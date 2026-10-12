@@ -1,15 +1,7 @@
 import type { CoachTheme, TemplateId } from "@/lib/theme/types"
+import type { HomeLayouts } from "@/lib/widgets/layout"
 
 export type ModuleId = "courses" | "calendar" | "community" | "journal" | "ranking" | "ai"
-export type WidgetId =
-  | "start-here"
-  | "first-week"
-  | "next-lesson"
-  | "journal-week"
-  | "next-event"
-  | "announcement"
-  | "econ"
-  | "rank"
 
 /** Words the coach can rename. Keys are ours; values are what students see. */
 export type Wording = {
@@ -43,7 +35,8 @@ export type Coach = {
   wording: Wording
   modules: Record<ModuleId, boolean>
   menu: ModuleId[]
-  homeWidgets: WidgetId[]
+  /** Home layouts the coach built; without one, Home follows the template's default. */
+  home?: HomeLayouts
   tiers: Tier[]
   discordUrl?: string
 }
@@ -74,7 +67,6 @@ export const COACHES: Coach[] = [
     wording: { ...DEFAULT_WORDING, courses: "Playbook", students: "Traders", student: "Trader", ai: "Ask Marco" },
     modules: { courses: true, calendar: true, community: true, journal: true, ranking: false, ai: true },
     menu: ["courses", "calendar", "journal", "community", "ai", "ranking"],
-    homeWidgets: ["start-here", "next-lesson", "journal-week", "next-event", "econ", "announcement"],
     tiers: [
       { id: "core", name: "Core", price: "€149", cadence: "month", members: 141 },
       { id: "desk", name: "Trading Desk", price: "€390", cadence: "month", members: 37 },
@@ -103,7 +95,6 @@ export const COACHES: Coach[] = [
     },
     modules: { courses: true, calendar: true, community: true, journal: true, ranking: false, ai: true },
     menu: ["courses", "calendar", "community", "journal", "ai", "ranking"],
-    homeWidgets: ["start-here", "first-week", "next-lesson", "next-event", "announcement"],
     tiers: [
       { id: "academy", name: "Academy", price: "€79", cadence: "month", members: 412 },
       { id: "circle", name: "Inner Circle", price: "€249", cadence: "month", members: 58 },
@@ -121,7 +112,6 @@ export const COACHES: Coach[] = [
     wording: { ...DEFAULT_WORDING, courses: "Bootcamp", calendar: "Live room", ai: "Kairo AI" },
     modules: { courses: true, calendar: true, community: true, journal: true, ranking: true, ai: true },
     menu: ["courses", "calendar", "journal", "ranking", "community", "ai"],
-    homeWidgets: ["start-here", "next-lesson", "rank", "journal-week", "next-event", "econ"],
     tiers: [
       { id: "free", name: "Free", price: "€0", cadence: "month", members: 1830 },
       { id: "pro", name: "Pro", price: "€99", cadence: "month", members: 266 },
@@ -140,7 +130,6 @@ export const COACHES: Coach[] = [
     wording: { ...DEFAULT_WORDING, courses: "Lab", students: "Members", student: "Member" },
     modules: { courses: true, calendar: true, community: true, journal: false, ranking: false, ai: false },
     menu: ["courses", "calendar", "community", "journal", "ai", "ranking"],
-    homeWidgets: ["start-here", "first-week", "next-lesson", "next-event", "announcement"],
     tiers: [{ id: "lab", name: "Lab", price: "€59", cadence: "month", members: 96 }],
   },
 ]

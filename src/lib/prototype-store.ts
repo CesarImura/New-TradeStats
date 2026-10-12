@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react"
 import type { ModuleId, Wording } from "@/lib/data/coaches"
+import type { HomeLayouts } from "@/lib/widgets/layout"
 import type { CoachTheme } from "@/lib/theme/types"
 
 /**
@@ -25,6 +26,7 @@ export type ContentDraft = {
   wording?: Partial<Wording>
   menu?: ModuleId[]
   modules?: Partial<Record<ModuleId, boolean>>
+  home?: HomeLayouts
 }
 
 export type Overrides = { theme: ThemeDraft; content: ContentDraft }

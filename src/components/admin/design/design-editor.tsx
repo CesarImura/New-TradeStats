@@ -1,41 +1,25 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import {
   ArrowDown,
   ArrowUp,
   ChevronDown,
   ExternalLink,
-  History,
   ImagePlus,
   Monitor,
-  PlayCircle,
   Smartphone,
   Trash2,
-  Undo2,
   Wand2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { getCoach, type ModuleId } from "@/lib/data/coaches"
 import { FONT_LIBRARY, type FontId } from "@/lib/fonts"
-import {
-  EMPTY,
-  mergeOverrides,
-  publish,
-  setDraft,
-  useDraft,
-  useHistory,
-  usePublished,
-  type Overrides,
-} from "@/lib/prototype-store"
 import { isDark, themeToCss } from "@/lib/theme/css"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
@@ -43,6 +27,7 @@ import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import type { TemplateId } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { Field, More, Segmented, Swatches } from "./controls"
+import { EditorBar, useDraftEditor } from "./editor-shell"
 import { PreviewFrame } from "./preview-frame"
 
 const BRAND_COLORS = ["#ff5500", "#e11d48", "#6b3dff", "#3d5afe", "#0ea5e9", "#16a34a", "#1f5a45", "#0a0a0a"]
@@ -70,44 +55,11 @@ export function DesignEditor() {
   const { coach: published } = useCoach()
   const slug = published.slug
   const original = getCoach(slug)!
-  const pub = usePublished(slug)
-  const draft = useDraft(slug)
-  const working = draft ?? pub
-  const dirty = draft !== null && JSON.stringify(draft) !== JSON.stringify(pub)
+  const editor = useDraftEditor(slug)
+  const { working, dirty, commit, change } = editor
 
   const coach = useMemo(() => resolveCoach(original, working.content), [original, working.content])
   const theme = useMemo(() => resolveTheme(coach, working.theme), [coach, working.theme])
-
-  // Undo: one step per change; rapid changes to the same setting (sliders, typing) count as one.
-  const [undo, setUndo] = useState<Overrides[]>([])
-  const last = useRef({ key: "", at: 0 })
-  const commit = useCallback(
-    (next: Overrides, key: string) => {
-      const now = Date.now()
-      if (last.current.key !== key || now - last.current.at > 800) setUndo((u) => [...u.slice(-49), working])
-      last.current = { key, at: now }
-      setDraft(slug, next)
-    },
-    [slug, working],
-  )
-  const change = (patch: Partial<Overrides>, key: string) => commit(mergeOverrides(working, patch), key)
-  const doUndo = useCallback(() => {
-    if (!undo.length) return
-    setDraft(slug, undo[undo.length - 1])
-    last.current = { key: "", at: 0 }
-    setUndo(undo.slice(0, -1))
-  }, [slug, undo])
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey && !(e.target instanceof HTMLInputElement)) {
-        e.preventDefault()
-        doUndo()
-      }
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [doUndo])
 
   const [device, setDevice] = useState<"desktop" | "phone">("desktop")
   const [page, setPage] = useState("")
@@ -116,50 +68,12 @@ export function DesignEditor() {
 
   return (
     <div className="-m-4 grid min-h-[calc(100svh-3.5rem)] grid-rows-[auto_1fr] md:-m-6 lg:-m-8 lg:h-[calc(100svh-3.5rem)]">
-      {/* Editor bar */}
-      <div className="flex flex-wrap items-center gap-2 border-b bg-background px-4 py-2.5">
-        <div className="mr-auto flex items-center gap-2.5">
-          <h1 className="text-base font-semibold">Design</h1>
-          {dirty ? (
-            <Badge variant="secondary" className="gap-1.5">
-              <span className="size-1.5 rounded-full bg-amber-500" /> Unpublished changes
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="gap-1.5 text-muted-foreground">
-              <span className="size-1.5 rounded-full bg-emerald-500" /> Live
-            </Badge>
-          )}
-        </div>
-        <GuideButton />
-        <Button variant="ghost" size="sm" onClick={doUndo} disabled={!undo.length} title="Undo (⌘Z)">
-          <Undo2 /> Undo
-        </Button>
-        <Versions slug={slug} />
-        {dirty && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setUndo((u) => [...u, working])
-              setDraft(slug, null)
-              toast("Changes discarded. Your platform is back to the live design.")
-            }}
-          >
-            Discard
-          </Button>
-        )}
-        <Button
-          size="sm"
-          disabled={!dirty}
-          onClick={() => {
-            publish(slug, `Published ${new Date().toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`)
-            setUndo([])
-            toast.success("Published. Students see the new design now.")
-          }}
-        >
-          Publish
-        </Button>
-      </div>
+      <EditorBar
+        slug={slug}
+        active="look"
+        editor={editor}
+        guide={{ title: "Designing your platform", text: "Pick a template, add your logo, then fine-tune. Nothing changes for students until you publish." }}
+      />
 
       <div className="grid min-h-0 lg:grid-cols-[380px_1fr]">
         {/* Settings */}
@@ -633,66 +547,4 @@ async function shrink(dataUrl: string, max: number) {
   c.height = Math.round(img.height * s)
   c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height)
   return c.toDataURL("image/png")
-}
-
-function GuideButton() {
-  return (
-    <Dialog>
-      <DialogTrigger render={<Button variant="ghost" size="sm" />}>
-        <PlayCircle /> 2-min guide
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Designing your platform</DialogTitle>
-          <DialogDescription>Pick a template, add your logo, then fine-tune. Nothing changes for students until you publish.</DialogDescription>
-        </DialogHeader>
-        <div className="grid aspect-video place-items-center rounded-lg bg-muted">
-          <PlayCircle className="size-12 text-muted-foreground" />
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Rather not do it yourself? <button className="font-medium text-foreground underline underline-offset-4" onClick={() => toast("We'll be in touch to book your setup call.")}>Let us set it up for you</button>.
-        </p>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function Versions({ slug }: { slug: string }) {
-  const history = useHistory(slug)
-  return (
-    <Sheet>
-      <SheetTrigger render={<Button variant="ghost" size="sm" />}>
-        <History /> Versions
-      </SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Earlier versions</SheetTitle>
-          <SheetDescription>Restoring a version opens it as a draft. Publish to make it live again.</SheetDescription>
-        </SheetHeader>
-        <div className="grid gap-2 px-4">
-          {history.length === 0 && <p className="text-sm text-muted-foreground">Nothing yet. Each time you publish, the design before it is kept here.</p>}
-          {history.map((v, i) => (
-            <div key={v.at + i} className="flex items-center justify-between gap-3 rounded-lg border p-3">
-              <div className="grid">
-                <span className="text-sm">{i === history.length - 1 && JSON.stringify(v.snapshot) === JSON.stringify(EMPTY) ? "Original design" : `Before: ${v.label.replace("Published ", "")}`}</span>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(v.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                </span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setDraft(slug, v.snapshot)
-                  toast("Version restored as a draft. Publish to make it live.")
-                }}
-              >
-                Restore
-              </Button>
-            </div>
-          ))}
-        </div>
-      </SheetContent>
-    </Sheet>
-  )
 }

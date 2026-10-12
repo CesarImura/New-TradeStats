@@ -8,6 +8,7 @@ import { themeToCss } from "@/lib/theme/css"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import type { CoachTheme } from "@/lib/theme/types"
 
+export type CoachCtx = Ctx
 type Ctx = {
   coach: Coach
   theme: CoachTheme
@@ -16,7 +17,7 @@ type Ctx = {
   /** True inside the design editor's preview frame, which shows the unpublished draft. */
   preview: boolean
 }
-const CoachContext = createContext<Ctx | null>(null)
+export const CoachContext = createContext<Ctx | null>(null)
 
 const noop = () => () => {}
 
