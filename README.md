@@ -31,15 +31,18 @@ Coach data (wording, modules, menu, home widgets, tiers) is in `src/lib/data/coa
 
 ## Home page builder
 
-`/admin/[coach]/design/home` (Design → Home page). The students' Home is a stack of **sections**. Inside a section, widgets sit on a **12-column grid**: each has a width (span) that snaps to the grid, set by dragging its right edge or from the settings panel, and never narrower than its content allows (`minSpan`). Widgets wrap onto the next line when a row is full.
+`/admin/[coach]/design/home` (Design → Home page). The students' Home is **one grid**: 12 columns and rows of 56px. Every widget covers a rectangle of cells (x, y, w, h) and **snaps to the grid in both directions**, so a tall card can sit beside two stacked ones. There are no preset sizes: drag a widget's right edge, bottom edge or corner. Each widget has a minimum width, and each of its looks a minimum height, so content never breaks.
 
-Responsive by the width of the page area (`.w-grid` / `.w-cell` in `globals.css`): ≥ 60rem spans apply as set; ≥ 40rem narrow widgets take half a row; below that every widget is full width. Widgets adapt inside using container queries.
+Built on react-grid-layout v2: while dragging or resizing, the grid cells show and a highlighted placeholder marks exactly where the widget will land. Widgets are dropped straight from the library onto the grid.
 
-- `src/lib/widgets/layout.ts` – layout data and each template's default Home.
-- `src/components/widgets/registry.tsx` – every widget: group, module, **three looks**, settings, default and minimum width.
+Responsive by the width of the page area (`.g-page` / `.g-item` in `globals.css`): ≥ 60rem the grid exactly as arranged; ≥ 40rem in reading order, half or full rows, heights kept; phones one column in reading order.
+
+- `src/lib/widgets/layout.ts` – layout data, responsive rules and each template's default Home.
+- `src/components/widgets/registry.tsx` – every widget: group, module, three looks (each with a height and minimum height), settings, default and minimum width.
 - `src/components/widgets/{learning,calendar,journal,progress,community,brand}.tsx` – the widgets, each with its empty state.
-- `src/components/widgets/shared.tsx` – sample/empty data switch, empty state, cover art, rings.
-- `src/components/admin/design/home-builder.tsx` – drag and drop, resize, sections, per-tier layouts, desktop/tablet/phone, sample or empty data.
+- `src/components/admin/design/home-builder.tsx` – the grid editor, per-tier layouts, desktop/tablet/phone, sample or empty data.
+
+Note: react-grid-layout 2.2.4's `createScaledStrategy` measures drags from the page edge; the builder uses the standard strategy with `scale` instead, and corrects drop offsets for the scaled canvas.
 
 Only admins change the layout; students see it. No embeds or custom code. `?data=empty` on a student page shows what a brand-new student sees.
 

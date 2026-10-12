@@ -36,9 +36,9 @@ export function ContinueLesson({ variant = "card", props }: WidgetProps) {
 
   if (variant === "spotlight") {
     return (
-      <div className="@container relative isolate flex min-h-56 overflow-hidden rounded-(--radius) text-white" style={{ boxShadow: "var(--card-shadow)" }}>
+      <div className="@container relative isolate flex overflow-hidden rounded-(--radius) text-white" style={{ boxShadow: "var(--card-shadow)" }}>
         <Cover hue={course.hue} className="absolute inset-0 -z-10 rounded-none" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
+        <div className="absolute inset-0 -z-10 bg-black/45" />
         <div className="mt-auto flex w-full flex-col gap-3 p-5 @lg:flex-row @lg:items-end @lg:justify-between">
           <div className="grid gap-1">
             <span className="text-xs tracking-wide text-white/75 uppercase">{label}</span>

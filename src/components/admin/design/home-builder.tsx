@@ -1,66 +1,43 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import {
-  DndContext,
-  DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  pointerWithin,
-  rectIntersection,
-  useDraggable,
-  useDroppable,
-  useSensor,
-  useSensors,
-  type CollisionDetection,
-  type DragEndEvent,
-} from "@dnd-kit/core"
-import { ArrowDown, ArrowUp, Database, EyeOff, ExternalLink, Monitor, Plus, Smartphone, Tablet, Trash2 } from "lucide-react"
+import ReactGridLayout from "react-grid-layout"
+import { transformStrategy, type Layout, type LayoutItem, type PositionStrategy } from "react-grid-layout/core"
+import { GridBackground } from "react-grid-layout/extras"
+import "react-grid-layout/css/styles.css"
+import "react-resizable/css/styles.css"
+import { Database, EyeOff, ExternalLink, Info, LayoutGrid, Monitor, Smartphone, Tablet } from "lucide-react"
 import { toast } from "sonner"
 import { CoachContext, useCoach } from "@/components/coach/coach-provider"
-import { useSidebar } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { SECTION_BG, cellStyle, effectiveSpan, isAvailable } from "@/components/widgets/page-renderer"
-import { getWidget } from "@/components/widgets/registry"
+import { useSidebar } from "@/components/ui/sidebar"
+import { PageRenderer, isAvailable } from "@/components/widgets/page-renderer"
+import { getWidget, heightOf, lookOf } from "@/components/widgets/registry"
 import { DataModeProvider, type DataMode } from "@/components/widgets/shared"
-import { getCoach, type Coach } from "@/lib/data/coaches"
+import { getCoach } from "@/lib/data/coaches"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { themeToCss } from "@/lib/theme/css"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
-import { SPAN_STEPS, defaultHome, normalizeLayout, uid, type PageLayout, type Section, type WidgetInstance } from "@/lib/widgets/layout"
+import { COLS, GAP, ROW_HEIGHT, defaultHome, normalizeLayout, uid, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
-import { NothingSelected, SectionSettings, WidgetLibrary, WidgetSettings } from "./builder-panels"
+import { NothingSelected, WidgetLibrary, WidgetSettings } from "./builder-panels"
 import { Segmented } from "./controls"
 import { EditorBar, useDraftEditor } from "./editor-shell"
 
-type Selection = { kind: "widget"; id: string } | { kind: "section"; id: string } | null
 type Device = "desktop" | "tablet" | "phone"
 const DEVICE_WIDTH: Record<Device, number> = { desktop: 1180, tablet: 820, phone: 390 }
+const PAD = { desktop: 32, tablet: 24, phone: 16 }
+const DROP_ID = "__dropping__"
 
-const clone = (l: PageLayout): PageLayout => JSON.parse(JSON.stringify(l))
+/**
+ * The canvas is scaled down with a CSS transform. The library's own scaled
+ * strategy measures drags from the page edge (moving widgets too far), so use
+ * the standard strategy and only tell it the scale.
+ */
+const scaled = (scale: number): PositionStrategy => ({ ...transformStrategy, scale })
 
-function locate(l: PageLayout, id: string) {
-  for (let si = 0; si < l.sections.length; si++) {
-    const wi = l.sections[si].widgets.findIndex((w) => w.id === id)
-    if (wi >= 0) return { si, wi }
-  }
-  return null
-}
-
-/** Prefer dropping before a widget, then at the end of a section. */
-const collision: CollisionDetection = (args) => {
-  const hits = pointerWithin(args)
-  const before = hits.filter((h) => String(h.id).startsWith("before:"))
-  if (before.length) return before
-  const end = hits.filter((h) => String(h.id).startsWith("end:"))
-  if (end.length) return end
-  return hits.length ? hits : rectIntersection(args)
-}
-
-const spanLabel = (span: number) => SPAN_STEPS.find((s) => s.span === span)?.label ?? `${span}/12`
-
-/** ADM-37 / ADM-39: build the students' Home from widgets, per tier, by drag and drop. */
+/** ADM-37 / ADM-39: build the students' Home on a snap-to-grid canvas, per tier. */
 export function HomeBuilder() {
   const ctx = useCoach()
   const slug = ctx.coach.slug
@@ -70,13 +47,14 @@ export function HomeBuilder() {
 
   const coach = useMemo(() => resolveCoach(original, working.content), [original, working.content])
   const theme = useMemo(() => resolveTheme(coach, working.theme), [coach, working.theme])
+  const gap = GAP[theme.density]
 
   const [tier, setTier] = useState("default")
   const [device, setDevice] = useState<Device>("desktop")
   const [data, setData] = useState<DataMode>("sample")
-  const [selected, setSelected] = useState<Selection>(null)
-  const [dragging, setDragging] = useState<string | null>(null)
-  const [resizing, setResizing] = useState<{ id: string; span: number } | null>(null)
+  const [selected, setSelected] = useState<string | null>(null)
+  const [incoming, setIncoming] = useState<string | null>(null) // widget type being dragged in from the library
+  const [active, setActive] = useState(false) // a drag or resize is in progress on the grid
 
   // Give the canvas room: fold the admin menu to icons while building, and restore it on leaving.
   const { open: menuOpen, setOpen: setMenuOpen } = useSidebar()
@@ -87,120 +65,76 @@ export function HomeBuilder() {
     return () => setMenuOpen(restore)
   }, [setMenuOpen])
 
-  // The canvas is laid out at real device width and scaled to fit.
+  // The canvas is laid out at real device width and scaled to fit the space.
   const area = useRef<HTMLDivElement>(null)
+  const canvas = useRef<HTMLDivElement>(null)
   const [areaWidth, setAreaWidth] = useState(0)
+  const [canvasHeight, setCanvasHeight] = useState(0)
   useEffect(() => {
-    const el = area.current
-    if (!el) return
-    const ro = new ResizeObserver(([e]) => setAreaWidth(e.contentRect.width))
-    ro.observe(el)
+    const a = area.current
+    const c = canvas.current
+    if (!a || !c) return
+    const ro = new ResizeObserver(() => {
+      setAreaWidth(a.clientWidth)
+      setCanvasHeight(c.offsetHeight)
+    })
+    ro.observe(a)
+    ro.observe(c)
     return () => ro.disconnect()
   }, [])
   const logicalWidth = DEVICE_WIDTH[device]
-  const zoom = areaWidth ? Math.min(1, (areaWidth - 32) / logicalWidth) : 1
+  const scale = areaWidth ? Math.min(1, (areaWidth - 32) / logicalWidth) : 1
+  const gridWidth = logicalWidth - PAD[device] * 2
 
   const layouts = coach.home ?? {}
-  const baseLayout = layouts.default ? normalizeLayout(layouts.default) : defaultHome(theme.template, coach)
+  const baseLayout = layouts.default ? normalizeLayout(layouts.default, heightOf) : defaultHome(theme.template, coach)
   const inherits = tier !== "default" && !layouts[tier]
-  const layout = tier === "default" ? baseLayout : layouts[tier] ? normalizeLayout(layouts[tier]) : baseLayout
+  const layout = tier === "default" ? baseLayout : layouts[tier] ? normalizeLayout(layouts[tier], heightOf) : baseLayout
   const tierName = coach.tiers.find((t) => t.id === tier)?.name
 
   const save = (next: PageLayout, key: string) => {
     commit({ ...working, content: { ...working.content, home: { ...layouts, [tier]: next } } }, `${tier}-${key}`)
     if (inherits) toast(`${tierName} now has its own Home. Other tiers keep the default.`)
   }
-  const edit = (key: string, fn: (l: PageLayout) => void) => {
-    const next = clone(layout)
-    fn(next)
-    save(next, key)
-  }
-  const newWidget = (type: string): WidgetInstance => ({ id: uid(), type, span: getWidget(type)?.defaultSpan ?? 6 })
+  const updateItem = (id: string, patch: Partial<WidgetInstance>, key: string) =>
+    save({ items: layout.items.map((w) => (w.id === id ? { ...w, ...patch } : w)) }, key)
 
-  // ---------- operations
+  /** Take positions from the grid after a move, resize or drop. */
+  const fromGrid = (grid: Layout, extra?: WidgetInstance) => {
+    const pos = new Map(grid.map((g) => [g.i, g]))
+    const items = layout.items.map((w) => {
+      const g = pos.get(w.id)
+      return g ? { ...w, x: g.x, y: g.y, w: g.w, h: g.h } : w
+    })
+    return { items: extra ? [...items, extra] : items }
+  }
 
   const addWidget = (type: string) => {
-    const w = newWidget(type)
-    edit(`add-${w.id}`, (l) => {
-      const at = selected?.kind === "widget" ? locate(l, selected.id) : null
-      const si = at?.si ?? (selected?.kind === "section" ? l.sections.findIndex((s) => s.id === selected.id) : l.sections.length - 1)
-      if (si < 0 || !l.sections[si]) l.sections.push({ id: uid(), widgets: [w] })
-      else if (at) l.sections[si].widgets.splice(at.wi + 1, 0, w)
-      else l.sections[si].widgets.push(w)
-    })
-    setSelected({ kind: "widget", id: w.id })
+    const def = getWidget(type)!
+    const look = def.variants[0]
+    const bottom = layout.items.reduce((m, w) => Math.max(m, w.y + w.h), 0)
+    const w: WidgetInstance = { id: uid(), type, x: 0, y: bottom, w: def.defaultW, h: look.h }
+    save({ items: [...layout.items, w] }, `add-${w.id}`)
+    setSelected(w.id)
+    toast(`${def.name} added at the bottom. Drag it where you want it.`)
   }
 
-  const addSection = (index: number) => {
-    const id = uid()
-    edit(`section-${id}`, (l) => l.sections.splice(index, 0, { id, widgets: [] }))
-    setSelected({ kind: "section", id })
-  }
+  // Grid items. Hidden-module widgets stay on the grid (marked) so their place is kept.
+  const gridLayout: LayoutItem[] = layout.items.map((w) => {
+    const def = getWidget(w.type)
+    const look = def ? lookOf(def, w.variant) : undefined
+    return { i: w.id, x: w.x, y: w.y, w: w.w, h: w.h, minW: def?.minW ?? 2, minH: look?.minH ?? 2, maxW: COLS }
+  })
+  const incomingDef = incoming ? getWidget(incoming) : undefined
+  const incomingSize = incomingDef ? { w: incomingDef.defaultW, h: incomingDef.variants[0].h } : { w: 4, h: 3 }
+  const rows = layout.items.reduce((m, w) => Math.max(m, w.y + w.h), 0) + 4
+  // The library centres a dropped widget on the pointer but subtracts half its
+  // width before undoing the canvas scale; compensate so it lands under the pointer.
+  const colWidth = (gridWidth - gap * (COLS - 1)) / COLS
+  const itemPx = { w: incomingSize.w * colWidth + (incomingSize.w - 1) * gap, h: incomingSize.h * ROW_HEIGHT + (incomingSize.h - 1) * gap }
+  const dropOffset = { dragOffsetX: (itemPx.w / 2) * (1 - scale), dragOffsetY: (itemPx.h / 2) * (1 - scale) }
 
-  const onDragEnd = (e: DragEndEvent) => {
-    setDragging(null)
-    const src = String(e.active.id)
-    const target = e.over ? String(e.over.id) : null
-    if (!target || target === `before:${src}`) return
-    const next = clone(layout)
-    let w: WidgetInstance
-    if (src.startsWith("new:")) w = newWidget(src.slice(4))
-    else {
-      const at = locate(next, src)
-      if (!at) return
-      ;[w] = next.sections[at.si].widgets.splice(at.wi, 1)
-    }
-    if (target.startsWith("before:")) {
-      const at = locate(next, target.slice(7))
-      if (!at) return
-      next.sections[at.si].widgets.splice(at.wi, 0, w)
-    } else {
-      const s = next.sections.find((x) => x.id === target.slice(4))
-      if (!s) return
-      s.widgets.push(w)
-    }
-    save(next, `move-${w.id}-${uid()}`)
-    setSelected({ kind: "widget", id: w.id })
-  }
-
-  /** Drag a widget's right edge: the width snaps to the 12-column grid and stops at the widget's minimum. */
-  const startResize = (w: WidgetInstance, e: React.PointerEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const grid = (e.currentTarget as HTMLElement).closest(".w-grid") as HTMLElement | null
-    if (!grid) return
-    const def = getWidget(w.type)!
-    const gap = parseFloat(getComputedStyle(grid).columnGap) || 0
-    const step = (grid.getBoundingClientRect().width + gap) / 12
-    const startX = e.clientX
-    const startSpan = effectiveSpan(w)
-    let span = startSpan
-    setResizing({ id: w.id, span })
-    setSelected({ kind: "widget", id: w.id })
-    const move = (ev: PointerEvent) => {
-      span = Math.min(12, Math.max(def.minSpan, Math.round(startSpan + (ev.clientX - startX) / step)))
-      setResizing({ id: w.id, span })
-    }
-    const up = () => {
-      window.removeEventListener("pointermove", move)
-      window.removeEventListener("pointerup", up)
-      setResizing(null)
-      if (span !== startSpan) edit(`resize-${w.id}-${uid()}`, (l) => {
-        const at = locate(l, w.id)
-        if (at) l.sections[at.si].widgets[at.wi].span = span
-      })
-    }
-    window.addEventListener("pointermove", move)
-    window.addEventListener("pointerup", up)
-  }
-
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor))
-
-  const selAt = selected?.kind === "widget" ? locate(layout, selected.id) : null
-  const selWidget = selAt ? layout.sections[selAt.si].widgets[selAt.wi] : null
-  const selSection = selected?.kind === "section" ? layout.sections.find((s) => s.id === selected.id) : null
-  const dragType = dragging?.startsWith("new:") ? dragging.slice(4) : dragging ? (() => { const at = locate(layout, dragging); return at ? layout.sections[at.si].widgets[at.wi].type : "" })() : ""
-
+  const selWidget = layout.items.find((w) => w.id === selected) ?? null
   const scope = ".hb-canvas"
   const canvasClass = cn("hb-canvas", theme.mode === "dark" && "dark")
   const canvasCtx = { ...ctx, coach, theme, base: `/c/${slug}` }
@@ -212,7 +146,7 @@ export function HomeBuilder() {
         slug={slug}
         active="home"
         editor={editor}
-        guide={{ title: "Building your Home page", text: "Drag widgets onto the page, drag their right edge to resize, pick one of three looks for each, and make a different Home per tier if you like." }}
+        guide={{ title: "Building your Home page", text: "Drag widgets onto the grid, drag their edges to resize them, pick one of three looks for each, and make a different Home per tier if you like." }}
       />
 
       {/* Tier, data, device and preview */}
@@ -258,7 +192,7 @@ export function HomeBuilder() {
           <Segmented
             label="Canvas size"
             value={device}
-            onChange={setDevice}
+            onChange={(d) => { setDevice(d); setActive(false) }}
             options={[
               { value: "desktop", label: <><Monitor className="size-3.5" /> Desktop</> },
               { value: "tablet", label: <><Tablet className="size-3.5" /> Tablet</> },
@@ -273,247 +207,176 @@ export function HomeBuilder() {
 
       <CoachContext.Provider value={canvasCtx}>
         <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, scope) }} />
-        <DndContext
-          id="home-builder"
-          sensors={sensors}
-          collisionDetection={collision}
-          onDragStart={(e) => setDragging(String(e.active.id))}
-          onDragEnd={onDragEnd}
-          onDragCancel={() => setDragging(null)}
-        >
-          <div className="grid min-h-0 grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
-            <aside className="min-h-0 overflow-y-auto border-r bg-background">
-              <WidgetLibrary coach={coach} canvasClass={canvasClass} onAdd={addWidget} />
-            </aside>
+        <div className="grid min-h-0 grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
+          <aside className="min-h-0 overflow-y-auto border-r bg-background">
+            <WidgetLibrary
+              coach={coach}
+              canvasClass={canvasClass}
+              onAdd={addWidget}
+              onDragType={(t) => {
+                setIncoming(t)
+                if (!t) setActive(false)
+              }}
+            />
+          </aside>
 
-            {/* Canvas: the real Home in the coach's draft theme */}
-            <div ref={area} className="min-h-[70svh] min-w-0 overflow-x-hidden overflow-y-auto bg-muted/50 p-4 lg:min-h-0" onClick={() => setSelected(null)}>
+          {/* Canvas: the real Home in the coach's draft theme, at real width, scaled to fit */}
+          <div ref={area} className="min-h-[70svh] min-w-0 overflow-x-hidden overflow-y-auto bg-muted/50 p-4 lg:min-h-0" onClick={() => setSelected(null)}>
+            {device !== "desktop" && (
+              <div className="mx-auto mb-3 flex max-w-xl items-center gap-2 rounded-lg bg-background px-3 py-2 text-xs text-muted-foreground shadow-sm">
+                <Info className="size-4 shrink-0" />
+                This is how the page reflows on {device === "tablet" ? "tablets" : "phones"}. Arrange widgets in the desktop view; the order here follows it, top to bottom and left to right.
+              </div>
+            )}
+            <div className="mx-auto" style={{ width: logicalWidth * scale, height: canvasHeight * scale }}>
               <DataModeProvider value={data}>
                 <div
+                  ref={canvas}
                   data-canvas={device}
-                  className={cn(canvasClass, "mx-auto bg-background font-sans text-foreground shadow-xl ring-1 ring-black/10", device === "desktop" ? "rounded-xl" : "rounded-[28px]")}
-                  style={{ width: logicalWidth, zoom }}
+                  className={cn(canvasClass, "origin-top-left bg-background font-sans text-foreground shadow-xl ring-1 ring-black/10", device === "desktop" ? "rounded-xl" : "rounded-[28px]")}
+                  style={{ width: logicalWidth, transform: `scale(${scale})`, padding: PAD[device] }}
                 >
-                  <div className={cn("@container flex flex-col page-gap", device === "phone" ? "p-4" : device === "tablet" ? "p-6" : "p-8")}>
-                    <div className="pointer-events-none flex flex-col gap-1 opacity-80">
-                      <span className="eyebrow">Monday, 12 October</span>
-                      <h1 className="text-3xl leading-tight">Good morning, {DEMO_STUDENT.first}</h1>
-                    </div>
-                    <AddSection onAdd={() => addSection(0)} />
-                    {layout.sections.map((s, si) => (
-                      <div key={s.id} className="flex flex-col page-gap">
-                        <SectionEditor
-                          section={s}
-                          coach={coach}
-                          first={si === 0}
-                          last={si === layout.sections.length - 1}
-                          device={device}
-                          dragging={dragging}
-                          resizing={resizing}
-                          selected={selected}
-                          onSelect={setSelected}
-                          onResizeStart={startResize}
-                          onMove={(by) => edit(`move-s-${uid()}`, (l) => { const [x] = l.sections.splice(si, 1); l.sections.splice(si + by, 0, x) })}
-                          onRemove={() => { edit(`del-s-${s.id}`, (l) => l.sections.splice(si, 1)); setSelected(null) }}
-                        />
-                        <AddSection onAdd={() => addSection(si + 1)} />
-                      </div>
-                    ))}
+                  <div className="pointer-events-none mb-[var(--page-gap)] flex flex-col gap-1 opacity-80">
+                    <span className="eyebrow">Monday, 12 October</span>
+                    <h1 className="text-3xl leading-tight">Good morning, {DEMO_STUDENT.first}</h1>
                   </div>
+
+                  {device === "desktop" ? (
+                    <div className="relative" style={{ minHeight: 6 * (ROW_HEIGHT + gap) }}>
+                      {(active || incoming) && (
+                        <GridBackground
+                          width={gridWidth}
+                          cols={COLS}
+                          rowHeight={ROW_HEIGHT}
+                          margin={[gap, gap]}
+                          containerPadding={[0, 0]}
+                          rows={rows}
+                          color="color-mix(in oklab, var(--primary) 9%, transparent)"
+                          borderRadius={6}
+                          className="pointer-events-none absolute inset-0"
+                        />
+                      )}
+                      {layout.items.length === 0 && !incoming && (
+                        <div className="pointer-events-none absolute inset-0 grid place-items-center rounded-(--radius) border-2 border-dashed text-sm text-muted-foreground">
+                          <span className="flex items-center gap-2">
+                            <LayoutGrid className="size-4" /> Drag widgets from the left onto this grid
+                          </span>
+                        </div>
+                      )}
+                      <ReactGridLayout
+                        width={gridWidth}
+                        layout={gridLayout}
+                        gridConfig={{ cols: COLS, rowHeight: ROW_HEIGHT, margin: [gap, gap], containerPadding: [0, 0] }}
+                        positionStrategy={scaled(scale)}
+                        dragConfig={{ enabled: true, threshold: 4, cancel: ".react-resizable-handle" }}
+                        resizeConfig={{ enabled: true, handles: ["e", "s", "se"] }}
+                        dropConfig={{ enabled: true, defaultItem: incomingSize, onDragOver: () => ({ ...incomingSize, ...dropOffset }) }}
+                        droppingItem={{ i: DROP_ID, x: 0, y: 0, ...incomingSize }}
+                        style={{ minHeight: 6 * (ROW_HEIGHT + gap) }}
+                        onDragStart={(_l, _o, item) => {
+                          setActive(true)
+                          if (item) setSelected(item.i)
+                        }}
+                        onResizeStart={(_l, _o, item) => {
+                          setActive(true)
+                          if (item) setSelected(item.i)
+                        }}
+                        onDragStop={(l) => {
+                          setActive(false)
+                          save(fromGrid(l), `move-${uid()}`)
+                        }}
+                        onResizeStop={(l) => {
+                          setActive(false)
+                          save(fromGrid(l), `resize-${uid()}`)
+                        }}
+                        onDrop={(l, item) => {
+                          const type = incoming
+                          setIncoming(null)
+                          // The library treats a drop as a drag that never "stops"; end it here.
+                          setActive(false)
+                          if (!type || !item) return
+                          const w: WidgetInstance = { id: uid(), type, x: item.x, y: item.y, w: item.w, h: item.h }
+                          save(fromGrid(l.filter((g) => g.i !== DROP_ID), w), `drop-${w.id}`)
+                          setSelected(w.id)
+                        }}
+                      >
+                        {layout.items.map((w) => (
+                          <div key={w.id} onClick={(e) => { e.stopPropagation(); setSelected(w.id) }}>
+                            <GridWidget w={w} selected={selected === w.id} available={isAvailable(w, coach)} />
+                          </div>
+                        ))}
+                      </ReactGridLayout>
+                    </div>
+                  ) : (
+                    <div className="pointer-events-none">
+                      <PageRenderer layout={layout} />
+                    </div>
+                  )}
                 </div>
               </DataModeProvider>
             </div>
-
-            <aside className="min-h-0 overflow-y-auto border-l bg-background">
-              {selWidget ? (
-                <WidgetSettings
-                  key={selWidget.id}
-                  w={selWidget}
-                  canvasClass={canvasClass}
-                  onChange={(patch, key) => edit(key, (l) => { const at = locate(l, selWidget.id)!; Object.assign(l.sections[at.si].widgets[at.wi], patch) })}
-                  onDuplicate={() => {
-                    const copy = { ...selWidget, id: uid() }
-                    edit(`dup-${copy.id}`, (l) => { const at = locate(l, selWidget.id)!; l.sections[at.si].widgets.splice(at.wi + 1, 0, copy) })
-                    setSelected({ kind: "widget", id: copy.id })
-                  }}
-                  onRemove={() => { edit(`del-${selWidget.id}`, (l) => { const at = locate(l, selWidget.id)!; l.sections[at.si].widgets.splice(at.wi, 1) }); setSelected(null) }}
-                />
-              ) : selSection ? (
-                <SectionSettings
-                  key={selSection.id}
-                  section={selSection}
-                  onChange={(patch, key) => edit(key, (l) => Object.assign(l.sections.find((x) => x.id === selSection.id)!, patch))}
-                  onRemove={() => { edit(`del-s-${selSection.id}`, (l) => { l.sections = l.sections.filter((x) => x.id !== selSection.id) }); setSelected(null) }}
-                />
-              ) : (
-                <NothingSelected />
-              )}
-            </aside>
           </div>
-          <DragOverlay dropAnimation={null}>{dragType && <DragChip type={dragType} />}</DragOverlay>
-        </DndContext>
+
+          <aside className="min-h-0 overflow-y-auto border-l bg-background">
+            {selWidget ? (
+              <WidgetSettings
+                key={selWidget.id}
+                w={selWidget}
+                canvasClass={canvasClass}
+                onChange={(patch, key) => updateItem(selWidget.id, patch, key)}
+                onDuplicate={() => {
+                  const bottom = layout.items.reduce((m, w) => Math.max(m, w.y + w.h), 0)
+                  const copy = { ...selWidget, id: uid(), x: selWidget.x, y: bottom }
+                  save({ items: [...layout.items, copy] }, `dup-${copy.id}`)
+                  setSelected(copy.id)
+                }}
+                onRemove={() => {
+                  save({ items: layout.items.filter((w) => w.id !== selWidget.id) }, `del-${selWidget.id}`)
+                  setSelected(null)
+                }}
+              />
+            ) : (
+              <NothingSelected />
+            )}
+          </aside>
+        </div>
       </CoachContext.Provider>
     </div>
   )
 }
 
-function DragChip({ type }: { type: string }) {
-  const def = getWidget(type)
-  if (!def) return null
-  return (
-    <div className="flex w-56 cursor-grabbing items-center gap-2 rounded-lg border bg-background p-2 font-[family-name:var(--ff-geist)] text-sm shadow-xl">
-      <def.icon className="size-4" /> {def.name}
-    </div>
-  )
-}
-
-function AddSection({ onAdd }: { onAdd: () => void }) {
-  return (
-    <div className="group/add relative -my-[calc(var(--page-gap)/2)] flex h-[var(--page-gap)] items-center justify-center" onClick={(e) => e.stopPropagation()}>
-      <span className="absolute inset-x-0 top-1/2 h-px bg-transparent group-hover/add:bg-primary/40" />
-      <button
-        onClick={onAdd}
-        className="relative z-10 flex items-center gap-1 rounded-full border bg-background px-2 py-0.5 font-[family-name:var(--ff-geist)] text-[0.7rem] text-muted-foreground opacity-0 shadow-sm transition-opacity group-hover/add:opacity-100 focus-visible:opacity-100"
-        aria-label="Add a section here"
-      >
-        <Plus className="size-3" /> Section
-      </button>
-    </div>
-  )
-}
-
-type CanvasProps = {
-  coach: Coach
-  device: Device
-  dragging: string | null
-  resizing: { id: string; span: number } | null
-  selected: Selection
-  onSelect: (s: Selection) => void
-  onResizeStart: (w: WidgetInstance, e: React.PointerEvent) => void
-}
-
-function SectionEditor({
-  section,
-  first,
-  last,
-  onMove,
-  onRemove,
-  ...canvas
-}: CanvasProps & { section: Section; first: boolean; last: boolean; onMove: (by: number) => void; onRemove: () => void }) {
-  const isSel = canvas.selected?.kind === "section" && canvas.selected.id === section.id
-  const { setNodeRef: setEndRef, isOver: endOver } = useDroppable({ id: `end:${section.id}` })
-  return (
-    <section
-      onClick={(e) => {
-        e.stopPropagation()
-        canvas.onSelect({ kind: "section", id: section.id })
-      }}
-      className={cn("group/sec relative rounded-[calc(var(--radius)+4px)] outline-2 outline-offset-4 outline-transparent transition-[outline-color] hover:outline-primary/25", isSel && "outline-primary")}
-    >
-      <div
-        className="absolute -top-3 right-2 z-20 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 font-[family-name:var(--ff-geist)] text-foreground opacity-0 shadow-sm transition-opacity group-hover/sec:opacity-100 data-[on=true]:opacity-100"
-        data-on={isSel}
-      >
-        <span className="px-1.5 text-[0.7rem] text-muted-foreground">Section</span>
-        <Button variant="ghost" size="icon-xs" disabled={first} aria-label="Move section up" onClick={(e) => { e.stopPropagation(); onMove(-1) }}>
-          <ArrowUp />
-        </Button>
-        <Button variant="ghost" size="icon-xs" disabled={last} aria-label="Move section down" onClick={(e) => { e.stopPropagation(); onMove(1) }}>
-          <ArrowDown />
-        </Button>
-        <Button variant="ghost" size="icon-xs" aria-label="Remove section" onClick={(e) => { e.stopPropagation(); onRemove() }}>
-          <Trash2 />
-        </Button>
-      </div>
-      <div className={cn("w-grid", SECTION_BG[section.background ?? "none"])}>
-        {section.widgets.map((w) => (
-          <EditableWidget key={w.id} w={w} {...canvas} />
-        ))}
-        <div
-          ref={setEndRef}
-          style={{ gridColumn: "1 / -1" }}
-          className={cn(
-            "grid place-items-center rounded-(--radius) border-2 border-dashed font-[family-name:var(--ff-geist)] text-xs text-muted-foreground transition-colors",
-            section.widgets.length ? (canvas.dragging ? "min-h-12" : "hidden") : "min-h-28",
-            endOver ? "border-primary bg-primary/5 text-primary" : "border-foreground/15",
-          )}
-        >
-          {section.widgets.length ? "Drop here to add at the end" : "Drop a widget here"}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function EditableWidget({ w, coach, device, dragging, resizing, selected, onSelect, onResizeStart }: CanvasProps & { w: WidgetInstance }) {
+/** One widget on the builder grid: the real widget, plus its name and selection outline. */
+function GridWidget({ w, selected, available }: { w: WidgetInstance; selected: boolean; available: boolean }) {
   const def = getWidget(w.type)
-  const drag = useDraggable({ id: w.id })
-  const drop = useDroppable({ id: `before:${w.id}` })
-  const isSel = selected?.kind === "widget" && selected.id === w.id
-  const live = resizing?.id === w.id ? { ...w, span: resizing.span } : w
   if (!def) return null
   const C = def.Component
-  const available = isAvailable(w, coach)
-  const showInsert = drop.isOver && dragging && dragging !== w.id
-  const hiddenHere = device === "phone" && w.hideOnPhone
   return (
     <div
-      ref={(n) => {
-        drag.setNodeRef(n)
-        drop.setNodeRef(n)
-      }}
-      style={cellStyle(live)}
-      {...drag.attributes}
-      {...drag.listeners}
-      onClick={(e) => {
-        e.stopPropagation()
-        onSelect({ kind: "widget", id: w.id })
-      }}
-      aria-label={`${def.name}. Click to edit, drag to move.`}
       className={cn(
-        "w-cell group/w relative cursor-grab rounded-[calc(var(--radius)+2px)] outline-2 outline-offset-2 outline-transparent hover:outline-primary/40 active:cursor-grabbing",
-        isSel && "outline-primary",
-        drag.isDragging && "opacity-30",
-        hiddenHere && "opacity-40",
+        "group/w relative flex size-full cursor-grab flex-col rounded-[calc(var(--radius)+2px)] outline-2 outline-offset-2 outline-transparent hover:outline-primary/40 active:cursor-grabbing",
+        selected && "outline-primary",
       )}
     >
-      {showInsert && <span className="absolute top-0 bottom-0 -left-[calc(var(--page-gap)/2+1px)] z-10 w-0.5 rounded-full bg-primary" />}
       <span
-        className="absolute top-2 left-2 z-10 flex items-center gap-1 rounded-md bg-foreground px-1.5 py-0.5 font-[family-name:var(--ff-geist)] text-[0.65rem] text-background opacity-0 group-hover/w:opacity-100 data-[on=true]:opacity-100"
-        data-on={isSel || resizing?.id === w.id}
+        className="absolute top-2 left-2 z-10 rounded-md bg-foreground px-1.5 py-0.5 font-[family-name:var(--ff-geist)] text-[0.65rem] text-background opacity-0 group-hover/w:opacity-100 data-[on=true]:opacity-100"
+        data-on={selected}
       >
-        {def.name} · {spanLabel(effectiveSpan(live))}
+        {def.name} · {w.w}×{w.h}
       </span>
-      {hiddenHere && (
+      {w.hideOnPhone && (
         <Badge variant="secondary" className="absolute top-2 right-2 z-10 gap-1">
           <EyeOff className="size-3" /> Hidden on phones
         </Badge>
       )}
-      <div className="pointer-events-none flex flex-1 flex-col select-none [&>*]:flex-1">
+      <div className="pointer-events-none flex min-h-0 flex-1 flex-col overflow-hidden select-none [&>*]:flex-1">
         {available ? (
           <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
         ) : (
-          <div className="grid min-h-24 place-items-center rounded-(--radius) border border-dashed p-4 text-center text-xs text-muted-foreground">
+          <div className="grid place-items-center rounded-(--radius) border border-dashed p-4 text-center text-xs text-muted-foreground">
             {def.name} is hidden: its module is switched off in Look and feel → Menu and words.
           </div>
         )}
       </div>
-      {/* Resize handle: only on desktop, where spans apply as set */}
-      {device === "desktop" && (
-        <span
-          role="separator"
-          aria-orientation="vertical"
-          aria-label={`Resize ${def.name}`}
-          onPointerDown={(e) => onResizeStart(w, e)}
-          onClick={(e) => e.stopPropagation()}
-          className={cn(
-            "absolute top-1/2 -right-[calc(var(--page-gap)/2+3px)] z-20 flex h-12 w-2.5 -translate-y-1/2 cursor-ew-resize items-center justify-center rounded-full border bg-background opacity-0 shadow-sm group-hover/w:opacity-100",
-            (isSel || resizing?.id === w.id) && "opacity-100",
-          )}
-        >
-          <span className="h-5 w-0.5 rounded-full bg-primary" />
-        </span>
-      )}
     </div>
   )
 }

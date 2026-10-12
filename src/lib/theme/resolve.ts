@@ -19,9 +19,9 @@ export function resolveCoach(coach: Coach, c: ContentDraft = {}): Coach {
 }
 
 /** The Home a student in this tier sees: the tier's own layout, the coach's default, or the template's. */
-export function homeLayout(coach: Coach, template: TemplateId, tier?: string): PageLayout {
+export function homeLayout(coach: Coach, template: TemplateId, tier?: string, heightOf?: (w: { type: string; variant?: string }) => number): PageLayout {
   const saved = (tier && coach.home?.[tier]) || coach.home?.default
-  return saved ? normalizeLayout(saved) : defaultHome(template, coach)
+  return saved ? normalizeLayout(saved, heightOf) : defaultHome(template, coach)
 }
 
 /**
@@ -46,3 +46,4 @@ export function resolveTheme(coach: Coach, draft: ThemeDraft = {}): CoachTheme {
     base,
   )
 }
+

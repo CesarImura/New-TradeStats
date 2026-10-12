@@ -170,40 +170,80 @@
 }
 
 /*
- * Widget grid (Home builder). Each section is a 12-column grid; a widget's
- * width comes from --span. The rules follow the width of the page area, so
- * the same page reflows in a sidebar layout, a preview or on a phone.
+ * Widget grid (Home). One 12-column grid with fixed-height rows; each widget
+ * sets --x --y --w --h (cells), --w-md (half or full row) and --order.
+ * The rules follow the width of the page area, so the same page reflows in a
+ * sidebar layout, a preview or on a phone.
  */
 @layer components {
-  .w-grid {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: var(--page-gap, 1.5rem);
-    align-items: stretch;
+  .g-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
   }
-  .w-cell {
+  .g-item {
     container-type: inline-size;
-    grid-column: span 12 / span 12;
+    order: var(--order);
     display: flex;
     flex-direction: column;
     min-width: 0;
+    min-height: 0;
   }
-  .w-cell > * {
+  .g-item > * {
     flex: 1;
+    min-height: 0;
   }
   @container (min-width: 40rem) {
-    .w-cell {
-      grid-column: span var(--span-md) / span var(--span-md);
+    .g-page {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      grid-auto-rows: var(--row-h);
+      grid-auto-flow: row dense;
+    }
+    .g-item {
+      grid-column: span var(--w-md) / span var(--w-md);
+      grid-row: span var(--h) / span var(--h);
+      overflow: hidden;
     }
   }
   @container (min-width: 60rem) {
-    .w-cell {
-      grid-column: span var(--span) / span var(--span);
+    .g-item {
+      grid-column: calc(var(--x) + 1) / span var(--w);
+      grid-row: calc(var(--y) + 1) / span var(--h);
     }
   }
   @container (max-width: 39.99rem) {
-    .w-hide-phone {
+    .g-hide-phone {
       display: none;
     }
   }
 }
+
+/* Home builder grid: where a widget will land, and its resize handles. */
+.hb-canvas .react-grid-item.react-grid-placeholder {
+  background: color-mix(in oklab, var(--primary) 16%, transparent);
+  border: 2px dashed var(--primary);
+  border-radius: var(--radius);
+  opacity: 1;
+}
+.hb-canvas .react-grid-item > .react-resizable-handle {
+  z-index: 20;
+  background: none;
+  opacity: 0;
+}
+.hb-canvas .react-grid-item:hover > .react-resizable-handle,
+.hb-canvas .react-grid-item.resizing > .react-resizable-handle {
+  opacity: 1;
+}
+.hb-canvas .react-grid-item > .react-resizable-handle::after {
+  border: 0;
+  border-radius: 9999px;
+  background: var(--primary);
+  box-shadow: 0 0 0 2px var(--background);
+}
+.hb-canvas .react-grid-item > .react-resizable-handle-e { right: -10px; }
+.hb-canvas .react-grid-item > .react-resizable-handle-e::after { right: 8px; top: 2px; bottom: auto; width: 4px; height: 16px; }
+.hb-canvas .react-grid-item > .react-resizable-handle-s { bottom: -10px; }
+.hb-canvas .react-grid-item > .react-resizable-handle-s::after { left: 2px; bottom: 8px; right: auto; width: 16px; height: 4px; }
+.hb-canvas .react-grid-item > .react-resizable-handle-se { right: -6px; bottom: -6px; }
+.hb-canvas .react-grid-item > .react-resizable-handle-se::after { right: 4px; bottom: 4px; width: 10px; height: 10px; }

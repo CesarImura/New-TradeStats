@@ -42,12 +42,12 @@ export type WidgetDef = {
   icon: LucideIcon
   /** Only offered, and only shown to students, when this module is on. */
   module?: ModuleId
-  /** Three designs per widget; the first is the default. */
-  variants: { value: string; label: string }[]
+  /** Three designs per widget; the first is the default. Each needs its own height in rows. */
+  variants: { value: string; label: string; h: number; minH: number }[]
   settings?: Setting[]
-  /** Width in twelfths when added, and the narrowest it can go before its content breaks. */
-  defaultSpan: number
-  minSpan: number
+  /** Width in columns when added, and the narrowest it can go before its content breaks. */
+  defaultW: number
+  minW: number
   Component: (p: WidgetProps) => React.ReactNode
 }
 
@@ -65,16 +65,16 @@ export const WIDGETS: WidgetDef[] = [
     icon: PlayCircle,
     module: "courses",
     variants: [
-      { value: "hero", label: "Large" },
-      { value: "card", label: "Compact" },
-      { value: "spotlight", label: "Cover" },
+      { value: "hero", label: "Large", h: 4, minH: 4 },
+      { value: "card", label: "Compact", h: 2, minH: 2 },
+      { value: "spotlight", label: "Cover", h: 3, minH: 3 },
     ],
     settings: [
       { key: "title", label: "Small label", type: "text", placeholder: "Start here" },
       { key: "course", label: "Course", type: "select", options: COURSE_OPTIONS },
     ],
-    defaultSpan: 8,
-    minSpan: 4,
+    defaultW: 8,
+    minW: 4,
     Component: ContinueLesson,
   },
   {
@@ -85,12 +85,12 @@ export const WIDGETS: WidgetDef[] = [
     icon: GraduationCap,
     module: "courses",
     variants: [
-      { value: "list", label: "List" },
-      { value: "cards", label: "Cards" },
-      { value: "rings", label: "Rings" },
+      { value: "list", label: "List", h: 4, minH: 3 },
+      { value: "cards", label: "Cards", h: 5, minH: 4 },
+      { value: "rings", label: "Rings", h: 3, minH: 3 },
     ],
-    defaultSpan: 8,
-    minSpan: 4,
+    defaultW: 8,
+    minW: 4,
     Component: CourseProgress,
   },
   {
@@ -101,12 +101,12 @@ export const WIDGETS: WidgetDef[] = [
     icon: Radio,
     module: "calendar",
     variants: [
-      { value: "card", label: "Card" },
-      { value: "banner", label: "Colour block" },
-      { value: "countdown", label: "Countdown" },
+      { value: "card", label: "Card", h: 3, minH: 3 },
+      { value: "banner", label: "Colour block", h: 3, minH: 3 },
+      { value: "countdown", label: "Countdown", h: 4, minH: 4 },
     ],
-    defaultSpan: 4,
-    minSpan: 3,
+    defaultW: 4,
+    minW: 3,
     Component: NextLive,
   },
   {
@@ -117,13 +117,13 @@ export const WIDGETS: WidgetDef[] = [
     icon: CalendarDays,
     module: "calendar",
     variants: [
-      { value: "list", label: "List" },
-      { value: "timeline", label: "Timeline" },
-      { value: "days", label: "Week strip" },
+      { value: "list", label: "List", h: 4, minH: 4 },
+      { value: "timeline", label: "Timeline", h: 4, minH: 4 },
+      { value: "days", label: "Week strip", h: 3, minH: 3 },
     ],
     settings: [{ key: "news", label: "Include economic news", type: "toggle", defaultOn: true }],
-    defaultSpan: 6,
-    minSpan: 3,
+    defaultW: 6,
+    minW: 3,
     Component: ThisWeek,
   },
   {
@@ -134,12 +134,12 @@ export const WIDGETS: WidgetDef[] = [
     icon: Newspaper,
     module: "calendar",
     variants: [
-      { value: "list", label: "List" },
-      { value: "impact", label: "Table" },
-      { value: "next", label: "Next big one" },
+      { value: "list", label: "List", h: 3, minH: 3 },
+      { value: "impact", label: "Table", h: 4, minH: 4 },
+      { value: "next", label: "Next big one", h: 4, minH: 4 },
     ],
-    defaultSpan: 4,
-    minSpan: 3,
+    defaultW: 4,
+    minW: 3,
     Component: EconNews,
   },
   {
@@ -150,12 +150,12 @@ export const WIDGETS: WidgetDef[] = [
     icon: LineChart,
     module: "journal",
     variants: [
-      { value: "chart", label: "Daily bars" },
-      { value: "number", label: "Big number" },
-      { value: "calendar", label: "Heatmap" },
+      { value: "chart", label: "Daily bars", h: 3, minH: 3 },
+      { value: "number", label: "Big number", h: 3, minH: 3 },
+      { value: "calendar", label: "Heatmap", h: 4, minH: 4 },
     ],
-    defaultSpan: 4,
-    minSpan: 3,
+    defaultW: 4,
+    minW: 3,
     Component: JournalPnl,
   },
   {
@@ -166,12 +166,12 @@ export const WIDGETS: WidgetDef[] = [
     icon: Gauge,
     module: "journal",
     variants: [
-      { value: "number", label: "Number" },
-      { value: "ring", label: "Ring" },
-      { value: "breakdown", label: "Per rule" },
+      { value: "number", label: "Number", h: 3, minH: 3 },
+      { value: "ring", label: "Ring", h: 2, minH: 2 },
+      { value: "breakdown", label: "Per rule", h: 3, minH: 3 },
     ],
-    defaultSpan: 4,
-    minSpan: 3,
+    defaultW: 4,
+    minW: 3,
     Component: RulesFollowed,
   },
   {
@@ -181,12 +181,12 @@ export const WIDGETS: WidgetDef[] = [
     group: "Progress",
     icon: CircleCheck,
     variants: [
-      { value: "checklist", label: "Checklist" },
-      { value: "steps", label: "Steps" },
-      { value: "progress", label: "Ring" },
+      { value: "checklist", label: "Checklist", h: 3, minH: 3 },
+      { value: "steps", label: "Steps", h: 3, minH: 3 },
+      { value: "progress", label: "Ring", h: 2, minH: 2 },
     ],
-    defaultSpan: 4,
-    minSpan: 3,
+    defaultW: 4,
+    minW: 3,
     Component: FirstWeek,
   },
   {
@@ -197,12 +197,12 @@ export const WIDGETS: WidgetDef[] = [
     icon: Trophy,
     module: "ranking",
     variants: [
-      { value: "number", label: "Number" },
-      { value: "podium", label: "Podium" },
-      { value: "leaderboard", label: "Top list" },
+      { value: "number", label: "Number", h: 3, minH: 3 },
+      { value: "podium", label: "Podium", h: 3, minH: 3 },
+      { value: "leaderboard", label: "Top list", h: 5, minH: 5 },
     ],
-    defaultSpan: 4,
-    minSpan: 3,
+    defaultW: 4,
+    minW: 3,
     Component: MyRank,
   },
   {
@@ -212,12 +212,12 @@ export const WIDGETS: WidgetDef[] = [
     group: "Community",
     icon: Megaphone,
     variants: [
-      { value: "highlight", label: "Highlighted" },
-      { value: "plain", label: "Plain" },
-      { value: "pinned", label: "Post" },
+      { value: "highlight", label: "Highlighted", h: 3, minH: 3 },
+      { value: "plain", label: "Plain", h: 3, minH: 3 },
+      { value: "pinned", label: "Post", h: 3, minH: 3 },
     ],
-    defaultSpan: 4,
-    minSpan: 3,
+    defaultW: 4,
+    minW: 3,
     Component: Announcement,
   },
   {
@@ -228,13 +228,13 @@ export const WIDGETS: WidgetDef[] = [
     icon: MessageSquareText,
     module: "community",
     variants: [
-      { value: "card", label: "Card" },
-      { value: "banner", label: "Banner" },
-      { value: "members", label: "Who's online" },
+      { value: "card", label: "Card", h: 3, minH: 3 },
+      { value: "banner", label: "Banner", h: 2, minH: 2 },
+      { value: "members", label: "Who's online", h: 3, minH: 3 },
     ],
     settings: [{ key: "text", label: "Text", type: "textarea" }],
-    defaultSpan: 4,
-    minSpan: 3,
+    defaultW: 4,
+    minW: 3,
     Component: Discord,
   },
   {
@@ -244,16 +244,16 @@ export const WIDGETS: WidgetDef[] = [
     group: "Coach and brand",
     icon: Video,
     variants: [
-      { value: "side", label: "Side by side" },
-      { value: "stacked", label: "Video on top" },
-      { value: "minimal", label: "Quote" },
+      { value: "side", label: "Side by side", h: 5, minH: 4 },
+      { value: "stacked", label: "Video on top", h: 5, minH: 5 },
+      { value: "minimal", label: "Quote", h: 3, minH: 3 },
     ],
     settings: [
       { key: "title", label: "Title", type: "text" },
       { key: "text", label: "Text", type: "textarea" },
     ],
-    defaultSpan: 12,
-    minSpan: 4,
+    defaultW: 12,
+    minW: 4,
     Component: WelcomeVideo,
   },
   {
@@ -263,9 +263,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Coach and brand",
     icon: ImageIcon,
     variants: [
-      { value: "brand", label: "Brand colour" },
-      { value: "highlight", label: "Highlight" },
-      { value: "plain", label: "Plain" },
+      { value: "brand", label: "Brand colour", h: 2, minH: 2 },
+      { value: "highlight", label: "Highlight", h: 2, minH: 2 },
+      { value: "plain", label: "Plain", h: 2, minH: 2 },
     ],
     settings: [
       { key: "title", label: "Headline", type: "text" },
@@ -283,8 +283,8 @@ export const WIDGETS: WidgetDef[] = [
         ],
       },
     ],
-    defaultSpan: 12,
-    minSpan: 6,
+    defaultW: 12,
+    minW: 6,
     Component: Banner,
   },
   {
@@ -294,16 +294,16 @@ export const WIDGETS: WidgetDef[] = [
     group: "Coach and brand",
     icon: Type,
     variants: [
-      { value: "plain", label: "Plain" },
-      { value: "quote", label: "Quote" },
-      { value: "centered", label: "Centred" },
+      { value: "plain", label: "Plain", h: 2, minH: 2 },
+      { value: "quote", label: "Quote", h: 2, minH: 2 },
+      { value: "centered", label: "Centred", h: 2, minH: 2 },
     ],
     settings: [
       { key: "title", label: "Heading", type: "text" },
       { key: "text", label: "Text", type: "textarea" },
     ],
-    defaultSpan: 6,
-    minSpan: 3,
+    defaultW: 6,
+    minW: 3,
     Component: TextBlock,
   },
   {
@@ -313,12 +313,12 @@ export const WIDGETS: WidgetDef[] = [
     group: "Coach and brand",
     icon: Handshake,
     variants: [
-      { value: "list", label: "List" },
-      { value: "tiles", label: "Tiles" },
-      { value: "chips", label: "Chips" },
+      { value: "list", label: "List", h: 4, minH: 4 },
+      { value: "tiles", label: "Tiles", h: 4, minH: 3 },
+      { value: "chips", label: "Chips", h: 1, minH: 1 },
     ],
-    defaultSpan: 4,
-    minSpan: 3,
+    defaultW: 4,
+    minW: 3,
     Component: PartnerLinks,
   },
   {
@@ -329,12 +329,12 @@ export const WIDGETS: WidgetDef[] = [
     icon: Sparkles,
     module: "ai",
     variants: [
-      { value: "search", label: "Search box" },
-      { value: "chat", label: "Example chat" },
-      { value: "compact", label: "Compact" },
+      { value: "search", label: "Search box", h: 3, minH: 3 },
+      { value: "chat", label: "Example chat", h: 4, minH: 4 },
+      { value: "compact", label: "Compact", h: 2, minH: 2 },
     ],
-    defaultSpan: 12,
-    minSpan: 3,
+    defaultW: 12,
+    minW: 4,
     Component: AiAsk,
   },
 ]
@@ -342,3 +342,14 @@ export const WIDGETS: WidgetDef[] = [
 export const WIDGET_GROUPS: WidgetGroup[] = ["Learning", "Calendar", "Journal", "Progress", "Community", "Coach and brand", "AI"]
 
 export const getWidget = (type: string) => WIDGETS.find((w) => w.type === type)
+
+/** Height rules for a widget in a given look. */
+export function lookOf(def: WidgetDef, variant?: string) {
+  return def.variants.find((v) => v.value === variant) ?? def.variants[0]
+}
+
+/** Standard height for a widget's look, used when converting older layouts. */
+export function heightOf(w: { type: string; variant?: string }) {
+  const def = getWidget(w.type)
+  return def ? lookOf(def, w.variant).h : 4
+}

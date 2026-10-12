@@ -46,13 +46,13 @@ export function WidgetEmpty({
   )
 }
 
-/** Generated course artwork: a gradient in the course's hue with a few candles. */
+/** Generated course artwork: a flat colour in the course's hue with a few candles. */
 export function Cover({ hue, label, className }: { hue: number; label?: string; className?: string }) {
   const candles = [38, 52, 44, 61, 55, 70, 64, 78]
   return (
     <div
       className={cn("relative overflow-hidden rounded-[min(var(--radius),12px)]", className)}
-      style={{ background: `linear-gradient(135deg, oklch(0.62 0.14 ${hue}), oklch(0.32 0.09 ${hue + 40}))` }}
+      style={{ background: `oklch(0.5 0.12 ${hue})` }}
     >
       <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="absolute inset-0 size-full opacity-35" aria-hidden>
         {candles.map((h, i) => {
