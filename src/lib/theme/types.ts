@@ -44,6 +44,8 @@ export type CoachTheme = {
   labelStyle: "plain" | "caps"
   headingWeight: 400 | 500 | 600 | 700
   background: BackgroundStyle
+  /** How much depth widgets get from the brand colour: gradients, glow, texture. */
+  effects: "flat" | "soft" | "vivid"
   nav: { layout: NavLayout; style: NavStyle; logo: "left" | "center" }
 }
 

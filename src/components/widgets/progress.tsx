@@ -64,7 +64,11 @@ export function FirstWeek({ variant = "steps" }: WidgetProps) {
       <Head icon={Flag} value={`${pct}%`} label="First week" right={`${done}/${items.length}`} />
       <div className="flex gap-1">
         {items.map((i) => (
-          <span key={i.label} className="h-2 flex-1 rounded-full" style={{ background: i.done ? TONE.primary : i === next ? TONE.highlight : "var(--muted)" }} />
+          <span
+            key={i.label}
+            className={cn("h-2 flex-1 rounded-full", i.done && "fx-glow")}
+            style={{ background: i.done ? "var(--brand-grad-h)" : i === next ? TONE.highlight : "var(--muted)" }}
+          />
         ))}
       </div>
       <div className="mt-auto grid gap-1">
@@ -98,7 +102,7 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
       <div className="flex min-w-0 flex-col items-center gap-1">
         <span className="grid size-8 place-items-center rounded-full bg-muted text-[0.65rem] font-semibold">{p.initials}</span>
         <Caps className="max-w-full truncate">{p.name}</Caps>
-        <div className={cn("grid w-full place-items-start justify-center rounded-t-[min(var(--radius),8px)] pt-1.5 font-heading text-sm font-semibold", h, p.rank === 1 ? "bg-primary text-primary-foreground" : "bg-muted")}>
+        <div className={cn("grid w-full place-items-start justify-center overflow-hidden rounded-t-[min(var(--radius),8px)] pt-1.5 font-heading text-sm font-semibold", h, p.rank === 1 ? "fx-hero fx-glow" : "bg-muted")}>
           {p.rank === 1 ? <Crown className="size-4" /> : p.rank}
         </div>
       </div>
@@ -130,7 +134,10 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
                 <span className="w-6 text-right font-semibold tabular-nums">{p.score}</span>
               </div>
               <div className="ml-7 h-1.5 overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full" style={{ width: `${(p.score / max) * 100}%`, background: p.me ? TONE.primary : `color-mix(in oklab, ${TONE.primary} 40%, var(--muted))` }} />
+                <div
+                  className={cn("h-full rounded-full", p.me && "fx-glow")}
+                  style={{ width: `${(p.score / max) * 100}%`, background: p.me ? "var(--brand-grad-h)" : `color-mix(in oklab, ${TONE.primary} 30%, var(--muted))` }}
+                />
               </div>
             </div>
           ))}
@@ -142,7 +149,7 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
   return (
     <W>
       <Head icon={Trophy} label={coach.wording.ranking} right={<Change n={me.change} />} />
-      <Big value={`#${me.rank}`} unit="of 240" sub={`Up from #${RANK_HISTORY[0]} eight weeks ago`} />
+      <Big fx value={`#${me.rank}`} unit="of 240" sub={`Up from #${RANK_HISTORY[0]} eight weeks ago`} />
       <Spark values={RANK_HISTORY} invert />
       <div className="flex justify-between">
         <Caps>8 weeks</Caps>

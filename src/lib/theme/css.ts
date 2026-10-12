@@ -1,4 +1,5 @@
 import { FONT_LIBRARY } from "@/lib/fonts"
+import { brandVisuals } from "./color"
 import type { CoachTheme } from "./types"
 
 const DENSITY = { compact: 0.85, comfortable: 1, airy: 1.3 } as const
@@ -38,6 +39,7 @@ export function themeToCss(t: CoachTheme, scope = ":root") {
   const buttonRadius =
     t.buttonShape === "pill" ? "9999px" : t.buttonShape === "square" ? `${Math.min(t.radius, 3)}px` : `${Math.max(6, t.radius * 0.7)}px`
 
+  const fx = brandVisuals(t.primary, t.mode, t.effects ?? "soft")
   const vars: Record<string, string> = {
     "--background": p.background,
     "--foreground": p.foreground,
@@ -85,6 +87,21 @@ export function themeToCss(t: CoachTheme, scope = ":root") {
     "--page-gap": PAGE_GAP[t.density],
     "--button-radius": buttonRadius,
     "--card-shadow": cardShadow,
+    // Brand visuals: a natural gradient ramp, a harmonious series palette, glow and texture.
+    "--brand-a": fx.a,
+    "--brand-b": fx.b,
+    "--brand-c": fx.c,
+    "--brand-grad": `linear-gradient(135deg, ${fx.a}, ${fx.b} 55%, ${fx.c})`,
+    "--brand-grad-h": `linear-gradient(90deg, ${fx.a}, ${fx.b} 60%, ${fx.c})`,
+    "--brand-grad-v": `linear-gradient(to top, ${fx.c}, ${fx.b} 55%, ${fx.a})`,
+    "--s1": fx.series[0],
+    "--s2": fx.series[1],
+    "--s3": fx.series[2],
+    "--s4": fx.series[3],
+    "--s5": fx.series[4],
+    "--glow": fx.glow,
+    "--wash": fx.wash,
+    "--texture": fx.texture,
   }
 
   const body = Object.entries(vars).map(([k, v]) => `${k}:${v};`).join("")

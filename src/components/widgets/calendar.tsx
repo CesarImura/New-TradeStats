@@ -6,16 +6,16 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { EVENTS, NOW_HOUR, TODAY, type CalEvent } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Big, Caps, DayTimeline, Head, TONE, W } from "./kit"
+import { Big, Caps, DayTimeline, Head, TONE, W, gradientFill, series } from "./kit"
 import { WidgetEmpty, inWords, useEmpty, type WidgetProps } from "./shared"
 
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
 const WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 const KIND: Record<CalEvent["kind"], { color: string; label: string }> = {
-  live: { color: TONE.primary, label: "Live" },
-  call: { color: "oklch(0.62 0.13 240)", label: "Call" },
-  workshop: { color: "oklch(0.6 0.15 300)", label: "Workshop" },
-  "one-on-one": { color: "oklch(0.62 0.13 160)", label: "1:1" },
+  live: { color: series(0), label: "Live" },
+  call: { color: series(1), label: "Call" },
+  workshop: { color: series(2), label: "Workshop" },
+  "one-on-one": { color: series(4), label: "1:1" },
   news: { color: TONE.loss, label: "News" },
 }
 
@@ -49,7 +49,7 @@ export function NextLive({ variant = "countdown" }: WidgetProps) {
 
   if (variant === "block") {
     return (
-      <div className="flex h-full flex-col justify-between gap-4 rounded-(--radius) bg-primary p-[calc(1rem*var(--density,1))] text-primary-foreground" style={{ boxShadow: "var(--card-shadow)" }}>
+      <div className="fx-hero fx-glow flex h-full flex-col justify-between gap-4 overflow-hidden rounded-(--radius) p-[calc(1rem*var(--density,1))]" style={{ boxShadow: "var(--card-shadow), 0 10px 30px -10px var(--glow)" }}>
         <div className="flex items-center gap-2 text-[0.65rem] font-semibold tracking-wider uppercase opacity-85">
           <span className="relative flex size-2">
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-current opacity-60 motion-reduce:animate-none" />
@@ -76,12 +76,12 @@ export function NextLive({ variant = "countdown" }: WidgetProps) {
   return (
     <W>
       <Head icon={Radio} label="Next live" right={live.seats} />
-      <Big size="lg" value={`${hh}:${mm}`} sub={`${live.title} · today ${live.time}`} />
+      <Big fx size="lg" value={`${hh}:${mm}`} sub={`${live.title} · today ${live.time}`} />
       <div className="mt-auto grid gap-1.5">
-        <div className="flex h-2 gap-0.5">
-          {Array.from({ length: 30 }, (_, i) => (
-            <span key={i} className="flex-1 rounded-sm" style={{ background: (i / 30) * 100 < dayPct ? TONE.primary : "var(--muted)" }} />
-          ))}
+        <div className="relative h-2.5 overflow-hidden rounded-full bg-muted">
+          <div className="fx-glow h-full rounded-full" style={{ width: `${dayPct}%`, backgroundImage: "var(--brand-grad-h)" }} />
+          {/* tick gaps every 1/30 of the bar */}
+          <div className="absolute inset-0" style={{ background: "repeating-linear-gradient(90deg, transparent 0 calc(100% / 30 - 2px), var(--card) calc(100% / 30 - 2px) calc(100% / 30))" }} />
         </div>
         <div className="flex justify-between">
           <Caps>08:00</Caps>
@@ -107,12 +107,16 @@ export function ThisWeek({ variant = "week", props }: WidgetProps) {
           {WEEK.map((d, i) => {
             const ev = items.filter((e) => e.day === d)
             return (
-              <div key={d} className={cn("flex min-w-0 flex-col gap-1 rounded-[min(var(--radius),8px)] p-1.5", i === 0 ? "bg-primary/10" : "bg-muted/60")}>
+              <div
+                key={d}
+                className={cn("flex min-w-0 flex-col gap-1 rounded-[min(var(--radius),8px)] p-1.5", i === 0 ? "ring-1 ring-primary/40" : "bg-muted/60")}
+                style={i === 0 ? { background: "linear-gradient(170deg, color-mix(in oklab, var(--brand-a) 22%, transparent), color-mix(in oklab, var(--brand-c) 6%, transparent))" } : undefined}
+              >
                 <Caps className={cn(i === 0 && "text-primary")}>{d}</Caps>
                 <span className="font-heading text-lg leading-none font-semibold tabular-nums">{12 + i}</span>
                 <div className="mt-auto flex flex-col gap-1">
                   {ev.map((e) => (
-                    <span key={e.id} className="h-1.5 rounded-full" title={`${e.time} ${e.title}`} style={{ background: KIND[e.kind].color }} />
+                    <span key={e.id} className="h-1.5 rounded-full" title={`${e.time} ${e.title}`} style={{ background: gradientFill(KIND[e.kind].color), boxShadow: `0 0 8px -2px ${KIND[e.kind].color}` }} />
                   ))}
                 </div>
               </div>
@@ -178,7 +182,9 @@ export function EconNews({ variant = "impact" }: WidgetProps) {
 
   if (variant === "next") {
     return (
-      <W className={cn(big.noTrade && "ring-1 ring-loss/40")}>
+      <W accent={TONE.loss} className={cn("pt-0", big.noTrade && "ring-1 ring-loss/40")}>
+        {/* Warning stripes, as on a hazard sign */}
+        <div className={cn("-mx-[calc(1rem*var(--density,1))] h-3 shrink-0", big.noTrade && "fx-hatch")} />
         <Head icon={TriangleAlert} tone="loss" value={big.day} label={big.time} right="High impact" />
         <Big value={big.title} sub={`in ${inWords(big.inMinutes ?? 0)}`} />
         <div className="mt-auto grid grid-cols-2 gap-2">
@@ -220,7 +226,7 @@ export function EconNews({ variant = "impact" }: WidgetProps) {
 
   // impact: one bar per event across the week, height = impact, red = no-trade
   return (
-    <W>
+    <W accent={TONE.loss}>
       <Head icon={Newspaper} tone="loss" value={news.filter((e) => e.noTrade).length} label="No-trade events" right="This week" />
       <div className="flex flex-1 items-end gap-1.5">
         {WEEK.map((d) => {
@@ -234,7 +240,11 @@ export function EconNews({ variant = "impact" }: WidgetProps) {
                     key={e.id}
                     title={`${e.time} ${e.title}`}
                     className="w-full max-w-5 rounded-[3px]"
-                    style={{ height: `${(IMPACT[e.impact ?? "low"] / 3) * 100}%`, background: e.noTrade ? TONE.loss : `color-mix(in oklab, ${TONE.loss} 35%, var(--muted))` }}
+                    style={{
+                      height: `${(IMPACT[e.impact ?? "low"] / 3) * 100}%`,
+                      background: e.noTrade ? `linear-gradient(to top, color-mix(in oklab, ${TONE.loss} 70%, black), color-mix(in oklab, ${TONE.loss} 80%, white))` : `color-mix(in oklab, ${TONE.loss} 30%, var(--muted))`,
+                      boxShadow: e.noTrade ? `0 0 14px -3px ${TONE.loss}` : undefined,
+                    }}
                   />
                 ))}
               </div>

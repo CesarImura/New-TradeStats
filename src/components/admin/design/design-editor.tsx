@@ -185,6 +185,18 @@ export function DesignEditor() {
           </Section>
 
           <Section title="Style">
+            <Field label="Effects" hint="Gradients, glow and texture from your brand colour">
+              <Segmented
+                label="Effects"
+                value={theme.effects ?? "soft"}
+                onChange={(effects) => change({ theme: { effects } }, "effects")}
+                options={[
+                  { value: "flat", label: "Flat" },
+                  { value: "soft", label: "Soft" },
+                  { value: "vivid", label: "Vivid" },
+                ]}
+              />
+            </Field>
             <Field label="Corners" hint={theme.radius <= 3 ? "Sharp" : theme.radius >= 16 ? "Very round" : "Round"}>
               <Slider
                 value={[theme.radius]}

@@ -1,12 +1,15 @@
 "use client"
 
+import { useId } from "react"
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /**
  * Building blocks for dashboard widgets: one big number, a compact header,
- * and a chart that fills the card. Colours come from the coach's theme
- * tokens, so every coach's widgets look like theirs.
+ * and a chart that fills the card. Colours come from the coach's brand ramp
+ * (--brand-a → --brand-b → --brand-c) and series palette (--s1…--s5), so
+ * gradients and glows always match the brand. With Effects = Flat the ramp
+ * collapses to the plain brand colour.
  */
 
 export type Tone = "primary" | "profit" | "loss" | "highlight" | "muted" | "fg"
@@ -27,12 +30,28 @@ const TEXT: Record<Tone, string> = {
   fg: "text-foreground",
 }
 
-/** The card every widget sits in. Content stacks and the last child (usually a chart) fills the rest. */
-export function W({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+/** Lighter and deeper versions of a tone, for gradients that stay in the same family. */
+const light = (c: string) => `color-mix(in oklab, ${c} 78%, white)`
+const deep = (c: string) => `color-mix(in oklab, ${c} 82%, black)`
+/** Brand tone uses the brand ramp; other tones get a gentle same-colour gradient. */
+const ends = (tone: Tone) => (tone === "primary" ? ["var(--brand-a)", "var(--brand-c)"] : [light(TONE[tone]), deep(TONE[tone])])
+
+/** Series colour by index (courses, event types…): harmonious with the brand. */
+export const series = (i: number) => `var(--s${(i % 5) + 1})`
+
+/**
+ * The card every widget sits in. `accent` washes a little of that colour into
+ * the top-left corner, so each widget carries its own tint of the brand.
+ */
+export function W({ children, className, style, accent = TONE.primary }: { children: React.ReactNode; className?: string; style?: React.CSSProperties; accent?: string }) {
   return (
     <div
       className={cn("@container flex h-full min-h-0 flex-col gap-3 overflow-hidden rounded-(--radius) bg-card p-[calc(1rem*var(--density,1))] text-card-foreground", className)}
-      style={{ boxShadow: "var(--card-shadow)", ...style }}
+      style={{
+        boxShadow: "var(--card-shadow)",
+        backgroundImage: `radial-gradient(130% 100% at 0% 0%, color-mix(in oklab, ${accent} var(--wash, 0%), transparent), transparent 70%)`,
+        ...style,
+      }}
     >
       {children}
     </div>
@@ -62,7 +81,14 @@ export function Head({
 }) {
   return (
     <div className="flex items-center gap-2 leading-none">
-      {Icon && <Icon className={cn("size-4 shrink-0", TEXT[tone])} />}
+      {Icon && (
+        <span
+          className="grid size-6 shrink-0 place-items-center rounded-[min(var(--radius),7px)]"
+          style={{ background: `color-mix(in oklab, ${TONE[tone]} 16%, transparent)` }}
+        >
+          <Icon className={cn("size-3.5", TEXT[tone])} />
+        </span>
+      )}
       {value !== undefined && (
         <span className={cn("font-heading text-base font-semibold tabular-nums", TEXT[tone])}>
           {value}
@@ -75,12 +101,12 @@ export function Head({
   )
 }
 
-/** The one big number. */
-export function Big({ value, unit, sub, tone = "fg", size = "md" }: { value: React.ReactNode; unit?: string; sub?: React.ReactNode; tone?: Tone; size?: "md" | "lg" }) {
+/** The one big number. `fx` paints it in the brand gradient. */
+export function Big({ value, unit, sub, tone = "fg", size = "md", fx }: { value: React.ReactNode; unit?: string; sub?: React.ReactNode; tone?: Tone; size?: "md" | "lg"; fx?: boolean }) {
   return (
     <div className="grid gap-1">
-      <div className={cn("font-heading leading-none font-semibold tracking-tight tabular-nums", TEXT[tone], size === "lg" ? "text-5xl" : "text-4xl")}>
-        {value}
+      <div className={cn("font-heading leading-none font-semibold tracking-tight tabular-nums", size === "lg" ? "text-5xl" : "text-4xl")}>
+        <span className={cn(fx ? "fx-text" : TEXT[tone])}>{value}</span>
         {unit && <span className="ml-1 text-base font-medium tracking-normal text-muted-foreground">{unit}</span>}
       </div>
       {sub && <div className="text-xs text-muted-foreground tabular-nums">{sub}</div>}
@@ -88,7 +114,7 @@ export function Big({ value, unit, sub, tone = "fg", size = "md" }: { value: Rea
   )
 }
 
-/** Vertical bars. With `diverging`, bars grow up (profit) and down (loss) from a zero line. */
+/** Vertical bars with gradient fills. With `diverging`, bars grow up (profit) and down (loss) from a zero line. */
 export function Bars({
   values,
   labels,
@@ -105,21 +131,28 @@ export function Bars({
   className?: string
 }) {
   const max = Math.max(...values.map(Math.abs), 1)
+  const [a, c] = ends(tone)
   return (
     <div className={cn("flex min-h-12 flex-1 flex-col gap-1.5", className)}>
       <div className="relative flex flex-1 items-stretch gap-[6%]">
         {diverging && <span className="absolute inset-x-0 top-1/2 h-px bg-border" />}
         {values.map((v, i) => {
           const pct = (Math.abs(v) / max) * (diverging ? 50 : 100)
-          const color = diverging ? (v >= 0 ? TONE.profit : TONE.loss) : i === active ? TONE[tone] : `color-mix(in oklab, ${TONE[tone]} 45%, transparent)`
+          const up = v >= 0
+          const base = diverging ? TONE[up ? "profit" : "loss"] : undefined
+          const fill = diverging
+            ? `linear-gradient(${up ? "to top" : "to bottom"}, ${deep(base!)}, ${light(base!)})`
+            : i === active
+              ? `linear-gradient(to top, ${c}, ${a})`
+              : `linear-gradient(to top, color-mix(in oklab, ${c} 30%, transparent), color-mix(in oklab, ${a} 55%, transparent))`
           return (
             <div key={i} className="relative flex-1">
               <span
-                className="absolute inset-x-0 rounded-[3px]"
+                className={cn("absolute inset-x-0 rounded-[3px]", i === active && "fx-glow")}
                 style={
                   diverging
-                    ? { background: color, height: `${Math.max(pct, v === 0 ? 0 : 2)}%`, ...(v >= 0 ? { bottom: "50%" } : { top: "50%" }) }
-                    : { background: color, height: `${Math.max(pct, 3)}%`, bottom: 0 }
+                    ? { background: fill, height: `${Math.max(pct, v === 0 ? 0 : 2)}%`, ...(up ? { bottom: "50%" } : { top: "50%" }) }
+                    : { background: fill, height: `${Math.max(pct, 3)}%`, bottom: 0 }
                 }
               />
             </div>
@@ -139,8 +172,9 @@ export function Bars({
   )
 }
 
-/** A line with an optional filled area and a dot on the latest value. */
+/** A line in a gradient over a tinted area, with a glowing dot on the latest value. */
 export function Spark({ values, tone = "primary", area = true, className, invert }: { values: number[]; tone?: Tone; area?: boolean; className?: string; invert?: boolean }) {
+  const id = useId().replace(/:/g, "")
   const min = Math.min(...values)
   const max = Math.max(...values)
   const span = max - min || 1
@@ -151,15 +185,26 @@ export function Spark({ values, tone = "primary", area = true, className, invert
   })
   const line = pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")
   const [lx, ly] = pts[pts.length - 1]
+  const [a, c] = ends(tone)
   return (
     <div className={cn("relative min-h-10 flex-1", className)}>
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 size-full overflow-visible" aria-hidden>
-        {area && <path d={`${line} L100,100 L0,100 Z`} fill={TONE[tone]} opacity={0.14} />}
-        <path d={line} fill="none" stroke={TONE[tone]} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+        <defs>
+          <linearGradient id={`l${id}`} x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stopColor={c} />
+            <stop offset="1" stopColor={a} />
+          </linearGradient>
+          <linearGradient id={`f${id}`} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stopColor={a} stopOpacity={0.35} />
+            <stop offset="1" stopColor={c} stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
+        {area && <path d={`${line} L100,100 L0,100 Z`} fill={`url(#f${id})`} />}
+        <path d={line} fill="none" stroke={`url(#l${id})`} strokeWidth={2.5} vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
       </svg>
       <span
-        className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-card"
-        style={{ left: `${lx}%`, top: `${ly}%`, background: TONE[tone] }}
+        className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{ left: `${lx}%`, top: `${ly}%`, background: a, boxShadow: `0 0 0 3px var(--card), 0 0 0 5px color-mix(in oklab, ${a} 35%, transparent), 0 0 14px var(--glow)` }}
       />
     </div>
   )
@@ -182,14 +227,25 @@ export function Heat({ rows, labels, className }: { rows: number[][]; labels?: s
       )}
       {rows.map((r, ri) => (
         <div key={ri} className="grid min-h-2 flex-1 gap-1" style={cols}>
-          {r.map((v, ci) => (
-            <span
-              key={ci}
-              title={v ? `${v > 0 ? "+" : "−"}€${Math.abs(v)}` : "No trades"}
-              className="rounded-[min(var(--radius),5px)]"
-              style={{ background: v === 0 ? "var(--muted)" : `color-mix(in oklab, ${v > 0 ? TONE.profit : TONE.loss} ${30 + (Math.abs(v) / max) * 70}%, var(--muted))` }}
-            />
-          ))}
+          {r.map((v, ci) => {
+            const k = Math.abs(v) / max
+            const base = v > 0 ? TONE.profit : TONE.loss
+            return (
+              <span
+                key={ci}
+                title={v ? `${v > 0 ? "+" : "−"}€${Math.abs(v)}` : "No trades"}
+                className="rounded-[min(var(--radius),5px)]"
+                style={
+                  v === 0
+                    ? { background: "var(--muted)" }
+                    : {
+                        background: `linear-gradient(160deg, color-mix(in oklab, ${light(base)} ${35 + k * 65}%, var(--muted)), color-mix(in oklab, ${base} ${30 + k * 70}%, var(--muted)))`,
+                        boxShadow: k > 0.75 ? `0 0 12px -2px ${base}` : undefined,
+                      }
+                }
+              />
+            )
+          })}
         </div>
       ))}
     </div>
@@ -204,40 +260,68 @@ export function Dots({ groups, total, cols = 14, className }: { groups: { n: num
   return (
     <div className={cn("grid content-end gap-1", className)} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}>
       {dots.map((c, i) => (
-        <span key={i} className="aspect-square rounded-[30%]" style={{ background: c }} />
+        <span
+          key={i}
+          className="aspect-square rounded-[30%]"
+          style={c === "var(--muted)" ? { background: c } : { background: `linear-gradient(150deg, ${light(c)}, ${c})`, boxShadow: `0 0 8px -3px ${c}` }}
+        />
       ))}
     </div>
   )
 }
 
-/** A horizontal bar made of segments, e.g. lessons in a module. */
-export function Segments({ parts, className }: { parts: { w: number; color: string; label?: string }[]; className?: string }) {
+/**
+ * A horizontal bar made of segments. Brand-coloured segments share one
+ * continuous gradient, so the filled part reads as a single sweep.
+ */
+export function Segments({ parts, className }: { parts: { w: number; color: string; brand?: boolean; label?: string }[]; className?: string }) {
+  const total = parts.reduce((n, p) => n + p.w, 0)
+  const starts = parts.map((_, i) => parts.slice(0, i).reduce((n, p) => n + p.w, 0))
   return (
     <div className={cn("flex min-h-8 flex-1 gap-1", className)}>
-      {parts.map((p, i) => (
-        <span key={i} title={p.label} className="rounded-[min(var(--radius),6px)]" style={{ flex: p.w, background: p.color }} />
-      ))}
+      {parts.map((p, i) => {
+        const start = starts[i]
+        const size = (total / p.w) * 100
+        const pos = p.w === total ? 0 : (start / (total - p.w)) * 100
+        return (
+          <span
+            key={i}
+            title={p.label}
+            className="rounded-[min(var(--radius),6px)]"
+            style={p.brand ? { flex: p.w, backgroundImage: "var(--brand-grad-h)", backgroundSize: `${size}% 100%`, backgroundPosition: `${pos}% 0` } : { flex: p.w, background: p.color }}
+          />
+        )
+      })}
     </div>
   )
 }
 
-/** Circular progress (ring). */
+/** Circular progress in a gradient, with a glow. */
 export function Ring({ value, size = 64, stroke = 7, tone = "primary", children, className }: { value: number; size?: number; stroke?: number; tone?: Tone; children?: React.ReactNode; className?: string }) {
+  const id = useId().replace(/:/g, "")
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
+  const [a, d] = ends(tone)
   return (
     <div className={cn("relative grid shrink-0 place-items-center", className)} style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90" aria-hidden>
+      <svg width={size} height={size} className="-rotate-90 overflow-visible" aria-hidden style={{ filter: "drop-shadow(0 0 6px var(--glow))" }}>
+        <defs>
+          <linearGradient id={`r${id}`} x1="0" x2="1" y1="1" y2="0">
+            <stop offset="0" stopColor={d} />
+            <stop offset="1" stopColor={a} />
+          </linearGradient>
+        </defs>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--muted)" strokeWidth={stroke} />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={TONE[tone]} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - Math.min(value, 100) / 100)} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={`url(#r${id})`} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - Math.min(value, 100) / 100)} />
       </svg>
       <span className="absolute text-center leading-none">{children}</span>
     </div>
   )
 }
 
-/** Spider chart, 0–100 per axis. */
-export function Radar({ axes, tone = "primary", className }: { axes: { label: string; v: number }[]; tone?: Tone; className?: string }) {
+/** Spider chart, 0–100 per axis, filled with the brand gradient. */
+export function Radar({ axes, className }: { axes: { label: string; v: number }[]; className?: string }) {
+  const id = useId().replace(/:/g, "")
   const n = axes.length
   const pt = (i: number, r: number) => {
     const a = (Math.PI * 2 * i) / n - Math.PI / 2
@@ -245,7 +329,17 @@ export function Radar({ axes, tone = "primary", className }: { axes: { label: st
   }
   const poly = (r: (i: number) => number) => axes.map((_, i) => pt(i, r(i)).join(",")).join(" ")
   return (
-    <svg viewBox="-14 -8 128 116" className={cn("size-full min-h-24", className)} aria-label="Discipline by area">
+    <svg viewBox="-14 -8 128 116" className={cn("size-full min-h-24 overflow-visible", className)} aria-label="Discipline by area">
+      <defs>
+        <radialGradient id={`g${id}`} cx="50%" cy="50%" r="60%">
+          <stop offset="0" stopColor="var(--brand-c)" stopOpacity={0.15} />
+          <stop offset="1" stopColor="var(--brand-a)" stopOpacity={0.5} />
+        </radialGradient>
+        <linearGradient id={`s${id}`} x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stopColor="var(--brand-a)" />
+          <stop offset="1" stopColor="var(--brand-c)" />
+        </linearGradient>
+      </defs>
       {[0.25, 0.5, 0.75, 1].map((k) => (
         <polygon key={k} points={poly(() => 40 * k)} fill="none" stroke="var(--border)" strokeWidth={0.6} />
       ))}
@@ -253,13 +347,13 @@ export function Radar({ axes, tone = "primary", className }: { axes: { label: st
         const [x, y] = pt(i, 40)
         return <line key={i} x1={50} y1={50} x2={x} y2={y} stroke="var(--border)" strokeWidth={0.6} />
       })}
-      <polygon points={poly((i) => (40 * axes[i].v) / 100)} fill={TONE[tone]} fillOpacity={0.22} stroke={TONE[tone]} strokeWidth={1.4} strokeLinejoin="round" />
+      <polygon points={poly((i) => (40 * axes[i].v) / 100)} fill={`url(#g${id})`} stroke={`url(#s${id})`} strokeWidth={1.6} strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 4px var(--glow))" }} />
       {axes.map((a, i) => {
         const [x, y] = pt(i, (40 * a.v) / 100)
         const [lx, ly] = pt(i, 50)
         return (
           <g key={a.label}>
-            <circle cx={x} cy={y} r={2} fill={TONE[tone]} />
+            <circle cx={x} cy={y} r={2.2} fill="var(--brand-a)" stroke="var(--card)" strokeWidth={0.8} />
             <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize={7} fill="var(--muted-foreground)" fontWeight={600}>
               {a.label}
             </text>
@@ -271,17 +365,7 @@ export function Radar({ axes, tone = "primary", className }: { axes: { label: st
 }
 
 /** A day timeline with event blocks and a "now" line. Hours as decimals. */
-export function DayTimeline({
-  from,
-  to,
-  now,
-  events,
-}: {
-  from: number
-  to: number
-  now: number
-  events: { title: string; start: number; end: number; color: string }[]
-}) {
+export function DayTimeline({ from, to, now, events }: { from: number; to: number; now: number; events: { title: string; start: number; end: number; color: string }[] }) {
   const pos = (h: number) => `${((h - from) / (to - from)) * 100}%`
   const ticks = Array.from({ length: Math.floor(to - from) + 1 }, (_, i) => from + i)
   return (
@@ -294,7 +378,13 @@ export function DayTimeline({
           <span
             key={e.title}
             className="absolute truncate rounded-[min(var(--radius),6px)] px-1.5 py-1 text-[0.65rem] leading-tight font-semibold text-white"
-            style={{ left: pos(e.start), width: `calc(${pos(e.end)} - ${pos(e.start)})`, top: `${8 + (i % 3) * 30}%`, background: e.color }}
+            style={{
+              left: pos(e.start),
+              width: `calc(${pos(e.end)} - ${pos(e.start)})`,
+              top: `${8 + (i % 3) * 30}%`,
+              background: `linear-gradient(135deg, ${light(e.color)}, ${deep(e.color)})`,
+              boxShadow: `0 4px 14px -6px ${e.color}`,
+            }}
             title={e.title}
           >
             {e.title}
@@ -317,5 +407,11 @@ export function DayTimeline({
   )
 }
 
-/** Course colour from its hue, in the theme's lightness. */
-export const hueColor = (hue: number) => `oklch(0.66 0.15 ${hue})`
+/** Fill a bar in a tone's gradient (brand ramp for primary). */
+export const gradientFill = (tone: Tone | string) => {
+  if (tone in TONE) {
+    const [a, c] = ends(tone as Tone)
+    return `linear-gradient(90deg, ${c}, ${a})`
+  }
+  return `linear-gradient(90deg, ${deep(tone)}, ${light(tone)})`
+}

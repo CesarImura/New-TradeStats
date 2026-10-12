@@ -46,15 +46,15 @@ export function WidgetEmpty({
   )
 }
 
-/** Generated course artwork: a flat colour in the course's hue with a few candles. */
-export function Cover({ hue, label, className }: { hue: number; label?: string; className?: string }) {
+/** Generated course artwork: a natural gradient of the course colour, with candles and fine grain. */
+export function Cover({ color = "var(--primary)", label, className }: { color?: string; hue?: number; label?: string; className?: string }) {
   const candles = [38, 52, 44, 61, 55, 70, 64, 78]
   return (
     <div
-      className={cn("relative overflow-hidden rounded-[min(var(--radius),12px)]", className)}
-      style={{ background: `oklch(0.5 0.12 ${hue})` }}
+      className={cn("relative isolate overflow-hidden rounded-[min(var(--radius),12px)]", className)}
+      style={{ background: `linear-gradient(140deg, color-mix(in oklab, ${color} 75%, white), ${color} 45%, color-mix(in oklab, ${color} 65%, black))` }}
     >
-      <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="absolute inset-0 size-full opacity-35" aria-hidden>
+      <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="absolute inset-0 size-full opacity-30" aria-hidden>
         {candles.map((h, i) => {
           const x = 8 + i * 11
           const up = i % 3 !== 1
@@ -66,6 +66,7 @@ export function Cover({ hue, label, className }: { hue: number; label?: string; 
           )
         })}
       </svg>
+      <span className="fx-hero pointer-events-none absolute inset-0 -z-10 bg-none" style={{ background: "none" }} />
       {label && <span className="absolute bottom-2 left-3 font-heading text-sm text-white/90 drop-shadow">{label}</span>}
     </div>
   )

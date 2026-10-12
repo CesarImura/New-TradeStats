@@ -21,7 +21,7 @@ export function WelcomeVideo({ variant = "side", props }: WidgetProps) {
   const text = String(props.text || "Two minutes on how the program works, what to do first, and how to reach me.")
   const video = (
     <div className="relative aspect-video overflow-hidden rounded-[min(var(--radius),14px)]">
-      <Cover hue={30} className="absolute inset-0" />
+      <Cover className="absolute inset-0" />
       <PlayCircle className="absolute top-1/2 left-1/2 size-14 -translate-1/2 text-white drop-shadow" />
       <span className="absolute right-2 bottom-2 rounded bg-black/60 px-1.5 text-xs text-white">2:14</span>
     </div>
@@ -76,13 +76,13 @@ export function WelcomeVideo({ variant = "side", props }: WidgetProps) {
 export function Banner({ variant = "brand", props }: WidgetProps) {
   const { base } = useCoach()
   const styles = {
-    brand: "bg-primary text-primary-foreground",
+    brand: "fx-hero",
     highlight: "bg-highlight text-highlight-foreground",
     plain: "bg-card text-card-foreground",
   } as const
   return (
     <div
-      className={cn("@container flex flex-col items-start gap-4 rounded-(--radius) p-[calc(var(--card-spacing,1rem)*1.5)] @xl:flex-row @xl:items-center @xl:justify-between", styles[variant as keyof typeof styles] ?? styles.brand)}
+      className={cn("@container flex h-full flex-col items-start justify-center gap-4 overflow-hidden rounded-(--radius) p-[calc(var(--card-spacing,1rem)*1.5)] @xl:flex-row @xl:items-center @xl:justify-between", styles[variant as keyof typeof styles] ?? styles.brand)}
       style={{ boxShadow: "var(--card-shadow)" }}
     >
       <div className="flex max-w-prose flex-col gap-1">

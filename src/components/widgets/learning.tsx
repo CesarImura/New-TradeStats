@@ -6,7 +6,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { COURSES, courseProgress, nextLesson } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Big, Caps, Dots, Head, Ring, Segments, TONE, W, hueColor } from "./kit"
+import { Big, Caps, Dots, Head, Ring, Segments, TONE, W, gradientFill, series } from "./kit"
 import { Cover, WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
@@ -31,7 +31,7 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
   if (variant === "cover") {
     return (
       <div className="@container relative isolate flex h-full overflow-hidden rounded-(--radius) text-white" style={{ boxShadow: "var(--card-shadow)" }}>
-        <Cover hue={course.hue} className="absolute inset-0 -z-10 rounded-none" />
+        <Cover color={series(COURSES.indexOf(course))} className="absolute inset-0 -z-10 rounded-none" />
         <div className="absolute inset-0 -z-10 bg-black/45" />
         <div className="flex w-full flex-col justify-between gap-3 p-5">
           <div className="flex items-center gap-2">
@@ -89,6 +89,7 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
         parts={lessons.map((l, i) => ({
           w: l.minutes,
           label: l.title,
+          brand: l.done,
           color: l.done ? TONE.primary : i === index ? TONE.highlight : "var(--muted)",
         }))}
       />
@@ -114,17 +115,17 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
     return (
       <W>
         <Head icon={BookOpen} label={coach.wording.courses} right={`${done}/${all.length} lessons`} />
-        <Big value={`${overall}%`} sub="of everything you have access to" />
+        <Big fx value={`${overall}%`} sub="of everything you have access to" />
         <Dots
           className="mt-auto"
           cols={Math.max(12, Math.ceil(all.length / 2))}
           total={all.length}
-          groups={COURSES.map((c) => ({ n: c.modules.flatMap((m) => m.lessons).filter((l) => l.done).length, color: hueColor(c.hue) }))}
+          groups={COURSES.map((c, i) => ({ n: c.modules.flatMap((m) => m.lessons).filter((l) => l.done).length, color: series(i) }))}
         />
         <div className="flex flex-wrap gap-x-3 gap-y-1">
-          {COURSES.map((c) => (
+          {COURSES.map((c, i) => (
             <span key={c.id} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <i className="size-2 rounded-full" style={{ background: hueColor(c.hue) }} /> {c.title}
+              <i className="size-2 rounded-full" style={{ background: series(i) }} /> {c.title}
             </span>
           ))}
         </div>
@@ -136,9 +137,9 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
     return (
       <W>
         <Head icon={BookOpen} label={coach.wording.courses} right={`${COURSES.length} courses`} />
-        <Big value={`${overall}%`} sub={`${done} of ${all.length} lessons done`} />
+        <Big fx value={`${overall}%`} sub={`${done} of ${all.length} lessons done`} />
         <div className="mt-auto grid gap-2.5">
-          {COURSES.map((c) => {
+          {COURSES.map((c, ci) => {
             const p = courseProgress(c)
             return (
               <div key={c.id} className="grid gap-1">
@@ -148,7 +149,7 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
                   <span className="ml-auto text-muted-foreground tabular-nums">{c.locked ? c.locked : `${p}%`}</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full" style={{ width: `${c.locked ? 0 : p}%`, background: hueColor(c.hue) }} />
+                  <div className="h-full rounded-full" style={{ width: `${c.locked ? 0 : p}%`, background: gradientFill(series(ci)), boxShadow: `0 0 10px -2px ${series(ci)}` }} />
                 </div>
               </div>
             )

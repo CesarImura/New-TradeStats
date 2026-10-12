@@ -5,7 +5,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { DISCIPLINE, EQUITY, JOURNAL_DAYS, JOURNAL_STATS, JOURNAL_WEEK, RULE_DAYS } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Bars, Big, Caps, Head, Heat, Radar, Ring, Spark, W } from "./kit"
+import { Bars, Big, Caps, Head, Heat, Radar, Ring, Spark, TONE, W } from "./kit"
 import { WidgetEmpty, signed, useEmpty, type WidgetProps } from "./shared"
 
 function ConnectBroker() {
@@ -30,7 +30,7 @@ export function JournalPnl({ variant = "bars" }: WidgetProps) {
   if (variant === "curve") {
     const total = EQUITY[EQUITY.length - 1]
     return (
-      <W>
+      <W accent={TONE.profit}>
         <Head icon={LineChart} tone="profit" value={`${JOURNAL_STATS.winRate}%`} unit="win" right="20 days" />
         <Big value={signed(total)} tone="profit" sub={`${JOURNAL_STATS.trades} trades this week`} />
         <Spark values={EQUITY} tone="profit" />
@@ -52,7 +52,7 @@ export function JournalPnl({ variant = "bars" }: WidgetProps) {
   }
 
   return (
-    <W>
+    <W accent={TONE.profit}>
       <Head icon={LineChart} tone="profit" value={`${JOURNAL_STATS.winRate}%`} unit="win" right="This week" />
       <Big value={signed(JOURNAL_STATS.pnl)} tone="profit" sub={`${JOURNAL_STATS.trades} trades`} />
       <Bars diverging values={JOURNAL_WEEK.map((d) => d.pnl)} labels={JOURNAL_WEEK.map((d) => d.day[0])} />
@@ -88,13 +88,14 @@ export function RulesFollowed({ variant = "radar" }: WidgetProps) {
     let streak = 0
     for (let i = RULE_DAYS.length - 1; i >= 0 && RULE_DAYS[i]; i--) streak++
     return (
-      <W>
+      <W accent={TONE.profit}>
         <Head icon={Shield} tone="profit" value={streak} unit="days" label="Clean streak" right="10 days" />
         <div className="grid flex-1 grid-cols-10 items-center gap-1">
           {RULE_DAYS.map((ok, i) => (
             <span
               key={i}
-              className={cn("grid aspect-square place-items-center rounded-full", ok ? "bg-profit/15 text-profit" : "bg-loss/15 text-loss", i === RULE_DAYS.length - 1 && "ring-2 ring-foreground/30")}
+              className={cn("grid aspect-square place-items-center rounded-full", ok ? "text-white" : "bg-loss/15 text-loss", i === RULE_DAYS.length - 1 && "ring-2 ring-foreground/30")}
+              style={ok ? { background: `linear-gradient(150deg, color-mix(in oklab, ${TONE.profit} 75%, white), ${TONE.profit})`, boxShadow: `0 0 10px -3px ${TONE.profit}` } : undefined}
             >
               {ok ? <Check className="size-3" /> : <X className="size-3" />}
             </span>

@@ -96,7 +96,7 @@ export function Discord({ variant = "online", props }: WidgetProps) {
     <W>
       <Head icon={MessageSquareText} label="Discord" right={<span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-emerald-500" /><Caps>Live</Caps></span>} />
       <div className="flex items-end justify-between gap-3">
-        <Big value={empty ? 0 : DISCORD.online} unit="online" />
+        <Big fx value={empty ? 0 : DISCORD.online} unit="online" />
         {!empty && <AvatarStack initials={DISCORD.avatars.slice(0, 4)} />}
       </div>
       <Bars values={empty ? DISCORD_ACTIVITY.map(() => 0) : DISCORD_ACTIVITY} active={DISCORD_ACTIVITY.length - 1} />
