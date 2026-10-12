@@ -15,7 +15,8 @@ import {
   Wand2,
 } from "lucide-react"
 import { useCoach } from "@/components/coach/coach-provider"
-import { CoachLogo } from "@/components/coach/coach-logo"
+import { WorkspaceSwitcher } from "@/components/admin/workspace-switcher"
+import { DEMO_ADMIN } from "@/lib/data/account"
 import { adminNav } from "@/components/coach/nav"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -60,10 +61,8 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
         }}
       />
       <Sidebar collapsible="icon">
-        <SidebarHeader className="h-16 justify-center px-3">
-          <Link href={base}>
-            <CoachLogo coach={coach} className="group-data-[collapsible=icon]:[&>span:last-child]:hidden" />
-          </Link>
+        <SidebarHeader className="py-3">
+          <WorkspaceSwitcher />
         </SidebarHeader>
         <SidebarContent>
           {groups.map((g) => (
@@ -113,7 +112,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
               <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />
             </Button>
             <Avatar className="ml-1 size-8">
-              <AvatarFallback className="text-xs">{coach.coachName.slice(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="text-xs">{DEMO_ADMIN.initials}</AvatarFallback>
             </Avatar>
           </div>
         </header>

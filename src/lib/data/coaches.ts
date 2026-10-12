@@ -29,6 +29,8 @@ export type Tier = { id: string; name: string; price: string; cadence: string; m
 
 export type Coach = {
   slug: string
+  /** The coach's business. One business can run several communities. */
+  org: string
   name: string
   coachName: string
   /** Short mark shown in the logo tile. */
@@ -61,6 +63,7 @@ const DEFAULT_WORDING: Wording = {
 export const COACHES: Coach[] = [
   {
     slug: "northline",
+    org: "Northline",
     name: "Northline Trading",
     coachName: "Marco",
     mark: "N",
@@ -80,6 +83,7 @@ export const COACHES: Coach[] = [
   },
   {
     slug: "sophia",
+    org: "Sophia Lane",
     name: "Sophia Lane Mentorship",
     coachName: "Sophia",
     mark: "SL",
@@ -106,6 +110,7 @@ export const COACHES: Coach[] = [
   },
   {
     slug: "kairo",
+    org: "Kairo FX",
     name: "Kairo FX",
     coachName: "Kairo",
     mark: "K",
@@ -121,6 +126,21 @@ export const COACHES: Coach[] = [
       { id: "pro", name: "Pro", price: "€99", cadence: "month", members: 266 },
       { id: "funded", name: "Funded Track", price: "€990", cadence: "once", members: 31 },
     ],
+  },
+  {
+    slug: "northline-options",
+    org: "Northline",
+    name: "Northline Options Lab",
+    coachName: "Marco",
+    mark: "NO",
+    tagline: "A second community: options income strategies.",
+    template: "terminal",
+    overrides: { primary: "#16a34a", mode: "light", nav: { layout: "top", style: "labels", logo: "left" } },
+    wording: { ...DEFAULT_WORDING, courses: "Lab", students: "Members", student: "Member" },
+    modules: { courses: true, calendar: true, community: true, journal: false, ranking: false, ai: false },
+    menu: ["courses", "calendar", "community", "journal", "ai", "ranking"],
+    homeWidgets: ["start-here", "first-week", "next-lesson", "next-event", "announcement"],
+    tiers: [{ id: "lab", name: "Lab", price: "€59", cadence: "month", members: 96 }],
   },
 ]
 

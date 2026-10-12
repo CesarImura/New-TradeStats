@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -30,6 +31,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { DEMO_STUDENT } from "@/lib/data/sample"
+import { DEMO_STUDENT_COMMUNITIES } from "@/lib/data/account"
+import { getCoach } from "@/lib/data/coaches"
 import { cn } from "@/lib/utils"
 
 function useActive(base: string) {
@@ -158,7 +161,8 @@ function HeaderActions() {
 }
 
 function ProfileMenu({ compact }: { compact?: boolean }) {
-  const { base } = useCoach()
+  const { base, coach } = useCoach()
+  const others = DEMO_STUDENT_COMMUNITIES.filter((s) => s !== coach.slug).map((s) => getCoach(s)!)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -181,16 +185,31 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>
-          {DEMO_STUDENT.first} {DEMO_STUDENT.last}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href={`${base}/profile`} />}>
-          <User /> Profile
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href={`${base}/profile`} />}>
-          <Settings /> Subscription & settings
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>
+            {DEMO_STUDENT.first} {DEMO_STUDENT.last}
+          </DropdownMenuLabel>
+          <DropdownMenuItem render={<Link href={`${base}/profile`} />}>
+            <User /> Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link href={`${base}/profile`} />}>
+            <Settings /> Subscription & settings
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        {others.length > 0 && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Your other communities</DropdownMenuLabel>
+              {others.map((c) => (
+                <DropdownMenuItem key={c.slug} render={<Link href={`/c/${c.slug}`} />}>
+                  <span className="grid size-5 place-items-center rounded-sm bg-muted text-[0.6rem] font-semibold">{c.mark}</span>
+                  {c.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <LogOut /> Log out

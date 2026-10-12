@@ -23,13 +23,13 @@ export default function Launcher() {
             One platform, every coach&apos;s own.
           </h1>
           <p className="max-w-[60ch] text-white/60">
-            Three demo coaches on three starting templates. Same pages and components underneath; the coach&apos;s
+            Four demo communities from three coaches, on three starting templates. Same pages and components underneath; the coach&apos;s
             settings decide everything you see. Open a student platform or its admin area, then use the Prototype
             button to switch template, navigation and mode.
           </p>
         </header>
 
-        <section className="grid gap-px border border-white/10 bg-white/10 md:grid-cols-3">
+        <section className="grid gap-px border border-white/10 bg-white/10 md:grid-cols-2 xl:grid-cols-4">
           {COACHES.map((c) => {
             const theme = resolveTheme(c)
             const scope = `.pv-${c.slug}`
