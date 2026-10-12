@@ -2,18 +2,9 @@
 
 import { useCoach } from "@/components/coach/coach-provider"
 import type { Coach } from "@/lib/data/coaches"
-import type { ColumnSplit, PageLayout, Section, WidgetInstance } from "@/lib/widgets/layout"
+import { spanMd, type PageLayout, type Section, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { getWidget } from "./registry"
-
-/** Column templates, applied only when the page area is wide enough (container query). */
-export const GRID: Record<ColumnSplit, string> = {
-  "1": "",
-  "1:1": "@3xl:grid-cols-2",
-  "2:1": "@3xl:grid-cols-[2fr_1fr]",
-  "1:2": "@3xl:grid-cols-[1fr_2fr]",
-  "1:1:1": "@3xl:grid-cols-3",
-}
 
 export const SECTION_BG = {
   none: "",
@@ -24,6 +15,18 @@ export const SECTION_BG = {
 export function isAvailable(w: WidgetInstance, coach: Coach) {
   const def = getWidget(w.type)
   return !!def && (!def.module || coach.modules[def.module])
+}
+
+/** Width a widget actually gets: never narrower than its content allows. */
+export function effectiveSpan(w: WidgetInstance) {
+  const def = getWidget(w.type)
+  return Math.min(12, Math.max(w.span ?? def?.defaultSpan ?? 12, def?.minSpan ?? 1))
+}
+
+/** Grid placement for one widget. See `.w-cell` in globals.css for the responsive rules. */
+export function cellStyle(w: WidgetInstance) {
+  const span = effectiveSpan(w)
+  return { "--span": span, "--span-md": spanMd(span) } as React.CSSProperties
 }
 
 /** Draws a page from its layout. Used by the live platform and the preview. */
@@ -39,16 +42,12 @@ export function PageRenderer({ layout }: { layout: PageLayout }) {
 }
 
 function SectionView({ section, coach }: { section: Section; coach: Coach }) {
-  const slots = section.slots.map((col) => col.filter((w) => isAvailable(w, coach)))
-  if (slots.every((c) => c.length === 0)) return null
+  const widgets = section.widgets.filter((w) => isAvailable(w, coach))
+  if (!widgets.length) return null
   return (
-    <section className={cn("grid grid-cols-1 page-gap", GRID[section.columns], SECTION_BG[section.background ?? "none"])}>
-      {slots.map((col, i) => (
-        <div key={i} className="flex min-w-0 flex-col page-gap">
-          {col.map((w) => (
-            <WidgetView key={w.id} w={w} />
-          ))}
-        </div>
+    <section className={cn("w-grid", SECTION_BG[section.background ?? "none"])}>
+      {widgets.map((w) => (
+        <WidgetView key={w.id} w={w} />
       ))}
     </section>
   )
@@ -59,8 +58,8 @@ export function WidgetView({ w }: { w: WidgetInstance }) {
   if (!def) return null
   const C = def.Component
   return (
-    <div className={cn("flex min-w-0 flex-col last:flex-1 *:flex-1", w.hideOnPhone && "@max-3xl:hidden")}>
-      <C variant={w.variant ?? def.variants?.[0]?.value} props={w.props ?? {}} />
+    <div className={cn("w-cell", w.hideOnPhone && "w-hide-phone")} style={cellStyle(w)}>
+      <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
     </div>
   )
 }

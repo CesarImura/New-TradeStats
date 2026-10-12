@@ -1,38 +1,64 @@
 "use client"
 
-import { useDraggable } from "@dnd-kit/core"
 import { useState } from "react"
-import { Copy, EyeOff, GripVertical, MousePointerClick, Plus, Search, Trash2, X } from "lucide-react"
+import { useDraggable } from "@dnd-kit/core"
+import { Copy, EyeOff, GripVertical, MousePointerClick, MoveHorizontal, Plus, Search, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { WIDGETS, WIDGET_GROUPS, getWidget, type WidgetDef } from "@/components/widgets/registry"
+import { DataModeProvider } from "@/components/widgets/shared"
 import type { Coach } from "@/lib/data/coaches"
-import { COLUMN_SPLITS, type Section, type SectionBackground, type WidgetInstance } from "@/lib/widgets/layout"
+import { SPAN_STEPS, type Section, type SectionBackground, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { Field, Segmented } from "./controls"
 
 const MODULE_LABEL = { courses: "Courses", calendar: "Calendar", community: "Community", journal: "Journal", ranking: "Ranking", ai: "AI assistant" }
 
 /**
- * Left panel: every widget, grouped, each with a live thumbnail drawn in the
- * coach's draft design. Search by name, description or group. Drag one onto
- * the page, or press + to add it to the selected section.
+ * A widget drawn small, in the coach's draft design and with sample data.
+ * Laid out at the width it would have on the page, then scaled down.
  */
-export function WidgetLibrary({
-  coach,
+export function WidgetThumb({
+  def,
+  variant,
   canvasClass,
-  onAdd,
+  space,
+  height,
 }: {
-  coach: Coach
-  /** Classes that give thumbnails the coach's theme (scope class, dark). */
+  def: WidgetDef
+  variant?: string
   canvasClass: string
-  onAdd: (type: string) => void
+  /** Width available for the thumbnail, in px. */
+  space: number
+  height: number
 }) {
+  const logical = def.defaultSpan >= 12 ? 820 : def.defaultSpan >= 8 ? 620 : 400
+  const C = def.Component
+  return (
+    <div className="relative flex justify-center overflow-hidden bg-muted/40 pt-2" style={{ height }} aria-hidden inert>
+      <DataModeProvider value="sample">
+        <div
+          className={cn(canvasClass, "pointer-events-none flex shrink-0 flex-col self-start rounded-md bg-background font-sans text-foreground select-none [&>*]:flex-1")}
+          style={{ width: logical, zoom: space / logical, padding: 12, containerType: "inline-size" }}
+        >
+          <C variant={variant ?? def.variants[0].value} props={{}} />
+        </div>
+      </DataModeProvider>
+      <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-background to-transparent" />
+    </div>
+  )
+}
+
+/**
+ * Left panel: every widget, grouped, each with a live thumbnail. Search by
+ * name, description, group or look. Drag one onto the page, or press + to add it.
+ */
+export function WidgetLibrary({ coach, canvasClass, onAdd }: { coach: Coach; canvasClass: string; onAdd: (type: string) => void }) {
   const [query, setQuery] = useState("")
   const q = query.trim().toLowerCase()
-  const match = (w: WidgetDef) => !q || `${w.name} ${w.description} ${w.group}`.toLowerCase().includes(q)
+  const match = (w: WidgetDef) => !q || `${w.name} ${w.description} ${w.group} ${w.variants.map((v) => v.label).join(" ")}`.toLowerCase().includes(q)
   const groups = WIDGET_GROUPS.map((g) => ({ g, items: WIDGETS.filter((w) => w.group === g && match(w)) })).filter((x) => x.items.length)
 
   return (
@@ -40,13 +66,7 @@ export function WidgetLibrary({
       <div className="sticky top-0 z-10 grid gap-2 border-b bg-background p-4 pb-3">
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search widgets"
-            aria-label="Search widgets"
-            className="pl-8"
-          />
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search widgets" aria-label="Search widgets" className="pl-8" />
           {query && (
             <button onClick={() => setQuery("")} aria-label="Clear search" className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
               <X className="size-4" />
@@ -56,11 +76,7 @@ export function WidgetLibrary({
         <p className="text-xs text-muted-foreground">Drag a widget onto the page, or press + to add it to the selected section.</p>
       </div>
       <div className="grid gap-5 px-4 pb-6">
-        {groups.length === 0 && (
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            No widget matches “{query}”. Try “calendar”, “progress” or “banner”.
-          </p>
-        )}
+        {groups.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">No widget matches “{query}”. Try “calendar”, “progress” or “banner”.</p>}
         {groups.map(({ g, items }) => (
           <div key={g} className="grid gap-2">
             <span className="text-[0.7rem] font-medium tracking-wide text-muted-foreground uppercase">{g}</span>
@@ -74,14 +90,8 @@ export function WidgetLibrary({
   )
 }
 
-/** Width the thumbnail is laid out at before scaling: a column, or the full page for wide widgets. */
-const THUMB_WIDTH = { normal: 420, wide: 820 }
-const THUMB_SPACE = 236
-
 function LibraryItem({ def, off, canvasClass, onAdd }: { def: WidgetDef; off: boolean; canvasClass: string; onAdd: () => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `new:${def.type}`, disabled: off })
-  const logical = def.wide ? THUMB_WIDTH.wide : THUMB_WIDTH.normal
-  const C = def.Component
   return (
     <div
       ref={setNodeRef}
@@ -94,23 +104,12 @@ function LibraryItem({ def, off, canvasClass, onAdd }: { def: WidgetDef; off: bo
       {...attributes}
       aria-label={`Drag ${def.name} onto the page`}
     >
-      {/* Live thumbnail: the real widget, in the coach's design, scaled down */}
-      <div className="relative flex h-[104px] justify-center overflow-hidden border-b bg-muted/40 pt-2" aria-hidden inert>
-        <div
-          className={cn(canvasClass, "pointer-events-none shrink-0 self-start rounded-md bg-background font-sans text-foreground select-none")}
-          style={{ width: logical, zoom: THUMB_SPACE / logical, padding: 12 }}
-        >
-          <C variant={def.variants?.[0]?.value} props={{}} />
-        </div>
-        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-background to-transparent" />
-      </div>
-      <div className="flex items-center gap-2 p-2 pr-1.5">
+      <WidgetThumb def={def} canvasClass={canvasClass} space={236} height={112} />
+      <div className="flex items-center gap-2 border-t p-2 pr-1.5">
         <def.icon className="size-4 shrink-0 text-muted-foreground" />
         <span className="grid min-w-0 flex-1 leading-tight">
           <span className="truncate text-sm">{def.name}</span>
-          <span className="truncate text-xs text-muted-foreground">
-            {off ? `Switch on ${MODULE_LABEL[def.module!]} to use` : def.description}
-          </span>
+          <span className="truncate text-xs text-muted-foreground">{off ? `Switch on ${MODULE_LABEL[def.module!]} to use` : `${def.variants.length} looks · ${def.description}`}</span>
         </span>
         {!off && (
           <Button
@@ -131,14 +130,16 @@ function LibraryItem({ def, off, canvasClass, onAdd }: { def: WidgetDef; off: bo
   )
 }
 
-/** Right panel for a selected widget: its look, its settings, and phone visibility. */
+/** Right panel for a selected widget: its look, width, settings, and phone visibility. */
 export function WidgetSettings({
   w,
+  canvasClass,
   onChange,
   onDuplicate,
   onRemove,
 }: {
   w: WidgetInstance
+  canvasClass: string
   onChange: (patch: Partial<WidgetInstance>, key: string) => void
   onDuplicate: () => void
   onRemove: () => void
@@ -146,6 +147,8 @@ export function WidgetSettings({
   const def = getWidget(w.type)!
   const props = w.props ?? {}
   const setProp = (k: string, v: string | boolean) => onChange({ props: { ...props, [k]: v } }, `${w.id}-${k}`)
+  const current = w.variant ?? def.variants[0].value
+  const span = Math.max(w.span, def.minSpan)
   return (
     <div className="grid gap-5 p-4">
       <div className="flex items-start gap-3">
@@ -157,16 +160,48 @@ export function WidgetSettings({
           <span className="text-xs text-muted-foreground">{def.description}</span>
         </div>
       </div>
-      {def.variants && (
-        <Field label="Look">
-          <Segmented
-            label="Look"
-            value={w.variant ?? def.variants[0].value}
-            options={def.variants}
-            onChange={(variant) => onChange({ variant }, `${w.id}-variant`)}
-          />
-        </Field>
-      )}
+
+      <Field label="Look">
+        <div className="grid gap-2" role="radiogroup" aria-label="Look">
+          {def.variants.map((v) => (
+            <button
+              key={v.value}
+              role="radio"
+              aria-checked={current === v.value}
+              onClick={() => onChange({ variant: v.value }, `${w.id}-variant`)}
+              className={cn("overflow-hidden rounded-lg border text-left hover:border-foreground/40", current === v.value && "border-foreground ring-1 ring-foreground")}
+            >
+              <WidgetThumb def={def} variant={v.value} canvasClass={canvasClass} space={286} height={100} />
+              <span className="block border-t px-2.5 py-1.5 text-xs font-medium">{v.label}</span>
+            </button>
+          ))}
+        </div>
+      </Field>
+
+      <Field label="Width" hint="Or drag the widget's right edge">
+        <div className="grid grid-cols-6 gap-1" role="radiogroup" aria-label="Width">
+          {SPAN_STEPS.map((s) => {
+            const tooNarrow = s.span < def.minSpan
+            return (
+              <button
+                key={s.span}
+                role="radio"
+                aria-checked={span === s.span}
+                disabled={tooNarrow}
+                title={tooNarrow ? "Too narrow for this widget's content" : `${s.span} of 12 columns`}
+                onClick={() => onChange({ span: s.span }, `${w.id}-span`)}
+                className={cn("rounded-md border py-1.5 text-xs tabular-nums disabled:cursor-not-allowed disabled:opacity-35", span === s.span && "border-foreground font-semibold ring-1 ring-foreground")}
+              >
+                {s.label}
+              </button>
+            )
+          })}
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {span} of 12 columns{def.minSpan > 3 ? `; this widget needs at least ${def.minSpan}` : ""}. On tablets narrow widgets take half the row; on phones every widget takes the full row.
+        </span>
+      </Field>
+
       {def.settings?.map((s) => {
         if (s.type === "toggle")
           return (
@@ -203,7 +238,6 @@ export function WidgetSettings({
         </span>
         <Switch checked={!!w.hideOnPhone} onCheckedChange={(hideOnPhone) => onChange({ hideOnPhone }, `${w.id}-phone`)} />
       </label>
-      {def.wide && <p className="text-xs text-muted-foreground">Looks best in a one-column section.</p>}
       <div className="flex gap-2 border-t pt-4">
         <Button variant="outline" size="sm" onClick={onDuplicate}>
           <Copy /> Duplicate
@@ -216,49 +250,14 @@ export function WidgetSettings({
   )
 }
 
-export function SplitIcon({ split, className }: { split: string; className?: string }) {
-  const parts = split.split(":").map(Number)
-  return (
-    <span className={cn("flex h-3.5 w-6 gap-0.5", className)} aria-hidden>
-      {parts.map((p, i) => (
-        <span key={i} className="rounded-[2px] bg-current opacity-70" style={{ flex: p }} />
-      ))}
-    </span>
-  )
-}
-
-/** Right panel for a selected section: columns and background. */
-export function SectionSettings({
-  section,
-  onChange,
-  onRemove,
-}: {
-  section: Section
-  onChange: (patch: Partial<Section>, key: string) => void
-  onRemove: () => void
-}) {
+/** Right panel for a selected section: background. */
+export function SectionSettings({ section, onChange, onRemove }: { section: Section; onChange: (patch: Partial<Section>, key: string) => void; onRemove: () => void }) {
   return (
     <div className="grid gap-5 p-4">
       <div className="grid">
         <span className="text-sm font-semibold">Section</span>
-        <span className="text-xs text-muted-foreground">A row of the page. Widgets snap into its columns; on phones it becomes one column.</span>
+        <span className="text-xs text-muted-foreground">A band of the page. Widgets inside it sit on a 12-column grid and wrap onto the next line when a row is full.</span>
       </div>
-      <Field label="Columns">
-        <div className="grid grid-cols-5 gap-1.5">
-          {COLUMN_SPLITS.map((c) => (
-            <button
-              key={c.value}
-              title={c.label}
-              aria-label={c.label}
-              aria-pressed={section.columns === c.value}
-              onClick={() => onChange({ columns: c.value }, `${section.id}-cols`)}
-              className={cn("grid place-items-center rounded-md border py-2 text-muted-foreground hover:text-foreground", section.columns === c.value && "border-foreground text-foreground ring-1 ring-foreground")}
-            >
-              <SplitIcon split={c.value} />
-            </button>
-          ))}
-        </div>
-      </Field>
       <Field label="Background">
         <Segmented<SectionBackground>
           label="Background"
@@ -287,13 +286,16 @@ export function NothingSelected() {
       <p>Click a widget or a section on the page to change it.</p>
       <ul className="grid gap-2 text-xs">
         <li className="flex gap-2">
-          <GripVertical className="size-4 shrink-0" /> Drag widgets to move them between columns and sections.
+          <GripVertical className="size-4 shrink-0" /> Drag widgets to reorder them or move them to another section.
         </li>
         <li className="flex gap-2">
-          <Plus className="size-4 shrink-0" /> Add a section between rows to change the layout.
+          <MoveHorizontal className="size-4 shrink-0" /> Drag a widget&apos;s right edge to make it wider or narrower. It snaps to the grid.
         </li>
         <li className="flex gap-2">
-          <EyeOff className="size-4 shrink-0" /> Check the phone view: sections stack into one column.
+          <Plus className="size-4 shrink-0" /> Hover between sections to add a new one.
+        </li>
+        <li className="flex gap-2">
+          <EyeOff className="size-4 shrink-0" /> Check tablet and phone: widgets reflow on their own.
         </li>
       </ul>
     </div>

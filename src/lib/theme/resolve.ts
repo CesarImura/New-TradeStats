@@ -2,7 +2,7 @@ import type { Coach } from "@/lib/data/coaches"
 import type { ContentDraft, ThemeDraft } from "@/lib/prototype-store"
 import { TEMPLATES } from "./templates"
 import type { CoachTheme, TemplateId } from "./types"
-import { defaultHome, type PageLayout } from "@/lib/widgets/layout"
+import { defaultHome, normalizeLayout, type PageLayout } from "@/lib/widgets/layout"
 
 /** The coach with their saved name, logo, words, menu and modules applied. */
 export function resolveCoach(coach: Coach, c: ContentDraft = {}): Coach {
@@ -20,7 +20,8 @@ export function resolveCoach(coach: Coach, c: ContentDraft = {}): Coach {
 
 /** The Home a student in this tier sees: the tier's own layout, the coach's default, or the template's. */
 export function homeLayout(coach: Coach, template: TemplateId, tier?: string): PageLayout {
-  return (tier && coach.home?.[tier]) || coach.home?.default || defaultHome(template, coach)
+  const saved = (tier && coach.home?.[tier]) || coach.home?.default
+  return saved ? normalizeLayout(saved) : defaultHome(template, coach)
 }
 
 /**

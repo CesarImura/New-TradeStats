@@ -5,13 +5,15 @@ export const DEMO_STUDENT = { first: "Alex", last: "Moreau", initials: "AM" }
 
 export type Lesson = { id: string; title: string; minutes: number; done: boolean }
 export type Module = { id: string; title: string; lessons: Lesson[] }
-export type Course = { id: string; title: string; area: string; modules: Module[]; locked?: string }
+export type Course = { id: string; title: string; area: string; modules: Module[]; locked?: string; hue: number; tagline: string }
 
 export const COURSES: Course[] = [
   {
     id: "foundations",
     title: "Foundations",
     area: "Core",
+    hue: 24,
+    tagline: "Market structure, execution and risk",
     modules: [
       {
         id: "m1",
@@ -45,6 +47,8 @@ export const COURSES: Course[] = [
     id: "playbook",
     title: "Price action playbook",
     area: "Core",
+    hue: 210,
+    tagline: "Six setups, step by step",
     modules: [
       {
         id: "p1",
@@ -60,6 +64,8 @@ export const COURSES: Course[] = [
     id: "psychology",
     title: "Trading psychology",
     area: "Inner circle",
+    hue: 280,
+    tagline: "Tilt, patience and routines",
     locked: "Inner Circle",
     modules: [{ id: "x1", title: "Tilt", lessons: [{ id: "x1l1", title: "Spotting tilt early", minutes: 15, done: false }] }],
   },
@@ -86,15 +92,22 @@ export type CalEvent = {
   live?: boolean
   noTrade?: boolean
   seats?: string
+  impact?: "high" | "medium" | "low"
+  forecast?: string
+  previous?: string
+  inMinutes?: number
 }
 
 export const EVENTS: CalEvent[] = [
-  { id: "e1", kind: "live", title: "Live trading · NY open", day: "Mon", date: "12 Oct", time: "15:30", live: false },
+  { id: "e1", kind: "live", title: "Live trading · NY open", day: "Mon", date: "12 Oct", time: "15:30", live: false, inMinutes: 390, seats: "41 signed up" },
   { id: "e2", kind: "call", title: "Q&A call", day: "Tue", date: "13 Oct", time: "18:00", seats: "34 signed up" },
-  { id: "e3", kind: "news", title: "US CPI", day: "Wed", date: "14 Oct", time: "14:30", noTrade: true },
+  { id: "e3", kind: "news", title: "US CPI", day: "Wed", date: "14 Oct", time: "14:30", noTrade: true, impact: "high", forecast: "3.1%", previous: "3.2%", inMinutes: 3210 },
   { id: "e4", kind: "workshop", title: "Workshop · Journaling that works", day: "Thu", date: "15 Oct", time: "11:00", seats: "12 of 20 seats" },
   { id: "e5", kind: "one-on-one", title: "1:1 with coach", day: "Fri", date: "16 Oct", time: "16:00" },
-  { id: "e6", kind: "news", title: "FOMC minutes", day: "Thu", date: "15 Oct", time: "20:00" },
+  { id: "e6", kind: "news", title: "FOMC minutes", day: "Thu", date: "15 Oct", time: "20:00", impact: "medium" },
+  { id: "e7", kind: "news", title: "ECB rate decision", day: "Thu", date: "15 Oct", time: "14:15", impact: "high", forecast: "3.25%", previous: "3.50%", noTrade: true },
+  { id: "e8", kind: "news", title: "US retail sales", day: "Fri", date: "16 Oct", time: "14:30", impact: "medium", forecast: "0.3%", previous: "0.6%" },
+  { id: "e9", kind: "news", title: "UK GDP", day: "Fri", date: "16 Oct", time: "08:00", impact: "low", forecast: "0.2%", previous: "0.1%" },
 ]
 
 export const JOURNAL_WEEK = [
@@ -108,6 +121,10 @@ export const JOURNAL_WEEK = [
 export const JOURNAL_STATS = { pnl: 780, winRate: 58, trades: 19, rulesFollowed: 84 }
 
 export const ANNOUNCEMENT = {
+  author: "Coach",
+  pinned: true,
+  reactions: 42,
+  comments: 9,
   title: "New module: Daily loss limits",
   body: "Watch it before Wednesday's CPI. We'll go through your limits on Thursday's call.",
   when: "2 hours ago",
@@ -161,3 +178,43 @@ export const GETTING_STARTED = [
   { id: "discord", label: "Connect Discord", done: false },
   { id: "invite", label: "Invite students", done: false },
 ]
+
+/** Last four weeks, Monday to Friday, oldest first. 0 = no trades. */
+export const JOURNAL_DAYS = [
+  [120, -80, 0, 260, 90],
+  [-210, 140, 310, -60, 0],
+  [80, 0, -150, 420, 180],
+  [320, -140, 210, 480, -90],
+]
+
+export const RULES = [
+  { rule: "Max 1% risk per trade", kept: 19, total: 19 },
+  { rule: "No trades 10 min before red news", kept: 17, total: 19 },
+  { rule: "Stop never moved further away", kept: 13, total: 19 },
+  { rule: "Max 3 trades a day", kept: 18, total: 19 },
+]
+
+export const LEADERBOARD = [
+  { rank: 1, name: "Jonas P.", initials: "JP", score: 98, change: 0 },
+  { rank: 2, name: "Sara K.", initials: "SK", score: 96, change: 2 },
+  { rank: 3, name: "Mia S.", initials: "MS", score: 95, change: -1 },
+  { rank: 4, name: "Tariq B.", initials: "TB", score: 93, change: 1 },
+  { rank: 5, name: "Elena R.", initials: "ER", score: 92, change: -2 },
+  { rank: 12, name: "You", initials: "AM", score: 88, change: 4, me: true },
+]
+
+export const DISCORD = { members: 2140, online: 128, avatars: ["JP", "SK", "MS", "TB", "ER", "LI"], channels: ["#trade-ideas", "#daily-recap", "#questions"] }
+
+export const PARTNERS = [
+  { name: "IC Markets", note: "Broker · our partner", tag: "Partner", color: "#1e3a8a" },
+  { name: "FTMO", note: "Prop firm challenges", color: "#0f766e" },
+  { name: "TradingView", note: "Charts we use on the lives", color: "#131722" },
+  { name: "YouTube", note: "Free weekly breakdowns", color: "#dc2626" },
+]
+
+export const AI_SAMPLE = {
+  question: "Why do I keep getting stopped out right before the move?",
+  answer:
+    "Your stops sit just beyond the obvious swing low, where most traders put theirs. In Module 2 the coach suggests placing them past the next structure level and sizing down to keep the 1% risk.",
+  source: "Module 2 · Stops that make sense, 12:40",
+}

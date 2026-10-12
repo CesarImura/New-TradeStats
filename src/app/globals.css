@@ -168,3 +168,42 @@
     background-attachment: fixed;
   }
 }
+
+/*
+ * Widget grid (Home builder). Each section is a 12-column grid; a widget's
+ * width comes from --span. The rules follow the width of the page area, so
+ * the same page reflows in a sidebar layout, a preview or on a phone.
+ */
+@layer components {
+  .w-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--page-gap, 1.5rem);
+    align-items: stretch;
+  }
+  .w-cell {
+    container-type: inline-size;
+    grid-column: span 12 / span 12;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .w-cell > * {
+    flex: 1;
+  }
+  @container (min-width: 40rem) {
+    .w-cell {
+      grid-column: span var(--span-md) / span var(--span-md);
+    }
+  }
+  @container (min-width: 60rem) {
+    .w-cell {
+      grid-column: span var(--span) / span var(--span);
+    }
+  }
+  @container (max-width: 39.99rem) {
+    .w-hide-phone {
+      display: none;
+    }
+  }
+}

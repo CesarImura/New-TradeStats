@@ -14,12 +14,19 @@ import {
   Sparkles,
   Trophy,
   Type,
+  Video,
   type LucideIcon,
 } from "lucide-react"
 import type { ModuleId } from "@/lib/data/coaches"
-import * as W from "./library"
+import { AiAsk, Banner, PartnerLinks, TextBlock, WelcomeVideo } from "./brand"
+import { EconNews, NextLive, ThisWeek } from "./calendar"
+import { Announcement, Discord } from "./community"
+import { JournalPnl, RulesFollowed } from "./journal"
+import { ContinueLesson, CourseProgress } from "./learning"
+import { FirstWeek, MyRank } from "./progress"
+import type { WidgetProps } from "./shared"
 
-export type WidgetGroup = "Learning" | "Calendar" | "Journal" | "Community" | "Progress" | "Coach and brand" | "AI"
+export type WidgetGroup = "Learning" | "Calendar" | "Journal" | "Progress" | "Community" | "Coach and brand" | "AI"
 
 export type Setting =
   | { key: string; label: string; type: "text"; placeholder?: string }
@@ -35,11 +42,13 @@ export type WidgetDef = {
   icon: LucideIcon
   /** Only offered, and only shown to students, when this module is on. */
   module?: ModuleId
-  variants?: { value: string; label: string }[]
+  /** Three designs per widget; the first is the default. */
+  variants: { value: string; label: string }[]
   settings?: Setting[]
-  /** Looks best across the full width (hint shown in the builder). */
-  wide?: boolean
-  Component: (p: W.WidgetProps) => React.ReactNode
+  /** Width in twelfths when added, and the narrowest it can go before its content breaks. */
+  defaultSpan: number
+  minSpan: number
+  Component: (p: WidgetProps) => React.ReactNode
 }
 
 const COURSE_OPTIONS = [
@@ -57,13 +66,16 @@ export const WIDGETS: WidgetDef[] = [
     module: "courses",
     variants: [
       { value: "hero", label: "Large" },
-      { value: "card", label: "Card" },
+      { value: "card", label: "Compact" },
+      { value: "spotlight", label: "Cover" },
     ],
     settings: [
       { key: "title", label: "Small label", type: "text", placeholder: "Start here" },
       { key: "course", label: "Course", type: "select", options: COURSE_OPTIONS },
     ],
-    Component: W.ContinueLesson,
+    defaultSpan: 8,
+    minSpan: 4,
+    Component: ContinueLesson,
   },
   {
     type: "course-progress",
@@ -75,21 +87,27 @@ export const WIDGETS: WidgetDef[] = [
     variants: [
       { value: "list", label: "List" },
       { value: "cards", label: "Cards" },
+      { value: "rings", label: "Rings" },
     ],
-    Component: W.CourseProgress,
+    defaultSpan: 8,
+    minSpan: 4,
+    Component: CourseProgress,
   },
   {
     type: "next-live",
     name: "Next live session",
-    description: "When the next live is, with Join and add to calendar",
+    description: "When the next live is, with a reminder",
     group: "Calendar",
     icon: Radio,
     module: "calendar",
     variants: [
       { value: "card", label: "Card" },
       { value: "banner", label: "Colour block" },
+      { value: "countdown", label: "Countdown" },
     ],
-    Component: W.NextLive,
+    defaultSpan: 4,
+    minSpan: 3,
+    Component: NextLive,
   },
   {
     type: "this-week",
@@ -98,8 +116,15 @@ export const WIDGETS: WidgetDef[] = [
     group: "Calendar",
     icon: CalendarDays,
     module: "calendar",
+    variants: [
+      { value: "list", label: "List" },
+      { value: "timeline", label: "Timeline" },
+      { value: "days", label: "Week strip" },
+    ],
     settings: [{ key: "news", label: "Include economic news", type: "toggle", defaultOn: true }],
-    Component: W.ThisWeek,
+    defaultSpan: 6,
+    minSpan: 3,
+    Component: ThisWeek,
   },
   {
     type: "econ-news",
@@ -108,11 +133,18 @@ export const WIDGETS: WidgetDef[] = [
     group: "Calendar",
     icon: Newspaper,
     module: "calendar",
-    Component: W.EconNews,
+    variants: [
+      { value: "list", label: "List" },
+      { value: "impact", label: "Table" },
+      { value: "next", label: "Next big one" },
+    ],
+    defaultSpan: 4,
+    minSpan: 3,
+    Component: EconNews,
   },
   {
     type: "journal-pnl",
-    name: "P&L this week",
+    name: "P&L",
     description: "The student's own result from their journal",
     group: "Journal",
     icon: LineChart,
@@ -120,8 +152,11 @@ export const WIDGETS: WidgetDef[] = [
     variants: [
       { value: "chart", label: "Daily bars" },
       { value: "number", label: "Big number" },
+      { value: "calendar", label: "Heatmap" },
     ],
-    Component: W.JournalPnl,
+    defaultSpan: 4,
+    minSpan: 3,
+    Component: JournalPnl,
   },
   {
     type: "rules-followed",
@@ -130,7 +165,14 @@ export const WIDGETS: WidgetDef[] = [
     group: "Journal",
     icon: Gauge,
     module: "journal",
-    Component: W.RulesFollowed,
+    variants: [
+      { value: "number", label: "Number" },
+      { value: "ring", label: "Ring" },
+      { value: "breakdown", label: "Per rule" },
+    ],
+    defaultSpan: 4,
+    minSpan: 3,
+    Component: RulesFollowed,
   },
   {
     type: "first-week",
@@ -138,16 +180,30 @@ export const WIDGETS: WidgetDef[] = [
     description: "Turns a new member into an active one",
     group: "Progress",
     icon: CircleCheck,
-    Component: W.FirstWeek,
+    variants: [
+      { value: "checklist", label: "Checklist" },
+      { value: "steps", label: "Steps" },
+      { value: "progress", label: "Ring" },
+    ],
+    defaultSpan: 4,
+    minSpan: 3,
+    Component: FirstWeek,
   },
   {
     type: "my-rank",
-    name: "My rank",
+    name: "Ranking",
     description: "The student's place on your leaderboard",
     group: "Progress",
     icon: Trophy,
     module: "ranking",
-    Component: W.MyRank,
+    variants: [
+      { value: "number", label: "Number" },
+      { value: "podium", label: "Podium" },
+      { value: "leaderboard", label: "Top list" },
+    ],
+    defaultSpan: 4,
+    minSpan: 3,
+    Component: MyRank,
   },
   {
     type: "announcement",
@@ -158,8 +214,11 @@ export const WIDGETS: WidgetDef[] = [
     variants: [
       { value: "highlight", label: "Highlighted" },
       { value: "plain", label: "Plain" },
+      { value: "pinned", label: "Post" },
     ],
-    Component: W.Announcement,
+    defaultSpan: 4,
+    minSpan: 3,
+    Component: Announcement,
   },
   {
     type: "discord",
@@ -168,21 +227,34 @@ export const WIDGETS: WidgetDef[] = [
     group: "Community",
     icon: MessageSquareText,
     module: "community",
+    variants: [
+      { value: "card", label: "Card" },
+      { value: "banner", label: "Banner" },
+      { value: "members", label: "Who's online" },
+    ],
     settings: [{ key: "text", label: "Text", type: "textarea" }],
-    Component: W.Discord,
+    defaultSpan: 4,
+    minSpan: 3,
+    Component: Discord,
   },
   {
     type: "welcome-video",
     name: "Welcome video",
     description: "A personal message from you",
     group: "Coach and brand",
-    icon: PlayCircle,
-    wide: true,
+    icon: Video,
+    variants: [
+      { value: "side", label: "Side by side" },
+      { value: "stacked", label: "Video on top" },
+      { value: "minimal", label: "Quote" },
+    ],
     settings: [
       { key: "title", label: "Title", type: "text" },
       { key: "text", label: "Text", type: "textarea" },
     ],
-    Component: W.WelcomeVideo,
+    defaultSpan: 12,
+    minSpan: 4,
+    Component: WelcomeVideo,
   },
   {
     type: "banner",
@@ -190,7 +262,6 @@ export const WIDGETS: WidgetDef[] = [
     description: "A headline with a button, e.g. an offer or launch",
     group: "Coach and brand",
     icon: ImageIcon,
-    wide: true,
     variants: [
       { value: "brand", label: "Brand colour" },
       { value: "highlight", label: "Highlight" },
@@ -212,19 +283,28 @@ export const WIDGETS: WidgetDef[] = [
         ],
       },
     ],
-    Component: W.Banner,
+    defaultSpan: 12,
+    minSpan: 6,
+    Component: Banner,
   },
   {
     type: "text",
     name: "Text",
-    description: "A heading and a paragraph",
+    description: "A heading and a paragraph, or a quote",
     group: "Coach and brand",
     icon: Type,
+    variants: [
+      { value: "plain", label: "Plain" },
+      { value: "quote", label: "Quote" },
+      { value: "centered", label: "Centred" },
+    ],
     settings: [
       { key: "title", label: "Heading", type: "text" },
       { key: "text", label: "Text", type: "textarea" },
     ],
-    Component: W.TextBlock,
+    defaultSpan: 6,
+    minSpan: 3,
+    Component: TextBlock,
   },
   {
     type: "partner-links",
@@ -232,7 +312,14 @@ export const WIDGETS: WidgetDef[] = [
     description: "Brokers, prop firms and tools you recommend",
     group: "Coach and brand",
     icon: Handshake,
-    Component: W.PartnerLinks,
+    variants: [
+      { value: "list", label: "List" },
+      { value: "tiles", label: "Tiles" },
+      { value: "chips", label: "Chips" },
+    ],
+    defaultSpan: 4,
+    minSpan: 3,
+    Component: PartnerLinks,
   },
   {
     type: "ai-ask",
@@ -241,12 +328,17 @@ export const WIDGETS: WidgetDef[] = [
     group: "AI",
     icon: Sparkles,
     module: "ai",
-    wide: true,
-    Component: W.AiAsk,
+    variants: [
+      { value: "search", label: "Search box" },
+      { value: "chat", label: "Example chat" },
+      { value: "compact", label: "Compact" },
+    ],
+    defaultSpan: 12,
+    minSpan: 3,
+    Component: AiAsk,
   },
 ]
 
 export const WIDGET_GROUPS: WidgetGroup[] = ["Learning", "Calendar", "Journal", "Progress", "Community", "Coach and brand", "AI"]
 
 export const getWidget = (type: string) => WIDGETS.find((w) => w.type === type)
-

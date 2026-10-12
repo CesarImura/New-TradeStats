@@ -2,27 +2,31 @@ import type { Coach } from "@/lib/data/coaches"
 import type { TemplateId } from "@/lib/theme/types"
 
 /**
- * A page is a stack of sections. Each section splits into columns, and
- * widgets snap into the columns. Heights follow the content; on phones every
- * section becomes one column.
+ * A page is a stack of sections. Inside a section, widgets sit on a
+ * 12-column grid: each widget has a width (span) that snaps to the grid, and
+ * widgets wrap onto the next line when a row is full.
+ *
+ * Responsive rules (applied by width of the page area, not the screen):
+ * - wide (≥ 60rem): widgets use their span
+ * - medium (≥ 40rem): narrow widgets take half the row, wide ones the full row
+ * - narrow (phones): every widget takes the full row
  */
-export type ColumnSplit = "1" | "1:1" | "2:1" | "1:2" | "1:1:1"
 export type SectionBackground = "none" | "muted" | "brand"
 
 export type WidgetInstance = {
   id: string
   type: string
   variant?: string
+  /** Width in twelfths of the row, 1–12. */
+  span: number
   props?: Record<string, string | boolean>
   hideOnPhone?: boolean
 }
 
 export type Section = {
   id: string
-  columns: ColumnSplit
   background?: SectionBackground
-  /** One list of widgets per column. */
-  slots: WidgetInstance[][]
+  widgets: WidgetInstance[]
 }
 
 export type PageLayout = { sections: Section[] }
@@ -30,48 +34,45 @@ export type PageLayout = { sections: Section[] }
 /** Home layouts per community: "default" plus optional per-tier versions. */
 export type HomeLayouts = Record<string, PageLayout>
 
-export const COLUMN_SPLITS: { value: ColumnSplit; label: string }[] = [
-  { value: "1", label: "One column" },
-  { value: "1:1", label: "Two equal" },
-  { value: "2:1", label: "Wide + narrow" },
-  { value: "1:2", label: "Narrow + wide" },
-  { value: "1:1:1", label: "Three equal" },
+export const SPAN_STEPS = [
+  { span: 3, label: "¼" },
+  { span: 4, label: "⅓" },
+  { span: 6, label: "½" },
+  { span: 8, label: "⅔" },
+  { span: 9, label: "¾" },
+  { span: 12, label: "Full" },
 ]
 
-export const columnCount = (c: ColumnSplit) => c.split(":").length
-
-/** Change a section's columns, moving widgets from removed columns into the last one kept. */
-export function resizeSlots(slots: WidgetInstance[][], columns: ColumnSplit) {
-  const n = columnCount(columns)
-  const next = Array.from({ length: n }, (_, i) => [...(slots[i] ?? [])])
-  for (let i = n; i < slots.length; i++) next[n - 1].push(...slots[i])
-  return next
-}
+/** Width on medium screens (tablets, narrow laptops). */
+export const spanMd = (span: number) => (span <= 6 ? 6 : 12)
 
 export const uid = () => Math.random().toString(36).slice(2, 10)
 
+/** Older saved layouts used fixed columns ("slots"); turn them into spans. */
+export function normalizeLayout(l: PageLayout): PageLayout {
+  return {
+    sections: l.sections.map((s) => {
+      const legacy = s as Section & { columns?: string; slots?: { id: string; type: string; variant?: string }[][] }
+      if (legacy.widgets) return s
+      const parts = (legacy.columns ?? "1").split(":").map(Number)
+      const total = parts.reduce((a, b) => a + b, 0)
+      const widgets = (legacy.slots ?? []).flatMap((col, i) => col.map((w) => ({ ...w, span: Math.round((12 * parts[i]) / total) })))
+      return { id: s.id, background: s.background, widgets }
+    }),
+  }
+}
+
 // ---------- template defaults
 
-type Spec = [ColumnSplit, ...(string | [string, string])[][]] | [ColumnSplit, SectionBackground, ...(string | [string, string])[][]]
+type Spec = { bg?: SectionBackground; w: [type: string, span: number, variant?: string][] }
 
 function build(prefix: string, specs: Spec[]): PageLayout {
   return {
-    sections: specs.map((spec, si) => {
-      const [columns, maybeBg, ...rest] = spec
-      const background = typeof maybeBg === "string" ? (maybeBg as SectionBackground) : undefined
-      const cols = (typeof maybeBg === "string" ? rest : [maybeBg, ...rest]) as (string | [string, string])[][]
-      return {
-        id: `${prefix}-s${si}`,
-        columns,
-        background,
-        slots: cols.map((col, ci) =>
-          col.map((w, wi) => {
-            const [type, variant] = Array.isArray(w) ? w : [w, undefined]
-            return { id: `${prefix}-w${si}${ci}${wi}`, type, variant }
-          }),
-        ),
-      }
-    }),
+    sections: specs.map((spec, si) => ({
+      id: `${prefix}-s${si}`,
+      background: spec.bg,
+      widgets: spec.w.map(([type, span, variant], wi) => ({ id: `${prefix}-w${si}${wi}`, type, span, variant })),
+    })),
   }
 }
 
@@ -85,23 +86,23 @@ export function defaultHome(template: TemplateId, coach: Coach): PageLayout {
   switch (template) {
     case "terminal":
       return build(p, [
-        ["2:1", [["continue-lesson", "card"]], [["next-live", "card"]]],
-        ["1:1:1", [["journal-pnl", "chart"]], ["this-week"], ["econ-news"]],
-        ["2:1", [["course-progress", "list"]], [["announcement", "highlight"]]],
+        { w: [["continue-lesson", 8, "card"], ["next-live", 4, "countdown"]] },
+        { w: [["journal-pnl", 4, "chart"], ["rules-followed", 4, "breakdown"], ["econ-news", 4, "impact"]] },
+        { w: [["course-progress", 8, "list"], ["announcement", 4, "highlight"]] },
       ])
     case "atelier":
       return build(p, [
-        ["1", [["continue-lesson", "hero"]]],
-        ["1:1", ["first-week"], [["next-live", "card"]]],
-        ["1", "muted", [["course-progress", "cards"]]],
-        ["2:1", [["announcement", "plain"]], ["partner-links"]],
+        { w: [["welcome-video", 12, "side"]] },
+        { w: [["continue-lesson", 8, "hero"], ["first-week", 4, "checklist"]] },
+        { bg: "muted", w: [["course-progress", 12, "cards"]] },
+        { w: [["this-week", 6, "timeline"], ["announcement", 6, "pinned"]] },
       ])
     case "pulse":
       return build(p, [
-        ["1:1:1", ["my-rank"], [["journal-pnl", "number"]], ["rules-followed"]],
-        ["2:1", [["continue-lesson", "hero"]], [["next-live", "banner"]]],
-        ["1:2", ["econ-news"], [["course-progress", "cards"]]],
-        ["1", "brand", ["ai-ask"]],
+        { w: [["my-rank", 4, "podium"], ["journal-pnl", 4, "number"], ["rules-followed", 4, "ring"]] },
+        { w: [["continue-lesson", 8, "spotlight"], ["next-live", 4, "banner"]] },
+        { w: [["course-progress", 6, "rings"], ["this-week", 6, "days"]] },
+        { bg: "brand", w: [["ai-ask", 12, "chat"]] },
       ])
   }
 }

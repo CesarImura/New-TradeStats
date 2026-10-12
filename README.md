@@ -31,14 +31,16 @@ Coach data (wording, modules, menu, home widgets, tiers) is in `src/lib/data/coa
 
 ## Home page builder
 
-`/admin/[coach]/design/home` (Design → Home page). The students' Home is a stack of **sections**; each section has 1–3 columns (1, 1:1, 2:1, 1:2, 1:1:1) and **widgets snap into the columns**. On phones every section becomes one column.
+`/admin/[coach]/design/home` (Design → Home page). The students' Home is a stack of **sections**. Inside a section, widgets sit on a **12-column grid**: each has a width (span) that snaps to the grid, set by dragging its right edge or from the settings panel, and never narrower than its content allows (`minSpan`). Widgets wrap onto the next line when a row is full.
 
-- `src/lib/widgets/layout.ts` – the layout data (sections, columns, widgets) and each template's default Home.
-- `src/components/widgets/registry.tsx` – every widget: name, group, required module, looks (variants) and settings. The settings panel is generated from this.
-- `src/components/widgets/library.tsx` – the widget components.
-- `src/components/widgets/page-renderer.tsx` – draws a layout; used by the live platform.
-- `src/components/admin/design/home-builder.tsx` – drag and drop (dnd-kit), sections, per-tier layouts, phone view.
+Responsive by the width of the page area (`.w-grid` / `.w-cell` in `globals.css`): ≥ 60rem spans apply as set; ≥ 40rem narrow widgets take half a row; below that every widget is full width. Widgets adapt inside using container queries.
 
-Only admins change the layout; students see it. No embeds or custom code.
+- `src/lib/widgets/layout.ts` – layout data and each template's default Home.
+- `src/components/widgets/registry.tsx` – every widget: group, module, **three looks**, settings, default and minimum width.
+- `src/components/widgets/{learning,calendar,journal,progress,community,brand}.tsx` – the widgets, each with its empty state.
+- `src/components/widgets/shared.tsx` – sample/empty data switch, empty state, cover art, rings.
+- `src/components/admin/design/home-builder.tsx` – drag and drop, resize, sections, per-tier layouts, desktop/tablet/phone, sample or empty data.
+
+Only admins change the layout; students see it. No embeds or custom code. `?data=empty` on a student page shows what a brand-new student sees.
 
 Screen IDs (STU-01, ADM-01, …) refer to the platform map.
