@@ -94,38 +94,39 @@ export function defaultHome(template: TemplateId, coach: Coach): PageLayout {
   const p = `${coach.slug}-${template}`
   switch (template) {
     case "terminal":
-      // A tall countdown on the right, dense rows of data on the left.
+      // Dense trading desk: a tall countdown on the right, data rows on the left.
       return build(p, [
-        ["continue-lesson", 0, 0, 8, 2, "card"],
-        ["next-live", 8, 0, 4, 4, "countdown"],
-        ["journal-pnl", 0, 2, 4, 3, "chart"],
-        ["rules-followed", 4, 2, 4, 3, "breakdown"],
-        ["econ-news", 8, 4, 4, 4, "impact"],
-        ["course-progress", 0, 5, 8, 4, "list"],
-        ["announcement", 8, 8, 4, 3, "highlight"],
+        ["continue-lesson", 0, 0, 8, 3, "progress"],
+        ["next-live", 8, 0, 4, 3, "countdown"],
+        ["journal-pnl", 0, 3, 4, 3, "bars"],
+        ["rules-followed", 4, 3, 4, 4, "radar"],
+        ["econ-news", 8, 3, 4, 4, "impact"],
+        ["course-progress", 0, 6, 4, 4, "bars"],
+        ["this-week", 4, 7, 8, 3, "week"],
       ])
     case "atelier":
-      // Calm and editorial: a welcome, a large lesson, a tall checklist beside it.
+      // Calm and editorial: a welcome, a large lesson, the week beside it.
       return build(p, [
-        ["welcome-video", 0, 0, 12, 5, "side"],
-        ["continue-lesson", 0, 5, 8, 4, "hero"],
-        ["first-week", 8, 5, 4, 4, "checklist"],
-        ["course-progress", 0, 9, 12, 5, "cards"],
-        ["this-week", 0, 14, 6, 4, "timeline"],
-        ["announcement", 6, 14, 6, 3, "pinned"],
+        ["welcome-video", 0, 0, 12, 4, "side"],
+        ["continue-lesson", 0, 4, 8, 3, "cover"],
+        ["first-week", 8, 4, 4, 3, "checklist"],
+        ["course-progress", 0, 7, 6, 3, "rings"],
+        ["this-week", 6, 7, 6, 4, "timeline"],
+        ["announcement", 0, 10, 6, 3, "post"],
       ])
     case "pulse":
       // Stats on top, a tall leaderboard on the side.
       return build(p, [
-        ["journal-pnl", 0, 0, 4, 3, "number"],
-        ["rules-followed", 4, 0, 4, 3, "ring"],
+        ["journal-pnl", 0, 0, 4, 3, "curve"],
+        ["rules-followed", 4, 0, 4, 3, "streak"],
         ["my-rank", 8, 0, 4, 6, "leaderboard"],
-        ["continue-lesson", 0, 3, 8, 3, "spotlight"],
-        ["next-live", 0, 6, 4, 3, "banner"],
-        ["this-week", 4, 6, 8, 3, "days"],
-        ["course-progress", 0, 9, 6, 4, "rings"],
-        ["econ-news", 6, 9, 6, 4, "next"],
-        ["ai-ask", 0, 13, 12, 4, "chat"],
+        ["continue-lesson", 0, 3, 8, 3, "cover"],
+        ["next-live", 0, 6, 4, 3, "block"],
+        ["journal-pnl", 4, 6, 8, 3, "heatmap"],
+        ["discord", 0, 9, 4, 3, "online"],
+        ["econ-news", 4, 9, 4, 3, "next"],
+        ["course-progress", 8, 9, 4, 3, "rings"],
+        ["ai-ask", 0, 12, 12, 4, "chat"],
       ])
   }
 }

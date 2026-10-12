@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AI_SAMPLE, PARTNERS } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
+import { Caps, Head, Ring, W } from "./kit"
 import { Cover, type WidgetProps } from "./shared"
 
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
@@ -190,16 +191,25 @@ export function AiAsk({ variant = "search" }: WidgetProps) {
     </div>
   )
 
-  if (variant === "compact") {
+  if (variant === "quota") {
+    const used = 18
+    const quota = 50
     return (
-      <Card>
-        <CardContent className="flex flex-col gap-3">
-          <span className="flex items-center gap-2 text-sm font-medium">
-            <Sparkles className="size-4 text-primary" /> {coach.wording.ai}
-          </span>
-          {box}
-        </CardContent>
-      </Card>
+      <W>
+        <Head icon={Sparkles} label={coach.wording.ai} right="This month" />
+        <div className="flex flex-1 items-center gap-4">
+          <Ring value={(used / quota) * 100} size={76} stroke={8}>
+            <span className="font-heading text-lg font-semibold tabular-nums">{quota - used}</span>
+          </Ring>
+          <div className="grid gap-1">
+            <Caps>Questions left</Caps>
+            <span className="text-sm text-muted-foreground">
+              {used} of {quota} used. Resets on 1 November.
+            </span>
+          </div>
+        </div>
+        {box}
+      </W>
     )
   }
 

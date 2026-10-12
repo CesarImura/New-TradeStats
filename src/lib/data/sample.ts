@@ -218,3 +218,34 @@ export const AI_SAMPLE = {
     "Your stops sit just beyond the obvious swing low, where most traders put theirs. In Module 2 the coach suggests placing them past the next structure level and sizing down to keep the 1% risk.",
   source: "Module 2 · Stops that make sense, 12:40",
 }
+
+// ---------- Extra series for the visual widgets ("now" is Monday 09:00)
+
+/** Today's schedule, for timeline views. Times as decimal hours. */
+export const TODAY = [
+  { title: "Market prep", start: 14, end: 14.75, kind: "call" as const },
+  { title: "Live trading · NY open", start: 15.5, end: 17, kind: "live" as const },
+  { title: "Q&A", start: 18, end: 18.75, kind: "call" as const },
+]
+export const NOW_HOUR = 9
+
+/** Discipline score per area, 0–100, for the radar view. */
+export const DISCIPLINE = [
+  { label: "Risk", v: 100 },
+  { label: "News", v: 89 },
+  { label: "Stops", v: 68 },
+  { label: "Trades/day", v: 95 },
+  { label: "Journal", v: 80 },
+]
+
+/** Last 10 trading days: did the student keep every rule? */
+export const RULE_DAYS = [true, true, false, true, true, true, false, true, true, true]
+
+/** Weekly rank over the last 8 weeks (lower is better). */
+export const RANK_HISTORY = [31, 27, 25, 22, 20, 18, 16, 12]
+
+/** Messages per hour in the Discord over the last 12 hours. */
+export const DISCORD_ACTIVITY = [4, 2, 1, 0, 1, 3, 9, 14, 22, 18, 26, 31]
+
+/** Equity over the last 20 trading days, in euros. */
+export const EQUITY = [0, 120, 40, 40, 300, 390, 180, 320, 630, 570, 570, 650, 650, 500, 920, 1100, 1240, 1100, 1310, 1220]
