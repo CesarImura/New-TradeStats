@@ -1,36 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TradeStats Coach Platform · Prototype
 
-## Getting Started
-
-First, run the development server:
+Clickable prototype of the white-label coach platform. For design and functionality only: placeholder data, no backend.
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Where things are
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| URL | What |
+|---|---|
+| `/` | Launcher with the three demo coaches |
+| `/c/[coach]` | Student side, in the coach's theme (`northline`, `sophia`, `kairo`) |
+| `/admin/[coach]` | Admin area: fixed layout, coach's logo and colour |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The **Prototype** button (bottom right) switches coach, template, navigation and light/dark. Changes are kept in localStorage per coach.
 
-## Learn More
+## How theming works
 
-To learn more about Next.js, take a look at the following resources:
+- `src/lib/theme/types.ts` – everything a coach can change (`CoachTheme`).
+- `src/lib/theme/templates.ts` – the starting templates: Terminal, Atelier, Pulse.
+- `src/lib/theme/css.ts` – turns a theme into shadcn's CSS variables plus a few rules (button shape, shadow, density, label style). shadcn components are not modified.
+- `src/lib/theme/resolve.ts` – template → coach's saved changes → unpublished edits.
+- `src/lib/fonts.ts` – the font library.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Coach data (wording, modules, menu, home widgets, tiers) is in `src/lib/data/coaches.ts`; sample content in `src/lib/data/sample.ts`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Screen IDs (STU-01, ADM-01, …) refer to the platform map.

@@ -1,0 +1,95 @@
+import { FONT_LIBRARY } from "@/lib/fonts"
+import type { CoachTheme } from "./types"
+
+const DENSITY = { compact: 0.85, comfortable: 1, airy: 1.3 } as const
+const PAGE_GAP = { compact: "1rem", comfortable: "1.5rem", airy: "2rem" } as const
+
+/** Is a hex colour dark? Used to pick readable text on the sidebar. */
+function isDark(hex: string) {
+  const m = hex.replace("#", "").match(/.{2}/g)
+  if (!m || m.length < 3) return false
+  const [r, g, b] = m.map((x) => parseInt(x, 16))
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b < 110
+}
+
+/**
+ * Turns a coach theme into CSS. It writes shadcn's own variables, so every
+ * shadcn component takes the coach's look without being touched, plus a few
+ * rules for the settings shadcn has no variable for (button shape, shadow,
+ * density, label style).
+ *
+ * `scope` is `:root` for the student platform and a class for live previews.
+ */
+export function themeToCss(t: CoachTheme, scope = ":root") {
+  const p = t.palettes[t.mode]
+  const sidebarDark = isDark(p.sidebar)
+  const sidebarFg = sidebarDark ? "#f5f6fb" : p.foreground
+  const shadow =
+    t.shadow === "none"
+      ? "none"
+      : t.shadow === "soft"
+        ? "0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05)"
+        : `0 2px 4px rgb(0 0 0 / 0.06), 0 14px 36px color-mix(in oklab, ${t.primary} 16%, transparent)`
+  const ring = t.borders ? `0 0 0 1px ${p.border}` : ""
+  const cardShadow = [ring, shadow === "none" ? "" : shadow].filter(Boolean).join(", ") || "none"
+  const buttonRadius =
+    t.buttonShape === "pill" ? "9999px" : t.buttonShape === "square" ? `${Math.min(t.radius, 3)}px` : `${Math.max(6, t.radius * 0.7)}px`
+
+  const vars: Record<string, string> = {
+    "--background": p.background,
+    "--foreground": p.foreground,
+    "--card": p.card,
+    "--card-foreground": p.foreground,
+    "--popover": p.card,
+    "--popover-foreground": p.foreground,
+    "--primary": t.primary,
+    "--primary-foreground": t.primaryForeground,
+    "--secondary": p.muted,
+    "--secondary-foreground": p.foreground,
+    "--muted": p.muted,
+    "--muted-foreground": p.mutedForeground,
+    "--accent": p.muted,
+    "--accent-foreground": p.foreground,
+    "--border": p.border,
+    "--input": p.border,
+    "--ring": t.primary,
+    "--radius": `${t.radius}px`,
+    "--chart-1": t.primary,
+    "--chart-2": p.highlight,
+    "--chart-3": p.profit,
+    "--chart-4": p.loss,
+    "--chart-5": p.mutedForeground,
+    "--sidebar": p.sidebar,
+    "--sidebar-foreground": sidebarFg,
+    "--sidebar-primary": t.primary,
+    "--sidebar-primary-foreground": t.primaryForeground,
+    "--sidebar-accent": sidebarDark ? "rgba(255,255,255,0.08)" : p.muted,
+    "--sidebar-accent-foreground": sidebarFg,
+    "--sidebar-border": sidebarDark ? "rgba(255,255,255,0.08)" : p.border,
+    "--sidebar-ring": t.primary,
+    "--highlight": p.highlight,
+    "--highlight-foreground": p.highlightForeground,
+    "--profit": p.profit,
+    "--loss": p.loss,
+    "--coach-font-heading": FONT_LIBRARY[t.fonts.heading].css,
+    "--coach-font-body": FONT_LIBRARY[t.fonts.body].css,
+    "--coach-font-label": FONT_LIBRARY[t.fonts.label].css,
+    "--coach-heading-weight": String(t.headingWeight),
+    "--label-transform": t.labelStyle === "caps" ? "uppercase" : "none",
+    "--label-tracking": t.labelStyle === "caps" ? "0.06em" : "0",
+    "--label-size": t.labelStyle === "caps" ? "0.6875rem" : "0.8125rem",
+    "--density": String(DENSITY[t.density]),
+    "--page-gap": PAGE_GAP[t.density],
+    "--button-radius": buttonRadius,
+    "--card-shadow": cardShadow,
+  }
+
+  const body = Object.entries(vars).map(([k, v]) => `${k}:${v};`).join("")
+  const s = scope === ":root" ? "" : `${scope} `
+  return `
+${scope}{${body}color-scheme:${t.mode};}
+${s}[data-slot=button]{border-radius:var(--button-radius)!important;}
+${s}[data-slot=card]{box-shadow:var(--card-shadow);--card-spacing:calc(var(--spacing) * 4 * var(--density))!important;}
+${s}[data-slot=card][data-size=sm]{--card-spacing:calc(var(--spacing) * 3 * var(--density))!important;}
+`
+}
