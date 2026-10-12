@@ -36,39 +36,28 @@ export function css({ l, c, h }: Oklch, alpha?: number) {
 export type Effects = "flat" | "soft" | "vivid"
 
 /**
- * The brand's visual vocabulary for one mode and effect level.
- * - a, b, c: the gradient ramp (lighter/warmer → brand → deeper/cooler)
+ * The brand's visual vocabulary for one mode and effect level. Restrained on
+ * purpose: gradients stay within the same hue family and shift only a little
+ * in lightness, so they read as depth, not as decoration.
+ * - a, b, c: tonal ramp (a little lighter → brand → a little deeper)
  * - series: five harmonious colours for multi-series charts, brand first
- * - glow: the brand as light, for dark themes
  */
 export function brandVisuals(primary: string, mode: "light" | "dark", effects: Effects) {
   const p = hexToOklch(primary)
-  // Greys and near-greys have no hue to shift; give them a little chroma so gradients still read.
-  const chroma = Math.max(p.c, 0.06)
+  const chroma = Math.max(p.c, 0.04)
   const dark = mode === "dark"
-
-  // Like real light: the bright end leans toward yellow, the deep end away from it.
+  // Like real light: the bright end leans slightly toward yellow, the deep end away from it.
   const toYellow = ((((100 - p.h) % 360) + 540) % 360) - 180
   const dir = toYellow >= 0 ? 1 : -1
-  const a = { l: p.l + (dark ? 0.12 : 0.1), c: chroma * 1.05, h: p.h + 18 * dir }
+  const k = { flat: 0, soft: 1, vivid: 1.8 }[effects]
+  const a = { l: p.l + 0.035 * k, c: chroma, h: p.h + 5 * k * dir }
   const b = { l: p.l, c: chroma, h: p.h }
-  const c = { l: p.l - (dark ? 0.04 : 0.08), c: chroma * 0.95, h: p.h - 24 * dir }
+  const c = { l: p.l - 0.035 * k, c: chroma, h: p.h - 6 * k * dir }
 
   // Series: brand, then neighbours either side, then a softened complement and a split.
-  const sl = dark ? 0.72 : 0.6
-  const sc = clamp(chroma, 0.09, 0.16)
-  const series = [p.h, p.h + 45, p.h - 45, p.h + 180, p.h + 100].map((h, i) => (i === 0 ? css(b) : css({ l: sl, c: i === 3 ? sc * 0.7 : sc, h })))
+  const sl = dark ? 0.72 : 0.62
+  const sc = clamp(chroma * 0.8, 0.07, 0.13)
+  const series = [p.h, p.h + 50, p.h - 50, p.h + 180, p.h + 105].map((h, i) => (i === 0 ? css(b) : css({ l: sl, c: i === 3 ? sc * 0.7 : sc, h })))
 
-  const strength = { flat: 0, soft: 1, vivid: 1.8 }[effects]
-  return {
-    a: effects === "flat" ? css(b) : css(a),
-    b: css(b),
-    c: effects === "flat" ? css(b) : css(c),
-    series,
-    glow: css({ l: p.l + 0.1, c: chroma, h: p.h }, dark ? 0.34 * strength : 0.2 * strength),
-    /** Percentage of accent colour washed into a card's corner. */
-    wash: `${Math.round((dark ? 9 : 6) * strength)}%`,
-    /** Opacity of grain and grid textures on brand surfaces. */
-    texture: String(effects === "flat" ? 0 : effects === "soft" ? 0.12 : 0.2),
-  }
+  return { a: css(a), b: css(b), c: css(c), series }
 }

@@ -249,51 +249,28 @@
 .hb-canvas .react-grid-item > .react-resizable-handle-se::after { right: 4px; bottom: 4px; width: 10px; height: 10px; }
 
 /*
- * Brand effects for widgets. All colours come from the brand ramp set by
- * themeToCss (--brand-a/b/c, --glow, --wash, --texture); with Effects = Flat
- * these resolve to the plain brand colour and no glow or texture.
+ * Brand surfaces for widgets, Apple-style: the brand colour with at most a
+ * small tonal shift (from --brand-a/b/c), no glow or texture.
  */
 @layer components {
-  /* A surface in the brand gradient with fine grain and grid lines. */
   .fx-hero {
-    position: relative;
-    isolation: isolate;
-    background: var(--brand-grad);
+    background: linear-gradient(180deg, var(--brand-a), var(--brand-c));
     color: var(--primary-foreground);
   }
-  .fx-hero::before,
-  .fx-hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    border-radius: inherit;
-    pointer-events: none;
-    opacity: var(--texture);
-  }
-  .fx-hero::before {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    mix-blend-mode: overlay;
-  }
-  .fx-hero::after {
-    background-image:
-      linear-gradient(to right, rgb(255 255 255 / 0.18) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(255 255 255 / 0.18) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-  /* Headline numbers in the brand gradient. */
   .fx-text {
-    background: var(--brand-grad-h);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: var(--primary);
   }
-  /* Something that should feel lit: the brand as light around it. */
-  .fx-glow {
-    box-shadow: 0 6px 24px -4px var(--glow);
+  /* Geometry that follows the theme's corner style (set by themeToCss). */
+  .r-bar {
+    border-radius: var(--r-bar, 4px);
   }
-  /* Warning stripes, e.g. a no-trade news event. */
-  .fx-hatch {
-    background-image: repeating-linear-gradient(135deg, color-mix(in oklab, var(--loss) 55%, transparent) 0 6px, transparent 6px 12px);
+  .r-chip {
+    border-radius: var(--r-chip, 6px);
+  }
+  .r-dot {
+    border-radius: var(--r-dot, 9999px);
+  }
+  .r-inner {
+    border-radius: var(--r-inner, 8px);
   }
 }

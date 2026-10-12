@@ -130,8 +130,8 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-2 @lg:grid-cols-4">
           {PARTNERS.map((p) => (
-            <a key={p.name} href="#" className="grid gap-2 rounded-[min(var(--radius),10px)] border p-3 hover:bg-muted">
-              <span className="grid size-9 place-items-center rounded-md text-sm font-bold text-white" style={{ background: p.color }}>
+            <a key={p.name} href="#" className="r-inner grid gap-2 border p-3 hover:bg-muted">
+              <span className="r-chip grid size-9 place-items-center text-sm font-bold text-white" style={{ background: p.color }}>
                 {p.name[0]}
               </span>
               <span className="text-sm leading-tight">{p.name}</span>
@@ -147,8 +147,8 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
       <div className="flex flex-wrap items-center gap-2">
         <span className="eyebrow mr-1">Our tools</span>
         {PARTNERS.map((p) => (
-          <a key={p.name} href="#" className="flex items-center gap-2 rounded-[var(--button-radius)] border bg-card px-3 py-1.5 text-sm hover:bg-muted">
-            <span className="size-2 rounded-full" style={{ background: p.color }} />
+          <a key={p.name} href="#" className="r-chip flex items-center gap-2 border bg-card px-3 py-1.5 text-sm hover:bg-muted">
+            <span className="r-dot size-2" style={{ background: p.color }} />
             {p.name}
             <ArrowUpRight className="size-3.5 text-muted-foreground" />
           </a>
@@ -165,7 +165,7 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
       <CardContent className="flex flex-col divide-y">
         {PARTNERS.map((p) => (
           <a key={p.name} href="#" className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
-            <span className="grid size-8 shrink-0 place-items-center rounded-md text-xs font-bold text-white" style={{ background: p.color }}>
+            <span className="r-chip grid size-8 shrink-0 place-items-center text-xs font-bold text-white" style={{ background: p.color }}>
               {p.name[0]}
             </span>
             <span className="min-w-0 flex-1">

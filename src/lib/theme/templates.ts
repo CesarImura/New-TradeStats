@@ -50,7 +50,7 @@ export const TEMPLATES: Record<TemplateId, { name: string; blurb: string; theme:
       labelStyle: "caps",
       headingWeight: 400,
       background: "grid",
-      effects: "vivid",
+      effects: "soft",
       nav: { layout: "side", style: "labels", logo: "left" },
     },
   },

@@ -33,7 +33,7 @@ export function WidgetEmpty({
   return (
     <Card className={cn("@container", className)}>
       <div className="flex flex-col items-start gap-3 px-(--card-spacing) @md:flex-row @md:items-center">
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
+        <span className="r-chip grid size-10 shrink-0 place-items-center bg-muted text-muted-foreground">
           <Icon className="size-5" />
         </span>
         <div className="grid flex-1 gap-0.5">
@@ -46,13 +46,13 @@ export function WidgetEmpty({
   )
 }
 
-/** Generated course artwork: a natural gradient of the course colour, with candles and fine grain. */
+/** Generated course artwork: the course colour with a slight tonal shift, and a few candles. */
 export function Cover({ color = "var(--primary)", label, className }: { color?: string; hue?: number; label?: string; className?: string }) {
   const candles = [38, 52, 44, 61, 55, 70, 64, 78]
   return (
     <div
       className={cn("relative isolate overflow-hidden rounded-[min(var(--radius),12px)]", className)}
-      style={{ background: `linear-gradient(140deg, color-mix(in oklab, ${color} 75%, white), ${color} 45%, color-mix(in oklab, ${color} 65%, black))` }}
+      style={{ background: `linear-gradient(180deg, color-mix(in oklab, ${color} 92%, white), color-mix(in oklab, ${color} 88%, black))` }}
     >
       <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="absolute inset-0 size-full opacity-30" aria-hidden>
         {candles.map((h, i) => {
@@ -66,7 +66,6 @@ export function Cover({ color = "var(--primary)", label, className }: { color?: 
           )
         })}
       </svg>
-      <span className="fx-hero pointer-events-none absolute inset-0 -z-10 bg-none" style={{ background: "none" }} />
       {label && <span className="absolute bottom-2 left-3 font-heading text-sm text-white/90 drop-shadow">{label}</span>}
     </div>
   )
@@ -103,7 +102,7 @@ export function AvatarStack({ initials, className }: { initials: string[]; class
       {initials.map((i, n) => (
         <span
           key={i}
-          className="grid size-7 place-items-center rounded-full border-2 border-card text-[0.6rem] font-semibold text-white"
+          className="r-dot grid size-7 place-items-center border-2 border-card text-[0.6rem] font-semibold text-white"
           style={{ background: `oklch(0.55 0.12 ${(n * 67) % 360})` }}
         >
           {i}

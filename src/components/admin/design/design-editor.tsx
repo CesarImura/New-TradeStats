@@ -185,15 +185,15 @@ export function DesignEditor() {
           </Section>
 
           <Section title="Style">
-            <Field label="Effects" hint="Gradients, glow and texture from your brand colour">
+            <Field label="Brand depth" hint="A slight tonal shift in your brand colour">
               <Segmented
-                label="Effects"
+                label="Brand depth"
                 value={theme.effects ?? "soft"}
                 onChange={(effects) => change({ theme: { effects } }, "effects")}
                 options={[
                   { value: "flat", label: "Flat" },
-                  { value: "soft", label: "Soft" },
-                  { value: "vivid", label: "Vivid" },
+                  { value: "soft", label: "Subtle" },
+                  { value: "vivid", label: "Rich" },
                 ]}
               />
             </Field>

@@ -40,6 +40,7 @@ export function themeToCss(t: CoachTheme, scope = ":root") {
     t.buttonShape === "pill" ? "9999px" : t.buttonShape === "square" ? `${Math.min(t.radius, 3)}px` : `${Math.max(6, t.radius * 0.7)}px`
 
   const fx = brandVisuals(t.primary, t.mode, t.effects ?? "soft")
+  const geometric = t.radius <= 3
   const vars: Record<string, string> = {
     "--background": p.background,
     "--foreground": p.foreground,
@@ -99,9 +100,13 @@ export function themeToCss(t: CoachTheme, scope = ":root") {
     "--s3": fx.series[2],
     "--s4": fx.series[3],
     "--s5": fx.series[4],
-    "--glow": fx.glow,
-    "--wash": fx.wash,
-    "--texture": fx.texture,
+    // Geometry for elements inside widgets, so they follow the coach's corner style:
+    // square themes get square bars, dots and ring ends; pill themes get round ones.
+    "--r-bar": geometric ? "0px" : t.buttonShape === "pill" ? "9999px" : `${Math.min(t.radius * 0.25, 4)}px`,
+    "--r-chip": t.buttonShape === "pill" ? "9999px" : geometric ? `${t.radius}px` : `${Math.max(4, Math.round(t.radius * 0.45))}px`,
+    "--r-dot": geometric ? "1px" : "9999px",
+    "--r-inner": geometric ? `${t.radius}px` : `${Math.max(6, Math.round(t.radius * 0.6))}px`,
+    "--cap": geometric ? "butt" : "round",
   }
 
   const body = Object.entries(vars).map(([k, v]) => `${k}:${v};`).join("")
