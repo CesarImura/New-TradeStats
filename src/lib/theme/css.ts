@@ -85,11 +85,12 @@ export function themeToCss(t: CoachTheme, scope = ":root") {
   }
 
   const body = Object.entries(vars).map(([k, v]) => `${k}:${v};`).join("")
-  const s = scope === ":root" ? "" : `${scope} `
+  const within = (sel: string) =>
+    scope === ":root" ? sel : scope.split(",").map((p) => `${p.trim()} ${sel}`).join(", ")
   return `
 ${scope}{${body}color-scheme:${t.mode};}
-${s}[data-slot=button]{border-radius:var(--button-radius)!important;}
-${s}[data-slot=card]{box-shadow:var(--card-shadow);--card-spacing:calc(var(--spacing) * 4 * var(--density))!important;}
-${s}[data-slot=card][data-size=sm]{--card-spacing:calc(var(--spacing) * 3 * var(--density))!important;}
+${within("[data-slot=button]")}{border-radius:var(--button-radius)!important;}
+${within("[data-slot=card]")}{box-shadow:var(--card-shadow);--card-spacing:calc(var(--spacing) * 4 * var(--density))!important;}
+${within("[data-slot=card][data-size=sm]")}{--card-spacing:calc(var(--spacing) * 3 * var(--density))!important;}
 `
 }

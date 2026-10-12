@@ -49,7 +49,7 @@ import {
  * the logo and the brand colour change.
  */
 export function AdminShell({ studentBase, children }: { studentBase: string; children: React.ReactNode }) {
-  const { coach, theme, base } = useCoach()
+  const { coach, theme, base, scope } = useCoach()
   const path = usePathname()
   const groups = adminNav(coach, base)
 
@@ -57,7 +57,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
     <SidebarProvider>
       <style
         dangerouslySetInnerHTML={{
-          __html: `:root{--primary:${theme.primary};--primary-foreground:${theme.primaryForeground};--ring:${theme.primary};--sidebar-primary:${theme.primary};--sidebar-primary-foreground:${theme.primaryForeground};--chart-1:${theme.primary};}`,
+          __html: `${scope}{--primary:${theme.primary};--primary-foreground:${theme.primaryForeground};--ring:${theme.primary};--sidebar-primary:${theme.primary};--sidebar-primary-foreground:${theme.primaryForeground};--chart-1:${theme.primary};}`,
         }}
       />
       <Sidebar collapsible="icon">

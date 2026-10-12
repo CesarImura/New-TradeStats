@@ -1,13 +1,13 @@
 "use client"
 
-import { createContext, useContext, useEffect, useMemo } from "react"
+import { createContext, useContext, useLayoutEffect, useMemo } from "react"
 import { getCoach, type Coach } from "@/lib/data/coaches"
 import { useThemeDraft } from "@/lib/prototype-store"
 import { themeToCss } from "@/lib/theme/css"
 import { resolveTheme } from "@/lib/theme/resolve"
 import type { CoachTheme } from "@/lib/theme/types"
 
-type Ctx = { coach: Coach; theme: CoachTheme; base: string }
+type Ctx = { coach: Coach; theme: CoachTheme; base: string; scope: string }
 const CoachContext = createContext<Ctx | null>(null)
 
 export function useCoach() {
@@ -36,16 +36,28 @@ export function CoachProvider({
   const draft = useThemeDraft(slug)
   const theme = useMemo(() => resolveTheme(coach, draft), [coach, draft])
 
-  useEffect(() => {
-    if (!apply) return
+  // Next.js keeps the previous page mounted but hidden, so several coaches'
+  // styles can be in the DOM at once. Each style is scoped to
+  // :root[data-coach=slug] and only the visible coach sets that attribute.
+  useLayoutEffect(() => {
     const html = document.documentElement
-    html.classList.toggle("dark", theme.mode === "dark")
-    return () => html.classList.remove("dark")
-  }, [apply, theme.mode])
+    html.dataset.coach = slug
+    if (apply) html.classList.toggle("dark", theme.mode === "dark")
+    return () => {
+      if (html.dataset.coach === slug) {
+        delete html.dataset.coach
+        if (apply) html.classList.remove("dark")
+      }
+    }
+  }, [slug, apply, theme.mode])
+
+  // Before hydration no attribute is set yet; the server page holds a single
+  // coach, so `:not([data-coach])` covers the first paint.
+  const scope = `:root[data-coach="${slug}"], :root:not([data-coach])`
 
   return (
-    <CoachContext.Provider value={{ coach, theme, base }}>
-      {apply && <style dangerouslySetInnerHTML={{ __html: themeToCss(theme) }} />}
+    <CoachContext.Provider value={{ coach, theme, base, scope }}>
+      {apply && <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, scope) }} />}
       {children}
     </CoachContext.Provider>
   )

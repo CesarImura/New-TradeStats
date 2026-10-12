@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Bell, LogOut, Search, Settings, User } from "lucide-react"
 import { useCoach } from "@/components/coach/coach-provider"
-import { CoachLogo } from "@/components/coach/coach-logo"
+import { CommunitySwitcher } from "@/components/student/community-switcher"
 import { studentNav, type NavItem } from "@/components/coach/nav"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -31,8 +31,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { DEMO_STUDENT } from "@/lib/data/sample"
-import { DEMO_STUDENT_COMMUNITIES } from "@/lib/data/account"
-import { getCoach } from "@/lib/data/coaches"
 import { cn } from "@/lib/utils"
 
 function useActive(base: string) {
@@ -63,10 +61,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider key={theme.nav.style} defaultOpen={theme.nav.style === "labels"}>
       <Sidebar collapsible="icon" className="max-md:hidden">
-        <SidebarHeader className="h-16 justify-center px-3">
-          <Link href={base}>
-            <CoachLogo coach={coach} className="group-data-[collapsible=icon]:[&>span:last-child]:hidden" />
-          </Link>
+        <SidebarHeader className="h-16 justify-center">
+          <CommunitySwitcher placement="sidebar" />
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
@@ -80,9 +76,9 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
       <SidebarInset className={cn("bg-background", bg)}>
         <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur sm:px-6 lg:px-8">
           <SidebarTrigger className="max-md:hidden" />
-          <Link href={base} className="md:hidden">
-            <CoachLogo coach={coach} />
-          </Link>
+          <div className="min-w-0 md:hidden">
+            <CommunitySwitcher placement="bar" />
+          </div>
           <div className="ml-auto flex items-center gap-1">
             <HeaderActions />
           </div>
@@ -122,9 +118,9 @@ function TopNav({ items }: { items: NavItem[] }) {
   return (
     <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-6 px-4 sm:px-6 lg:px-8">
-        <Link href={base} className={cn(centered && "md:absolute md:left-1/2 md:-translate-x-1/2")}>
-          <CoachLogo coach={coach} />
-        </Link>
+        <div className={cn("min-w-0", centered && "md:absolute md:left-1/2 md:-translate-x-1/2")}>
+          <CommunitySwitcher placement="bar" />
+        </div>
         <nav className={cn("hidden items-center gap-1 md:flex", centered && "order-first")}>
           {items.map((item) => (
             <Link
@@ -161,8 +157,7 @@ function HeaderActions() {
 }
 
 function ProfileMenu({ compact }: { compact?: boolean }) {
-  const { base, coach } = useCoach()
-  const others = DEMO_STUDENT_COMMUNITIES.filter((s) => s !== coach.slug).map((s) => getCoach(s)!)
+  const { base } = useCoach()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -196,20 +191,6 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
             <Settings /> Subscription & settings
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        {others.length > 0 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Your other communities</DropdownMenuLabel>
-              {others.map((c) => (
-                <DropdownMenuItem key={c.slug} render={<Link href={`/c/${c.slug}`} />}>
-                  <span className="grid size-5 place-items-center rounded-sm bg-muted text-[0.6rem] font-semibold">{c.mark}</span>
-                  {c.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
-          </>
-        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <LogOut /> Log out
