@@ -2,14 +2,31 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { FlaskConical, RotateCcw } from "lucide-react"
+import { Eye, FlaskConical, RotateCcw, Shield } from "lucide-react"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { COACHES } from "@/lib/data/coaches"
+import { COACHES, type ModuleId } from "@/lib/data/coaches"
 import { updateThemeDraft } from "@/lib/prototype-store"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import { cn } from "@/lib/utils"
+
+// Where the same thing lives on the other side.
+const TO_ADMIN: Record<string, string> = {
+  courses: "content",
+  calendar: "calendar",
+  community: "community",
+  journal: "students",
+  ranking: "ranking",
+  ai: "ai",
+}
+const TO_STUDENT: Record<string, ModuleId> = {
+  content: "courses",
+  calendar: "calendar",
+  community: "community",
+  ranking: "ranking",
+  ai: "ai",
+}
 
 function Segment<T extends string>({
   label,
@@ -53,22 +70,34 @@ export function PrototypeBar({ area }: { area: "student" | "admin" }) {
   const rest = path.split("/").slice(3).join("/")
   const set = (patch: Parameters<typeof updateThemeDraft>[1]) => updateThemeDraft(coach.slug, patch)
 
+  const section = path.split("/")[3]
+  const adminHref = `/admin/${coach.slug}${section && TO_ADMIN[section] ? `/${TO_ADMIN[section]}` : ""}`
+  const studentTarget = section ? TO_STUDENT[section] : undefined
+  const studentHref = `/c/${coach.slug}${studentTarget && coach.modules[studentTarget] ? `/${studentTarget}` : ""}`
+  const tab = "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
+
   return (
     <Popover>
-      <PopoverTrigger
-        render={
-          <button className="fixed right-4 bottom-20 z-50 flex items-center gap-2 rounded-full bg-neutral-950 px-3.5 py-2 text-xs font-medium text-white shadow-lg ring-1 ring-white/15 md:bottom-4" />
-        }
-      >
-        <FlaskConical className="size-3.5" /> Prototype
-      </PopoverTrigger>
+      <div className="fixed right-4 bottom-20 z-50 flex items-center gap-1 rounded-full bg-neutral-950 p-1 font-[family-name:var(--ff-geist)] text-white shadow-lg ring-1 ring-white/15 md:bottom-4">
+        <Link href={adminHref} aria-current={area === "admin"} className={cn(tab, area === "admin" ? "bg-white text-neutral-950" : "text-white/70 hover:text-white")}>
+          <Shield className="size-3.5" /> Admin
+        </Link>
+        <Link href={studentHref} aria-current={area === "student"} className={cn(tab, area === "student" ? "bg-white text-neutral-950" : "text-white/70 hover:text-white")}>
+          <Eye className="size-3.5" /> Student
+        </Link>
+        <PopoverTrigger
+          render={<button className="grid size-7 place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white" aria-label="Prototype settings" />}
+        >
+          <FlaskConical className="size-3.5" />
+        </PopoverTrigger>
+      </div>
       <PopoverContent
         side="top"
         align="end"
         className="w-80 gap-4 border-neutral-200 bg-white p-4 font-[family-name:var(--ff-geist)] text-neutral-950 shadow-xl [&_[data-slot=button]]:rounded-md!"
       >
         <div className="grid gap-1.5">
-          <span className="text-[0.7rem] font-medium tracking-wide text-neutral-500 uppercase">Coach</span>
+          <span className="text-[0.7rem] font-medium tracking-wide text-neutral-500 uppercase">Community</span>
           <div className="grid gap-1">
             {COACHES.map((c) => (
               <Link
@@ -86,17 +115,6 @@ export function PrototypeBar({ area }: { area: "student" | "admin" }) {
           </div>
         </div>
 
-        <Segment
-          label="Area"
-          value={area}
-          options={[
-            { value: "student", label: "Student side" },
-            { value: "admin", label: "Admin area" },
-          ]}
-          onChange={(v) => {
-            if (v !== area) window.location.href = `/${v === "admin" ? "admin" : "c"}/${coach.slug}`
-          }}
-        />
 
         <Segment
           label="Template"

@@ -54,8 +54,8 @@ export function studentNav(coach: Coach, base: string): NavItem[] {
   ]
 }
 
-/** The admin menu is fixed; only wording inside it follows the coach. */
-export function adminNav(coach: Coach, base: string): { group: string; items: NavItem[] }[] {
+/** The admin menu is the same for every community, in our words, not the coach's. */
+export function adminNav(_coach: Coach, base: string): { group: string; items: NavItem[] }[] {
   return [
     {
       group: "Today",
@@ -64,7 +64,7 @@ export function adminNav(coach: Coach, base: string): { group: string; items: Na
     {
       group: "Coaching",
       items: [
-        { id: "students", label: coach.wording.students, href: `${base}/students`, icon: Users, screens: "ADM-02 to ADM-07" },
+        { id: "students", label: "Students", href: `${base}/students`, icon: Users, screens: "ADM-02 to ADM-07" },
         { id: "content", label: "Content", href: `${base}/content`, icon: GraduationCap, screens: "ADM-08 to ADM-15" },
         { id: "calendar", label: "Calendar", href: `${base}/calendar`, icon: CalendarDays, screens: "ADM-19 to ADM-23" },
         { id: "community", label: "Community", href: `${base}/community`, icon: MessagesSquare, screens: "ADM-17, ADM-18" },

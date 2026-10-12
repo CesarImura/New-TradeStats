@@ -20,6 +20,7 @@ import {
   courseProgress,
 } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
+import { DEMO_ADMIN } from "@/lib/data/account"
 
 const revenueConfig = { revenue: { label: "Revenue", color: "var(--chart-1)" } } satisfies ChartConfig
 
@@ -31,7 +32,7 @@ export function AdminOverview() {
   const members = coach.tiers.reduce((n, t) => n + t.members, 0)
 
   const kpis = [
-    { label: `Active ${coach.wording.students.toLowerCase()}`, value: members.toLocaleString("en"), note: "+9 this week" },
+    { label: "Active students", value: members.toLocaleString("en"), note: "+9 this week" },
     { label: "Revenue · October", value: "€17,940", note: "+8.9% vs September" },
     { label: "Open feedback", value: String(FEEDBACK_REQUESTS.length), note: "oldest waits 2 days" },
     { label: "Next live", value: "Today 15:30", note: "NY open · 41 signed up" },
@@ -41,8 +42,8 @@ export function AdminOverview() {
     <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm text-muted-foreground">Monday, 12 October</p>
-          <h1 className="text-2xl font-semibold tracking-tight">Good morning, {coach.coachName}</h1>
+          <p className="text-sm text-muted-foreground">Monday, 12 October · {coach.name}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Good morning, {DEMO_ADMIN.name.split(" ")[0]}</h1>
         </div>
         <Button>
           <Radio /> Go live
@@ -92,10 +93,10 @@ export function AdminOverview() {
         <Card>
           <CardHeader>
             <CardTitle>Needs your help</CardTitle>
-            <CardDescription>{needsHelp.length} {coach.wording.students.toLowerCase()}, most urgent first</CardDescription>
+            <CardDescription>{needsHelp.length} students, most urgent first</CardDescription>
             <CardAction>
               <Link href={`${base}/students`} className="inline-flex items-center gap-1 text-sm text-primary">
-                All {coach.wording.students.toLowerCase()} <ArrowRight className="size-4" />
+                All students <ArrowRight className="size-4" />
               </Link>
             </CardAction>
           </CardHeader>
@@ -182,7 +183,7 @@ export function AdminOverview() {
       <Card>
         <CardHeader>
           <CardTitle>Course progress</CardTitle>
-          <CardDescription>Average across {coach.wording.students.toLowerCase()} with access</CardDescription>
+          <CardDescription>Average across students with access</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
           {COURSES.map((c) => (

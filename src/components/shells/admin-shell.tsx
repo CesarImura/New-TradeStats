@@ -45,21 +45,17 @@ import {
 } from "@/components/ui/sidebar"
 
 /**
- * The admin area. Fixed structure and side navigation for every coach; only
- * the logo and the brand colour change.
+ * The admin area. Identical in every community: same layout, same colours,
+ * same words, so people who run several communities always know where things
+ * are. Only the switcher at the top says which community is open.
  */
 export function AdminShell({ studentBase, children }: { studentBase: string; children: React.ReactNode }) {
-  const { coach, theme, base, scope } = useCoach()
+  const { coach, base } = useCoach()
   const path = usePathname()
   const groups = adminNav(coach, base)
 
   return (
     <SidebarProvider>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `${scope}{--primary:${theme.primary};--primary-foreground:${theme.primaryForeground};--ring:${theme.primary};--sidebar-primary:${theme.primary};--sidebar-primary-foreground:${theme.primaryForeground};--chart-1:${theme.primary};}`,
-        }}
-      />
       <Sidebar collapsible="icon">
         <SidebarHeader className="py-3">
           <WorkspaceSwitcher />
@@ -90,7 +86,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
             <SidebarMenuItem>
               <SidebarMenuButton tooltip="View as student" render={<Link href={studentBase} />}>
                 <ExternalLink />
-                <span>View as {coach.wording.student.toLowerCase()}</span>
+                <span>View as student</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -102,7 +98,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
           <Separator orientation="vertical" className="mx-1 h-5" />
           <button className="hidden h-8 w-full max-w-sm min-w-0 items-center gap-2 rounded-md border bg-muted/40 px-2.5 text-sm whitespace-nowrap text-muted-foreground sm:flex">
             <Search className="size-4" />
-            <span className="truncate">Search {coach.wording.students.toLowerCase()}, lessons, events</span>
+            <span className="truncate">Search students, lessons, events</span>
             <kbd className="ml-auto rounded border bg-background px-1.5 font-mono text-[0.7rem]">⌘K</kbd>
           </button>
           <div className="ml-auto flex items-center gap-1">

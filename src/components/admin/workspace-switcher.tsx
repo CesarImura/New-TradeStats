@@ -90,7 +90,7 @@ export function WorkspaceSwitcher() {
                           <span className="grid min-w-0 flex-1 leading-tight">
                             <span className="truncate">{w.coach.name}</span>
                             <span className="truncate text-xs text-muted-foreground">
-                              {w.role} · {members.toLocaleString("en")} {w.coach.wording.students.toLowerCase()}
+                              {w.role} · {members.toLocaleString("en")} members
                             </span>
                           </span>
                           {w.slug === coach.slug && <Check className="size-4" />}
