@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CoachLogo } from "@/components/coach/coach-logo"
+import { CommunityMark } from "@/components/coach/community-mark"
 import {
   Command,
   CommandGroup,
@@ -17,7 +18,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import { DEMO_STUDENT_COMMUNITIES } from "@/lib/data/account"
 import { getCoach } from "@/lib/data/coaches"
-import { resolveTheme } from "@/lib/theme/resolve"
 import { cn } from "@/lib/utils"
 
 /**
@@ -85,15 +85,9 @@ export function CommunitySwitcher({ placement }: { placement: "sidebar" | "bar" 
           <CommandList>
             <CommandGroup heading="Your communities">
               {communities.map((c) => {
-                const t = resolveTheme(c)
                 return (
                   <CommandItem key={c.slug} value={c.name} onSelect={() => go(c.slug)} className="gap-2.5 py-2">
-                    <span
-                      className="grid size-7 shrink-0 place-items-center rounded-md text-[0.7rem] font-semibold"
-                      style={{ background: t.primary, color: t.primaryForeground }}
-                    >
-                      {c.mark}
-                    </span>
+                    <CommunityMark coach={c} className="size-7" />
                     <span className="grid min-w-0 flex-1 leading-tight">
                       <span className="truncate">{c.name}</span>
                       <span className="truncate text-xs text-muted-foreground">with {c.coachName}</span>

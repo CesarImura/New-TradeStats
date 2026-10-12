@@ -1,7 +1,20 @@
 import type { Coach } from "@/lib/data/coaches"
-import type { ThemeDraft } from "@/lib/prototype-store"
+import type { ContentDraft, ThemeDraft } from "@/lib/prototype-store"
 import { TEMPLATES } from "./templates"
 import type { CoachTheme } from "./types"
+
+/** The coach with their saved name, logo, words, menu and modules applied. */
+export function resolveCoach(coach: Coach, c: ContentDraft = {}): Coach {
+  return {
+    ...coach,
+    name: c.name || coach.name,
+    mark: c.mark || coach.mark,
+    logo: c.logo ?? coach.logo,
+    wording: { ...coach.wording, ...c.wording },
+    menu: c.menu ?? coach.menu,
+    modules: { ...coach.modules, ...c.modules },
+  }
+}
 
 /**
  * The theme a student actually sees: the template the coach is on, then the

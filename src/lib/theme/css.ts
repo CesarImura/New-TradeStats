@@ -4,8 +4,8 @@ import type { CoachTheme } from "./types"
 const DENSITY = { compact: 0.85, comfortable: 1, airy: 1.3 } as const
 const PAGE_GAP = { compact: "1rem", comfortable: "1.5rem", airy: "2rem" } as const
 
-/** Is a hex colour dark? Used to pick readable text on the sidebar. */
-function isDark(hex: string) {
+/** Is a hex colour dark? Used to pick readable text on coloured surfaces. */
+export function isDark(hex: string) {
   const m = hex.replace("#", "").match(/.{2}/g)
   if (!m || m.length < 3) return false
   const [r, g, b] = m.map((x) => parseInt(x, 16))
@@ -21,7 +21,10 @@ function isDark(hex: string) {
  * `scope` is `:root` for the student platform and a class for live previews.
  */
 export function themeToCss(t: CoachTheme, scope = ":root") {
-  const p = t.palettes[t.mode]
+  const base = t.palettes[t.mode]
+  const p = t.highlight
+    ? { ...base, highlight: t.highlight, highlightForeground: isDark(t.highlight) ? "#ffffff" : "#0a0a0a" }
+    : base
   const sidebarDark = isDark(p.sidebar)
   const sidebarFg = sidebarDark ? "#f5f6fb" : p.foreground
   const shadow =

@@ -1,66 +1,142 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
+import type { ModuleId, Wording } from "@/lib/data/coaches"
 import type { CoachTheme } from "@/lib/theme/types"
 
 /**
- * Prototype-only persistence. Stands in for the backend: whatever the coach
- * changes in the design editor or the prototype bar is kept per coach in
- * localStorage, and every open page re-renders with it.
+ * Prototype-only persistence, standing in for the backend. Per coach it keeps:
+ * - published: what students see
+ * - draft: unpublished edits from the design editor (null = none)
+ * - history: earlier published versions, newest first
+ * Everything lives in localStorage, so the editor and its preview frame
+ * (a separate document) stay in sync through storage events.
  */
+
 export type ThemeDraft = Partial<Omit<CoachTheme, "nav" | "fonts">> & {
   nav?: Partial<CoachTheme["nav"]>
   fonts?: Partial<CoachTheme["fonts"]>
 }
 
-const key = (slug: string) => `proto:theme:${slug}`
-const listeners = new Set<() => void>()
-const cache = new Map<string, { raw: string | null; value: ThemeDraft }>()
+export type ContentDraft = {
+  name?: string
+  mark?: string
+  logo?: string // data URL of the uploaded logo
+  wording?: Partial<Wording>
+  menu?: ModuleId[]
+  modules?: Partial<Record<ModuleId, boolean>>
+}
 
-function read(slug: string): ThemeDraft {
+export type Overrides = { theme: ThemeDraft; content: ContentDraft }
+export type Version = { at: string; label: string; snapshot: Overrides }
+
+export const EMPTY: Overrides = { theme: {}, content: {} }
+
+const k = {
+  pub: (s: string) => `proto:pub:${s}`,
+  draft: (s: string) => `proto:draft:${s}`,
+  history: (s: string) => `proto:history:${s}`,
+}
+
+const listeners = new Set<() => void>()
+const cache = new Map<string, { raw: string | null; value: unknown }>()
+
+function read<T>(key: string, fallback: T): T {
   let raw: string | null = null
   try {
-    raw = localStorage.getItem(key(slug))
+    raw = localStorage.getItem(key)
   } catch {}
-  const hit = cache.get(slug)
-  if (hit && hit.raw === raw) return hit.value
-  let value: ThemeDraft = {}
+  const hit = cache.get(key)
+  if (hit && hit.raw === raw) return hit.value as T
+  let value: T = fallback
   try {
-    value = raw ? JSON.parse(raw) : {}
+    if (raw) value = JSON.parse(raw)
   } catch {}
-  cache.set(slug, { raw, value })
+  cache.set(key, { raw, value })
   return value
 }
 
-const EMPTY: ThemeDraft = {}
-
-export function useThemeDraft(slug: string) {
-  return useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb)
-      const onStorage = (e: StorageEvent) => e.key === key(slug) && cb()
-      window.addEventListener("storage", onStorage)
-      return () => {
-        listeners.delete(cb)
-        window.removeEventListener("storage", onStorage)
-      }
-    },
-    () => read(slug),
-    () => EMPTY,
-  )
-}
-
-export function updateThemeDraft(slug: string, patch: ThemeDraft | null) {
-  const current = read(slug)
-  const next: ThemeDraft | null = patch === null ? null : {
-    ...current,
-    ...patch,
-    nav: { ...current.nav, ...patch.nav },
-    fonts: { ...current.fonts, ...patch.fonts },
-  }
+function write(key: string, value: unknown) {
   try {
-    if (next === null) localStorage.removeItem(key(slug))
-    else localStorage.setItem(key(slug), JSON.stringify(next))
+    if (value === null || value === undefined) localStorage.removeItem(key)
+    else localStorage.setItem(key, JSON.stringify(value))
   } catch {}
   listeners.forEach((l) => l())
+}
+
+function subscribe(cb: () => void) {
+  listeners.add(cb)
+  const onStorage = (e: StorageEvent) => e.key?.startsWith("proto:") && cb()
+  window.addEventListener("storage", onStorage)
+  return () => {
+    listeners.delete(cb)
+    window.removeEventListener("storage", onStorage)
+  }
+}
+
+function useKey<T>(key: string, fallback: T): T {
+  return useSyncExternalStore(subscribe, () => read(key, fallback), () => fallback)
+}
+
+// ---------- reads
+
+export function usePublished(slug: string) {
+  return useKey<Overrides>(k.pub(slug), EMPTY)
+}
+
+export function useDraft(slug: string) {
+  return useKey<Overrides | null>(k.draft(slug), null)
+}
+
+/** What a page shows: the draft in the editor's preview, otherwise the published design. */
+export function useOverrides(slug: string, source: "published" | "draft") {
+  const pub = usePublished(slug)
+  const draft = useDraft(slug)
+  return source === "draft" ? (draft ?? pub) : pub
+}
+
+export function useHistory(slug: string) {
+  return useKey<Version[]>(k.history(slug), [])
+}
+
+// ---------- writes
+
+export function mergeOverrides(base: Overrides, patch: Partial<Overrides>): Overrides {
+  const t = patch.theme ?? {}
+  const c = patch.content ?? {}
+  return {
+    theme: { ...base.theme, ...t, nav: { ...base.theme.nav, ...t.nav }, fonts: { ...base.theme.fonts, ...t.fonts } },
+    content: {
+      ...base.content,
+      ...c,
+      wording: { ...base.content.wording, ...c.wording },
+      modules: { ...base.content.modules, ...c.modules },
+    },
+  }
+}
+
+export function setDraft(slug: string, next: Overrides | null) {
+  write(k.draft(slug), next)
+}
+
+export function publish(slug: string, label = "Published") {
+  const draft = read<Overrides | null>(k.draft(slug), null)
+  if (!draft) return
+  const pub = read<Overrides>(k.pub(slug), EMPTY)
+  const history = read<Version[]>(k.history(slug), [])
+  write(k.history(slug), [{ at: new Date().toISOString(), label, snapshot: pub }, ...history].slice(0, 12))
+  write(k.pub(slug), draft)
+  write(k.draft(slug), null)
+}
+
+/** Prototype bar: change the live design directly, or reset a coach (null). */
+export function patchPublishedTheme(slug: string, patch: ThemeDraft | null) {
+  if (patch === null) {
+    ;[k.pub(slug), k.draft(slug), k.history(slug)].forEach((key) => write(key, null))
+    return
+  }
+  const pub = read<Overrides>(k.pub(slug), EMPTY)
+  write(k.pub(slug), mergeOverrides(pub, { theme: patch }))
+  const draft = read<Overrides | null>(k.draft(slug), null)
+  if (draft) write(k.draft(slug), mergeOverrides(draft, { theme: patch }))
 }

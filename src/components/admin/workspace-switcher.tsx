@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { Check, ChevronsUpDown, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
+import { CommunityMark } from "@/components/coach/community-mark"
 import {
   Command,
   CommandEmpty,
@@ -17,21 +18,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import { adminWorkspaces, adminWorkspacesByOrg } from "@/lib/data/account"
-import type { Coach } from "@/lib/data/coaches"
-import { resolveTheme } from "@/lib/theme/resolve"
 import { cn } from "@/lib/utils"
 
-function Mark({ coach, className }: { coach: Coach; className?: string }) {
-  const t = resolveTheme(coach)
-  return (
-    <span
-      className={cn("grid size-8 shrink-0 place-items-center rounded-md text-xs font-semibold", className)}
-      style={{ background: t.primary, color: t.primaryForeground }}
-    >
-      {coach.mark}
-    </span>
-  )
-}
 
 /**
  * Top of the admin sidebar. Owners, team members and operators often run
@@ -66,7 +54,7 @@ export function WorkspaceSwitcher() {
               />
             }
           >
-            <Mark coach={coach} />
+            <CommunityMark coach={coach} />
             <span className="grid min-w-0 flex-1 text-left leading-tight">
               <span className="truncate text-sm font-semibold">{coach.name}</span>
               <span className="truncate text-xs text-muted-foreground">
@@ -86,7 +74,7 @@ export function WorkspaceSwitcher() {
                       const members = w.coach.tiers.reduce((n, t) => n + t.members, 0)
                       return (
                         <CommandItem key={w.slug} value={`${w.coach.name} ${g.org}`} onSelect={() => go(w.slug)} className="gap-2.5 py-2">
-                          <Mark coach={w.coach} className="size-7" />
+                          <CommunityMark coach={w.coach} className="size-7" />
                           <span className="grid min-w-0 flex-1 leading-tight">
                             <span className="truncate">{w.coach.name}</span>
                             <span className="truncate text-xs text-muted-foreground">

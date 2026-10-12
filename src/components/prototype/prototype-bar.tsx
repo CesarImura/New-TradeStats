@@ -7,7 +7,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { COACHES, type ModuleId } from "@/lib/data/coaches"
-import { updateThemeDraft } from "@/lib/prototype-store"
+import { patchPublishedTheme } from "@/lib/prototype-store"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import { cn } from "@/lib/utils"
 
@@ -65,15 +65,16 @@ function Segment<T extends string>({
  * coaches, templates and layouts while demoing.
  */
 export function PrototypeBar({ area }: { area: "student" | "admin" }) {
-  const { coach, theme } = useCoach()
+  const { coach, theme, preview } = useCoach()
   const path = usePathname()
   const rest = path.split("/").slice(3).join("/")
-  const set = (patch: Parameters<typeof updateThemeDraft>[1]) => updateThemeDraft(coach.slug, patch)
+  const set = (patch: Parameters<typeof patchPublishedTheme>[1]) => patchPublishedTheme(coach.slug, patch)
 
   const section = path.split("/")[3]
   const adminHref = `/admin/${coach.slug}${section && TO_ADMIN[section] ? `/${TO_ADMIN[section]}` : ""}`
   const studentTarget = section ? TO_STUDENT[section] : undefined
   const studentHref = `/c/${coach.slug}${studentTarget && coach.modules[studentTarget] ? `/${studentTarget}` : ""}`
+  if (preview) return null
   const tab = "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
 
   return (

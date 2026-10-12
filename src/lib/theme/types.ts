@@ -32,6 +32,8 @@ export type CoachTheme = {
   palettes: Record<Mode, Palette>
   primary: string
   primaryForeground: string
+  /** Replaces the template's highlight colour. */
+  highlight?: string
   radius: number // px, for cards, inputs, menus
   buttonShape: ButtonShape
   shadow: Shadow

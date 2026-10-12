@@ -33,8 +33,9 @@ export type Coach = {
   org: string
   name: string
   coachName: string
-  /** Short mark shown in the logo tile. */
+  /** Short mark shown in the logo tile when there is no uploaded logo. */
   mark: string
+  logo?: string
   tagline: string
   template: TemplateId
   /** What the coach changed on top of the template. */

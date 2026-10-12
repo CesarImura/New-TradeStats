@@ -15,14 +15,16 @@ npm run dev
 | `/c/[coach]` | Student side, in the coach's theme (`northline`, `sophia`, `kairo`) |
 | `/admin/[coach]` | Admin area: fixed layout, coach's logo and colour |
 
-The **Prototype** button (bottom right) switches coach, template, navigation and light/dark. Changes are kept in localStorage per coach.
+The **Admin | Student** switch (bottom right) flips between views; the flask icon next to it changes community, template, navigation and light/dark.
+
+**Design editor:** `/admin/[coach]/design`. Settings on the left, the real student platform on the right (an iframe with `?preview=draft`). Changes stay a draft until **Publish**; earlier versions can be restored. Published design, draft and versions are kept in localStorage per community (`src/lib/prototype-store.ts`) in place of a backend.
 
 ## How theming works
 
 - `src/lib/theme/types.ts` – everything a coach can change (`CoachTheme`).
 - `src/lib/theme/templates.ts` – the starting templates: Terminal, Atelier, Pulse.
 - `src/lib/theme/css.ts` – turns a theme into shadcn's CSS variables plus a few rules (button shape, shadow, density, label style). shadcn components are not modified.
-- `src/lib/theme/resolve.ts` – template → coach's saved changes → unpublished edits.
+- `src/lib/theme/resolve.ts` – template → coach's published changes (or the draft in preview); also applies name, logo, words, menu and modules.
 - `src/lib/fonts.ts` – the font library.
 
 Coach data (wording, modules, menu, home widgets, tiers) is in `src/lib/data/coaches.ts`; sample content in `src/lib/data/sample.ts`.

@@ -13,9 +13,14 @@ export function CoachLogo({
 }) {
   return (
     <span className={cn("flex min-w-0 items-center gap-2.5", className)}>
-      <span className="grid size-8 shrink-0 place-items-center rounded-[min(var(--radius),10px)] bg-primary font-heading text-sm text-primary-foreground">
-        {coach.mark}
-      </span>
+      {coach.logo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={coach.logo} alt="" className="size-8 shrink-0 rounded-[min(var(--radius),10px)] object-contain" />
+      ) : (
+        <span className="grid size-8 shrink-0 place-items-center rounded-[min(var(--radius),10px)] bg-primary font-heading text-sm text-primary-foreground">
+          {coach.mark}
+        </span>
+      )}
       {showName && <span className="truncate font-heading text-[0.95rem] leading-tight">{coach.name}</span>}
     </span>
   )
