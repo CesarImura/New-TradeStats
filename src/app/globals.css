@@ -241,36 +241,22 @@
   background: var(--primary);
   box-shadow: 0 0 0 2px var(--background);
 }
-.hb-canvas .react-grid-item > .react-resizable-handle-e { right: -10px; }
-.hb-canvas .react-grid-item > .react-resizable-handle-e::after { right: 8px; top: 2px; bottom: auto; width: 4px; height: 16px; }
-.hb-canvas .react-grid-item > .react-resizable-handle-s { bottom: -10px; }
-.hb-canvas .react-grid-item > .react-resizable-handle-s::after { left: 2px; bottom: 8px; right: auto; width: 16px; height: 4px; }
-.hb-canvas .react-grid-item > .react-resizable-handle-se { right: -6px; bottom: -6px; }
-.hb-canvas .react-grid-item > .react-resizable-handle-se::after { right: 4px; bottom: 4px; width: 10px; height: 10px; }
-
-/*
- * Brand surfaces for widgets, Apple-style: the brand colour with at most a
- * small tonal shift (from --brand-a/b/c), no glow or texture.
- */
-@layer components {
-  .fx-hero {
-    background: linear-gradient(180deg, var(--brand-a), var(--brand-c));
-    color: var(--primary-foreground);
-  }
-  .fx-text {
-    color: var(--primary);
-  }
-  /* Geometry that follows the theme's corner style (set by themeToCss). */
-  .r-bar {
-    border-radius: var(--r-bar, 4px);
-  }
-  .r-chip {
-    border-radius: var(--r-chip, 6px);
-  }
-  .r-dot {
-    border-radius: var(--r-dot, 9999px);
-  }
-  .r-inner {
-    border-radius: var(--r-inner, 8px);
-  }
-}
+/* Edge handles: a short bar centred on each side. Corner handles: a dot. */
+.hb-canvas .react-grid-item > .react-resizable-handle { width: 20px; height: 20px; margin: 0; transform: none; }
+.hb-canvas .react-grid-item > .react-resizable-handle::after { right: auto; bottom: auto; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.hb-canvas .react-grid-item > .react-resizable-handle-n { top: -10px; left: calc(50% - 10px); cursor: ns-resize; }
+.hb-canvas .react-grid-item > .react-resizable-handle-s { bottom: -10px; top: auto; left: calc(50% - 10px); cursor: ns-resize; }
+.hb-canvas .react-grid-item > .react-resizable-handle-e { right: -10px; left: auto; top: calc(50% - 10px); cursor: ew-resize; }
+.hb-canvas .react-grid-item > .react-resizable-handle-w { left: -10px; top: calc(50% - 10px); cursor: ew-resize; }
+.hb-canvas .react-grid-item > .react-resizable-handle-n::after,
+.hb-canvas .react-grid-item > .react-resizable-handle-s::after { width: 18px; height: 4px; }
+.hb-canvas .react-grid-item > .react-resizable-handle-e::after,
+.hb-canvas .react-grid-item > .react-resizable-handle-w::after { width: 4px; height: 18px; }
+.hb-canvas .react-grid-item > .react-resizable-handle-nw { top: -10px; left: -10px; cursor: nwse-resize; }
+.hb-canvas .react-grid-item > .react-resizable-handle-ne { top: -10px; right: -10px; left: auto; cursor: nesw-resize; }
+.hb-canvas .react-grid-item > .react-resizable-handle-sw { bottom: -10px; top: auto; left: -10px; cursor: nesw-resize; }
+.hb-canvas .react-grid-item > .react-resizable-handle-se { bottom: -10px; right: -10px; top: auto; left: auto; cursor: nwse-resize; }
+.hb-canvas .react-grid-item > .react-resizable-handle-nw::after,
+.hb-canvas .react-grid-item > .react-resizable-handle-ne::after,
+.hb-canvas .react-grid-item > .react-resizable-handle-sw::after,
+.hb-canvas .react-grid-item > .react-resizable-handle-se::after { width: 9px; height: 9px; }

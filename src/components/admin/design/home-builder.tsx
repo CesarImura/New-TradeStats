@@ -2,15 +2,31 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import ReactGridLayout from "react-grid-layout"
-import { transformStrategy, type Layout, type LayoutItem, type PositionStrategy } from "react-grid-layout/core"
+import { transformStrategy, verticalCompactor, type Layout, type LayoutItem, type PositionStrategy } from "react-grid-layout/core"
 import { GridBackground } from "react-grid-layout/extras"
 import "react-grid-layout/css/styles.css"
 import "react-resizable/css/styles.css"
-import { Database, EyeOff, ExternalLink, Info, LayoutGrid, Monitor, Smartphone, Tablet } from "lucide-react"
+import { ArrowDownToLine, ArrowUpToLine, Copy, Database, EyeOff, ExternalLink, Info, LayoutGrid, Monitor, Pencil, Smartphone, Tablet, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { CoachContext, useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuGroup,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 import { useSidebar } from "@/components/ui/sidebar"
 import { PageRenderer, isAvailable } from "@/components/widgets/page-renderer"
 import { getWidget, heightOf, lookOf } from "@/components/widgets/registry"
@@ -118,6 +134,43 @@ export function HomeBuilder() {
     setSelected(w.id)
     toast(`${def.name} added at the bottom. Drag it where you want it.`)
   }
+
+  /** Save with the grid compacted upward, so the live page never has overlaps. */
+  const saveCompacted = (items: WidgetInstance[], key: string) => {
+    const packed = verticalCompactor.compact(items.map((w) => ({ i: w.id, x: w.x, y: w.y, w: w.w, h: w.h })), COLS)
+    const pos = new Map(packed.map((g) => [g.i, g]))
+    save({ items: items.map((w) => ({ ...w, x: pos.get(w.id)!.x, y: pos.get(w.id)!.y })) }, key)
+  }
+  const removeWidget = (id: string) => {
+    const def = getWidget(layout.items.find((w) => w.id === id)?.type ?? "")
+    saveCompacted(layout.items.filter((w) => w.id !== id), `del-${id}`)
+    if (selected === id) setSelected(null)
+    toast(`${def?.name ?? "Widget"} removed.`, { description: "Press ⌘Z to undo." })
+  }
+  const duplicateWidget = (id: string) => {
+    const w = layout.items.find((x) => x.id === id)
+    if (!w) return
+    const copy = { ...w, id: uid(), y: w.y + w.h }
+    saveCompacted([...layout.items, copy], `dup-${copy.id}`)
+    setSelected(copy.id)
+  }
+  const moveTo = (id: string, where: "top" | "bottom") =>
+    saveCompacted(layout.items.map((w) => (w.id === id ? { ...w, y: where === "top" ? -1 : 9999 } : w)), `order-${uid()}`)
+
+  // Delete / Backspace removes the selected widget, Escape deselects.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement
+      if (t.closest("input, textarea, select, [contenteditable=true]")) return
+      if (!selected) return
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault()
+        removeWidget(selected)
+      } else if (e.key === "Escape") setSelected(null)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  })
 
   // Grid items. Hidden-module widgets stay on the grid (marked) so their place is kept.
   const gridLayout: LayoutItem[] = layout.items.map((w) => {
@@ -268,8 +321,8 @@ export function HomeBuilder() {
                         layout={gridLayout}
                         gridConfig={{ cols: COLS, rowHeight: ROW_HEIGHT, margin: [gap, gap], containerPadding: [0, 0] }}
                         positionStrategy={scaled(scale)}
-                        dragConfig={{ enabled: true, threshold: 4, cancel: ".react-resizable-handle" }}
-                        resizeConfig={{ enabled: true, handles: ["e", "s", "se"] }}
+                        dragConfig={{ enabled: true, threshold: 4, cancel: ".react-resizable-handle, .no-drag" }}
+                        resizeConfig={{ enabled: true, handles: ["n", "e", "s", "w", "ne", "nw", "se", "sw"] }}
                         dropConfig={{ enabled: true, defaultItem: incomingSize, onDragOver: () => ({ ...incomingSize, ...dropOffset }) }}
                         droppingItem={{ i: DROP_ID, x: 0, y: 0, ...incomingSize }}
                         style={{ minHeight: 6 * (ROW_HEIGHT + gap) }}
@@ -302,7 +355,17 @@ export function HomeBuilder() {
                       >
                         {layout.items.map((w) => (
                           <div key={w.id} onClick={(e) => { e.stopPropagation(); setSelected(w.id) }}>
-                            <GridWidget w={w} selected={selected === w.id} available={isAvailable(w, coach)} />
+                            <WidgetMenu
+                              w={w}
+                              onOpen={() => setSelected(w.id)}
+                              onLook={(variant, minH) => updateItem(w.id, { variant, h: Math.max(w.h, minH) }, `${w.id}-variant`)}
+                              onDuplicate={() => duplicateWidget(w.id)}
+                              onMove={(where) => moveTo(w.id, where)}
+                              onPhone={(hideOnPhone) => updateItem(w.id, { hideOnPhone }, `${w.id}-phone`)}
+                              onRemove={() => removeWidget(w.id)}
+                            >
+                              <GridWidget w={w} selected={selected === w.id} available={isAvailable(w, coach)} onRemove={() => removeWidget(w.id)} onDuplicate={() => duplicateWidget(w.id)} />
+                            </WidgetMenu>
                           </div>
                         ))}
                       </ReactGridLayout>
@@ -324,16 +387,8 @@ export function HomeBuilder() {
                 w={selWidget}
                 canvasClass={canvasClass}
                 onChange={(patch, key) => updateItem(selWidget.id, patch, key)}
-                onDuplicate={() => {
-                  const bottom = layout.items.reduce((m, w) => Math.max(m, w.y + w.h), 0)
-                  const copy = { ...selWidget, id: uid(), x: selWidget.x, y: bottom }
-                  save({ items: [...layout.items, copy] }, `dup-${copy.id}`)
-                  setSelected(copy.id)
-                }}
-                onRemove={() => {
-                  save({ items: layout.items.filter((w) => w.id !== selWidget.id) }, `del-${selWidget.id}`)
-                  setSelected(null)
-                }}
+                onDuplicate={() => duplicateWidget(selWidget.id)}
+                onRemove={() => removeWidget(selWidget.id)}
               />
             ) : (
               <NothingSelected />
@@ -346,7 +401,77 @@ export function HomeBuilder() {
 }
 
 /** One widget on the builder grid: the real widget, plus its name and selection outline. */
-function GridWidget({ w, selected, available }: { w: WidgetInstance; selected: boolean; available: boolean }) {
+/** Right-click menu for a widget on the grid. */
+function WidgetMenu({
+  w,
+  children,
+  onOpen,
+  onLook,
+  onDuplicate,
+  onMove,
+  onPhone,
+  onRemove,
+}: {
+  w: WidgetInstance
+  children: React.ReactNode
+  onOpen: () => void
+  onLook: (variant: string, minH: number) => void
+  onDuplicate: () => void
+  onMove: (where: "top" | "bottom") => void
+  onPhone: (hide: boolean) => void
+  onRemove: () => void
+}) {
+  const def = getWidget(w.type)
+  if (!def) return <>{children}</>
+  const look = lookOf(def, w.variant)
+  return (
+    <ContextMenu onOpenChange={(open) => open && onOpen()}>
+      <ContextMenuTrigger render={<div className="size-full select-auto" />}>{children}</ContextMenuTrigger>
+      <ContextMenuContent className="w-56 font-[family-name:var(--ff-geist)]">
+        <ContextMenuGroup>
+          <ContextMenuLabel className="text-xs text-muted-foreground">{def.name}</ContextMenuLabel>
+          <ContextMenuItem onClick={onOpen}>
+            <Pencil /> Edit settings
+          </ContextMenuItem>
+          <ContextMenuSub>
+            <ContextMenuSubTrigger>Look</ContextMenuSubTrigger>
+            <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
+              <ContextMenuRadioGroup value={look.value} onValueChange={(v) => onLook(String(v), def.variants.find((x) => x.value === v)?.minH ?? 1)}>
+                {def.variants.map((v) => (
+                  <ContextMenuRadioItem key={v.value} value={v.value}>
+                    {v.label}
+                  </ContextMenuRadioItem>
+                ))}
+              </ContextMenuRadioGroup>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+        </ContextMenuGroup>
+        <ContextMenuSeparator />
+        <ContextMenuGroup>
+          <ContextMenuItem onClick={onDuplicate}>
+            <Copy /> Duplicate
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onMove("top")}>
+            <ArrowUpToLine /> Bring to top
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onMove("bottom")}>
+            <ArrowDownToLine /> Send to bottom
+          </ContextMenuItem>
+          <ContextMenuCheckboxItem checked={!!w.hideOnPhone} onCheckedChange={(v) => onPhone(!!v)}>
+            Hide on phones
+          </ContextMenuCheckboxItem>
+        </ContextMenuGroup>
+        <ContextMenuSeparator />
+        <ContextMenuItem variant="destructive" onClick={onRemove}>
+          <Trash2 /> Remove
+          <ContextMenuShortcut>⌫</ContextMenuShortcut>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  )
+}
+
+function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: WidgetInstance; selected: boolean; available: boolean; onRemove: () => void; onDuplicate: () => void }) {
   const def = getWidget(w.type)
   if (!def) return null
   const C = def.Component
@@ -363,11 +488,23 @@ function GridWidget({ w, selected, available }: { w: WidgetInstance; selected: b
       >
         {def.name} · {w.w}×{w.h}
       </span>
-      {w.hideOnPhone && (
-        <Badge variant="secondary" className="absolute top-2 right-2 z-10 gap-1">
-          <EyeOff className="size-3" /> Hidden on phones
-        </Badge>
-      )}
+      {/* Quick actions; .no-drag keeps clicks here from starting a drag */}
+      <div
+        className="no-drag absolute top-2 right-2 z-20 flex items-center gap-0.5 rounded-lg border bg-background p-0.5 font-[family-name:var(--ff-geist)] text-foreground opacity-0 shadow-sm transition-opacity group-hover/w:opacity-100 data-[on=true]:opacity-100"
+        data-on={selected}
+      >
+        {w.hideOnPhone && (
+          <span className="flex items-center gap-1 px-1.5 text-[0.65rem] text-muted-foreground" title="Hidden on phones">
+            <EyeOff className="size-3" />
+          </span>
+        )}
+        <Button variant="ghost" size="icon-xs" aria-label={`Duplicate ${def.name}`} onClick={(e) => { e.stopPropagation(); onDuplicate() }}>
+          <Copy />
+        </Button>
+        <Button variant="ghost" size="icon-xs" aria-label={`Remove ${def.name}`} className="hover:text-destructive" onClick={(e) => { e.stopPropagation(); onRemove() }}>
+          <Trash2 />
+        </Button>
+      </div>
       <div className="pointer-events-none flex min-h-0 flex-1 flex-col overflow-hidden select-none [&>*]:flex-1">
         {available ? (
           <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
