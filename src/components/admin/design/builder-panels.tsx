@@ -1,7 +1,8 @@
 "use client"
 
 import { useDraggable } from "@dnd-kit/core"
-import { Copy, EyeOff, GripVertical, MousePointerClick, Plus, Trash2 } from "lucide-react"
+import { useState } from "react"
+import { Copy, EyeOff, GripVertical, MousePointerClick, Plus, Search, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -14,63 +15,118 @@ import { Field, Segmented } from "./controls"
 
 const MODULE_LABEL = { courses: "Courses", calendar: "Calendar", community: "Community", journal: "Journal", ranking: "Ranking", ai: "AI assistant" }
 
-/** Left panel: every widget, grouped. Drag one onto the page, or press + to add it. */
-export function WidgetLibrary({ coach, onAdd }: { coach: Coach; onAdd: (type: string) => void }) {
+/**
+ * Left panel: every widget, grouped, each with a live thumbnail drawn in the
+ * coach's draft design. Search by name, description or group. Drag one onto
+ * the page, or press + to add it to the selected section.
+ */
+export function WidgetLibrary({
+  coach,
+  canvasClass,
+  onAdd,
+}: {
+  coach: Coach
+  /** Classes that give thumbnails the coach's theme (scope class, dark). */
+  canvasClass: string
+  onAdd: (type: string) => void
+}) {
+  const [query, setQuery] = useState("")
+  const q = query.trim().toLowerCase()
+  const match = (w: WidgetDef) => !q || `${w.name} ${w.description} ${w.group}`.toLowerCase().includes(q)
+  const groups = WIDGET_GROUPS.map((g) => ({ g, items: WIDGETS.filter((w) => w.group === g && match(w)) })).filter((x) => x.items.length)
+
   return (
-    <div className="grid gap-5 p-4">
-      <p className="text-xs text-muted-foreground">Drag a widget onto the page, or press + to add it to the selected section.</p>
-      {WIDGET_GROUPS.map((g) => {
-        const items = WIDGETS.filter((w) => w.group === g)
-        return (
-          <div key={g} className="grid gap-1.5">
+    <div className="grid gap-4">
+      <div className="sticky top-0 z-10 grid gap-2 border-b bg-background p-4 pb-3">
+        <div className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search widgets"
+            aria-label="Search widgets"
+            className="pl-8"
+          />
+          {query && (
+            <button onClick={() => setQuery("")} aria-label="Clear search" className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">Drag a widget onto the page, or press + to add it to the selected section.</p>
+      </div>
+      <div className="grid gap-5 px-4 pb-6">
+        {groups.length === 0 && (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No widget matches “{query}”. Try “calendar”, “progress” or “banner”.
+          </p>
+        )}
+        {groups.map(({ g, items }) => (
+          <div key={g} className="grid gap-2">
             <span className="text-[0.7rem] font-medium tracking-wide text-muted-foreground uppercase">{g}</span>
             {items.map((w) => (
-              <LibraryItem key={w.type} def={w} off={!!w.module && !coach.modules[w.module]} onAdd={() => onAdd(w.type)} />
+              <LibraryItem key={w.type} def={w} canvasClass={canvasClass} off={!!w.module && !coach.modules[w.module]} onAdd={() => onAdd(w.type)} />
             ))}
           </div>
-        )
-      })}
+        ))}
+      </div>
     </div>
   )
 }
 
-function LibraryItem({ def, off, onAdd }: { def: WidgetDef; off: boolean; onAdd: () => void }) {
+/** Width the thumbnail is laid out at before scaling: a column, or the full page for wide widgets. */
+const THUMB_WIDTH = { normal: 420, wide: 820 }
+const THUMB_SPACE = 236
+
+function LibraryItem({ def, off, canvasClass, onAdd }: { def: WidgetDef; off: boolean; canvasClass: string; onAdd: () => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `new:${def.type}`, disabled: off })
+  const logical = def.wide ? THUMB_WIDTH.wide : THUMB_WIDTH.normal
+  const C = def.Component
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "group flex items-center gap-2.5 rounded-lg border bg-background p-2 pr-1.5 text-left",
-        off ? "opacity-50" : "cursor-grab hover:border-foreground/30 active:cursor-grabbing",
+        "group overflow-hidden rounded-lg border bg-background text-left",
+        off ? "opacity-55" : "cursor-grab hover:border-foreground/30 hover:shadow-sm active:cursor-grabbing",
         isDragging && "opacity-40",
       )}
       {...(off ? {} : listeners)}
       {...attributes}
       aria-label={`Drag ${def.name} onto the page`}
     >
-      <span className="grid size-8 shrink-0 place-items-center rounded-md bg-muted">
-        <def.icon className="size-4" />
-      </span>
-      <span className="grid min-w-0 flex-1 leading-tight">
-        <span className="truncate text-sm">{def.name}</span>
-        <span className="truncate text-xs text-muted-foreground">
-          {off ? `Switch on ${MODULE_LABEL[def.module!]} to use` : def.description}
-        </span>
-      </span>
-      {!off && (
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={`Add ${def.name}`}
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation()
-            onAdd()
-          }}
+      {/* Live thumbnail: the real widget, in the coach's design, scaled down */}
+      <div className="relative flex h-[104px] justify-center overflow-hidden border-b bg-muted/40 pt-2" aria-hidden inert>
+        <div
+          className={cn(canvasClass, "pointer-events-none shrink-0 self-start rounded-md bg-background font-sans text-foreground select-none")}
+          style={{ width: logical, zoom: THUMB_SPACE / logical, padding: 12 }}
         >
-          <Plus />
-        </Button>
-      )}
+          <C variant={def.variants?.[0]?.value} props={{}} />
+        </div>
+        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-background to-transparent" />
+      </div>
+      <div className="flex items-center gap-2 p-2 pr-1.5">
+        <def.icon className="size-4 shrink-0 text-muted-foreground" />
+        <span className="grid min-w-0 flex-1 leading-tight">
+          <span className="truncate text-sm">{def.name}</span>
+          <span className="truncate text-xs text-muted-foreground">
+            {off ? `Switch on ${MODULE_LABEL[def.module!]} to use` : def.description}
+          </span>
+        </span>
+        {!off && (
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label={`Add ${def.name}`}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation()
+              onAdd()
+            }}
+          >
+            <Plus />
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

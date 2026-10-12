@@ -215,16 +215,16 @@ export function HomeBuilder() {
         </div>
       </div>
 
+      <CoachContext.Provider value={canvasCtx}>
+      <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, scope) }} />
       <DndContext id="home-builder" sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
         <div className="grid min-h-0 grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_320px]">
           <aside className="min-h-0 overflow-y-auto border-r bg-background">
-            <WidgetLibrary coach={coach} onAdd={addWidget} />
+            <WidgetLibrary coach={coach} canvasClass={cn("hb-canvas", theme.mode === "dark" && "dark")} onAdd={addWidget} />
           </aside>
 
           {/* Canvas: the real Home in the coach's draft theme */}
           <div ref={area} className="min-h-[70svh] min-w-0 overflow-x-hidden overflow-y-auto bg-muted/50 p-4 lg:min-h-0" onClick={() => setSelected(null)}>
-            <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, scope) }} />
-            <CoachContext.Provider value={canvasCtx}>
               <div
                 className={cn(
                   "hb-canvas mx-auto bg-background font-sans text-foreground shadow-xl ring-1 ring-black/10 transition-[max-width]",
@@ -258,7 +258,6 @@ export function HomeBuilder() {
                   ))}
                 </div>
               </div>
-            </CoachContext.Provider>
           </div>
 
           <aside className="min-h-0 overflow-y-auto border-l bg-background">
@@ -296,6 +295,7 @@ export function HomeBuilder() {
           {dragging && <DragChip type={dragging.startsWith("new:") ? dragging.slice(4) : locate(layout, dragging) ? (() => { const at = locate(layout, dragging)!; return layout.sections[at.si].slots[at.ci][at.wi].type })() : ""} />}
         </DragOverlay>
       </DndContext>
+      </CoachContext.Provider>
     </div>
   )
 }
