@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { History, PlayCircle, Undo2 } from "lucide-react"
+import { History, Play, PlayCircle, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -90,15 +90,18 @@ export function EditorBar({
   active,
   editor,
   guide,
+  previewHref,
 }: {
   slug: string
-  active: "look" | "home"
+  active: "look" | "pages"
   editor: ReturnType<typeof useDraftEditor>
   guide: { title: string; text: string }
+  /** The student page to open in a new tab, showing the draft. */
+  previewHref: string
 }) {
   const tabs = [
     { id: "look", label: "Look and feel", href: `/admin/${slug}/design` },
-    { id: "home", label: "Home page", href: `/admin/${slug}/design/home` },
+    { id: "pages", label: "Pages", href: `/admin/${slug}/design/pages` },
   ]
   return (
     <div className="flex flex-wrap items-center gap-2 border-b bg-background px-4 py-2">
@@ -138,6 +141,16 @@ export function EditorBar({
           Discard
         </Button>
       )}
+      <Button
+        variant="outline"
+        size="icon-sm"
+        aria-label="Preview in a new tab"
+        title={editor.dirty ? "Preview your draft in a new tab" : "Preview in a new tab"}
+        nativeButton={false}
+        render={<a href={previewHref} target="_blank" rel="noreferrer" />}
+      >
+        <Play />
+      </Button>
       <Button size="sm" disabled={!editor.dirty} onClick={editor.publish}>
         Publish
       </Button>

@@ -50,7 +50,7 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
                 {course.title} · {next.lesson.minutes} min
               </span>
             </div>
-            <Button size="lg" variant="secondary" className="shrink-0 self-start @lg:self-auto" {...link(`${base}/courses`)}>
+            <Button size="lg" variant="secondary" className="shrink-0 self-start @lg:self-auto" {...link(`${base}/courses/${course.id}/${next.lesson.id}`)}>
               <Play /> Continue
             </Button>
           </div>
@@ -74,7 +74,7 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
             {course.title} · {next.lesson.minutes} min
           </span>
         </div>
-        <Button size="icon-lg" aria-label="Continue" className="shrink-0" {...link(`${base}/courses`)}>
+        <Button size="icon-lg" aria-label="Continue" className="shrink-0" {...link(`${base}/courses/${course.id}/${next.lesson.id}`)}>
           <Play />
         </Button>
       </W>
@@ -86,7 +86,7 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
       <Head icon={GraduationCap} value={`${pct}%`} label={course.title} right={`${index + 1} of ${lessons.length}`} />
       <div className="flex items-end justify-between gap-3">
         <Big value={next.lesson.title} sub={`${next.module.title} · ${next.lesson.minutes} min`} />
-        <Button size="icon-lg" aria-label={`Continue ${coach.wording.lesson.toLowerCase()}`} className="shrink-0" {...link(`${base}/courses`)}>
+        <Button size="icon-lg" aria-label={`Continue ${coach.wording.lesson.toLowerCase()}`} className="shrink-0" {...link(`${base}/courses/${course.id}/${next.lesson.id}`)}>
           <Play />
         </Button>
       </div>

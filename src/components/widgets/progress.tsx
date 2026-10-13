@@ -85,7 +85,7 @@ function Change({ n }: { n: number }) {
   )
 }
 
-/** Ranking: trend (place over 8 weeks), podium (top 3), leaderboard (score bars). */
+/** Ranking: trend (place over 8 weeks), podium (top 3), leaderboard (score bars), brand (trend on the coach's colour). */
 export function MyRank({ variant = "trend" }: WidgetProps) {
   const { coach } = useCoach()
   const empty = useEmpty()
@@ -141,10 +141,10 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
   }
 
   return (
-    <W>
+    <W brand={variant === "brand"}>
       <Head icon={Trophy} label={coach.wording.ranking} right={<Change n={me.change} />} />
       <Big value={`#${me.rank}`} unit="of 240" sub={`Up from #${RANK_HISTORY[0]} eight weeks ago`} />
-      <Spark values={RANK_HISTORY} invert />
+      <Spark values={RANK_HISTORY} invert format={(v) => `#${v}`} tip={(i) => (i === RANK_HISTORY.length - 1 ? "This week" : `${RANK_HISTORY.length - 1 - i}w ago`)} />
     </W>
   )
 }

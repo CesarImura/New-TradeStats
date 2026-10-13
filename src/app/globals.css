@@ -161,6 +161,34 @@
       linear-gradient(to right, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px);
     background-size: 96px 100%;
   }
+  /*
+   * Brand surface: the coach's colour as a card, with its soft tonal shift and
+   * a little light in one corner. Everything inside re-tints to the brand's
+   * text colour (labels, icons, charts, chips, buttons), so widgets built for
+   * plain cards read well here too.
+   */
+  .fx-hero {
+    --on: var(--on-brand, var(--primary-foreground));
+    background:
+      radial-gradient(120% 90% at 100% 0%, color-mix(in oklab, white 16%, transparent), transparent 55%),
+      var(--brand-grad, var(--primary));
+    color: var(--on);
+    --foreground: var(--on);
+    --card-foreground: var(--on);
+    --muted-foreground: color-mix(in oklab, var(--on) 72%, transparent);
+    --muted: color-mix(in oklab, var(--on) 14%, transparent);
+    --border: color-mix(in oklab, var(--on) 22%, transparent);
+    --primary: var(--on);
+    --primary-foreground: var(--brand-b, black);
+    --brand-a: var(--on);
+    --brand-c: var(--on);
+    --highlight: var(--on);
+    --highlight-foreground: var(--brand-b, black);
+    --card: transparent;
+    /* Inputs and page-coloured boxes become a light tint of the brand. */
+    --background: color-mix(in oklab, var(--on) 14%, transparent);
+    --input: color-mix(in oklab, var(--on) 30%, transparent);
+  }
   .coach-bg-glow {
     background-image:
       radial-gradient(60rem 30rem at 85% -10%, color-mix(in oklab, var(--primary) 18%, transparent), transparent 70%),

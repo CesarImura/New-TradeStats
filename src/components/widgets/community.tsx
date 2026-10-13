@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { Bars, Big, Caps, Head, W } from "./kit"
 import { AvatarStack, WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 
-/** Announcement: highlight (colour card), plain, post (with reactions). */
+/** Announcement: highlight (colour card), plain, post (with reactions), brand (on the coach's colour). */
 export function Announcement({ variant = "highlight" }: WidgetProps) {
   const { coach } = useCoach()
   const empty = useEmpty()
@@ -46,7 +46,7 @@ export function Announcement({ variant = "highlight" }: WidgetProps) {
 
   const hl = variant === "highlight"
   return (
-    <W className={cn(hl && "bg-highlight text-highlight-foreground")}>
+    <W brand={variant === "brand"} className={cn(hl && "bg-highlight text-highlight-foreground")}>
       <div className={cn("flex min-w-0 items-center gap-2 text-[0.65rem] font-medium tracking-wide uppercase", hl ? "text-highlight-foreground/70" : "text-muted-foreground")}>
         <Megaphone className={cn("size-4 shrink-0", !hl && "text-primary")} />
         <span className="truncate">From {coach.coachName}</span>
@@ -58,7 +58,7 @@ export function Announcement({ variant = "highlight" }: WidgetProps) {
   )
 }
 
-/** Discord: online (who's around + activity today), card, banner. */
+/** Discord: online (who's around + activity today), card, banner, brand (online, on the coach's colour). */
 export function Discord({ variant = "online", props }: WidgetProps) {
   const empty = useEmpty()
   const text = String(props.text || "Live chat, trade ideas and Q&A with the group.")
@@ -98,7 +98,7 @@ export function Discord({ variant = "online", props }: WidgetProps) {
   }
 
   return (
-    <W>
+    <W brand={variant === "brand"}>
       <Head
         icon={MessageSquareText}
         label="Discord"
@@ -113,7 +113,12 @@ export function Discord({ variant = "online", props }: WidgetProps) {
         <Big value={empty ? 0 : DISCORD.online} unit="online" />
         {!empty && <AvatarStack initials={DISCORD.avatars.slice(0, 4)} className="hidden @[15rem]:flex" />}
       </div>
-      <Bars values={empty ? DISCORD_ACTIVITY.map(() => 0) : DISCORD_ACTIVITY} active={DISCORD_ACTIVITY.length - 1} />
+      <Bars
+        values={empty ? DISCORD_ACTIVITY.map(() => 0) : DISCORD_ACTIVITY}
+        active={DISCORD_ACTIVITY.length - 1}
+        format={(v) => `${v} msgs`}
+        tips={DISCORD_ACTIVITY.map((_, i) => (i === DISCORD_ACTIVITY.length - 1 ? "Last hour" : `${DISCORD_ACTIVITY.length - 1 - i}h ago`))}
+      />
     </W>
   )
 }

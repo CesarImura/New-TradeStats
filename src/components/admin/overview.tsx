@@ -155,8 +155,21 @@ export function AdminOverview() {
               <BarChart data={REVENUE_MONTHS} margin={{ left: 0, right: 0 }}>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                <ChartTooltip
+                  cursor={false}
+                  content={
+                    <ChartTooltipContent
+                      hideLabel
+                      formatter={(v, _name, item) => (
+                        <span className="flex w-full items-center justify-between gap-4">
+                          <span className="text-muted-foreground">{item.payload?.month} revenue</span>
+                          <span className="font-mono font-medium text-foreground tabular-nums">€{Number(v).toLocaleString("en")}</span>
+                        </span>
+                      )}
+                    />
+                  }
+                />
+                <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} activeBar={{ fill: "var(--foreground)" }} />
               </BarChart>
             </ChartContainer>
           </CardContent>

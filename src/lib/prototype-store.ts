@@ -142,3 +142,23 @@ export function patchPublishedTheme(slug: string, patch: ThemeDraft | null) {
   const draft = read<Overrides | null>(k.draft(slug), null)
   if (draft) write(k.draft(slug), mergeOverrides(draft, { theme: patch }))
 }
+
+// ---------- other stored data (courses, calendar, student activity)
+
+/**
+ * Any other prototype data, under `proto:<key>`. `fallback` must be a stable
+ * value (a module constant), since it is returned as-is until something is saved.
+ */
+export function useStored<T>(key: string, fallback: T): T {
+  return useKey<T>(`proto:${key}`, fallback)
+}
+
+export function readStored<T>(key: string, fallback: T): T {
+  return read<T>(`proto:${key}`, fallback)
+}
+
+/** Save under `proto:<key>`; pass a function to update from the current value. */
+export function setStored<T>(key: string, value: T | ((current: T) => T), fallback?: T) {
+  const next = typeof value === "function" ? (value as (c: T) => T)(read<T>(`proto:${key}`, fallback as T)) : value
+  write(`proto:${key}`, next)
+}

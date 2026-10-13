@@ -249,3 +249,106 @@ export const DISCORD_ACTIVITY = [4, 2, 1, 0, 1, 3, 9, 14, 22, 18, 26, 31]
 
 /** Equity over the last 20 trading days, in euros. */
 export const EQUITY = [0, 120, 40, 40, 300, 390, 180, 320, 630, 570, 570, 650, 650, 500, 920, 1100, 1240, 1100, 1310, 1220]
+
+// ---------- Second widget batch (times in the student's time zone, now = Mon 09:00)
+
+export const MARKET_SESSIONS = [
+  { name: "Sydney", open: 0, close: 9 },
+  { name: "Tokyo", open: 2, close: 11 },
+  { name: "London", open: 9, close: 18 },
+  { name: "New York", open: 14, close: 23 },
+]
+export const SESSION_PNL = [
+  { name: "Tokyo", pnl: -70 },
+  { name: "London", pnl: 540 },
+  { name: "New York", pnl: 310 },
+]
+
+/** A funded / prop-firm style account with limits. */
+export const ACCOUNT = {
+  name: "Funded 50K",
+  start: 50000,
+  peak: 53100,
+  balance: 52340,
+  maxDrawdown: 5000, // 10% of start, from peak
+  dailyLimit: 2500,
+  today: -120,
+  history: [50000, 50320, 50180, 50640, 51200, 50900, 51650, 52400, 53100, 52700, 52480, 52340],
+}
+
+export const SETUPS = [
+  { name: "Opening range breakout", short: "ORB", trades: 14, win: 64, r: 1.4 },
+  { name: "Failed breakout", short: "Failed BO", trades: 9, win: 56, r: 0.9 },
+  { name: "VWAP reclaim", short: "VWAP", trades: 11, win: 45, r: 0.3 },
+  { name: "News fade", short: "News", trades: 5, win: 20, r: -0.6 },
+]
+
+/** How many trades ended at each R-multiple, from −3R to +4R. */
+export const R_BINS = [
+  { r: -3, n: 1 },
+  { r: -2, n: 3 },
+  { r: -1, n: 11 },
+  { r: 0, n: 4 },
+  { r: 1, n: 7 },
+  { r: 2, n: 5 },
+  { r: 3, n: 2 },
+  { r: 4, n: 1 },
+]
+export const R_STATS = { expectancy: 0.42, avgWin: 1.8, avgLoss: -0.9, winRate: 44 }
+
+export const FEEDBACK = {
+  requested: 6,
+  answered: 4,
+  avgReplyHours: 9,
+  items: [
+    { trade: "NQ long · −1.2R", status: "waiting" as const, when: "2 days" },
+    { trade: "ES short · +2.4R", status: "answered" as const, when: "yesterday", reply: "Good patience on the entry. Next time scale out at 1R so the runner is free." },
+    { trade: "CL long · −0.8R", status: "answered" as const, when: "3 days ago", reply: "You entered before the candle closed. Wait for the close." },
+    { trade: "NQ short · +0.6R", status: "waiting" as const, when: "5 hours" },
+  ],
+}
+
+export const AI_INSIGHT = {
+  title: "You give back profits after lunch",
+  text: "Morning trades average +0.8R; after 12:00 they average −0.4R.",
+  hours: ["09", "10", "11", "12", "13", "14", "15"],
+  r: [0.9, 1.1, 0.7, 0.2, -0.3, -0.5, -0.4],
+  lesson: "Daily loss limits",
+}
+
+export const CALL_SLOTS = [
+  { day: "Tue", date: "13 Oct", times: ["10:00", "14:30"] },
+  { day: "Wed", date: "14 Oct", times: [] as string[] },
+  { day: "Thu", date: "15 Oct", times: ["09:00", "11:00", "16:00"] },
+  { day: "Fri", date: "16 Oct", times: ["13:00"] },
+]
+export const CALL_ALLOWANCE = { used: 1, included: 2, length: 30 }
+
+export const UNLOCKS = [
+  { title: "Module 4 · Building a playbook", lessons: 6, inHours: 74, date: "Thu 15 Oct" },
+  { title: "Module 5 · Scaling up", lessons: 4, inHours: 242, date: "Thu 22 Oct" },
+  { title: "Bonus · Live trade breakdowns", lessons: 8, inHours: 410, date: "Thu 29 Oct" },
+]
+
+export const UPGRADE = {
+  current: { name: "Core", price: "€149" },
+  next: { name: "Trading Desk", price: "€390", cadence: "month" },
+  features: [
+    { label: "All courses", current: true, next: true },
+    { label: "Weekly live sessions", current: true, next: true },
+    { label: "Group trade review", current: false, next: true },
+    { label: "1:1 call every month", current: false, next: true },
+    { label: "Unlimited AI questions", current: false, next: true },
+  ],
+}
+
+export const COACH_PROFILE = {
+  title: "Futures trader since 2012",
+  bio: "I trade the NY open on NQ and ES, and teach a rules-first way to do it. No signals, no hype.",
+  stats: [
+    { label: "Students", value: "182" },
+    { label: "Years trading", value: "12" },
+    { label: "Rating", value: "4.9" },
+  ],
+  socials: ["YouTube", "X", "Instagram"],
+}

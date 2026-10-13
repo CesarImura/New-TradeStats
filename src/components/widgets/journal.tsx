@@ -25,7 +25,7 @@ export function JournalPnl({ variant = "bars" }: WidgetProps) {
       <W>
         <Head icon={LineChart} tone="profit" value={`${JOURNAL_STATS.winRate}%`} unit="win" right="20 days" />
         <Big value={signed(EQUITY[EQUITY.length - 1])} tone="profit" sub={`${JOURNAL_STATS.trades} trades this week`} />
-        <Spark values={EQUITY} tone="profit" />
+        <Spark values={EQUITY} tone="profit" format={signed} tip={(i) => `Day ${i + 1}`} />
       </W>
     )
   }
@@ -43,7 +43,7 @@ export function JournalPnl({ variant = "bars" }: WidgetProps) {
     <W>
       <Head icon={LineChart} tone="profit" value={`${JOURNAL_STATS.winRate}%`} unit="win" right="This week" />
       <Big value={signed(JOURNAL_STATS.pnl)} tone="profit" sub={`${JOURNAL_STATS.trades} trades`} />
-      <Bars diverging values={JOURNAL_WEEK.map((d) => d.pnl)} labels={JOURNAL_WEEK.map((d) => d.day[0])} />
+      <Bars diverging values={JOURNAL_WEEK.map((d) => d.pnl)} labels={JOURNAL_WEEK.map((d) => d.day[0])} tips={JOURNAL_WEEK.map((d) => d.day)} format={signed} />
     </W>
   )
 }

@@ -89,6 +89,8 @@ export function themeToCss(t: CoachTheme, scope = ":root") {
     "--button-radius": buttonRadius,
     "--card-shadow": cardShadow,
     // Brand visuals: a natural gradient ramp, a harmonious series palette, glow and texture.
+    // The brand colour's own text colour, kept separate so brand surfaces can re-tint --primary.
+    "--on-brand": t.primaryForeground,
     "--brand-a": fx.a,
     "--brand-b": fx.b,
     "--brand-c": fx.c,

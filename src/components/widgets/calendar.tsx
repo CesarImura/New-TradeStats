@@ -1,12 +1,13 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { Bell, CalendarDays, CalendarX, Newspaper, Radio, TriangleAlert } from "lucide-react"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { EVENTS, NOW_HOUR, TODAY, type CalEvent } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Big, Caps, DayTimeline, Head, Key, TONE, Track, W, fill, series } from "./kit"
+import { Big, Caps, DayTimeline, Head, Key, TONE, Tip, Track, W, fill, series } from "./kit"
 import { WidgetEmpty, inWords, useEmpty, type WidgetProps } from "./shared"
 
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
@@ -97,6 +98,7 @@ export function NextLive({ variant = "countdown" }: WidgetProps) {
 export function ThisWeek({ variant = "week", props }: WidgetProps) {
   const { coach, base } = useCoach()
   const empty = useEmpty()
+  const [hover, setHover] = useState<string>()
   if (empty) return <NothingPlanned />
   const items = EVENTS.filter((e) => props.news !== false || e.kind !== "news")
 
@@ -112,9 +114,16 @@ export function ThisWeek({ variant = "week", props }: WidgetProps) {
               <div key={d} className={cn("r-inner flex min-w-0 flex-col gap-1 p-1.5", today ? "bg-primary text-primary-foreground" : "bg-muted/60")}>
                 <Caps className={cn(today && "text-primary-foreground/80")}>{d}</Caps>
                 <span className="font-heading text-lg leading-none font-semibold tabular-nums">{12 + i}</span>
-                <div className="mt-auto flex flex-col gap-1">
+                <div className="mt-auto flex flex-col gap-1" onPointerLeave={() => setHover(undefined)}>
                   {ev.map((e) => (
-                    <span key={e.id} className="r-bar h-1.5" title={`${e.time} ${e.title}`} style={{ background: today ? "currentColor" : KIND[e.kind].color, opacity: today ? 0.85 : 1 }} />
+                    <span
+                      key={e.id}
+                      onPointerEnter={() => setHover(e.id)}
+                      className={cn("r-bar relative h-1.5 transition-[opacity,transform] duration-150", hover === e.id && "scale-y-150")}
+                      style={{ background: today ? "currentColor" : KIND[e.kind].color, opacity: hover && hover !== e.id ? 0.4 : today ? 0.85 : 1 }}
+                    >
+                      {hover === e.id && <Tip x={i === 0 ? 0 : i === WEEK.length - 1 ? 100 : 50} y={0} place="above" label={`${e.day} ${e.time}`} value={e.title} />}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -176,6 +185,7 @@ const IMPACT = { high: 3, medium: 2, low: 1 } as const
 /** Economic news: impact (bars across the week), next (the next big one), list. */
 export function EconNews({ variant = "impact" }: WidgetProps) {
   const empty = useEmpty()
+  const [hover, setHover] = useState<string>()
   if (empty) return <NothingPlanned news />
   const news = EVENTS.filter((e) => e.kind === "news")
   const big = news.find((e) => e.impact === "high")!
@@ -226,20 +236,26 @@ export function EconNews({ variant = "impact" }: WidgetProps) {
   return (
     <W>
       <Head icon={Newspaper} tone="loss" value={news.filter((e) => e.noTrade).length} label="No-trade events" right="This week" />
-      <div className="flex flex-1 items-end gap-1.5">
-        {WEEK.map((d) => {
+      <div className="flex flex-1 items-end gap-1.5" onPointerLeave={() => setHover(undefined)}>
+        {WEEK.map((d, i) => {
           const ev = news.filter((e) => e.day === d)
           return (
-            <div key={d} className="flex h-full flex-1 flex-col justify-end gap-1.5">
+            <div key={d} className="flex h-full flex-1 flex-col justify-end gap-1.5" onPointerEnter={() => setHover(ev[0]?.id)}>
               <div className="flex flex-1 items-end justify-center gap-0.5">
                 {ev.length === 0 && <span className="r-bar h-1 w-full bg-muted" />}
                 {ev.map((e) => (
                   <span
                     key={e.id}
-                    title={`${e.time} ${e.title}`}
-                    className="r-bar w-full max-w-5"
-                    style={{ height: `${(IMPACT[e.impact ?? "low"] / 3) * 100}%`, background: e.noTrade ? fill("loss") : `color-mix(in oklab, ${TONE.loss} 28%, var(--muted))` }}
-                  />
+                    onPointerEnter={() => setHover(e.id)}
+                    className="r-bar relative w-full max-w-5 transition-opacity duration-150"
+                    style={{
+                      height: `${(IMPACT[e.impact ?? "low"] / 3) * 100}%`,
+                      background: e.noTrade ? fill("loss") : `color-mix(in oklab, ${TONE.loss} 28%, var(--muted))`,
+                      opacity: hover && hover !== e.id ? 0.35 : 1,
+                    }}
+                  >
+                    {hover === e.id && <Tip x={i === 0 ? 0 : i === WEEK.length - 1 ? 100 : 50} y={0} place="above" label={`${e.day} ${e.time}`} value={e.title} />}
+                  </span>
                 ))}
               </div>
               <Caps className="text-center">{d.slice(0, 1)}</Caps>

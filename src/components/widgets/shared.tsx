@@ -31,7 +31,7 @@ export function WidgetEmpty({
   className?: string
 }) {
   return (
-    <Card className={cn("@container", className)}>
+    <Card className={cn("@container rounded-(--radius)", className)}>
       <div className="flex flex-col items-start gap-3 px-(--card-spacing) @md:flex-row @md:items-center">
         <span className="r-chip grid size-10 shrink-0 place-items-center bg-muted text-muted-foreground">
           <Icon className="size-5" />

@@ -5,7 +5,6 @@ import {
   ArrowDown,
   ArrowUp,
   ChevronDown,
-  ExternalLink,
   ImagePlus,
   Monitor,
   Smartphone,
@@ -72,6 +71,7 @@ export function DesignEditor() {
         slug={slug}
         active="look"
         editor={editor}
+        previewHref={src}
         guide={{ title: "Designing your platform", text: "Pick a template, add your logo, then fine-tune. Nothing changes for students until you publish." }}
       />
 
@@ -426,9 +426,6 @@ export function DesignEditor() {
               ))}
             </select>
             <span className="ml-auto hidden text-xs text-muted-foreground sm:inline">What students will see{dirty ? " after you publish" : ""}</span>
-            <Button variant="ghost" size="sm" nativeButton={false} render={<a href={src} target="_blank" rel="noreferrer" />}>
-              <ExternalLink /> Open
-            </Button>
           </div>
           <PreviewFrame src={src} device={device} />
         </div>

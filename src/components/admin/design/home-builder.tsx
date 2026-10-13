@@ -1,12 +1,13 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
 import ReactGridLayout from "react-grid-layout"
 import { transformStrategy, verticalCompactor, type Layout, type LayoutItem, type PositionStrategy } from "react-grid-layout/core"
 import { GridBackground } from "react-grid-layout/extras"
 import "react-grid-layout/css/styles.css"
 import "react-resizable/css/styles.css"
-import { ArrowDownToLine, ArrowUpToLine, Copy, Database, EyeOff, ExternalLink, Info, LayoutGrid, Monitor, Pencil, Smartphone, Tablet, Trash2 } from "lucide-react"
+import { ArrowDownToLine, ArrowLeft, ArrowUpToLine, Copy, Database, EyeOff, Info, LayoutGrid, Monitor, Pencil, Smartphone, Tablet, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { CoachContext, useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
@@ -197,13 +198,18 @@ export function HomeBuilder() {
     <div className="-m-4 grid min-h-[calc(100svh-3.5rem)] grid-rows-[auto_auto_1fr] md:-m-6 lg:-m-8 lg:h-[calc(100svh-3.5rem)]">
       <EditorBar
         slug={slug}
-        active="home"
+        active="pages"
         editor={editor}
+        previewHref={previewHref}
         guide={{ title: "Building your Home page", text: "Drag widgets onto the grid, drag their edges to resize them, pick one of three looks for each, and make a different Home per tier if you like." }}
       />
 
       {/* Tier, data, device and preview */}
       <div className="flex flex-wrap items-center gap-2 border-b bg-background px-4 py-2 text-sm">
+        <Button variant="ghost" size="sm" className="-ml-1.5" nativeButton={false} render={<Link href={`/admin/${slug}/design/pages`} />}>
+          <ArrowLeft /> All pages
+        </Button>
+        <span className="h-4 w-px bg-border" />
         <span className="text-muted-foreground">Home for</span>
         <select value={tier} onChange={(e) => { setTier(e.target.value); setSelected(null) }} className="h-8 rounded-lg border bg-background px-2" aria-label="Which tier's Home">
           <option value="default">Everyone (default)</option>
@@ -239,7 +245,7 @@ export function HomeBuilder() {
             onChange={setData}
             options={[
               { value: "sample", label: "Sample data" },
-              { value: "empty", label: "Empty (new student)" },
+              { value: "empty", label: "New student" },
             ]}
           />
           <Segmented
@@ -252,9 +258,6 @@ export function HomeBuilder() {
               { value: "phone", label: <><Smartphone className="size-3.5" /> Phone</> },
             ]}
           />
-          <Button variant="ghost" size="sm" nativeButton={false} render={<a href={previewHref} target="_blank" rel="noreferrer" />}>
-            <ExternalLink /> Preview
-          </Button>
         </div>
       </div>
 

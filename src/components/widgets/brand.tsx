@@ -12,6 +12,9 @@ import { cn } from "@/lib/utils"
 import { Caps, Head, Ring, W } from "./kit"
 import { Cover, type WidgetProps } from "./shared"
 
+/** "Ask Kairo AI", but not "Ask Ask Marco" when the coach already named it that way. */
+const askAi = (name: string) => (/^ask\b/i.test(name) ? name : `Ask ${name}`)
+
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
 
 /** Welcome video: side (video beside text), stacked (video on top), minimal (quote + play). */
@@ -29,7 +32,7 @@ export function WelcomeVideo({ variant = "side", props }: WidgetProps) {
 
   if (variant === "minimal") {
     return (
-      <div className="@container flex flex-col items-center gap-4 py-6 text-center">
+      <W className="items-center justify-center gap-4 text-center">
         <Quote className="size-6 text-primary" />
         <p className="max-w-2xl font-heading text-2xl leading-snug @lg:text-3xl">“{title}”</p>
         <div className="flex items-center gap-3">
@@ -41,13 +44,13 @@ export function WelcomeVideo({ variant = "side", props }: WidgetProps) {
             <PlayCircle /> Watch · 2 min
           </Button>
         </div>
-      </div>
+      </W>
     )
   }
 
   if (variant === "stacked") {
     return (
-      <Card className="pt-0">
+      <Card className="rounded-(--radius) pt-0">
         {video}
         <CardHeader>
           <CardDescription className="eyebrow">A message from {coach.coachName}</CardDescription>
@@ -59,7 +62,7 @@ export function WelcomeVideo({ variant = "side", props }: WidgetProps) {
   }
 
   return (
-    <Card className="@container">
+    <Card className="@container rounded-(--radius)">
       <div className="grid gap-5 px-(--card-spacing) @xl:grid-cols-[1fr_1.2fr] @xl:items-center">
         {video}
         <div className="flex flex-col gap-2">
@@ -105,17 +108,19 @@ export function TextBlock({ variant = "plain", props }: WidgetProps) {
   const text = String(props.text || "Watch one lesson a day, join Monday's live session, and journal every trade. Ask for a review whenever you're unsure.")
   if (variant === "quote") {
     return (
-      <figure className="flex flex-col gap-3 border-l-4 border-primary py-1 pl-5">
-        <blockquote className="font-heading text-2xl leading-snug">“{text}”</blockquote>
-        <figcaption className="text-sm text-muted-foreground">— {coach.coachName}</figcaption>
-      </figure>
+      <W className="justify-center">
+        <figure className="flex flex-col gap-3 border-l-4 border-primary py-1 pl-5">
+          <blockquote className="font-heading text-2xl leading-snug">“{text}”</blockquote>
+          <figcaption className="text-sm text-muted-foreground">— {coach.coachName}</figcaption>
+        </figure>
+      </W>
     )
   }
   return (
-    <div className={cn("flex flex-col gap-2 py-1", variant === "centered" && "items-center text-center")}>
+    <W className={cn("gap-2", variant === "centered" && "items-center justify-center text-center")}>
       <h3 className="text-2xl leading-tight">{title}</h3>
       <p className="max-w-prose whitespace-pre-line text-muted-foreground">{text}</p>
-    </div>
+    </W>
   )
 }
 
@@ -123,7 +128,7 @@ export function TextBlock({ variant = "plain", props }: WidgetProps) {
 export function PartnerLinks({ variant = "list" }: WidgetProps) {
   if (variant === "tiles") {
     return (
-      <Card className="@container">
+      <Card className="@container rounded-(--radius)">
         <CardHeader>
           <CardDescription className="eyebrow">Tools and partners</CardDescription>
           <CardTitle className="text-lg">What we use</CardTitle>
@@ -144,7 +149,7 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
   }
   if (variant === "chips") {
     return (
-      <div className="flex flex-wrap items-center gap-2">
+      <W className="flex-row flex-wrap content-center items-center gap-2">
         <span className="eyebrow mr-1">Our tools</span>
         {PARTNERS.map((p) => (
           <a key={p.name} href="#" className="r-chip flex items-center gap-2 border bg-card px-3 py-1.5 text-sm hover:bg-muted">
@@ -153,11 +158,11 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
             <ArrowUpRight className="size-3.5 text-muted-foreground" />
           </a>
         ))}
-      </div>
+      </W>
     )
   }
   return (
-    <Card>
+    <Card className="rounded-(--radius)">
       <CardHeader>
         <CardDescription className="eyebrow">Tools and partners</CardDescription>
         <CardTitle className="text-lg">What we use</CardTitle>
@@ -181,7 +186,7 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
   )
 }
 
-/** Ask the AI: search (centred box), chat (example exchange), compact (one-line card). */
+/** Ask the AI: search (centred box), chat (example exchange), quota (questions left), brand (search, on the coach's colour). */
 export function AiAsk({ variant = "search" }: WidgetProps) {
   const { coach } = useCoach()
   const box = (
@@ -215,13 +220,14 @@ export function AiAsk({ variant = "search" }: WidgetProps) {
 
   if (variant === "chat") {
     return (
-      <div className="@container grid gap-4 py-2 @3xl:grid-cols-[1fr_1.4fr] @3xl:items-center">
+      <W className="grid content-center gap-4 @3xl:grid-cols-[1fr_1.4fr] @3xl:items-center">
         <div className="grid gap-2">
-          <Sparkles className="size-6 text-primary" />
-          <h3 className="text-2xl leading-tight">Stuck? Ask {coach.wording.ai}.</h3>
-          <p className="text-sm text-muted-foreground">Answers come from {coach.coachName}&apos;s own lessons, with a link to the exact moment. Not investment advice.</p>
+          <h3 className="flex items-center gap-2 text-xl leading-tight @3xl:flex-col @3xl:items-start @3xl:text-2xl">
+            <Sparkles className="size-5 shrink-0 text-primary @3xl:size-6" /> Stuck? {askAi(coach.wording.ai)}.
+          </h3>
+          <p className="hidden text-sm text-muted-foreground @3xl:block">Answers come from {coach.coachName}&apos;s own lessons, with a link to the exact moment. Not investment advice.</p>
         </div>
-        <div className="grid gap-2 rounded-(--radius) bg-card p-4" style={{ boxShadow: "var(--card-shadow)" }}>
+        <div className="r-inner grid gap-2 bg-muted/60 p-3">
           <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-3 py-2 text-sm text-primary-foreground">{AI_SAMPLE.question}</div>
           <div className="max-w-[90%] rounded-2xl rounded-bl-sm bg-muted px-3 py-2 text-sm">
             {AI_SAMPLE.answer}
@@ -229,16 +235,16 @@ export function AiAsk({ variant = "search" }: WidgetProps) {
           </div>
           {box}
         </div>
-      </div>
+      </W>
     )
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 py-4 text-center">
+    <W brand={variant === "brand"} className="items-center justify-center gap-4 text-center">
       <Sparkles className="size-6 text-primary" />
-      <h3 className="text-2xl leading-tight">Ask {coach.wording.ai} anything</h3>
+      <h3 className="text-2xl leading-tight">{askAi(coach.wording.ai)} anything</h3>
       <div className="w-full max-w-xl">{box}</div>
       <p className="text-xs text-muted-foreground">Answers come from {coach.coachName}&apos;s lessons. Not investment advice.</p>
-    </div>
+    </W>
   )
 }
