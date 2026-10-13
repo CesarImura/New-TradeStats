@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { ArrowRight, ArrowUpRight } from "lucide-react"
+import { LauncherOnboarding } from "@/components/onboarding/launcher-section"
 import { COACHES } from "@/lib/data/coaches"
 import { themeToCss } from "@/lib/theme/css"
 import { resolveTheme } from "@/lib/theme/resolve"
@@ -28,6 +29,8 @@ export default function Launcher() {
             button to switch template, navigation and mode.
           </p>
         </header>
+
+        <LauncherOnboarding />
 
         <section className="grid gap-px border border-white/10 bg-white/10 md:grid-cols-2 xl:grid-cols-4">
           {COACHES.map((c) => {
@@ -90,6 +93,7 @@ export default function Launcher() {
             <li>Admin layout with help panel</li>
             <li>STU-01 Home, built from the coach&apos;s widgets</li>
             <li>ADM-01 Overview with getting-started list</li>
+            <li>ONB-01 to ONB-16 Coach sign-up and setup wizard</li>
           </ul>
         </section>
       </div>

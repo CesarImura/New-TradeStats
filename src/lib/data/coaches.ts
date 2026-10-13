@@ -1,5 +1,6 @@
 import type { CoachTheme, TemplateId } from "@/lib/theme/types"
 import type { HomeLayouts } from "@/lib/widgets/layout"
+import { customCommunities } from "./communities"
 
 export type ModuleId = "courses" | "calendar" | "community" | "journal" | "ranking" | "ai"
 
@@ -41,7 +42,7 @@ export type Coach = {
   discordUrl?: string
 }
 
-const DEFAULT_WORDING: Wording = {
+export const DEFAULT_WORDING: Wording = {
   home: "Home",
   courses: "Courses",
   calendar: "Calendar",
@@ -134,6 +135,17 @@ export const COACHES: Coach[] = [
   },
 ]
 
-export function getCoach(slug: string) {
+/** One of the demo communities that ship with the prototype (known on the server too). */
+export function getDemoCoach(slug: string) {
   return COACHES.find((c) => c.slug === slug)
+}
+
+/** A demo community, or in the browser also one created with the setup wizard. */
+export function getCoach(slug: string): Coach | undefined {
+  return getDemoCoach(slug) ?? customCommunities().find((c) => c.slug === slug)
+}
+
+/** Addresses the wizard can create. The server can't see them, so it only checks the format. */
+export function isCommunitySlug(slug: string) {
+  return /^[a-z0-9][a-z0-9-]{1,39}$/.test(slug)
 }

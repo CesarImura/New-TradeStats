@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Check, ChevronsUpDown, Plus } from "lucide-react"
-import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CommunityMark } from "@/components/coach/community-mark"
 import {
@@ -18,6 +17,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import { adminWorkspaces, adminWorkspacesByOrg } from "@/lib/data/account"
+import { useCustomCommunities } from "@/lib/data/use-communities"
 
 
 /**
@@ -31,9 +31,11 @@ export function WorkspaceSwitcher() {
   const path = usePathname()
   const [open, setOpen] = useState(false)
   const section = path.split("/").slice(3).join("/")
-  const current = adminWorkspaces().find((w) => w.slug === coach.slug)
-  const groups = adminWorkspacesByOrg()
-  const many = adminWorkspaces().length > 5
+  const created = useCustomCommunities()
+  const all = adminWorkspaces(created)
+  const current = all.find((w) => w.slug === coach.slug)
+  const groups = adminWorkspacesByOrg(created)
+  const many = all.length > 5
 
   const go = (slug: string) => {
     setOpen(false)
@@ -91,7 +93,7 @@ export function WorkspaceSwitcher() {
                   <CommandItem
                     onSelect={() => {
                       setOpen(false)
-                      toast("The setup wizard for a new community comes next in the prototype.")
+                      router.push("/setup?new=1")
                     }}
                     className="gap-2.5"
                   >
