@@ -15,8 +15,8 @@ export function DemoBanner() {
   const { coach } = useCoach()
   if (!acc?.call || acc.setupSlug || coach.slug !== "northline") return null
   return (
-    <div className="fixed bottom-4 left-1/2 z-40 flex w-[min(52rem,calc(100vw-2rem))] md:bottom-16 -translate-x-1/2 flex-wrap items-center gap-x-4 gap-y-1 rounded-[3px] bg-[#393939] px-4 py-2.5 text-sm text-white shadow-2xl ring-1 ring-white/10">
-      <span className="rounded-[2px] bg-white px-1.5 py-0.5 font-[family-name:var(--ff-plex-mono)] text-[0.65rem] tracking-wider text-[#040404] uppercase">
+    <div className="fixed bottom-4 left-1/2 z-40 flex w-[min(52rem,calc(100vw-2rem))] md:bottom-16 -translate-x-1/2 flex-wrap items-center gap-x-4 gap-y-1 rounded-[3px] bg-[#222226] px-4 py-2.5 text-sm text-white shadow-2xl ring-1 ring-white/10">
+      <span className="rounded-[2px] bg-[#f8ff9e] px-1.5 py-0.5 font-[family-name:var(--ff-plex-mono)] text-[0.65rem] tracking-wider text-[#040404] uppercase">
         Demo
       </span>
       <span className="text-white/80">This is an example platform to click around. Nothing you change here is kept.</span>

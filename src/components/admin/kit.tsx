@@ -10,16 +10,16 @@ export function PageHeader({ title, text, actions, guide }: { title: string; tex
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="grid gap-1">
-        <h1 className="text-[1.75rem] leading-9 font-normal tracking-[-0.005em]">{title}</h1>
-        {text && <p className="max-w-2xl text-sm leading-5 text-muted-foreground">{text}</p>}
+        <h1 className="text-xl leading-7 font-medium tracking-[-0.01em]">{title}</h1>
+        {text && <p className="max-w-2xl text-sm text-muted-foreground">{text}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {guide && (
           <button
             onClick={() => toast(`Video guide · ${guide}`, { description: "Plays here in the real product. It ends with the offer to let us set it up." })}
-            className="flex h-8 items-center gap-1.5 px-2 text-sm text-muted-foreground hover:text-foreground"
+            className="flex h-7 items-center gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
           >
-            <PlayCircle className="size-4" /> {guide}
+            <PlayCircle className="size-3.5" /> {guide}
           </button>
         )}
         {actions}
@@ -30,7 +30,7 @@ export function PageHeader({ title, text, actions, guide }: { title: string; tex
 
 /** The admin's page column. */
 export function Page({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
-  return <div className={cn("mx-auto flex flex-col gap-6", wide ? "max-w-[1400px]" : "max-w-[1200px]")}>{children}</div>
+  return <div className={cn("mx-auto flex flex-col gap-4", wide ? "max-w-[1400px]" : "max-w-[1200px]")}>{children}</div>
 }
 
 /** A native select in the admin style. Simple, keyboard-friendly, works in dialogs. */
@@ -39,7 +39,7 @@ export function NativeSelect({ className, ...props }: React.ComponentProps<"sele
     <select
       {...props}
       className={cn(
-        "h-8 min-w-0 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 [&>option]:bg-popover",
+        "h-7 min-w-0 rounded-[4px] border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 [&>option]:bg-popover",
         className,
       )}
     />
@@ -49,7 +49,7 @@ export function NativeSelect({ className, ...props }: React.ComponentProps<"sele
 /** One setting: label and help text on the left, the control on the right. */
 export function SettingRow({ label, text, children, className }: { label: React.ReactNode; text?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3.5", className)}>
+    <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5 py-2.5", className)}>
       <div className="grid min-w-0 flex-1 basis-64 gap-0.5">
         <span className="text-sm font-medium">{label}</span>
         {text && <span className="text-xs text-muted-foreground">{text}</span>}
@@ -62,8 +62,8 @@ export function SettingRow({ label, text, children, className }: { label: React.
 /** Label above a control. */
 export function Field({ label, hint, children, className }: { label: string; hint?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <label className={cn("grid gap-1.5", className)}>
-      <span className="flex items-baseline justify-between gap-3 text-[0.8rem] font-medium">
+    <label className={cn("grid gap-1", className)}>
+      <span className="flex items-baseline justify-between gap-3 text-xs font-medium text-muted-foreground">
         {label}
         {hint && <span className="text-xs font-normal text-muted-foreground">{hint}</span>}
       </span>

@@ -1,5 +1,10 @@
-import { StudentRanking } from "@/components/student/ranking"
+import { Suspense } from "react"
+import { WidgetPage } from "@/components/student/widget-page"
 
 export default function Page() {
-  return <StudentRanking />
+  return (
+    <Suspense>
+      <WidgetPage page="ranking" />
+    </Suspense>
+  )
 }

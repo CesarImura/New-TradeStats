@@ -1,15 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Copy, EyeOff, GripVertical, Maximize2, MousePointerClick, Plus, Search, Trash2, X } from "@/components/icons"
+import { Copy, EyeOff, GripVertical, Lock, Maximize2, MousePointerClick, Plus, Search, Trash2, X } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { WIDGETS, WIDGET_GROUPS, getWidget, lookOf, type WidgetDef } from "@/components/widgets/registry"
+import { getWidget, librarySections, lookOf, type WidgetDef } from "@/components/widgets/registry"
 import { DataModeProvider } from "@/components/widgets/shared"
 import type { Coach } from "@/lib/data/coaches"
-import { ROW_HEIGHT, type WidgetInstance } from "@/lib/widgets/layout"
+import { ROW_HEIGHT, type PageId, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { Field } from "./controls"
 
@@ -49,11 +49,13 @@ export function WidgetThumb({ def, variant, canvasClass, box }: { def: WidgetDef
  * name, description, group or look. Drag one onto the grid, or press + to add it.
  */
 export function WidgetLibrary({
+  page,
   coach,
   canvasClass,
   onAdd,
   onDragType,
 }: {
+  page: PageId
   coach: Coach
   canvasClass: string
   onAdd: (type: string) => void
@@ -63,7 +65,9 @@ export function WidgetLibrary({
   const [query, setQuery] = useState("")
   const q = query.trim().toLowerCase()
   const match = (w: WidgetDef) => !q || `${w.name} ${w.description} ${w.group} ${w.variants.map((v) => v.label).join(" ")}`.toLowerCase().includes(q)
-  const groups = WIDGET_GROUPS.map((g) => ({ g, items: WIDGETS.filter((w) => w.group === g && match(w)) })).filter((x) => x.items.length)
+  const groups = librarySections(page)
+    .map((s) => ({ g: s.title, items: s.types.map((t) => getWidget(t)!).filter(match) }))
+    .filter((x) => x.items.length)
 
   return (
     <div className="grid gap-4">
@@ -129,12 +133,15 @@ export function WidgetLibrary({
 /** Right panel for a selected widget: its look, its size, settings, and phone visibility. */
 export function WidgetSettings({
   w,
+  pinned,
   canvasClass,
   onChange,
   onDuplicate,
   onRemove,
 }: {
   w: WidgetInstance
+  /** The page's core widget: it can't be removed, duplicated or hidden. */
+  pinned?: boolean
   canvasClass: string
   onChange: (patch: Partial<WidgetInstance>, key: string) => void
   onDuplicate: () => void
@@ -157,35 +164,45 @@ export function WidgetSettings({
         </div>
       </div>
 
-      <Field label="Look">
-        <div className="grid gap-2" role="radiogroup" aria-label="Look">
-          {def.variants.map((v) => (
-            // A div, not a button: the thumbnail contains the widget's own buttons.
-            <div
-              key={v.value}
-              role="radio"
-              tabIndex={0}
-              aria-checked={look.value === v.value}
-              aria-label={v.label}
-              // A taller look grows the widget so its content fits.
-              onClick={() => pick(v)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault()
-                  pick(v)
-                }
-              }}
-              className={cn(
-                "cursor-pointer overflow-hidden rounded-lg border text-left outline-none hover:border-foreground/40 focus-visible:ring-2 focus-visible:ring-ring",
-                look.value === v.value && "border-foreground ring-1 ring-foreground",
-              )}
-            >
-              <WidgetThumb def={def} variant={v.value} canvasClass={canvasClass} box={{ w: 306, h: 120 }} />
-              <span className="block border-t px-2.5 py-1.5 text-xs font-medium">{v.label}</span>
-            </div>
-          ))}
-        </div>
-      </Field>
+      {pinned && (
+        <p className="flex gap-2 rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">
+          <Lock className="mt-0.5 size-3.5 shrink-0" />
+          The main part of this page. It always stays on the page: move it or drag its edges to resize it. On the live page it grows with its
+          content.
+        </p>
+      )}
+
+      {def.variants.length > 1 && (
+        <Field label="Look">
+          <div className="grid gap-2" role="radiogroup" aria-label="Look">
+            {def.variants.map((v) => (
+              // A div, not a button: the thumbnail contains the widget's own buttons.
+              <div
+                key={v.value}
+                role="radio"
+                tabIndex={0}
+                aria-checked={look.value === v.value}
+                aria-label={v.label}
+                // A taller look grows the widget so its content fits.
+                onClick={() => pick(v)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    pick(v)
+                  }
+                }}
+                className={cn(
+                  "cursor-pointer overflow-hidden rounded-lg border text-left outline-none hover:border-foreground/40 focus-visible:ring-2 focus-visible:ring-ring",
+                  look.value === v.value && "border-foreground ring-1 ring-foreground",
+                )}
+              >
+                <WidgetThumb def={def} variant={v.value} canvasClass={canvasClass} box={{ w: 306, h: 120 }} />
+                <span className="block border-t px-2.5 py-1.5 text-xs font-medium">{v.label}</span>
+              </div>
+            ))}
+          </div>
+        </Field>
+      )}
 
       <Field label="Size">
         <div className="flex items-center gap-3 rounded-lg bg-muted/60 p-3 text-sm">
@@ -232,20 +249,24 @@ export function WidgetSettings({
           </Field>
         )
       })}
-      <label className="flex items-center justify-between gap-3 text-[0.8rem] font-medium">
-        <span className="flex items-center gap-2">
-          <EyeOff className="size-4 text-muted-foreground" /> Hide on phones
-        </span>
-        <Switch checked={!!w.hideOnPhone} onCheckedChange={(hideOnPhone) => onChange({ hideOnPhone }, `${w.id}-phone`)} />
-      </label>
-      <div className="flex gap-2 border-t pt-4">
-        <Button variant="outline" size="sm" onClick={onDuplicate}>
-          <Copy /> Duplicate
-        </Button>
-        <Button variant="ghost" size="sm" className="text-destructive" onClick={onRemove}>
-          <Trash2 /> Remove
-        </Button>
-      </div>
+      {!pinned && (
+        <label className="flex items-center justify-between gap-3 text-[0.8rem] font-medium">
+          <span className="flex items-center gap-2">
+            <EyeOff className="size-4 text-muted-foreground" /> Hide on phones
+          </span>
+          <Switch checked={!!w.hideOnPhone} onCheckedChange={(hideOnPhone) => onChange({ hideOnPhone }, `${w.id}-phone`)} />
+        </label>
+      )}
+      {!pinned && (
+        <div className="flex gap-2 border-t pt-4">
+          <Button variant="outline" size="sm" onClick={onDuplicate}>
+            <Copy /> Duplicate
+          </Button>
+          <Button variant="ghost" size="sm" className="text-destructive" onClick={onRemove}>
+            <Trash2 /> Remove
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

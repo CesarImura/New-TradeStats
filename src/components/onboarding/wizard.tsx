@@ -107,8 +107,8 @@ export function SetupWizard() {
     >
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(400px,480px)_1fr]">
         {/* Left: the step */}
-        <div className="flex min-h-0 flex-col border-r">
-          <nav aria-label="Setup steps" className="flex gap-1 border-b px-5 py-3">
+        <div className="flex min-h-0 flex-col border-r bg-card">
+          <nav aria-label="Setup steps" className="flex gap-1 border-b px-4 py-2.5">
             {STEPS.map((s, i) => (
               <button
                 key={s.id}
@@ -126,20 +126,20 @@ export function SetupWizard() {
             ))}
           </nav>
 
-          <div className="flex-1 overflow-y-auto px-5 py-8 md:px-8">
-            <div className="grid gap-7">
-              <div className="grid gap-2.5">
+          <div className="flex-1 overflow-y-auto px-4 py-5 md:px-5">
+            <div className="grid gap-5">
+              <div className="grid gap-1.5 border-b pb-4">
                 <span className={cn(mono, "text-[var(--ts-interactive)]")}>
                   {String(step + 1).padStart(2, "0")} · {S.label}
                 </span>
-                <h1 className="text-[1.75rem] leading-[1.1] font-normal tracking-tight">{S.title}</h1>
+                <h1 className="text-lg leading-6 font-medium tracking-[-0.01em]">{S.title}</h1>
                 <p className="text-sm text-muted-foreground">{S.text}</p>
               </div>
               <S.Step key={S.id} community={community} update={update} setReady={setReady} />
             </div>
           </div>
 
-          <div className="flex items-center gap-2 border-t px-5 py-3 md:px-8">
+          <div className="flex items-center gap-2 border-t px-4 py-2.5 md:px-5">
             {step > 0 && (
               <Button variant="ghost" onClick={() => go(step - 1)}>
                 <ArrowLeft /> Back
@@ -165,12 +165,12 @@ export function SetupWizard() {
         </div>
 
         {/* Right: the real platform, as students will see it */}
-        <div className="relative hidden min-h-0 flex-col bg-[#0b0b0b] lg:flex">
-          <div className="flex items-center justify-between gap-3 border-b px-5 py-2.5">
+        <div className="relative hidden min-h-0 flex-col bg-background lg:flex">
+          <div className="flex h-9 items-center justify-between gap-3 border-b bg-[var(--sidebar)] px-3">
             <span className={cn(mono, "flex items-center gap-2 text-muted-foreground")}>
               <span className="size-1.5 rounded-full bg-[var(--ts-interactive)]" /> Live preview · not public yet
             </span>
-            <div className="flex rounded-[var(--radius)] border p-0.5" role="radiogroup" aria-label="Preview size">
+            <div className="flex rounded-[4px] border border-[#2a2a2f] bg-[#0e0e10] p-0.5" role="radiogroup" aria-label="Preview size">
               {(
                 [
                   ["desktop", Monitor],
@@ -183,9 +183,9 @@ export function SetupWizard() {
                   aria-checked={device === d}
                   aria-label={d}
                   onClick={() => setDevice(d)}
-                  className={cn("grid size-7 place-items-center rounded-[2px] text-muted-foreground", device === d && "bg-white/10 text-foreground")}
+                  className={cn("grid size-6 place-items-center rounded-[3px] text-muted-foreground hover:text-foreground", device === d && "bg-[var(--ts-layer-3)] text-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]")}
                 >
-                  <Icon className="size-4" />
+                  <Icon className="size-3.5" />
                 </button>
               ))}
             </div>
@@ -203,7 +203,7 @@ export function SetupWizard() {
 export function DoneRow({ done, children }: { done: boolean; children: React.ReactNode }) {
   return (
     <li className="flex items-center gap-2.5 text-sm">
-      <span className={cn("grid size-4 shrink-0 place-items-center border border-white/25", done && "border-[var(--ts-cta)] bg-[var(--ts-cta)] text-[#040404]")}>
+      <span className={cn("grid size-3.5 shrink-0 place-items-center rounded-[3px] border border-[#4a4a52] bg-[#0e0e10]", done && "border-[var(--ts-cta)] bg-[var(--ts-cta)] text-[#040404]")}>
         {done && <Check className="size-3" strokeWidth={3} />}
       </span>
       <span className={cn(!done && "text-muted-foreground")}>{children}</span>

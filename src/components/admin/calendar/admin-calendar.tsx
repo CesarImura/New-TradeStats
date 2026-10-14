@@ -70,7 +70,7 @@ export function AdminCalendar() {
     <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[1.75rem] leading-9 font-normal tracking-[-0.005em]">Calendar</h1>
+          <h1 className="text-xl leading-7 font-medium tracking-[-0.01em]">Calendar</h1>
           <p className="text-sm text-muted-foreground">Lives, calls, workshops, 1:1s and market news. Students see it in their own time zone.</p>
         </div>
         <Button onClick={() => newEvent(new Date(2026, 9, 13, 15, 30))}>

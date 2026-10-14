@@ -126,7 +126,7 @@ export function AddressStep({ community, update, setReady }: StepProps) {
           value={community.name}
           maxLength={40}
           autoFocus
-          className="h-11 text-base"
+          
           onChange={(e) => {
             const name = e.target.value
             const initials = name
@@ -141,7 +141,7 @@ export function AddressStep({ community, update, setReady }: StepProps) {
       </Row>
 
       <Row label="Web address" htmlFor="paddr" hint="Free · your own domain later in Settings">
-        <div className="flex h-11 items-center rounded-[var(--radius)] border border-input bg-card focus-within:border-[var(--ts-interactive)] focus-within:ring-2 focus-within:ring-[var(--ts-interactive)]/25">
+        <div className="flex h-7 items-center rounded-[4px] border border-[#2a2a2f] bg-[#0e0e10] text-[0.8125rem] shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] focus-within:border-[var(--ts-interactive)] focus-within:shadow-[0_0_0_3px_rgb(255_85_0/0.18)]">
           <span className="pl-3 text-sm text-muted-foreground">https://</span>
           <input
             id="paddr"
@@ -168,7 +168,7 @@ export function AddressStep({ community, update, setReady }: StepProps) {
       </Row>
 
       <Row label="What do students call you?" htmlFor="cname" hint="Used in messages like “Marco replied”">
-        <Input id="cname" value={community.coachName} onChange={(e) => update({ coachName: e.target.value })} className="h-11" />
+        <Input id="cname" value={community.coachName} onChange={(e) => update({ coachName: e.target.value })} />
       </Row>
 
       <More label="What you call things">
@@ -463,13 +463,13 @@ export function TierStep({ community, update, setReady }: StepProps) {
       </div>
 
       <Row label="Tier name" htmlFor="tname" hint="e.g. Core, Academy, Inner Circle">
-        <Input id="tname" value={tier.name} onChange={(e) => set({ name: e.target.value })} className="h-11" />
+        <Input id="tname" value={tier.name} onChange={(e) => set({ name: e.target.value })} />
       </Row>
 
       {!free && (
         <>
           <Row label="Price" htmlFor="tprice" hint="Euro · tax added at checkout where needed">
-            <div className="flex h-11 items-center rounded-[var(--radius)] border border-input bg-card focus-within:border-[var(--ts-interactive)] focus-within:ring-2 focus-within:ring-[var(--ts-interactive)]/25">
+            <div className="flex h-7 items-center rounded-[4px] border border-[#2a2a2f] bg-[#0e0e10] text-[0.8125rem] shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] focus-within:border-[var(--ts-interactive)] focus-within:shadow-[0_0_0_3px_rgb(255_85_0/0.18)]">
               <span className="pl-3 text-muted-foreground">€</span>
               <input
                 id="tprice"
@@ -561,7 +561,7 @@ export function PayoutsStep({ community, update }: StepProps) {
               setBusy(true)
               setTimeout(() => update({ setup: { ...community.setup, payouts: "connected" } }), 1200)
             }}
-            className="flex h-11 items-center justify-center gap-2 bg-[var(--ts-cta)] text-sm text-[#040404] disabled:opacity-70"
+            className="flex h-7 items-center justify-center gap-1.5 rounded-[4px] bg-[var(--ts-cta)] text-[0.78125rem] font-medium text-[#040404] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),0_0_0_1px_rgb(0_0_0/0.5)] hover:bg-[#ecf38a] disabled:opacity-70"
           >
             {busy ? (
               <>

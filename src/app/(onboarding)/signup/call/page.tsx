@@ -51,7 +51,7 @@ export default function Call() {
   if (booked) {
     return (
       <OnbFrame>
-        <div className="grid gap-8">
+        <div className="grid gap-5">
           <div className="grid size-12 place-items-center bg-[var(--ts-cta)] text-[#040404]">
             <Check className="size-6" strokeWidth={2.5} />
           </div>
@@ -85,7 +85,7 @@ export default function Call() {
           <div className="grid gap-3">
             <Button
               size="lg"
-              className="h-12 justify-between px-4 text-[0.95rem]"
+              className="w-full justify-between"
               onClick={() => {
                 setAccount({ step: 0 })
                 router.push("/admin/northline")
@@ -107,7 +107,7 @@ export default function Call() {
 
   return (
     <OnbFrame>
-      <div className="grid gap-8">
+      <div className="grid gap-5">
         <OnbTitle
           eyebrow="Free · white-glove setup"
           title="Let us set it up with you."
@@ -160,7 +160,7 @@ export default function Call() {
         <div className="grid gap-4">
           <Button
             size="lg"
-            className="h-12 justify-between px-4 text-[0.95rem]"
+            className="w-full justify-between"
             disabled={!time}
             onClick={() => time && setAccount({ call: { date: `${d.label} ${d.date}`, time } })}
           >

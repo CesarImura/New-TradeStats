@@ -8,7 +8,7 @@ import { StartHere } from "./getting-started"
 import { DataModeProvider } from "@/components/widgets/shared"
 import { useViewerTier } from "@/lib/data/access"
 import { DEMO_STUDENT } from "@/lib/data/sample"
-import { homeLayout } from "@/lib/theme/resolve"
+import { pageLayout } from "@/lib/theme/resolve"
 
 /** STU-01. Laid out by the coach in Design → Home page, per tier. */
 export function StudentHome() {
@@ -24,7 +24,7 @@ export function StudentHome() {
           <h1 className="text-3xl leading-tight md:text-4xl">Good morning, {DEMO_STUDENT.first}</h1>
         </div>
         <StartHere />
-        <PageRenderer layout={homeLayout(coach, theme.template, tier, heightOf)} />
+        <PageRenderer layout={pageLayout(coach, "home", theme.template, tier, heightOf)} />
       </div>
     </DataModeProvider>
   )

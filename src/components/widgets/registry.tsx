@@ -1,4 +1,8 @@
 import {
+  BookOpen,
+  ChartCandlestick,
+  MessagesSquare,
+  NotebookPen,
   CalendarDays,
   CircleCheck,
   Gauge,
@@ -27,6 +31,8 @@ import {
   type LucideIcon,
 } from "@/components/icons"
 import type { ModuleId } from "@/lib/data/coaches"
+import { CORE_H, COLS, coreType, type PageId } from "@/lib/widgets/layout"
+import { corePage } from "./core"
 import { AiAsk, Banner, PartnerLinks, TextBlock, WelcomeVideo } from "./brand"
 import { EconNews, NextLive, ThisWeek } from "./calendar"
 import { Announcement, Discord } from "./community"
@@ -38,7 +44,7 @@ import { CoachProfile, Upgrade } from "./offer"
 import type { WidgetProps } from "./shared"
 import { Drawdown, MarketSessions, RSpread, Setups } from "./trading"
 
-export type WidgetGroup = "Learning" | "Calendar" | "Journal" | "Coaching" | "Progress" | "Community" | "Coach and brand" | "AI"
+export type WidgetGroup = "Learning" | "Calendar" | "Journal" | "Coaching" | "Progress" | "Community" | "Coach and brand" | "AI" | "Page"
 
 export type Setting =
   | { key: string; label: string; type: "text"; placeholder?: string }
@@ -54,6 +60,8 @@ export type WidgetDef = {
   icon: LucideIcon
   /** Only offered, and only shown to students, when this module is on. */
   module?: ModuleId
+  /** A page's core widget: always on that page, never in the library, can't be removed or duplicated. */
+  core?: ModuleId
   /** Three designs per widget; the first is the default. Each needs its own height in rows. */
   variants: { value: string; label: string; h: number; minH: number }[]
   settings?: Setting[]
@@ -513,6 +521,55 @@ export const WIDGETS: WidgetDef[] = [
     Component: CoachProfile,
   },
 ]
+
+const CORE: { page: ModuleId; name: string; description: string; icon: LucideIcon }[] = [
+  { page: "courses", name: "Courses", description: "The course catalogue and lessons", icon: BookOpen },
+  { page: "calendar", name: "Calendar", description: "Lives, events and booking", icon: CalendarDays },
+  { page: "charts", name: "Chart", description: "The chart with the coach's view", icon: ChartCandlestick },
+  { page: "community", name: "Community feed", description: "Posts, channels and replies", icon: MessagesSquare },
+  { page: "journal", name: "Journal", description: "Trades, stats and feedback", icon: NotebookPen },
+  { page: "ranking", name: "Leaderboard", description: "The ranking and its rules", icon: Trophy },
+  { page: "ai", name: "AI chat", description: "Questions to the AI coach", icon: Sparkles },
+]
+
+for (const c of CORE) {
+  WIDGETS.push({
+    type: coreType(c.page),
+    name: c.name,
+    description: c.description,
+    group: "Page",
+    icon: c.icon,
+    core: c.page,
+    variants: [{ value: "page", label: "Full page", h: CORE_H, minH: 6 }],
+    defaultW: COLS,
+    minW: 6,
+    Component: corePage(c.page),
+  })
+}
+
+/** Widgets offered first on each module page; Home offers every widget. */
+export const PAGE_WIDGETS: Record<ModuleId, string[]> = {
+  courses: ["continue-lesson", "next-unlock", "course-progress"],
+  calendar: ["next-live", "this-week", "econ-news", "market-sessions", "book-call"],
+  charts: ["setups", "market-sessions", "econ-news"],
+  journal: ["journal-pnl", "rules-followed", "r-spread", "drawdown", "setups", "coach-feedback", "ai-insight"],
+  community: ["announcement", "discord", "my-rank"],
+  ranking: ["my-rank", "first-week"],
+  ai: ["ai-insight", "ai-ask"],
+}
+/** Widgets that make sense on any page. */
+export const ANYWHERE = ["banner", "text", "welcome-video", "announcement", "upgrade", "partner-links", "coach-profile", "book-call"]
+
+/** The library for a page, in sections. Home: by group, as before. */
+export function librarySections(page: PageId): { title: string; types: string[] }[] {
+  const all = WIDGETS.filter((w) => !w.core)
+  if (page === "home") return WIDGET_GROUPS.map((g) => ({ title: g, types: all.filter((w) => w.group === g).map((w) => w.type) }))
+  const own = PAGE_WIDGETS[page]
+  return [
+    { title: "For this page", types: own },
+    { title: "Anywhere", types: ANYWHERE.filter((t) => !own.includes(t)) },
+  ]
+}
 
 export const WIDGET_GROUPS: WidgetGroup[] = ["Learning", "Calendar", "Journal", "Coaching", "Progress", "Community", "Coach and brand", "AI"]
 

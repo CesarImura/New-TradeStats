@@ -32,7 +32,7 @@ function WidgetView({ w, order }: { w: WidgetInstance; order: number }) {
   const C = def.Component
   const style = { "--x": w.x, "--y": w.y, "--w": w.w, "--h": w.h, "--w-md": wMd(w.w), "--order": order } as React.CSSProperties
   return (
-    <div className={cn("g-item", w.hideOnPhone && "g-hide-phone")} style={style}>
+    <div className={cn("g-item", def.core && "g-core", w.hideOnPhone && "g-hide-phone")} style={style}>
       <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
     </div>
   )

@@ -1,12 +1,14 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   ArrowDown,
   ArrowUp,
   ChevronDown,
+  Eye,
   ImagePlus,
   Monitor,
+  MousePointerClick,
   Smartphone,
   Trash2,
   Wand2,
@@ -18,6 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { getCoach, type ModuleId } from "@/lib/data/coaches"
+import { describe, targetsForField, type PickMessage, type PickTarget } from "@/lib/design-pick"
 import { FONT_LIBRARY, type FontId } from "@/lib/fonts"
 import { themeToCss } from "@/lib/theme/css"
 import { onColor } from "@/lib/theme/derive"
@@ -28,7 +31,7 @@ import type { TemplateId } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { BackgroundControl } from "./background-control"
 import { BRAND_COLORS, FONT_PAIRS, HIGHLIGHT_COLORS } from "./options"
-import { Field, More, Segmented, Swatches } from "./controls"
+import { Field, More, RevealContext, Segmented, Swatches, useReveal } from "./controls"
 import { EditorBar, useDraftEditor } from "./editor-shell"
 import { PreviewFrame } from "./preview-frame"
 
@@ -58,6 +61,7 @@ export function DesignEditor() {
   const [page, setPage] = useState("")
   const pages = [{ value: "", label: coach.wording.home }, ...coach.menu.filter((m) => coach.modules[m]).map((m) => ({ value: m, label: coach.wording[m] }))]
   const src = `/c/${slug}${page ? `/${page}` : ""}?preview=draft`
+  const { frameRef, panelRef, ...pick } = usePreviewPick()
 
   return (
     <div className="-m-4 grid min-h-[calc(100svh-3.5rem)] grid-rows-[auto_1fr] md:-m-6 lg:-m-8 lg:h-[calc(100svh-3.5rem)]">
@@ -71,7 +75,8 @@ export function DesignEditor() {
 
       <div className="grid min-h-0 lg:grid-cols-[380px_1fr]">
         {/* Settings */}
-        <div className="min-h-0 overflow-y-auto border-r bg-background">
+        <RevealContext.Provider value={pick.reveal}>
+        <div ref={panelRef} className="min-h-0 overflow-y-auto border-r bg-background" onPointerOver={pick.onPanelHover} onPointerLeave={pick.onPanelLeave}>
           <Section title="Template" defaultOpen>
             <div className="grid grid-cols-3 gap-2">
               {TEMPLATE_IDS.map((id) => (
@@ -98,7 +103,7 @@ export function DesignEditor() {
           </Section>
 
           <Section title="Brand" defaultOpen>
-            <Field label="Platform name">
+            <Field id="name" label="Platform name">
               <Input value={coach.name} onChange={(e) => change({ content: { name: e.target.value } }, "name")} />
             </Field>
             <LogoField
@@ -108,7 +113,7 @@ export function DesignEditor() {
               onColor={(c) => change({ theme: { primary: c, primaryForeground: onColor(c) } }, "primary")}
               primary={theme.primary}
             />
-            <Field label="Brand colour" hint="Buttons, links, active menu">
+            <Field id="primary" label="Brand colour" hint="Buttons, links, active menu">
               <Swatches
                 label="Brand colour"
                 value={theme.primary}
@@ -116,7 +121,7 @@ export function DesignEditor() {
                 onChange={(c) => change({ theme: { primary: c, primaryForeground: onColor(c) } }, "primary")}
               />
             </Field>
-            <Field label="Look">
+            <Field id="mode" label="Look">
               <Segmented
                 label="Light or dark"
                 value={theme.mode}
@@ -128,7 +133,7 @@ export function DesignEditor() {
               />
             </Field>
             <More label="More colours">
-              <Field label="Highlight colour" hint="Announcements, badges">
+              <Field id="highlight" label="Highlight colour" hint="Announcements, badges">
                 <Swatches
                   label="Highlight colour"
                   value={theme.highlight ?? theme.palettes[theme.mode].highlight}
@@ -140,7 +145,7 @@ export function DesignEditor() {
           </Section>
 
           <Section title="Fonts">
-            <div className="grid grid-cols-2 gap-2">
+            <div data-field="fonts" className="grid grid-cols-2 gap-2">
               {FONT_PAIRS.map((p) => {
                 const on = theme.fonts.heading === p.heading && theme.fonts.body === p.body
                 return (
@@ -179,7 +184,7 @@ export function DesignEditor() {
           </Section>
 
           <Section title="Style">
-            <Field label="Brand depth" hint="A slight tonal shift in your brand colour">
+            <Field id="effects" label="Brand depth" hint="A slight tonal shift in your brand colour">
               <Segmented
                 label="Brand depth"
                 value={theme.effects ?? "soft"}
@@ -191,7 +196,7 @@ export function DesignEditor() {
                 ]}
               />
             </Field>
-            <Field label="Corners" hint={theme.radius <= 3 ? "Sharp" : theme.radius >= 16 ? "Very round" : "Round"}>
+            <Field id="corners" label="Corners" hint={theme.radius <= 3 ? "Sharp" : theme.radius >= 16 ? "Very round" : "Round"}>
               <Slider
                 value={[theme.radius]}
                 min={0}
@@ -201,7 +206,7 @@ export function DesignEditor() {
                 aria-label="Corner roundness"
               />
             </Field>
-            <Field label="Spacing">
+            <Field id="density" label="Spacing">
               <Segmented
                 label="Spacing"
                 value={theme.density}
@@ -213,7 +218,7 @@ export function DesignEditor() {
                 ]}
               />
             </Field>
-            <Field label="Buttons">
+            <Field id="buttons" label="Buttons">
               <Segmented
                 label="Button shape"
                 value={theme.buttonShape}
@@ -225,7 +230,7 @@ export function DesignEditor() {
                 ]}
               />
             </Field>
-            <Field label="Shadows">
+            <Field id="shadows" label="Shadows">
               <Segmented
                 label="Shadows"
                 value={theme.shadow}
@@ -237,9 +242,11 @@ export function DesignEditor() {
                 ]}
               />
             </Field>
-            <BackgroundControl theme={theme} onChange={(patch, key) => change({ theme: patch }, key)} />
+            <div data-field="background">
+              <BackgroundControl theme={theme} onChange={(patch, key) => change({ theme: patch }, key)} />
+            </div>
             <More label="More style options">
-              <Field label="Small labels">
+              <Field id="labels" label="Small labels">
                 <Segmented
                   label="Small labels"
                   value={theme.labelStyle}
@@ -250,7 +257,7 @@ export function DesignEditor() {
                   ]}
                 />
               </Field>
-              <Field label="Heading weight">
+              <Field id="heading-weight" label="Heading weight">
                 <Segmented
                   label="Heading weight"
                   value={theme.headingWeight}
@@ -262,7 +269,7 @@ export function DesignEditor() {
                   ]}
                 />
               </Field>
-              <label className="flex items-center justify-between gap-3 text-[0.8rem] font-medium">
+              <label data-field="borders" className="flex items-center justify-between gap-3 text-[0.8rem] font-medium">
                 Outline on cards
                 <Switch checked={theme.borders} onCheckedChange={(borders) => change({ theme: { borders } }, "borders")} />
               </label>
@@ -270,7 +277,7 @@ export function DesignEditor() {
           </Section>
 
           <Section title="Navigation">
-            <Field label="Menu position">
+            <Field id="nav-layout" label="Menu position">
               <Segmented
                 label="Menu position"
                 value={theme.nav.layout}
@@ -281,7 +288,7 @@ export function DesignEditor() {
                 ]}
               />
             </Field>
-            <Field label="Menu items">
+            <Field id="nav-style" label="Menu items">
               <Segmented
                 label="Menu items"
                 value={theme.nav.style}
@@ -293,7 +300,7 @@ export function DesignEditor() {
               />
             </Field>
             {theme.nav.layout === "top" && (
-              <Field label="Logo">
+              <Field id="nav-logo" label="Logo">
                 <Segmented
                   label="Logo position"
                   value={theme.nav.logo}
@@ -310,7 +317,7 @@ export function DesignEditor() {
           <Section title="Menu and words">
             <p className="text-xs text-muted-foreground">Rename, reorder or hide what students see. Hidden items disappear from the menu and Home.</p>
             <div className="grid gap-1.5">
-              <div className="flex items-center gap-2 rounded-lg border p-1.5 pl-3">
+              <div data-field="menu-home" className="flex items-center gap-2 rounded-lg border p-1.5 pl-3">
                 <span className="w-24 shrink-0 text-xs text-muted-foreground">Home</span>
                 <Input
                   className="h-7"
@@ -321,7 +328,7 @@ export function DesignEditor() {
                 <span className="w-[4.75rem] shrink-0" />
               </div>
               {coach.menu.map((m, i) => (
-                <div key={m} className={cn("flex items-center gap-2 rounded-lg border p-1.5 pl-3", !coach.modules[m] && "bg-muted/50")}>
+                <div key={m} data-field={`menu-${m}`} className={cn("flex items-center gap-2 rounded-lg border p-1.5 pl-3", !coach.modules[m] && "bg-muted/50")}>
                   <span className={cn("w-24 shrink-0 text-xs text-muted-foreground", !coach.modules[m] && "line-through")}>{MODULE_NAMES[m]}</span>
                   <Input
                     className="h-7"
@@ -383,6 +390,7 @@ export function DesignEditor() {
             </Button>
           </div>
         </div>
+        </RevealContext.Provider>
 
         {/* Live preview */}
         <div className="grid min-h-[70svh] grid-rows-[auto_1fr] bg-muted/50 lg:min-h-0">
@@ -408,13 +416,91 @@ export function DesignEditor() {
                 </option>
               ))}
             </select>
-            <span className="ml-auto hidden text-xs text-muted-foreground sm:inline">What students will see{dirty ? " after you publish" : ""}</span>
+            <Segmented
+              label="Clicking in the preview"
+              value={pick.mode}
+              onChange={pick.setMode}
+              options={[
+                { value: "select", label: <><MousePointerClick className="size-3.5" /> Click to edit</> },
+                { value: "browse", label: <><Eye className="size-3.5" /> Browse</> },
+              ]}
+            />
+            <span className="ml-auto hidden text-xs text-muted-foreground xl:inline">
+              {pick.mode === "select" ? "Click any part of your platform to change it" : `What students will see${dirty ? " after you publish" : ""}`}
+            </span>
           </div>
-          <PreviewFrame src={src} device={device} />
+          <PreviewFrame src={src} device={device} frameRef={frameRef} />
         </div>
       </div>
     </div>
   )
+}
+
+/**
+ * Click-to-edit between the panel and the preview frame: a click in the
+ * preview opens, scrolls to and flashes the matching settings; hovering a
+ * setting in the panel outlines what it changes in the preview.
+ */
+function usePreviewPick() {
+  const frame = useRef<HTMLIFrameElement>(null)
+  const panel = useRef<HTMLDivElement>(null)
+  const [mode, setMode] = useState<"select" | "browse">("select")
+  const [reveal, setReveal] = useState<{ fields: string[]; n: number }>({ fields: [], n: 0 })
+  const shown = useRef("")
+
+  useEffect(() => {
+    const send = (m: PickMessage) => frame.current?.contentWindow?.postMessage(m, window.location.origin)
+    send({ type: "design-pick-mode", on: mode === "select" })
+    const onMessage = (e: MessageEvent<PickMessage>) => {
+      if (e.origin !== window.location.origin || e.source !== frame.current?.contentWindow) return
+      const m = e.data
+      if (m?.type === "design-pick-ready") send({ type: "design-pick-mode", on: mode === "select" })
+      if (m?.type === "design-pick") setReveal((r) => ({ fields: describe(m.target).fields, n: r.n + 1 }))
+    }
+    window.addEventListener("message", onMessage)
+    return () => window.removeEventListener("message", onMessage)
+  }, [mode])
+
+  // After the folded parts have opened: scroll to the first setting and flash them all.
+  useEffect(() => {
+    if (!reveal.n) return
+    const id = requestAnimationFrame(() => {
+      const els = reveal.fields.flatMap((f) => [...(panel.current?.querySelectorAll<HTMLElement>(`[data-field="${f}"]`) ?? [])])
+      els[0]?.scrollIntoView({ behavior: "smooth", block: "center" })
+      for (const el of els) {
+        el.animate(
+          [
+            { outline: "2px solid #ff5500", outlineOffset: "6px", borderRadius: "4px" },
+            { outline: "2px solid #ff550000", outlineOffset: "6px", borderRadius: "4px" },
+          ],
+          { duration: 1600, easing: "ease-in" },
+        )
+      }
+      if (reveal.fields[0]?.startsWith("menu-")) els[0]?.querySelector<HTMLInputElement>("input:not(:disabled)")?.select()
+    })
+    return () => cancelAnimationFrame(id)
+  }, [reveal])
+
+  const show = (targets: PickTarget[]) => {
+    const key = targets.join()
+    if (key === shown.current) return
+    shown.current = key
+    frame.current?.contentWindow?.postMessage({ type: "design-show", targets } satisfies PickMessage, window.location.origin)
+  }
+
+  return {
+    frameRef: frame,
+    panelRef: panel,
+    mode,
+    setMode,
+    reveal,
+    onPanelHover: (e: React.PointerEvent) => {
+      if (mode !== "select") return
+      const field = (e.target as Element).closest("[data-field]")?.getAttribute("data-field")
+      show(field ? targetsForField(field) : [])
+    },
+    onPanelLeave: () => show([]),
+  }
 }
 
 function move<T>(list: T[], i: number, by: number) {
@@ -426,13 +512,17 @@ function move<T>(list: T[], i: number, by: number) {
 
 function Section({ title, defaultOpen, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(!!defaultOpen)
+  const ref = useRef<HTMLElement>(null)
+  useReveal(ref, () => setOpen(true))
   return (
-    <section className="border-b">
+    <section ref={ref} className="border-b">
       <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold hover:bg-muted/50">
         {title}
         <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
-      {open && <div className="grid gap-5 px-4 pt-1 pb-5">{children}</div>}
+      <div hidden={!open} className="grid gap-5 px-4 pt-1 pb-5">
+        {children}
+      </div>
     </section>
   )
 }
@@ -484,7 +574,7 @@ function LogoField({
   }
 
   return (
-    <Field label="Logo" hint="PNG or SVG, square works best">
+    <Field id="logo" label="Logo" hint="PNG or SVG, square works best">
       <div className="flex items-center gap-3">
         {logo ? (
           // eslint-disable-next-line @next/next/no-img-element

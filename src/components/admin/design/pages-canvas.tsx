@@ -299,11 +299,9 @@ export function PagesCanvas() {
                 </Button>
               ))}
             </div>
-            {focused.id === "home" && (
-              <Button size="sm" nativeButton={false} render={<Link href={`/admin/${slug}/design/home`} />}>
-                <LayoutGrid /> Edit widgets
-              </Button>
-            )}
+            <Button size="sm" nativeButton={false} render={<Link href={`/admin/${slug}/design/pages?page=${focused.id}`} />}>
+              <LayoutGrid /> Edit widgets
+            </Button>
           </div>
         )}
 

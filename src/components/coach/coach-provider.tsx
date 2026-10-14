@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useLayoutEffect, useMemo, useSyncExternalStore } from "react"
+import { createContext, useContext, useLayoutEffect, useMemo, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { getDemoCoach, type Coach } from "@/lib/data/coaches"
 import { useCustomCommunities } from "@/lib/data/use-communities"
@@ -58,6 +58,18 @@ export function CoachProvider(props: ProviderProps) {
   return <ThemedProvider {...props} original={original} hydrated={hydrated} />
 }
 
+/**
+ * The Design preview frame loads with ?preview=draft. Links inside it don't
+ * carry the flag; the provider stays mounted while browsing in the frame, so
+ * once it has seen the flag it keeps it.
+ */
+function usePreviewFlag() {
+  const param = useSearchParams().get("preview") === "draft"
+  const [seen, setSeen] = useState(param)
+  if (param && !seen) setSeen(true)
+  return param || seen
+}
+
 function ThemedProvider({
   slug,
   base,
@@ -66,7 +78,7 @@ function ThemedProvider({
   original,
   hydrated,
 }: ProviderProps & { original: Coach; hydrated: boolean }) {
-  const preview = useSearchParams().get("preview") === "draft"
+  const preview = usePreviewFlag()
   const overrides = useOverrides(slug, preview ? "draft" : "published")
   const coach = useMemo(() => resolveCoach(original, overrides.content), [original, overrides.content])
   const theme = useMemo(() => resolveTheme(coach, overrides.theme), [coach, overrides.theme])

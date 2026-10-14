@@ -51,7 +51,7 @@ export default function Verify() {
 
   return (
     <OnbFrame>
-      <div className="grid gap-8">
+      <div className="grid gap-5">
         <OnbTitle
           eyebrow="Check your inbox"
           title="Enter the 6-digit code"
@@ -83,7 +83,7 @@ export default function Verify() {
               }}
               onFocus={(e) => e.target.select()}
               className={cn(
-                "h-14 w-full min-w-0 rounded-[var(--radius)] border border-input bg-card text-center font-[family-name:var(--ff-plex-mono)] text-2xl outline-none focus:border-[var(--ts-interactive)] focus:ring-2 focus:ring-[var(--ts-interactive)]/30 disabled:opacity-60",
+                "h-10 w-full min-w-0 rounded-[4px] border border-[#2a2a2f] bg-[#0e0e10] text-center font-[family-name:var(--ff-plex-mono)] text-lg shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] outline-none focus:border-[var(--ts-interactive)] focus:shadow-[0_0_0_3px_rgb(255_85_0/0.18)] disabled:opacity-60",
                 i === 3 && "ml-3",
               )}
             />

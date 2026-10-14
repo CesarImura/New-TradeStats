@@ -15,7 +15,7 @@ export default function Welcome() {
 
   return (
     <OnbFrame>
-      <div className="grid gap-8">
+      <div className="grid gap-5">
         <div className="grid size-12 place-items-center bg-[var(--ts-cta)] text-[#040404]">
           <Check className="size-6" strokeWidth={2.5} />
         </div>
@@ -38,7 +38,7 @@ export default function Welcome() {
         </ul>
         <Button
           size="lg"
-          className="h-12 justify-between px-4 text-[0.95rem]"
+          className="w-full justify-between"
           nativeButton={false}
           render={<Link href="/setup" onClick={() => setAccount({ route: "A" })} />}
         >

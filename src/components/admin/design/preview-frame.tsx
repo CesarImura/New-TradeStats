@@ -9,7 +9,15 @@ const SIZES = { desktop: { w: 1280, h: 860 }, phone: { w: 390, h: 844 } } as con
  * shows unpublished changes. It updates live as settings change.
  * Scaled down to fit the space it has.
  */
-export function PreviewFrame({ src, device }: { src: string; device: keyof typeof SIZES }) {
+export function PreviewFrame({
+  src,
+  device,
+  frameRef,
+}: {
+  src: string
+  device: keyof typeof SIZES
+  frameRef?: React.Ref<HTMLIFrameElement>
+}) {
   const box = useRef<HTMLDivElement>(null)
   const [space, setSpace] = useState({ w: 0, h: 0 })
   const size = SIZES[device]
@@ -34,6 +42,7 @@ export function PreviewFrame({ src, device }: { src: string; device: keyof typeo
         >
           <iframe
             key={device}
+            ref={frameRef}
             src={src}
             title="Live preview of your platform"
             style={{ width: size.w, height, transform: `scale(${scale})`, transformOrigin: "0 0", border: 0 }}

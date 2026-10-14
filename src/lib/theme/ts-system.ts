@@ -2,12 +2,12 @@
  * Our own UI ("ts-ui"): the admin area, sign-up, the setup wizard and the
  * launcher. Never the coach's platform; that is themed by the coach.
  *
- * Follows shadcn's components and IBM Carbon's Gray 100 theme: layered
- * surfaces (#161616 → #262626 → #393939) instead of shadows and borders,
- * square-ish corners (2–4px), IBM Plex, Carbon icons, a 4/8px rhythm, dense
- * data tables, line tabs and fields with a bottom rule. No brand colour while
- * TradeStats' own is a placeholder: the main action and every selection or
- * focus mark is white.
+ * Built on shadcn's components, in the spirit of Webflow's dark Designer: a
+ * dense tool UI. Near-black page (#0a0a0b) with panels one step up (#161618)
+ * edged by 1px lines, titled panels with a header band, recessed fields,
+ * small tactile buttons (28px, 4px corners, a top highlight), 13px body text,
+ * compact tables, tabs and menus. IBM Plex and Carbon icons; TradeStats
+ * colours stay: yellow for the main action, orange for selection and focus.
  *
  * Everything sits under `:root:has(.ts-ui)`, so menus and dialogs rendered
  * outside the tree match. Coach previews shown inside our UI (Design editor,
@@ -19,24 +19,30 @@ const COACH = `:where(.hb-canvas, [class*="tpl-"], [class^="pv-"], [class*=" pv-
 const R = ":root:has(.ts-ui)"
 /** A shadcn part inside our UI, but not inside a coach preview. */
 const ui = (sel: string) => `${R} ${sel}:not(${COACH}, ${COACH} *)`
+/** A border colour set on the element itself (transparent, a state colour, a brand colour). */
+const CUSTOM_BORDER = `[class*="border-["], [class*="border-transparent"], [class*="border-white"], [class*="border-primary"], [class*="border-destructive"], [class*="border-red"], [class*="border-amber"], [class*="border-emerald"], [class*="border-green"], [class*="border-input"]`
 
 export const TS = {
-  bg: "#161616",
-  layer1: "#262626",
-  layer2: "#393939",
-  layer3: "#525252",
-  layerHover1: "#333333",
-  layerHover2: "#474747",
-  borderSubtle: "#393939",
-  borderStrong: "#6f6f6f",
-  text: "#f4f4f4",
-  textSecondary: "#c6c6c6",
-  textHelper: "#8d8d8d",
-  /** Main action: white button, near-black text. */
-  cta: "#ffffff",
-  ctaHover: "#e0e0e0",
-  /** Focus outlines, the open page, the active tab, selected options. */
-  interactive: "#f4f4f4",
+  bg: "#0a0a0b",
+  layer1: "#161618",
+  layer2: "#222226",
+  layer3: "#2e2e33",
+  layerHover1: "#1d1d20",
+  layerHover2: "#2a2a2f",
+  borderSubtle: "#232327",
+  borderStrong: "#4a4a52",
+  /** The 1px edge around panels, buttons and fields. */
+  panelBorder: "#2a2a2f",
+  /** Recessed field fill, darker than any panel. */
+  field: "#0e0e10",
+  text: "#f4f4f5",
+  textSecondary: "#a8a8b1",
+  textHelper: "#71717a",
+  /** Main action: yellow button, near-black text. */
+  cta: "#f8ff9e",
+  ctaHover: "#ecf38a",
+  /** Focus outlines, the open page, the active tab, selected options: orange. */
+  interactive: "#ff5500",
   profit: "#42be65",
   loss: "#fa4d56",
 } as const
@@ -53,10 +59,10 @@ ${R} {
   --destructive: ${TS.loss};
   --border: ${TS.borderSubtle}; --input: ${TS.borderStrong};
   --ring: ${TS.interactive}; --radius: 4px;
-  --chart-1: ${TS.text}; --chart-2: #8d8d8d; --chart-3: ${TS.profit}; --chart-4: ${TS.loss}; --chart-5: ${TS.layer3};
+  --chart-1: ${TS.interactive}; --chart-2: ${TS.cta}; --chart-3: ${TS.profit}; --chart-4: ${TS.loss}; --chart-5: ${TS.layer3};
   --highlight: ${TS.cta}; --highlight-foreground: ${TS.bg};
   --profit: ${TS.profit}; --loss: ${TS.loss};
-  --sidebar: ${TS.bg}; --sidebar-foreground: ${TS.textSecondary};
+  --sidebar: #0e0e10; --sidebar-foreground: ${TS.textSecondary};
   --sidebar-primary: ${TS.cta}; --sidebar-primary-foreground: ${TS.bg};
   --sidebar-accent: ${TS.layer1}; --sidebar-accent-foreground: ${TS.text};
   --sidebar-border: ${TS.borderSubtle}; --sidebar-ring: ${TS.interactive};
@@ -67,99 +73,150 @@ ${R} {
   color-scheme: dark;
 }
 ${R} body { background: ${TS.bg}; font-family: var(--ff-plex), system-ui, sans-serif; font-feature-settings: "tnum" 0; letter-spacing: 0.01em; }
-${R} ::selection { background: rgb(255 255 255 / 0.25); }
-
-r-spacing: 0.01em; }
 ${R} ::selection { background: rgb(255 85 0 / 0.35); }
 
-/* Focus: one 2px white outline everywhere, no glow. */
-${ui(":is([data-slot=button], [data-slot=input], [data-slot=textarea], [data-slot=select-trigger], [data-slot=tabs-trigger], [data-slot=checkbox], [data-slot=switch], [data-slot=sidebar-menu-button], a, button, select):focus-visible")} {
-  outline: 2px solid var(--ring) !important; outline-offset: 1px; box-shadow: none !important; --tw-ring-shadow: 0 0 #0000;
+/* Focus: one 1px orange ring with a soft halo, like a selected element in an editor. */
+${ui(":is([data-slot=button], [data-slot=tabs-trigger], [data-slot=checkbox], [data-slot=switch], [data-slot=sidebar-menu-button], a, button):focus-visible")} {
+  outline: 1px solid var(--ring) !important; outline-offset: 1px; box-shadow: 0 0 0 3px rgb(255 85 0 / 0.18) !important; --tw-ring-shadow: 0 0 #0000;
 }
 
-/* Buttons: rectangular, medium weight. Primary is white; secondary a grey layer; outline a white hairline. */
-${ui("[data-slot=button]")} { border-radius: 2px; font-weight: 500; letter-spacing: 0.01em; }
+/* Density: a tool, not a web page. 13px body, 11.5px small print, tighter line heights. */
+${ui(".text-sm")} { font-size: 0.8125rem; line-height: 1.125rem; }
+${ui(".text-xs")} { font-size: 0.71875rem; line-height: 1rem; }
+${ui(".text-base")} { font-size: 0.875rem; line-height: 1.25rem; }
+${ui(":is(h1, h2, h3)")} { letter-spacing: -0.005em; }
+
+/*
+ * Buttons: small and tactile. 28px (24px small), 4px corners, 12.5px medium text,
+ * a 1px edge and a faint top highlight so they read as pressable on a dark panel.
+ */
+${ui("[data-slot=button]")} {
+  border-radius: 4px; font-weight: 500; font-size: 0.78125rem; letter-spacing: 0.005em;
+  transition: background-color .12s, border-color .12s, color .12s;
+}
+${ui("[data-slot=button]:is(.h-8, .h-9)")} { height: 1.75rem; }
+${ui("[data-slot=button]:is(.size-8, .size-9)")} { width: 1.75rem; height: 1.75rem; }
+${ui("[data-slot=button].h-7")} { height: 1.5rem; font-size: 0.75rem; }
+${ui("[data-slot=button].size-7")} { width: 1.5rem; height: 1.5rem; }
 ${ui("[data-slot=button]:active")} { translate: none; }
+${ui("[data-slot=button].bg-primary")} {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45), inset 0 -1px 0 rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.5);
+}
 ${ui("[data-slot=button].bg-primary:hover")} { background: ${TS.ctaHover}; }
-${ui("[data-slot=button].bg-secondary")} { background: ${TS.layer2}; }
-${ui("[data-slot=button].bg-secondary:hover")} { background: ${TS.layerHover2}; }
-${ui("[data-slot=button][class*='border-border']")} { background: transparent; border-color: ${TS.borderStrong}; }
-${ui("[data-slot=button][class*='border-border']:hover")} { background: var(--ts-hover-1); border-color: ${TS.textHelper}; }
+${ui(":is([data-slot=button].bg-secondary, [data-slot=button][class*='border-border'])")} {
+  background: ${TS.layer2}; border-color: ${TS.panelBorder};
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 1px 1px rgb(0 0 0 / 0.4);
+}
+${ui(":is([data-slot=button].bg-secondary, [data-slot=button][class*='border-border']):hover")} { background: ${TS.layer3}; border-color: #3a3a40; }
+${ui("[data-slot=button][class*='hover:bg-muted']:not(.bg-secondary):not([class*='border-border']):hover")} { background: ${TS.layerHover2}; }
 
-/* Fields: Carbon fields. A filled layer one step above what they sit on, with a bottom rule. */
+/* Fields: recessed. Darker than the panel they sit in, a 1px edge, 4px corners, 28px tall. */
 ${ui(":is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], select)")} {
-  border-radius: 0; background-color: var(--ts-layer-1); border-color: transparent; box-shadow: inset 0 -1px 0 ${TS.borderStrong};
+  border-radius: 4px; background-color: ${TS.field}; border: 1px solid ${TS.panelBorder};
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.35); font-size: 0.8125rem;
 }
-${ui(":is([data-slot=card], [data-slot=dialog-content], [data-slot=sheet-content], [data-slot=popover-content]) :is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], select)")} {
-  background-color: var(--ts-layer-2);
+${ui(":is([data-slot=input], [data-slot=select-trigger], select):not(textarea)")} { height: 1.75rem; }
+${ui(":is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], select):hover")} { border-color: #3a3a40; }
+${ui(":is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], select):focus-visible")} {
+  outline: none !important; border-color: var(--ring); box-shadow: 0 0 0 3px rgb(255 85 0 / 0.18) !important;
 }
-${ui(":is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], select):hover")} { background-color: var(--ts-hover-1); }
-${ui(":is([data-slot=card], [data-slot=dialog-content], [data-slot=sheet-content], [data-slot=popover-content]) :is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], select):hover")} { background-color: var(--ts-hover-2); }
-${ui(":is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], select):focus-visible")} { outline-offset: -2px !important; }
 ${ui("[data-slot=input]::placeholder, [data-slot=textarea]::placeholder")} { color: ${TS.textHelper}; }
-${ui("[data-slot=checkbox]")} { border-radius: 2px; border-color: ${TS.text}; }
-${ui("[data-slot=checkbox][data-checked]")} { background: ${TS.text}; color: ${TS.bg}; }
-${ui("[data-slot=switch][data-checked]")} { background: ${TS.text}; }
-${ui("[data-slot=switch][data-checked] [data-slot=switch-thumb]")} { background: ${TS.bg}; }
+${ui("[data-slot=checkbox]")} { border-radius: 3px; background: ${TS.field}; border-color: #3a3a40; }
+${ui("[data-slot=checkbox][data-checked]")} { background: var(--primary); border-color: var(--primary); }
+${ui("[data-slot=switch]")} { box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.4); }
 
-/* Cards: Carbon tiles. A flat layer, no outline, no shadow; the layer step does the separating. */
-${ui("[data-slot=card]")} { border-radius: var(--radius); box-shadow: none; --tw-ring-color: transparent; background: var(--card); }
-${ui("[data-slot=card-title]")} { font-weight: 600; letter-spacing: 0; }
-/* Things inside a tile step up one layer, so they never vanish into it. */
-${ui("[data-slot=card] :is(.bg-muted, .bg-secondary)")} { background-color: var(--ts-layer-2); }
+/*
+ * Cards are panels: one surface, a 1px edge, 6px corners. A titled panel gets a
+ * header band (13px semibold title, hairline under it), like an editor's
+ * inspector sections.
+ */
+${ui("[data-slot=card]")} {
+  --card-spacing: 0.75rem; border-radius: 6px; background: var(--card);
+  box-shadow: 0 0 0 1px ${TS.panelBorder}; --tw-ring-color: transparent;
+}
+${ui("[data-slot=card][data-size=sm]")} { --card-spacing: 0.625rem; }
+${ui("[data-slot=card] > [data-slot=card-header]:has([data-slot=card-title])")} {
+  border-bottom: 1px solid ${TS.borderSubtle}; padding-bottom: var(--card-spacing);
+}
+${ui("[data-slot=card-title]")} { font-size: 0.8125rem; line-height: 1.125rem; font-weight: 600; letter-spacing: 0; }
+/* Big numbers (KPI tiles) keep a readable size. */
+${ui("[data-slot=card-title]:is(.text-2xl, .text-xl, .text-3xl)")} { font-size: 1.25rem; line-height: 1.75rem; font-weight: 500; letter-spacing: -0.01em; }
+${ui("[data-slot=card-description]")} { font-size: 0.75rem; line-height: 1rem; color: ${TS.textHelper}; }
+${ui("[data-slot=card-footer]")} { background: transparent; border-color: ${TS.borderSubtle}; }
+/* Things inside a panel step up one layer, so they never vanish into it. */
+${ui("[data-slot=card] :is(.bg-muted, .bg-secondary):not([data-slot=button])")} { background-color: var(--ts-layer-2); }
 ${ui("[data-slot=card] :is(.bg-card, .bg-background)")} { background-color: var(--ts-layer-2); }
 ${ui("[data-slot=card] [class*='hover:bg-muted']:hover")} { background-color: var(--ts-hover-2); }
-${ui("[data-slot=card] .border, [data-slot=card] [class*='border-b'], [data-slot=card] [class*='border-t']")} { border-color: ${TS.layer3}; }
+${ui("[data-slot=card] .border, [data-slot=card] [class*='border-b'], [data-slot=card] [class*='border-t']")} { border-color: ${TS.panelBorder}; }
+/* Hand-built boxes (any rounded box with a border) look like panels too: 1px edge, 6px corners (4px for small ones). */
+${ui(":is(.rounded-lg, .rounded-xl, .rounded-2xl).border:not([data-slot])")} { border-radius: 6px; }
+${ui(":is(.rounded-md, .rounded-sm).border:not([data-slot])")} { border-radius: 4px; }
+/* Only boxes with the default border colour get the panel edge; transparent, coloured and selected borders keep theirs. */
+${ui(`:is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-md, .rounded-sm).border:not([data-slot], ${CUSTOM_BORDER})`)} { border-color: ${TS.panelBorder}; }
+${ui(`:is(.rounded-lg, .rounded-xl).border:is(button, a):not(${CUSTOM_BORDER}):hover`)} { border-color: #3a3a40; }
+${ui(".rounded-lg.border.bg-card, .rounded-xl.border.bg-card")} { background-color: var(--card); }
+${ui(".border-dashed")} { border-color: #34343a; }
 
-/* Tags: square, compact, grey. */
-${ui("[data-slot=badge]")} { border-radius: 2px; height: 1.25rem; padding-inline: 0.375rem; font-weight: 500; }
+/* Tags: small, square, quiet. */
+${ui("[data-slot=badge]")} { border-radius: 3px; height: 1.125rem; padding-inline: 0.3125rem; font-size: 0.6875rem; font-weight: 500; }
 ${ui("[data-slot=badge].bg-secondary")} { background: ${TS.layer3}; color: ${TS.text}; }
 
-/* Tabs: Carbon line tabs. Text tabs with a white indicator on a hairline. */
+/* Tabs: compact line tabs, 32px, 12.5px text, an orange underline on the open one. */
 ${ui("[data-slot=tabs-list][data-variant=default]")} {
-  background: transparent; border-radius: 0; padding: 0; height: 2.5rem !important; gap: 0;
+  background: transparent; border-radius: 0; padding: 0; height: 2rem !important; gap: 0.25rem;
   box-shadow: inset 0 -1px 0 var(--border);
 }
 ${ui("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger]")} {
-  flex: none; height: 100%; border-radius: 0; border: 0; padding: 0 1rem; background: transparent !important; box-shadow: none !important;
-  color: var(--muted-foreground); font-weight: 400;
+  flex: none; height: 100%; border-radius: 0; border: 0; padding: 0 0.625rem; background: transparent !important; box-shadow: none !important;
+  color: ${TS.textHelper}; font-weight: 500; font-size: 0.78125rem;
 }
-${ui("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger]:hover")} { color: var(--foreground); background: var(--ts-hover-1) !important; }
+${ui("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger]:hover")} { color: var(--foreground); }
 ${ui("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger][data-active]")} {
-  color: var(--foreground); font-weight: 500; box-shadow: inset 0 -2px 0 var(--ts-interactive) !important;
+  color: var(--foreground); box-shadow: inset 0 -2px 0 var(--ts-interactive) !important;
 }
 ${ui("[data-slot=tabs-list][data-variant=line] [data-slot=tabs-trigger]")} { border-radius: 0; }
 ${ui("[data-slot=tabs-list][data-variant=line] [data-slot=tabs-trigger]::after")} { background: var(--ts-interactive); }
 
-/* Data tables: a header band, 48px rows, 16px gutters, rows separated by the layer below. */
-${ui("[data-slot=table-header] [data-slot=table-row]")} { background: var(--ts-layer-2); border-color: transparent; }
-${ui("[data-slot=table-head]")} { height: 3rem; padding-inline: 1rem; font-size: 0.875rem; font-weight: 600; color: var(--foreground); letter-spacing: 0.01em; }
-${ui("[data-slot=table-body] [data-slot=table-row]")} { background: var(--ts-layer-1); border-color: var(--ts-layer-2); }
-${ui("[data-slot=table-cell]")} { height: 3rem; padding: 0.375rem 1rem; color: ${TS.textSecondary}; }
+/* Data tables: a panel with a 32px header band and 40px rows split by hairlines. */
+${ui("[data-slot=table-container]")} { border-radius: 6px; box-shadow: 0 0 0 1px ${TS.panelBorder}; background: var(--ts-layer-1); }
+${ui("[data-slot=table-header] [data-slot=table-row]")} { background: ${TS.layer1}; border-color: ${TS.borderSubtle}; }
+${ui("[data-slot=table-head]")} {
+  height: 2rem; padding-inline: 0.75rem; font-size: 0.71875rem; font-weight: 500; color: ${TS.textHelper}; letter-spacing: 0.01em;
+}
+${ui("[data-slot=table-body] [data-slot=table-row]")} { background: transparent; border-color: ${TS.borderSubtle}; }
+${ui("[data-slot=table-cell]")} { height: 2.5rem; padding: 0.25rem 0.75rem; font-size: 0.8125rem; color: ${TS.textSecondary}; }
 ${ui("[data-slot=table-body] [data-slot=table-row]:hover")} { background: var(--ts-hover-1); }
 ${ui("[data-slot=table-body] [data-slot=table-row]:hover [data-slot=table-cell]")} { color: var(--foreground); }
 
-/* Overlays: one layer up, a soft short shadow, no outline. */
+/* Overlays: floating panels. One layer up, a 1px edge, a deep soft shadow. */
 ${ui(":is([data-slot=dialog-content], [data-slot=popover-content], [data-slot=dropdown-menu-content], [data-slot=context-menu-content], [data-slot=select-content], [data-slot=command])")} {
-  border-radius: var(--radius); box-shadow: 0 2px 6px rgb(0 0 0 / 0.5); --tw-ring-color: transparent;
+  border-radius: 6px; box-shadow: 0 0 0 1px #34343a, 0 12px 32px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.4); --tw-ring-color: transparent;
 }
 ${ui("[data-slot=dialog-content]")} { background: var(--ts-layer-1); }
-${ui(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item])")} { border-radius: 0; }
+${ui(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item])")} {
+  border-radius: 3px; min-height: 1.625rem; padding-block: 0.25rem; font-size: 0.78125rem;
+}
 ${ui(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item]):is(:hover, [data-highlighted], [data-selected=true])")} { background: var(--ts-hover-2); }
-${ui("[data-slot=sheet-content]")} { background: var(--ts-layer-1); box-shadow: none; }
-${ui("[data-slot=tooltip-content]")} { border-radius: 2px; background: ${TS.text}; color: ${TS.bg}; }
-${ui(":is([data-slot=progress], [data-slot=progress-track], [data-slot=progress-indicator])")} { border-radius: 0; }
-${ui(":is([data-slot=progress], [data-slot=progress-track])")} { background: var(--ts-layer-3); }
-${ui("[data-slot=progress-indicator]")} { background: var(--ts-interactive); }
+${ui("[data-slot=sheet-content]")} { background: var(--ts-layer-1); box-shadow: -1px 0 0 ${TS.panelBorder}, -16px 0 40px rgb(0 0 0 / 0.5); }
+${ui("[data-slot=tooltip-content]")} {
+  border-radius: 4px; background: ${TS.layer3}; color: ${TS.text}; font-size: 0.71875rem; padding: 0.25rem 0.5rem;
+  box-shadow: 0 0 0 1px #3a3a40, 0 4px 12px rgb(0 0 0 / 0.5);
+}
+${ui(":is([data-slot=progress], [data-slot=progress-track], [data-slot=progress-indicator])")} { border-radius: 999px; }
+${ui(":is([data-slot=progress], [data-slot=progress-track])")} { background: var(--ts-layer-3); height: 4px; }
 ${ui("[data-slot=separator]")} { background: var(--border); }
 
-/* Side navigation: Carbon UI shell. Full-width grey rows, a white bar on the open page. */
-${ui("[data-slot=sidebar-container]")} { border-color: var(--border); }
-${ui("[data-slot=sidebar-menu-button]")} { border-radius: 0; color: ${TS.textSecondary}; }
+/* Side navigation: an editor's left panel. 28px rows, 12.5px text, icons 16px, an orange tick on the open page. */
+${ui("[data-slot=sidebar-container]")} { border-color: ${TS.borderSubtle}; }
+${ui("[data-slot=sidebar-group]")} { padding-block: 0.25rem; }
+${ui("[data-slot=sidebar-menu]")} { gap: 1px; }
+${ui("[data-slot=sidebar-menu-button]")} { border-radius: 4px; color: ${TS.textSecondary}; font-size: 0.78125rem; }
 ${ui("[data-slot=sidebar-menu-button]:hover")} { background: var(--ts-hover-1); color: ${TS.text}; }
-${ui("[data-slot=sidebar-menu-button]:not([data-size=lg])")} { height: 2rem; }
-${ui("[data-slot=sidebar-menu-button][data-active]")} { box-shadow: inset 3px 0 0 var(--ts-interactive); background: var(--ts-layer-1); color: ${TS.text}; font-weight: 600; }
+${ui("[data-slot=sidebar-menu-button]:not([data-size=lg])")} { height: 1.75rem; }
+${ui("[data-slot=sidebar-menu-button][data-active]")} {
+  box-shadow: inset 2px 0 0 var(--ts-interactive); background: var(--ts-layer-2); color: ${TS.text}; font-weight: 500;
+}
 ${ui("[data-slot=sidebar-group-label]")} {
-  font-family: var(--ff-plex-mono), ui-monospace, monospace; font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase; color: ${TS.textHelper};
+  height: 1.5rem; font-family: var(--ff-plex-mono), ui-monospace, monospace; font-size: 0.65625rem; letter-spacing: 0.06em; text-transform: uppercase; color: ${TS.textHelper};
 }
 `

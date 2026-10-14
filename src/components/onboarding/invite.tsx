@@ -28,7 +28,7 @@ export function InviteStep() {
 
   return (
     <OnbFrame>
-      <div className="grid gap-9">
+      <div className="grid gap-5">
         <OnbTitle
           eyebrow="You're live"
           title={<>{c.name} is published.</>}
@@ -37,7 +37,7 @@ export function InviteStep() {
 
         <section className="grid gap-2.5">
           <span className={cn(mono, "text-muted-foreground")}>Share your join link</span>
-          <div className="flex h-11 items-center gap-2 rounded-[var(--radius)] border bg-card pr-1 pl-3">
+          <div className="flex h-8 items-center gap-2 rounded-[4px] border border-[#2a2a2f] bg-[#0e0e10] pr-0.5 pl-2.5 text-[0.8125rem] shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)]">
             <span className="min-w-0 flex-1 truncate text-sm">{link}</span>
             <Button
               size="sm"
@@ -97,7 +97,7 @@ export function InviteStep() {
         </section>
 
         <div className="grid gap-3 border-t pt-6">
-          <Button size="lg" className="h-12 justify-between px-4 text-[0.95rem]" nativeButton={false} render={<Link href={`/admin/${c.slug}`} />}>
+          <Button className="w-full justify-between" nativeButton={false} render={<Link href={`/admin/${c.slug}`} />}>
             Go to my dashboard <ArrowRight />
           </Button>
           <div className="flex justify-between gap-3 text-sm">

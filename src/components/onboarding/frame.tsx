@@ -7,18 +7,18 @@ import { cn } from "@/lib/utils"
 
 /**
  * Sign-up and setup are our own product, not the coach's, so they use our own
- * UI (src/lib/theme/ts-system.ts): IBM Plex, layered dark surfaces, yellow
- * main action, orange focus.
+ * UI (src/lib/theme/ts-system.ts): the Webflow-Designer-like tool look, IBM
+ * Plex, near-black page with bordered panels, yellow main action, orange focus.
  */
 export const mono = "font-[family-name:var(--ff-plex-mono)] text-[0.68rem] uppercase tracking-[0.06em]"
 
 export function TsLogo({ className }: { className?: string }) {
   return (
     <Link href="/" className={cn("flex items-center gap-2", className)} aria-label="TradeStats">
-      <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-        <path fill="currentColor" d="M2 3h20v6h-7v12H9V9H2z" />
+      <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+        <path fill="#ff5500" d="M2 3h20v6h-7v12H9V9H2z" />
       </svg>
-      <span className="text-[0.95rem] font-medium tracking-tight">TradeStats</span>
+      <span className="text-[0.8125rem] font-semibold tracking-tight">TradeStats</span>
     </Link>
   )
 }
@@ -44,17 +44,17 @@ export function OnbFrame({
   }, [])
 
   return (
-    <div className={cn("ts-ui ts-onb flex flex-col", wide ? "h-svh overflow-hidden" : "min-h-svh", " bg-background font-sans text-foreground [background-image:linear-gradient(to_right,rgb(255_255_255/.035)_1px,transparent_1px)] [background-size:96px_100%]")}>
+    <div className={cn("ts-ui ts-onb flex flex-col", wide ? "h-svh overflow-hidden" : "min-h-svh", " bg-background font-sans text-foreground")}>
       <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS }} />
-      <header className="flex h-12 shrink-0 items-center justify-between gap-4 border-b px-5">
+      <header className="flex h-11 shrink-0 items-center justify-between gap-4 border-b bg-[var(--sidebar)] px-4">
         <TsLogo />
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">{right}</div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">{right}</div>
       </header>
       {wide ? (
         <div className="flex min-h-0 flex-1 flex-col">{children}</div>
       ) : (
-        <main className="flex flex-1 items-start justify-center px-5 py-12 md:items-center md:py-16">
-          <div className="w-full max-w-[460px]">{children}</div>
+        <main className="flex flex-1 items-start justify-center px-4 py-10 md:items-center md:py-14">
+          <div className="w-full max-w-[420px] rounded-[6px] bg-card p-5 shadow-[0_0_0_1px_#2a2a2f,0_16px_40px_rgb(0_0_0/0.5)] md:p-6">{children}</div>
         </main>
       )}
     </div>
@@ -68,10 +68,10 @@ export function Eyebrow({ children, className }: { children: React.ReactNode; cl
 
 export function OnbTitle({ eyebrow, title, text }: { eyebrow?: string; title: React.ReactNode; text?: React.ReactNode }) {
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-1.5">
       {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-      <h1 className="text-[2rem] leading-[1.05] font-normal tracking-tight text-balance md:text-[2.4rem]">{title}</h1>
-      {text && <p className="text-[0.95rem] text-pretty text-muted-foreground">{text}</p>}
+      <h1 className="text-[1.375rem] leading-7 font-medium tracking-[-0.01em] text-balance">{title}</h1>
+      {text && <p className="text-sm text-pretty text-muted-foreground">{text}</p>}
     </div>
   )
 }
@@ -101,8 +101,8 @@ export function Choice({
       aria-checked={checked}
       onClick={onClick}
       className={cn(
-        "flex items-start gap-3 rounded-[var(--radius)] border bg-card p-3.5 text-left transition-colors outline-none hover:border-white/25 focus-visible:ring-2 focus-visible:ring-ring",
-        checked && "border-[var(--ts-interactive)] bg-[color-mix(in_oklab,var(--ts-interactive)_8%,var(--card))] hover:border-[var(--ts-interactive)]",
+        "flex items-start gap-2.5 rounded-[6px] border border-[#2a2a2f] bg-[var(--ts-layer-2)] p-2.5 text-left shadow-[inset_0_1px_0_rgb(255_255_255/0.04)] transition-colors outline-none hover:border-[#3a3a40] hover:bg-[var(--ts-layer-3)] focus-visible:border-[var(--ts-interactive)] focus-visible:shadow-[0_0_0_3px_rgb(255_85_0/0.18)]",
+        checked && "border-[var(--ts-interactive)] bg-[color-mix(in_oklab,var(--ts-interactive)_10%,var(--ts-layer-2))] hover:border-[var(--ts-interactive)] hover:bg-[color-mix(in_oklab,var(--ts-interactive)_14%,var(--ts-layer-2))]",
         className,
       )}
     >
@@ -114,8 +114,8 @@ export function Choice({
       <span
         aria-hidden
         className={cn(
-          "mt-0.5 grid size-4 shrink-0 place-items-center border border-white/30",
-          multi ? "rounded-[2px]" : "rounded-full",
+          "mt-0.5 grid size-3.5 shrink-0 place-items-center border border-[#4a4a52] bg-[#0e0e10]",
+          multi ? "rounded-[3px]" : "rounded-full",
           checked && "border-[var(--ts-interactive)] bg-[var(--ts-interactive)]",
         )}
       >
@@ -128,7 +128,7 @@ export function Choice({
 /** Small note that marks something as prototype-only behaviour. */
 export function ProtoNote({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-[var(--radius)] border border-dashed border-white/15 px-3 py-2 text-xs text-muted-foreground">
+    <p className="rounded-[4px] border border-dashed border-[#2a2a2f] px-2.5 py-1.5 text-xs text-muted-foreground">
       <span className={cn(mono, "mr-1.5 text-[var(--ts-cta)]")}>Prototype</span>
       {children}
     </p>

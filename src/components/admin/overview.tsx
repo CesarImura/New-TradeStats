@@ -43,7 +43,7 @@ export function AdminOverview() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm text-muted-foreground">Monday, 12 October · {coach.name}</p>
-          <h1 className="text-[1.75rem] leading-9 font-normal tracking-[-0.005em]">Good morning, {DEMO_ADMIN.name.split(" ")[0]}</h1>
+          <h1 className="text-xl leading-7 font-medium tracking-[-0.01em]">Good morning, {DEMO_ADMIN.name.split(" ")[0]}</h1>
         </div>
         <Button>
           <Radio /> Go live

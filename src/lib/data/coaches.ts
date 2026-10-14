@@ -1,5 +1,5 @@
 import type { CoachTheme, TemplateId } from "@/lib/theme/types"
-import type { HomeLayouts } from "@/lib/widgets/layout"
+import type { HomeLayouts, PageLayouts } from "@/lib/widgets/layout"
 import { customCommunities } from "./communities"
 
 export type ModuleId = "courses" | "calendar" | "charts" | "community" | "journal" | "ranking" | "ai"
@@ -37,8 +37,10 @@ export type Coach = {
   wording: Wording
   modules: Record<ModuleId, boolean>
   menu: ModuleId[]
-  /** Home layouts the coach built; without one, Home follows the template's default. */
+  /** Older communities (and the setup wizard) keep Home's layouts here; resolveCoach moves them into pages.home. */
   home?: HomeLayouts
+  /** Layouts the coach built, per page and tier. Without one, Home follows the template and a module page is just its core widget. */
+  pages?: PageLayouts
   tiers: Tier[]
   discordUrl?: string
 }

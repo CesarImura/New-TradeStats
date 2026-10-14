@@ -1,5 +1,10 @@
-import { PagesCanvas } from "@/components/admin/design/pages-canvas"
+import { Suspense } from "react"
+import { PageBuilder } from "@/components/admin/design/page-builder"
 
 export default function Page() {
-  return <PagesCanvas />
+  return (
+    <Suspense>
+      <PageBuilder />
+    </Suspense>
+  )
 }

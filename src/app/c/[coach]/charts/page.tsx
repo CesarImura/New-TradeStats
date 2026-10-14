@@ -1,10 +1,10 @@
 import { Suspense } from "react"
-import { StudentCharts } from "@/components/student/charts"
+import { WidgetPage } from "@/components/student/widget-page"
 
 export default function Page() {
   return (
     <Suspense>
-      <StudentCharts />
+      <WidgetPage page="charts" />
     </Suspense>
   )
 }

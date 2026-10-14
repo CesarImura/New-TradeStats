@@ -230,13 +230,19 @@
     .g-page {
       display: grid;
       grid-template-columns: repeat(12, minmax(0, 1fr));
-      grid-auto-rows: var(--row-h);
+      /* Rows keep their height; only a page's core widget can make its rows taller, to fit the page's content. */
+      grid-auto-rows: minmax(var(--row-h), auto);
       grid-auto-flow: row dense;
     }
     .g-item {
       grid-column: span var(--w-md) / span var(--w-md);
       grid-row: span var(--h) / span var(--h);
       overflow: hidden;
+      contain: size;
+    }
+    .g-item.g-core {
+      overflow: visible;
+      contain: none;
     }
   }
   @container (min-width: 60rem) {

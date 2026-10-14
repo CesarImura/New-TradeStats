@@ -11,19 +11,19 @@ const mono = "font-[family-name:var(--ff-plex-mono)] text-[0.7rem] uppercase tra
 /** Prototype launcher, in our own TradeStats look. */
 export default function Launcher() {
   return (
-    <div className="ts-ui min-h-svh bg-[#161616] font-[family-name:var(--ff-plex)] text-white [background-image:linear-gradient(to_right,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:96px_100%]">
-      <div className="mx-auto flex max-w-[1180px] flex-col gap-14 px-5 py-14 md:py-20">
-        <header className="flex flex-col gap-6">
+    <div className="ts-ui min-h-svh bg-[#0a0a0b] font-[family-name:var(--ff-plex)] text-[0.8125rem] text-white">
+      <div className="mx-auto flex max-w-[1180px] flex-col gap-6 px-4 py-8 md:px-6 md:py-10">
+        <header className="flex flex-col gap-3">
           <div className="flex items-center gap-2.5">
-            <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-              <path fill="#f4f4f4" d="M2 3h20v6h-7v12H9V9H2z" />
+            <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+              <path fill="#ff5500" d="M2 3h20v6h-7v12H9V9H2z" />
             </svg>
             <span className={mono}>TradeStats · Coach platform · Prototype</span>
           </div>
-          <h1 className="max-w-[14ch] text-5xl leading-[1.02] font-light tracking-tight md:text-7xl">
+          <h1 className="text-2xl leading-8 font-medium tracking-[-0.01em]">
             One platform, every coach&apos;s own.
           </h1>
-          <p className="max-w-[60ch] text-white/60">
+          <p className="max-w-[72ch] text-[#a8a8b1]">
             Four demo communities from three coaches, on three starting templates. Same pages and components underneath; the coach&apos;s
             settings decide everything you see. Open a student platform or its admin area, then use the Prototype
             button to switch template, navigation and mode.
@@ -35,12 +35,12 @@ export default function Launcher() {
 
         <LauncherOnboarding />
 
-        <section className="grid gap-px border border-white/10 bg-white/10 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {COACHES.map((c) => {
             const theme = resolveTheme(c)
             const scope = `.pv-${c.slug}`
             return (
-              <article key={c.slug} className="flex flex-col gap-5 bg-[#161616] p-5">
+              <article key={c.slug} className="flex flex-col gap-3 rounded-[6px] bg-[#161618] p-3 shadow-[0_0_0_1px_#2a2a2f]">
                 <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, scope) }} />
                 <div className="flex items-center justify-between">
                   <span className={`${mono} text-white/50`}>Template · {TEMPLATES[c.template].name}</span>
@@ -48,7 +48,7 @@ export default function Launcher() {
                 </div>
 
                 {/* Live mini preview rendered with the coach's real theme */}
-                <div className={`pv-${c.slug} overflow-hidden rounded-[var(--radius)] bg-background p-4 text-foreground`} style={{ fontFamily: "var(--coach-font-body)" }}>
+                <div className={`pv-${c.slug} overflow-hidden rounded-[4px] bg-background p-4 text-foreground shadow-[0_0_0_1px_#2a2a2f]`} style={{ fontFamily: "var(--coach-font-body)" }}>
                   <div className="mb-4 flex items-center gap-2">
                     <span className="grid size-7 place-items-center rounded-[min(var(--radius),8px)] bg-primary text-xs text-primary-foreground" style={{ fontFamily: "var(--coach-font-heading)" }}>
                       {c.mark}
@@ -71,14 +71,14 @@ export default function Launcher() {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <h2 className="text-2xl font-normal">{c.name}</h2>
-                  <p className="text-sm text-white/55">{c.tagline}</p>
+                  <h2 className="text-[0.875rem] font-semibold">{c.name}</h2>
+                  <p className="text-xs text-[#a8a8b1]">{c.tagline}</p>
                 </div>
                 <div className="mt-auto flex flex-wrap gap-2">
-                  <Link href={`/c/${c.slug}`} className={`${mono} inline-flex items-center gap-2 rounded-[2px] bg-white px-3.5 py-2.5 text-[#161616] hover:bg-[#e0e0e0]`}>
+                  <Link href={`/c/${c.slug}`} className="inline-flex h-7 items-center gap-1.5 rounded-[4px] bg-[#f8ff9e] px-2.5 text-[0.78125rem] font-medium text-[#040404] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),0_0_0_1px_rgb(0_0_0/0.5)] hover:bg-[#ecf38a]">
                     Student side <ArrowRight className="size-3.5" />
                   </Link>
-                  <Link href={`/admin/${c.slug}`} className={`${mono} inline-flex items-center gap-2 rounded-[2px] border border-white/20 px-3.5 py-2.5 hover:bg-white/5`}>
+                  <Link href={`/admin/${c.slug}`} className="inline-flex h-7 items-center gap-1.5 rounded-[4px] border border-[#2a2a2f] bg-[#222226] px-2.5 text-[0.78125rem] font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_1px_1px_rgb(0_0_0/0.4)] hover:bg-[#2e2e33]">
                     Admin area <ArrowUpRight className="size-3.5" />
                   </Link>
                 </div>
@@ -87,9 +87,9 @@ export default function Launcher() {
           })}
         </section>
 
-        <section className="grid gap-4 md:grid-cols-[1fr_2fr]">
+        <section className="grid gap-3 rounded-[6px] bg-[#161618] p-4 shadow-[0_0_0_1px_#2a2a2f] md:grid-cols-[1fr_2fr]">
           <span className={`${mono} text-white/50`}>Built so far</span>
-          <ul className="grid gap-2 text-sm text-white/70 sm:grid-cols-2">
+          <ul className="grid gap-1.5 text-[0.8125rem] text-[#a8a8b1] sm:grid-cols-2">
             <li>Theme engine: coach settings → shadcn variables</li>
             <li>3 starting templates: Terminal, Atelier, Pulse</li>
             <li>Student layouts: side, top, mobile bar</li>

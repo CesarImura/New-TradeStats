@@ -2,15 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import ReactGridLayout from "react-grid-layout"
 import { transformStrategy, verticalCompactor, type Layout, type LayoutItem, type PositionStrategy } from "react-grid-layout/core"
 import { GridBackground } from "react-grid-layout/extras"
 import "react-grid-layout/css/styles.css"
 import "react-resizable/css/styles.css"
-import { ArrowDownToLine, ArrowLeft, ArrowUpToLine, Copy, Database, EyeOff, Info, LayoutGrid, Monitor, Pencil, Smartphone, Tablet, Trash2 } from "@/components/icons"
+import { ArrowDownToLine, ArrowUpToLine, Copy, Database, EyeOff, Info, LayoutGrid, Lock, Monitor, Pencil, Smartphone, Tablet, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { CoachContext, useCoach } from "@/components/coach/coach-provider"
-import { Badge } from "@/components/ui/badge"
+import { studentNav } from "@/components/coach/nav"
 import { Button } from "@/components/ui/button"
 import {
   ContextMenu,
@@ -35,8 +36,8 @@ import { DataModeProvider, type DataMode } from "@/components/widgets/shared"
 import { getCoach } from "@/lib/data/coaches"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { themeToCss } from "@/lib/theme/css"
-import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
-import { COLS, GAP, ROW_HEIGHT, defaultHome, normalizeLayout, uid, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
+import { pageLayout, resolveCoach, resolveTheme } from "@/lib/theme/resolve"
+import { COLS, GAP, ROW_HEIGHT, normalizeLayout, uid, withCore, type PageId, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { NothingSelected, WidgetLibrary, WidgetSettings } from "./builder-panels"
 import { Segmented } from "./controls"
@@ -54,8 +55,12 @@ const DROP_ID = "__dropping__"
  */
 const scaled = (scale: number): PositionStrategy => ({ ...transformStrategy, scale })
 
-/** ADM-37 / ADM-39: build the students' Home on a snap-to-grid canvas, per tier. */
-export function HomeBuilder() {
+/**
+ * ADM-37 / ADM-39: build any student page on a snap-to-grid canvas, per tier.
+ * Home is all widgets; a module page also has its core widget (the page's own
+ * tool), which can move and resize but not be removed.
+ */
+export function PageBuilder() {
   const ctx = useCoach()
   const slug = ctx.coach.slug
   const original = getCoach(slug)!
@@ -65,6 +70,20 @@ export function HomeBuilder() {
   const coach = useMemo(() => resolveCoach(original, working.content), [original, working.content])
   const theme = useMemo(() => resolveTheme(coach, working.theme), [coach, working.theme])
   const gap = GAP[theme.density]
+
+  // Which page: ?page=journal. Pages for switched-off modules aren't offered.
+  const params = useSearchParams()
+  const router = useRouter()
+  const pages = studentNav(coach, `/c/${slug}`)
+  const asked = params.get("page") ?? "home"
+  const page = (pages.some((p) => p.id === asked) ? asked : "home") as PageId
+  const pageInfo = pages.find((p) => p.id === page)!
+  const goTo = (id: string) => {
+    const q = new URLSearchParams(params)
+    q.set("page", id)
+    router.replace(`?${q}`, { scroll: false })
+    setSelected(null)
+  }
 
   const [tier, setTier] = useState("default")
   const [device, setDevice] = useState<Device>("desktop")
@@ -103,16 +122,20 @@ export function HomeBuilder() {
   const scale = areaWidth ? Math.min(1, (areaWidth - 32) / logicalWidth) : 1
   const gridWidth = logicalWidth - PAD[device] * 2
 
-  const layouts = coach.home ?? {}
-  const baseLayout = layouts.default ? normalizeLayout(layouts.default, heightOf) : defaultHome(theme.template, coach)
+  const layouts = coach.pages?.[page] ?? {}
+  const baseLayout = pageLayout(coach, page, theme.template, undefined, heightOf)
   const inherits = tier !== "default" && !layouts[tier]
-  const layout = tier === "default" ? baseLayout : layouts[tier] ? normalizeLayout(layouts[tier], heightOf) : baseLayout
+  const own = (l: PageLayout) => (page === "home" ? l : withCore(page, l))
+  const layout = tier === "default" || !layouts[tier] ? baseLayout : own(normalizeLayout(layouts[tier], heightOf))
   const tierName = coach.tiers.find((t) => t.id === tier)?.name
+  const savePages = (next: typeof layouts, key: string) =>
+    commit({ ...working, content: { ...working.content, pages: { ...coach.pages, [page]: next } } }, `${page}-${key}`)
 
   const save = (next: PageLayout, key: string) => {
-    commit({ ...working, content: { ...working.content, home: { ...layouts, [tier]: next } } }, `${tier}-${key}`)
-    if (inherits) toast(`${tierName} now has its own Home. Other tiers keep the default.`)
+    savePages({ ...layouts, [tier]: next }, `${tier}-${key}`)
+    if (inherits) toast(`${tierName} now has its own ${pageInfo.label} page. Other tiers keep the default.`)
   }
+  const pinned = (id: string) => !!getWidget(layout.items.find((w) => w.id === id)?.type ?? "")?.core
   const updateItem = (id: string, patch: Partial<WidgetInstance>, key: string) =>
     save({ items: layout.items.map((w) => (w.id === id ? { ...w, ...patch } : w)) }, key)
 
@@ -143,6 +166,10 @@ export function HomeBuilder() {
     save({ items: items.map((w) => ({ ...w, x: pos.get(w.id)!.x, y: pos.get(w.id)!.y })) }, key)
   }
   const removeWidget = (id: string) => {
+    if (pinned(id)) {
+      toast(`${pageInfo.label} is the main part of this page, so it stays. Move or resize it instead.`)
+      return
+    }
     const def = getWidget(layout.items.find((w) => w.id === id)?.type ?? "")
     saveCompacted(layout.items.filter((w) => w.id !== id), `del-${id}`)
     if (selected === id) setSelected(null)
@@ -150,7 +177,7 @@ export function HomeBuilder() {
   }
   const duplicateWidget = (id: string) => {
     const w = layout.items.find((x) => x.id === id)
-    if (!w) return
+    if (!w || pinned(id)) return
     const copy = { ...w, id: uid(), y: w.y + w.h }
     saveCompacted([...layout.items, copy], `dup-${copy.id}`)
     setSelected(copy.id)
@@ -192,7 +219,7 @@ export function HomeBuilder() {
   const scope = ".hb-canvas"
   const canvasClass = cn("hb-canvas", theme.mode === "dark" ? "dark" : "light")
   const canvasCtx = { ...ctx, coach, theme, base: `/c/${slug}` }
-  const previewHref = `/c/${slug}?preview=draft${tier !== "default" ? `&tier=${tier}` : ""}${data === "empty" ? "&data=empty" : ""}`
+  const previewHref = `${pageInfo.href}?preview=draft${tier !== "default" ? `&tier=${tier}` : ""}${data === "empty" ? "&data=empty" : ""}`
 
   return (
     <div className="-m-4 grid min-h-[calc(100svh-3.5rem)] grid-rows-[auto_auto_1fr] md:-m-6 lg:-m-8 lg:h-[calc(100svh-3.5rem)]">
@@ -201,17 +228,39 @@ export function HomeBuilder() {
         active="pages"
         editor={editor}
         previewHref={previewHref}
-        guide={{ title: "Building your Home page", text: "Drag widgets onto the grid, drag their edges to resize them, pick one of three looks for each, and make a different Home per tier if you like." }}
+        guide={{
+          title: "Building your pages",
+          text: "Every page is a grid of widgets. Pick a page at the top, drag widgets onto the grid, drag their edges to resize them, pick one of three looks for each, and make a different version per tier if you like. A page's main part stays; move or resize it.",
+        }}
       />
+
+      {/* Which page */}
+      <div className="flex items-center gap-1 overflow-x-auto border-b bg-background px-4 py-1.5" role="tablist" aria-label="Page to build">
+        {pages.map((p) => (
+          <button
+            key={p.id}
+            role="tab"
+            aria-selected={p.id === page}
+            onClick={() => goTo(p.id)}
+            className={cn(
+              "flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm whitespace-nowrap text-muted-foreground hover:text-foreground",
+              p.id === page && "bg-muted font-medium text-foreground",
+            )}
+          >
+            <p.icon className="size-4" />
+            {p.label}
+            {Object.keys(coach.pages?.[p.id as PageId] ?? {}).length > 1 && <span className="size-1.5 rounded-full bg-primary" title="Has a layout per tier" />}
+          </button>
+        ))}
+        <Button variant="ghost" size="sm" className="ml-auto shrink-0" nativeButton={false} render={<Link href={`/admin/${slug}/design/pages/all${params.get("from") === "setup" ? "?from=setup" : ""}`} />}>
+          <LayoutGrid /> All pages
+        </Button>
+      </div>
 
       {/* Tier, data, device and preview */}
       <div className="flex flex-wrap items-center gap-2 border-b bg-background px-4 py-2 text-sm">
-        <Button variant="ghost" size="sm" className="-ml-1.5" nativeButton={false} render={<Link href={`/admin/${slug}/design/pages`} />}>
-          <ArrowLeft /> All pages
-        </Button>
-        <span className="h-4 w-px bg-border" />
-        <span className="text-muted-foreground">Home for</span>
-        <select value={tier} onChange={(e) => { setTier(e.target.value); setSelected(null) }} className="h-8 rounded-lg border bg-background px-2" aria-label="Which tier's Home">
+        <span className="text-muted-foreground">{pageInfo.label} for</span>
+        <select value={tier} onChange={(e) => { setTier(e.target.value); setSelected(null) }} className="h-8 rounded-lg border bg-background px-2" aria-label={`Which tier's ${pageInfo.label} page`}>
           <option value="default">Everyone (default)</option>
           {coach.tiers.map((t) => (
             <option key={t.id} value={t.id}>
@@ -220,7 +269,7 @@ export function HomeBuilder() {
             </option>
           ))}
         </select>
-        {inherits && <span className="text-xs text-muted-foreground">Uses the default. Changing it here makes a separate Home for {tierName}.</span>}
+        {inherits && <span className="text-xs text-muted-foreground">Uses the default. Changing it here makes a separate {pageInfo.label} page for {tierName}.</span>}
         {tier !== "default" && !inherits && (
           <Button
             variant="ghost"
@@ -228,8 +277,8 @@ export function HomeBuilder() {
             onClick={() => {
               const rest = { ...layouts }
               delete rest[tier]
-              commit({ ...working, content: { ...working.content, home: rest } }, `reset-${tier}`)
-              toast(`${tierName} uses the default Home again.`)
+              savePages(rest, `reset-${tier}`)
+              toast(`${tierName} uses the default ${pageInfo.label} page again.`)
             }}
           >
             Use the default instead
@@ -266,6 +315,8 @@ export function HomeBuilder() {
         <div className="grid min-h-0 grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
           <aside className="min-h-0 overflow-y-auto border-r bg-background">
             <WidgetLibrary
+              key={page}
+              page={page}
               coach={coach}
               canvasClass={canvasClass}
               onAdd={addWidget}
@@ -292,10 +343,12 @@ export function HomeBuilder() {
                   className={cn(canvasClass, "origin-top-left bg-background font-sans text-foreground shadow-xl ring-1 ring-black/10", device === "desktop" ? "rounded-xl" : "rounded-[28px]")}
                   style={{ width: logicalWidth, transform: `scale(${scale})`, padding: PAD[device] }}
                 >
-                  <div className="pointer-events-none mb-[var(--page-gap)] flex flex-col gap-1 opacity-80">
-                    <span className="eyebrow">Monday, 12 October</span>
-                    <h1 className="text-3xl leading-tight">Good morning, {DEMO_STUDENT.first}</h1>
-                  </div>
+                  {page === "home" && (
+                    <div className="pointer-events-none mb-[var(--page-gap)] flex flex-col gap-1 opacity-80">
+                      <span className="eyebrow">Monday, 12 October</span>
+                      <h1 className="text-3xl leading-tight">Good morning, {DEMO_STUDENT.first}</h1>
+                    </div>
+                  )}
 
                   {device === "desktop" ? (
                     <div className="relative" style={{ minHeight: 6 * (ROW_HEIGHT + gap) }}>
@@ -388,6 +441,7 @@ export function HomeBuilder() {
               <WidgetSettings
                 key={selWidget.id}
                 w={selWidget}
+                pinned={pinned(selWidget.id)}
                 canvasClass={canvasClass}
                 onChange={(patch, key) => updateItem(selWidget.id, patch, key)}
                 onDuplicate={() => duplicateWidget(selWidget.id)}
@@ -451,24 +505,32 @@ function WidgetMenu({
         </ContextMenuGroup>
         <ContextMenuSeparator />
         <ContextMenuGroup>
-          <ContextMenuItem onClick={onDuplicate}>
-            <Copy /> Duplicate
-          </ContextMenuItem>
+          {!def.core && (
+            <ContextMenuItem onClick={onDuplicate}>
+              <Copy /> Duplicate
+            </ContextMenuItem>
+          )}
           <ContextMenuItem onClick={() => onMove("top")}>
             <ArrowUpToLine /> Bring to top
           </ContextMenuItem>
           <ContextMenuItem onClick={() => onMove("bottom")}>
             <ArrowDownToLine /> Send to bottom
           </ContextMenuItem>
-          <ContextMenuCheckboxItem checked={!!w.hideOnPhone} onCheckedChange={(v) => onPhone(!!v)}>
-            Hide on phones
-          </ContextMenuCheckboxItem>
+          {!def.core && (
+            <ContextMenuCheckboxItem checked={!!w.hideOnPhone} onCheckedChange={(v) => onPhone(!!v)}>
+              Hide on phones
+            </ContextMenuCheckboxItem>
+          )}
         </ContextMenuGroup>
-        <ContextMenuSeparator />
-        <ContextMenuItem variant="destructive" onClick={onRemove}>
-          <Trash2 /> Remove
-          <ContextMenuShortcut>⌫</ContextMenuShortcut>
-        </ContextMenuItem>
+        {!def.core && (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem variant="destructive" onClick={onRemove}>
+              <Trash2 /> Remove
+              <ContextMenuShortcut>⌫</ContextMenuShortcut>
+            </ContextMenuItem>
+          </>
+        )}
       </ContextMenuContent>
     </ContextMenu>
   )
@@ -489,7 +551,8 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
         className="absolute top-2 left-2 z-10 rounded-md bg-foreground px-1.5 py-0.5 font-[family-name:var(--ff-geist)] text-[0.65rem] text-background opacity-0 group-hover/w:opacity-100 data-[on=true]:opacity-100"
         data-on={selected}
       >
-        {def.name} · {w.w}×{w.h}
+        {def.core && <Lock className="mr-1 inline size-2.5 align-[-1px]" />}
+        {def.core ? `${def.name} · main part of the page` : def.name} · {w.w}×{w.h}
       </span>
       {/* Quick actions; .no-drag keeps clicks here from starting a drag */}
       <div
@@ -501,12 +564,20 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
             <EyeOff className="size-3" />
           </span>
         )}
-        <Button variant="ghost" size="icon-xs" aria-label={`Duplicate ${def.name}`} onClick={(e) => { e.stopPropagation(); onDuplicate() }}>
-          <Copy />
-        </Button>
-        <Button variant="ghost" size="icon-xs" aria-label={`Remove ${def.name}`} className="hover:text-destructive" onClick={(e) => { e.stopPropagation(); onRemove() }}>
-          <Trash2 />
-        </Button>
+        {def.core ? (
+          <span className="flex items-center gap-1 px-1.5 py-0.5 text-[0.65rem] text-muted-foreground">
+            <Lock className="size-3" /> Always on this page
+          </span>
+        ) : (
+          <>
+            <Button variant="ghost" size="icon-xs" aria-label={`Duplicate ${def.name}`} onClick={(e) => { e.stopPropagation(); onDuplicate() }}>
+              <Copy />
+            </Button>
+            <Button variant="ghost" size="icon-xs" aria-label={`Remove ${def.name}`} className="hover:text-destructive" onClick={(e) => { e.stopPropagation(); onRemove() }}>
+              <Trash2 />
+            </Button>
+          </>
+        )}
       </div>
       <div className="pointer-events-none flex min-h-0 flex-1 flex-col overflow-hidden select-none [&>*]:flex-1">
         {available ? (

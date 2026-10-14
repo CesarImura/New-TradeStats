@@ -48,7 +48,7 @@ export default function SignUp() {
         </>
       }
     >
-      <form onSubmit={submit} className="grid gap-8" noValidate>
+      <form onSubmit={submit} className="grid gap-5" noValidate>
         <OnbTitle
           eyebrow="Start free · 14 days"
           title="Your trading community, on your own platform."
@@ -57,10 +57,10 @@ export default function SignUp() {
 
         <div className="grid gap-4">
           <FieldRow id="name" label="Your name" error={tried && errors.name}>
-            <Input id="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Marco Rossi" className="h-11" autoFocus />
+            <Input id="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Marco Rossi" autoFocus />
           </FieldRow>
           <FieldRow id="email" label="E-mail" error={tried && errors.email}>
-            <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@yourbrand.com" className="h-11" />
+            <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@yourbrand.com" />
           </FieldRow>
 
           {!withCode && (
@@ -72,7 +72,7 @@ export default function SignUp() {
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-11 pr-10"
+                  className="pr-9"
                 />
                 <button
                   type="button"
@@ -92,7 +92,7 @@ export default function SignUp() {
         </div>
 
         <div className="grid gap-3">
-          <Button type="submit" size="lg" className="h-12 justify-between px-4 text-[0.95rem]">
+          <Button type="submit" className="w-full justify-between">
             Create my account <ArrowRight />
           </Button>
           <p className="text-xs text-muted-foreground">

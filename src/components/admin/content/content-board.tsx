@@ -103,7 +103,7 @@ export function ContentBoard() {
     <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[1.75rem] leading-9 font-normal tracking-[-0.005em]">Content</h1>
+          <h1 className="text-xl leading-7 font-medium tracking-[-0.01em]">Content</h1>
           <p className="text-sm text-muted-foreground">
             Areas and courses. Students see what&apos;s published, in your words: “{coach.wording.courses}”.
           </p>

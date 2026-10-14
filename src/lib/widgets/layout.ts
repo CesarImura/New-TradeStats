@@ -1,4 +1,4 @@
-import type { Coach } from "@/lib/data/coaches"
+import type { Coach, ModuleId } from "@/lib/data/coaches"
 import type { Density, TemplateId } from "@/lib/theme/types"
 
 /**
@@ -30,8 +30,18 @@ export type WidgetInstance = {
 
 export type PageLayout = { items: WidgetInstance[] }
 
-/** Home layouts per community: "default" plus optional per-tier versions. */
+/** One page's layouts: "default" plus optional per-tier versions. */
 export type HomeLayouts = Record<string, PageLayout>
+
+/** Every student page is a widget grid: Home, and one page per module. */
+export type PageId = "home" | ModuleId
+export type PageLayouts = Partial<Record<PageId, HomeLayouts>>
+
+/** The widget holding a module page's own tool (its trades, calendar, chart…). Pinned: it can move and resize, not go. */
+export const coreType = (page: ModuleId) => `page-${page}`
+export const isCoreType = (type: string) => type.startsWith("page-")
+/** Rows a page's core widget gets when the page is new. On the live page it grows with its content. */
+export const CORE_H = 8
 
 export const uid = () => Math.random().toString(36).slice(2, 10)
 
@@ -75,6 +85,17 @@ export function normalizeLayout(l: PageLayout | { sections: LegacySection[] }, h
     }
   }
   return { items }
+}
+
+/** A module page before the coach arranges it: just its core widget, full width. */
+export function defaultPage(page: ModuleId): PageLayout {
+  return { items: [{ id: `core-${page}`, type: coreType(page), x: 0, y: 0, w: COLS, h: CORE_H }] }
+}
+
+/** Saved layouts always keep the core widget; if one is missing, put it back on top. */
+export function withCore(page: ModuleId, l: PageLayout): PageLayout {
+  if (l.items.some((w) => w.type === coreType(page))) return l
+  return { items: [...defaultPage(page).items, ...l.items.map((w) => ({ ...w, y: w.y + CORE_H }))] }
 }
 
 // ---------- template defaults

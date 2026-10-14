@@ -29,7 +29,7 @@ export function PublishStep() {
     return (
       <OnbFrame>
         <div className="grid gap-4">
-          <h1 className="text-2xl">Nothing to publish yet</h1>
+          <h1 className="text-xl font-medium">Nothing to publish yet</h1>
           <Link href="/setup" className="underline underline-offset-4">
             Go to setup
           </Link>
@@ -89,7 +89,7 @@ export function PublishStep() {
           </ul>
 
           <div className="mt-auto grid gap-3">
-            <Button size="lg" className="h-12 justify-between px-4 text-[0.95rem]" onClick={publish} disabled={busy}>
+            <Button className="w-full justify-between" onClick={publish} disabled={busy}>
               {busy ? (
                 <>
                   Publishing… <Loader2 className="animate-spin" />

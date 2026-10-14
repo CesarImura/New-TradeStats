@@ -66,11 +66,11 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
   }, [])
 
   return (
-    <SidebarProvider className="ts-ui ts-admin">
-      {/* Our own look (IBM Carbon x shadcn): see src/lib/theme/ts-system.ts. */}
+    <SidebarProvider className="ts-ui ts-admin" style={{ "--sidebar-width": "14.5rem" } as React.CSSProperties}>
+      {/* Our own look (a dense, Webflow-Designer-like tool UI): see src/lib/theme/ts-system.ts. */}
       <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS }} />
       <Sidebar collapsible="icon">
-        <SidebarHeader className="h-12 justify-center border-b border-sidebar-border py-0">
+        <SidebarHeader className="h-11 justify-center border-b border-sidebar-border py-0">
           <WorkspaceSwitcher />
         </SidebarHeader>
         <SidebarContent>
@@ -106,13 +106,13 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-20 flex h-12 items-center gap-2 border-b bg-[var(--sidebar)] px-3">
+        <header className="sticky top-0 z-20 flex h-11 items-center gap-2 border-b bg-[var(--sidebar)] px-2.5">
           <SidebarTrigger />
-          <Separator orientation="vertical" className="mx-1 h-5" />
-          <button className="hidden h-8 w-full max-w-md min-w-0 items-center gap-2 rounded-[3px] border border-transparent bg-[var(--ts-layer-2)] px-2.5 text-sm whitespace-nowrap text-muted-foreground hover:border-[var(--input)] sm:flex">
-            <Search className="size-4" />
+          <Separator orientation="vertical" className="mx-1 h-4" />
+          <button className="hidden h-7 w-full max-w-sm min-w-0 items-center gap-2 rounded-[4px] border border-[#2a2a2f] bg-[#0e0e10] px-2 text-[0.78125rem] whitespace-nowrap text-muted-foreground shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] hover:border-[#3a3a40] sm:flex">
+            <Search className="size-3.5" />
             <span className="truncate">Search students, lessons, events</span>
-            <kbd className="ml-auto rounded-[2px] border px-1.5 font-[family-name:var(--ff-plex-mono)] text-[0.7rem]">⌘K</kbd>
+            <kbd className="ml-auto rounded-[3px] border border-[#2a2a2f] bg-[#161618] px-1 font-[family-name:var(--ff-plex-mono)] text-[0.65rem]">⌘K</kbd>
           </button>
           <div className="ml-auto flex items-center gap-1">
             <HelpButton />
@@ -120,12 +120,12 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
               <Bell />
               <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />
             </Button>
-            <Avatar className="ml-1 size-8">
+            <Avatar className="ml-1 size-7">
               <AvatarFallback className="text-xs">{DEMO_ADMIN.initials}</AvatarFallback>
             </Avatar>
           </div>
         </header>
-        <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+        <main className="flex-1 px-4 py-5 md:px-6 md:py-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   )

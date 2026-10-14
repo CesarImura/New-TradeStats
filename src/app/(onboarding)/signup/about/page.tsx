@@ -40,7 +40,7 @@ export default function About() {
 
   return (
     <OnbFrame right={<span className={mono}>3 quick questions</span>}>
-      <div className="grid gap-10">
+      <div className="grid gap-6">
         <OnbTitle
           eyebrow={acc?.name ? `Hi ${acc.name.split(" ")[0]}` : "About you"}
           title="Tell us where you are today."
@@ -75,7 +75,7 @@ export default function About() {
           </div>
         </Question>
 
-        <Button size="lg" className="h-12 justify-between px-4 text-[0.95rem]" disabled={!ready} onClick={next}>
+        <Button className="w-full justify-between" disabled={!ready} onClick={next}>
           Continue <ArrowRight />
         </Button>
       </div>
@@ -85,10 +85,10 @@ export default function About() {
 
 function Question({ n, title, hint, children }: { n: number; title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <fieldset className="grid gap-3">
-      <legend className="mb-3 flex w-full items-baseline gap-3">
+    <fieldset className="grid gap-2">
+      <legend className="mb-2 flex w-full items-baseline gap-2">
         <span className={cn(mono, "text-[var(--ts-interactive)]")}>0{n}</span>
-        <span className="text-[1.05rem]">{title}</span>
+        <span className="text-[0.875rem] font-medium">{title}</span>
         {hint && <span className="ml-auto text-xs text-muted-foreground">{hint}</span>}
       </legend>
       {children}
@@ -104,8 +104,8 @@ function Pill({ on, onClick, children }: { on: boolean; onClick: () => void; chi
       aria-checked={on}
       onClick={onClick}
       className={cn(
-        "rounded-[var(--radius)] border px-3 py-2 text-sm transition-colors outline-none hover:border-white/25 focus-visible:ring-2 focus-visible:ring-ring",
-        on && "border-[var(--ts-interactive)] bg-[color-mix(in_oklab,var(--ts-interactive)_10%,transparent)] text-foreground hover:border-[var(--ts-interactive)]",
+        "h-7 rounded-[4px] border border-[#2a2a2f] bg-[var(--ts-layer-2)] px-2.5 text-[0.78125rem] shadow-[inset_0_1px_0_rgb(255_255_255/0.04)] transition-colors outline-none hover:border-[#3a3a40] hover:bg-[var(--ts-layer-3)] focus-visible:border-[var(--ts-interactive)] focus-visible:shadow-[0_0_0_3px_rgb(255_85_0/0.18)]",
+        on && "border-[var(--ts-interactive)] bg-[color-mix(in_oklab,var(--ts-interactive)_12%,var(--ts-layer-2))] text-foreground hover:border-[var(--ts-interactive)] hover:bg-[color-mix(in_oklab,var(--ts-interactive)_16%,var(--ts-layer-2))]",
         !on && "text-muted-foreground",
       )}
     >
