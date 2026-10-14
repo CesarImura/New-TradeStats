@@ -219,4 +219,6 @@ ${ui("[data-slot=sidebar-menu-button][data-active]")} {
 ${ui("[data-slot=sidebar-group-label]")} {
   height: 1.5rem; font-family: var(--ff-plex-mono), ui-monospace, monospace; font-size: 0.65625rem; letter-spacing: 0.06em; text-transform: uppercase; color: ${TS.textHelper};
 }
+/* Folded to icons: the group names fade out. Pull them up by their own height (not shadcn's 32px) and let clicks through, so they never sit on an icon. */
+${ui("[data-slot=sidebar][data-collapsible=icon] [data-slot=sidebar-group-label]")} { margin-top: -1.5rem; pointer-events: none; }
 `
