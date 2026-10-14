@@ -490,6 +490,23 @@ function NavStyleField() {
   )
 }
 
+function NavFrameField() {
+  const { theme, change } = useDesign()
+  return (
+    <Field id="nav-frame" label="Menu frame" hint={theme.nav.frame === "floating" ? "Pages float on the menu's colour" : "Menu and page are one surface"}>
+      <Segmented
+        label="Menu frame"
+        value={theme.nav.frame ?? "classic"}
+        onChange={(frame) => change({ theme: { nav: { frame } } }, "nav-frame")}
+        options={[
+          { value: "classic", label: "Classic" },
+          { value: "floating", label: "Floating" },
+        ]}
+      />
+    </Field>
+  )
+}
+
 function NavLogoField() {
   const { theme, change } = useDesign()
   if (theme.nav.layout !== "top") return null
@@ -598,6 +615,7 @@ const FIELDS: Record<string, () => React.ReactNode> = {
   "nav-layout": NavLayoutField,
   "nav-style": NavStyleField,
   "nav-logo": NavLogoField,
+  "nav-frame": NavFrameField,
   "menu-items": MenuItemsField,
   wording: WordingField,
 }
@@ -639,6 +657,7 @@ export function MenuPanel() {
     <>
       <Group title="Menu layout">
         <DesignField id="nav-layout" />
+        <DesignField id="nav-frame" />
         <DesignField id="nav-style" />
         <DesignField id="nav-logo" />
       </Group>

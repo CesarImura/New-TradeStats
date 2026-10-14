@@ -69,6 +69,8 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
     "--chart-4": p.loss,
     "--chart-5": p.mutedForeground,
     "--sidebar": p.sidebar,
+    // The ground a floating page sits on: the menu's colour, or a step off the page colour when they are the same.
+    "--ground": p.sidebar.toLowerCase() !== p.background.toLowerCase() ? p.sidebar : `color-mix(in oklab, ${p.foreground} ${isDark(p.background) ? 5 : 4}%, ${p.background})`,
     "--sidebar-foreground": sidebarFg,
     "--sidebar-primary": t.primary,
     "--sidebar-primary-foreground": t.primaryForeground,

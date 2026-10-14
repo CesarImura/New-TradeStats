@@ -62,7 +62,23 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     </div>
   )
 
+  // Floating: the page is a rounded canvas on the menu's ground, with a gutter around it (like the admin area).
+  const floating = theme.nav.frame === "floating"
+  const canvas = "md:rounded-[min(calc(var(--radius)*1.5),20px)] md:overflow-clip md:shadow-[0_0_0_1px_var(--border),0_1px_3px_rgb(0_0_0/0.08)]"
+
   if (theme.nav.layout === "top") {
+    if (floating)
+      return (
+        <div className="min-h-svh bg-[var(--ground)]">
+          <PreviewAsBanner />
+          <TopNav items={items} floating />
+          <div className={cn("relative isolate min-h-[calc(100svh-4.75rem)] md:mx-3 md:mb-3", bg, canvas)}>
+            {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
+            {content}
+          </div>
+          <MobileBar items={items} />
+        </div>
+      )
     return (
       <div className={cn("min-h-svh", bg)}>
         <PreviewAsBanner />
@@ -75,8 +91,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SidebarProvider key={theme.nav.style} defaultOpen={theme.nav.style === "labels"}>
-      <Sidebar collapsible="icon" className="max-md:hidden" data-edit="nav">
+    <SidebarProvider key={theme.nav.style} defaultOpen={theme.nav.style === "labels"} style={floating ? ({ "--sidebar": "var(--ground)" } as React.CSSProperties) : undefined}>
+      <Sidebar collapsible="icon" variant={floating ? "inset" : "sidebar"} className="max-md:hidden" data-edit="nav">
         <SidebarHeader className="h-16 justify-center" data-edit="logo">
           <CommunitySwitcher placement="sidebar" />
         </SidebarHeader>
@@ -89,7 +105,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
           <ProfileMenu compact />
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className={bg}>
+      <SidebarInset className={cn(bg, floating && canvas)}>
         <PreviewAsBanner />
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
         <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur sm:px-6 lg:px-8">
@@ -139,12 +155,12 @@ function SideItems({ items }: { items: NavItem[] }) {
   )
 }
 
-function TopNav({ items }: { items: NavItem[] }) {
-  const { coach, theme, base } = useCoach()
+function TopNav({ items, floating }: { items: NavItem[]; floating?: boolean }) {
+  const { theme, base } = useCoach()
   const isActive = useActive(base)
   const centered = theme.nav.logo === "center"
   return (
-    <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur" data-edit="nav">
+    <header className={cn("sticky top-0 z-20", floating ? "bg-[var(--ground)]" : "border-b bg-background/85 backdrop-blur")} data-edit="nav">
       <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-6 px-4 sm:px-6 lg:px-8">
         <div className={cn("min-w-0", centered && "md:absolute md:left-1/2 md:-translate-x-1/2")} data-edit="logo">
           <CommunitySwitcher placement="bar" />

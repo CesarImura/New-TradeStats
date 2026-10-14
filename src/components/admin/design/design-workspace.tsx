@@ -147,9 +147,9 @@ export function DesignWorkspace() {
   return (
     <DesignProvider value={{ coach, theme, working, change, commit }}>
       <StepCtx.Provider value={{ go }}>
-        <div className="-mx-4 -my-5 grid min-h-[calc(100svh-2.75rem)] grid-rows-[auto_1fr] md:-m-6 lg:h-[calc(100svh-2.75rem)]">
+        <div className="-mx-4 -mt-6 -mb-10 grid min-h-[calc(100svh-4.5rem)] grid-rows-[auto_1fr] md:-mx-10 md:-mt-8 lg:h-[calc(100svh-4.5rem)]">
           {/* Top bar: the way back, status, and the three things you do: undo, preview, publish. */}
-          <div className="flex items-center gap-2 border-b bg-[var(--sidebar)] px-3 py-1.5">
+          <div className="flex items-center gap-2 border-b px-4 py-2">
             {fromSetup && (
               <Button size="sm" nativeButton={false} render={<Link href="/setup" />}>
                 <ArrowLeft /> Back to setup
@@ -219,7 +219,7 @@ export function DesignWorkspace() {
 
           <div className="grid min-h-0 grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)]">
             {/* The one panel: steps across the top, the step's settings, then Next. */}
-            <aside className="flex min-h-0 flex-col border-b bg-card lg:border-r lg:border-b-0">
+            <aside className="flex min-h-0 flex-col border-b lg:border-r lg:border-b-0">
               <nav aria-label="Design steps" className="grid grid-cols-4 gap-1 border-b p-2">
                 {STEPS.map((s, n) => (
                   <button
@@ -308,7 +308,7 @@ export function DesignWorkspace() {
 
             {/* The platform. On Pages it's the widget grid; elsewhere, click a part to change it. */}
             <section className="grid min-h-[70svh] min-w-0 grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-[color:color-mix(in_oklab,var(--background)_70%,black)] lg:min-h-0">
-              <p className="truncate border-b bg-[var(--sidebar)] px-4 py-1.5 text-xs text-muted-foreground">
+              <p className="truncate px-4 py-2 text-xs text-muted-foreground">
                 {step === "pages"
                   ? arrange.inherits
                     ? `${arrange.tierName} uses the everyone layout. Changing it gives ${arrange.tierName} its own.`
@@ -496,6 +496,7 @@ function MenuStep() {
       <Section>
         <More label="Menu layout">
           <DesignField id="nav-layout" />
+          <DesignField id="nav-frame" />
           <DesignField id="nav-style" />
           <DesignField id="nav-logo" />
         </More>

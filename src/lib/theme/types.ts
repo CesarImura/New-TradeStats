@@ -63,7 +63,8 @@ export type CoachTheme = {
   bgAngle?: number
   /** How much depth widgets get from the brand colour: gradients, glow, texture. */
   effects: "flat" | "soft" | "vivid"
-  nav: { layout: NavLayout; style: NavStyle; logo: "left" | "center" }
+  /** frame: classic (the menu and the page are one surface) or floating (the page sits on a rounded canvas on the menu's ground, like the admin). */
+  nav: { layout: NavLayout; style: NavStyle; logo: "left" | "center"; frame?: "classic" | "floating" }
   /** Widget style; each template has a default (widgetStyleOf). */
   widgetStyle?: WidgetStyle
   /** Defaults from the widget style (chartStyleOf). */
