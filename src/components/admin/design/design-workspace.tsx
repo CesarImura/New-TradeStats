@@ -45,12 +45,12 @@ import { DEPTH_NAMES, LOOKS, SPACING_NAMES, currentLook, depthOf, fromDepth, fro
 import { ArrangeCanvas, useArrange, type Device } from "./page-builder"
 import { PreviewFrame } from "./preview-frame"
 
-type Step = "brand" | "look" | "pages" | "menu"
+type Step = "brand" | "look" | "menu" | "pages"
 const STEPS: { id: Step; label: string; text: string }[] = [
   { id: "brand", label: "Brand", text: "Your name, logo and colour." },
   { id: "look", label: "Look", text: "Pick a look. Fine-tune it if you like." },
-  { id: "pages", label: "Pages", text: "What's on each page. Drag widgets on the right." },
   { id: "menu", label: "Menu", text: "What the menu shows and what you call things." },
+  { id: "pages", label: "Pages", text: "What's on each page. Drag widgets on the right." },
 ]
 
 /** Where a part clicked in the preview is set. Buttons and cards land on Fine-tune, not on the brand colour. */
@@ -81,8 +81,9 @@ const FLASH: Partial<Record<PickTarget, string[]>> = {
 const StepCtx = createContext<{ go: (s: Step) => void }>({ go: () => {} })
 
 /**
- * ADM-37 to ADM-44: Design in four short steps (Brand, Look, Pages, Menu). One
- * panel on the left, the coach's real platform on the right. Clicking a part
+ * ADM-37 to ADM-44: Design in four short steps (Brand, Look, Menu, Pages).
+ * Menu comes before Pages: a module switched off there hides its widgets, so
+ * the coach decides that first. One panel on the left, the coach's real platform on the right. Clicking a part
  * of the platform opens the step and setting that changes it. On Pages the
  * platform becomes the widget grid. Simple first: a ready-made look, three
  * Fine-tune sliders, everything else under Advanced. Changes stay a draft
@@ -211,7 +212,7 @@ export function DesignWorkspace() {
             <VersionsSheet slug={slug} open={menu === "versions"} onOpenChange={(o) => setMenu(o ? "versions" : null)} />
             <GuideDialog
               title="Designing your platform"
-              text="Four short steps: your brand, a look, your pages, your menu. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."
+              text="Four short steps: your brand, a look, your menu, your pages. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."
               open={menu === "guide"}
               onOpenChange={(o) => setMenu(o ? "guide" : null)}
             />

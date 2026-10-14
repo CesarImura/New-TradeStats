@@ -565,7 +565,7 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
           </WidgetFrame>
         ) : (
           <div className="grid place-items-center rounded-(--radius) border border-dashed p-4 text-center text-xs text-muted-foreground">
-            {def.name} is hidden: its module is switched off in Menu and words.
+            {def.name} is hidden: its page is switched off in the Menu step.
           </div>
         )}
       </div>
