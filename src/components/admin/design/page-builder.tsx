@@ -28,6 +28,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
 import { PageRenderer, isAvailable } from "@/components/widgets/page-renderer"
+import { WidgetFrame } from "@/components/widgets/kit"
 import { getWidget, heightOf, lookOf } from "@/components/widgets/registry"
 import { DataModeProvider, type DataMode } from "@/components/widgets/shared"
 import type { Coach } from "@/lib/data/coaches"
@@ -497,7 +498,9 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
       </div>
       <div className="pointer-events-none flex min-h-0 flex-1 flex-col overflow-hidden select-none [&>*]:flex-1">
         {available ? (
-          <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
+          <WidgetFrame emphasis={w.emphasis} detail={w.detail}>
+            <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
+          </WidgetFrame>
         ) : (
           <div className="grid place-items-center rounded-(--radius) border border-dashed p-4 text-center text-xs text-muted-foreground">
             {def.name} is hidden: its module is switched off in Menu and words.

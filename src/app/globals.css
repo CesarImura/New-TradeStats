@@ -163,16 +163,14 @@
     background-size: 96px 100%;
   }
   /*
-   * Brand surface: the coach's colour as a card, with its soft tonal shift and
-   * a little light in one corner. Everything inside re-tints to the brand's
-   * text colour (labels, icons, charts, chips, buttons), so widgets built for
-   * plain cards read well here too.
+   * Brand surface (a widget's Star emphasis): the coach's colour as a flat
+   * card. No glow or gradient (they look cheap). Everything inside re-tints
+   * to the brand's text colour (labels, icons, charts, chips, buttons), so
+   * widgets built for plain cards read well here too.
    */
   .fx-hero {
     --on: var(--on-brand, var(--primary-foreground));
-    background:
-      radial-gradient(120% 90% at 100% 0%, color-mix(in oklab, white 16%, transparent), transparent 55%),
-      var(--brand-grad, var(--primary));
+    background: var(--primary);
     color: var(--on);
     --foreground: var(--on);
     --card-foreground: var(--on);

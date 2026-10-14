@@ -16,10 +16,17 @@ export const ROW_HEIGHT = 56
 /** Space between cells follows the theme's spacing setting. */
 export const GAP: Record<Density, number> = { compact: 16, comfortable: 24, airy: 32 }
 
+/** How much a widget stands out: Quiet (no colour), Accent (one mark in the brand colour), Star (on the brand colour; one per page). */
+export type Emphasis = "quiet" | "accent" | "star"
+/** How much a widget shows. */
+export type Detail = "compact" | "standard" | "detailed"
+
 export type WidgetInstance = {
   id: string
   type: string
   variant?: string
+  emphasis?: Emphasis
+  detail?: Detail
   x: number
   y: number
   w: number
@@ -58,8 +65,30 @@ type LegacySection = { widgets?: LegacyWidget[]; slots?: LegacyWidget[][]; colum
  * Older saved layouts were sections with widths only. Lay their widgets out
  * left to right, wrapping onto new rows, with a standard height.
  */
+/**
+ * Widgets merged into others, and looks that became an Emphasis or Detail.
+ * Saved pages keep working: they show the widget and look that replaced them.
+ */
+export const RETIRED: Record<string, { type: string; variant?: string; detail?: Detail }> = {}
+export const RETIRED_LOOKS: Record<string, Record<string, { variant?: string; emphasis?: Emphasis; detail?: Detail }>> = {}
+
+export function upgradeItem(w: WidgetInstance): WidgetInstance {
+  const r = RETIRED[w.type]
+  const moved = r ? { ...w, type: r.type, variant: r.variant, detail: w.detail ?? r.detail } : w
+  const look = moved.variant ? RETIRED_LOOKS[moved.type]?.[moved.variant] : undefined
+  return look ? { ...moved, variant: look.variant, emphasis: moved.emphasis ?? look.emphasis, detail: moved.detail ?? look.detail } : moved
+}
+
+/** Only one Star per page: the newest one wins, earlier ones become Accent. */
+export function oneStar(items: WidgetInstance[], keep?: string): WidgetInstance[] {
+  const stars = items.filter((w) => w.emphasis === "star")
+  if (stars.length <= 1) return items
+  const winner = keep ?? stars[stars.length - 1].id
+  return items.map((w) => (w.emphasis === "star" && w.id !== winner ? { ...w, emphasis: "accent" } : w))
+}
+
 export function normalizeLayout(l: PageLayout | { sections: LegacySection[] }, heightOf: (w: LegacyWidget) => number = () => 4): PageLayout {
-  if ("items" in l) return l
+  if ("items" in l) return { items: oneStar(l.items.map(upgradeItem)) }
   const items: WidgetInstance[] = []
   let x = 0
   let y = 0

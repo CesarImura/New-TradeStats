@@ -33,12 +33,10 @@ export function WidgetEmpty({
   return (
     <Card className={cn("@container rounded-(--radius)", className)}>
       <div className="flex flex-col items-start gap-3 px-(--card-spacing) @md:flex-row @md:items-center">
-        <span className="r-chip grid size-10 shrink-0 place-items-center bg-muted text-muted-foreground">
-          <Icon className="size-5" />
-        </span>
+        <Icon className="size-4 shrink-0 text-muted-foreground" />
         <div className="grid flex-1 gap-0.5">
-          <span className="font-medium">{title}</span>
-          <span className="text-sm text-muted-foreground">{text}</span>
+          <span className="text-[0.8125rem] font-medium">{title}</span>
+          <span className="text-xs text-muted-foreground">{text}</span>
         </div>
         {action}
       </div>
@@ -46,33 +44,37 @@ export function WidgetEmpty({
   )
 }
 
-/** Generated course artwork: the course colour with a slight tonal shift, and a few candles. */
+/**
+ * Course artwork until coaches upload their own: a near-black (or near-white)
+ * panel with a fine candlestick line and the course name in the heading font.
+ * `color` only tints it slightly; it never becomes a block of brand colour.
+ */
 export function Cover({ color = "var(--primary)", label, className }: { color?: string; hue?: number; label?: string; className?: string }) {
-  const candles = [38, 52, 44, 61, 55, 70, 64, 78]
+  const candles = [38, 52, 44, 61, 55, 70, 64, 78, 72, 84]
   return (
     <div
-      className={cn("relative isolate overflow-hidden rounded-[min(var(--radius),12px)]", className)}
-      style={{ background: `linear-gradient(180deg, color-mix(in oklab, ${color} 92%, white), color-mix(in oklab, ${color} 88%, black))` }}
+      className={cn("relative isolate overflow-hidden rounded-[min(var(--radius),8px)]", className)}
+      style={{ background: `color-mix(in oklab, ${color} 10%, color-mix(in oklab, var(--foreground) 88%, var(--background)))` }}
     >
-      <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="absolute inset-0 size-full opacity-30" aria-hidden>
+      <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="absolute inset-0 size-full" aria-hidden>
         {candles.map((h, i) => {
-          const x = 8 + i * 11
+          const x = 6 + i * 9
           const up = i % 3 !== 1
           return (
-            <g key={i} fill="white" stroke="white">
-              <line x1={x + 2} x2={x + 2} y1={60 - h - 6} y2={60 - h + 22} strokeWidth="0.6" />
-              <rect x={x} y={60 - h} width="4" height={up ? 14 : 10} opacity={up ? 1 : 0.5} />
+            <g key={i} stroke="var(--background)" fill={up ? "var(--background)" : "none"} opacity={i === candles.length - 1 ? 0.9 : 0.28}>
+              <line x1={x + 1.5} x2={x + 1.5} y1={60 - h - 5} y2={60 - h + 17} strokeWidth="0.4" />
+              <rect x={x} y={60 - h} width="3" height={up ? 11 : 8} strokeWidth="0.4" />
             </g>
           )
         })}
       </svg>
-      {label && <span className="absolute bottom-2 left-3 font-heading text-sm text-white/90 drop-shadow">{label}</span>}
+      {label && <span className="absolute bottom-2.5 left-3 font-heading text-[0.9375rem] leading-tight text-background">{label}</span>}
     </div>
   )
 }
 
-/** Circular progress. */
-export function Ring({ value, size = 64, stroke = 7, children, className }: { value: number; size?: number; stroke?: number; children?: React.ReactNode; className?: string }) {
+/** Circular progress (kit.tsx has the themed one widgets should use). */
+export function Ring({ value, size = 56, stroke = 4, children, className }: { value: number; size?: number; stroke?: number; children?: React.ReactNode; className?: string }) {
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
   return (
@@ -102,8 +104,8 @@ export function AvatarStack({ initials, className }: { initials: string[]; class
       {initials.map((i, n) => (
         <span
           key={i}
-          className="r-dot grid size-7 place-items-center border-2 border-card text-[0.6rem] font-semibold text-white"
-          style={{ background: `oklch(0.55 0.12 ${(n * 67) % 360})` }}
+          className="r-dot grid size-6 place-items-center border-2 border-card bg-muted text-[0.625rem] font-medium text-muted-foreground"
+          data-n={n}
         >
           {i}
         </span>
