@@ -17,6 +17,7 @@ import { AddressStep, BrandStep, ModulesStep, PayoutsStep, TemplateStep, TierSte
 import { suggestedModules, suggestedTemplate } from "./suggest"
 import { HomeStep, StyleStep } from "./look-steps"
 import { VideosStep } from "./videos-step"
+import { WizardDesign } from "./wizard-design"
 
 export type StepProps = {
   community: CustomCommunity
@@ -135,7 +136,9 @@ export function SetupWizard() {
                 <h1 className="text-lg leading-6 font-medium tracking-[-0.01em]">{S.title}</h1>
                 <p className="text-sm text-muted-foreground">{S.text}</p>
               </div>
-              <S.Step key={S.id} community={community} update={update} setReady={setReady} />
+              <WizardDesign community={community}>
+                <S.Step key={S.id} community={community} update={update} setReady={setReady} />
+              </WizardDesign>
             </div>
           </div>
 

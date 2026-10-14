@@ -1,30 +1,23 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { BookOpen, Bot, CalendarDays, ChartCandlestick, Check, CircleAlert, ImagePlus, Landmark, Loader2, MessagesSquare, NotebookPen, Trash2, Trophy } from "@/components/icons"
+import { useEffect, useState } from "react"
+import { BookOpen, Bot, CalendarDays, ChartCandlestick, Check, CircleAlert, Landmark, Loader2, MessagesSquare, NotebookPen, Trophy } from "@/components/icons"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { BackgroundControl } from "@/components/admin/design/background-control"
-import { Field, More, Segmented, Swatches } from "@/components/admin/design/controls"
-import { HIGHLIGHT_COLORS } from "@/components/admin/design/options"
+import { More } from "@/components/admin/design/controls"
+import { DesignField, useDesign } from "@/components/admin/design/design-fields"
 import { COACHES, type ModuleId } from "@/lib/data/coaches"
 import { customCommunities, slugify } from "@/lib/data/communities"
 import { useAccount } from "@/lib/data/use-communities"
-import { themeToCss } from "@/lib/theme/css"
-import { onColor } from "@/lib/theme/derive"
-import { colorsFromLogo } from "@/lib/theme/logo-colors"
-import { resolveTheme } from "@/lib/theme/resolve"
 import { TEMPLATES } from "@/lib/theme/templates"
-import type { TemplateId } from "@/lib/theme/types"
 import { MARKETS, type Market } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { Choice, mono } from "./frame"
-import { FullEditorLink, MenuOptions, themeUpdater } from "./look-steps"
+import { FullEditorLink, MenuOptions } from "./look-steps"
 import { suggestedTemplate } from "./suggest"
 import type { StepProps } from "./wizard"
-
 
 function Row({ label, hint, htmlFor, children }: { label: string; hint?: React.ReactNode; htmlFor?: string; children: React.ReactNode }) {
   return (
@@ -42,61 +35,18 @@ function Row({ label, hint, htmlFor, children }: { label: string; hint?: React.R
 
 // ---------- ONB-08 · Template
 
-export function TemplateStep({ community, update }: StepProps) {
+export function TemplateStep() {
   const acc = useAccount()
   const suggested = suggestedTemplate(acc?.answers)
   return (
-    <div className="grid gap-3" role="radiogroup" aria-label="Template">
-      {(Object.keys(TEMPLATES) as TemplateId[]).map((id) => {
-        const on = community.template === id
-        const theme = resolveTheme({ ...community, template: id, overrides: {} })
-        return (
-          <button
-            key={id}
-            role="radio"
-            aria-checked={on}
-            onClick={() => update({ template: id, overrides: {} })}
-            className={cn(
-              "grid grid-cols-[132px_1fr] items-center gap-4 rounded-[var(--radius)] border bg-card p-2.5 pr-4 text-left transition-colors hover:border-white/25",
-              on && "border-[var(--ts-interactive)] hover:border-[var(--ts-interactive)]",
-            )}
-          >
-            <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, `.onb-tpl-${id}`) }} />
-            <span
-              className={`onb-tpl-${id} grid aspect-[4/3] grid-cols-[18px_1fr] gap-1.5 overflow-hidden rounded-[min(var(--radius),6px)] bg-background p-1.5`}
-              style={{ fontFamily: "var(--coach-font-heading)" }}
-              aria-hidden
-            >
-              <span className={cn("rounded-[min(var(--radius),4px)] bg-sidebar", theme.nav.layout === "top" && "hidden")} />
-              <span className={cn("grid content-start gap-1.5", theme.nav.layout === "top" && "col-span-2")}>
-                <span className="text-[0.55rem] leading-none text-foreground">Welcome back</span>
-                <span className="grid gap-1 rounded-[min(var(--radius),5px)] bg-card p-1.5" style={{ boxShadow: "var(--card-shadow)" }}>
-                  <span className="h-1 w-3/4 rounded-full bg-foreground/35" />
-                  <span className="h-1 overflow-hidden rounded-full bg-muted">
-                    <span className="block h-full w-3/5 bg-primary" />
-                  </span>
-                  <span className="h-2.5 w-9 rounded-[var(--button-radius)] bg-primary" />
-                </span>
-                <span className="grid grid-cols-2 gap-1">
-                  <span className="h-5 rounded-[min(var(--radius),4px)] bg-card" style={{ boxShadow: "var(--card-shadow)" }} />
-                  <span className="h-5 rounded-[min(var(--radius),4px)] bg-card" style={{ boxShadow: "var(--card-shadow)" }} />
-                </span>
-              </span>
-            </span>
-            <span className="grid gap-1">
-              <span className="flex items-center gap-2">
-                <span className="text-base">{TEMPLATES[id].name}</span>
-                {id === suggested && (
-                  <Badge variant="outline" className={cn(mono, "h-5 border-[var(--ts-interactive)]/50 text-[0.58rem] text-[var(--ts-interactive)]")}>
-                    Fits you
-                  </Badge>
-                )}
-              </span>
-              <span className="text-xs text-muted-foreground">{TEMPLATES[id].blurb}</span>
-            </span>
-          </button>
-        )
-      })}
+    <div className="grid gap-3">
+      <DesignField id="template" />
+      <p className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Badge variant="outline" className={cn(mono, "h-5 border-[var(--ts-interactive)]/50 text-[0.58rem] text-[var(--ts-interactive)]")}>
+          Fits you
+        </Badge>
+        {TEMPLATES[suggested].name}: {TEMPLATES[suggested].blurb}
+      </p>
       <p className="text-xs text-muted-foreground">Click one to see it full size on the right. You can switch template any time from Design.</p>
     </div>
   )
@@ -172,15 +122,7 @@ export function AddressStep({ community, update, setReady }: StepProps) {
       </Row>
 
       <More label="What you call things">
-        <Row label="Your students are called" hint="e.g. Traders, Mentees, Members">
-          <div className="grid grid-cols-2 gap-2">
-            <Input value={community.wording.student} onChange={(e) => update({ wording: { ...community.wording, student: e.target.value } })} aria-label="One student" />
-            <Input value={community.wording.students} onChange={(e) => update({ wording: { ...community.wording, students: e.target.value } })} aria-label="Several students" />
-          </div>
-        </Row>
-        <Row label="A lesson is called" hint="e.g. Session, Module, Class">
-          <Input value={community.wording.lesson} onChange={(e) => update({ wording: { ...community.wording, lesson: e.target.value } })} />
-        </Row>
+        <DesignField id="wording" />
       </More>
     </div>
   )
@@ -188,172 +130,20 @@ export function AddressStep({ community, update, setReady }: StepProps) {
 
 // ---------- ONB-10 · Logo & colours
 
-const BRAND = ["#ff5500", "#e11d48", "#7c3aed", "#3d5afe", "#0ea5e9", "#16a34a", "#1f5a45", "#ca8a04", "#0a0a0a"]
-
-export function BrandStep({ community, update }: StepProps) {
-  const theme = resolveTheme(community)
-  const [suggested, setSuggested] = useState<string[]>([])
-  const [busy, setBusy] = useState(false)
-  const input = useRef<HTMLInputElement>(null)
-  const setColor = (c: string) => update({ overrides: { ...community.overrides, primary: c, primaryForeground: onColor(c) } })
-
-  const onFile = async (file: File) => {
-    setBusy(true)
-    const url = await new Promise<string>((res) => {
-      const r = new FileReader()
-      r.onload = () => res(r.result as string)
-      r.readAsDataURL(file)
-    })
-    const small = await shrink(url, 256)
-    const colors = await colorsFromLogo(small)
-    update({ logo: small, ...(colors[0] ? { overrides: { ...community.overrides, primary: colors[0], primaryForeground: onColor(colors[0]) } } : {}) })
-    setSuggested(colors)
-    setBusy(false)
-  }
-
+export function BrandStep({ community }: StepProps) {
   return (
     <div className="grid gap-7">
-      <Row label="Logo" hint="PNG or SVG · square works best">
-        <div
-          className="flex items-center gap-4 rounded-[var(--radius)] border border-dashed border-white/20 p-4"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault()
-            const f = e.dataTransfer.files[0]
-            if (f?.type.startsWith("image/")) onFile(f)
-          }}
-        >
-          {community.logo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={community.logo} alt="Your logo" className="size-14 rounded-[var(--radius)] bg-white object-contain p-1.5" />
-          ) : (
-            <span className="grid size-14 place-items-center rounded-[var(--radius)] text-lg font-semibold" style={{ background: theme.primary, color: theme.primaryForeground }}>
-              {community.mark}
-            </span>
-          )}
-          <div className="grid gap-1.5">
-            <div className="flex gap-2">
-              <button onClick={() => input.current?.click()} className="flex items-center gap-1.5 text-sm underline underline-offset-4">
-                {busy ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />} {community.logo ? "Replace logo" : "Upload logo"}
-              </button>
-              {community.logo && (
-                <button
-                  onClick={() => {
-                    update({ logo: undefined })
-                    setSuggested([])
-                  }}
-                  className="text-muted-foreground hover:text-foreground"
-                  aria-label="Remove logo"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              )}
-            </div>
-            <span className="text-xs text-muted-foreground">or drop it here. No logo? We use your initials.</span>
-          </div>
-          <input
-            ref={input}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) onFile(f)
-              e.target.value = ""
-            }}
-          />
-        </div>
-      </Row>
-
-      <Row label="Brand colour" hint={suggested.length ? "First one picked from your logo" : undefined}>
-        {suggested.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className={cn(mono, "text-[0.6rem] text-muted-foreground")}>From your logo</span>
-            {suggested.map((c) => (
-              <ColorDot key={c} color={c} on={theme.primary.toLowerCase() === c.toLowerCase()} onClick={() => setColor(c)} />
-            ))}
-          </div>
-        )}
-        <div className="flex flex-wrap items-center gap-2">
-          {BRAND.map((c) => (
-            <ColorDot key={c} color={c} on={theme.primary.toLowerCase() === c} onClick={() => setColor(c)} />
-          ))}
-          <label className="relative grid size-8 cursor-pointer place-items-center rounded-full bg-[conic-gradient(red,yellow,lime,cyan,blue,magenta,red)]" title="Any colour">
-            <input type="color" value={theme.primary} onChange={(e) => setColor(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0" aria-label="Pick any colour" />
-          </label>
-        </div>
-      </Row>
-
-      <Row label="Background">
-        <div className="grid grid-cols-2 gap-2" role="radiogroup">
-          {(["light", "dark"] as const).map((m) => (
-            <Choice
-              key={m}
-              checked={theme.mode === m}
-              onClick={() => update({ overrides: { ...community.overrides, mode: m } })}
-              title={m === "light" ? "Light" : "Dark"}
-              text={m === "light" ? "Bright and open" : "Like a trading terminal"}
-            />
-          ))}
-        </div>
-      </Row>
-      <BrandMore community={community} update={update} />
-    </div>
-  )
-}
-
-function BrandMore({ community, update }: Pick<StepProps, "community" | "update">) {
-  const { theme, set } = themeUpdater(community, update)
-  return (
-    <>
+      <DesignField id="logo" />
+      <DesignField id="primary" />
+      <DesignField id="mode" />
       <More label="More colours and background">
-        <Field label="Highlight colour" hint="Announcements, badges">
-          <Swatches label="Highlight colour" value={theme.highlight ?? theme.palettes[theme.mode].highlight} colors={HIGHLIGHT_COLORS} onChange={(c) => set({ highlight: c })} />
-        </Field>
-        <Field label="Brand depth" hint="A slight tonal shift in your brand colour">
-          <Segmented
-            label="Brand depth"
-            value={theme.effects ?? "soft"}
-            onChange={(effects) => set({ effects })}
-            options={[
-              { value: "flat", label: "Flat" },
-              { value: "soft", label: "Subtle" },
-              { value: "vivid", label: "Rich" },
-            ]}
-          />
-        </Field>
-        <BackgroundControl theme={theme} onChange={(patch) => set(patch)} />
+        <DesignField id="highlight" />
+        <DesignField id="effects" />
+        <DesignField id="background" />
       </More>
       <FullEditorLink slug={community.slug} />
-    </>
+    </div>
   )
-}
-
-function ColorDot({ color, on, onClick }: { color: string; on: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={color}
-      aria-pressed={on}
-      className={cn("grid size-8 place-items-center rounded-full ring-1 ring-white/15", on && "ring-2 ring-white ring-offset-2 ring-offset-background")}
-      style={{ background: color }}
-    >
-      {on && <Check className="size-4" style={{ color: onColor(color) }} />}
-    </button>
-  )
-}
-
-async function shrink(dataUrl: string, max: number) {
-  if (dataUrl.startsWith("data:image/svg")) return dataUrl
-  const img = new Image()
-  img.src = dataUrl
-  await img.decode()
-  const s = Math.min(1, max / Math.max(img.width, img.height))
-  const c = document.createElement("canvas")
-  c.width = Math.round(img.width * s)
-  c.height = Math.round(img.height * s)
-  c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height)
-  return c.toDataURL("image/png")
 }
 
 // ---------- ONB-11 · Modules
@@ -368,8 +158,8 @@ const MODULES: { id: ModuleId; name: string; text: string; icon: React.Component
   { id: "ranking", name: "Ranking", text: "Leaderboard by consistency and progress", icon: Trophy, later: true },
 ]
 
-export function ModulesStep(props: StepProps) {
-  const { community, update } = props
+export function ModulesStep({ community, update }: StepProps) {
+  const { coach, change } = useDesign()
   const acc = useAccount()
   const markets = community.setup?.markets ?? ["futures", "forex"]
   return (
@@ -377,7 +167,7 @@ export function ModulesStep(props: StepProps) {
       {acc?.answers && <p className={cn(mono, "text-[0.62rem] text-[var(--ts-cta)]")}>Switched on from your answers</p>}
       <div className="grid divide-y rounded-[var(--radius)] border bg-card">
         {MODULES.map((m) => {
-          const on = community.modules[m.id]
+          const on = coach.modules[m.id]
           return (
             <label key={m.id} className="flex cursor-pointer items-center gap-3.5 px-4 py-3.5">
               <m.icon className={cn("size-5 shrink-0", on ? "text-[var(--ts-interactive)]" : "text-muted-foreground")} />
@@ -392,8 +182,8 @@ export function ModulesStep(props: StepProps) {
                 </span>
                 {on && !m.later ? (
                   <input
-                    value={community.wording[m.id]}
-                    onChange={(e) => update({ wording: { ...community.wording, [m.id]: e.target.value } })}
+                    value={coach.wording[m.id]}
+                    onChange={(e) => change({ content: { wording: { [m.id]: e.target.value } } }, `w-${m.id}`)}
                     onClick={(e) => e.preventDefault()}
                     aria-label={`What students see instead of ${m.name}`}
                     className="mt-1 h-7 w-full max-w-56 rounded-[var(--radius)] border border-white/10 bg-transparent px-2 text-xs outline-none focus:border-[var(--ts-interactive)]"
@@ -402,13 +192,13 @@ export function ModulesStep(props: StepProps) {
                   <span className="text-xs text-muted-foreground">{m.text}</span>
                 )}
               </span>
-              <Switch checked={on} disabled={m.later} onCheckedChange={(v) => update({ modules: { ...community.modules, [m.id]: v } })} />
+              <Switch checked={on} disabled={m.later} onCheckedChange={(v) => change({ content: { modules: { [m.id]: v } } }, `mod-${m.id}`)} />
             </label>
           )
         })}
       </div>
       <p className="text-xs text-muted-foreground">Type a new name to rename a section for your students, e.g. Courses → Playbook.</p>
-      {community.modules.charts && (
+      {coach.modules.charts && (
         <Row label="Markets you trade" hint="Fills your chart watchlist">
           <div className="flex flex-wrap gap-1.5">
             {MARKETS.map((mk) => {
@@ -427,7 +217,7 @@ export function ModulesStep(props: StepProps) {
           </div>
         </Row>
       )}
-      <MenuOptions {...props} />
+      <MenuOptions />
     </div>
   )
 }

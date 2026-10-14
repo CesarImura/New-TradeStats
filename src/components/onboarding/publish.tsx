@@ -8,6 +8,8 @@ import { PreviewFrame } from "@/components/admin/design/preview-frame"
 import { Button } from "@/components/ui/button"
 import { renameSlug, setAccount, slugify, updateCommunity } from "@/lib/data/communities"
 import { useAccount, useCustomCommunities } from "@/lib/data/use-communities"
+import { publish as publishDraft, useOverrides } from "@/lib/prototype-store"
+import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import { TEMPLATES } from "@/lib/theme/templates"
 import { cn } from "@/lib/utils"
 import { OnbFrame, mono } from "./frame"
@@ -23,7 +25,11 @@ export function PublishStep() {
   const communities = useCustomCommunities()
   const [device, setDevice] = useState<"desktop" | "phone">("desktop")
   const [busy, setBusy] = useState(false)
-  const c = communities.find((x) => x.slug === acc?.setupSlug)
+  const base = communities.find((x) => x.slug === acc?.setupSlug)
+  // The look and menu are in the draft the wizard and Design share.
+  const draft = useOverrides(base?.slug ?? "", "draft")
+  const c = base && { ...base, ...resolveCoach(base, draft.content) }
+  const template = c && resolveTheme(c, draft.theme).template
 
   if (!c) {
     return (
@@ -46,6 +52,7 @@ export function PublishStep() {
   const publish = () => {
     setBusy(true)
     setTimeout(() => {
+      publishDraft(c.slug, "Published from setup")
       updateCommunity(c.slug, { status: "live" })
       renameSlug(c.slug, address)
       setAccount({ setupSlug: address, step: undefined })
@@ -79,7 +86,7 @@ export function PublishStep() {
           </div>
 
           <ul className="grid gap-3">
-            <DoneRow done>{TEMPLATES[c.template].name} template</DoneRow>
+            <DoneRow done>{TEMPLATES[template ?? c.template].name} template</DoneRow>
             <DoneRow done={!!c.name}>{c.name || "Name"}</DoneRow>
             <DoneRow done={!!c.logo}>{c.logo ? "Logo and colour" : "Colour set · no logo yet"}</DoneRow>
             <DoneRow done>{sections} sections switched on</DoneRow>

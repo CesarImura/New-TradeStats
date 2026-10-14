@@ -36,7 +36,8 @@ export type DesignCtx = {
 
 const Ctx = createContext<DesignCtx | null>(null)
 export const DesignProvider = Ctx.Provider
-const useDesign = () => useContext(Ctx)!
+/** The coach, theme and draft the fields are editing. */
+export const useDesign = () => useContext(Ctx)!
 
 export const MODULE_NAMES: Record<ModuleId, string> = {
   courses: "Courses",
