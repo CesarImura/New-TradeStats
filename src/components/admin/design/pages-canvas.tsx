@@ -6,7 +6,8 @@ import { ArrowLeft, LayoutGrid, Maximize, Minus, Plus } from "@/components/icons
 import { useCoach } from "@/components/coach/coach-provider"
 import { studentNav } from "@/components/coach/nav"
 import { Button } from "@/components/ui/button"
-import { getCoach } from "@/lib/data/coaches"
+import { getDemoCoach } from "@/lib/data/coaches"
+import { useCustomCommunities } from "@/lib/data/use-communities"
 import { resolveCoach } from "@/lib/theme/resolve"
 import { cn } from "@/lib/utils"
 import { EditorBar, useDraftEditor } from "./editor-shell"
@@ -54,7 +55,10 @@ export function PagesCanvas() {
   const { coach: published } = useCoach()
   const slug = published.slug
   const editor = useDraftEditor(slug)
-  const coach = useMemo(() => resolveCoach(getCoach(slug)!, editor.working.content), [slug, editor.working.content])
+  // Wizard-made communities aren't known on the server or at first paint; use the published coach meanwhile.
+  const custom = useCustomCommunities()
+  const original = getDemoCoach(slug) ?? custom.find((c) => c.slug === slug) ?? published
+  const coach = useMemo(() => resolveCoach(original, editor.working.content), [original, editor.working.content])
   const pages = studentNav(coach, `/c/${slug}`).map((p, i) => ({
     ...p,
     x: (i % COLS) * (FRAME.w + GAP.x),

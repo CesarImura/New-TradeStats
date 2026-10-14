@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button"
 import { useSidebar } from "@/components/ui/sidebar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { DataMode } from "@/components/widgets/shared"
-import { getCoach } from "@/lib/data/coaches"
+import { getDemoCoach } from "@/lib/data/coaches"
+import { useCustomCommunities } from "@/lib/data/use-communities"
 import { describe, targetsForField, type PickMessage, type PickTarget } from "@/lib/design-pick"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import type { PageId } from "@/lib/widgets/layout"
@@ -43,7 +44,10 @@ const PANELS: { id: Panel; label: string; icon: React.ComponentType<{ className?
 export function DesignWorkspace() {
   const { coach: published } = useCoach()
   const slug = published.slug
-  const original = getCoach(slug)!
+  // The server and the first browser render can't see wizard-made communities
+  // (the provider shows a hidden stand-in then); use the published coach meanwhile.
+  const custom = useCustomCommunities()
+  const original = getDemoCoach(slug) ?? custom.find((c) => c.slug === slug) ?? published
   const editor = useDraftEditor(slug)
   const { working, commit, change } = editor
   const coach = useMemo(() => resolveCoach(original, working.content), [original, working.content])
