@@ -5,8 +5,9 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { DEMO_STUDENT, LEADERBOARD, RANK_HISTORY } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { ACCENT, ACCENT_TEXT, Avatar, TYPE, useMore } from "./kit"
-import { Axis, Chip, DotStrip, GREY, Label, Legend, Num, Rule, WCard, useFigureFont, useChartStyle } from "./instrument"
+import { Axis, Chip, DotStrip, GREY, Label, Legend, Num, Rule, WCard, ink, useFigureFont, useChartStyle } from "./instrument"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
+import { BleedArea, HeroCard, Rail, type RailItem } from "./layouts"
 
 /** An empty tick or track (the same faint grey instrument.tsx uses). */
 const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
@@ -158,6 +159,23 @@ export function FirstWeek({ variant = "steps" }: WidgetProps) {
     )
   }
 
+  if (variant === "path") {
+    const at = items.findIndex((i) => !i.done)
+    const rail: RailItem[] = items.map((i, k) => ({
+      time: i.done ? "Sun" : k === at ? "Next" : `${k + 1}`,
+      title: i.label,
+      sub: standard && !i.done ? i.hint : undefined,
+      aside: <span className={i === next ? "" : "text-muted-foreground"} style={i === next ? { color: ink(ACCENT_TEXT) } : undefined}>{i.done ? "done" : i.time}</span>,
+      state: i.done ? "past" : i === next ? "next" : "ahead",
+    }))
+    rail.splice(at < 0 ? rail.length : at, 0, { now: `Day ${FIRST_WEEK_DAY}` })
+    return (
+      <WCard icon={Flag} title="First week" meta={meta} chip={chip}>
+        <Rail items={standard ? rail : rail.slice(0, (at < 0 ? rail.length : at) + 3)} />
+      </WCard>
+    )
+  }
+
   if (variant === "checklist") {
     const shown = standard ? items : items.filter((i) => !i.done)
     return (
@@ -287,6 +305,31 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
   const delta = me.change ? `${me.change > 0 ? "▲" : "▼"} ${Math.abs(me.change)}` : undefined
   const deltaTone = me.change >= 0 ? "profit" : "loss"
   const head = <Num value={`#${me.rank}`} unit={`of ${MEMBERS}`} delta={delta} deltaTone={deltaTone} />
+
+  if (variant === "hero") {
+    const ahead = others[others.length - 1]
+    return (
+      <HeroCard
+        title={`${coach.wording.ranking} · discipline score`}
+        chip={<Chip>{`Top ${topPct}%`}</Chip>}
+        label={`Your place of ${MEMBERS}`}
+        value={`#${me.rank}`}
+        delta={standard ? delta && `${delta} this week` : undefined}
+        deltaTone={deltaTone}
+        line={standard ? `Up from #${RANK_HISTORY[0]} ${RANK_HISTORY.length} weeks ago. ${ahead.name} (#${ahead.rank}) is ${ahead.score - me.score} points ahead.` : undefined}
+        stats={
+          detailed
+            ? [
+                { label: "Score", value: me.score, tone: "accent" },
+                { label: "Best", value: `#${Math.min(...RANK_HISTORY)}` },
+                { label: `#${ahead.rank}`, value: `+${ahead.score - me.score} pts` },
+              ]
+            : undefined
+        }
+        foot={standard ? <BleedArea values={RANK_HISTORY} invert /> : undefined}
+      />
+    )
+  }
 
   if (variant === "podium") {
     const [first, second, third] = others

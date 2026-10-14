@@ -32,7 +32,7 @@ export type WidgetDef = {
   module?: ModuleId
   /** A page's core widget: always on that page, never in the library, can't be removed or duplicated. */
   core?: ModuleId
-  /** Three designs per widget; the first is the default. Each needs its own height in rows. */
+  /** Three or more designs per widget; the first is the default. Each needs its own height in rows. */
   variants: { value: string; label: string; h: number; minH: number }[]
   settings?: Setting[]
   /** Width in columns when added, and the narrowest it can go before its content breaks. */
@@ -114,6 +114,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "countdown", label: "Countdown", h: 5, minH: 3 },
       { value: "timeline", label: "Today", h: 4, minH: 3 },
       { value: "week", label: "Week", h: 4, minH: 3 },
+      { value: "split", label: "Split", h: 3, minH: 3 },
     ],
     settings: [{ key: "news", label: "Include market news", type: "toggle", defaultOn: true }],
     defaultW: 4,
@@ -131,6 +132,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "next", label: "Next big one", h: 4, minH: 3 },
       { value: "week", label: "This week", h: 4, minH: 3 },
       { value: "sessions", label: "Sessions", h: 4, minH: 3 },
+      { value: "timeline", label: "Timeline", h: 5, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -147,6 +149,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "curve", label: "Equity curve", h: 5, minH: 3 },
       { value: "bars", label: "Daily P&L", h: 4, minH: 3 },
       { value: "heatmap", label: "Calendar", h: 4, minH: 3 },
+      { value: "hero", label: "Hero", h: 4, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -163,6 +166,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "radar", label: "Gauge", h: 5, minH: 3 },
       { value: "streak", label: "Clean streak", h: 3, minH: 3 },
       { value: "rules", label: "Rule by rule", h: 4, minH: 3 },
+      { value: "hero", label: "Hero", h: 4, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -178,6 +182,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "steps", label: "Steps", h: 2, minH: 2 },
       { value: "ring", label: "Ring", h: 2, minH: 2 },
       { value: "checklist", label: "Checklist", h: 4, minH: 3 },
+      { value: "path", label: "Timeline", h: 5, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -194,6 +199,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "trend", label: "Trend", h: 4, minH: 3 },
       { value: "podium", label: "Podium", h: 3, minH: 3 },
       { value: "leaderboard", label: "Top list", h: 5, minH: 4 },
+      { value: "hero", label: "Hero", h: 4, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -343,6 +349,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "slots", label: "Time slots", h: 4, minH: 3 },
       { value: "next", label: "Next free", h: 3, minH: 3 },
       { value: "allowance", label: "Calls left", h: 2, minH: 2 },
+      { value: "split", label: "Split", h: 3, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -359,6 +366,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "gauge", label: "Gauge", h: 4, minH: 3 },
       { value: "bars", label: "Daily limit", h: 4, minH: 3 },
       { value: "curve", label: "Balance and floor", h: 4, minH: 3 },
+      { value: "hero", label: "Hero", h: 4, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -375,6 +383,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "queue", label: "Queue", h: 3, minH: 3 },
       { value: "latest", label: "Latest reply", h: 3, minH: 3 },
       { value: "stats", label: "Answered", h: 2, minH: 2 },
+      { value: "thread", label: "Timeline", h: 5, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -390,6 +399,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "compare", label: "Compare", h: 5, minH: 4 },
       { value: "banner", label: "Banner", h: 2, minH: 2 },
       { value: "card", label: "Price", h: 4, minH: 3 },
+      { value: "split", label: "Split", h: 3, minH: 3 },
     ],
     settings: [{ key: "button", label: "Button text", type: "text", placeholder: "Upgrade to …" }],
     defaultW: 6,

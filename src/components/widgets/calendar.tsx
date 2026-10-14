@@ -5,7 +5,9 @@ import { CalendarDays, CalendarX, Clock, Newspaper, Radio } from "@/components/i
 import { useCoach } from "@/components/coach/coach-provider"
 import { EVENTS, MARKET_SESSIONS, NOW_HOUR, type CalEvent } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { ACCENT, Tip, useMore } from "./kit"
+import { Button } from "@/components/ui/button"
+import { ACCENT, Tip, useFrame, useMore } from "./kit"
+import { Poster, Rail, SplitCard, type RailItem } from "./layouts"
 import { Axis, Chip, GREY, Label, Legend, Num, Rule, TickBar, Timeline, WCard, useFigureFont } from "./instrument"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 
@@ -128,6 +130,8 @@ export function NextLive({ variant = "countdown", props = {} }: WidgetProps) {
   const more = useMore("standard")
   const detailed = useMore("detailed")
   const [hover, setHover] = useState<string>()
+  const [remind, setRemind] = useState(false)
+  const { emphasis } = useFrame()
   const font = useFigureFont()
   const sessions = EVENTS.filter((e) => e.kind !== "news")
   const next = sessions.find((e) => e.inMinutes !== undefined) ?? sessions[0]
@@ -254,8 +258,41 @@ export function NextLive({ variant = "countdown", props = {} }: WidgetProps) {
     )
   }
 
-  // countdown
   const hh = Math.floor(secs / 3600)
+  const clock = (
+    <>
+      {hh >= 24 ? `${Math.floor(hh / 24)}d ${pad(hh % 24)}` : `${pad(hh)}:${pad(Math.floor((secs % 3600) / 60))}`}
+      <span className="text-muted-foreground">:{pad(secs % 60)}</span>
+    </>
+  )
+
+  if (variant === "split") {
+    const later = items.filter((e) => e.id !== next.id).slice(0, detailed ? 3 : 2)
+    return (
+      <SplitCard panel={<Poster kicker={`${KIND_LABEL[next.kind]} · ${next.day} ${next.time}`} title={next.title} sub={`with ${coach.coachName}`} />}>
+        <div className="grid shrink-0 gap-0.5">
+          <span className="truncate text-[0.8125rem] leading-5 font-medium @[22rem]:hidden">{next.title}</span>
+          <Label>Starts in</Label>
+          <Num value={clock} />
+        </div>
+        {more && next.seats && <span className="truncate text-xs leading-4 text-muted-foreground">{next.seats} · reminder 15 min before</span>}
+        {detailed && (
+          <>
+            <Rule />
+            <Legend
+              className="shrink-0"
+              items={later.map((e) => ({ dot: true, color: e.noTrade ? LOSS : e.kind === "news" ? GREY[1] : GREY[0], label: `${e.day} ${e.time} · ${e.title}`, value: e.kind === "news" ? "news" : KIND_LABEL[e.kind] }))}
+            />
+          </>
+        )}
+        <Button size="sm" variant={remind || emphasis === "quiet" ? "outline" : "default"} className="mt-auto w-fit" onClick={() => setRemind((r) => !r)}>
+          {remind ? "Reminder set" : "Remind me"}
+        </Button>
+      </SplitCard>
+    )
+  }
+
+  // countdown
   const later = items.filter((e) => e.id !== next.id)
   return (
     <WCard icon={Radio} title="Up next" meta={meta} chip={next.seats ? <Chip>{next.seats}</Chip> : undefined}>
@@ -475,6 +512,31 @@ export function EconNews({ variant = "next" }: WidgetProps) {
             <ReleaseRow key={e.id} e={e} figures={detailed} />
           ))}
         </Fit>
+      </WCard>
+    )
+  }
+
+  if (variant === "timeline") {
+    const days = WEEK.filter((d) => news.some((e) => e.day === d))
+    const shown = more ? news : news.filter((e) => e.impact === "high")
+    const rail: RailItem[] = [{ now: "Mon" }]
+    for (const d of days) {
+      const evs = shown.filter((e) => e.day === d)
+      if (!evs.length) continue
+      rail.push({ group: `${d} ${evs[0].date.split(" ")[0]}` })
+      for (const e of evs)
+        rail.push({
+          time: e.time,
+          title: e.title,
+          state: e.id === big.id ? "next" : "ahead",
+          color: e.noTrade ? LOSS : undefined,
+          sub: more && (e.forecast || e.noTrade) ? [e.noTrade && "no trade", detailed && e.forecast && `f ${e.forecast} · p ${e.previous}`].filter(Boolean).join(" · ") || undefined : undefined,
+          aside: <ImpactTicks impact={e.impact} />,
+        })
+    }
+    return (
+      <WCard icon={Newspaper} title="Market calendar" meta={meta} chip={<Chip tone="loss">{`${noTrade.length} no-trade`}</Chip>}>
+        <Rail items={rail} />
       </WCard>
     )
   }

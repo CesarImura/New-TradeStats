@@ -8,6 +8,7 @@ import { JOURNAL_STATS, JOURNAL_WEEK, RULE_DAYS, R_STATS, SETUPS } from "@/lib/d
 import { cn } from "@/lib/utils"
 import { Chip, GREY, Label, Legend, Num, Rule, StepChart, TickBar, TickGauge, WCard, useFigureFont } from "./instrument"
 import { ACCENT, ACCENT_TEXT, useMore } from "./kit"
+import { BleedArea, BleedBars, HeroCard } from "./layouts"
 import { WidgetEmpty, signed, useEmpty, type WidgetProps } from "./shared"
 
 const rr = (v: number, digits = 1) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(digits)}R`
@@ -204,6 +205,30 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
     </WCard>
   )
 
+  if (variant === "hero") {
+    const week = JOURNAL_STATS.pnl
+    return (
+      <HeroCard
+        title={`Performance · last ${DAILY.length} days`}
+        chip={<Chip>{JOURNAL_STATS.winRate}% win</Chip>}
+        value={signed(total)}
+        delta={standard ? `${signed(week)} this week` : undefined}
+        deltaTone={week >= 0 ? "profit" : "loss"}
+        line={standard ? `${green} green days out of ${green + red}. You're ${signed(total - MODEL_20[MODEL_20.length - 1])} against ${coach.coachName}'s model account.` : undefined}
+        stats={
+          detailed
+            ? [
+                { label: "Expectancy", value: rr(R_STATS.expectancy, 2), tone: "accent" },
+                { label: "Best day", value: signed(best), tone: "profit" },
+                { label: "Worst day", value: signed(worst), tone: "loss" },
+              ]
+            : undefined
+        }
+        foot={standard ? <BleedArea values={EQUITY_20} /> : undefined}
+      />
+    )
+  }
+
   if (variant === "bars") {
     return card(
       <>
@@ -346,6 +371,34 @@ export function RulesFollowed({ variant = "radar" }: WidgetProps) {
       {children}
     </WCard>
   )
+
+  if (variant === "hero") {
+    const broken = RULE_SET.filter((r) => !r.miss).sort((a, b) => a.kept / a.total - b.kept / b.total)[0]
+    return (
+      <HeroCard
+        title={`Discipline · ${coach.coachName}'s ${RULE_SET.length} rules`}
+        chip={<Chip>{`${run} clean in a row`}</Chip>}
+        label="Rules kept"
+        value={`${KEPT}%`}
+        delta={standard ? `${clean} of ${RULE_DAYS.length} days clean` : undefined}
+        deltaTone="muted"
+        line={standard ? `Most often missed: “${broken.rule}”, kept ${broken.kept} of ${broken.total} times.` : undefined}
+        stats={detailed ? ["Risk 1%", "Stop first", "No news"].map((label, i) => ({ label, value: `${RULE_SET[i].kept}/${RULE_SET[i].total}` })) : undefined}
+        foot={
+          standard ? (
+            <BleedBars
+              bars={RULE_DAYS.map((d, i) => ({
+                h: d ? 1 : 0.55,
+                color: d ? (i >= RULE_DAYS.length - run ? ACCENT : GREY[2]) : "var(--loss)",
+                ring: !d,
+                title: d ? "Clean day" : "Broke a rule",
+              }))}
+            />
+          ) : undefined
+        }
+      />
+    )
+  }
 
   if (variant === "streak") {
     return card(

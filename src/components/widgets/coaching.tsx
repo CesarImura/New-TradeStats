@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils"
 import { ACCENT, ACCENT_TEXT, Avatar, useFrame, useMore } from "./kit"
 import { Chip, GREY, HatchBar, Label, Legend, Num, Rule, WCard, useFigureFont } from "./instrument"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
+import { CoachPhoto } from "./brand"
+import { Rail, SplitCard } from "./layouts"
 
 /** An empty tick or track (same as instrument.tsx). */
 const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
@@ -159,6 +161,31 @@ export function CoachFeedback({ variant = "queue" }: WidgetProps) {
     )
   }
 
+  if (variant === "thread") {
+    /** "5 hours" → "5h", "yesterday" → "1d", "3 days ago" → "3d". */
+    const ago = (w: string) => (w === "yesterday" ? "1d" : w.replace(/(\d+) (\w).*/, "$1$2"))
+    /** Age in hours, to list the newest first. */
+    const hours = (w: string) => (w === "yesterday" ? 24 : parseInt(w) * (/hour/.test(w) ? 1 : 24))
+    const shown = (more ? FEEDBACK.items : waiting).slice().sort((a, b) => hours(a.when) - hours(b.when))
+    return (
+      <WCard icon={MessageSquareReply} title="Coach feedback" meta={`Your trade reviews · ${coach.coachName} replies in ~${FEEDBACK.avgReplyHours}h`} chip={<Chip>{waiting.length} waiting</Chip>}>
+        <Rail
+          newestFirst
+          items={[
+            { now: "" },
+            ...shown.map((i) => ({
+              time: ago(i.when),
+              title: <TradeName trade={i.trade} />,
+              state: (i.status === "answered" ? "past" : "ahead") as "past" | "ahead",
+              color: i.status === "answered" ? ACCENT : undefined,
+              sub: i.status === "answered" ? (detailed || i === latest ? `${coach.coachName}: “${i.reply}”` : undefined) : `Waiting for ${coach.coachName}`,
+            })),
+          ]}
+        />
+      </WCard>
+    )
+  }
+
   if (variant === "stats") {
     return (
       <WCard icon={MessageSquareReply} title="Coach feedback" meta={`Your reviews this month · ${coach.coachName}`} chip={replyChip}>
@@ -275,6 +302,35 @@ export function BookCall({ variant = "slots" }: WidgetProps) {
       >
         {on ? `✓ ${time}` : time}
       </button>
+    )
+  }
+
+  if (variant === "split") {
+    const label = `${next.day} ${next.time}`
+    return (
+      <SplitCard
+        panel={
+          <>
+            <CoachPhoto className="absolute inset-0 rounded-none" />
+            <span data-split-narrow="hide" className="absolute bottom-2 left-2">
+              <Chip tone="neutral">{`${CALL_ALLOWANCE.length} min`}</Chip>
+            </span>
+          </>
+        }
+      >
+        <div className="grid min-w-0 shrink-0 gap-0.5">
+          <span className="truncate text-[0.8125rem] leading-5 font-medium">1:1 with {coach.coachName}</span>
+          {more && <span className="truncate text-xs leading-4 text-muted-foreground @max-[22rem]:hidden">Your trades, your questions · {left} of {CALL_ALLOWANCE.included} left this month</span>}
+        </div>
+        <div className="grid shrink-0 gap-0.5">
+          <Label>Next free</Label>
+          <Num size="md" value={label} delta={next.date} deltaTone="muted" />
+        </div>
+        {detailed && <div className="flex min-w-0 flex-wrap gap-1">{free.slice(1, 4).map((f) => slot(`${f.day} ${f.time}`, `${f.day} ${f.time}`))}</div>}
+        <Button size="sm" variant={emphasis === "quiet" ? "outline" : "default"} className="mt-auto w-fit" disabled={!picked && left === 0} onClick={() => book(label)}>
+          {picked === label ? "Booked" : `Book ${label}`}
+        </Button>
+      </SplitCard>
     )
   }
 

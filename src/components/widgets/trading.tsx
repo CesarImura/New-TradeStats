@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { ACCOUNT } from "@/lib/data/sample"
 import { Axis, Chip, GREY, Label, Legend, Num, Rule, TickBar, TickGauge, WCard, useFigureFont } from "./instrument"
 import { ACCENT, useMore } from "./kit"
+import { BleedArea, HeroCard } from "./layouts"
 import { WidgetEmpty, signed, useEmpty, type WidgetProps } from "./shared"
 
 const euro = (n: number) => `€${Math.round(n).toLocaleString("en")}`
@@ -108,6 +109,30 @@ export function Drawdown({ variant = "gauge" }: WidgetProps) {
   const floor = ACCOUNT.peak - ACCOUNT.maxDrawdown
   const dayPct = (TODAY.used / TODAY.limit) * 100
   const pctText = (p: number) => `${p.toFixed(1)}%`
+
+  if (variant === "hero") {
+    return (
+      <HeroCard
+        title={`Risk limits · ${ACCOUNT.name}`}
+        chip={<Chip tone={ddPct > 75 ? "loss" : "accent"}>{pctText(ddPct)} used</Chip>}
+        label="Left before the floor"
+        value={euro(left)}
+        delta={standard ? `${neg(dd)} from peak` : undefined}
+        deltaTone="loss"
+        line={standard ? `The account fails below ${euro(floor)}. Today you've used ${euro(TODAY.used)} of your ${euro(TODAY.limit)} daily limit.` : undefined}
+        stats={
+          detailed
+            ? [
+                { label: "Balance", value: euro(ACCOUNT.balance) },
+                { label: "Today left", value: euro(TODAY.limit - TODAY.used), tone: "accent" },
+                { label: "Trades", value: `${TODAY.trades}/${TODAY.maxTrades}` },
+              ]
+            : undefined
+        }
+        foot={standard ? <BleedArea values={ACCOUNT.history} floor={floor} /> : undefined}
+      />
+    )
+  }
 
   if (variant === "bars") {
     const q = TODAY.limit / 4

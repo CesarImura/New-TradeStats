@@ -10,6 +10,7 @@ import { CoachPhoto } from "./brand"
 import { Chip, GREY, HatchBar, Label, Legend, Num, Rule, WCard, useFigureFont } from "./instrument"
 import { ACCENT, ACCENT_TEXT, TYPE, W, useMore } from "./kit"
 import type { WidgetProps } from "./shared"
+import { Poster, SplitCard } from "./layouts"
 
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
 
@@ -88,6 +89,26 @@ export function Upgrade({ variant = "compare", props }: WidgetProps) {
       >
         {cta}
       </WCard>
+    )
+  }
+
+  if (variant === "split") {
+    return (
+      <SplitCard panel={<Poster kicker={`Next · ${next.name}`} title={`${next.price} / ${next.cadence}`} sub={`${next.members} ${students} on it`} />}>
+        <div className="grid min-w-0 shrink-0 gap-0.5">
+          <span className="truncate text-[0.8125rem] leading-5 font-medium">Move up to {next.name}</span>
+          {more && <span className="truncate text-xs leading-4 text-muted-foreground">You&rsquo;re on {current.name} · {plus} a {next.cadence}</span>}
+        </div>
+        <div className="grid min-h-0 gap-1 overflow-hidden">
+          {(detailed ? extra : extra.slice(0, 2)).map((f) => (
+            <div key={f.label} className="flex min-w-0 items-center gap-2 text-xs leading-5">
+              <Check className="size-3.5 shrink-0" style={{ color: ACCENT_TEXT }} />
+              <span className="truncate">{f.label}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-auto">{cta}</div>
+      </SplitCard>
     )
   }
 
