@@ -83,7 +83,7 @@ export default function Verify() {
               }}
               onFocus={(e) => e.target.select()}
               className={cn(
-                "h-10 w-full min-w-0 rounded-[4px] border border-[#2a2a2f] bg-[#0e0e10] text-center font-[family-name:var(--ff-plex-mono)] text-lg shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] outline-none focus:border-[var(--ts-interactive)] focus:shadow-[0_0_0_3px_rgb(255_85_0/0.18)] disabled:opacity-60",
+                "h-10 w-full min-w-0 rounded-[4px] border border-[#2a2a2f] bg-[#0e0e10] text-center font-[family-name:var(--ff-geist-mono)] text-lg shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] outline-none focus:border-[var(--ts-interactive)] focus:shadow-[0_0_0_3px_rgb(255_85_0/0.18)] disabled:opacity-60",
                 i === 3 && "ml-3",
               )}
             />

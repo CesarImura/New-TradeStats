@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
  * UI (src/lib/theme/ts-system.ts): the Webflow-Designer-like tool look, IBM
  * Plex, near-black page with bordered panels, yellow main action, orange focus.
  */
-export const mono = "font-[family-name:var(--ff-plex-mono)] text-[0.68rem] uppercase tracking-[0.06em]"
+export const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.68rem] uppercase tracking-[0.06em]"
 
 export function TsLogo({ className }: { className?: string }) {
   return (

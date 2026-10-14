@@ -85,7 +85,7 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
   const studentUrl = `/c/${coach.slug}/courses/${course.id}${lesson ? `/${lesson.id}` : ""}?preview=draft`
 
   return (
-    <div className="-m-4 grid min-h-[calc(100svh-3.5rem)] grid-rows-[auto_1fr] md:-m-6 lg:-m-8 lg:h-[calc(100svh-3.5rem)]">
+    <div className="-mx-4 -mt-6 -mb-10 grid min-h-[calc(100svh-4.5rem)] grid-rows-[auto_1fr] md:-mx-10 md:-mt-8 lg:h-[calc(100svh-4.5rem)]">
       <div className="flex flex-wrap items-center gap-2 border-b bg-background px-4 py-2">
         <Button variant="ghost" size="sm" nativeButton={false} render={<Link href={`${base}/content`} />}>
           <ArrowLeft /> Content

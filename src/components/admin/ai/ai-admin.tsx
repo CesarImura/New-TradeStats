@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
-import { Slider } from "@/components/ui/slider"
+import { SliderField } from "@/components/admin/design/controls"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -57,13 +57,15 @@ export function AiAdmin() {
                   Change picture
                 </Button>
               </div>
-              <Field label="Tone" hint={ai.tone < 33 ? "Friendly and warm" : ai.tone > 66 ? "Direct, no small talk" : "Calm and clear"}>
-                <Slider value={[ai.tone]} min={0} max={100} onValueChange={(v) => set({ tone: Array.isArray(v) ? v[0] : v })} aria-label="Tone" />
-                <span className="flex justify-between text-xs text-muted-foreground">
-                  <span>Warm</span>
-                  <span>Direct</span>
-                </span>
-              </Field>
+              <SliderField
+                label="Tone"
+                value={ai.tone}
+                min={0}
+                max={100}
+                format={(t) => (t < 33 ? "Friendly and warm" : t > 66 ? "Direct, no small talk" : "Calm and clear")}
+                ends={["Warm", "Direct"]}
+                onChange={(tone) => set({ tone })}
+              />
               <Field label="Answer length">
                 <div className="grid grid-cols-3 gap-1 rounded-lg border p-1">
                   {(["short", "medium", "long"] as const).map((l) => (

@@ -204,7 +204,7 @@ export function PagesCanvas() {
   const dot = 22 * cam.z < 8 ? 22 * 4 * cam.z : 22 * cam.z // keep the dots from getting too dense when zoomed out
 
   return (
-    <div className="-mx-4 -my-5 grid min-h-[calc(100svh-2.75rem)] grid-rows-[auto_1fr] md:-m-6 lg:h-[calc(100svh-2.75rem)]">
+    <div className="-mx-4 -mt-6 -mb-10 grid min-h-[calc(100svh-4.5rem)] grid-rows-[auto_1fr] md:-mx-10 md:-mt-8 lg:h-[calc(100svh-4.5rem)]">
       <EditorBar
         slug={slug}
         title="All pages"

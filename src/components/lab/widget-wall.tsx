@@ -17,7 +17,7 @@ import { LIMITS, RULES, checkWidget, type RuleId, type RuleResult } from "@/lib/
 import { ROW_HEIGHT, type Detail, type Emphasis } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 
-const mono = "font-[family-name:var(--ff-plex-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
+const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
 
 /** The real grid: 12 columns of 80px on a 1136px page, 16px gaps, 56px rows. */
 const COL_PX = 80
@@ -103,7 +103,7 @@ export function WidgetWall() {
   const star = emphasis === "star"
 
   return (
-    <div className="ts-ui min-h-svh bg-[#0a0a0b] font-[family-name:var(--ff-plex)] text-[0.8125rem] text-[#f4f4f5]">
+    <div className="ts-ui min-h-svh bg-[#0a0a0b] font-[family-name:var(--ff-geist)] text-[0.8125rem] text-[#f4f4f5]">
       <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS }} />
       <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, `.${SCOPE}`) }} />
 

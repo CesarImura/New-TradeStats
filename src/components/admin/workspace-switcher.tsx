@@ -50,7 +50,7 @@ export function WorkspaceSwitcher() {
             render={
               <SidebarMenuButton
                 size="lg"
-                className="h-10 data-popup-open:bg-sidebar-accent"
+                className="ts-switcher h-12 rounded-[10px] bg-white/[0.04] hover:bg-white/[0.07] data-popup-open:bg-white/[0.07] group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:shadow-none"
                 aria-label={`Current community: ${coach.name}. Switch community`}
               />
             }

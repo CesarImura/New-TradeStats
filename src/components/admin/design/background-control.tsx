@@ -2,11 +2,10 @@
 
 import { useRef } from "react"
 import { ImagePlus } from "@/components/icons"
-import { Slider } from "@/components/ui/slider"
 import { BACKDROPS, MIN_DIM } from "@/lib/theme/backdrops"
 import type { BackgroundStyle, CoachTheme } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
-import { Field, Segmented } from "./controls"
+import { Field, Segmented, SliderField } from "./controls"
 
 type Patch = Partial<Pick<CoachTheme, "background" | "bgImage" | "bgDim" | "bgBlur" | "bgWhere" | "bgAngle">>
 const KIND = (b: BackgroundStyle) => (b === "grid" || b === "glow" || b === "dots" ? "texture" : b)
@@ -19,7 +18,6 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
   const file = useRef<HTMLInputElement>(null)
   const kind = KIND(theme.background)
   const uploaded = theme.bgImage && !theme.bgImage.startsWith("preset:") ? theme.bgImage : undefined
-  const num = (v: number | readonly number[]) => (Array.isArray(v) ? v[0] : (v as number))
 
   return (
     <div className="grid gap-4">
@@ -56,9 +54,7 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
       )}
 
       {kind === "gradient" && (
-        <Field label="Direction" hint="From your brand and highlight colours">
-          <Slider value={[theme.bgAngle ?? 160]} min={0} max={360} step={5} onValueChange={(v) => onChange({ bgAngle: num(v) }, "bg-angle")} aria-label="Gradient direction" />
-        </Field>
+        <SliderField label="Direction" value={theme.bgAngle ?? 160} min={0} max={360} step={5} unit="°" onChange={(bgAngle) => onChange({ bgAngle }, "bg-angle")} />
       )}
 
       {kind === "image" && (
@@ -97,12 +93,16 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
               if (f) onChange({ bgImage: await compress(f) }, "bg-image")
             }}
           />
-          <Field label="Readability" hint={`${Math.max(MIN_DIM, theme.bgDim ?? 70)}% page colour on top`}>
-            <Slider value={[Math.max(MIN_DIM, theme.bgDim ?? 70)]} min={MIN_DIM} max={95} onValueChange={(v) => onChange({ bgDim: num(v) }, "bg-dim")} aria-label="Readability" />
-          </Field>
-          <Field label="Blur">
-            <Slider value={[theme.bgBlur ?? 0]} min={0} max={24} onValueChange={(v) => onChange({ bgBlur: num(v) }, "bg-blur")} aria-label="Blur" />
-          </Field>
+          <SliderField
+            label="Readability"
+            value={Math.max(MIN_DIM, theme.bgDim ?? 70)}
+            min={MIN_DIM}
+            max={95}
+            unit="%"
+            format={(v) => `${v}% page colour on top`}
+            onChange={(bgDim) => onChange({ bgDim }, "bg-dim")}
+          />
+          <SliderField label="Blur" value={theme.bgBlur ?? 0} min={0} max={24} unit="px" onChange={(bgBlur) => onChange({ bgBlur }, "bg-blur")} />
         </>
       )}
 

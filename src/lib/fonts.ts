@@ -17,7 +17,7 @@ import {
 const geist = Geist({ subsets: ["latin"], variable: "--ff-geist" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--ff-geist-mono" })
 const archivo = Archivo({ subsets: ["latin"], variable: "--ff-archivo" })
-// Our own UI (admin, sign-up, wizard) uses IBM Plex; coaches can pick it too.
+// IBM Plex is a coach font choice. Our own UI (admin, sign-up, wizard, launcher) uses Geist.
 const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--ff-plex" })
 const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--ff-plex-mono" })
 const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--ff-space-mono" })

@@ -5,7 +5,7 @@ import { ArrowRight, ArrowUpRight, RotateCcw, Trash2 } from "@/components/icons"
 import { deleteCommunity, setAccount } from "@/lib/data/communities"
 import { useAccount, useCustomCommunities } from "@/lib/data/use-communities"
 
-const mono = "font-[family-name:var(--ff-plex-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
+const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
 
 /** Start page: the coach sign-up entry, and communities made with the wizard in this browser. */
 export function LauncherOnboarding() {

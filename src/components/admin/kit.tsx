@@ -10,7 +10,7 @@ export function PageHeader({ title, text, actions, guide }: { title: string; tex
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="grid gap-1">
-        <h1 className="text-xl leading-7 font-medium tracking-[-0.01em]">{title}</h1>
+        <h1 className="text-[1.75rem] leading-9 font-semibold tracking-[-0.02em]">{title}</h1>
         {text && <p className="max-w-2xl text-sm text-muted-foreground">{text}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -30,7 +30,7 @@ export function PageHeader({ title, text, actions, guide }: { title: string; tex
 
 /** The admin's page column. */
 export function Page({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
-  return <div className={cn("mx-auto flex flex-col gap-4", wide ? "max-w-[1400px]" : "max-w-[1200px]")}>{children}</div>
+  return <div className={cn("mx-auto flex w-full flex-col gap-6", wide ? "max-w-[1400px]" : "max-w-[1200px]")}>{children}</div>
 }
 
 /** A native select in the admin style. Simple, keyboard-friendly, works in dialogs. */
@@ -85,7 +85,7 @@ export function Empty({ icon: Icon, title, text, action }: { icon: React.Compone
 
 /** Small mono label in our own TradeStats style. */
 export function Mono({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <span className={cn("font-[family-name:var(--ff-plex-mono)] text-[0.6875rem] tracking-[0.06em] uppercase", className)}>{children}</span>
+  return <span className={cn("font-[family-name:var(--coach-font-label)] text-[0.6875rem] tracking-[0.06em] uppercase", className)}>{children}</span>
 }
 
 export function HealthDot({ health, className }: { health: "red" | "amber" | "green"; className?: string }) {

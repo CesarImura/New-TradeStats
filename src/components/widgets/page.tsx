@@ -48,5 +48,6 @@ export function PageHeader({ variant = "plain", props }: WidgetProps) {
         </div>
       </div>
     )
-  return <div className={cn("flex h-full min-h-0 flex-col justify-end gap-1", variant === "centered" && "items-center text-center")}>{words}</div>
+  // Text starts at the top, like a page heading: the rows it doesn't fill become space before the content, not above the title.
+  return <div className={cn("flex h-full min-h-0 flex-col justify-start gap-1", variant === "centered" && "items-center text-center")}>{words}</div>
 }

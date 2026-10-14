@@ -110,6 +110,7 @@ import {
   Unlink as CUnlink,
   Upload as CUpload,
   User as CUser,
+  UserFollow as CUserFollow,
   UserMultiple as CUserMultiple,
   Video as CVideo,
   View as CView,
@@ -273,6 +274,7 @@ export const Unplug = i(CUnlink, "Unplug")
 export const Upload = i(CUpload, "Upload")
 export const User = i(CUser, "User")
 export const Users = i(CUserMultiple, "Users")
+export const UserPlus = i(CUserFollow, "UserPlus")
 export const Video = i(CVideo, "Video")
 export const Wallet = i(CWallet, "Wallet")
 export const Wand2 = i(CMagicWand, "Wand2")

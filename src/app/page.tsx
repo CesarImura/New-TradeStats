@@ -6,12 +6,12 @@ import { themeToCss } from "@/lib/theme/css"
 import { resolveTheme } from "@/lib/theme/resolve"
 import { TEMPLATES } from "@/lib/theme/templates"
 
-const mono = "font-[family-name:var(--ff-plex-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
+const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
 
 /** Prototype launcher, in our own TradeStats look. */
 export default function Launcher() {
   return (
-    <div className="ts-ui min-h-svh bg-[#0a0a0b] font-[family-name:var(--ff-plex)] text-[0.8125rem] text-white">
+    <div className="ts-ui min-h-svh bg-[#0a0a0b] font-[family-name:var(--ff-geist)] text-[0.8125rem] text-white">
       <div className="mx-auto flex max-w-[1180px] flex-col gap-6 px-4 py-8 md:px-6 md:py-10">
         <header className="flex flex-col gap-3">
           <div className="flex items-center gap-2.5">

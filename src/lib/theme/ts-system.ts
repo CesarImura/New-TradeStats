@@ -6,7 +6,7 @@
  * dense tool UI. Near-black page (#0a0a0b) with panels one step up (#161618)
  * edged by 1px lines, titled panels with a header band, recessed fields,
  * small tactile buttons (28px, 4px corners, a top highlight), 13px body text,
- * compact tables, tabs and menus. IBM Plex and Carbon icons; TradeStats
+ * compact tables, tabs and menus. Geist and Carbon icons; TradeStats
  * colours stay: yellow for the main action, orange for selection and focus.
  *
  * Everything sits under `:root:has(.ts-ui)`, so menus and dialogs rendered
@@ -69,10 +69,10 @@ ${R} {
   --ts-interactive: ${TS.interactive}; --ts-cta: ${TS.cta};
   --ts-layer-1: ${TS.layer1}; --ts-layer-2: ${TS.layer2}; --ts-layer-3: ${TS.layer3};
   --ts-hover-1: ${TS.layerHover1}; --ts-hover-2: ${TS.layerHover2};
-  --coach-font-body: var(--ff-plex); --coach-font-heading: var(--ff-plex); --coach-font-label: var(--ff-plex-mono);
+  --coach-font-body: var(--ff-geist); --coach-font-heading: var(--ff-geist); --coach-font-label: var(--ff-geist-mono);
   color-scheme: dark;
 }
-${R} body { background: ${TS.bg}; font-family: var(--ff-plex), system-ui, sans-serif; font-feature-settings: "tnum" 0; letter-spacing: 0.01em; }
+${R} body { background: ${TS.bg}; font-family: var(--ff-geist), system-ui, sans-serif; font-feature-settings: "tnum" 0; letter-spacing: 0; -webkit-font-smoothing: antialiased; }
 ${R} ::selection { background: rgb(255 85 0 / 0.35); }
 
 /* Focus: one 1px orange ring with a soft halo, like a selected element in an editor. */
@@ -206,19 +206,176 @@ ${ui(":is([data-slot=progress], [data-slot=progress-track], [data-slot=progress-
 ${ui(":is([data-slot=progress], [data-slot=progress-track])")} { background: var(--ts-layer-3); height: 4px; }
 ${ui("[data-slot=separator]")} { background: var(--border); }
 
-/* Side navigation: an editor's left panel. 28px rows, 12.5px text, icons 16px, an orange tick on the open page. */
+/* Side navigation: logo, then the community card, then quiet 30px rows (12.5px text, 16px icons); the open page is a filled pill. */
 ${ui("[data-slot=sidebar-container]")} { border-color: ${TS.borderSubtle}; }
-${ui("[data-slot=sidebar-group]")} { padding-block: 0.25rem; }
+${ui("[data-slot=sidebar-group]")} { padding-block: 0.375rem; }
 ${ui("[data-slot=sidebar-menu]")} { gap: 1px; }
-${ui("[data-slot=sidebar-menu-button]")} { border-radius: 4px; color: ${TS.textSecondary}; font-size: 0.78125rem; }
-${ui("[data-slot=sidebar-menu-button]:hover")} { background: var(--ts-hover-1); color: ${TS.text}; }
-${ui("[data-slot=sidebar-menu-button]:not([data-size=lg])")} { height: 1.75rem; }
+${ui("[data-slot=sidebar-menu-button]")} { border-radius: 4px; color: ${TS.textHelper}; font-size: 0.78125rem; }
+${ui("[data-slot=sidebar-menu-button] > svg")} { opacity: 0.8; }
+${ui("[data-slot=sidebar-menu-button]:hover")} { background: var(--ts-hover-1); color: ${TS.textSecondary}; }
+${ui("[data-slot=sidebar-menu-button]:hover > svg")} { opacity: 1; }
+${ui("[data-slot=sidebar-menu-button]:not([data-size=lg])")} { height: 1.875rem; }
+/* The open page: a filled pill, full-white text, orange icon. Everything else stays quiet. */
 ${ui("[data-slot=sidebar-menu-button][data-active]")} {
-  box-shadow: inset 2px 0 0 var(--ts-interactive); background: var(--ts-layer-2); color: ${TS.text}; font-weight: 500;
+  background: var(--ts-layer-2); color: ${TS.text}; font-weight: 500; box-shadow: inset 0 0 0 1px ${TS.panelBorder};
 }
+${ui("[data-slot=sidebar-menu-button][data-active] > svg")} { opacity: 1; color: var(--ts-interactive); }
+/* The community selector card keeps its own text colour. */
+${ui("[data-slot=sidebar-menu-button].ts-switcher")} { color: ${TS.text}; }
 ${ui("[data-slot=sidebar-group-label]")} {
-  height: 1.5rem; font-family: var(--ff-plex-mono), ui-monospace, monospace; font-size: 0.65625rem; letter-spacing: 0.06em; text-transform: uppercase; color: ${TS.textHelper};
+  height: 1.5rem; font-family: var(--ff-geist-mono), ui-monospace, monospace; font-size: 0.65625rem; letter-spacing: 0.06em; text-transform: uppercase; color: ${TS.textHelper};
 }
 /* Folded to icons: the group names fade out. Pull them up by their own height (not shadcn's 32px) and let clicks through, so they never sit on an icon. */
 ${ui("[data-slot=sidebar][data-collapsible=icon] [data-slot=sidebar-group-label]")} { margin-top: -1.5rem; pointer-events: none; }
+`
+
+/**
+ * The admin area on top of the base look: a floating canvas, after Linear and
+ * Vercel. The side menu and the page share one near-black ground with no lines
+ * between them; everything the admin works on sits on one rounded canvas a step
+ * lighter. On the canvas, panels are soft fills, not outlines: depth comes from
+ * surface steps, and hairlines are kept only where they help reading (table
+ * rows, tab bars). Geist throughout, 14px body, 8px controls, 12px panels,
+ * monochrome selection. Dark only. Orange stays for focus and charts, yellow
+ * for the main action.
+ *
+ * Components can use the tokens directly: --adm-ground, --adm-canvas,
+ * --adm-surface, --adm-raised, --adm-hover, --adm-line.
+ */
+const A = ":root:has(.ts-admin)"
+const adm = (sel: string) => `${A} ${sel}:not(${COACH}, ${COACH} *)`
+export const ADMIN = {
+  /** Behind everything: the side menu and the gutter around the canvas. */
+  ground: "#09090b",
+  /** The rounded canvas the page sits on. */
+  canvas: "#111113",
+  /** A panel on the canvas. */
+  surface: "#18181b",
+  /** Something inside a panel (a nested box, a selected tile). */
+  raised: "#202024",
+  hover: "#1d1d21",
+  /** The few hairlines left: table rows, tab bars. */
+  line: "rgb(255 255 255 / 0.06)",
+  /** The faint edge that keeps a fill from looking flat. */
+  edge: "rgb(255 255 255 / 0.05)",
+  idle: "#8b8b94",
+} as const
+
+export const TS_ADMIN_CSS = `
+${A} {
+  --radius: 8px; --background: ${ADMIN.canvas}; --card: ${ADMIN.surface}; --popover: ${ADMIN.raised};
+  --border: ${ADMIN.line}; --input: rgb(255 255 255 / 0.1);
+  --muted: ${ADMIN.surface}; --secondary: ${ADMIN.surface}; --accent: ${ADMIN.raised};
+  --sidebar: ${ADMIN.ground}; --sidebar-border: transparent; --sidebar-accent: rgb(255 255 255 / 0.07);
+  --ts-layer-1: ${ADMIN.surface}; --ts-layer-2: ${ADMIN.raised}; --ts-hover-1: ${ADMIN.hover}; --ts-hover-2: #26262b;
+  --adm-ground: ${ADMIN.ground}; --adm-canvas: ${ADMIN.canvas}; --adm-surface: ${ADMIN.surface};
+  --adm-raised: ${ADMIN.raised}; --adm-hover: ${ADMIN.hover}; --adm-line: ${ADMIN.line}; --adm-edge: ${ADMIN.edge};
+  --coach-font-body: var(--ff-geist); --coach-font-heading: var(--ff-geist); --coach-font-label: var(--ff-geist-mono);
+}
+${A} body { background: ${ADMIN.ground}; font-family: var(--ff-geist), system-ui, sans-serif; letter-spacing: 0; -webkit-font-smoothing: antialiased; }
+${adm(":is(h1, h2, h3)")} { letter-spacing: -0.02em; }
+${adm(".font-mono, kbd, code")} { font-family: var(--ff-geist-mono), ui-monospace, monospace; }
+
+/* The canvas: one rounded sheet floating on the ground, a faint edge instead of a line. */
+${adm("[data-slot=sidebar-inset]")} { background: ${ADMIN.canvas}; box-shadow: 0 0 0 1px ${ADMIN.edge}, 0 1px 3px rgb(0 0 0 / 0.4); }
+${adm(".ts-admin-bar")} { background: color-mix(in srgb, ${ADMIN.canvas} 85%, transparent); }
+
+/* Type: a readable page, not a tool panel. */
+${adm(".text-sm")} { font-size: 0.875rem; line-height: 1.25rem; }
+${adm(".text-xs")} { font-size: 0.75rem; line-height: 1rem; }
+${adm(".text-base")} { font-size: 0.9375rem; line-height: 1.375rem; }
+
+/* Buttons: 32px, 8px corners, flat. Outline buttons are a soft fill, not a frame. */
+${adm("[data-slot=button]")} { border-radius: 8px; font-size: 0.8125rem; }
+${adm("[data-slot=button]:is(.h-8, .h-9)")} { height: 2rem; }
+${adm("[data-slot=button]:is(.size-8, .size-9)")} { width: 2rem; height: 2rem; }
+${adm("[data-slot=button].h-7")} { height: 1.75rem; font-size: 0.78125rem; border-radius: 7px; }
+${adm("[data-slot=button].size-7")} { width: 1.75rem; height: 1.75rem; border-radius: 7px; }
+${adm("[data-slot=button].bg-primary")} { box-shadow: none; }
+${adm(":is([data-slot=button].bg-secondary, [data-slot=button][class*='border-border'])")} {
+  background: rgb(255 255 255 / 0.05); border-color: transparent; box-shadow: inset 0 0 0 1px ${ADMIN.edge};
+}
+${adm(":is([data-slot=button].bg-secondary, [data-slot=button][class*='border-border']):hover")} { background: rgb(255 255 255 / 0.09); border-color: transparent; }
+
+/* Fields: 34px, 8px corners, a soft fill with a faint edge. */
+${adm(":is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], select)")} {
+  border-radius: 8px; background-color: rgb(255 255 255 / 0.04); border-color: rgb(255 255 255 / 0.08); box-shadow: none; font-size: 0.875rem;
+}
+${adm(":is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], select):hover")} { border-color: rgb(255 255 255 / 0.14); }
+${adm(":is([data-slot=input], [data-slot=select-trigger], select):not(textarea)")} { height: 2.125rem; }
+${adm("[data-slot=checkbox]")} { border-radius: 4px; background: rgb(255 255 255 / 0.04); border-color: rgb(255 255 255 / 0.16); }
+
+/* Panels: a fill one step up from the canvas, 12px corners, no outline, no header band. */
+${adm("[data-slot=card]")} { --card-spacing: 1.25rem; border-radius: 12px; background: ${ADMIN.surface}; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03); }
+${adm("[data-slot=card][data-size=sm]")} { --card-spacing: 1rem; }
+${adm("[data-slot=card] > [data-slot=card-header]:has([data-slot=card-title])")} { border-bottom: 0; padding-bottom: 0; }
+${adm("[data-slot=card-title]")} { font-size: 0.9375rem; line-height: 1.375rem; font-weight: 500; letter-spacing: -0.01em; }
+${adm("[data-slot=card-title]:is(.text-2xl, .text-xl, .text-3xl)")} { font-size: 1.625rem; line-height: 2rem; font-weight: 500; letter-spacing: -0.025em; }
+${adm("[data-slot=card-description]")} { font-size: 0.8125rem; line-height: 1.125rem; }
+${adm("[data-slot=card-footer]")} { border-color: ${ADMIN.line}; }
+
+/*
+ * Hand-built boxes (rounded, bordered divs) become fills too: the frame goes,
+ * a surface takes its place. Boxes that set their own fill keep it; boxes with
+ * a coloured, transparent or selected border keep that border.
+ */
+${adm(`:is(.rounded-lg, .rounded-xl, .rounded-2xl).border:not([data-slot])`)} { border-radius: 12px; }
+${adm(`:is(.rounded-md, .rounded-sm).border:not([data-slot])`)} { border-radius: 8px; }
+${adm(`:is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-md, .rounded-sm).border:not([data-slot], .border-dashed, ${CUSTOM_BORDER})`)} { border-color: transparent; }
+${adm(`:is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-md, .rounded-sm).border:not([data-slot], .border-dashed, ${CUSTOM_BORDER}):not([class*="bg-"])`)} { background-color: ${ADMIN.surface}; }
+${adm(`:is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-md, .rounded-sm).border:is(button, a):not(${CUSTOM_BORDER}):hover`)} { background-color: ${ADMIN.hover}; border-color: transparent; }
+${adm(".border-dashed")} { border-color: rgb(255 255 255 / 0.12); }
+${adm(".bg-card")} { background-color: ${ADMIN.surface}; }
+${adm(":is(.bg-muted, .bg-secondary):not([data-slot=button], [data-slot=tabs-list])")} { background-color: ${ADMIN.surface}; }
+
+/* Inside a panel, everything steps up one more surface so it never vanishes into it. */
+${adm(`:is([data-slot=card], .rounded-lg.border, .rounded-xl.border) :is(.rounded-lg, .rounded-xl, .rounded-md, .rounded-sm).border:not([data-slot], .border-dashed, ${CUSTOM_BORDER}):not([class*="bg-"])`)} { background-color: ${ADMIN.raised}; }
+${adm(":is([data-slot=card], .rounded-lg.border, .rounded-xl.border) :is(.bg-muted, .bg-secondary, .bg-card, .bg-background):not([data-slot=button])")} { background-color: ${ADMIN.raised}; }
+${adm("[data-slot=card] [class*='hover:bg-muted']:hover")} { background-color: #26262b; }
+${adm(":is([data-slot=card], .rounded-lg.border, .rounded-xl.border) :is([class*='border-b'], [class*='border-t'], [class*='divide-'] > *)")} { border-color: ${ADMIN.line}; }
+
+/* Tags: soft. */
+${adm("[data-slot=badge]")} { border-radius: 6px; height: 1.25rem; padding-inline: 0.4375rem; font-size: 0.71875rem; }
+${adm("[data-slot=badge].bg-secondary")} { background: rgb(255 255 255 / 0.08); }
+${adm("[data-slot=badge][class*='border-border']")} { border-color: transparent; background: rgb(255 255 255 / 0.06); }
+
+/* Tabs: plain words on a faint hairline; the open one is white with a white underline. */
+${adm("[data-slot=tabs-list][data-variant=default]")} { background: transparent; height: 2.5rem !important; gap: 1.25rem; box-shadow: inset 0 -1px 0 ${ADMIN.line}; }
+${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger]")} { padding: 0 0.125rem; font-size: 0.875rem; color: ${ADMIN.idle}; }
+${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger][data-active]")} { box-shadow: inset 0 -2px 0 var(--foreground) !important; }
+${adm("[data-slot=tabs-list][data-variant=line] [data-slot=tabs-trigger]::after")} { background: var(--foreground); }
+
+/* Tables: no frame, just a quiet header and hairlines between rows. */
+${adm("[data-slot=table-container]")} { border-radius: 0; box-shadow: none; background: transparent; }
+${adm("[data-slot=table-header] [data-slot=table-row]")} { background: transparent; border-color: ${ADMIN.line}; }
+${adm("[data-slot=table-head]")} { height: 2.5rem; padding-inline: 0.75rem; font-size: 0.8125rem; font-weight: 400; color: ${ADMIN.idle}; }
+${adm("[data-slot=table-body] [data-slot=table-row]")} { border-color: ${ADMIN.line}; }
+${adm("[data-slot=table-body] [data-slot=table-row]:hover")} { background: rgb(255 255 255 / 0.025); }
+${adm("[data-slot=table-cell]")} { height: 3.25rem; padding-inline: 0.75rem; font-size: 0.875rem; }
+
+/* Overlays: floating sheets, 12px corners, a faint edge and a deep shadow. */
+${adm(":is([data-slot=dialog-content], [data-slot=popover-content], [data-slot=dropdown-menu-content], [data-slot=context-menu-content], [data-slot=select-content], [data-slot=command])")} {
+  border-radius: 12px; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 16px 48px rgb(0 0 0 / 0.6);
+}
+${adm(":is([data-slot=dialog-content], [data-slot=sheet-content])")} { background: ${ADMIN.canvas}; }
+${adm("[data-slot=sheet-content]")} { box-shadow: -1px 0 0 ${ADMIN.edge}, -24px 0 48px rgb(0 0 0 / 0.5); }
+${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item])")} {
+  border-radius: 6px; min-height: 2rem; font-size: 0.875rem;
+}
+${adm("[data-slot=tooltip-content]")} { border-radius: 6px; font-size: 0.75rem; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 4px 12px rgb(0 0 0 / 0.5); }
+
+/* Side menu: on the ground, no edge. Sentence-case group names, 34px rows, a soft white pill on the open page. */
+${adm("[data-slot=sidebar-container]")} { border: 0; }
+${adm("[data-slot=sidebar-group]")} { padding-block: 0.375rem; }
+${adm("[data-slot=sidebar-menu]")} { gap: 1px; }
+${adm("[data-slot=sidebar-group-label]")} {
+  height: 2rem; font-family: var(--ff-geist), system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0; text-transform: none; color: #5f5f68;
+}
+${adm("[data-slot=sidebar-menu-button]")} { border-radius: 8px; color: ${ADMIN.idle}; font-size: 0.875rem; gap: 0.75rem; }
+${adm("[data-slot=sidebar-menu-button]:not([data-size=lg])")} { height: 2.125rem; }
+${adm("[data-slot=sidebar-menu-button] > svg")} { opacity: 1; width: 1.125rem; height: 1.125rem; }
+${adm("[data-slot=sidebar-menu-button]:hover")} { background: rgb(255 255 255 / 0.04); color: ${TS.text}; }
+${adm("[data-slot=sidebar-menu-button][data-active]")} { background: rgb(255 255 255 / 0.07); color: ${TS.text}; box-shadow: none; }
+${adm("[data-slot=sidebar-menu-button][data-active] > svg")} { color: ${TS.text}; }
+${adm("[data-slot=sidebar][data-collapsible=icon] [data-slot=sidebar-group-label]")} { margin-top: -2rem; }
 `
