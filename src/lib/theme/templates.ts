@@ -7,7 +7,7 @@ import type { CoachTheme, TemplateId } from "./types"
 export const TEMPLATES: Record<TemplateId, { name: string; blurb: string; theme: CoachTheme }> = {
   terminal: {
     name: "Terminal",
-    blurb: "Dark, square, mono labels. Built on the TradeStats look.",
+    blurb: "Dark, crisp, mono labels. Built on the TradeStats look.",
     theme: {
       template: "terminal",
       mode: "dark",
@@ -41,8 +41,8 @@ export const TEMPLATES: Record<TemplateId, { name: string; blurb: string; theme:
           loss: "#d12f24",
         },
       },
-      radius: 2,
-      buttonShape: "square",
+      radius: 6,
+      buttonShape: "rounded",
       shadow: "none",
       borders: true,
       density: "compact",

@@ -21,9 +21,9 @@ export const LOOKS: Look[] = [
   {
     id: "terminal",
     name: "Terminal",
-    blurb: "Square, dense, mono labels",
+    blurb: "Crisp, dense, mono labels",
     template: "terminal",
-    set: { widgetStyle: "instrument", radius: 2, buttonShape: "square", shadow: "none", effects: "soft", borders: true, density: "compact", labelStyle: "caps", headingWeight: 400, fonts: { heading: "archivo", body: "archivo", label: "space-mono" } },
+    set: { widgetStyle: "instrument", radius: 6, buttonShape: "rounded", shadow: "none", effects: "soft", borders: true, density: "compact", labelStyle: "caps", headingWeight: 400, fonts: { heading: "archivo", body: "archivo", label: "space-mono" } },
   },
   {
     id: "desk",
