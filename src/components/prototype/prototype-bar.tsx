@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { COACHES, type ModuleId } from "@/lib/data/coaches"
 import { patchPublishedTheme } from "@/lib/prototype-store"
+import { resetAsNewStudent } from "@/lib/data/student-start"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import { cn } from "@/lib/utils"
 
@@ -67,14 +68,14 @@ function Segment<T extends string>({
  * Prototype-only control. Not part of the product: lets us flip between
  * coaches, templates and layouts while demoing.
  */
-export function PrototypeBar({ area }: { area: "student" | "admin" }) {
+export function PrototypeBar({ area }: { area: "student" | "admin" | "site" }) {
   const { coach, theme, preview } = useCoach()
   const path = usePathname()
   const rest = path.split("/").slice(3).join("/")
   const set = (patch: Parameters<typeof patchPublishedTheme>[1]) => patchPublishedTheme(coach.slug, patch)
 
-  const section = path.split("/")[3]
-  const adminHref = `/admin/${coach.slug}${section && TO_ADMIN[section] ? `/${TO_ADMIN[section]}` : ""}`
+  const section = area === "site" ? undefined : path.split("/")[3]
+  const adminHref = area === "site" ? `/admin/${coach.slug}/sales?tab=page` : `/admin/${coach.slug}${section && TO_ADMIN[section] ? `/${TO_ADMIN[section]}` : ""}`
   const studentTarget = section ? TO_STUDENT[section] : undefined
   const studentHref = `/c/${coach.slug}${studentTarget && coach.modules[studentTarget] ? `/${studentTarget}` : ""}`
   if (preview) return null
@@ -106,7 +107,7 @@ export function PrototypeBar({ area }: { area: "student" | "admin" }) {
             {COACHES.map((c) => (
               <Link
                 key={c.slug}
-                href={`/${area === "admin" ? "admin" : "c"}/${c.slug}${rest ? `/${rest}` : ""}`}
+                href={`/${area === "admin" ? "admin" : area === "site" ? "site" : "c"}/${c.slug}${rest ? `/${rest}` : ""}`}
                 className={cn(
                   "flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-neutral-100",
                   c.slug === coach.slug && "bg-neutral-100 font-medium",
@@ -119,6 +120,32 @@ export function PrototypeBar({ area }: { area: "student" | "admin" }) {
           </div>
         </div>
 
+
+        <div className="grid gap-1.5">
+          <span className="text-[0.7rem] font-medium tracking-wide text-neutral-500 uppercase">Before joining</span>
+          <div className="flex flex-wrap gap-1">
+            {(
+              [
+                ["Sales page", ""],
+                ["Checkout", "/checkout"],
+                ["Log in", "/login"],
+                ["Free join", "/join"],
+                ["Invite", "/invite"],
+              ] as const
+            ).map(([label, p]) => (
+              <Link key={label} href={`/site/${coach.slug}${p}`} className="rounded-md bg-neutral-100 px-2 py-1 text-xs text-neutral-700 hover:bg-neutral-200">
+                {label}
+              </Link>
+            ))}
+            <Link
+              href={`/site/${coach.slug}/start`}
+              onClick={() => resetAsNewStudent(coach.slug)}
+              className="rounded-md bg-neutral-950 px-2 py-1 text-xs text-white hover:bg-neutral-800"
+            >
+              Be a new student
+            </Link>
+          </div>
+        </div>
 
         <Segment
           label="Template"

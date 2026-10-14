@@ -22,6 +22,7 @@ import {
   type Course,
 } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
+import { groupOpening, useAccess, useViewerGroup } from "@/lib/data/access"
 import { CourseCover, UpgradeDialog, hours, useStudentTier } from "./shared"
 
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
@@ -32,7 +33,10 @@ export function StudentCourses() {
   const catalog = useCatalog(coach)
   const progress = useProgress(coach.slug)
   const tier = useStudentTier()
-  const courses = studentCourses(catalog)
+  const access = useAccess(coach.slug)
+  const group = useViewerGroup(coach)
+  // The coach decides whether courses of other tiers show locked (as an upsell) or not at all.
+  const courses = studentCourses(catalog).filter((c) => access.locked === "show" || canAccess(c, tier))
   const [area, setArea] = useState("all")
   const [locked, setLocked] = useState<Course | null>(null)
 
@@ -106,7 +110,9 @@ export function StudentCourses() {
 
             <div className="grid gap-[var(--page-gap)] sm:grid-cols-2 xl:grid-cols-3">
               {shown.map((c) => {
-                const open = canAccess(c, tier)
+                const opening = groupOpening(access, c.id, group)
+                const open = canAccess(c, tier) && (!opening || opening.open)
+                const waits = canAccess(c, tier) && !open
                 const s = courseStats(c, progress)
                 const needs = coach.tiers.find((t) => c.tiers.includes(t.id))
                 const body = (
@@ -118,7 +124,11 @@ export function StudentCourses() {
                           <span className="eyebrow">{c.area}</span>
                           <h3 className="text-lg leading-tight">{c.title}</h3>
                         </div>
-                        {!open ? (
+                        {waits ? (
+                          <Badge variant="secondary" className="shrink-0 gap-1">
+                            <Lock className="size-3" /> Opens {opening?.date}
+                          </Badge>
+                        ) : !open ? (
                           <Badge variant="secondary" className="shrink-0 gap-1">
                             <Lock className="size-3" /> {needs?.name}
                           </Badge>
@@ -142,6 +152,12 @@ export function StudentCourses() {
                   </>
                 )
                 const cls = "group flex flex-col overflow-hidden rounded-(--radius) bg-card text-left text-card-foreground transition-transform hover:-translate-y-0.5"
+                if (waits)
+                  return (
+                    <div key={c.id} className={cls} style={{ boxShadow: "var(--card-shadow)" }} title={`Opens for ${group?.name} on ${opening?.date}`}>
+                      {body}
+                    </div>
+                  )
                 return open ? (
                   <Link key={c.id} href={`${base}/courses/${c.id}`} className={cls} style={{ boxShadow: "var(--card-shadow)" }}>
                     {body}

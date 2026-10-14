@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { Bell, LogOut, Search, Settings, User } from "lucide-react"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CommunitySwitcher } from "@/components/student/community-switcher"
+import { PreviewAsBanner, Tour } from "@/components/student/getting-started"
 import { studentNav, type NavItem } from "@/components/coach/nav"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -53,12 +54,16 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   // The Charts terminal uses the full width, like a trading screen.
   const wide = path.startsWith(`${base}/charts`)
   const content = (
-    <div className={cn("mx-auto w-full px-4 pt-5 pb-28 sm:px-6 md:pb-12 lg:px-8", wide ? "max-w-none pt-3 lg:px-4" : "max-w-[1280px]")}>{children}</div>
+    <div className={cn("mx-auto w-full px-4 pt-5 pb-28 sm:px-6 md:pb-12 lg:px-8", wide ? "max-w-none pt-3 lg:px-4" : "max-w-[1280px]")}>
+      {children}
+      <Tour />
+    </div>
   )
 
   if (theme.nav.layout === "top") {
     return (
       <div className={cn("min-h-svh", bg)}>
+        <PreviewAsBanner />
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
         <TopNav items={items} />
         {content}
@@ -83,6 +88,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className={bg}>
+        <PreviewAsBanner />
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
         <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur sm:px-6 lg:px-8">
           <SidebarTrigger className="max-md:hidden" />
@@ -119,7 +125,7 @@ function SideItems({ items }: { items: NavItem[] }) {
           <SidebarMenuButton
             isActive={isActive(item)}
             tooltip={item.label}
-            render={<Link href={item.href} />}
+            render={<Link href={item.href} data-tour={item.id} />}
             className="h-10"
           >
             <item.icon />
@@ -147,6 +153,7 @@ function TopNav({ items }: { items: NavItem[] }) {
               key={item.id}
               href={item.href}
               data-active={isActive(item)}
+              data-tour={item.id}
               className="rounded-[min(var(--radius),10px)] px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
             >
               {theme.nav.style === "icons" ? <item.icon className="size-4" aria-label={item.label} /> : item.label}
@@ -177,7 +184,7 @@ function HeaderActions() {
 }
 
 function ProfileMenu({ compact }: { compact?: boolean }) {
-  const { base } = useCoach()
+  const { base, coach } = useCoach()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -212,7 +219,7 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem render={<Link href={`/site/${coach.slug}/login`} />}>
           <LogOut /> Log out
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -231,6 +238,7 @@ function MobileBar({ items }: { items: NavItem[] }) {
             <Link
               href={item.href}
               data-active={isActive(item)}
+              data-tour={item.id}
               className="flex flex-col items-center gap-1 py-2.5 text-[0.7rem] text-muted-foreground data-[active=true]:text-primary"
             >
               <item.icon className="size-5" />

@@ -19,6 +19,7 @@ import {
   type Lesson,
 } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
+import { moduleTiers, useAccess } from "@/lib/data/access"
 import { CourseCover, PreviewNotice, UpgradeDialog, hours, useStudentTier } from "./shared"
 
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
@@ -32,9 +33,13 @@ export function StudentCourse({ courseId }: { courseId: string }) {
   const found = catalog.courses.find((c) => c.id === courseId && (preview || c.status === "published"))
   const course = found && preview ? asPreview(found) : found
   const [upgrade, setUpgrade] = useState(false)
+  const access = useAccess(coach.slug)
+  const allTiers = coach.tiers.map((t) => t.id)
 
   if (!course) return <NotFound />
   const open = canAccess(course, tier)
+  // A module can be set apart from its course in the access overview (ADM-14).
+  const moduleOpen = (id: string) => open && moduleTiers(access, course, id, allTiers).includes(tier ?? "")
   const s = courseStats(course, progress)
   const resume = resumeLesson(course, progress)
   const downloads = course.modules.flatMap((m) => m.lessons).reduce((n, l) => n + (l.status === "published" ? l.downloads.length : 0), 0)
@@ -95,6 +100,9 @@ export function StudentCourse({ courseId }: { courseId: string }) {
         {course.modules.map((m, mi) => {
           const lessons = visibleLessons(m)
           if (lessons.length === 0) return null
+          const mOpen = moduleOpen(m.id)
+          if (open && !mOpen && access.locked === "hide") return null
+          const needs = coach.tiers.find((t) => moduleTiers(access, course, m.id, allTiers).includes(t.id))
           const done = lessons.filter((l) => progress.done.includes(l.id)).length
           const opens = lessons.every((l) => l.status === "scheduled") ? lessons[0].unlockAt : undefined
           return (
@@ -107,7 +115,7 @@ export function StudentCourse({ courseId }: { courseId: string }) {
                   <div className="grid min-w-0 text-left">
                     <span className="truncate font-heading text-base">{m.title}</span>
                     <span className="text-xs font-normal text-muted-foreground tabular-nums">
-                      {opens ? `Opens ${opens}` : `${done} of ${lessons.length} done`}
+                      {open && !mOpen ? `Part of ${needs?.name ?? "a higher tier"}` : opens ? `Opens ${opens}` : `${done} of ${lessons.length} done`}
                     </span>
                   </div>
                 </div>
@@ -115,7 +123,7 @@ export function StudentCourse({ courseId }: { courseId: string }) {
               <AccordionContent className="pb-2 [&_a]:no-underline">
                 <ol className="grid">
                   {lessons.map((l) => (
-                    <LessonRow key={l.id} lesson={l} courseId={course.id} locked={!open} gate={open ? gateBefore(course, l.id, progress) : null} current={resume?.lesson.id === l.id} done={progress.done.includes(l.id)} onLocked={() => setUpgrade(true)} />
+                    <LessonRow key={l.id} lesson={l} courseId={course.id} locked={!mOpen} gate={mOpen ? gateBefore(course, l.id, progress) : null} current={resume?.lesson.id === l.id} done={progress.done.includes(l.id)} onLocked={() => setUpgrade(true)} />
                   ))}
                 </ol>
               </AccordionContent>

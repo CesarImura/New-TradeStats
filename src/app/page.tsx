@@ -97,6 +97,9 @@ export default function Launcher() {
             <li>STU-01 Home, built from the coach&apos;s widgets</li>
             <li>ADM-01 Overview with getting-started list</li>
             <li>ONB-01 to ONB-16 Coach sign-up and setup wizard</li>
+            <li>Tiers, groups, access overview and Preview as</li>
+            <li>PUB-01 to PUB-12 Sales page, checkout, login (visual only)</li>
+            <li>STO-01 to STO-04 Student onboarding and tour</li>
           </ul>
         </section>
       </div>

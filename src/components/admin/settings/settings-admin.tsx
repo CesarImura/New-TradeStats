@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Check, Copy, Globe, Loader2, Mail, Plus, Upload, Wand2 } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { Check, Copy, Eye, Globe, Loader2, Mail, Plus, Upload, Wand2 } from "lucide-react"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -14,6 +15,8 @@ import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { FIRST_WEEK, resetAsNewStudent, useOnboardingSettings, type FirstWeekItem, type OnboardingSettings } from "@/lib/data/student-start"
+import { setStored } from "@/lib/prototype-store"
 import { EMAIL_TEMPLATES, LEGAL, ROLES, TEAM } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Field, Mono, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
@@ -31,10 +34,11 @@ const TABS = [
 
 /** ADM-45 to ADM-52. */
 export function SettingsAdmin() {
+  const tab = useSearchParams().get("tab") ?? "general"
   return (
     <Page>
       <PageHeader title="Settings" text="Your platform's name, address, e-mails, legal pages and team." guide="Your own domain · 2 min" />
-      <Tabs defaultValue="general" orientation="vertical" className="gap-6 max-md:flex-col!">
+      <Tabs defaultValue={tab} orientation="vertical" className="gap-6 max-md:flex-col!">
         <TabsList variant="line" className="h-fit shrink-0 items-stretch max-md:w-full max-md:flex-row! max-md:overflow-x-auto max-md:[scrollbar-width:none] md:w-48">
           {TABS.map(([id, label]) => (
             <TabsTrigger key={id} value={id} className="justify-start">
@@ -316,17 +320,28 @@ function Legal() {
 
 function StudentOnboarding() {
   const { coach } = useCoach()
-  const [s, setS] = useCommunityData(coach.slug, "student-onboarding", {
-    video: true,
-    message: `Welcome! Start with the first lesson of Foundations, then book your first live session.`,
-    questions: { nickname: true, experience: true, markets: true, goal: true, broker: false },
-    discord: true,
-    tour: true,
-    login: "code" as "code" | "password" | "both",
+  const s = useOnboardingSettings(coach.slug)
+  const setS = (fn: (x: OnboardingSettings) => OnboardingSettings) => setStored(`${coach.slug}:student-onboarding`, fn(s))
+  const set = (p: Partial<OnboardingSettings>) => setS((x) => ({ ...x, ...p }))
+  const items = (Object.keys(FIRST_WEEK) as FirstWeekItem[]).filter((id) => {
+    const m = FIRST_WEEK[id].module
+    return !m || coach.modules[m]
   })
-  const set = (p: Partial<typeof s>) => setS((x) => ({ ...x, ...p }))
   return (
     <div className="grid gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3">
+        <span className="text-sm text-muted-foreground">Account → welcome → profile → Discord → tour → Home. Every step can be skipped.</span>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            resetAsNewStudent(coach.slug)
+            window.open(`/site/${coach.slug}/start`, "_blank")
+          }}
+        >
+          <Eye /> Try it as a new student
+        </Button>
+      </div>
       <Section title="Welcome" text="The first thing a new student sees, before Home.">
         <div className="grid gap-3 rounded-lg border bg-card p-4">
           <div className="flex items-center gap-3">
@@ -334,9 +349,16 @@ function StudentOnboarding() {
             <div className="grid flex-1 gap-1">
               <span className="text-sm font-medium">Your welcome video</span>
               <span className="text-xs text-muted-foreground">One minute is enough: who you are, what to do first.</span>
-              <Button variant="outline" size="sm" className="justify-self-start" onClick={() => set({ video: true })}>
-                <Upload /> {s.video ? "Replace" : "Upload"}
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => set({ video: true })}>
+                  <Upload /> {s.video ? "Replace" : "Upload"}
+                </Button>
+                {s.video && (
+                  <Button variant="ghost" size="sm" onClick={() => set({ video: false })}>
+                    Remove
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
           <Field label="Personal message">
@@ -370,12 +392,28 @@ function StudentOnboarding() {
             <Switch checked={s.tour} onCheckedChange={(v) => set({ tour: v })} />
           </SettingRow>
           <SettingRow label="How students log in">
-            <NativeSelect value={s.login} onChange={(e) => set({ login: e.target.value as typeof s.login })}>
+            <NativeSelect value={s.login} onChange={(e) => set({ login: e.target.value as OnboardingSettings["login"] })}>
               <option value="code">E-mail code</option>
               <option value="password">Password</option>
               <option value="both">Both, and Discord</option>
             </NativeSelect>
           </SettingRow>
+        </div>
+      </Section>
+      <Section title="Home in the first week" text="New students see a Start here card and a short checklist on Home until they finish or close it.">
+        <div className="divide-y rounded-lg border bg-card px-3">
+          <SettingRow label="Start here card" text="First lesson, next live session, introduce yourself">
+            <Switch checked={s.startHere} onCheckedChange={(v) => set({ startHere: v })} />
+          </SettingRow>
+          {items.map((id) => (
+            <SettingRow key={id} label={FIRST_WEEK[id].label} text={FIRST_WEEK[id].text}>
+              <Switch
+                checked={s.firstWeek.includes(id)}
+                onCheckedChange={(v) => set({ firstWeek: v ? items.filter((x) => x === id || s.firstWeek.includes(x)) : s.firstWeek.filter((x) => x !== id) })}
+                aria-label={FIRST_WEEK[id].label}
+              />
+            </SettingRow>
+          ))}
         </div>
       </Section>
     </div>

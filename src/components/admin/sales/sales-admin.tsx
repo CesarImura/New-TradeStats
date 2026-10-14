@@ -1,28 +1,29 @@
 "use client"
 
 import { useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
-import { AlertTriangle, Check, Copy, Landmark, Loader2, MoreHorizontal, Plus, RotateCcw, Users } from "lucide-react"
+import { AlertTriangle, Check, Copy, ExternalLink, Landmark, Loader2, MoreHorizontal, Plus, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { Tier } from "@/lib/data/coaches"
-import { COUPONS, GROUPS, MONEY, TRANSACTIONS, type Txn } from "@/lib/data/people"
-import { COURSES, PARTNERS, REVENUE_MONTHS } from "@/lib/data/sample"
+import { COUPONS, MONEY, TRANSACTIONS, type Txn } from "@/lib/data/people"
+import { PARTNERS, REVENUE_MONTHS } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { Field, Mono, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { AccessOverview, PreviewAsMenu } from "./access-overview"
+import { Groups } from "./groups"
+import { SalesPageEditor } from "./sales-page-editor"
+import { Tiers } from "./tiers"
 
 const mrrConfig = { revenue: { label: "Revenue", color: "var(--chart-1)" } } satisfies ChartConfig
 const STATUS: Record<Txn["status"], { label: string; cls: string }> = {
@@ -33,31 +34,44 @@ const STATUS: Record<Txn["status"], { label: string; cls: string }> = {
   disputed: { label: "Disputed", cls: "text-[var(--loss)]" },
 }
 
-/** ADM-29 to ADM-36 and ADM-41: tiers, groups, coupons, revenue, transactions, payouts, affiliates. */
+/** ADM-29 to ADM-36, ADM-14, ADM-15, ADM-40 and ADM-41: tiers, groups, access, sales page, coupons, revenue, transactions, payouts, affiliates. */
 export function SalesAdmin() {
   const { coach } = useCoach()
-  const [tab, setTab] = useState("overview")
+  const [tab, setTab] = useState(useSearchParams().get("tab") ?? "overview")
   const problems = TRANSACTIONS.filter((t) => ["failed", "retrying", "disputed"].includes(t.status)).length
 
   return (
     <Page wide>
       <PageHeader
         title="Sales & payments"
-        text="What students pay for, what came in, and where the money goes. Our fees are shown openly."
+        text="What students pay for, what they get, what came in, and where the money goes. Our fees are shown openly."
         guide="Tiers and prices · 3 min"
+        actions={
+          <>
+            <PreviewAsMenu size="sm" />
+            <Button size="sm" variant="outline" nativeButton={false} render={<a href={`/site/${coach.slug}`} target="_blank" rel="noreferrer" />}>
+              <ExternalLink /> Sales page
+            </Button>
+          </>
+        }
       />
       <Tabs value={tab} onValueChange={setTab} className="gap-5">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="tiers">Tiers & prices</TabsTrigger>
-          <TabsTrigger value="groups">Groups</TabsTrigger>
-          <TabsTrigger value="coupons">Coupons</TabsTrigger>
-          <TabsTrigger value="transactions">
-            Payments {problems > 0 && <span className="rounded-full bg-[var(--loss)]/20 px-1.5 text-[0.7rem] text-[var(--loss)] tabular-nums">{problems}</span>}
-          </TabsTrigger>
-          <TabsTrigger value="payouts">Payouts</TabsTrigger>
-          <TabsTrigger value="affiliates">Affiliates & partners</TabsTrigger>
-        </TabsList>
+        {/* Scrolls sideways on narrow screens instead of widening the page. */}
+        <div className="w-0 min-w-full overflow-x-auto [scrollbar-width:none]">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="tiers">Tiers & prices</TabsTrigger>
+            <TabsTrigger value="groups">Groups</TabsTrigger>
+            <TabsTrigger value="access">Access</TabsTrigger>
+            <TabsTrigger value="page">Sales page</TabsTrigger>
+            <TabsTrigger value="coupons">Coupons</TabsTrigger>
+            <TabsTrigger value="transactions">
+              Payments {problems > 0 && <span className="rounded-full bg-[var(--loss)]/20 px-1.5 text-[0.7rem] text-[var(--loss)] tabular-nums">{problems}</span>}
+            </TabsTrigger>
+            <TabsTrigger value="payouts">Payouts</TabsTrigger>
+            <TabsTrigger value="affiliates">Affiliates</TabsTrigger>
+          </TabsList>
+        </div>
         <TabsContent value="overview">
           <Overview onProblems={() => setTab("transactions")} />
         </TabsContent>
@@ -66,6 +80,12 @@ export function SalesAdmin() {
         </TabsContent>
         <TabsContent value="groups">
           <Groups />
+        </TabsContent>
+        <TabsContent value="access">
+          <AccessOverview />
+        </TabsContent>
+        <TabsContent value="page">
+          <SalesPageEditor />
         </TabsContent>
         <TabsContent value="coupons">
           <Coupons />
@@ -159,220 +179,6 @@ function Overview({ onProblems }: { onProblems: () => void }) {
             <p className="pt-2 text-xs text-muted-foreground">VAT is collected and paid for you; it isn&apos;t in these numbers.</p>
           </CardContent>
         </Card>
-      </div>
-    </div>
-  )
-}
-
-// ---------- ADM-29 / ADM-30 Tiers
-
-type TierExtra = { yearly?: string; trial: number; installments: boolean; hidden: boolean; courses: string[]; role: string; description: string }
-const NO_EXTRA: Record<string, TierExtra> = {}
-const blankExtra = (i: number): TierExtra => ({ trial: i === 0 ? 7 : 0, installments: false, hidden: false, courses: COURSES.filter((c) => !c.locked || i > 0).map((c) => c.id), role: "", description: "" })
-
-function Tiers() {
-  const { coach } = useCoach()
-  const [extra, setExtra] = useCommunityData(coach.slug, "tier-extra", NO_EXTRA)
-  const [added, setAdded] = useCommunityData<Tier[]>(coach.slug, "tiers-added", [] as Tier[])
-  const [open, setOpen] = useState<Tier | null>(null)
-  const tiers = [...coach.tiers, ...added]
-
-  return (
-    <div className="grid gap-3">
-      <div className="flex justify-end">
-        <Button
-          onClick={() => {
-            const t = { id: `t${Date.now()}`, name: "New tier", price: "€99", cadence: "month", members: 0 }
-            setAdded((a) => [...a, t])
-            setOpen(t)
-          }}
-        >
-          <Plus /> New tier
-        </Button>
-      </div>
-      <div className="overflow-x-auto rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>Tier</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead className="hidden md:table-cell">Trial</TableHead>
-              <TableHead>Members</TableHead>
-              <TableHead className="hidden md:table-cell">Visible</TableHead>
-              <TableHead className="w-10" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tiers.map((t, i) => {
-              const x = extra[t.id] ?? blankExtra(i)
-              return (
-                <TableRow key={t.id} className="cursor-pointer" onClick={() => setOpen(t)}>
-                  <TableCell className="font-medium">{t.name}</TableCell>
-                  <TableCell className="tabular-nums">
-                    {t.price}
-                    <span className="text-muted-foreground"> {t.cadence === "once" ? "once" : `/ ${t.cadence}`}</span>
-                    {x.yearly && <span className="block text-xs text-muted-foreground">or {x.yearly} / year</span>}
-                  </TableCell>
-                  <TableCell className="hidden text-muted-foreground md:table-cell">{x.trial ? `${x.trial} days` : "–"}</TableCell>
-                  <TableCell className="tabular-nums">{t.members.toLocaleString("en")}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <Badge variant="outline" className="font-normal">
-                      {x.hidden ? "Hidden · link only" : "On sales page"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon-sm" aria-label={`Edit ${t.name}`}>
-                      <MoreHorizontal />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
-      </div>
-      <p className="text-xs text-muted-foreground">Upgrades start straight away with the price difference. Downgrades start at the end of the period. Nothing is deleted when someone cancels.</p>
-      <TierEditor
-        tier={open}
-        extra={open ? (extra[open.id] ?? blankExtra(tiers.findIndex((t) => t.id === open.id))) : null}
-        onClose={() => setOpen(null)}
-        onSave={(x) => open && setExtra((e) => ({ ...e, [open.id]: x }))}
-      />
-    </div>
-  )
-}
-
-function TierEditor({ tier, extra, onClose, onSave }: { tier: Tier | null; extra: TierExtra | null; onClose: () => void; onSave: (x: TierExtra) => void }) {
-  const [x, setX] = useState<TierExtra | null>(extra)
-  const [name, setName] = useState(tier?.name ?? "")
-  const [price, setPrice] = useState(tier?.price ?? "")
-  const [cadence, setCadence] = useState(tier?.cadence ?? "month")
-  const [key, setKey] = useState(tier?.id)
-  if (tier?.id !== key) {
-    setKey(tier?.id)
-    setX(extra)
-    setName(tier?.name ?? "")
-    setPrice(tier?.price ?? "")
-    setCadence(tier?.cadence ?? "month")
-  }
-  const set = (p: Partial<TierExtra>) => setX((v) => (v ? { ...v, ...p } : v))
-
-  return (
-    <Sheet open={!!tier} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg">
-        <SheetHeader>
-          <SheetTitle>{name || "Tier"}</SheetTitle>
-          <SheetDescription>{tier?.members ? `${tier.members} members. Price changes apply to new members only.` : "Not on sale yet."}</SheetDescription>
-        </SheetHeader>
-        {x && (
-          <div className="grid gap-5 overflow-y-auto px-4">
-            <Field label="Name">
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Price">
-                <Input value={price} onChange={(e) => setPrice(e.target.value)} className="tabular-nums" />
-              </Field>
-              <Field label="Billing">
-                <NativeSelect value={cadence} onChange={(e) => setCadence(e.target.value)}>
-                  <option value="month">Monthly</option>
-                  <option value="quarter">Every 3 months</option>
-                  <option value="year">Yearly</option>
-                  <option value="once">One payment</option>
-                </NativeSelect>
-              </Field>
-            </div>
-            <div className="divide-y rounded-lg border px-3">
-              <SettingRow label="Also offer yearly" text="Usually two months free">
-                {x.yearly !== undefined && <Input value={x.yearly} onChange={(e) => set({ yearly: e.target.value })} className="h-8 w-24 tabular-nums" aria-label="Yearly price" />}
-                <Switch checked={x.yearly !== undefined} onCheckedChange={(v) => set({ yearly: v ? `€${Math.round((Number(price.replace(/[^\d.]/g, "")) || 0) * 10)}` : undefined })} />
-              </SettingRow>
-              <SettingRow label="Free trial" text="Card needed; first payment after the trial">
-                <NativeSelect value={String(x.trial)} onChange={(e) => set({ trial: Number(e.target.value) })}>
-                  {[0, 3, 7, 14, 30].map((d) => (
-                    <option key={d} value={d}>
-                      {d ? `${d} days` : "No trial"}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </SettingRow>
-              <SettingRow label="Pay in instalments" text="For one-time prices: 3 monthly payments">
-                <Switch checked={x.installments} onCheckedChange={(v) => set({ installments: v })} />
-              </SettingRow>
-              <SettingRow label="Hidden" text="Not on the sales page; only people with the link can join">
-                <Switch checked={x.hidden} onCheckedChange={(v) => set({ hidden: v })} />
-              </SettingRow>
-            </div>
-            <div className="grid gap-2">
-              <span className="text-[0.8rem] font-medium">What it unlocks</span>
-              {COURSES.map((c) => (
-                <label key={c.id} className="flex items-center gap-2 text-sm">
-                  <Checkbox checked={x.courses.includes(c.id)} onCheckedChange={(v) => set({ courses: v ? [...x.courses, c.id] : x.courses.filter((y) => y !== c.id) })} />
-                  {c.title}
-                </label>
-              ))}
-              <p className="text-xs text-muted-foreground">Calendar events, charts and AI quotas are set per tier in their own areas.</p>
-            </div>
-            <Field label="Discord role">
-              <NativeSelect value={x.role} onChange={(e) => set({ role: e.target.value })}>
-                <option value="">Same as in Community</option>
-                <option>@Core</option>
-                <option>@Trading Desk</option>
-                <option>@VIP</option>
-              </NativeSelect>
-            </Field>
-          </div>
-        )}
-        <SheetFooter>
-          <Button
-            onClick={() => {
-              if (x) onSave(x)
-              toast(`${name} saved`)
-              onClose()
-            }}
-          >
-            Save tier
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
-  )
-}
-
-// ---------- ADM-31 Groups
-
-function Groups() {
-  return (
-    <div className="grid gap-3">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">Cohorts that start together. What a group unlocks starts on its start date.</p>
-        <Button variant="outline" onClick={() => toast("New group", { description: "Name, start and end date, seats and which tiers can join." })}>
-          <Plus /> New group
-        </Button>
-      </div>
-      <div className="grid gap-3 md:grid-cols-3">
-        {GROUPS.map((g) => (
-          <Card key={g.id} size="sm">
-            <CardHeader>
-              <CardTitle>{g.name}</CardTitle>
-              <CardDescription>
-                {g.start} – {g.end}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-2 text-sm">
-              <div className="flex justify-between">
-                <span className="flex items-center gap-1.5 text-muted-foreground">
-                  <Users className="size-3.5" /> Seats
-                </span>
-                <span className="tabular-nums">
-                  {g.members} of {g.seats}
-                </span>
-              </div>
-              <Progress value={(g.members / g.seats) * 100} />
-              {g.waiting > 0 ? <span className="text-xs text-amber-400">Full · {g.waiting} on the waiting list</span> : <span className="text-xs text-muted-foreground">{g.seats - g.members} seats left</span>}
-            </CardContent>
-          </Card>
-        ))}
       </div>
     </div>
   )

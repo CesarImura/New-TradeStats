@@ -17,7 +17,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useViewerGroup } from "@/lib/data/access"
 import { DEMO_STUDENT } from "@/lib/data/sample"
+import { MyGroup } from "./my-group"
 import { ACCOUNTS } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 
@@ -37,6 +39,7 @@ function Row({ label, text, children }: { label: string; text?: string; children
 export function StudentProfile() {
   const { coach } = useCoach()
   const tierId = useStudentTier()
+  const group = useViewerGroup(coach)
   const params = useSearchParams()
   const [nick, setNick] = useCommunityData(coach.slug, "nickname", "alexm")
   const [notif, setNotif] = useCommunityData(coach.slug, "notifications", { feedback: true, lessons: true, events: true, community: false, email: true })
@@ -67,6 +70,7 @@ export function StudentProfile() {
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="billing">Subscription</TabsTrigger>
+          {group && <TabsTrigger value="group">My group</TabsTrigger>}
           <TabsTrigger value="connections">Connections</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
@@ -151,6 +155,10 @@ export function StudentProfile() {
               </div>
             ))}
           </Card>
+        </TabsContent>
+
+        <TabsContent value="group">
+          <MyGroup />
         </TabsContent>
 
         <TabsContent value="connections">

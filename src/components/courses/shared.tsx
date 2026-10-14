@@ -1,6 +1,5 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
 import { Check, Lock, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
@@ -8,14 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { series } from "@/components/widgets/kit"
 import { Cover } from "@/components/widgets/shared"
+import { useViewerTier } from "@/lib/data/access"
 import type { Course } from "@/lib/data/learning"
 import { UPGRADE } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 
-/** The demo student is in the first tier; previews can ask for another with ?tier=. */
+/** The demo student is in the first tier; previews can ask for another with ?tier= or "Preview as". */
 export function useStudentTier() {
   const { coach } = useCoach()
-  return useSearchParams().get("tier") ?? coach.tiers[0]?.id
+  return useViewerTier(coach)
 }
 
 /** Course artwork in the brand's series colours. */
