@@ -64,7 +64,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
   // Floating: the page is a rounded canvas on the menu's ground, with a gutter around it (like the admin area).
   const floating = theme.nav.frame === "floating"
-  const canvas = "md:rounded-[min(calc(var(--radius)*1.5),20px)] md:overflow-clip md:shadow-[0_0_0_1px_var(--border),0_1px_3px_rgb(0_0_0/0.08)]"
+  const canvas = "md:rounded-[var(--r-panel)] md:overflow-clip md:shadow-[0_0_0_1px_var(--border),0_1px_3px_rgb(0_0_0/0.08)]"
 
   if (theme.nav.layout === "top") {
     if (floating)
@@ -173,7 +173,7 @@ function TopNav({ items, floating }: { items: NavItem[]; floating?: boolean }) {
               data-active={isActive(item)}
               data-tour={item.id}
               data-edit={`menu:${item.id}`}
-              className="rounded-[min(var(--radius),10px)] px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
+              className="rounded-[var(--r-menu)] px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
             >
               {theme.nav.style === "icons" ? <item.icon className="size-4" aria-label={item.label} /> : item.label}
             </Link>
@@ -211,7 +211,7 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
           <button
             className={cn(
               "flex items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              compact && "w-full rounded-[min(var(--radius),10px)] p-1 hover:bg-sidebar-accent",
+              compact && "w-full rounded-[var(--r-menu)] p-1 hover:bg-sidebar-accent",
             )}
           />
         }

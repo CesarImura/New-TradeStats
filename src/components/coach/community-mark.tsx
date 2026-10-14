@@ -12,11 +12,11 @@ export function CommunityMark({ coach, className }: { coach: Coach; className?: 
   const t = resolveTheme(c, pub.theme)
   if (c.logo) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={c.logo} alt="" className={cn("size-8 shrink-0 rounded-md bg-white object-contain", className)} />
+    return <img src={c.logo} alt="" className={cn("size-8 shrink-0 rounded-[var(--r-menu,6px)] bg-white object-contain", className)} />
   }
   return (
     <span
-      className={cn("grid size-8 shrink-0 place-items-center rounded-md text-xs font-semibold", className)}
+      className={cn("grid size-8 shrink-0 place-items-center rounded-[var(--r-menu,6px)] text-xs font-semibold", className)}
       style={{ background: t.primary, color: t.primaryForeground }}
     >
       {c.mark}

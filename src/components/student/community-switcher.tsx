@@ -70,7 +70,7 @@ export function CommunitySwitcher({ placement }: { placement: "sidebar" | "bar" 
         <PopoverTrigger
           render={
             <button
-              className="-mx-1.5 flex min-w-0 items-center gap-2 rounded-[min(var(--radius),10px)] px-1.5 py-1 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-muted"
+              className="-mx-1.5 flex min-w-0 items-center gap-2 rounded-[var(--r-menu)] px-1.5 py-1 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-muted"
               aria-label={`${coach.name}. Switch community`}
             />
           }

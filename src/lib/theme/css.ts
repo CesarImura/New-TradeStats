@@ -124,6 +124,10 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
     "--r-dot": geometric ? "1px" : "9999px",
     "--r-inner": geometric ? `${t.radius}px` : `${Math.max(6, Math.round(t.radius * 0.6))}px`,
     "--cap": geometric ? "butt" : "round",
+    // Menus (nav items, dropdowns, tabs, switchers) follow the corners but never go fully square:
+    // a square theme keeps crisp cards and charts, with softer menus.
+    "--r-menu": `${Math.max(6, Math.min(Math.round(t.radius * 0.8), 12))}px`,
+    "--r-panel": `${Math.max(10, Math.min(t.radius + 4, 18))}px`,
   }
 
   const body = Object.entries(vars).map(([k, v]) => `${k}:${v};`).join("")
@@ -135,6 +139,9 @@ ${within(".text-primary")}{color:var(--brand-text);}
 ${within(".border-primary")}{border-color:var(--brand-mark);}
 ${within("[data-slot=button]")}{border-radius:var(--button-radius)!important;}
 ${within("[data-slot=card]")}{box-shadow:var(--card-shadow);--card-spacing:calc(var(--spacing) * 4 * var(--density))!important;}
+${within(":is([data-slot=sidebar-menu-button],[data-slot=sidebar-menu-sub-button],[data-slot=tabs-trigger],[data-slot=dropdown-menu-item],[data-slot=dropdown-menu-sub-trigger],[data-slot=select-item],[data-slot=context-menu-item],[data-slot=command-item])")}{border-radius:var(--r-menu)!important;}
+${within(":is([data-slot=dropdown-menu-content],[data-slot=dropdown-menu-sub-content],[data-slot=popover-content],[data-slot=select-content],[data-slot=context-menu-content],[data-slot=tooltip-content])")}{border-radius:var(--r-panel)!important;}
+${within("[data-slot=tabs-list]:not([data-variant=line])")}{border-radius:calc(var(--r-menu) + 3px)!important;}
 ${within("[data-slot=card][data-size=sm]")}{--card-spacing:calc(var(--spacing) * 3 * var(--density))!important;}
 `
 }
