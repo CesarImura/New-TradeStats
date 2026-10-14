@@ -1,4 +1,4 @@
-import type { Coach } from "@/lib/data/coaches"
+import { DEFAULT_WORDING, type Coach, type ModuleId } from "@/lib/data/coaches"
 import type { ContentDraft, ThemeDraft } from "@/lib/prototype-store"
 import { TEMPLATES } from "./templates"
 import type { CoachTheme, TemplateId } from "./types"
@@ -6,14 +6,17 @@ import { defaultHome, normalizeLayout, type PageLayout } from "@/lib/widgets/lay
 
 /** The coach with their saved name, logo, words, menu and modules applied. */
 export function resolveCoach(coach: Coach, c: ContentDraft = {}): Coach {
+  // Menus saved before a module existed don't list it yet: add it at the end, switched off.
+  const menu = c.menu ?? coach.menu
+  const all = Object.keys(DEFAULT_WORDING).filter((k) => !["home", "student", "students", "lesson"].includes(k)) as ModuleId[]
   return {
     ...coach,
     name: c.name || coach.name,
     mark: c.mark || coach.mark,
     logo: c.logo ?? coach.logo,
-    wording: { ...coach.wording, ...c.wording },
-    menu: c.menu ?? coach.menu,
-    modules: { ...coach.modules, ...c.modules },
+    wording: { ...DEFAULT_WORDING, ...coach.wording, ...c.wording },
+    menu: [...menu, ...all.filter((m) => !menu.includes(m))],
+    modules: { ...Object.fromEntries(all.map((m) => [m, false])), ...coach.modules, ...c.modules } as Coach["modules"],
     home: c.home ?? coach.home,
   }
 }

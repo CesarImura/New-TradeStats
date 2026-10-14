@@ -19,35 +19,29 @@ import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { getCoach, type ModuleId } from "@/lib/data/coaches"
 import { FONT_LIBRARY, type FontId } from "@/lib/fonts"
-import { isDark, themeToCss } from "@/lib/theme/css"
+import { themeToCss } from "@/lib/theme/css"
+import { onColor } from "@/lib/theme/derive"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import type { TemplateId } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
+import { BackgroundControl } from "./background-control"
+import { BRAND_COLORS, FONT_PAIRS, HIGHLIGHT_COLORS } from "./options"
 import { Field, More, Segmented, Swatches } from "./controls"
 import { EditorBar, useDraftEditor } from "./editor-shell"
 import { PreviewFrame } from "./preview-frame"
 
-const BRAND_COLORS = ["#ff5500", "#e11d48", "#6b3dff", "#3d5afe", "#0ea5e9", "#16a34a", "#1f5a45", "#0a0a0a"]
-const HIGHLIGHT_COLORS = ["#f8ff9e", "#ffd166", "#00d39a", "#c7d2fe", "#fecdd3", "#e9dcc3"]
-const FONT_PAIRS: { name: string; heading: FontId; body: FontId; label: FontId }[] = [
-  { name: "Technical", heading: "archivo", body: "archivo", label: "space-mono" },
-  { name: "Editorial", heading: "fraunces", body: "dm-sans", label: "dm-sans" },
-  { name: "Bold", heading: "sora", body: "manrope", label: "sora" },
-  { name: "Elegant", heading: "instrument-serif", body: "geist", label: "geist-mono" },
-  { name: "Neutral", heading: "geist", body: "geist", label: "geist" },
-]
 const MODULE_NAMES: Record<ModuleId, string> = {
   courses: "Courses",
   calendar: "Calendar",
+  charts: "Charts",
   community: "Community",
   journal: "Journal",
   ranking: "Ranking",
   ai: "AI assistant",
 }
 
-const onColor = (hex: string) => (isDark(hex) ? "#ffffff" : "#0a0a0a")
 
 /** ADM-38 to ADM-44: design, navigation, menu and words, with a live preview and publishing. */
 export function DesignEditor() {
@@ -243,19 +237,8 @@ export function DesignEditor() {
                 ]}
               />
             </Field>
+            <BackgroundControl theme={theme} onChange={(patch, key) => change({ theme: patch }, key)} />
             <More label="More style options">
-              <Field label="Background">
-                <Segmented
-                  label="Background"
-                  value={theme.background}
-                  onChange={(background) => change({ theme: { background } }, "background")}
-                  options={[
-                    { value: "plain", label: "Plain" },
-                    { value: "grid", label: "Grid lines" },
-                    { value: "glow", label: "Glow" },
-                  ]}
-                />
-              </Field>
               <Field label="Small labels">
                 <Segmented
                   label="Small labels"
@@ -461,7 +444,7 @@ function TemplateCard({ id, selected, primary, onSelect }: { id: TemplateId; sel
   return (
     <button onClick={onSelect} aria-pressed={selected} className={cn("grid gap-1.5 rounded-lg p-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring", selected && "ring-2 ring-foreground")}>
       <style dangerouslySetInnerHTML={{ __html: themeToCss(t, scope) }} />
-      <span className={`tpl-${id} grid aspect-[4/3] content-start gap-1.5 overflow-hidden rounded-[min(var(--radius),8px)] bg-background p-2 ring-1 ring-black/10`}>
+      <span className={`tpl-${id} ${t.mode === "light" ? "light" : ""} grid aspect-[4/3] content-start gap-1.5 overflow-hidden rounded-[min(var(--radius),8px)] bg-background p-2 ring-1 ring-black/10`}>
         <span className="h-1.5 w-8 rounded-full bg-foreground/70" />
         <span className="grid gap-1 rounded-[min(var(--radius),6px)] bg-card p-1.5" style={{ boxShadow: "var(--card-shadow)" }}>
           <span className="h-1 w-10 rounded-full bg-foreground/40" />

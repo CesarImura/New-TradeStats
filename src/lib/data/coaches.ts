@@ -2,13 +2,14 @@ import type { CoachTheme, TemplateId } from "@/lib/theme/types"
 import type { HomeLayouts } from "@/lib/widgets/layout"
 import { customCommunities } from "./communities"
 
-export type ModuleId = "courses" | "calendar" | "community" | "journal" | "ranking" | "ai"
+export type ModuleId = "courses" | "calendar" | "charts" | "community" | "journal" | "ranking" | "ai"
 
 /** Words the coach can rename. Keys are ours; values are what students see. */
 export type Wording = {
   home: string
   courses: string
   calendar: string
+  charts: string
   community: string
   journal: string
   ranking: string
@@ -46,6 +47,7 @@ export const DEFAULT_WORDING: Wording = {
   home: "Home",
   courses: "Courses",
   calendar: "Calendar",
+  charts: "Charts",
   community: "Community",
   journal: "Journal",
   ranking: "Ranking",
@@ -65,9 +67,9 @@ export const COACHES: Coach[] = [
     tagline: "Futures day trading with a rulebook.",
     template: "terminal",
     overrides: {},
-    wording: { ...DEFAULT_WORDING, courses: "Playbook", students: "Traders", student: "Trader", ai: "Ask Marco" },
-    modules: { courses: true, calendar: true, community: true, journal: true, ranking: false, ai: true },
-    menu: ["courses", "calendar", "journal", "community", "ai", "ranking"],
+    wording: { ...DEFAULT_WORDING, courses: "Playbook", charts: "Desk", students: "Traders", student: "Trader", ai: "Ask Marco" },
+    modules: { courses: true, calendar: true, charts: true, community: true, journal: true, ranking: false, ai: true },
+    menu: ["courses", "calendar", "charts", "journal", "community", "ai", "ranking"],
     tiers: [
       { id: "core", name: "Core", price: "€149", cadence: "month", members: 141 },
       { id: "desk", name: "Trading Desk", price: "€390", cadence: "month", members: 37 },
@@ -94,8 +96,8 @@ export const COACHES: Coach[] = [
       student: "Mentee",
       ai: "Study buddy",
     },
-    modules: { courses: true, calendar: true, community: true, journal: true, ranking: false, ai: true },
-    menu: ["courses", "calendar", "community", "journal", "ai", "ranking"],
+    modules: { courses: true, calendar: true, charts: false, community: true, journal: true, ranking: false, ai: true },
+    menu: ["courses", "calendar", "community", "journal", "charts", "ai", "ranking"],
     tiers: [
       { id: "academy", name: "Academy", price: "€79", cadence: "month", members: 412 },
       { id: "circle", name: "Inner Circle", price: "€249", cadence: "month", members: 58 },
@@ -110,9 +112,9 @@ export const COACHES: Coach[] = [
     tagline: "Forex and prop firm challenges, done properly.",
     template: "pulse",
     overrides: { primary: "#6b3dff" },
-    wording: { ...DEFAULT_WORDING, courses: "Bootcamp", calendar: "Live room", ai: "Kairo AI" },
-    modules: { courses: true, calendar: true, community: true, journal: true, ranking: true, ai: true },
-    menu: ["courses", "calendar", "journal", "ranking", "community", "ai"],
+    wording: { ...DEFAULT_WORDING, courses: "Bootcamp", calendar: "Live room", charts: "Markets", ai: "Kairo AI" },
+    modules: { courses: true, calendar: true, charts: true, community: true, journal: true, ranking: true, ai: true },
+    menu: ["courses", "charts", "calendar", "journal", "ranking", "community", "ai"],
     tiers: [
       { id: "free", name: "Free", price: "€0", cadence: "month", members: 1830 },
       { id: "pro", name: "Pro", price: "€99", cadence: "month", members: 266 },
@@ -129,8 +131,8 @@ export const COACHES: Coach[] = [
     template: "terminal",
     overrides: { primary: "#16a34a", mode: "light", nav: { layout: "top", style: "labels", logo: "left" } },
     wording: { ...DEFAULT_WORDING, courses: "Lab", students: "Members", student: "Member" },
-    modules: { courses: true, calendar: true, community: true, journal: false, ranking: false, ai: false },
-    menu: ["courses", "calendar", "community", "journal", "ai", "ranking"],
+    modules: { courses: true, calendar: true, charts: false, community: true, journal: false, ranking: false, ai: false },
+    menu: ["courses", "calendar", "community", "journal", "charts", "ai", "ranking"],
     tiers: [{ id: "lab", name: "Lab", price: "€59", cadence: "month", members: 96 }],
   },
 ]

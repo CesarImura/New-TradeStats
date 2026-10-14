@@ -190,7 +190,7 @@ export function HomeBuilder() {
 
   const selWidget = layout.items.find((w) => w.id === selected) ?? null
   const scope = ".hb-canvas"
-  const canvasClass = cn("hb-canvas", theme.mode === "dark" && "dark")
+  const canvasClass = cn("hb-canvas", theme.mode === "dark" ? "dark" : "light")
   const canvasCtx = { ...ctx, coach, theme, base: `/c/${slug}` }
   const previewHref = `/c/${slug}?preview=draft${tier !== "default" ? `&tier=${tier}` : ""}${data === "empty" ? "&data=empty" : ""}`
 

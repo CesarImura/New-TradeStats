@@ -2,7 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* `.light` marks a light coach preview inside the dark admin. */
+@custom-variant dark (&:is(.dark *):not(:is(.light, .light *)));
 
 @theme inline {
   --color-background: var(--background);
@@ -188,6 +189,10 @@
     /* Inputs and page-coloured boxes become a light tint of the brand. */
     --background: color-mix(in oklab, var(--on) 14%, transparent);
     --input: color-mix(in oklab, var(--on) 30%, transparent);
+  }
+  .coach-bg-dots {
+    background-image: radial-gradient(color-mix(in oklab, var(--foreground) 14%, transparent) 1px, transparent 1.2px);
+    background-size: 22px 22px;
   }
   .coach-bg-glow {
     background-image:

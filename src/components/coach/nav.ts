@@ -2,6 +2,7 @@ import {
   BarChart3,
   BookOpen,
   CalendarDays,
+  ChartCandlestick,
   CreditCard,
   GraduationCap,
   House,
@@ -22,6 +23,7 @@ export type NavItem = { id: string; label: string; href: string; icon: LucideIco
 const MODULE_ICON: Record<ModuleId, LucideIcon> = {
   courses: BookOpen,
   calendar: CalendarDays,
+  charts: ChartCandlestick,
   community: MessagesSquare,
   journal: NotebookPen,
   ranking: Trophy,
@@ -32,6 +34,7 @@ const MODULE_ICON: Record<ModuleId, LucideIcon> = {
 export const MODULE_SCREENS: Record<ModuleId, string> = {
   courses: "STU-02 to STU-05, STU-29",
   calendar: "STU-06 to STU-09, STU-27",
+  charts: "STU-32, STU-33",
   community: "STU-11, STU-30",
   journal: "STU-13 to STU-16, STU-28",
   ranking: "STU-25, STU-26",
@@ -65,8 +68,10 @@ export function adminNav(_coach: Coach, base: string): { group: string; items: N
       group: "Coaching",
       items: [
         { id: "students", label: "Students", href: `${base}/students`, icon: Users, screens: "ADM-02 to ADM-07" },
+        { id: "journal", label: "Journal & feedback", href: `${base}/journal`, icon: NotebookPen, screens: "ADM-05, ADM-06, ADM-16" },
         { id: "content", label: "Content", href: `${base}/content`, icon: GraduationCap, screens: "ADM-08 to ADM-15" },
         { id: "calendar", label: "Calendar", href: `${base}/calendar`, icon: CalendarDays, screens: "ADM-19 to ADM-23" },
+        { id: "charts", label: "Charts", href: `${base}/charts`, icon: ChartCandlestick, screens: "ADM-57, ADM-58" },
         { id: "community", label: "Community", href: `${base}/community`, icon: MessagesSquare, screens: "ADM-17, ADM-18" },
         { id: "ai", label: "AI assistant", href: `${base}/ai`, icon: Sparkles, screens: "ADM-24 to ADM-28" },
       ],

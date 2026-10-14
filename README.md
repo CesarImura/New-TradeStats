@@ -13,11 +13,27 @@ npm run dev
 |---|---|
 | `/` | Launcher with the three demo coaches |
 | `/c/[coach]` | Student side, in the coach's theme (`northline`, `sophia`, `kairo`) |
-| `/admin/[coach]` | Admin area: fixed layout, coach's logo and colour |
+| `/admin/[coach]` | Admin area: the same dark TradeStats look in every community (near-square corners, yellow main action) |
+| `/setup` | Setup wizard (9 steps): every Design option is reachable here too, folded under “More” |
 
 The **Admin | Student** switch (bottom right) flips between views; the flask icon next to it changes community, template, navigation and light/dark.
 
 **Design editor:** `/admin/[coach]/design`. Settings on the left, the real student platform on the right (an iframe with `?preview=draft`). Changes stay a draft until **Publish**; earlier versions can be restored. Published design, draft and versions are kept in localStorage per community (`src/lib/prototype-store.ts`) in place of a backend.
+
+## Sections
+
+Every section has an admin page and a student page; prototype data per community lives in localStorage (`useCommunityData` in `src/components/admin/kit.tsx`).
+
+| Admin | Student | Notes |
+|---|---|---|
+| Students | – | List, profile sheet, import, messages |
+| Journal & feedback | Journal | Feedback written in the admin shows up on the student's trade (`src/lib/data/feedback.ts`) |
+| Charts | Charts | TradingView's free widget. It can't show exchange futures (CME etc.), so the samples use CFD symbols; see the PRD addendum |
+| Community | Community | Announcements and the Discord connection |
+| AI assistant | AI assistant | Canned answers in `src/lib/data/ai.ts` |
+| Sales & payments | Profile → Subscription | Tiers, groups, coupons, payments, payouts, affiliates |
+| Ranking | Ranking | Leaderboard, competitions, points and badges |
+| Settings | Profile | Domain, e-mails, legal, student onboarding, team, our plan |
 
 ## How theming works
 
@@ -26,6 +42,7 @@ The **Admin | Student** switch (bottom right) flips between views; the flask ico
 - `src/lib/theme/css.ts` – turns a theme into shadcn's CSS variables plus a few rules (button shape, shadow, density, label style). shadcn components are not modified.
 - `src/lib/theme/resolve.ts` – template → coach's published changes (or the draft in preview); also applies name, logo, words, menu and modules.
 - `src/lib/fonts.ts` – the font library.
+- `src/lib/theme/backdrops.ts` – platform background: gradient or image (own upload or library), with a minimum overlay so text stays readable. The same control (`background-control.tsx`) is used in Design and in the setup wizard.
 
 Coach data (wording, modules, menu, home widgets, tiers) is in `src/lib/data/coaches.ts`; sample content in `src/lib/data/sample.ts`.
 

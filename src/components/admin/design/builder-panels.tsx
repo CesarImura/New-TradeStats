@@ -13,7 +13,7 @@ import { ROW_HEIGHT, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { Field } from "./controls"
 
-const MODULE_LABEL = { courses: "Courses", calendar: "Calendar", community: "Community", journal: "Journal", ranking: "Ranking", ai: "AI assistant" }
+const MODULE_LABEL = { courses: "Courses", calendar: "Calendar", charts: "Charts", community: "Community", journal: "Journal", ranking: "Ranking", ai: "AI assistant" }
 
 /** Size of one column and one gap on the 1180px desktop canvas, for thumbnails. */
 const COL_PX = 72

@@ -1,4 +1,6 @@
+import type { TemplateId } from "@/lib/theme/types"
 import type { Coach } from "./coaches"
+import type { Market } from "./trades"
 
 /**
  * Prototype-only: communities created through the setup wizard, and the
@@ -19,6 +21,12 @@ export type CustomCommunity = Coach & {
     courses?: CourseDraft[]
     payouts?: "connected" | "later"
     invited?: number
+    /** The ready-made Home layout picked in setup, if not the template's own. */
+    home?: TemplateId
+    /** Markets picked in setup; they fill the default chart watchlist. */
+    markets?: Market[]
+    /** Free trial days and a second tier, from the first-tier step. */
+    trial?: number
   }
 }
 

@@ -1,25 +1,30 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { BookOpen, Bot, CalendarDays, Check, CircleAlert, ImagePlus, Landmark, Loader2, MessagesSquare, NotebookPen, Trash2, Trophy } from "lucide-react"
+import { BookOpen, Bot, CalendarDays, ChartCandlestick, Check, CircleAlert, ImagePlus, Landmark, Loader2, MessagesSquare, NotebookPen, Trash2, Trophy } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { BackgroundControl } from "@/components/admin/design/background-control"
+import { Field, More, Segmented, Swatches } from "@/components/admin/design/controls"
+import { HIGHLIGHT_COLORS } from "@/components/admin/design/options"
 import { COACHES, type ModuleId } from "@/lib/data/coaches"
 import { customCommunities, slugify } from "@/lib/data/communities"
 import { useAccount } from "@/lib/data/use-communities"
-import { isDark, themeToCss } from "@/lib/theme/css"
+import { themeToCss } from "@/lib/theme/css"
+import { onColor } from "@/lib/theme/derive"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { resolveTheme } from "@/lib/theme/resolve"
 import { TEMPLATES } from "@/lib/theme/templates"
 import type { TemplateId } from "@/lib/theme/types"
+import { MARKETS, type Market } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { Choice, mono } from "./frame"
+import { FullEditorLink, MenuOptions, themeUpdater } from "./look-steps"
 import { suggestedTemplate } from "./suggest"
 import type { StepProps } from "./wizard"
 
-const onColor = (hex: string) => (isDark(hex) ? "#ffffff" : "#0a0a0a")
 
 function Row({ label, hint, htmlFor, children }: { label: string; hint?: React.ReactNode; htmlFor?: string; children: React.ReactNode }) {
   return (
@@ -165,6 +170,18 @@ export function AddressStep({ community, update, setReady }: StepProps) {
       <Row label="What do students call you?" htmlFor="cname" hint="Used in messages like “Marco replied”">
         <Input id="cname" value={community.coachName} onChange={(e) => update({ coachName: e.target.value })} className="h-11" />
       </Row>
+
+      <More label="What you call things">
+        <Row label="Your students are called" hint="e.g. Traders, Mentees, Members">
+          <div className="grid grid-cols-2 gap-2">
+            <Input value={community.wording.student} onChange={(e) => update({ wording: { ...community.wording, student: e.target.value } })} aria-label="One student" />
+            <Input value={community.wording.students} onChange={(e) => update({ wording: { ...community.wording, students: e.target.value } })} aria-label="Several students" />
+          </div>
+        </Row>
+        <Row label="A lesson is called" hint="e.g. Session, Module, Class">
+          <Input value={community.wording.lesson} onChange={(e) => update({ wording: { ...community.wording, lesson: e.target.value } })} />
+        </Row>
+      </More>
     </div>
   )
 }
@@ -280,8 +297,35 @@ export function BrandStep({ community, update }: StepProps) {
           ))}
         </div>
       </Row>
-      <p className="text-xs text-muted-foreground">Fonts, corners, menu layout and more are in Design once you&apos;re set up.</p>
+      <BrandMore community={community} update={update} />
     </div>
+  )
+}
+
+function BrandMore({ community, update }: Pick<StepProps, "community" | "update">) {
+  const { theme, set } = themeUpdater(community, update)
+  return (
+    <>
+      <More label="More colours and background">
+        <Field label="Highlight colour" hint="Announcements, badges">
+          <Swatches label="Highlight colour" value={theme.highlight ?? theme.palettes[theme.mode].highlight} colors={HIGHLIGHT_COLORS} onChange={(c) => set({ highlight: c })} />
+        </Field>
+        <Field label="Brand depth" hint="A slight tonal shift in your brand colour">
+          <Segmented
+            label="Brand depth"
+            value={theme.effects ?? "soft"}
+            onChange={(effects) => set({ effects })}
+            options={[
+              { value: "flat", label: "Flat" },
+              { value: "soft", label: "Subtle" },
+              { value: "vivid", label: "Rich" },
+            ]}
+          />
+        </Field>
+        <BackgroundControl theme={theme} onChange={(patch) => set(patch)} />
+      </More>
+      <FullEditorLink slug={community.slug} />
+    </>
   )
 }
 
@@ -317,14 +361,17 @@ async function shrink(dataUrl: string, max: number) {
 const MODULES: { id: ModuleId; name: string; text: string; icon: React.ComponentType<{ className?: string }>; later?: boolean }[] = [
   { id: "courses", name: "Courses", text: "Video lessons in modules, with progress", icon: BookOpen },
   { id: "calendar", name: "Calendar", text: "Live sessions, replays and 1:1 bookings", icon: CalendarDays },
+  { id: "charts", name: "Charts", text: "Full TradingView charts, watchlist and your marked-up levels", icon: ChartCandlestick },
   { id: "journal", name: "Journal", text: "Students log trades and ask you for reviews", icon: NotebookPen },
   { id: "community", name: "Community", text: "Posts and chat, or a link to your Discord", icon: MessagesSquare },
   { id: "ai", name: "AI assistant", text: "Answers questions from your own lessons", icon: Bot },
   { id: "ranking", name: "Ranking", text: "Leaderboard by consistency and progress", icon: Trophy, later: true },
 ]
 
-export function ModulesStep({ community, update }: StepProps) {
+export function ModulesStep(props: StepProps) {
+  const { community, update } = props
   const acc = useAccount()
+  const markets = community.setup?.markets ?? ["futures", "forex"]
   return (
     <div className="grid gap-4">
       {acc?.answers && <p className={cn(mono, "text-[0.62rem] text-[var(--ts-yellow)]")}>Switched on from your answers</p>}
@@ -343,14 +390,44 @@ export function ModulesStep({ community, update }: StepProps) {
                     </Badge>
                   )}
                 </span>
-                <span className="text-xs text-muted-foreground">{m.text}</span>
+                {on && !m.later ? (
+                  <input
+                    value={community.wording[m.id]}
+                    onChange={(e) => update({ wording: { ...community.wording, [m.id]: e.target.value } })}
+                    onClick={(e) => e.preventDefault()}
+                    aria-label={`What students see instead of ${m.name}`}
+                    className="mt-1 h-7 w-full max-w-56 rounded-[var(--radius)] border border-white/10 bg-transparent px-2 text-xs outline-none focus:border-[var(--ts-orange)]"
+                  />
+                ) : (
+                  <span className="text-xs text-muted-foreground">{m.text}</span>
+                )}
               </span>
               <Switch checked={on} disabled={m.later} onCheckedChange={(v) => update({ modules: { ...community.modules, [m.id]: v } })} />
             </label>
           )
         })}
       </div>
-      <p className="text-xs text-muted-foreground">Rename any section (e.g. Courses → Playbook) in Design → Menu and words.</p>
+      <p className="text-xs text-muted-foreground">Type a new name to rename a section for your students, e.g. Courses → Playbook.</p>
+      {community.modules.charts && (
+        <Row label="Markets you trade" hint="Fills your chart watchlist">
+          <div className="flex flex-wrap gap-1.5">
+            {MARKETS.map((mk) => {
+              const on = markets.includes(mk.id)
+              return (
+                <button
+                  key={mk.id}
+                  onClick={() => update({ setup: { ...community.setup, markets: on ? markets.filter((x) => x !== mk.id) : [...markets, mk.id as Market] } })}
+                  aria-pressed={on}
+                  className={cn("rounded-[var(--radius)] border px-2.5 py-1 text-xs", on ? "border-[var(--ts-orange)] text-foreground" : "text-muted-foreground")}
+                >
+                  {mk.label}
+                </button>
+              )
+            })}
+          </div>
+        </Row>
+      )}
+      <MenuOptions {...props} />
     </div>
   )
 }
@@ -423,7 +500,33 @@ export function TierStep({ community, update, setReady }: StepProps) {
           </span>
         </span>
       </div>
-      <p className="text-xs text-muted-foreground">Trials, discounts, extra tiers and who sees what are in Tiers &amp; access.</p>
+      <More label="Free trial and a second tier">
+        {!free && (
+          <Row label="Free trial" hint="Card needed, first payment after the trial">
+            <div className="grid grid-cols-4 gap-2" role="radiogroup">
+              {[0, 7, 14, 30].map((d) => (
+                <Choice key={d} checked={(community.setup?.trial ?? 0) === d} onClick={() => update({ setup: { ...community.setup, trial: d } })} title={d ? `${d} days` : "None"} />
+              ))}
+            </div>
+          </Row>
+        )}
+        {community.tiers.length < 2 ? (
+          <button
+            onClick={() => update({ tiers: [...community.tiers, { id: "plus", name: "Inner Circle", price: "€149", cadence: "month", members: 0 }] })}
+            className="w-fit text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            + Add a second tier
+          </button>
+        ) : (
+          <Row label="Second tier" hint={<button onClick={() => update({ tiers: community.tiers.slice(0, 1) })} className="underline underline-offset-4">Remove</button>}>
+            <div className="grid grid-cols-[1fr_110px] gap-2">
+              <Input value={community.tiers[1].name} onChange={(e) => update({ tiers: [community.tiers[0], { ...community.tiers[1], name: e.target.value }] })} aria-label="Second tier name" />
+              <Input value={community.tiers[1].price} onChange={(e) => update({ tiers: [community.tiers[0], { ...community.tiers[1], price: e.target.value }] })} aria-label="Second tier price" className="tabular-nums" />
+            </div>
+          </Row>
+        )}
+        <p className="text-xs text-muted-foreground">Discounts, groups and who sees what are in Sales &amp; payments.</p>
+      </More>
     </div>
   )
 }

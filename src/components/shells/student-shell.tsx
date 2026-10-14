@@ -31,6 +31,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { DEMO_STUDENT } from "@/lib/data/sample"
+import { backdropStyle, dimOf } from "@/lib/theme/backdrops"
 import { cn } from "@/lib/utils"
 
 function useActive(base: string) {
@@ -42,15 +43,23 @@ function useActive(base: string) {
 export function StudentShell({ children }: { children: React.ReactNode }) {
   const { coach, theme, base } = useCoach()
   const items = studentNav(coach, base)
-  const bg = theme.background === "grid" ? "coach-bg-grid" : theme.background === "glow" ? "coach-bg-glow" : ""
+  const path = usePathname()
+  const texture = { grid: "coach-bg-grid", glow: "coach-bg-glow", dots: "coach-bg-dots" } as Record<string, string>
+  // An image or gradient sits on its own layer behind the page, so the page itself turns see-through.
+  const where = theme.bgWhere ?? "all"
+  const backdrop = backdropStyle(theme) && (where === "all" || (where === "home" && path === base)) ? backdropStyle(theme) : null
+  const bg = backdrop ? "bg-transparent" : cn("bg-background", texture[theme.background])
 
+  // The Charts terminal uses the full width, like a trading screen.
+  const wide = path.startsWith(`${base}/charts`)
   const content = (
-    <div className="mx-auto w-full max-w-[1280px] px-4 pt-5 pb-28 sm:px-6 md:pb-12 lg:px-8">{children}</div>
+    <div className={cn("mx-auto w-full px-4 pt-5 pb-28 sm:px-6 md:pb-12 lg:px-8", wide ? "max-w-none pt-3 lg:px-4" : "max-w-[1280px]")}>{children}</div>
   )
 
   if (theme.nav.layout === "top") {
     return (
-      <div className={cn("min-h-svh bg-background", bg)}>
+      <div className={cn("min-h-svh", bg)}>
+        {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
         <TopNav items={items} />
         {content}
         <MobileBar items={items} />
@@ -73,7 +82,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
           <ProfileMenu compact />
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className={cn("bg-background", bg)}>
+      <SidebarInset className={bg}>
+        {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
         <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur sm:px-6 lg:px-8">
           <SidebarTrigger className="max-md:hidden" />
           <div className="min-w-0 md:hidden">
@@ -87,6 +97,16 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         <MobileBar items={items} />
       </SidebarInset>
     </SidebarProvider>
+  )
+}
+
+/** The coach's image or gradient, fixed behind the page, with page colour over it so text stays readable. */
+function Backdrop({ style, dim }: { style: React.CSSProperties; dim: number }) {
+  return (
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div className="absolute inset-0" style={style} />
+      {dim > 0 && <div className="absolute inset-0 bg-background" style={{ opacity: dim / 100 }} />}
+    </div>
   )
 }
 
@@ -187,7 +207,7 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
           <DropdownMenuItem render={<Link href={`${base}/profile`} />}>
             <User /> Profile
           </DropdownMenuItem>
-          <DropdownMenuItem render={<Link href={`${base}/profile`} />}>
+          <DropdownMenuItem render={<Link href={`${base}/profile?tab=billing`} />}>
             <Settings /> Subscription & settings
           </DropdownMenuItem>
         </DropdownMenuGroup>

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { OnbFrame, mono } from "./frame"
 import { AddressStep, BrandStep, ModulesStep, PayoutsStep, TemplateStep, TierStep } from "./steps"
 import { suggestedModules, suggestedTemplate } from "./suggest"
+import { HomeStep, StyleStep } from "./look-steps"
 import { VideosStep } from "./videos-step"
 
 export type StepProps = {
@@ -28,7 +29,9 @@ const STEPS: { id: string; label: string; title: string; text: string; skip?: st
   { id: "template", label: "Template", title: "Pick a starting point", text: "Each one is a complete look. You'll make it yours in the next steps.", Step: TemplateStep },
   { id: "address", label: "Name", title: "Name your platform", text: "This is what your students see in the menu, in e-mails and on the login page.", Step: AddressStep },
   { id: "brand", label: "Logo & colours", title: "Add your logo and colour", text: "We'll suggest colours from your logo. Everything else follows from them.", Step: BrandStep },
-  { id: "modules", label: "Sections", title: "What's on your platform?", text: "Switch on what you offer. Hidden sections stay ready for later.", Step: ModulesStep },
+  { id: "style", label: "Fonts & style", title: "Fonts and style", text: "Pick a font pair and how round things are. Everything else is under More.", skip: "Keep the template's style", Step: StyleStep },
+  { id: "modules", label: "Sections & menu", title: "What's on your platform?", text: "Switch on what you offer and call it your way. Hidden sections stay ready for later.", Step: ModulesStep },
+  { id: "home", label: "Home", title: "Pick a Home page", text: "What students see first after they log in.", skip: "Keep the template's Home", Step: HomeStep },
   { id: "tier", label: "First tier", title: "Create your first membership", text: "What students join. Add more tiers and bundles later.", Step: TierStep },
   { id: "videos", label: "Videos", title: "Bring your first videos", text: "Drop a folder. We'll suggest modules and lessons from the file names.", skip: "Add videos later", Step: VideosStep },
   { id: "payouts", label: "Get paid", title: "Get paid", text: "Connect where your money goes. Free tiers work without it.", skip: "Do this later", Step: PayoutsStep },
@@ -66,7 +69,7 @@ export function SetupWizard() {
       overrides: {},
       wording: DEFAULT_WORDING,
       modules: suggestedModules(a?.answers),
-      menu: ["courses", "calendar", "journal", "community", "ai", "ranking"],
+      menu: ["courses", "calendar", "charts", "journal", "community", "ai", "ranking"],
       tiers: [],
       status: "setup",
       createdAt: new Date().toISOString(),

@@ -15,14 +15,17 @@ import { cn } from "@/lib/utils"
 const TO_ADMIN: Record<string, string> = {
   courses: "content",
   calendar: "calendar",
+  charts: "charts",
   community: "community",
-  journal: "students",
+  journal: "journal",
   ranking: "ranking",
   ai: "ai",
 }
 const TO_STUDENT: Record<string, ModuleId> = {
   content: "courses",
   calendar: "calendar",
+  charts: "charts",
+  journal: "journal",
   community: "community",
   ranking: "ranking",
   ai: "ai",

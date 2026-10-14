@@ -23,7 +23,8 @@ export type Shadow = "none" | "soft" | "strong"
 export type Density = "compact" | "comfortable" | "airy"
 export type NavLayout = "side" | "top"
 export type NavStyle = "labels" | "icons"
-export type BackgroundStyle = "plain" | "grid" | "glow"
+/** Plain, a texture (grid, glow, dots), a gradient from the brand colours, or an image. */
+export type BackgroundStyle = "plain" | "grid" | "glow" | "dots" | "gradient" | "image"
 
 /** Everything a coach can change about the look of their platform. */
 export type CoachTheme = {
@@ -34,6 +35,8 @@ export type CoachTheme = {
   primaryForeground: string
   /** Replaces the template's highlight colour. */
   highlight?: string
+  /** Greys: tinted towards the brand colour (default), the template's own, or pure grey. */
+  tint?: "brand" | "template" | "none"
   radius: number // px, for cards, inputs, menus
   buttonShape: ButtonShape
   shadow: Shadow
@@ -44,6 +47,14 @@ export type CoachTheme = {
   labelStyle: "plain" | "caps"
   headingWeight: 400 | 500 | 600 | 700
   background: BackgroundStyle
+  /** Image background: an uploaded image (data URL) or a library one ("preset:<id>"). */
+  bgImage?: string
+  /** How much the page colour covers the image or gradient, 0–100. Never below the readability minimum. */
+  bgDim?: number
+  bgBlur?: number
+  /** Where the image or gradient shows. */
+  bgWhere?: "all" | "home" | "login"
+  bgAngle?: number
   /** How much depth widgets get from the brand colour: gradients, glow, texture. */
   effects: "flat" | "soft" | "vivid"
   nav: { layout: NavLayout; style: NavStyle; logo: "left" | "center" }

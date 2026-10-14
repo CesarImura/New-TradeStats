@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { History, Play, PlayCircle, Undo2 } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { ArrowLeft, History, Play, PlayCircle, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -99,12 +100,20 @@ export function EditorBar({
   /** The student page to open in a new tab, showing the draft. */
   previewHref: string
 }) {
+  // Opened from the setup wizard: keep the way back, on every Design tab.
+  const fromSetup = useSearchParams().get("from") === "setup"
+  const q = fromSetup ? "?from=setup" : ""
   const tabs = [
-    { id: "look", label: "Look and feel", href: `/admin/${slug}/design` },
-    { id: "pages", label: "Pages", href: `/admin/${slug}/design/pages` },
+    { id: "look", label: "Look and feel", href: `/admin/${slug}/design${q}` },
+    { id: "pages", label: "Pages", href: `/admin/${slug}/design/pages${q}` },
   ]
   return (
     <div className="flex flex-wrap items-center gap-2 border-b bg-background px-4 py-2">
+      {fromSetup && (
+        <Button size="sm" nativeButton={false} render={<Link href="/setup" />} className="mr-1">
+          <ArrowLeft /> Back to setup
+        </Button>
+      )}
       <nav className="mr-2 flex items-center gap-1" aria-label="Design areas">
         {tabs.map((t) => (
           <Link

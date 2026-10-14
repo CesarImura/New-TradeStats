@@ -1,5 +1,6 @@
 import { FONT_LIBRARY } from "@/lib/fonts"
 import { brandVisuals } from "./color"
+import { resolveColors, type EngineOptions } from "./derive"
 import type { CoachTheme } from "./types"
 
 const DENSITY = { compact: 0.85, comfortable: 1, airy: 1.3 } as const
@@ -21,11 +22,8 @@ export function isDark(hex: string) {
  *
  * `scope` is `:root` for the student platform and a class for live previews.
  */
-export function themeToCss(t: CoachTheme, scope = ":root") {
-  const base = t.palettes[t.mode]
-  const p = t.highlight
-    ? { ...base, highlight: t.highlight, highlightForeground: isDark(t.highlight) ? "#ffffff" : "#0a0a0a" }
-    : base
+export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOptions) {
+  const p = resolveColors(t, engine)
   const sidebarDark = isDark(p.sidebar)
   const sidebarFg = sidebarDark ? "#f5f6fb" : p.foreground
   const shadow =
@@ -58,7 +56,7 @@ export function themeToCss(t: CoachTheme, scope = ":root") {
     "--accent-foreground": p.foreground,
     "--border": p.border,
     "--input": p.border,
-    "--ring": t.primary,
+    "--ring": p.brandMark,
     "--radius": `${t.radius}px`,
     "--chart-1": t.primary,
     "--chart-2": p.highlight,
@@ -72,7 +70,10 @@ export function themeToCss(t: CoachTheme, scope = ":root") {
     "--sidebar-accent": sidebarDark ? "rgba(255,255,255,0.08)" : p.muted,
     "--sidebar-accent-foreground": sidebarFg,
     "--sidebar-border": sidebarDark ? "rgba(255,255,255,0.08)" : p.border,
-    "--sidebar-ring": t.primary,
+    "--sidebar-ring": p.brandMark,
+    // The brand colour where it is read rather than filled: links, icons, selected outlines.
+    "--brand-text": p.brandText,
+    "--brand-mark": p.brandMark,
     "--highlight": p.highlight,
     "--highlight-foreground": p.highlightForeground,
     "--profit": p.profit,
@@ -116,6 +117,8 @@ export function themeToCss(t: CoachTheme, scope = ":root") {
     scope === ":root" ? sel : scope.split(",").map((p) => `${p.trim()} ${sel}`).join(", ")
   return `
 ${scope}{${body}color-scheme:${t.mode};}
+${within(".text-primary")}{color:var(--brand-text);}
+${within(".border-primary")}{border-color:var(--brand-mark);}
 ${within("[data-slot=button]")}{border-radius:var(--button-radius)!important;}
 ${within("[data-slot=card]")}{box-shadow:var(--card-shadow);--card-spacing:calc(var(--spacing) * 4 * var(--density))!important;}
 ${within("[data-slot=card][data-size=sm]")}{--card-spacing:calc(var(--spacing) * 3 * var(--density))!important;}

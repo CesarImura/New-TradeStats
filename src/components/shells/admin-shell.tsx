@@ -1,5 +1,6 @@
 "use client"
 
+import { useLayoutEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -45,6 +46,37 @@ import {
 } from "@/components/ui/sidebar"
 
 /**
+ * The admin area's own look: dark, near-square corners, TradeStats yellow for
+ * the main action and orange for focus. Fixed for every community. The tokens
+ * sit on :root while the admin is open, so menus and dialogs (rendered outside
+ * this tree) match.
+ */
+const ADMIN_TOKENS = `
+:root:has(.ts-admin) {
+  --background: #0a0a0a; --foreground: #f2f2ef;
+  --card: #111111; --card-foreground: #f2f2ef;
+  --popover: #141414; --popover-foreground: #f2f2ef;
+  --primary: #f8ff9e; --primary-foreground: #0a0a0a;
+  --secondary: #1b1b1b; --secondary-foreground: #f2f2ef;
+  --muted: #191919; --muted-foreground: rgb(242 242 239 / 0.56);
+  --accent: #1d1d1d; --accent-foreground: #f2f2ef;
+  --destructive: #ff5a4f;
+  --border: rgb(255 255 255 / 0.09); --input: rgb(255 255 255 / 0.14);
+  --ring: #ff5500; --radius: 5px;
+  --chart-1: #ff5500; --chart-2: #f8ff9e; --chart-3: #3ddc97; --chart-4: #ff5a4f; --chart-5: rgb(242 242 239 / 0.4);
+  --highlight: #f8ff9e; --highlight-foreground: #0a0a0a;
+  --profit: #3ddc97; --loss: #ff5a4f;
+  --sidebar: #070707; --sidebar-foreground: #f2f2ef;
+  --sidebar-primary: #f8ff9e; --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: rgb(255 255 255 / 0.06); --sidebar-accent-foreground: #f2f2ef;
+  --sidebar-border: rgb(255 255 255 / 0.08); --sidebar-ring: #ff5500;
+  --ts-orange: #ff5500; --ts-yellow: #f8ff9e;
+  color-scheme: dark;
+}
+:root:has(.ts-admin) body { background: #0a0a0a; }
+`
+
+/**
  * The admin area. Identical in every community: same layout, same colours,
  * same words, so people who run several communities always know where things
  * are. Only the switcher at the top says which community is open.
@@ -54,8 +86,18 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
   const path = usePathname()
   const groups = adminNav(coach, base)
 
+  useLayoutEffect(() => {
+    const html = document.documentElement
+    const had = html.classList.contains("dark")
+    html.classList.add("dark")
+    return () => {
+      if (!had) html.classList.remove("dark")
+    }
+  }, [])
+
   return (
-    <SidebarProvider>
+    <SidebarProvider className="ts-admin">
+      <style dangerouslySetInnerHTML={{ __html: ADMIN_TOKENS }} />
       <Sidebar collapsible="icon">
         <SidebarHeader className="py-3">
           <WorkspaceSwitcher />
