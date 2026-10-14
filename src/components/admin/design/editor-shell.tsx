@@ -7,8 +7,8 @@ import { ArrowLeft, History, Play, PlayCircle, Undo2 } from "@/components/icons"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import {
   EMPTY,
   mergeOverrides,
@@ -159,11 +159,21 @@ export function EditorBar({
 }
 
 function GuideButton({ title, text }: { title: string; text: string }) {
+  const [open, setOpen] = useState(false)
   return (
-    <Dialog>
-      <DialogTrigger render={<Button variant="ghost" size="sm" />}>
+    <>
+      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
         <PlayCircle /> 2-min guide
-      </DialogTrigger>
+      </Button>
+      <GuideDialog title={title} text={text} open={open} onOpenChange={setOpen} />
+    </>
+  )
+}
+
+/** The short video guide for a Design screen, with the offer to set it up for the coach. */
+export function GuideDialog({ title, text, open, onOpenChange }: { title: string; text: string; open: boolean; onOpenChange: (open: boolean) => void }) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -185,12 +195,22 @@ function GuideButton({ title, text }: { title: string; text: string }) {
 }
 
 function Versions({ slug }: { slug: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+        <History /> Versions
+      </Button>
+      <VersionsSheet slug={slug} open={open} onOpenChange={setOpen} />
+    </>
+  )
+}
+
+/** Earlier published versions; restoring one opens it as a draft. */
+export function VersionsSheet({ slug, open, onOpenChange }: { slug: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   const history = useHistory(slug)
   return (
-    <Sheet>
-      <SheetTrigger render={<Button variant="ghost" size="sm" />}>
-        <History /> Versions
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Earlier versions</SheetTitle>

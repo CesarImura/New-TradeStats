@@ -1,0 +1,96 @@
+import type { ThemeDraft } from "@/lib/prototype-store"
+import type { CoachTheme, Density, TemplateId } from "@/lib/theme/types"
+
+/**
+ * Ready-made looks: one choice that sets the template, fonts, shape, depth and
+ * spacing together, so a coach gets a finished design without touching
+ * individual settings. The coach's colours, logo, light/dark, menu and
+ * background stay as they are. Fine-tuning and Advanced change the parts.
+ */
+export type Look = {
+  id: string
+  name: string
+  blurb: string
+  template: TemplateId
+  set: Required<Pick<ThemeDraft, "radius" | "buttonShape" | "shadow" | "effects" | "borders" | "density" | "labelStyle" | "headingWeight">> & {
+    fonts: CoachTheme["fonts"]
+  }
+}
+
+export const LOOKS: Look[] = [
+  {
+    id: "terminal",
+    name: "Terminal",
+    blurb: "Square, dense, mono labels",
+    template: "terminal",
+    set: { radius: 2, buttonShape: "square", shadow: "none", effects: "soft", borders: true, density: "compact", labelStyle: "caps", headingWeight: 400, fonts: { heading: "archivo", body: "archivo", label: "space-mono" } },
+  },
+  {
+    id: "desk",
+    name: "Trading desk",
+    blurb: "Sharp and clean, plain labels",
+    template: "terminal",
+    set: { radius: 4, buttonShape: "square", shadow: "none", effects: "flat", borders: true, density: "compact", labelStyle: "plain", headingWeight: 500, fonts: { heading: "geist", body: "geist", label: "geist-mono" } },
+  },
+  {
+    id: "atelier",
+    name: "Atelier",
+    blurb: "Calm, serif headings, soft cards",
+    template: "atelier",
+    set: { radius: 12, buttonShape: "rounded", shadow: "soft", effects: "flat", borders: false, density: "airy", labelStyle: "plain", headingWeight: 400, fonts: { heading: "fraunces", body: "dm-sans", label: "dm-sans" } },
+  },
+  {
+    id: "elegant",
+    name: "Elegant",
+    blurb: "Fine serif, lots of air",
+    template: "atelier",
+    set: { radius: 8, buttonShape: "rounded", shadow: "none", effects: "flat", borders: true, density: "airy", labelStyle: "caps", headingWeight: 400, fonts: { heading: "instrument-serif", body: "geist", label: "geist-mono" } },
+  },
+  {
+    id: "pulse",
+    name: "Pulse",
+    blurb: "Bright, pill buttons, deep shadows",
+    template: "pulse",
+    set: { radius: 16, buttonShape: "pill", shadow: "strong", effects: "vivid", borders: false, density: "comfortable", labelStyle: "plain", headingWeight: 700, fonts: { heading: "sora", body: "manrope", label: "sora" } },
+  },
+  {
+    id: "friendly",
+    name: "Friendly",
+    blurb: "Round and soft, easy to read",
+    template: "pulse",
+    set: { radius: 14, buttonShape: "rounded", shadow: "soft", effects: "soft", borders: false, density: "comfortable", labelStyle: "plain", headingWeight: 600, fonts: { heading: "manrope", body: "manrope", label: "manrope" } },
+  },
+]
+
+/** The look the theme currently matches exactly, if any (after fine-tuning it's "Custom"). */
+export function currentLook(t: CoachTheme): Look | undefined {
+  return LOOKS.find(
+    (l) =>
+      l.template === t.template &&
+      l.set.radius === t.radius &&
+      l.set.buttonShape === t.buttonShape &&
+      l.set.shadow === t.shadow &&
+      l.set.effects === (t.effects ?? "soft") &&
+      l.set.density === t.density &&
+      l.set.fonts.heading === t.fonts.heading &&
+      l.set.fonts.body === t.fonts.body,
+  )
+}
+
+/** Fine-tune: three plain sliders over the detailed settings. */
+export const roundnessOf = (t: CoachTheme) => t.radius
+export const fromRoundness = (r: number): ThemeDraft => ({ radius: r, buttonShape: r <= 3 ? "square" : r >= 16 ? "pill" : "rounded" })
+
+const DEPTHS = [
+  { shadow: "none", effects: "flat" },
+  { shadow: "soft", effects: "soft" },
+  { shadow: "strong", effects: "vivid" },
+] as const
+export const depthOf = (t: CoachTheme) => (t.shadow === "strong" ? 2 : t.shadow === "soft" ? 1 : 0)
+export const fromDepth = (d: number): ThemeDraft => ({ ...DEPTHS[Math.round(d)] })
+export const DEPTH_NAMES = ["Flat", "Soft", "Deep"]
+
+const DENSITIES: Density[] = ["compact", "comfortable", "airy"]
+export const spacingOf = (t: CoachTheme) => DENSITIES.indexOf(t.density)
+export const fromSpacing = (s: number): ThemeDraft => ({ density: DENSITIES[Math.round(s)] })
+export const SPACING_NAMES = ["Compact", "Comfortable", "Airy"]
