@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowRight, CalendarDays, Check, Eye, MessagesSquare, PlayCircle, X } from "lucide-react"
+import { ArrowRight, CalendarDays, Check, Eye, MessagesSquare, PlayCircle, X } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"

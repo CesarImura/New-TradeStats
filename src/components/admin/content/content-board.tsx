@@ -19,7 +19,7 @@ import {
   Sparkles,
   Trash2,
   Upload,
-} from "lucide-react"
+} from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
@@ -103,7 +103,7 @@ export function ContentBoard() {
     <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Content</h1>
+          <h1 className="text-[1.75rem] leading-9 font-normal tracking-[-0.005em]">Content</h1>
           <p className="text-sm text-muted-foreground">
             Areas and courses. Students see what&apos;s published, in your words: “{coach.wording.courses}”.
           </p>

@@ -1,7 +1,7 @@
 "use client"
 
 import { Fragment, useState } from "react"
-import { Check, ChevronRight, Eye, Minus, RotateCcw } from "lucide-react"
+import { Check, ChevronRight, Eye, Minus, RotateCcw } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -214,7 +214,7 @@ export function AccessOverview() {
                                   <span className="flex items-center gap-2">
                                     <span className="truncate">{m.title}</span>
                                     {overridden && (
-                                      <button onClick={() => resetModule(c, m.id)} className="flex shrink-0 items-center gap-1 text-xs text-[var(--ts-orange)] hover:underline">
+                                      <button onClick={() => resetModule(c, m.id)} className="flex shrink-0 items-center gap-1 text-xs text-[var(--ts-interactive)] hover:underline">
                                         <RotateCcw className="size-3" /> follow course
                                       </button>
                                     )}
@@ -282,9 +282,9 @@ function Cell({ state, inherited, label, onClick }: { state: "on" | "off" | "som
       className={cn(
         "mx-auto my-1 grid size-6 place-items-center rounded-[5px] border transition-colors",
         state === "off" && "border-input hover:border-foreground/40",
-        state === "some" && "border-[var(--ts-yellow)]/60 text-[var(--ts-yellow)]",
-        state === "on" && !inherited && "border-[var(--ts-yellow)] bg-[var(--ts-yellow)] text-[#0a0a0a]",
-        state === "on" && inherited && "border-[var(--ts-yellow)]/40 text-[var(--ts-yellow)]/80",
+        state === "some" && "border-[var(--ts-cta)]/60 text-[var(--ts-cta)]",
+        state === "on" && !inherited && "border-[var(--ts-cta)] bg-[var(--ts-cta)] text-[#0a0a0a]",
+        state === "on" && inherited && "border-[var(--ts-cta)]/40 text-[var(--ts-cta)]/80",
         !onClick && "pointer-events-none",
       )}
     >

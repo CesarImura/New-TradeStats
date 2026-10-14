@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, MoreHorizontal, Plus, Star, X } from "lucide-react"
+import { Eye, MoreHorizontal, Plus, Star, X } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
@@ -49,7 +49,7 @@ export function Tiers() {
                 <TableCell className="font-medium">
                   <span className="flex items-center gap-2">
                     {t.name}
-                    {t.featured && <Star className="size-3.5 fill-[var(--ts-yellow)] text-[var(--ts-yellow)]" aria-label="Most popular" />}
+                    {t.featured && <Star className="size-3.5 fill-[var(--ts-cta)] text-[var(--ts-cta)]" aria-label="Most popular" />}
                   </span>
                 </TableCell>
                 <TableCell className="tabular-nums">

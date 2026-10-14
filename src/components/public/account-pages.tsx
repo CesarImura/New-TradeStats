@@ -3,7 +3,7 @@
 import { useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ArrowRight, Check, Clock, Loader2, Mail, PlayCircle, Wrench } from "lucide-react"
+import { ArrowRight, Check, Clock, Loader2, Mail, PlayCircle, Wrench } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

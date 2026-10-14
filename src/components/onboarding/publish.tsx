@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, Loader2, Monitor, Smartphone } from "lucide-react"
+import { ArrowLeft, ArrowRight, Loader2, Monitor, Smartphone } from "@/components/icons"
 import { PreviewFrame } from "@/components/admin/design/preview-frame"
 import { Button } from "@/components/ui/button"
 import { renameSlug, setAccount, slugify, updateCommunity } from "@/lib/data/communities"
@@ -65,7 +65,7 @@ export function PublishStep() {
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(340px,400px)_1fr]">
         <div className="flex flex-col gap-8 border-r px-5 py-8 md:px-8">
           <div className="grid gap-2.5">
-            <span className={cn(mono, "text-[var(--ts-orange)]")}>Last step</span>
+            <span className={cn(mono, "text-[var(--ts-interactive)]")}>Last step</span>
             <h1 className="text-[1.75rem] leading-[1.1] font-normal tracking-tight">Ready when you are</h1>
             <p className="text-sm text-muted-foreground">This is your platform exactly as students will see it. Publishing makes it reachable at your address.</p>
           </div>

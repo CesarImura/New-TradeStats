@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, Check, Monitor, Smartphone } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check, Monitor, Smartphone } from "@/components/icons"
 import { PreviewFrame } from "@/components/admin/design/preview-frame"
 import { Button } from "@/components/ui/button"
 import { DEMO_ADMIN } from "@/lib/data/account"
@@ -118,7 +118,7 @@ export function SetupWizard() {
                 aria-current={i === step ? "step" : undefined}
                 className="group grid flex-1 gap-1.5 text-left disabled:cursor-default"
               >
-                <span className={cn("h-0.5 w-full bg-white/12", i < step && "bg-[var(--ts-yellow)]", i === step && "bg-[var(--ts-orange)]")} />
+                <span className={cn("h-0.5 w-full bg-white/12", i < step && "bg-[var(--ts-cta)]", i === step && "bg-[var(--ts-interactive)]")} />
                 <span className={cn(mono, "hidden truncate text-[0.6rem] text-muted-foreground xl:block", i === step && "text-foreground", i < step && "group-hover:text-foreground")}>
                   {s.label}
                 </span>
@@ -129,7 +129,7 @@ export function SetupWizard() {
           <div className="flex-1 overflow-y-auto px-5 py-8 md:px-8">
             <div className="grid gap-7">
               <div className="grid gap-2.5">
-                <span className={cn(mono, "text-[var(--ts-orange)]")}>
+                <span className={cn(mono, "text-[var(--ts-interactive)]")}>
                   {String(step + 1).padStart(2, "0")} · {S.label}
                 </span>
                 <h1 className="text-[1.75rem] leading-[1.1] font-normal tracking-tight">{S.title}</h1>
@@ -168,7 +168,7 @@ export function SetupWizard() {
         <div className="relative hidden min-h-0 flex-col bg-[#0b0b0b] lg:flex">
           <div className="flex items-center justify-between gap-3 border-b px-5 py-2.5">
             <span className={cn(mono, "flex items-center gap-2 text-muted-foreground")}>
-              <span className="size-1.5 rounded-full bg-[var(--ts-orange)]" /> Live preview · not public yet
+              <span className="size-1.5 rounded-full bg-[var(--ts-interactive)]" /> Live preview · not public yet
             </span>
             <div className="flex rounded-[var(--radius)] border p-0.5" role="radiogroup" aria-label="Preview size">
               {(
@@ -203,7 +203,7 @@ export function SetupWizard() {
 export function DoneRow({ done, children }: { done: boolean; children: React.ReactNode }) {
   return (
     <li className="flex items-center gap-2.5 text-sm">
-      <span className={cn("grid size-4 shrink-0 place-items-center border border-white/25", done && "border-[var(--ts-yellow)] bg-[var(--ts-yellow)] text-[#040404]")}>
+      <span className={cn("grid size-4 shrink-0 place-items-center border border-white/25", done && "border-[var(--ts-cta)] bg-[var(--ts-cta)] text-[#040404]")}>
         {done && <Check className="size-3" strokeWidth={3} />}
       </span>
       <span className={cn(!done && "text-muted-foreground")}>{children}</span>

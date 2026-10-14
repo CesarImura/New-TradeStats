@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Bell, CalendarDays, CalendarX, Newspaper, Radio, TriangleAlert } from "lucide-react"
+import { Bell, CalendarDays, CalendarX, Newspaper, Radio, TriangleAlert } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { EVENTS, NOW_HOUR, TODAY, type CalEvent } from "@/lib/data/sample"

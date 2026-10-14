@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { BookOpen, GraduationCap, Lock, Play } from "lucide-react"
+import { BookOpen, GraduationCap, Lock, Play } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { COURSES, courseProgress, nextLesson } from "@/lib/data/sample"

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
-import { AlertTriangle, Check, Copy, ExternalLink, Landmark, Loader2, MoreHorizontal, Plus, RotateCcw } from "lucide-react"
+import { AlertTriangle, Check, Copy, ExternalLink, Landmark, Loader2, MoreHorizontal, Plus, RotateCcw } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
@@ -383,10 +383,10 @@ function Payouts() {
       <div className="grid max-w-xl gap-4">
         <div className="flex gap-1">
           {KYC.map((k, i) => (
-            <span key={k} className={cn("h-0.5 flex-1 bg-white/10", i < state.step && "bg-[var(--ts-yellow)]", i === state.step && "bg-[var(--ts-orange)]")} />
+            <span key={k} className={cn("h-0.5 flex-1 bg-white/10", i < state.step && "bg-[var(--ts-cta)]", i === state.step && "bg-[var(--ts-interactive)]")} />
           ))}
         </div>
-        <Mono className="text-[var(--ts-orange)]">
+        <Mono className="text-[var(--ts-interactive)]">
           Step {state.step + 1} of {KYC.length}
         </Mono>
         <h2 className="text-xl">{KYC[state.step]}</h2>
@@ -453,7 +453,7 @@ function Payouts() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <span className="grid size-7 place-items-center bg-[var(--ts-yellow)] text-[#0a0a0a]">
+            <span className="grid size-7 place-items-center bg-[var(--ts-cta)] text-[#0a0a0a]">
               <Check className="size-4" strokeWidth={3} />
             </span>
             Payouts connected

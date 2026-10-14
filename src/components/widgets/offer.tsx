@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, BadgeCheck, Check, Minus, Sparkles } from "lucide-react"
+import { ArrowRight, BadgeCheck, Check, Minus, Sparkles } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, CalendarClock, Check, Hash, Megaphone, Pin, RefreshCw, Send, Unplug } from "lucide-react"
+import { Bell, CalendarClock, Check, Hash, Megaphone, Pin, RefreshCw, Send, Unplug } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
@@ -57,7 +57,7 @@ export function CommunityAdmin() {
               {list.map((a) => (
                 <article key={a.id} className="grid gap-1.5 rounded-lg border bg-card p-4">
                   <div className="flex items-start gap-2">
-                    {a.pinned && <Pin className="mt-0.5 size-3.5 shrink-0 text-[var(--ts-orange)]" />}
+                    {a.pinned && <Pin className="mt-0.5 size-3.5 shrink-0 text-[var(--ts-interactive)]" />}
                     <span className="flex-1 font-medium">{a.title}</span>
                     <span className="shrink-0 text-xs text-muted-foreground">{a.scheduled ? `Scheduled · ${a.scheduled}` : a.when}</span>
                   </div>
@@ -159,7 +159,7 @@ export function CommunityAdmin() {
             </div>
           )}
           <p className="rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
-            <Mono className="mr-1.5 text-[var(--ts-yellow)]">Later</Mono>
+            <Mono className="mr-1.5 text-[var(--ts-cta)]">Later</Mono>
             Our own feed with channels, posts and shared trades replaces the Discord link for coaches who want everything in one place (STU-12).
           </p>
         </TabsContent>
@@ -203,14 +203,14 @@ function Composer({ onPost }: { onPost: (a: Announcement) => void }) {
       <div className="grid gap-2">
         <span className="text-[0.8rem] font-medium">To</span>
         <div className="flex flex-wrap gap-1.5">
-          <button onClick={() => setTiers([])} className={cn("rounded-md border px-2.5 py-1 text-sm", tiers.length === 0 && "border-[var(--ts-orange)]")}>
+          <button onClick={() => setTiers([])} className={cn("rounded-md border px-2.5 py-1 text-sm", tiers.length === 0 && "border-[var(--ts-interactive)]")}>
             Everyone
           </button>
           {coach.tiers.map((t) => (
             <button
               key={t.id}
               onClick={() => setTiers((x) => (x.includes(t.id) ? x.filter((y) => y !== t.id) : [...x, t.id]))}
-              className={cn("rounded-md border px-2.5 py-1 text-sm", tiers.includes(t.id) && "border-[var(--ts-orange)]")}
+              className={cn("rounded-md border px-2.5 py-1 text-sm", tiers.includes(t.id) && "border-[var(--ts-interactive)]")}
             >
               {t.name}
             </button>

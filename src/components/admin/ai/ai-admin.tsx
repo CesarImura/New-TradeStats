@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bot, Check, FileUp, Pencil, Send, ShieldAlert, Sparkles } from "lucide-react"
+import { Bot, Check, FileUp, Pencil, Send, ShieldAlert, Sparkles } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
@@ -46,7 +46,7 @@ export function AiAdmin() {
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
             <div className="grid content-start gap-4">
               <div className="flex items-center gap-3 rounded-lg border bg-card p-4">
-                <span className="grid size-12 place-items-center rounded-lg bg-[var(--ts-yellow)] text-[#0a0a0a]">
+                <span className="grid size-12 place-items-center rounded-lg bg-[var(--ts-cta)] text-[#0a0a0a]">
                   <Bot className="size-6" />
                 </span>
                 <div className="grid flex-1 gap-0.5">
@@ -87,7 +87,7 @@ export function AiAdmin() {
               <Mono className="text-muted-foreground">How it sounds</Mono>
               <div className="grid gap-2 rounded-lg border bg-card p-4 text-sm">
                 <p className="justify-self-end rounded-lg bg-muted px-3 py-2">Should I trade during CPI?</p>
-                <p className="rounded-lg bg-[var(--ts-yellow)]/10 px-3 py-2">
+                <p className="rounded-lg bg-[var(--ts-cta)]/10 px-3 py-2">
                   {ai.tone > 66
                     ? "No. Flat 10 minutes before and after. Trade the reaction once the first 5-minute candle closes."
                     : ai.tone < 33
@@ -214,7 +214,7 @@ export function AiAdmin() {
                       {q.answered ? (
                         <span className="text-muted-foreground">{q.lesson}</span>
                       ) : (
-                        <Badge variant="outline" className="border-[var(--ts-orange)]/50 text-[var(--ts-orange)]">
+                        <Badge variant="outline" className="border-[var(--ts-interactive)]/50 text-[var(--ts-interactive)]">
                           Gap · no lesson yet
                         </Badge>
                       )}
@@ -245,8 +245,8 @@ function TestChat({ onCorrect }: { onCorrect: (c: { q: string; a: string }) => v
         {log.map((m, i) => (
           <div key={i} className="grid gap-2">
             <p className="justify-self-end rounded-lg bg-muted px-3 py-2 text-sm">{m.q}</p>
-            <div className="grid max-w-[85%] gap-1.5 rounded-lg bg-[var(--ts-yellow)]/8 px-3 py-2 text-sm">
-              <span className="flex items-center gap-1.5 text-xs text-[var(--ts-yellow)]">
+            <div className="grid max-w-[85%] gap-1.5 rounded-lg bg-[var(--ts-cta)]/8 px-3 py-2 text-sm">
+              <span className="flex items-center gap-1.5 text-xs text-[var(--ts-cta)]">
                 <Sparkles className="size-3" /> {coach.wording.ai}
               </span>
               <p className={cn(m.fixed && "text-muted-foreground line-through")}>{m.a.text}</p>

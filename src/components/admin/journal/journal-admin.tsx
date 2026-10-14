@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ChartCandlestick, Check, Inbox, Mic, Plus, Send, Sparkles, Square, Trash2, Video, X } from "lucide-react"
+import { ChartCandlestick, Check, Inbox, Mic, Plus, Send, Sparkles, Square, Trash2, Video, X } from "@/components/icons"
 import { toast } from "sonner"
 import { TradeChart } from "@/components/charts/trade-chart"
 import { useCoach } from "@/components/coach/coach-provider"
@@ -94,7 +94,7 @@ function RequestList({ trades, active, onPick }: { trades: ReturnType<typeof all
           <button
             key={t.id}
             onClick={() => onPick(t.id)}
-            className={cn("grid gap-2 rounded-lg border bg-card p-3 text-left hover:border-white/20", active === t.id && "border-[var(--ts-orange)] hover:border-[var(--ts-orange)]")}
+            className={cn("grid gap-2 rounded-lg border bg-card p-3 text-left hover:border-white/20", active === t.id && "border-[var(--ts-interactive)] hover:border-[var(--ts-interactive)]")}
           >
             <span className="flex items-center gap-2">
               <Avatar className="size-6">
@@ -194,7 +194,7 @@ function Review({ trade: t, onDone, readOnly }: { trade: ReturnType<typeof allTr
             <Avatar className="size-7">
               <AvatarFallback className="text-[0.6rem]">{m.from === "coach" ? coach.mark : s.initials}</AvatarFallback>
             </Avatar>
-            <div className={cn("grid max-w-[80%] gap-1 rounded-lg px-3 py-2 text-sm", m.from === "coach" ? "bg-[var(--ts-yellow)]/10" : "bg-muted")}>
+            <div className={cn("grid max-w-[80%] gap-1 rounded-lg px-3 py-2 text-sm", m.from === "coach" ? "bg-[var(--ts-cta)]/10" : "bg-muted")}>
               {m.kind === "text" ? (
                 <p>{m.text}</p>
               ) : m.kind === "chart" ? (
@@ -220,8 +220,8 @@ function Review({ trade: t, onDone, readOnly }: { trade: ReturnType<typeof allTr
       {!readOnly && (
         <div className="grid gap-2">
           {recording ? (
-            <div className="flex items-center gap-3 rounded-lg border border-[var(--ts-orange)]/40 bg-[var(--ts-orange)]/8 px-3 py-3 text-sm">
-              <span className="size-2 animate-pulse rounded-full bg-[var(--ts-orange)]" />
+            <div className="flex items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-3 py-3 text-sm">
+              <span className="size-2 animate-pulse rounded-full bg-[var(--ts-interactive)]" />
               Recording {recording === "voice" ? "a voice note" : "your screen and camera"} · 0:{String(secs).padStart(2, "0")}
               <Button size="sm" className="ml-auto" onClick={() => record(recording)}>
                 <Square /> Stop and send

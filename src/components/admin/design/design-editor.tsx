@@ -10,7 +10,7 @@ import {
   Smartphone,
   Trash2,
   Wand2,
-} from "lucide-react"
+} from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"

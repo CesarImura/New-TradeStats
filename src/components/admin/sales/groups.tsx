@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CalendarRange, Eye, Plus, Users } from "lucide-react"
+import { CalendarRange, Eye, Plus, Users } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
@@ -119,7 +119,7 @@ function GroupEditor({ group, isNew, onClose }: { group: Group | null; isNew: bo
               <span className="text-[0.8rem] font-medium">Who can join</span>
               <div className="grid gap-2 sm:grid-cols-2">
                 {tiers.map((t) => (
-                  <label key={t.id} className={cn("flex items-center gap-2 rounded-lg border p-2.5 text-sm", g.tiers.includes(t.id) && "border-[var(--ts-yellow)]/50")}>
+                  <label key={t.id} className={cn("flex items-center gap-2 rounded-lg border p-2.5 text-sm", g.tiers.includes(t.id) && "border-[var(--ts-cta)]/50")}>
                     <Checkbox checked={g.tiers.includes(t.id)} onCheckedChange={(v) => set({ tiers: v ? [...g.tiers, t.id] : g.tiers.filter((x) => x !== t.id) })} />
                     {t.name}
                   </label>

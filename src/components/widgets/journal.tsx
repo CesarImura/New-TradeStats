@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, Gauge, LineChart, Link2, Shield, X } from "lucide-react"
+import { Check, Gauge, LineChart, Link2, Shield, X } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { DISCIPLINE, EQUITY, JOURNAL_DAYS, JOURNAL_STATS, JOURNAL_WEEK, RULE_DAYS } from "@/lib/data/sample"

@@ -1,14 +1,29 @@
 "use client"
 
-import { useState } from "react"
-import { Check, ChevronDown } from "lucide-react"
+import { createContext, useContext, useEffect, useRef, useState } from "react"
+import { Check, ChevronDown } from "@/components/icons"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
-/** A labelled row in the editor panel. */
-export function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+/**
+ * Click-to-edit: the setting fields picked in the preview. Folded parts of the
+ * panel that hold one of them open themselves; `n` changes on every pick.
+ */
+export const RevealContext = createContext<{ fields: string[]; n: number }>({ fields: [], n: 0 })
+
+/** Opens when a picked field is inside `ref` (folded content stays in the DOM, hidden). */
+export function useReveal(ref: React.RefObject<HTMLElement | null>, open: () => void) {
+  const { fields, n } = useContext(RevealContext)
+  useEffect(() => {
+    if (n && fields.some((f) => ref.current?.querySelector(`[data-field="${f}"]`))) open()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [n])
+}
+
+/** A labelled row in the editor panel. `id` lets a click in the preview find it. */
+export function Field({ id, label, hint, children }: { id?: string; label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-2" data-field={id}>
       <div className="flex items-baseline justify-between gap-2">
         <Label className="text-[0.8rem] font-medium">{label}</Label>
         {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
@@ -106,8 +121,10 @@ export function Swatches({
 /** "Simple first, advanced on demand": extra settings stay folded away. */
 export function More({ label = "More options", children }: { label?: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useReveal(ref, () => setOpen(true))
   return (
-    <div className="grid gap-4">
+    <div ref={ref} className="grid gap-4">
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
@@ -116,7 +133,9 @@ export function More({ label = "More options", children }: { label?: string; chi
         <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
         {open ? "Fewer options" : label}
       </button>
-      {open && <div className="grid gap-5 border-l pl-4">{children}</div>}
+      <div hidden={!open} className="grid gap-5 border-l pl-4">
+        {children}
+      </div>
     </div>
   )
 }

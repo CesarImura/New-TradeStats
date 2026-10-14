@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, LogOut, Search, Settings, User } from "lucide-react"
+import { Bell, LogOut, Search, Settings, User } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CommunitySwitcher } from "@/components/student/community-switcher"
 import { PreviewAsBanner, Tour } from "@/components/student/getting-started"
+import { PreviewPicker } from "@/components/student/preview-picker"
 import { studentNav, type NavItem } from "@/components/coach/nav"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -42,7 +43,7 @@ function useActive(base: string) {
 
 /** The coach's platform. Same pages, two navigation layouts, one mobile bar. */
 export function StudentShell({ children }: { children: React.ReactNode }) {
-  const { coach, theme, base } = useCoach()
+  const { coach, theme, base, preview } = useCoach()
   const items = studentNav(coach, base)
   const path = usePathname()
   const texture = { grid: "coach-bg-grid", glow: "coach-bg-glow", dots: "coach-bg-dots" } as Record<string, string>
@@ -54,9 +55,10 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   // The Charts terminal uses the full width, like a trading screen.
   const wide = path.startsWith(`${base}/charts`)
   const content = (
-    <div className={cn("mx-auto w-full px-4 pt-5 pb-28 sm:px-6 md:pb-12 lg:px-8", wide ? "max-w-none pt-3 lg:px-4" : "max-w-[1280px]")}>
+    <div data-edit-root className={cn("mx-auto w-full px-4 pt-5 pb-28 sm:px-6 md:pb-12 lg:px-8", wide ? "max-w-none pt-3 lg:px-4" : "max-w-[1280px]")}>
       {children}
       <Tour />
+      {preview && <PreviewPicker />}
     </div>
   )
 
@@ -74,8 +76,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider key={theme.nav.style} defaultOpen={theme.nav.style === "labels"}>
-      <Sidebar collapsible="icon" className="max-md:hidden">
-        <SidebarHeader className="h-16 justify-center">
+      <Sidebar collapsible="icon" className="max-md:hidden" data-edit="nav">
+        <SidebarHeader className="h-16 justify-center" data-edit="logo">
           <CommunitySwitcher placement="sidebar" />
         </SidebarHeader>
         <SidebarContent>
@@ -92,7 +94,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
         <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur sm:px-6 lg:px-8">
           <SidebarTrigger className="max-md:hidden" />
-          <div className="min-w-0 md:hidden">
+          <div className="min-w-0 md:hidden" data-edit="logo">
             <CommunitySwitcher placement="bar" />
           </div>
           <div className="ml-auto flex items-center gap-1">
@@ -125,7 +127,7 @@ function SideItems({ items }: { items: NavItem[] }) {
           <SidebarMenuButton
             isActive={isActive(item)}
             tooltip={item.label}
-            render={<Link href={item.href} data-tour={item.id} />}
+            render={<Link href={item.href} data-tour={item.id} data-edit={`menu:${item.id}`} />}
             className="h-10"
           >
             <item.icon />
@@ -142,9 +144,9 @@ function TopNav({ items }: { items: NavItem[] }) {
   const isActive = useActive(base)
   const centered = theme.nav.logo === "center"
   return (
-    <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur" data-edit="nav">
       <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-6 px-4 sm:px-6 lg:px-8">
-        <div className={cn("min-w-0", centered && "md:absolute md:left-1/2 md:-translate-x-1/2")}>
+        <div className={cn("min-w-0", centered && "md:absolute md:left-1/2 md:-translate-x-1/2")} data-edit="logo">
           <CommunitySwitcher placement="bar" />
         </div>
         <nav className={cn("hidden items-center gap-1 md:flex", centered && "order-first")}>
@@ -154,6 +156,7 @@ function TopNav({ items }: { items: NavItem[] }) {
               href={item.href}
               data-active={isActive(item)}
               data-tour={item.id}
+              data-edit={`menu:${item.id}`}
               className="rounded-[min(var(--radius),10px)] px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
             >
               {theme.nav.style === "icons" ? <item.icon className="size-4" aria-label={item.label} /> : item.label}
@@ -231,7 +234,7 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
 function MobileBar({ items }: { items: NavItem[] }) {
   const isActive = useActive(useCoach().base)
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+    <nav data-edit="nav" className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
       <ul className="grid grid-cols-5">
         {items.slice(0, 5).map((item) => (
           <li key={item.id}>
@@ -239,6 +242,7 @@ function MobileBar({ items }: { items: NavItem[] }) {
               href={item.href}
               data-active={isActive(item)}
               data-tour={item.id}
+              data-edit={`menu:${item.id}`}
               className="flex flex-col items-center gap-1 py-2.5 text-[0.7rem] text-muted-foreground data-[active=true]:text-primary"
             >
               <item.icon className="size-5" />

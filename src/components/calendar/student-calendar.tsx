@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { addDays, addMinutes, differenceInMinutes, format, isSameDay } from "date-fns"
-import { Bell, CalendarPlus, CalendarX, Clock, Lock, Play, Radio, TriangleAlert, Users, Video } from "lucide-react"
+import { Bell, CalendarPlus, CalendarX, Clock, Lock, Play, Radio, TriangleAlert, Users, Video } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"

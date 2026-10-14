@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ArrowDown, ArrowUp, ExternalLink, Plus, RotateCcw, X } from "lucide-react"
+import { ArrowDown, ArrowUp, ExternalLink, Plus, RotateCcw, X } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
@@ -56,7 +56,7 @@ export function SalesPageEditor() {
               <div
                 className={cn(
                   "flex items-center gap-2 rounded-lg border px-2.5 py-2 transition-colors",
-                  sel === b.id ? "border-[var(--ts-yellow)]/60 bg-[var(--ts-yellow)]/5" : "hover:bg-muted/50",
+                  sel === b.id ? "border-[var(--ts-cta)]/60 bg-[var(--ts-cta)]/5" : "hover:bg-muted/50",
                   !b.on && "opacity-55",
                 )}
               >
@@ -78,7 +78,7 @@ export function SalesPageEditor() {
 
         {block && (
           <div className="grid gap-3 rounded-lg border bg-card p-4">
-            <Mono className="text-[var(--ts-orange)]">{BLOCK_INFO[block.type].name}</Mono>
+            <Mono className="text-[var(--ts-interactive)]">{BLOCK_INFO[block.type].name}</Mono>
             <Field label="Heading">
               <Input value={block.title} onChange={(e) => update(block.id, { title: e.target.value })} />
             </Field>

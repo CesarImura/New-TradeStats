@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef } from "react"
-import { ImagePlus } from "lucide-react"
+import { ImagePlus } from "@/components/icons"
 import { Slider } from "@/components/ui/slider"
 import { BACKDROPS, MIN_DIM } from "@/lib/theme/backdrops"
 import type { BackgroundStyle, CoachTheme } from "@/lib/theme/types"

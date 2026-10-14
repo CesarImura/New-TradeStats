@@ -25,7 +25,7 @@ import {
   ShieldAlert,
   Sigma,
   type LucideIcon,
-} from "lucide-react"
+} from "@/components/icons"
 import type { ModuleId } from "@/lib/data/coaches"
 import { AiAsk, Banner, PartnerLinks, TextBlock, WelcomeVideo } from "./brand"
 import { EconNews, NextLive, ThisWeek } from "./calendar"

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowRight, CalendarDays, Check, MessagesSquare, NotebookPen, PlayCircle, Quote, Sparkles, Star, Users } from "lucide-react"
+import { ArrowRight, CalendarDays, Check, MessagesSquare, NotebookPen, PlayCircle, Quote, Sparkles, Star, Users } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CourseCover, hours } from "@/components/courses/shared"

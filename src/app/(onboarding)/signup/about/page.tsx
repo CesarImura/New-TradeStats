@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight } from "@/components/icons"
 import { Choice, OnbFrame, OnbTitle, mono } from "@/components/onboarding/frame"
 import { AUDIENCES, OFFERS, TOOLS, routeFor } from "@/components/onboarding/suggest"
 import { Button } from "@/components/ui/button"
@@ -87,7 +87,7 @@ function Question({ n, title, hint, children }: { n: number; title: string; hint
   return (
     <fieldset className="grid gap-3">
       <legend className="mb-3 flex w-full items-baseline gap-3">
-        <span className={cn(mono, "text-[var(--ts-orange)]")}>0{n}</span>
+        <span className={cn(mono, "text-[var(--ts-interactive)]")}>0{n}</span>
         <span className="text-[1.05rem]">{title}</span>
         {hint && <span className="ml-auto text-xs text-muted-foreground">{hint}</span>}
       </legend>
@@ -105,7 +105,7 @@ function Pill({ on, onClick, children }: { on: boolean; onClick: () => void; chi
       onClick={onClick}
       className={cn(
         "rounded-[var(--radius)] border px-3 py-2 text-sm transition-colors outline-none hover:border-white/25 focus-visible:ring-2 focus-visible:ring-ring",
-        on && "border-[var(--ts-orange)] bg-[color-mix(in_oklab,var(--ts-orange)_10%,transparent)] text-foreground hover:border-[var(--ts-orange)]",
+        on && "border-[var(--ts-interactive)] bg-[color-mix(in_oklab,var(--ts-interactive)_10%,transparent)] text-foreground hover:border-[var(--ts-interactive)]",
         !on && "text-muted-foreground",
       )}
     >

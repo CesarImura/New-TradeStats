@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, CalendarClock, Check, CircleHelp, FileDown, Lock, Play } from "lucide-react"
+import { ArrowLeft, CalendarClock, Check, CircleHelp, FileDown, Lock, Play } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Copy, EyeOff, GripVertical, Maximize2, MousePointerClick, Plus, Search, Trash2, X } from "lucide-react"
+import { Copy, EyeOff, GripVertical, Maximize2, MousePointerClick, Plus, Search, Trash2, X } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ArrowDown, ArrowUp, FolderUp, Loader2, Sparkles, Trash2, Video, X } from "lucide-react"
+import { ArrowDown, ArrowUp, FolderUp, Loader2, Sparkles, Trash2, Video, X } from "@/components/icons"
 import type { CourseDraft } from "@/lib/data/communities"
 import { uid } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
@@ -132,7 +132,7 @@ export function VideosStep({ community, update }: StepProps) {
     return (
       <div className="grid gap-4">
         <div className="flex items-center gap-2 text-sm">
-          <Sparkles className="size-4 text-[var(--ts-yellow)]" />
+          <Sparkles className="size-4 text-[var(--ts-cta)]" />
           <span>
             {courses.length} modules, {lessons} lessons. Rename or reorder anything.
           </span>
@@ -199,7 +199,7 @@ export function VideosStep({ community, update }: StepProps) {
         <div className="flex items-center justify-between text-sm">
           {thinking ? (
             <span className="flex items-center gap-2">
-              <Loader2 className="size-4 animate-spin text-[var(--ts-yellow)]" /> Organising into modules and lessons…
+              <Loader2 className="size-4 animate-spin text-[var(--ts-cta)]" /> Organising into modules and lessons…
             </span>
           ) : (
             <span>
@@ -225,7 +225,7 @@ export function VideosStep({ community, update }: StepProps) {
                 )}
               </div>
               <span className="h-0.5 overflow-hidden bg-white/10">
-                <span className={cn("block h-full transition-[width]", u.progress >= 100 ? "bg-[var(--ts-yellow)]" : "bg-[var(--ts-orange)]")} style={{ width: `${u.progress}%` }} />
+                <span className={cn("block h-full transition-[width]", u.progress >= 100 ? "bg-[var(--ts-cta)]" : "bg-[var(--ts-interactive)]")} style={{ width: `${u.progress}%` }} />
               </span>
             </li>
           ))}
@@ -251,10 +251,10 @@ export function VideosStep({ community, update }: StepProps) {
         }}
         className={cn(
           "grid place-items-center gap-3 rounded-[var(--radius)] border border-dashed border-white/20 px-6 py-12 text-center transition-colors",
-          over && "border-[var(--ts-orange)] bg-[color-mix(in_oklab,var(--ts-orange)_6%,transparent)]",
+          over && "border-[var(--ts-interactive)] bg-[color-mix(in_oklab,var(--ts-interactive)_6%,transparent)]",
         )}
       >
-        <FolderUp className={cn("size-8 text-muted-foreground", over && "text-[var(--ts-orange)]")} />
+        <FolderUp className={cn("size-8 text-muted-foreground", over && "text-[var(--ts-interactive)]")} />
         <div className="grid gap-1">
           <span className="text-base">Drop your course folder here</span>
           <span className="text-sm text-muted-foreground">Subfolders become modules. MP4 or MOV, any size.</span>

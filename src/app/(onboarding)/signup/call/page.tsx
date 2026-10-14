@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowRight, CalendarPlus, Check, Video } from "lucide-react"
+import { ArrowRight, CalendarPlus, Check, Video } from "@/components/icons"
 import { toast } from "sonner"
 import { OnbFrame, OnbTitle, mono } from "@/components/onboarding/frame"
 import { Button } from "@/components/ui/button"
@@ -52,7 +52,7 @@ export default function Call() {
     return (
       <OnbFrame>
         <div className="grid gap-8">
-          <div className="grid size-12 place-items-center bg-[var(--ts-yellow)] text-[#040404]">
+          <div className="grid size-12 place-items-center bg-[var(--ts-cta)] text-[#040404]">
             <Check className="size-6" strokeWidth={2.5} />
           </div>
           <OnbTitle
@@ -77,7 +77,7 @@ export default function Call() {
             <ul className="grid gap-2 text-sm">
               {PREPARE.map((p) => (
                 <li key={p} className="flex gap-2.5">
-                  <Check className="mt-0.5 size-4 shrink-0 text-[var(--ts-orange)]" /> {p}
+                  <Check className="mt-0.5 size-4 shrink-0 text-[var(--ts-interactive)]" /> {p}
                 </li>
               ))}
             </ul>
@@ -128,10 +128,10 @@ export default function Call() {
                 }}
                 className={cn(
                   "grid gap-0.5 rounded-[var(--radius)] border py-2.5 text-center transition-colors hover:border-white/25 disabled:opacity-35 disabled:hover:border-border",
-                  day === x.id && "border-[var(--ts-orange)] hover:border-[var(--ts-orange)]",
+                  day === x.id && "border-[var(--ts-interactive)] hover:border-[var(--ts-interactive)]",
                 )}
               >
-                <span className={cn(mono, day === x.id ? "text-[var(--ts-orange)]" : "text-muted-foreground")}>{x.label}</span>
+                <span className={cn(mono, day === x.id ? "text-[var(--ts-interactive)]" : "text-muted-foreground")}>{x.label}</span>
                 <span className="text-sm tabular-nums">{x.date.split(" ")[0]}</span>
               </button>
             ))}
@@ -145,7 +145,7 @@ export default function Call() {
                 onClick={() => setTime(t)}
                 className={cn(
                   "rounded-[var(--radius)] border py-2.5 text-sm tabular-nums transition-colors hover:border-white/25",
-                  time === t && "border-[var(--ts-yellow)] bg-[var(--ts-yellow)] text-[#040404] hover:border-[var(--ts-yellow)]",
+                  time === t && "border-[var(--ts-cta)] bg-[var(--ts-cta)] text-[#040404] hover:border-[var(--ts-cta)]",
                 )}
               >
                 {t}

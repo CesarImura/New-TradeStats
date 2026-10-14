@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ArrowUp, BookOpen, CandlestickChart, Sparkles } from "lucide-react"
+import { ArrowUp, BookOpen, CandlestickChart, Sparkles } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { AiMark, useStudentTier } from "@/components/courses/shared"
 import { Button } from "@/components/ui/button"

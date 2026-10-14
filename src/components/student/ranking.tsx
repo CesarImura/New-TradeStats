@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowDown, ArrowUp, Flame, Medal, Trophy } from "lucide-react"
+import { ArrowDown, ArrowUp, Flame, Medal, Trophy } from "@/components/icons"
 import { toast } from "sonner"
 import { useCommunityData } from "@/components/admin/kit"
 import { DEFAULT_RANKING, type RankingSetup } from "@/components/admin/ranking/ranking-admin"

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { Check, CreditCard, Download, Link2 } from "lucide-react"
+import { Check, CreditCard, Download, Link2 } from "@/components/icons"
 import { toast } from "sonner"
 import { DiscordMark } from "@/components/admin/community/community-admin"
 import { useCommunityData } from "@/components/admin/kit"

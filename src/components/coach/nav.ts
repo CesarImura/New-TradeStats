@@ -15,7 +15,7 @@ import {
   Trophy,
   Users,
   type LucideIcon,
-} from "lucide-react"
+} from "@/components/icons"
 import type { Coach, ModuleId } from "@/lib/data/coaches"
 
 export type NavItem = { id: string; label: string; href: string; icon: LucideIcon; screens: string }

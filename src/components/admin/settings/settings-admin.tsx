@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { Check, Copy, Eye, Globe, Loader2, Mail, Plus, Upload, Wand2 } from "lucide-react"
+import { Check, Copy, Eye, Globe, Loader2, Mail, Plus, Upload, Wand2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -254,7 +254,7 @@ function Emails() {
             {EMAIL_TEMPLATES.map((x) => (
               <button key={x.id} onClick={() => setSel(x.id)} className={cn("flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm hover:bg-muted", sel === x.id && "bg-muted font-medium")}>
                 <Mail className="size-3.5 text-muted-foreground" /> {x.name}
-                {edits[x.id] && <span className="ml-auto size-1.5 rounded-full bg-[var(--ts-yellow)]" />}
+                {edits[x.id] && <span className="ml-auto size-1.5 rounded-full bg-[var(--ts-cta)]" />}
               </button>
             ))}
           </div>
@@ -580,7 +580,7 @@ function Plan() {
       <Section title="Your plan with us">
         <div className="grid gap-3 md:grid-cols-3">
           {PLANS.map((p) => (
-            <Card key={p.id} size="sm" className={cn(p.id === "growth" && "ring-[var(--ts-yellow)]/60")}>
+            <Card key={p.id} size="sm" className={cn(p.id === "growth" && "ring-[var(--ts-cta)]/60")}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   {p.name} {p.id === "growth" && <Badge>Your plan</Badge>}
@@ -609,7 +609,7 @@ function Plan() {
             ["Fully custom", "€2,400", "A design made for you, like WCE and TradeX"],
           ].map(([n, p, t]) => (
             <div key={n} className="flex items-start gap-3 rounded-lg border bg-card p-4">
-              <Wand2 className="mt-0.5 size-4 text-[var(--ts-yellow)]" />
+              <Wand2 className="mt-0.5 size-4 text-[var(--ts-cta)]" />
               <div className="grid flex-1 gap-0.5">
                 <span className="font-medium">
                   {n} · {p}

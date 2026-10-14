@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { Archive, ArrowDown, ExternalLink, ArrowUp, ChartCandlestick, Pin, PinOff, Plus, X } from "lucide-react"
+import { Archive, ArrowDown, ExternalLink, ArrowUp, ChartCandlestick, Pin, PinOff, Plus, X } from "@/components/icons"
 import { toast } from "sonner"
 import { TradingViewChart, TradingViewMini } from "@/components/charts/tradingview"
 import { useCoach } from "@/components/coach/coach-provider"
@@ -54,8 +54,8 @@ export function ChartsAdmin() {
       />
 
       {!on && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-orange)]/40 bg-[var(--ts-orange)]/8 px-4 py-3 text-sm">
-          <ChartCandlestick className="size-4 text-[var(--ts-orange)]" />
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
+          <ChartCandlestick className="size-4 text-[var(--ts-interactive)]" />
           <span className="flex-1">Charts is switched off, so students don&apos;t see it in the menu yet.</span>
           <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`${base}/design`} />}>
             Switch on in Design
@@ -115,7 +115,7 @@ export function ChartsAdmin() {
                   {MARKETS.map((m) => {
                     const checked = s.markets.includes(m.id)
                     return (
-                      <label key={m.id} className={cn("flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm", checked && "border-[var(--ts-orange)]")}>
+                      <label key={m.id} className={cn("flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm", checked && "border-[var(--ts-interactive)]")}>
                         <Checkbox checked={checked} onCheckedChange={(v) => set({ markets: v ? [...s.markets, m.id] : s.markets.filter((x) => x !== m.id) })} />
                         {m.label}
                       </label>
@@ -132,7 +132,7 @@ export function ChartsAdmin() {
                 <div className="divide-y rounded-lg border bg-card">
                   {s.watchlist.map((w, i) => (
                     <div key={w.tv} className="flex items-center gap-2 px-3 py-1.5">
-                      <button onClick={() => setPreview(w.tv)} className={cn("flex-1 text-left text-sm", preview === w.tv && "text-[var(--ts-yellow)]")}>
+                      <button onClick={() => setPreview(w.tv)} className={cn("flex-1 text-left text-sm", preview === w.tv && "text-[var(--ts-cta)]")}>
                         {w.name} <span className="text-xs text-muted-foreground">{w.tv}</span>
                       </button>
                       <Button variant="ghost" size="icon-xs" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move ${w.name} up`}>
@@ -255,7 +255,7 @@ export function ChartCard({ chart: c, actions, onOpen, tierNames, dark = true }:
         <div className="flex items-start gap-2">
           <div className="grid min-w-0 flex-1 gap-0.5">
             <span className="flex items-center gap-2">
-              {c.pinned && <Pin className="size-3.5 shrink-0 text-[var(--ts-orange,var(--primary))]" />}
+              {c.pinned && <Pin className="size-3.5 shrink-0 text-[var(--ts-interactive,var(--primary))]" />}
               <span className="truncate font-medium">{c.title}</span>
             </span>
             <span className="text-xs text-muted-foreground">

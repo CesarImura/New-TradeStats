@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Download, FileUp, Mail, MoreHorizontal, Search, Send, Users } from "lucide-react"
+import { Download, FileUp, Mail, MoreHorizontal, Search, Send, Users } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -115,7 +115,7 @@ export function StudentsPage() {
       </div>
 
       {picked.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--ts-yellow)]/30 bg-[var(--ts-yellow)]/6 px-3 py-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--ts-cta)]/30 bg-[var(--ts-cta)]/6 px-3 py-2 text-sm">
           <span className="tabular-nums">{picked.length} selected</span>
           <Button size="sm" variant="outline" onClick={() => setMessage(selected)}>
             <Mail /> Message
@@ -248,7 +248,7 @@ function ActivityDots({ days }: { days: number }) {
   return (
     <span className="mt-1 flex gap-0.5" aria-label={`Active ${days} of the last 14 days`}>
       {Array.from({ length: 14 }, (_, i) => (
-        <span key={i} className={cn("h-1.5 w-1 rounded-[1px] bg-white/10", i >= 14 - days && "bg-[var(--ts-yellow)]/80")} />
+        <span key={i} className={cn("h-1.5 w-1 rounded-[1px] bg-white/10", i >= 14 - days && "bg-[var(--ts-cta)]/80")} />
       ))}
     </span>
   )

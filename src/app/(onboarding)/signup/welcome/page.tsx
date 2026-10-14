@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, Check } from "lucide-react"
+import { ArrowRight, Check } from "@/components/icons"
 import { OnbFrame, OnbTitle, mono } from "@/components/onboarding/frame"
 import { Button } from "@/components/ui/button"
 import { setAccount } from "@/lib/data/communities"
@@ -16,7 +16,7 @@ export default function Welcome() {
   return (
     <OnbFrame>
       <div className="grid gap-8">
-        <div className="grid size-12 place-items-center bg-[var(--ts-yellow)] text-[#040404]">
+        <div className="grid size-12 place-items-center bg-[var(--ts-cta)] text-[#040404]">
           <Check className="size-6" strokeWidth={2.5} />
         </div>
         <OnbTitle

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowDown, ArrowUp, ExternalLink, LayoutDashboard } from "lucide-react"
+import { ArrowDown, ArrowUp, ExternalLink, LayoutDashboard } from "@/components/icons"
 import { FONT_PAIRS } from "@/components/admin/design/options"
 import { Field, More, Segmented } from "@/components/admin/design/controls"
 import { Slider } from "@/components/ui/slider"
@@ -58,7 +58,7 @@ export function StyleStep({ community, update }: StepProps) {
                 key={p.name}
                 onClick={() => set({ fonts: { heading: p.heading, body: p.body, label: p.label } })}
                 aria-pressed={on}
-                className={cn("grid gap-1 rounded-[var(--radius)] border bg-card p-3 text-left hover:border-white/25", on && "border-[var(--ts-orange)] hover:border-[var(--ts-orange)]")}
+                className={cn("grid gap-1 rounded-[var(--radius)] border bg-card p-3 text-left hover:border-white/25", on && "border-[var(--ts-interactive)] hover:border-[var(--ts-interactive)]")}
               >
                 <span className="text-2xl leading-none" style={{ fontFamily: FONT_LIBRARY[p.heading].css }}>
                   Aa
@@ -269,7 +269,7 @@ export function MenuOptions({ community, update }: StepProps) {
         <input
           value={community.wording.home}
           onChange={(e) => update({ wording: { ...community.wording, home: e.target.value } })}
-          className="h-9 rounded-[var(--radius)] border bg-card px-3 text-sm outline-none focus:border-[var(--ts-orange)]"
+          className="h-9 rounded-[var(--radius)] border bg-card px-3 text-sm outline-none focus:border-[var(--ts-interactive)]"
         />
       </Field>
     </More>

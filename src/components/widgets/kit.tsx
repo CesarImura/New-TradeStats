@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import type { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "@/components/icons"
 import { cn } from "@/lib/utils"
 
 /**
@@ -48,6 +48,7 @@ export const series = (i: number) => `var(--s${(i % 5) + 1})`
 export function W({ children, className, style, brand }: { children: React.ReactNode; className?: string; style?: React.CSSProperties; brand?: boolean }) {
   return (
     <div
+      data-slot="widget"
       className={cn(
         "@container flex h-full min-h-0 flex-col gap-3 overflow-hidden rounded-(--radius) p-[calc(1rem*var(--density,1))]",
         brand ? "fx-hero" : "bg-card text-card-foreground",

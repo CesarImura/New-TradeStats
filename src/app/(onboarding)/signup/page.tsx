@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowRight, Eye, EyeOff } from "lucide-react"
+import { ArrowRight, Eye, EyeOff } from "@/components/icons"
 import { toast } from "sonner"
 import { Eyebrow, OnbFrame, OnbTitle, ProtoNote } from "@/components/onboarding/frame"
 import { Button } from "@/components/ui/button"

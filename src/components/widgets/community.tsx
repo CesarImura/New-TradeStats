@@ -1,6 +1,6 @@
 "use client"
 
-import { Heart, Megaphone, MessageCircle, MessageSquareText, Pin } from "lucide-react"
+import { Heart, Megaphone, MessageCircle, MessageSquareText, Pin } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"

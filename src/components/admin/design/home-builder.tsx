@@ -7,7 +7,7 @@ import { transformStrategy, verticalCompactor, type Layout, type LayoutItem, typ
 import { GridBackground } from "react-grid-layout/extras"
 import "react-grid-layout/css/styles.css"
 import "react-resizable/css/styles.css"
-import { ArrowDownToLine, ArrowLeft, ArrowUpToLine, Copy, Database, EyeOff, Info, LayoutGrid, Monitor, Pencil, Smartphone, Tablet, Trash2 } from "lucide-react"
+import { ArrowDownToLine, ArrowLeft, ArrowUpToLine, Copy, Database, EyeOff, Info, LayoutGrid, Monitor, Pencil, Smartphone, Tablet, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { CoachContext, useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"

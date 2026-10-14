@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext } from "react"
-import type { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "@/components/icons"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 

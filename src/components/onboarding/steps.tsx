@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { BookOpen, Bot, CalendarDays, ChartCandlestick, Check, CircleAlert, ImagePlus, Landmark, Loader2, MessagesSquare, NotebookPen, Trash2, Trophy } from "lucide-react"
+import { BookOpen, Bot, CalendarDays, ChartCandlestick, Check, CircleAlert, ImagePlus, Landmark, Loader2, MessagesSquare, NotebookPen, Trash2, Trophy } from "@/components/icons"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -58,7 +58,7 @@ export function TemplateStep({ community, update }: StepProps) {
             onClick={() => update({ template: id, overrides: {} })}
             className={cn(
               "grid grid-cols-[132px_1fr] items-center gap-4 rounded-[var(--radius)] border bg-card p-2.5 pr-4 text-left transition-colors hover:border-white/25",
-              on && "border-[var(--ts-orange)] hover:border-[var(--ts-orange)]",
+              on && "border-[var(--ts-interactive)] hover:border-[var(--ts-interactive)]",
             )}
           >
             <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, `.onb-tpl-${id}`) }} />
@@ -87,7 +87,7 @@ export function TemplateStep({ community, update }: StepProps) {
               <span className="flex items-center gap-2">
                 <span className="text-base">{TEMPLATES[id].name}</span>
                 {id === suggested && (
-                  <Badge variant="outline" className={cn(mono, "h-5 border-[var(--ts-orange)]/50 text-[0.58rem] text-[var(--ts-orange)]")}>
+                  <Badge variant="outline" className={cn(mono, "h-5 border-[var(--ts-interactive)]/50 text-[0.58rem] text-[var(--ts-interactive)]")}>
                     Fits you
                   </Badge>
                 )}
@@ -141,7 +141,7 @@ export function AddressStep({ community, update, setReady }: StepProps) {
       </Row>
 
       <Row label="Web address" htmlFor="paddr" hint="Free · your own domain later in Settings">
-        <div className="flex h-11 items-center rounded-[var(--radius)] border border-input bg-card focus-within:border-[var(--ts-orange)] focus-within:ring-2 focus-within:ring-[var(--ts-orange)]/25">
+        <div className="flex h-11 items-center rounded-[var(--radius)] border border-input bg-card focus-within:border-[var(--ts-interactive)] focus-within:ring-2 focus-within:ring-[var(--ts-interactive)]/25">
           <span className="pl-3 text-sm text-muted-foreground">https://</span>
           <input
             id="paddr"
@@ -155,7 +155,7 @@ export function AddressStep({ community, update, setReady }: StepProps) {
           />
           <span className="pr-3 text-sm text-muted-foreground">.tradestats.app</span>
         </div>
-        <span className={cn("flex items-center gap-1.5 text-xs", ok ? "text-[var(--ts-yellow)]" : "text-[var(--ts-orange)]")}>
+        <span className={cn("flex items-center gap-1.5 text-xs", ok ? "text-[var(--ts-cta)]" : "text-[var(--ts-interactive)]")}>
           {ok ? <Check className="size-3.5" /> : <CircleAlert className="size-3.5" />}
           {!community.name.trim()
             ? "Give your platform a name first."
@@ -374,13 +374,13 @@ export function ModulesStep(props: StepProps) {
   const markets = community.setup?.markets ?? ["futures", "forex"]
   return (
     <div className="grid gap-4">
-      {acc?.answers && <p className={cn(mono, "text-[0.62rem] text-[var(--ts-yellow)]")}>Switched on from your answers</p>}
+      {acc?.answers && <p className={cn(mono, "text-[0.62rem] text-[var(--ts-cta)]")}>Switched on from your answers</p>}
       <div className="grid divide-y rounded-[var(--radius)] border bg-card">
         {MODULES.map((m) => {
           const on = community.modules[m.id]
           return (
             <label key={m.id} className="flex cursor-pointer items-center gap-3.5 px-4 py-3.5">
-              <m.icon className={cn("size-5 shrink-0", on ? "text-[var(--ts-orange)]" : "text-muted-foreground")} />
+              <m.icon className={cn("size-5 shrink-0", on ? "text-[var(--ts-interactive)]" : "text-muted-foreground")} />
               <span className="grid min-w-0 flex-1 gap-0.5">
                 <span className="flex items-center gap-2 text-sm">
                   {m.name}
@@ -396,7 +396,7 @@ export function ModulesStep(props: StepProps) {
                     onChange={(e) => update({ wording: { ...community.wording, [m.id]: e.target.value } })}
                     onClick={(e) => e.preventDefault()}
                     aria-label={`What students see instead of ${m.name}`}
-                    className="mt-1 h-7 w-full max-w-56 rounded-[var(--radius)] border border-white/10 bg-transparent px-2 text-xs outline-none focus:border-[var(--ts-orange)]"
+                    className="mt-1 h-7 w-full max-w-56 rounded-[var(--radius)] border border-white/10 bg-transparent px-2 text-xs outline-none focus:border-[var(--ts-interactive)]"
                   />
                 ) : (
                   <span className="text-xs text-muted-foreground">{m.text}</span>
@@ -418,7 +418,7 @@ export function ModulesStep(props: StepProps) {
                   key={mk.id}
                   onClick={() => update({ setup: { ...community.setup, markets: on ? markets.filter((x) => x !== mk.id) : [...markets, mk.id as Market] } })}
                   aria-pressed={on}
-                  className={cn("rounded-[var(--radius)] border px-2.5 py-1 text-xs", on ? "border-[var(--ts-orange)] text-foreground" : "text-muted-foreground")}
+                  className={cn("rounded-[var(--radius)] border px-2.5 py-1 text-xs", on ? "border-[var(--ts-interactive)] text-foreground" : "text-muted-foreground")}
                 >
                   {mk.label}
                 </button>
@@ -469,7 +469,7 @@ export function TierStep({ community, update, setReady }: StepProps) {
       {!free && (
         <>
           <Row label="Price" htmlFor="tprice" hint="Euro · tax added at checkout where needed">
-            <div className="flex h-11 items-center rounded-[var(--radius)] border border-input bg-card focus-within:border-[var(--ts-orange)] focus-within:ring-2 focus-within:ring-[var(--ts-orange)]/25">
+            <div className="flex h-11 items-center rounded-[var(--radius)] border border-input bg-card focus-within:border-[var(--ts-interactive)] focus-within:ring-2 focus-within:ring-[var(--ts-interactive)]/25">
               <span className="pl-3 text-muted-foreground">€</span>
               <input
                 id="tprice"
@@ -542,7 +542,7 @@ export function PayoutsStep({ community, update }: StepProps) {
     <div className="grid gap-5">
       <div className="grid gap-4 rounded-[var(--radius)] border bg-card p-5">
         <div className="flex items-start gap-3.5">
-          <span className={cn("grid size-10 shrink-0 place-items-center bg-white/5", connected && "bg-[var(--ts-yellow)] text-[#040404]")}>
+          <span className={cn("grid size-10 shrink-0 place-items-center bg-white/5", connected && "bg-[var(--ts-cta)] text-[#040404]")}>
             {connected ? <Check className="size-5" strokeWidth={2.5} /> : <Landmark className="size-5" />}
           </span>
           <div className="grid gap-1">
@@ -561,7 +561,7 @@ export function PayoutsStep({ community, update }: StepProps) {
               setBusy(true)
               setTimeout(() => update({ setup: { ...community.setup, payouts: "connected" } }), 1200)
             }}
-            className="flex h-11 items-center justify-center gap-2 bg-[var(--ts-yellow)] text-sm text-[#040404] disabled:opacity-70"
+            className="flex h-11 items-center justify-center gap-2 bg-[var(--ts-cta)] text-sm text-[#040404] disabled:opacity-70"
           >
             {busy ? (
               <>
@@ -579,12 +579,12 @@ export function PayoutsStep({ community, update }: StepProps) {
         <li>· Weekly payouts, no minimum</li>
       </ul>
       {!connected && paid && (
-        <p className="text-xs text-[var(--ts-orange)]">
+        <p className="text-xs text-[var(--ts-interactive)]">
           Your tier is paid, so students can&apos;t join until payouts are connected. You can still publish and invite them.
         </p>
       )}
       <p className="rounded-[var(--radius)] border border-dashed border-white/15 px-3 py-2 text-xs text-muted-foreground">
-        <span className={cn(mono, "mr-1.5 text-[var(--ts-yellow)]")}>Prototype</span>
+        <span className={cn(mono, "mr-1.5 text-[var(--ts-cta)]")}>Prototype</span>
         The real form is the payment provider&apos;s own (open question: Whop or Stripe Connect). Here it just simulates a success.
       </p>
     </div>

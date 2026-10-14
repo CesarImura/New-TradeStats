@@ -17,7 +17,7 @@ import {
   Sparkles,
   Trash2,
   Upload,
-} from "lucide-react"
+} from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"

@@ -1,6 +1,6 @@
 "use client"
 
-import { CalendarRange, Lock, Users } from "lucide-react"
+import { CalendarRange, Lock, Users } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"

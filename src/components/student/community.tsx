@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, ExternalLink, Hash, Heart, MessageCircle, Pin } from "lucide-react"
+import { Check, ExternalLink, Hash, Heart, MessageCircle, Pin } from "@/components/icons"
 import { toast } from "sonner"
 import { DiscordMark, type Announcement } from "@/components/admin/community/community-admin"
 import { useCommunityData } from "@/components/admin/kit"

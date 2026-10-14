@@ -4,6 +4,8 @@ import {
   Fraunces,
   Geist,
   Geist_Mono,
+  IBM_Plex_Mono,
+  IBM_Plex_Sans,
   Instrument_Serif,
   Manrope,
   Sora,
@@ -15,6 +17,9 @@ import {
 const geist = Geist({ subsets: ["latin"], variable: "--ff-geist" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--ff-geist-mono" })
 const archivo = Archivo({ subsets: ["latin"], variable: "--ff-archivo" })
+// Our own UI (admin, sign-up, wizard) uses IBM Plex; coaches can pick it too.
+const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--ff-plex" })
+const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--ff-plex-mono" })
 const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--ff-space-mono" })
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--ff-fraunces" })
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--ff-dm-sans" })
@@ -23,11 +28,12 @@ const manrope = Manrope({ subsets: ["latin"], variable: "--ff-manrope" })
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", variable: "--ff-instrument-serif" })
 
 export const fontVariables = [
-  geist, geistMono, archivo, spaceMono, fraunces, dmSans, sora, manrope, instrumentSerif,
+  geist, geistMono, plex, plexMono, archivo, spaceMono, fraunces, dmSans, sora, manrope, instrumentSerif,
 ].map((f) => f.variable).join(" ")
 
 export const FONT_LIBRARY = {
   geist: { label: "Geist", css: "var(--ff-geist), system-ui, sans-serif", kind: "sans" },
+  plex: { label: "IBM Plex Sans", css: "var(--ff-plex), system-ui, sans-serif", kind: "sans" },
   archivo: { label: "Archivo", css: "var(--ff-archivo), 'Helvetica Neue', Arial, sans-serif", kind: "sans" },
   "dm-sans": { label: "DM Sans", css: "var(--ff-dm-sans), system-ui, sans-serif", kind: "sans" },
   sora: { label: "Sora", css: "var(--ff-sora), system-ui, sans-serif", kind: "sans" },
@@ -35,6 +41,7 @@ export const FONT_LIBRARY = {
   fraunces: { label: "Fraunces", css: "var(--ff-fraunces), Georgia, serif", kind: "serif" },
   "instrument-serif": { label: "Instrument Serif", css: "var(--ff-instrument-serif), Georgia, serif", kind: "serif" },
   "space-mono": { label: "Space Mono", css: "var(--ff-space-mono), ui-monospace, monospace", kind: "mono" },
+  "plex-mono": { label: "IBM Plex Mono", css: "var(--ff-plex-mono), ui-monospace, monospace", kind: "mono" },
   "geist-mono": { label: "Geist Mono", css: "var(--ff-geist-mono), ui-monospace, monospace", kind: "mono" },
 } as const
 

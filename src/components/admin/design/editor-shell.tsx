@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { ArrowLeft, History, Play, PlayCircle, Undo2 } from "lucide-react"
+import { ArrowLeft, History, Play, PlayCircle, Undo2 } from "@/components/icons"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"

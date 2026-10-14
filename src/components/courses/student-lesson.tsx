@@ -19,7 +19,7 @@ import {
   Sparkles,
   Trash2,
   X,
-} from "lucide-react"
+} from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"

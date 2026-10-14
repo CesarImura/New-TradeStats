@@ -1,6 +1,6 @@
 "use client"
 
-import { Construction } from "lucide-react"
+import { Construction } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { adminNav, studentNav } from "@/components/coach/nav"
 

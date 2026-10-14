@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+import { Loader2 } from "@/components/icons"
 import { toast } from "sonner"
 import { OnbFrame, OnbTitle, ProtoNote } from "@/components/onboarding/frame"
 import { setAccount } from "@/lib/data/communities"
@@ -83,7 +83,7 @@ export default function Verify() {
               }}
               onFocus={(e) => e.target.select()}
               className={cn(
-                "h-14 w-full min-w-0 rounded-[var(--radius)] border border-input bg-card text-center font-[family-name:var(--ff-space-mono)] text-2xl outline-none focus:border-[var(--ts-orange)] focus:ring-2 focus:ring-[var(--ts-orange)]/30 disabled:opacity-60",
+                "h-14 w-full min-w-0 rounded-[var(--radius)] border border-input bg-card text-center font-[family-name:var(--ff-plex-mono)] text-2xl outline-none focus:border-[var(--ts-interactive)] focus:ring-2 focus:ring-[var(--ts-interactive)]/30 disabled:opacity-60",
                 i === 3 && "ml-3",
               )}
             />

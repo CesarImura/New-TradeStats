@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowDown, ArrowUp, Check, Crown, Flag, Trophy } from "lucide-react"
+import { ArrowDown, ArrowUp, Check, Crown, Flag, Trophy } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { LEADERBOARD, RANK_HISTORY } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"

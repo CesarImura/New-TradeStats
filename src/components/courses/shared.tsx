@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, Lock, Sparkles } from "lucide-react"
+import { Check, Lock, Sparkles } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"

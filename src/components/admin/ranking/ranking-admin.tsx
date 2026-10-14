@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Medal, Plus, Trophy } from "lucide-react"
+import { Medal, Plus, Trophy } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
@@ -39,8 +39,8 @@ export function RankingAdmin() {
         }
       />
       {!coach.modules.ranking && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-orange)]/40 bg-[var(--ts-orange)]/8 px-4 py-3 text-sm">
-          <Trophy className="size-4 text-[var(--ts-orange)]" />
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
+          <Trophy className="size-4 text-[var(--ts-interactive)]" />
           <span className="flex-1">Ranking is switched off, so students don&apos;t see it yet.</span>
           <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`${base}/design`} />}>
             Switch on in Design
@@ -62,7 +62,7 @@ export function RankingAdmin() {
                 <button
                   key={m.id}
                   onClick={() => set({ metric: m.id })}
-                  className={cn("grid gap-0.5 rounded-lg border bg-card px-3 py-2.5 text-left", r.metric === m.id && "border-[var(--ts-orange)]")}
+                  className={cn("grid gap-0.5 rounded-lg border bg-card px-3 py-2.5 text-left", r.metric === m.id && "border-[var(--ts-interactive)]")}
                 >
                   <span className="text-sm font-medium">{m.name}</span>
                   <span className="text-xs text-muted-foreground">{m.text}</span>
@@ -92,7 +92,7 @@ export function RankingAdmin() {
             <div className="divide-y rounded-lg border bg-card">
               {LEADERBOARD.filter((l) => !l.me).map((l) => (
                 <div key={l.rank} className="flex items-center gap-3 px-3 py-2.5 text-sm">
-                  <span className={cn("w-6 text-center tabular-nums", l.rank <= 3 && "text-[var(--ts-yellow)]")}>{l.rank}</span>
+                  <span className={cn("w-6 text-center tabular-nums", l.rank <= 3 && "text-[var(--ts-cta)]")}>{l.rank}</span>
                   <span className="flex-1">{r.nicknames ? l.name : l.name.replace(".", "")}</span>
                   <span className="tabular-nums">{l.score}</span>
                 </div>
@@ -171,7 +171,7 @@ export function RankingAdmin() {
             <div className="divide-y rounded-lg border bg-card">
               {BADGES.map((b) => (
                 <div key={b.name} className="flex items-center gap-3 px-3 py-2.5 text-sm">
-                  <Medal className="size-4 text-[var(--ts-yellow)]" />
+                  <Medal className="size-4 text-[var(--ts-cta)]" />
                   <span className="flex-1">{b.name}</span>
                   <span className="text-muted-foreground tabular-nums">{b.earned} earned</span>
                 </div>

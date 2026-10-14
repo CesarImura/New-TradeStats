@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CoachLogo } from "@/components/coach/coach-logo"
 import { CommunityMark } from "@/components/coach/community-mark"

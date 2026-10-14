@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Clock, Crosshair, Link2, ShieldAlert, Sigma } from "lucide-react"
+import { Clock, Crosshair, Link2, ShieldAlert, Sigma } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { ACCOUNT, MARKET_SESSIONS, NOW_HOUR, R_BINS, R_STATS, SESSION_PNL, SETUPS } from "@/lib/data/sample"

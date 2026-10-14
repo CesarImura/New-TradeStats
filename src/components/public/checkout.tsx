@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Check, CreditCard, Loader2, Lock, Tag, Users, Wallet } from "lucide-react"
+import { Check, CreditCard, Loader2, Lock, Tag, Users, Wallet } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

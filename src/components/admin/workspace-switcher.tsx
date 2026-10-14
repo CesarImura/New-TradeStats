@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { Check, ChevronsUpDown, Plus } from "lucide-react"
+import { Check, ChevronsUpDown, Plus } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CommunityMark } from "@/components/coach/community-mark"
 import {
@@ -50,7 +50,7 @@ export function WorkspaceSwitcher() {
             render={
               <SidebarMenuButton
                 size="lg"
-                className="data-popup-open:bg-sidebar-accent"
+                className="h-10 data-popup-open:bg-sidebar-accent"
                 aria-label={`Current community: ${coach.name}. Switch community`}
               />
             }

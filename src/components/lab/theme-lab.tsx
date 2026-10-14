@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { ArrowRight, Check as CheckIcon, Shuffle, TriangleAlert } from "lucide-react"
+import { ArrowRight, Check as CheckIcon, Shuffle, TriangleAlert } from "@/components/icons"
 import { CoachContext } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -64,7 +64,7 @@ export function ThemeLab() {
                     <button
                       key={id}
                       onClick={() => setTemplates(on ? templates.filter((x) => x !== id) : [...templates, id])}
-                      className={cn("rounded-[3px] border px-2.5 py-1 text-sm", on ? "border-[#ff5500] text-white" : "border-white/15 text-white/45")}
+                      className={cn("rounded-[3px] border px-2.5 py-1 text-sm", on ? "border-white text-white" : "border-white/15 text-white/45")}
                     >
                       {TEMPLATES[id].name}
                     </button>
@@ -80,7 +80,7 @@ export function ThemeLab() {
             </button>
           )}
           <label className="ml-auto flex items-center gap-2 text-sm text-white/70">
-            <input type="checkbox" checked={onlyIssues} onChange={(e) => setOnlyIssues(e.target.checked)} className="accent-[#ff5500]" />
+            <input type="checkbox" checked={onlyIssues} onChange={(e) => setOnlyIssues(e.target.checked)} className="accent-white" />
             Only themes with issues
           </label>
         </div>
@@ -122,7 +122,7 @@ function Summary({ themes, audits }: { themes: LabTheme[]; audits: Map<string, C
         const fails = themes.filter((t) => !audits.get(t.id)!.find((x) => x.id === c.id)!.pass).length
         return (
           <span key={c.id} className={cn("flex items-center gap-1.5", fails ? "text-white" : "text-white/35")}>
-            <span className={cn("size-1.5 rounded-full", fails ? "bg-[#ff5500]" : "bg-white/25")} />
+            <span className={cn("size-1.5 rounded-full", fails ? "bg-[#fa4d56]" : "bg-white/25")} />
             {c.label}
             <span className="tabular-nums text-white/50">{fails ? `fails ${fails}` : "ok"}</span>
           </span>
@@ -154,7 +154,7 @@ function Cell({ lab, checks, fixes }: { lab: LabTheme; checks: Check[]; fixes: b
           <span className="truncate text-sm">{lab.name}</span>
           {lab.note && <span className="truncate text-xs text-white/45">{lab.note}</span>}
         </div>
-        <span className={cn(mono, "ml-auto flex shrink-0 items-center gap-1", fails.length ? "text-[#ff5500]" : "text-white/40")}>
+        <span className={cn(mono, "ml-auto flex shrink-0 items-center gap-1", fails.length ? "text-[#ff8389]" : "text-white/40")}>
           {fails.length ? <TriangleAlert className="size-3.5" /> : <CheckIcon className="size-3.5" />}
           {fails.length ? `${fails.length} unreadable` : "Readable"}
         </span>

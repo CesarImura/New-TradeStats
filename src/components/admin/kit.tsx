@@ -1,6 +1,6 @@
 "use client"
 
-import { PlayCircle } from "lucide-react"
+import { PlayCircle } from "@/components/icons"
 import { toast } from "sonner"
 import { setStored, useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
@@ -10,8 +10,8 @@ export function PageHeader({ title, text, actions, guide }: { title: string; tex
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="grid gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        {text && <p className="max-w-2xl text-sm text-muted-foreground">{text}</p>}
+        <h1 className="text-[1.75rem] leading-9 font-normal tracking-[-0.005em]">{title}</h1>
+        {text && <p className="max-w-2xl text-sm leading-5 text-muted-foreground">{text}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {guide && (
@@ -85,7 +85,7 @@ export function Empty({ icon: Icon, title, text, action }: { icon: React.Compone
 
 /** Small mono label in our own TradeStats style. */
 export function Mono({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <span className={cn("font-[family-name:var(--ff-space-mono)] text-[0.65rem] tracking-[0.07em] uppercase", className)}>{children}</span>
+  return <span className={cn("font-[family-name:var(--ff-plex-mono)] text-[0.6875rem] tracking-[0.06em] uppercase", className)}>{children}</span>
 }
 
 export function HealthDot({ health, className }: { health: "red" | "amber" | "green"; className?: string }) {

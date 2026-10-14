@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowDown, ArrowUp, ChevronDown, Copy, Lock, Plus, Search, Star, X } from "lucide-react"
+import { ArrowDown, ArrowUp, ChevronDown, Copy, Lock, Plus, Search, Star, X } from "@/components/icons"
 import { toast } from "sonner"
 import { ChartCard } from "@/components/admin/charts/charts-admin"
 import { useCommunityData } from "@/components/admin/kit"

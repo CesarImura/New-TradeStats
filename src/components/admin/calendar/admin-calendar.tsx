@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { addDays, format } from "date-fns"
-import { CalendarClock, Plus, Sparkles, Trash2 } from "lucide-react"
+import { CalendarClock, Plus, Sparkles, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -70,7 +70,7 @@ export function AdminCalendar() {
     <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
+          <h1 className="text-[1.75rem] leading-9 font-normal tracking-[-0.005em]">Calendar</h1>
           <p className="text-sm text-muted-foreground">Lives, calls, workshops, 1:1s and market news. Students see it in their own time zone.</p>
         </div>
         <Button onClick={() => newEvent(new Date(2026, 9, 13, 15, 30))}>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, LayoutGrid, Maximize, Minus, Plus } from "lucide-react"
+import { ArrowLeft, LayoutGrid, Maximize, Minus, Plus } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { studentNav } from "@/components/coach/nav"
 import { Button } from "@/components/ui/button"

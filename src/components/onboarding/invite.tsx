@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowRight, Check, Copy, ExternalLink, Upload } from "lucide-react"
+import { ArrowRight, Check, Copy, ExternalLink, Upload } from "@/components/icons"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -59,7 +59,7 @@ export function InviteStep() {
         <section className="grid gap-2.5">
           <div className="flex items-baseline justify-between">
             <span className={cn(mono, "text-muted-foreground")}>Or invite by e-mail</span>
-            {invited > 0 && <span className="text-xs text-[var(--ts-yellow)]">{invited} invited so far</span>}
+            {invited > 0 && <span className="text-xs text-[var(--ts-cta)]">{invited} invited so far</span>}
           </div>
           <Textarea
             value={emails}

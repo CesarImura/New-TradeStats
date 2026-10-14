@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowRight, CalendarClock, Hourglass, Lock, MessageSquareReply, Sparkles } from "lucide-react"
+import { ArrowRight, CalendarClock, Hourglass, Lock, MessageSquareReply, Sparkles } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, FileSpreadsheet, Link2 } from "lucide-react"
+import { Check, FileSpreadsheet, Link2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
@@ -56,7 +56,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
 
         <div className="flex gap-1">
           {["source", "map", "access"].map((s, i) => (
-            <span key={s} className={cn("h-0.5 flex-1 bg-white/10", ["source", "map", "access"].indexOf(step) >= i && "bg-[var(--ts-yellow)]")} />
+            <span key={s} className={cn("h-0.5 flex-1 bg-white/10", ["source", "map", "access"].indexOf(step) >= i && "bg-[var(--ts-cta)]")} />
           ))}
         </div>
 
@@ -75,7 +75,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
                   role="radio"
                   aria-checked={mode === id}
                   onClick={() => setMode(id)}
-                  className={cn("grid gap-0.5 rounded-lg border p-3 text-left text-sm hover:bg-muted", mode === id && "border-[var(--ts-orange)]")}
+                  className={cn("grid gap-0.5 rounded-lg border p-3 text-left text-sm hover:bg-muted", mode === id && "border-[var(--ts-interactive)]")}
                 >
                   <span className="font-medium">{t}</span>
                   <span className="text-xs text-muted-foreground">{d}</span>

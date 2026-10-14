@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
-import { ArrowRight, Check, CircleDashed, PlayCircle, Radio } from "lucide-react"
+import { ArrowRight, Check, CircleDashed, PlayCircle, Radio } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -43,7 +43,7 @@ export function AdminOverview() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm text-muted-foreground">Monday, 12 October · {coach.name}</p>
-          <h1 className="text-2xl font-semibold tracking-tight">Good morning, {DEMO_ADMIN.name.split(" ")[0]}</h1>
+          <h1 className="text-[1.75rem] leading-9 font-normal tracking-[-0.005em]">Good morning, {DEMO_ADMIN.name.split(" ")[0]}</h1>
         </div>
         <Button>
           <Radio /> Go live

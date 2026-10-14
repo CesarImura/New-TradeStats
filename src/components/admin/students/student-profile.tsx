@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, Mail, MessageSquareText, Sparkles } from "lucide-react"
+import { Eye, Mail, MessageSquareText, Sparkles } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -63,8 +63,8 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
             </Button>
           </div>
           {briefing && (
-            <div className="mt-3 grid gap-2 rounded-lg border border-[var(--ts-yellow)]/25 bg-[var(--ts-yellow)]/5 p-3 text-sm">
-              <Mono className="text-[var(--ts-yellow)]">AI briefing · only you see this</Mono>
+            <div className="mt-3 grid gap-2 rounded-lg border border-[var(--ts-cta)]/25 bg-[var(--ts-cta)]/5 p-3 text-sm">
+              <Mono className="text-[var(--ts-cta)]">AI briefing · only you see this</Mono>
               <ul className="grid gap-1 text-muted-foreground">
                 <li>· {s.trades30} trades in 30 days, {s.rules}% of rules kept. Most broken: “Stop never moved further away”.</li>
                 <li>· Losing trades cluster after 12:00; mornings average +0.8R.</li>

@@ -1,26 +1,26 @@
 import Link from "next/link"
-import { ArrowRight, ArrowUpRight } from "lucide-react"
+import { ArrowRight, ArrowUpRight } from "@/components/icons"
 import { LauncherOnboarding } from "@/components/onboarding/launcher-section"
 import { COACHES } from "@/lib/data/coaches"
 import { themeToCss } from "@/lib/theme/css"
 import { resolveTheme } from "@/lib/theme/resolve"
 import { TEMPLATES } from "@/lib/theme/templates"
 
-const mono = "font-[family-name:var(--ff-space-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
+const mono = "font-[family-name:var(--ff-plex-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
 
 /** Prototype launcher, in our own TradeStats look. */
 export default function Launcher() {
   return (
-    <div className="min-h-svh bg-[#040404] font-[family-name:var(--ff-archivo)] text-white [background-image:linear-gradient(to_right,rgba(255,255,255,.06)_1px,transparent_1px)] [background-size:96px_100%]">
+    <div className="ts-ui min-h-svh bg-[#161616] font-[family-name:var(--ff-plex)] text-white [background-image:linear-gradient(to_right,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:96px_100%]">
       <div className="mx-auto flex max-w-[1180px] flex-col gap-14 px-5 py-14 md:py-20">
         <header className="flex flex-col gap-6">
           <div className="flex items-center gap-2.5">
             <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-              <path fill="#ff5500" d="M2 3h20v6h-7v12H9V9H2z" />
+              <path fill="#f4f4f4" d="M2 3h20v6h-7v12H9V9H2z" />
             </svg>
             <span className={mono}>TradeStats · Coach platform · Prototype</span>
           </div>
-          <h1 className="max-w-[14ch] text-5xl leading-[1.02] font-normal tracking-tight md:text-7xl">
+          <h1 className="max-w-[14ch] text-5xl leading-[1.02] font-light tracking-tight md:text-7xl">
             One platform, every coach&apos;s own.
           </h1>
           <p className="max-w-[60ch] text-white/60">
@@ -40,7 +40,7 @@ export default function Launcher() {
             const theme = resolveTheme(c)
             const scope = `.pv-${c.slug}`
             return (
-              <article key={c.slug} className="flex flex-col gap-5 bg-[#040404] p-5">
+              <article key={c.slug} className="flex flex-col gap-5 bg-[#161616] p-5">
                 <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, scope) }} />
                 <div className="flex items-center justify-between">
                   <span className={`${mono} text-white/50`}>Template · {TEMPLATES[c.template].name}</span>
@@ -75,7 +75,7 @@ export default function Launcher() {
                   <p className="text-sm text-white/55">{c.tagline}</p>
                 </div>
                 <div className="mt-auto flex flex-wrap gap-2">
-                  <Link href={`/c/${c.slug}`} className={`${mono} inline-flex items-center gap-2 rounded-[2px] bg-[#f8ff9e] px-3.5 py-2.5 text-[#040404]`}>
+                  <Link href={`/c/${c.slug}`} className={`${mono} inline-flex items-center gap-2 rounded-[2px] bg-white px-3.5 py-2.5 text-[#161616] hover:bg-[#e0e0e0]`}>
                     Student side <ArrowRight className="size-3.5" />
                   </Link>
                   <Link href={`/admin/${c.slug}`} className={`${mono} inline-flex items-center gap-2 rounded-[2px] border border-white/20 px-3.5 py-2.5 hover:bg-white/5`}>
