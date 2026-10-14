@@ -58,7 +58,7 @@ export function PreviewPicker() {
       const hit = resolve(e.target as Element)
       if (!hit) return
       setPicked(hit)
-      window.parent.postMessage({ type: "design-pick", target: hit.target } satisfies PickMessage, window.location.origin)
+      window.parent.postMessage({ type: "design-pick", target: hit.target, count: elementsFor([hit.target], 999).length } satisfies PickMessage, window.location.origin)
     }
     const opts = { capture: true }
     document.addEventListener("pointermove", move, opts)

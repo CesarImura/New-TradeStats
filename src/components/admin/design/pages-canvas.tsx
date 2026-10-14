@@ -200,15 +200,16 @@ export function PagesCanvas() {
   const dot = 22 * cam.z < 8 ? 22 * 4 * cam.z : 22 * cam.z // keep the dots from getting too dense when zoomed out
 
   return (
-    <div className="-m-4 grid min-h-[calc(100svh-3.5rem)] grid-rows-[auto_1fr] md:-m-6 lg:-m-8 lg:h-[calc(100svh-3.5rem)]">
+    <div className="-mx-4 -my-5 grid min-h-[calc(100svh-2.75rem)] grid-rows-[auto_1fr] md:-m-6 lg:h-[calc(100svh-2.75rem)]">
       <EditorBar
         slug={slug}
-        active="pages"
+        title="All pages"
+        back={{ href: `/admin/${slug}/design?mode=arrange&panel=pages${focused ? `&page=${focused.id}` : ""}`, label: "Design" }}
         editor={editor}
         previewHref={`${focused?.href ?? `/c/${slug}`}?preview=draft`}
         guide={{
           title: "Your pages",
-          text: "Every page your students see, side by side. Click one to zoom in and look closely; the Home page has its own widget builder.",
+          text: "Every page your students see, side by side. Click one to zoom in and look closely, then open it in Design to arrange its widgets.",
         }}
       />
 
@@ -299,7 +300,7 @@ export function PagesCanvas() {
                 </Button>
               ))}
             </div>
-            <Button size="sm" nativeButton={false} render={<Link href={`/admin/${slug}/design/pages?page=${focused.id}`} />}>
+            <Button size="sm" nativeButton={false} render={<Link href={`/admin/${slug}/design?mode=arrange&panel=pages&page=${focused.id}`} />}>
               <LayoutGrid /> Edit widgets
             </Button>
           </div>

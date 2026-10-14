@@ -1,7 +1,7 @@
 /**
  * Click-to-edit in the Design preview. The preview frame (the real student
  * platform) works out which design setting a clicked element belongs to and
- * tells the editor, which opens and flashes that setting. Hovering a setting
+ * tells the editor, whose inspector then shows just that setting. Hovering a setting
  * in the editor outlines what it changes in the preview.
  *
  * Elements are matched from what they already are (shadcn data-slot, headings,
@@ -89,5 +89,6 @@ export function targetsForField(field: string): PickTarget[] {
 export type PickMessage =
   | { type: "design-pick-ready" }
   | { type: "design-pick-mode"; on: boolean }
-  | { type: "design-pick"; target: PickTarget }
+  /** `count`: how many parts of the page this setting changes. */
+  | { type: "design-pick"; target: PickTarget; count: number }
   | { type: "design-show"; targets: PickTarget[] }

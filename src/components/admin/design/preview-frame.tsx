@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 
-const SIZES = { desktop: { w: 1280, h: 860 }, phone: { w: 390, h: 844 } } as const
+const SIZES = { desktop: { w: 1280, h: 860 }, tablet: { w: 820, h: 1180 }, phone: { w: 390, h: 844 } } as const
 
 /**
  * The coach's real platform, loaded in a frame with ?preview=draft so it
@@ -30,15 +30,16 @@ export function PreviewFrame({
     return () => ro.disconnect()
   }, [])
 
-  const scale = space.w ? Math.min(1, (space.w - 32) / size.w, device === "phone" ? (space.h - 32) / size.h : 1) : 0
-  const height = device === "phone" ? size.h : Math.max(size.h, (space.h - 32) / (scale || 1))
+  const fixed = device !== "desktop"
+  const scale = space.w ? Math.min(1, (space.w - 32) / size.w, fixed ? (space.h - 32) / size.h : 1) : 0
+  const height = fixed ? size.h : Math.max(size.h, (space.h - 32) / (scale || 1))
 
   return (
     <div ref={box} className="relative grid h-full min-h-0 place-items-start justify-center overflow-hidden p-4">
       {scale > 0 && (
         <div
           className="overflow-hidden rounded-xl bg-background shadow-xl ring-1 ring-black/10"
-          style={{ width: size.w * scale, height: height * scale, borderRadius: device === "phone" ? 28 : 12 }}
+          style={{ width: size.w * scale, height: height * scale, borderRadius: fixed ? 28 : 12 }}
         >
           <iframe
             key={device}

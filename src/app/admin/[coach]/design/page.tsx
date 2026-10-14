@@ -1,5 +1,10 @@
-import { DesignEditor } from "@/components/admin/design/design-editor"
+import { Suspense } from "react"
+import { DesignWorkspace } from "@/components/admin/design/design-workspace"
 
 export default function Page() {
-  return <DesignEditor />
+  return (
+    <Suspense>
+      <DesignWorkspace />
+    </Suspense>
+  )
 }

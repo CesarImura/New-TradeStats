@@ -19,7 +19,6 @@ import {
   usePublished,
   type Overrides,
 } from "@/lib/prototype-store"
-import { cn } from "@/lib/utils"
 
 /**
  * Draft editing shared by the design editor and the page builder: the
@@ -85,50 +84,42 @@ export function useDraftEditor(slug: string) {
   }
 }
 
-/** Top bar of the Design area: tabs between editors, status, and the draft actions. */
+/**
+ * Top bar of the Design workspace: the way back (to setup, or from the all-pages
+ * overview to the workspace), what you're looking at (`children`: page and
+ * tier), status, and the draft actions.
+ */
 export function EditorBar({
   slug,
-  active,
+  title = "Design",
+  back,
   editor,
   guide,
   previewHref,
+  children,
 }: {
   slug: string
-  active: "look" | "pages"
+  title?: string
+  /** A link back to where this screen was opened from. */
+  back?: { href: string; label: string }
   editor: ReturnType<typeof useDraftEditor>
   guide: { title: string; text: string }
   /** The student page to open in a new tab, showing the draft. */
   previewHref: string
+  children?: React.ReactNode
 }) {
-  // Opened from the setup wizard: keep the way back, on every Design tab.
+  // Opened from the setup wizard: keep the way back, everywhere in Design.
   const fromSetup = useSearchParams().get("from") === "setup"
-  const q = fromSetup ? "?from=setup" : ""
-  const tabs = [
-    { id: "look", label: "Look and feel", href: `/admin/${slug}/design${q}` },
-    { id: "pages", label: "Pages", href: `/admin/${slug}/design/pages${q}` },
-  ]
+  const way = fromSetup ? { href: "/setup", label: "Back to setup" } : back
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b bg-background px-4 py-2">
-      {fromSetup && (
-        <Button size="sm" nativeButton={false} render={<Link href="/setup" />} className="mr-1">
-          <ArrowLeft /> Back to setup
+    <div className="flex flex-wrap items-center gap-2 border-b bg-[var(--sidebar)] px-3 py-1.5" data-design-slug={slug}>
+      {way && (
+        <Button size="sm" variant={fromSetup ? "default" : "ghost"} nativeButton={false} render={<Link href={way.href} />}>
+          <ArrowLeft /> {way.label}
         </Button>
       )}
-      <nav className="mr-2 flex items-center gap-1" aria-label="Design areas">
-        {tabs.map((t) => (
-          <Link
-            key={t.id}
-            href={t.href}
-            aria-current={active === t.id ? "page" : undefined}
-            className={cn(
-              "rounded-md px-2.5 py-1.5 text-sm text-muted-foreground hover:text-foreground",
-              active === t.id && "bg-muted font-medium text-foreground",
-            )}
-          >
-            {t.label}
-          </Link>
-        ))}
-      </nav>
+      <span className="px-1 text-[0.8125rem] font-semibold">{title}</span>
+      {children}
       <div className="mr-auto">
         {editor.dirty ? (
           <Badge variant="secondary" className="gap-1.5">
