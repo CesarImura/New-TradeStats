@@ -1,48 +1,17 @@
-import {
-  BookOpen,
-  ChartCandlestick,
-  MessagesSquare,
-  NotebookPen,
-  CalendarDays,
-  CircleCheck,
-  Gauge,
-  GraduationCap,
-  Handshake,
-  Image as ImageIcon,
-  LineChart,
-  Megaphone,
-  MessageSquareText,
-  Newspaper,
-  PlayCircle,
-  Radio,
-  Sparkles,
-  Trophy,
-  Type,
-  Video,
-  BadgeCheck,
-  CalendarClock,
-  Clock,
-  Crosshair,
-  Hourglass,
-  Lightbulb,
-  MessageSquareReply,
-  ShieldAlert,
-  Sigma,
-  type LucideIcon,
-} from "@/components/icons"
+import { BookOpen, ChartCandlestick, MessagesSquare, NotebookPen, CalendarDays, CircleCheck, Gauge, GraduationCap, Handshake, Image as ImageIcon, LineChart, Megaphone, MessageSquareText, Newspaper, PlayCircle, Radio, Sparkles, Trophy, Type, Video, BadgeCheck, CalendarClock, MessageSquareReply, ShieldAlert, type LucideIcon } from "@/components/icons"
 import type { ModuleId } from "@/lib/data/coaches"
 import { CORE_H, COLS, coreType, type PageId } from "@/lib/widgets/layout"
 import { corePage } from "./core"
 import { AiAsk, Banner, PartnerLinks, TextBlock, WelcomeVideo } from "./brand"
-import { EconNews, NextLive, ThisWeek } from "./calendar"
+import { EconNews, NextLive } from "./calendar"
 import { Announcement, Discord } from "./community"
 import { JournalPnl, RulesFollowed } from "./journal"
 import { ContinueLesson, CourseProgress } from "./learning"
 import { FirstWeek, MyRank } from "./progress"
-import { AiInsight, BookCall, CoachFeedback, NextUnlock } from "./coaching"
+import { BookCall, CoachFeedback } from "./coaching"
 import { CoachProfile, Upgrade } from "./offer"
 import type { WidgetProps } from "./shared"
-import { Drawdown, MarketSessions, RSpread, Setups } from "./trading"
+import { Drawdown } from "./trading"
 
 export type WidgetGroup = "Learning" | "Calendar" | "Journal" | "Coaching" | "Progress" | "Community" | "Coach and brand" | "AI" | "Page"
 
@@ -85,9 +54,9 @@ export const WIDGETS: WidgetDef[] = [
     icon: PlayCircle,
     module: "courses",
     variants: [
-      { value: "progress", label: "Progress bar", h: 3, minH: 3 },
-      { value: "card", label: "Compact", h: 2, minH: 2 },
+      { value: "progress", label: "Next lesson", h: 3, minH: 3 },
       { value: "cover", label: "Cover", h: 3, minH: 3 },
+      { value: "card", label: "One line", h: 2, minH: 2 },
     ],
     settings: [
       { key: "title", label: "Small label", type: "text", placeholder: "Start here" },
@@ -100,14 +69,14 @@ export const WIDGETS: WidgetDef[] = [
   {
     type: "course-progress",
     name: "Courses",
-    description: "All courses with progress; locked ones show the tier",
+    description: "All courses with progress, locked ones show the tier, and what unlocks next",
     group: "Learning",
     icon: GraduationCap,
     module: "courses",
     variants: [
       { value: "rings", label: "Rings", h: 3, minH: 3 },
-      { value: "bars", label: "Bars", h: 4, minH: 3 },
-      { value: "dots", label: "Lesson dots", h: 4, minH: 3 },
+      { value: "bars", label: "List", h: 4, minH: 3 },
+      { value: "unlocks", label: "Next unlock", h: 3, minH: 3 },
     ],
     defaultW: 8,
     minW: 4,
@@ -115,48 +84,32 @@ export const WIDGETS: WidgetDef[] = [
   },
   {
     type: "next-live",
-    name: "Next live session",
-    description: "When the next live is, with a reminder",
+    name: "Up next",
+    description: "The next live, call or workshop, today on a timeline, or the week ahead",
     group: "Calendar",
     icon: Radio,
     module: "calendar",
     variants: [
       { value: "countdown", label: "Countdown", h: 3, minH: 3 },
-      { value: "timeline", label: "Day timeline", h: 3, minH: 3 },
-      { value: "block", label: "Colour block", h: 3, minH: 3 },
+      { value: "timeline", label: "Today", h: 3, minH: 3 },
+      { value: "week", label: "Week", h: 3, minH: 3 },
     ],
+    settings: [{ key: "news", label: "Include market news", type: "toggle", defaultOn: true }],
     defaultW: 4,
     minW: 3,
     Component: NextLive,
   },
   {
-    type: "this-week",
-    name: "This week",
-    description: "Lives, calls and workshops coming up",
-    group: "Calendar",
-    icon: CalendarDays,
-    module: "calendar",
-    variants: [
-      { value: "week", label: "Week", h: 3, minH: 3 },
-      { value: "timeline", label: "Timeline", h: 4, minH: 4 },
-      { value: "list", label: "List", h: 4, minH: 3 },
-    ],
-    settings: [{ key: "news", label: "Include economic news", type: "toggle", defaultOn: true }],
-    defaultW: 6,
-    minW: 3,
-    Component: ThisWeek,
-  },
-  {
     type: "econ-news",
-    name: "Economic news",
-    description: "Rate decisions, CPI, NFP and your no-trade marks",
+    name: "Market calendar",
+    description: "Rate decisions, CPI, NFP, your no-trade marks and which market sessions are open",
     group: "Calendar",
     icon: Newspaper,
     module: "calendar",
     variants: [
-      { value: "impact", label: "Impact bars", h: 3, minH: 3 },
-      { value: "next", label: "Next big one", h: 4, minH: 3 },
-      { value: "list", label: "List", h: 4, minH: 3 },
+      { value: "next", label: "Next big one", h: 3, minH: 3 },
+      { value: "week", label: "This week", h: 4, minH: 3 },
+      { value: "sessions", label: "Sessions", h: 3, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -164,15 +117,15 @@ export const WIDGETS: WidgetDef[] = [
   },
   {
     type: "journal-pnl",
-    name: "P&L",
-    description: "The student's own result from their journal",
+    name: "Performance",
+    description: "The student's results from their journal: P&L, equity curve and edge",
     group: "Journal",
     icon: LineChart,
     module: "journal",
     variants: [
-      { value: "bars", label: "Daily bars", h: 3, minH: 3 },
       { value: "curve", label: "Equity curve", h: 3, minH: 3 },
-      { value: "heatmap", label: "Heatmap", h: 4, minH: 3 },
+      { value: "bars", label: "Daily P&L", h: 3, minH: 3 },
+      { value: "heatmap", label: "Calendar", h: 4, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -180,15 +133,15 @@ export const WIDGETS: WidgetDef[] = [
   },
   {
     type: "rules-followed",
-    name: "Rules followed",
-    description: "How well the student sticks to your rules",
+    name: "Discipline",
+    description: "How well the student keeps your rules",
     group: "Journal",
     icon: Gauge,
     module: "journal",
     variants: [
       { value: "radar", label: "Radar", h: 4, minH: 3 },
-      { value: "ring", label: "Ring", h: 2, minH: 2 },
-      { value: "streak", label: "Streak", h: 2, minH: 2 },
+      { value: "streak", label: "Clean streak", h: 3, minH: 2 },
+      { value: "rules", label: "Rule by rule", h: 4, minH: 2 },
     ],
     defaultW: 4,
     minW: 3,
@@ -203,7 +156,7 @@ export const WIDGETS: WidgetDef[] = [
     variants: [
       { value: "steps", label: "Steps", h: 2, minH: 2 },
       { value: "ring", label: "Ring", h: 2, minH: 2 },
-      { value: "checklist", label: "Checklist", h: 3, minH: 3 },
+      { value: "checklist", label: "Checklist", h: 4, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -220,7 +173,6 @@ export const WIDGETS: WidgetDef[] = [
       { value: "trend", label: "Trend", h: 3, minH: 3 },
       { value: "podium", label: "Podium", h: 3, minH: 3 },
       { value: "leaderboard", label: "Top list", h: 5, minH: 4 },
-      { value: "brand", label: "Brand", h: 3, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -233,10 +185,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Community",
     icon: Megaphone,
     variants: [
-      { value: "highlight", label: "Highlighted", h: 3, minH: 2 },
-      { value: "plain", label: "Plain", h: 3, minH: 2 },
+      { value: "plain", label: "Headline", h: 3, minH: 2 },
       { value: "post", label: "Post", h: 3, minH: 3 },
-      { value: "brand", label: "Brand", h: 3, minH: 2 },
+      { value: "line", label: "One line", h: 1, minH: 1 },
     ],
     defaultW: 4,
     minW: 3,
@@ -251,9 +202,8 @@ export const WIDGETS: WidgetDef[] = [
     module: "community",
     variants: [
       { value: "online", label: "Who's online", h: 3, minH: 3 },
-      { value: "card", label: "Card", h: 3, minH: 3 },
-      { value: "banner", label: "Banner", h: 2, minH: 2 },
-      { value: "brand", label: "Brand", h: 3, minH: 3 },
+      { value: "card", label: "Channels", h: 4, minH: 3 },
+      { value: "banner", label: "One row", h: 2, minH: 1 },
     ],
     settings: [{ key: "text", label: "Text", type: "textarea" }],
     defaultW: 4,
@@ -268,7 +218,7 @@ export const WIDGETS: WidgetDef[] = [
     icon: Video,
     variants: [
       { value: "side", label: "Side by side", h: 4, minH: 4 },
-      { value: "stacked", label: "Video on top", h: 5, minH: 5 },
+      { value: "stacked", label: "Video on top", h: 5, minH: 4 },
       { value: "minimal", label: "Quote", h: 3, minH: 3 },
     ],
     settings: [
@@ -286,11 +236,12 @@ export const WIDGETS: WidgetDef[] = [
     group: "Coach and brand",
     icon: ImageIcon,
     variants: [
-      { value: "brand", label: "Brand colour", h: 2, minH: 2 },
-      { value: "highlight", label: "Highlight", h: 2, minH: 2 },
-      { value: "plain", label: "Plain", h: 2, minH: 2 },
+      { value: "headline", label: "Headline", h: 2, minH: 2 },
+      { value: "picture", label: "With picture", h: 3, minH: 2 },
+      { value: "slim", label: "One line", h: 1, minH: 1 },
     ],
     settings: [
+      { key: "eyebrow", label: "Small label", type: "text", placeholder: "Limited places" },
       { key: "title", label: "Headline", type: "text" },
       { key: "text", label: "Text", type: "textarea" },
       { key: "button", label: "Button text", type: "text", placeholder: "Find out more" },
@@ -307,19 +258,19 @@ export const WIDGETS: WidgetDef[] = [
       },
     ],
     defaultW: 12,
-    minW: 6,
+    minW: 4,
     Component: Banner,
   },
   {
     type: "text",
     name: "Text",
-    description: "A heading and a paragraph, or a quote",
+    description: "A heading and a paragraph, a quote, or numbered steps",
     group: "Coach and brand",
     icon: Type,
     variants: [
-      { value: "plain", label: "Plain", h: 2, minH: 2 },
-      { value: "quote", label: "Quote", h: 2, minH: 2 },
-      { value: "centered", label: "Centred", h: 2, minH: 2 },
+      { value: "plain", label: "Plain", h: 3, minH: 2 },
+      { value: "quote", label: "Quote", h: 3, minH: 2 },
+      { value: "steps", label: "Steps", h: 3, minH: 2 },
     ],
     settings: [
       { key: "title", label: "Heading", type: "text" },
@@ -336,8 +287,8 @@ export const WIDGETS: WidgetDef[] = [
     group: "Coach and brand",
     icon: Handshake,
     variants: [
-      { value: "list", label: "List", h: 4, minH: 4 },
-      { value: "tiles", label: "Tiles", h: 4, minH: 3 },
+      { value: "list", label: "List", h: 4, minH: 3 },
+      { value: "tiles", label: "Logo wall", h: 4, minH: 3 },
       { value: "chips", label: "Chips", h: 1, minH: 1 },
     ],
     defaultW: 4,
@@ -347,50 +298,18 @@ export const WIDGETS: WidgetDef[] = [
   {
     type: "ai-ask",
     name: "Ask the AI",
-    description: "A search box for your AI assistant",
+    description: "A question box for your AI assistant, with one insight from the student's trades",
     group: "AI",
     icon: Sparkles,
     module: "ai",
     variants: [
-      { value: "search", label: "Search box", h: 3, minH: 3 },
-      { value: "chat", label: "Example chat", h: 4, minH: 4 },
-      { value: "quota", label: "Questions left", h: 3, minH: 3 },
-      { value: "brand", label: "Brand", h: 3, minH: 3 },
+      { value: "search", label: "Question box", h: 3, minH: 2 },
+      { value: "chat", label: "Example chat", h: 5, minH: 4 },
+      { value: "insight", label: "Insight from trades", h: 4, minH: 3 },
     ],
     defaultW: 12,
     minW: 4,
     Component: AiAsk,
-  },
-  {
-    type: "next-unlock",
-    name: "Next unlock",
-    description: "Countdown to the next module that opens",
-    group: "Learning",
-    icon: Hourglass,
-    module: "courses",
-    variants: [
-      { value: "countdown", label: "Countdown", h: 3, minH: 3 },
-      { value: "schedule", label: "Schedule", h: 3, minH: 3 },
-      { value: "card", label: "Compact", h: 2, minH: 2 },
-    ],
-    defaultW: 4,
-    minW: 3,
-    Component: NextUnlock,
-  },
-  {
-    type: "market-sessions",
-    name: "Market sessions",
-    description: "Sydney, Tokyo, London and New York: open, closed, and your results",
-    group: "Calendar",
-    icon: Clock,
-    variants: [
-      { value: "timeline", label: "Session bars", h: 3, minH: 3 },
-      { value: "clock", label: "24h clock", h: 4, minH: 3 },
-      { value: "status", label: "Open / closed", h: 3, minH: 3 },
-    ],
-    defaultW: 6,
-    minW: 3,
-    Component: MarketSessions,
   },
   {
     type: "book-call",
@@ -403,7 +322,6 @@ export const WIDGETS: WidgetDef[] = [
       { value: "slots", label: "Time slots", h: 4, minH: 3 },
       { value: "next", label: "Next free", h: 3, minH: 3 },
       { value: "allowance", label: "Calls left", h: 2, minH: 2 },
-      { value: "brand", label: "Brand", h: 3, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
@@ -411,7 +329,7 @@ export const WIDGETS: WidgetDef[] = [
   },
   {
     type: "drawdown",
-    name: "Drawdown",
+    name: "Risk limits",
     description: "How close the account is to its loss limits",
     group: "Journal",
     icon: ShieldAlert,
@@ -419,43 +337,11 @@ export const WIDGETS: WidgetDef[] = [
     variants: [
       { value: "gauge", label: "Gauge", h: 3, minH: 3 },
       { value: "bars", label: "Limit bars", h: 3, minH: 2 },
-      { value: "curve", label: "Balance curve", h: 4, minH: 3 },
+      { value: "curve", label: "Balance and floor", h: 4, minH: 3 },
     ],
     defaultW: 4,
     minW: 3,
     Component: Drawdown,
-  },
-  {
-    type: "setups",
-    name: "Win rate by setup",
-    description: "Which setups make money and which don't",
-    group: "Journal",
-    icon: Crosshair,
-    module: "journal",
-    variants: [
-      { value: "bars", label: "Bars", h: 4, minH: 3 },
-      { value: "table", label: "Table", h: 4, minH: 3 },
-      { value: "best", label: "Best setup", h: 3, minH: 3 },
-    ],
-    defaultW: 6,
-    minW: 3,
-    Component: Setups,
-  },
-  {
-    type: "r-spread",
-    name: "R-multiple spread",
-    description: "How trades end, in R, and what you earn per trade",
-    group: "Journal",
-    icon: Sigma,
-    module: "journal",
-    variants: [
-      { value: "histogram", label: "Histogram", h: 3, minH: 3 },
-      { value: "expectancy", label: "Expectancy", h: 3, minH: 3 },
-      { value: "split", label: "Win/loss split", h: 2, minH: 2 },
-    ],
-    defaultW: 6,
-    minW: 3,
-    Component: RSpread,
   },
   {
     type: "coach-feedback",
@@ -474,22 +360,6 @@ export const WIDGETS: WidgetDef[] = [
     Component: CoachFeedback,
   },
   {
-    type: "ai-insight",
-    name: "AI insight",
-    description: "One pattern from the student's own trades",
-    group: "AI",
-    icon: Lightbulb,
-    module: "ai",
-    variants: [
-      { value: "chart", label: "With chart", h: 3, minH: 3 },
-      { value: "card", label: "With lesson", h: 3, minH: 3 },
-      { value: "compact", label: "One line", h: 2, minH: 2 },
-    ],
-    defaultW: 6,
-    minW: 3,
-    Component: AiInsight,
-  },
-  {
     type: "upgrade",
     name: "Upgrade",
     description: "Their tier next to the next one, shown only when there is one",
@@ -498,7 +368,7 @@ export const WIDGETS: WidgetDef[] = [
     variants: [
       { value: "compare", label: "Compare", h: 5, minH: 4 },
       { value: "banner", label: "Banner", h: 2, minH: 2 },
-      { value: "card", label: "Card", h: 3, minH: 3 },
+      { value: "card", label: "Price", h: 3, minH: 3 },
     ],
     settings: [{ key: "button", label: "Button text", type: "text", placeholder: "Upgrade to …" }],
     defaultW: 6,
@@ -513,7 +383,7 @@ export const WIDGETS: WidgetDef[] = [
     icon: BadgeCheck,
     variants: [
       { value: "card", label: "Card", h: 4, minH: 3 },
-      { value: "hero", label: "Large", h: 4, minH: 4 },
+      { value: "hero", label: "Large", h: 4, minH: 3 },
       { value: "compact", label: "One row", h: 2, minH: 2 },
     ],
     defaultW: 4,
@@ -549,13 +419,13 @@ for (const c of CORE) {
 
 /** Widgets offered first on each module page; Home offers every widget. */
 export const PAGE_WIDGETS: Record<ModuleId, string[]> = {
-  courses: ["continue-lesson", "next-unlock", "course-progress"],
-  calendar: ["next-live", "this-week", "econ-news", "market-sessions", "book-call"],
-  charts: ["setups", "market-sessions", "econ-news"],
-  journal: ["journal-pnl", "rules-followed", "r-spread", "drawdown", "setups", "coach-feedback", "ai-insight"],
+  courses: ["continue-lesson", "course-progress"],
+  calendar: ["next-live", "econ-news", "book-call"],
+  charts: ["econ-news", "journal-pnl"],
+  journal: ["journal-pnl", "rules-followed", "drawdown", "coach-feedback", "ai-ask"],
   community: ["announcement", "discord", "my-rank"],
   ranking: ["my-rank", "first-week"],
-  ai: ["ai-insight", "ai-ask"],
+  ai: ["ai-ask"],
 }
 /** Widgets that make sense on any page. */
 export const ANYWHERE = ["banner", "text", "welcome-video", "announcement", "upgrade", "partner-links", "coach-profile", "book-call"]
@@ -584,4 +454,12 @@ export function lookOf(def: WidgetDef, variant?: string) {
 export function heightOf(w: { type: string; variant?: string }) {
   const def = getWidget(w.type)
   return def ? lookOf(def, w.variant).h : 4
+}
+
+/** Rows a Detailed widget gets on top of its layout's height: room for the extra list or stats. */
+export const DETAILED_EXTRA_ROWS = 2
+
+/** Standard height for a widget's layout at a given Detail. */
+export function heightFor(def: WidgetDef, variant?: string, detail?: "compact" | "standard" | "detailed") {
+  return lookOf(def, variant).h + (detail === "detailed" ? DETAILED_EXTRA_ROWS : 0)
 }

@@ -29,15 +29,16 @@ import {
 } from "@/components/ui/context-menu"
 import { PageRenderer, isAvailable } from "@/components/widgets/page-renderer"
 import { WidgetFrame } from "@/components/widgets/kit"
-import { getWidget, heightOf, lookOf } from "@/components/widgets/registry"
+import { getWidget, heightFor, heightOf, lookOf } from "@/components/widgets/registry"
 import { DataModeProvider, type DataMode } from "@/components/widgets/shared"
 import type { Coach } from "@/lib/data/coaches"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { themeToCss } from "@/lib/theme/css"
 import { pageLayout } from "@/lib/theme/resolve"
 import type { CoachTheme } from "@/lib/theme/types"
-import { COLS, GAP, ROW_HEIGHT, normalizeLayout, uid, withCore, type PageId, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
+import { COLS, GAP, ROW_HEIGHT, normalizeLayout, oneStar, uid, withCore, type Detail, type Emphasis, type PageId, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
+import { DETAIL, EMPHASIS } from "./builder-panels"
 import type { useDraftEditor } from "./editor-shell"
 
 const DEVICE_WIDTH: Record<Device, number> = { desktop: 1180, tablet: 820, phone: 390 }
@@ -87,13 +88,34 @@ export function useArrange({
   const savePages = (next: typeof layouts, key: string) =>
     commit({ ...working, content: { ...working.content, pages: { ...coach.pages, [page]: next } } }, `${page}-${key}`)
 
-  const save = (next: PageLayout, key: string) => {
-    savePages({ ...layouts, [tier]: next }, `${tier}-${key}`)
+  /**
+   * Every edit goes through here. Only one Star per page: `keep` names the
+   * widget that just became the star; any other star becomes Accent in the
+   * same commit, so one undo brings both back.
+   */
+  const save = (next: PageLayout, key: string, keep?: string) => {
+    const items = oneStar(next.items, keep)
+    const demoted = next.items.filter((w, i) => w.emphasis === "star" && items[i].emphasis !== "star")
+    savePages({ ...layouts, [tier]: { ...next, items } }, `${tier}-${key}`)
+    if (demoted.length) {
+      const names = demoted.map((w) => getWidget(w.type)?.name ?? "A widget").join(", ")
+      toast(`${names} gave up ${demoted.length > 1 ? "their" : "its"} star.`, { description: "Only one Star per page; it is Accent now." })
+    }
     if (inherits) toast(`${tierName} now has its own ${pageInfo.label} page. Other tiers keep the default.`)
   }
   const pinned = (id: string) => !!getWidget(layout.items.find((w) => w.id === id)?.type ?? "")?.core
-  const updateItem = (id: string, patch: Partial<WidgetInstance>, key: string) =>
-    save({ items: layout.items.map((w) => (w.id === id ? { ...w, ...patch } : w)) }, key)
+  const updateItem = (id: string, patch: Partial<WidgetInstance>, key: string) => {
+    const cur = layout.items.find((w) => w.id === id)
+    const def = cur && getWidget(cur.type)
+    // Detailed shows more, so it gets more rows (and back); widgets below move down to make room.
+    if (cur && def && patch.detail && patch.detail !== (cur.detail ?? "standard")) {
+      const grow = heightFor(def, cur.variant, patch.detail) - heightFor(def, cur.variant, cur.detail)
+      const next = { ...cur, ...patch, h: Math.max(lookOf(def, cur.variant).minH, cur.h + grow) }
+      saveCompacted(layout.items.map((w) => (w.id === id ? next : w)), key)
+      return
+    }
+    save({ items: layout.items.map((w) => (w.id === id ? { ...w, ...patch } : w)) }, key, patch.emphasis === "star" ? id : undefined)
+  }
 
   const addWidget = (type: string) => {
     const def = getWidget(type)!
@@ -124,7 +146,8 @@ export function useArrange({
   const duplicateWidget = (id: string) => {
     const w = layout.items.find((x) => x.id === id)
     if (!w || pinned(id)) return
-    const copy = { ...w, id: uid(), y: w.y + w.h }
+    // A copy of the star is Accent: the original keeps the star.
+    const copy: WidgetInstance = { ...w, id: uid(), y: w.y + w.h, emphasis: w.emphasis === "star" ? "accent" : w.emphasis }
     saveCompacted([...layout.items, copy], `dup-${copy.id}`)
     setSelected(copy.id)
   }
@@ -192,8 +215,8 @@ export function ArrangeCanvas({
   // Delete / Backspace removes the selected widget, Escape deselects.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement
-      if (t.closest("input, textarea, select, [contenteditable=true]")) return
+      const t = e.target
+      if (t instanceof Element && t.closest("input, textarea, select, [contenteditable=true]")) return
       if (!selected) return
       if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault()
@@ -350,6 +373,8 @@ export function ArrangeCanvas({
                           w={w}
                           onOpen={() => setSelected(w.id)}
                           onLook={(variant, minH) => updateItem(w.id, { variant, h: Math.max(w.h, minH) }, `${w.id}-variant`)}
+                          onEmphasis={(emphasis) => updateItem(w.id, { emphasis }, `${w.id}-emphasis`)}
+                          onDetail={(detail) => updateItem(w.id, { detail }, `${w.id}-detail`)}
                           onDuplicate={() => duplicateWidget(w.id)}
                           onMove={(where) => moveTo(w.id, where)}
                           onPhone={(hideOnPhone) => updateItem(w.id, { hideOnPhone }, `${w.id}-phone`)}
@@ -381,6 +406,8 @@ function WidgetMenu({
   children,
   onOpen,
   onLook,
+  onEmphasis,
+  onDetail,
   onDuplicate,
   onMove,
   onPhone,
@@ -390,6 +417,8 @@ function WidgetMenu({
   children: React.ReactNode
   onOpen: () => void
   onLook: (variant: string, minH: number) => void
+  onEmphasis: (emphasis: Emphasis) => void
+  onDetail: (detail: Detail) => void
   onDuplicate: () => void
   onMove: (where: "top" | "bottom") => void
   onPhone: (hide: boolean) => void
@@ -407,13 +436,39 @@ function WidgetMenu({
           <ContextMenuItem onClick={onOpen}>
             <Pencil /> Edit settings
           </ContextMenuItem>
+          {def.variants.length > 1 && (
+            <ContextMenuSub>
+              <ContextMenuSubTrigger>Layout</ContextMenuSubTrigger>
+              <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
+                <ContextMenuRadioGroup value={look.value} onValueChange={(v) => onLook(String(v), def.variants.find((x) => x.value === v)?.minH ?? 1)}>
+                  {def.variants.map((v) => (
+                    <ContextMenuRadioItem key={v.value} value={v.value}>
+                      {v.label}
+                    </ContextMenuRadioItem>
+                  ))}
+                </ContextMenuRadioGroup>
+              </ContextMenuSubContent>
+            </ContextMenuSub>
+          )}
           <ContextMenuSub>
-            <ContextMenuSubTrigger>Look</ContextMenuSubTrigger>
+            <ContextMenuSubTrigger>Emphasis</ContextMenuSubTrigger>
             <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
-              <ContextMenuRadioGroup value={look.value} onValueChange={(v) => onLook(String(v), def.variants.find((x) => x.value === v)?.minH ?? 1)}>
-                {def.variants.map((v) => (
-                  <ContextMenuRadioItem key={v.value} value={v.value}>
-                    {v.label}
+              <ContextMenuRadioGroup value={w.emphasis ?? "accent"} onValueChange={(v) => onEmphasis(v as Emphasis)}>
+                {EMPHASIS.map((o) => (
+                  <ContextMenuRadioItem key={o.value} value={o.value}>
+                    {o.label}
+                  </ContextMenuRadioItem>
+                ))}
+              </ContextMenuRadioGroup>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+          <ContextMenuSub>
+            <ContextMenuSubTrigger>Detail</ContextMenuSubTrigger>
+            <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
+              <ContextMenuRadioGroup value={w.detail ?? "standard"} onValueChange={(v) => onDetail(v as Detail)}>
+                {DETAIL.map((o) => (
+                  <ContextMenuRadioItem key={o.value} value={o.value}>
+                    {o.label}
                   </ContextMenuRadioItem>
                 ))}
               </ContextMenuRadioGroup>
@@ -469,7 +524,8 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
         data-on={selected}
       >
         {def.core && <Lock className="mr-1 inline size-2.5 align-[-1px]" />}
-        {def.core ? `${def.name} · main part of the page` : def.name} · {w.w}×{w.h}
+        {def.core ? `${def.name} · main part of the page` : def.name}
+        {w.emphasis === "star" && " · Star"} · {w.w}×{w.h}
       </span>
       {/* Quick actions; .no-drag keeps clicks here from starting a drag */}
       <div

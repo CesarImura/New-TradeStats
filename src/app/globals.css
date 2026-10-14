@@ -170,7 +170,7 @@
    */
   .fx-hero {
     --on: var(--on-brand, var(--primary-foreground));
-    background: var(--primary);
+    background: var(--brand, var(--chart-1));
     color: var(--on);
     --foreground: var(--on);
     --card-foreground: var(--on);
@@ -187,6 +187,10 @@
     /* Inputs and page-coloured boxes become a light tint of the brand. */
     --background: color-mix(in oklab, var(--on) 14%, transparent);
     --input: color-mix(in oklab, var(--on) 30%, transparent);
+  }
+  /* Inside a widget, brand-coloured text (links, link buttons) uses the readable brand colour (see kit.tsx ACCENT_TEXT). */
+  [data-slot="widget"] .text-primary {
+    color: var(--w-accent-text, var(--brand-text, var(--primary)));
   }
   .coach-bg-dots {
     background-image: radial-gradient(color-mix(in oklab, var(--foreground) 14%, transparent) 1px, transparent 1.2px);

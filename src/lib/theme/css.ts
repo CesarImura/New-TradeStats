@@ -39,6 +39,8 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
 
   const fx = brandVisuals(t.primary, t.mode, t.effects ?? "soft")
   const geometric = t.radius <= 3
+  // Is the brand's own text colour light (white-ish) or dark?
+  const onLight = !isDark(t.primaryForeground) || /^#f/i.test(t.primaryForeground)
   const vars: Record<string, string> = {
     "--background": p.background,
     "--foreground": p.foreground,
@@ -90,8 +92,13 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
     "--button-radius": buttonRadius,
     "--card-shadow": cardShadow,
     // Brand visuals: a natural gradient ramp, a harmonious series palette, glow and texture.
-    // The brand colour's own text colour, kept separate so brand surfaces can re-tint --primary.
+    // The brand colour and its own text colour, kept separate so brand surfaces can re-tint --primary.
+    "--brand": t.primary,
     "--on-brand": t.primaryForeground,
+    // Shades of the brand away from its text colour (darker under white text, lighter under black),
+    // for chips, avatars and pictures on a brand card: they keep or gain contrast instead of losing it.
+    "--brand-shade": `color-mix(in oklab, ${t.primary} 84%, ${onLight ? "black" : "white"})`,
+    "--brand-deep": `color-mix(in oklab, ${t.primary} 62%, ${onLight ? "black" : "white"})`,
     "--brand-a": fx.a,
     "--brand-b": fx.b,
     "--brand-c": fx.c,

@@ -1,138 +1,147 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { ArrowRight, CalendarClock, Hourglass, Lock, MessageSquareReply, Sparkles } from "@/components/icons"
+import { CalendarClock, MessageSquareReply } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { AI_INSIGHT, CALL_ALLOWANCE, CALL_SLOTS, FEEDBACK, UNLOCKS } from "@/lib/data/sample"
+import { CALL_ALLOWANCE, CALL_SLOTS, FEEDBACK } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Bars, Big, Caps, Head, Ring, TONE, Track, W } from "./kit"
-import { WidgetEmpty, inWords, useEmpty, type WidgetProps } from "./shared"
-
-const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
+import { ACCENT, ACCENT_TEXT, Avatar, Big, Caps, Head, Ring, Row, TYPE, W, useFrame, useMore } from "./kit"
+import { WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 
 // ---------- Coach feedback
 
-/** Coach feedback: queue (requests and their status), latest (the newest reply), stats (answered + reply time). */
+/** A list that shows as many whole rows as fit the widget's height and hides the rest. */
+function Fit({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", className)}>{children}</div>
+}
+
+/** Review status as a small neutral mark: hollow while waiting, filled once answered. */
+function StatusDot({ waiting }: { waiting: boolean }) {
+  return (
+    <i
+      className={cn("r-dot size-2 shrink-0", waiting ? "border border-[color:color-mix(in_oklab,var(--foreground)_45%,transparent)]" : "bg-[color:color-mix(in_oklab,var(--foreground)_55%,transparent)]")}
+    />
+  )
+}
+
+/**
+ * Coach feedback: queue (your review requests and where they stand), latest
+ * (the coach's newest reply, as a quote), stats (how many are answered, how fast).
+ */
 export function CoachFeedback({ variant = "queue" }: WidgetProps) {
   const { coach } = useCoach()
   const empty = useEmpty()
+  const more = useMore("standard")
+  const detailed = useMore("detailed")
   if (empty)
     return <WidgetEmpty icon={MessageSquareReply} title="No reviews yet" text={`Mark a trade “Please review” in your journal and ${coach.coachName} will answer here.`} />
   const waiting = FEEDBACK.items.filter((i) => i.status === "waiting")
-  const latest = FEEDBACK.items.find((i) => i.status === "answered")!
+  const answered = FEEDBACK.items.filter((i) => i.status === "answered")
+  const latest = answered[0]
+  const initials = coach.coachName.slice(0, 2).toUpperCase()
 
   if (variant === "latest") {
     return (
       <W>
         <div className="flex min-w-0 items-center gap-2.5">
-          <Avatar className="size-8">
-            <AvatarFallback className="bg-primary text-[0.65rem] text-primary-foreground">{coach.coachName.slice(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <div className="grid min-w-0 leading-tight">
-            <span className="truncate text-sm font-semibold">{coach.coachName} reviewed your trade</span>
-            <Caps>{latest.when}</Caps>
+          <Avatar initials={initials} size={28} />
+          <div className="grid min-w-0">
+            <span className={cn(TYPE.title, "truncate")}>{coach.coachName} replied</span>
+            <span className={cn(TYPE.small, "truncate tabular-nums")}>
+              {latest.trade} · {latest.when}
+            </span>
           </div>
         </div>
-        <p className="line-clamp-3 font-heading text-base leading-snug">“{latest.reply}”</p>
-        <div className="mt-auto flex items-center gap-2">
-          <span className="r-chip bg-muted px-2 py-1 text-xs tabular-nums">{latest.trade}</span>
-          <span className="ml-auto text-xs text-muted-foreground">{waiting.length} waiting</span>
-        </div>
+        <p className={cn(TYPE.body, "border-l-2 pl-3", detailed ? "line-clamp-2" : "line-clamp-3")} style={{ borderLeftColor: ACCENT }}>
+          {latest.reply}
+        </p>
+        {more && !detailed && (
+          <span className={cn(TYPE.small, "mt-auto truncate")}>
+            {waiting.length} more waiting · usually within {FEEDBACK.avgReplyHours} hours
+          </span>
+        )}
+        {detailed && (
+          <div className="flex min-h-0 flex-1 flex-col gap-1">
+            <Caps>Earlier</Caps>
+            <Fit>
+              {answered.slice(1).map((i) => (
+                <Row key={i.trade} title={i.reply} sub={`${i.trade} · ${i.when}`} />
+              ))}
+            </Fit>
+          </div>
+        )}
       </W>
     )
   }
 
   if (variant === "stats") {
     return (
-      <W className="flex-row items-center gap-4">
-        <Ring value={(FEEDBACK.answered / FEEDBACK.requested) * 100} size={72} stroke={7}>
-          <span className="font-heading text-base font-semibold tabular-nums">
-            {FEEDBACK.answered}/{FEEDBACK.requested}
-          </span>
-        </Ring>
-        <div className="grid min-w-0 gap-1.5">
-          <Head icon={MessageSquareReply} label="Reviews answered" />
-          <span className="truncate text-sm text-muted-foreground">
-            Usually within <span className="text-foreground">{FEEDBACK.avgReplyHours} hours</span>
-          </span>
+      <W className={cn(!detailed && "justify-center")}>
+        <div className="flex min-w-0 items-center gap-3">
+          <Ring value={(FEEDBACK.answered / FEEDBACK.requested) * 100} size={44} stroke={4}>
+            <span className="text-xs font-medium tabular-nums">
+              {FEEDBACK.answered}/{FEEDBACK.requested}
+            </span>
+          </Ring>
+          <div className="grid min-w-0 gap-0.5">
+            <span className={cn(TYPE.title, "truncate")}>
+              {FEEDBACK.answered} of {FEEDBACK.requested} reviews answered
+            </span>
+            {more && <span className={cn(TYPE.small, "truncate")}>Usually within {FEEDBACK.avgReplyHours} hours</span>}
+          </div>
         </div>
+        {detailed && (
+          <Fit>
+            {waiting.map((i) => (
+              <Row key={i.trade} avatar={<StatusDot waiting />} title={i.trade} value={<span className="text-xs text-muted-foreground">{i.when}</span>} />
+            ))}
+          </Fit>
+        )}
       </W>
     )
   }
 
+  // queue: compact = what's waiting; standard = plus answered; detailed = plus the reply under each answer
+  const list = more ? [...waiting, ...answered] : waiting
   return (
     <W>
-      <Head icon={MessageSquareReply} value={waiting.length} label="Waiting for review" right={`~${FEEDBACK.avgReplyHours}h reply`} />
-      <div className="grid flex-1 content-start gap-2">
-        {FEEDBACK.items.map((i) => (
-          <div key={i.trade} className="flex min-w-0 items-center gap-2.5">
-            <i className={cn("r-dot size-2 shrink-0", i.status === "waiting" ? "bg-amber-500" : "bg-profit")} />
-            <span className="min-w-0 flex-1 truncate text-sm tabular-nums">{i.trade}</span>
-            <Caps className="shrink-0">{i.status === "waiting" ? i.when : "Answered"}</Caps>
-          </div>
+      <Head icon={MessageSquareReply} label="Coach feedback" value={waiting.length} unit="waiting" right={`~${FEEDBACK.avgReplyHours}h reply`} />
+      <Fit>
+        {list.map((i) => (
+          <Row
+            key={i.trade}
+            avatar={<StatusDot waiting={i.status === "waiting"} />}
+            title={<span className="tabular-nums">{i.trade}</span>}
+            sub={detailed && i.status === "answered" ? i.reply : undefined}
+            value={<span className="text-xs text-muted-foreground">{i.status === "waiting" ? `Waiting ${i.when}` : "Answered"}</span>}
+          />
         ))}
-      </div>
+      </Fit>
     </W>
   )
 }
 
 // ---------- AI insight
 
-/** AI insight: chart (sentence + R by hour), card (sentence + suggested lesson), compact (one line). */
-export function AiInsight({ variant = "chart" }: WidgetProps) {
-  const { coach, base } = useCoach()
-  const empty = useEmpty()
-  if (empty) return <WidgetEmpty icon={Sparkles} title="Insights appear after 20 trades" text={`${coach.wording.ai} looks for patterns in your journal.`} />
-
-  if (variant === "compact") {
-    return (
-      <W className="flex-row items-center gap-3">
-        <span className="r-chip grid size-9 shrink-0 place-items-center bg-primary/12">
-          <Sparkles className="size-4 text-primary" />
-        </span>
-        <div className="grid min-w-0 flex-1 gap-0.5">
-          <span className="truncate text-sm font-semibold">{AI_INSIGHT.title}</span>
-          <span className="truncate text-xs text-muted-foreground">{AI_INSIGHT.text}</span>
-        </div>
-      </W>
-    )
-  }
-
-  if (variant === "card") {
-    return (
-      <W>
-        <Head icon={Sparkles} label={coach.wording.ai} right="Insight" />
-        <span className="font-heading text-xl leading-snug font-semibold text-balance">{AI_INSIGHT.title}</span>
-        <p className="line-clamp-2 text-sm text-muted-foreground">{AI_INSIGHT.text}</p>
-        <Button variant="secondary" size="sm" className="mt-auto w-fit" {...link(`${base}/courses`)}>
-          Watch “{AI_INSIGHT.lesson}” <ArrowRight />
-        </Button>
-      </W>
-    )
-  }
-
-  return (
-    <W>
-      <Head icon={Sparkles} label={coach.wording.ai} right="From your journal" />
-      <span className="font-heading text-lg leading-snug font-semibold text-balance">{AI_INSIGHT.title}</span>
-      <Bars diverging values={AI_INSIGHT.r} labels={AI_INSIGHT.hours} tips={AI_INSIGHT.hours.map((h) => `${h}:00`)} format={(v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}R`} />
-    </W>
-  )
-}
 
 // ---------- Book a 1:1
 
-/** Book a 1:1: slots (free times by day), next (the next free time), allowance (calls left this month), brand (next, on the coach's colour). */
+/**
+ * Book a 1:1: slots (free times by day, tap to book), next (the next free time
+ * with one button), allowance (calls left this month).
+ */
 export function BookCall({ variant = "slots" }: WidgetProps) {
   const { coach } = useCoach()
+  const { emphasis } = useFrame()
   const empty = useEmpty()
+  const more = useMore("standard")
+  const detailed = useMore("detailed")
   const [picked, setPicked] = useState<string>()
   const days = empty ? CALL_SLOTS.map((d) => ({ ...d, times: [] })) : CALL_SLOTS
-  const next = days.flatMap((d) => d.times.map((t) => ({ ...d, time: t })))[0]
+  const free = days.flatMap((d) => d.times.map((t) => ({ ...d, time: t })))
+  const next = free[0]
   const left = CALL_ALLOWANCE.included - CALL_ALLOWANCE.used
   const book = (label: string) => {
     setPicked(label)
@@ -141,131 +150,87 @@ export function BookCall({ variant = "slots" }: WidgetProps) {
 
   if (!next) return <WidgetEmpty icon={CalendarClock} title="No free times this week" text={`${coach.coachName} opens new 1:1 times every Sunday.`} />
 
+  const chip = (label: string, time: string) => (
+    <button
+      key={label}
+      onClick={() => book(label)}
+      className={cn("r-chip border px-2 py-1 text-xs tabular-nums transition-colors hover:border-foreground/40 hover:bg-muted", picked === label && "font-medium")}
+      style={picked === label ? { borderColor: ACCENT, color: ACCENT_TEXT } : undefined}
+    >
+      {picked === label ? `${time} · booked` : time}
+    </button>
+  )
+
   if (variant === "allowance") {
     return (
-      <W className="flex-row items-center gap-4">
-        <Ring value={(CALL_ALLOWANCE.used / CALL_ALLOWANCE.included) * 100} size={72} stroke={7}>
-          <span className="font-heading text-base font-semibold tabular-nums">{left}</span>
-        </Ring>
-        <div className="grid min-w-0 gap-1.5">
-          <Head icon={CalendarClock} label={`1:1 calls left`} />
-          <span className="truncate text-sm text-muted-foreground">
-            Next free: <span className="text-foreground">{next.day} {next.time}</span>
-          </span>
+      <W className={cn(!detailed && "justify-center")}>
+        <div className="flex min-w-0 items-center gap-3">
+          <Ring value={(left / CALL_ALLOWANCE.included) * 100} size={44} stroke={4}>
+            <span className="text-xs font-medium tabular-nums">{left}</span>
+          </Ring>
+          <div className="grid min-w-0 gap-0.5">
+            <span className={cn(TYPE.title, "truncate")}>
+              {left} of {CALL_ALLOWANCE.included} calls left this month
+            </span>
+            {more && (
+              <span className={cn(TYPE.small, "truncate")}>
+                Next free: <span className="text-foreground tabular-nums">{next.day} {next.time}</span>
+              </span>
+            )}
+          </div>
         </div>
+        {detailed && <div className="flex min-w-0 flex-wrap gap-1">{free.slice(0, 4).map((f) => chip(`${f.day} ${f.time}`, `${f.day} ${f.time}`))}</div>}
       </W>
     )
   }
 
-  if (variant === "next" || variant === "brand") {
+  if (variant === "next") {
+    const label = `${next.day} ${next.time}`
     return (
-      <W brand={variant === "brand"}>
-        <Head icon={CalendarClock} label={`1:1 with ${coach.coachName}`} right={`${left} of ${CALL_ALLOWANCE.included} left`} />
-        <Big value={`${next.day} ${next.time}`} sub={`${next.date} · ${CALL_ALLOWANCE.length} min`} />
-        <Button className="mt-auto w-full @[16rem]:w-fit" onClick={() => book(`${next.day} ${next.time}`)}>
-          {picked ? "Booked" : "Book this time"}
+      <W>
+        <Head icon={CalendarClock} label={`1:1 with ${coach.coachName}`} right={more ? `${left} of ${CALL_ALLOWANCE.included} left` : undefined} />
+        <Big value={label} sub={more ? `${next.date} · ${CALL_ALLOWANCE.length} min` : undefined} />
+        {detailed && (
+          <div className="flex min-w-0 flex-wrap items-center gap-1">
+            <Caps className="mr-1">Or</Caps>
+            {free.slice(1, 4).map((f) => chip(`${f.day} ${f.time}`, `${f.day} ${f.time}`))}
+          </div>
+        )}
+        <Button size="sm" variant={emphasis === "quiet" ? "outline" : "default"} className="mt-auto w-full @[16rem]:w-fit" onClick={() => book(label)}>
+          {picked === label ? "Booked" : "Book this time"}
         </Button>
       </W>
     )
   }
 
+  // slots: compact = the days that still have times; standard = every day; detailed = plus the allowance
+  const shown = more ? days : days.filter((d) => d.times.length > 0)
   return (
     <W>
-      <Head icon={CalendarClock} label={`Book a 1:1 · ${CALL_ALLOWANCE.length} min`} right={`${left} left`} />
-      <div className="grid flex-1 content-evenly gap-2">
-        {days.map((d) => (
-          <div key={d.day} className="grid grid-cols-[2.5rem_1fr] items-center gap-2">
+      <Head icon={CalendarClock} label="Book a 1:1" right={`${CALL_ALLOWANCE.length} min`} />
+      <Fit className="gap-1.5">
+        {shown.map((d) => (
+          <div key={d.day} className="grid grid-cols-[2.75rem_1fr] items-center gap-2">
             <span className="grid leading-tight">
               <Caps>{d.day}</Caps>
-              <span className="text-[0.65rem] text-muted-foreground tabular-nums">{d.date.split(" ")[0]}</span>
+              <span className="text-[0.6875rem] text-muted-foreground tabular-nums">{d.date.split(" ")[0]}</span>
             </span>
             <div className="flex min-w-0 flex-wrap gap-1">
-              {d.times.length === 0 && <span className="text-xs text-muted-foreground">Full</span>}
-              {d.times.map((t) => {
-                const label = `${d.day} ${t}`
-                return (
-                  <button
-                    key={t}
-                    onClick={() => book(label)}
-                    className={cn("r-chip border px-2 py-1 text-xs tabular-nums transition-colors hover:border-primary hover:text-primary", picked === label && "border-primary bg-primary text-primary-foreground hover:text-primary-foreground")}
-                  >
-                    {t}
-                  </button>
-                )
-              })}
+              {d.times.length === 0 && <span className={TYPE.small}>Full</span>}
+              {d.times.map((t) => chip(`${d.day} ${t}`, t))}
             </div>
           </div>
         ))}
-      </div>
+      </Fit>
+      {detailed && (
+        <span className={cn(TYPE.small, "truncate")}>
+          {left} of {CALL_ALLOWANCE.included} calls left this month
+        </span>
+      )}
     </W>
   )
 }
 
 // ---------- Next unlock
 
-/** Next unlock: countdown (time until the next module opens), schedule (the next three), card (compact). */
-export function NextUnlock({ variant = "countdown" }: WidgetProps) {
-  const { coach } = useCoach()
-  const empty = useEmpty()
-  if (empty) return <WidgetEmpty icon={Lock} title="Everything is unlocked" text={`New ${coach.wording.courses.toLowerCase()} content appears here when it's scheduled.`} />
-  const [first] = UNLOCKS
-  const days = Math.floor(first.inHours / 24)
-  const hours = first.inHours % 24
 
-  if (variant === "schedule") {
-    const horizon = UNLOCKS.at(-1)!.inHours
-    return (
-      <W>
-        <Head icon={Hourglass} label="Coming up" right={coach.wording.courses} />
-        <div className="grid flex-1 content-evenly gap-3">
-          {UNLOCKS.map((u, i) => (
-            <div key={u.title} className="grid gap-1">
-              <div className="flex min-w-0 items-baseline gap-2 text-sm">
-                <span className="truncate">{u.title}</span>
-                <span className="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums">{u.date}</span>
-              </div>
-              <Track value={100 - (u.inHours / horizon) * 100} color={i === 0 ? TONE.primary : `color-mix(in oklab, ${TONE.primary} 35%, var(--muted))`} className="h-1" />
-            </div>
-          ))}
-        </div>
-      </W>
-    )
-  }
-
-  if (variant === "card") {
-    return (
-      <W className="flex-row items-center gap-3">
-        <span className="r-chip grid size-9 shrink-0 place-items-center bg-muted">
-          <Lock className="size-4 text-muted-foreground" />
-        </span>
-        <div className="grid min-w-0 flex-1 gap-0.5">
-          <span className="truncate text-sm font-semibold">{first.title}</span>
-          <span className="truncate text-xs text-muted-foreground">Unlocks in {inWords(first.inHours * 60)} · {first.lessons} lessons</span>
-        </div>
-      </W>
-    )
-  }
-
-  return (
-    <W>
-      <Head icon={Hourglass} label="Next unlock" right={first.date} />
-      <div className="flex items-end gap-3 font-heading tabular-nums">
-        {[
-          [days, "days"],
-          [hours, "hours"],
-        ].map(([v, l]) => (
-          <div key={l} className="grid gap-1">
-            <span className="leading-none font-semibold" style={{ fontSize: "clamp(1.75rem, 14cqi, 3rem)" }}>
-              {String(v).padStart(2, "0")}
-            </span>
-            <Caps>{l}</Caps>
-          </div>
-        ))}
-      </div>
-      <div className="mt-auto grid min-w-0 gap-0.5">
-        <span className="truncate text-sm font-medium">{first.title}</span>
-        <span className="text-xs text-muted-foreground">{first.lessons} lessons</span>
-      </div>
-    </W>
-  )
-}

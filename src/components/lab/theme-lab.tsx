@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useMemo, useState } from "react"
 import { ArrowRight, Check as CheckIcon, Shuffle, TriangleAlert } from "@/components/icons"
 import { CoachContext } from "@/components/coach/coach-provider"
@@ -53,6 +54,9 @@ export function ThemeLab() {
             <span className={cn(mono, "text-white/50")}>Prototype · Theme lab</span>
             <h1 className="text-xl font-normal">Does every theme still look designed?</h1>
           </div>
+          <Link href="/lab/widgets" className={cn(mono, "flex items-center gap-1.5 rounded-[3px] border border-white/15 px-2.5 py-1.5 text-white/70 hover:border-white/40 hover:text-white")}>
+            Widget wall <ArrowRight className="size-3.5" />
+          </Link>
           <Seg value={fixes ? "fixes" : "today"} onChange={(v) => setFixes(v === "fixes")} options={[["today", "Engine today"], ["fixes", "With fixes"]]} />
           <Seg value={set} onChange={setSet} options={[["branded", "Own brands"], ["matrix", "Templates × colours"], ["random", "Random"]]} />
           {set === "matrix" && (

@@ -7,11 +7,24 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { getWidget, librarySections, lookOf, type WidgetDef } from "@/components/widgets/registry"
+import { WidgetFrame } from "@/components/widgets/kit"
 import { DataModeProvider } from "@/components/widgets/shared"
 import type { Coach } from "@/lib/data/coaches"
-import { ROW_HEIGHT, type PageId, type WidgetInstance } from "@/lib/widgets/layout"
+import { ROW_HEIGHT, type Detail, type Emphasis, type PageId, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
-import { Field } from "./controls"
+import { Field, Segmented } from "./controls"
+
+/** Per-widget Emphasis and Detail (see the rules in widgets/kit.tsx). Shared with the grid's right-click menu. */
+export const EMPHASIS: { value: Emphasis; label: string; hint: string }[] = [
+  { value: "quiet", label: "Quiet", hint: "No colour. Sits back so other widgets stand out." },
+  { value: "accent", label: "Accent", hint: "One mark in your brand colour." },
+  { value: "star", label: "Star", hint: "On your brand colour, bigger numbers. One per page." },
+]
+export const DETAIL: { value: Detail; label: string; hint: string }[] = [
+  { value: "compact", label: "Compact", hint: "Just the headline number or item." },
+  { value: "standard", label: "Standard", hint: "The headline plus its main context." },
+  { value: "detailed", label: "Detailed", hint: "Everything this widget can show." },
+]
 
 const MODULE_LABEL = { courses: "Courses", calendar: "Calendar", charts: "Charts", community: "Community", journal: "Journal", ranking: "Ranking", ai: "AI assistant" }
 
@@ -37,7 +50,10 @@ export function WidgetThumb({ def, variant, canvasClass, box }: { def: WidgetDef
           className={cn(canvasClass, "pointer-events-none flex flex-col bg-background font-sans text-foreground select-none [&>*]:flex-1")}
           style={{ width, height, zoom: scale, containerType: "inline-size" }}
         >
-          <C variant={look.value} props={{}} />
+          {/* Library and layout thumbnails always show the default Emphasis and Detail. */}
+          <WidgetFrame>
+            <C variant={look.value} props={{}} />
+          </WidgetFrame>
         </div>
       </DataModeProvider>
     </div>
@@ -112,7 +128,7 @@ export function WidgetLibrary({
                     <w.icon className="size-4 shrink-0 text-muted-foreground" />
                     <span className="grid min-w-0 flex-1 leading-tight">
                       <span className="truncate text-sm">{w.name}</span>
-                      <span className="truncate text-xs text-muted-foreground">{off ? `Switch on ${MODULE_LABEL[w.module!]} to use` : `${w.variants.length} looks · ${w.description}`}</span>
+                      <span className="truncate text-xs text-muted-foreground">{off ? `Switch on ${MODULE_LABEL[w.module!]} to use` : `${w.variants.length} layout${w.variants.length === 1 ? "" : "s"} · ${w.description}`}</span>
                     </span>
                     {!off && (
                       <Button variant="ghost" size="icon-xs" aria-label={`Add ${w.name}`} onClick={() => onAdd(w.type)}>
@@ -130,7 +146,7 @@ export function WidgetLibrary({
   )
 }
 
-/** Right panel for a selected widget: its look, its size, settings, and phone visibility. */
+/** Right panel for a selected widget: emphasis, detail, layout, size, settings, and phone visibility. */
 export function WidgetSettings({
   w,
   pinned,
@@ -152,6 +168,8 @@ export function WidgetSettings({
   const setProp = (k: string, v: string | boolean) => onChange({ props: { ...props, [k]: v } }, `${w.id}-${k}`)
   const look = lookOf(def, w.variant)
   const pick = (v: (typeof def.variants)[number]) => onChange({ variant: v.value, h: Math.max(w.h, v.minH) }, `${w.id}-variant`)
+  const emphasis = w.emphasis ?? "accent"
+  const detail = w.detail ?? "standard"
   return (
     <div className="grid gap-5 p-4">
       <div className="flex items-start gap-3">
@@ -172,9 +190,18 @@ export function WidgetSettings({
         </p>
       )}
 
+      <Field label="Emphasis">
+        <Segmented label="Emphasis" value={emphasis} options={EMPHASIS} onChange={(v) => onChange({ emphasis: v }, `${w.id}-emphasis`)} />
+        <p className="text-xs text-muted-foreground">{EMPHASIS.find((o) => o.value === emphasis)?.hint}</p>
+      </Field>
+      <Field label="Detail">
+        <Segmented label="Detail" value={detail} options={DETAIL} onChange={(v) => onChange({ detail: v }, `${w.id}-detail`)} />
+        <p className="text-xs text-muted-foreground">{DETAIL.find((o) => o.value === detail)?.hint}</p>
+      </Field>
+
       {def.variants.length > 1 && (
-        <Field label="Look">
-          <div className="grid gap-2" role="radiogroup" aria-label="Look">
+        <Field label="Layout">
+          <div className="grid gap-2" role="radiogroup" aria-label="Layout">
             {def.variants.map((v) => (
               // A div, not a button: the thumbnail contains the widget's own buttons.
               <div
@@ -213,7 +240,7 @@ export function WidgetSettings({
             </span>{" "}
             <span className="text-muted-foreground">cells</span>
             <span className="block text-xs text-muted-foreground">
-              Drag the widget&apos;s edges or corner on the grid. Smallest for this look: {def.minW} × {look.minH}.
+              Drag the widget&apos;s edges or corner on the grid. Smallest for this layout: {def.minW} × {look.minH}.
             </span>
           </span>
         </div>

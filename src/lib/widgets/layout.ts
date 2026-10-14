@@ -65,18 +65,50 @@ type LegacySection = { widgets?: LegacyWidget[]; slots?: LegacyWidget[][]; colum
  * Older saved layouts were sections with widths only. Lay their widgets out
  * left to right, wrapping onto new rows, with a standard height.
  */
+type Move = { type?: string; variant?: string; emphasis?: Emphasis; detail?: Detail; minW?: number }
+
 /**
- * Widgets merged into others, and looks that became an Emphasis or Detail.
- * Saved pages keep working: they show the widget and look that replaced them.
+ * Widgets merged into others ("*" = any look), so saved pages keep working:
+ * they show the widget and look that replaced them.
  */
-export const RETIRED: Record<string, { type: string; variant?: string; detail?: Detail }> = {}
-export const RETIRED_LOOKS: Record<string, Record<string, { variant?: string; emphasis?: Emphasis; detail?: Detail }>> = {}
+export const RETIRED: Record<string, Record<string, Move>> = {
+  "this-week": { week: { type: "next-live", variant: "week" }, timeline: { type: "next-live", variant: "week" }, list: { type: "next-live", variant: "countdown", detail: "detailed" }, "*": { type: "next-live", variant: "week" } },
+  "next-unlock": { countdown: { type: "course-progress", variant: "unlocks", detail: "standard", minW: 4 }, schedule: { type: "course-progress", variant: "unlocks", detail: "detailed", minW: 4 }, card: { type: "course-progress", variant: "unlocks", detail: "compact", minW: 4 }, "*": { type: "course-progress", variant: "unlocks", minW: 4 } },
+  "market-sessions": { status: { type: "econ-news", variant: "sessions", detail: "detailed" }, "*": { type: "econ-news", variant: "sessions" } },
+  "r-spread": { "*": { type: "journal-pnl", variant: "curve", detail: "detailed" } },
+  setups: { "*": { type: "journal-pnl", variant: "curve", detail: "detailed" } },
+  "ai-insight": { chart: { type: "ai-ask", variant: "insight", detail: "standard" }, card: { type: "ai-ask", variant: "insight", detail: "detailed" }, compact: { type: "ai-ask", variant: "insight", detail: "compact" }, "*": { type: "ai-ask", variant: "insight" } },
+}
+
+/** Looks that were only a colour (now Emphasis) or folded into another look (now Detail). */
+export const RETIRED_LOOKS: Record<string, Record<string, Move>> = {
+  "course-progress": { dots: { variant: "bars", detail: "standard" } },
+  "my-rank": { brand: { variant: "trend", emphasis: "star" } },
+  "rules-followed": { ring: { variant: "rules", detail: "compact" } },
+  "next-live": { block: { variant: "countdown", emphasis: "star" } },
+  "econ-news": { impact: { variant: "week" }, list: { variant: "week" } },
+  "book-call": { brand: { variant: "next", emphasis: "star" } },
+  announcement: { highlight: { variant: "plain" }, brand: { variant: "plain", emphasis: "star" } },
+  discord: { brand: { variant: "online", emphasis: "star" } },
+  banner: { brand: { variant: "headline", emphasis: "star" }, highlight: { variant: "headline" }, plain: { variant: "headline" } },
+  text: { centered: { variant: "plain" } },
+  "ai-ask": { quota: { variant: "search", detail: "detailed" }, brand: { variant: "search", emphasis: "star" } },
+}
+
+const apply = (w: WidgetInstance, m: Move): WidgetInstance => ({
+  ...w,
+  type: m.type ?? w.type,
+  variant: m.variant ?? (m.type ? undefined : w.variant),
+  emphasis: w.emphasis ?? m.emphasis,
+  detail: w.detail ?? m.detail,
+  w: Math.max(w.w, m.minW ?? 0),
+})
 
 export function upgradeItem(w: WidgetInstance): WidgetInstance {
   const r = RETIRED[w.type]
-  const moved = r ? { ...w, type: r.type, variant: r.variant, detail: w.detail ?? r.detail } : w
+  const moved = r ? apply(w, r[w.variant ?? ""] ?? r["*"]) : w
   const look = moved.variant ? RETIRED_LOOKS[moved.type]?.[moved.variant] : undefined
-  return look ? { ...moved, variant: look.variant, emphasis: moved.emphasis ?? look.emphasis, detail: moved.detail ?? look.detail } : moved
+  return look ? apply(moved, look) : moved
 }
 
 /** Only one Star per page: the newest one wins, earlier ones become Accent. */
@@ -129,10 +161,10 @@ export function withCore(page: ModuleId, l: PageLayout): PageLayout {
 
 // ---------- template defaults
 
-type Spec = [type: string, x: number, y: number, w: number, h: number, variant?: string]
+type Spec = [type: string, x: number, y: number, w: number, h: number, variant?: string, emphasis?: Emphasis]
 
 function build(prefix: string, specs: Spec[]): PageLayout {
-  return { items: specs.map(([type, x, y, w, h, variant], i) => ({ id: `${prefix}-${i}`, type, variant, x, y, w, h })) }
+  return { items: specs.map(([type, x, y, w, h, variant, emphasis], i) => ({ id: `${prefix}-${i}`, type, variant, emphasis, x, y, w, h })) }
 }
 
 /**
@@ -150,19 +182,19 @@ export function defaultHome(template: TemplateId, coach: Coach): PageLayout {
         ["next-live", 8, 0, 4, 3, "countdown"],
         ["journal-pnl", 0, 3, 4, 3, "bars"],
         ["rules-followed", 4, 3, 4, 4, "radar"],
-        ["econ-news", 8, 3, 4, 4, "impact"],
+        ["econ-news", 8, 3, 4, 4, "week"],
         ["course-progress", 0, 6, 4, 4, "bars"],
-        ["this-week", 4, 7, 8, 3, "week"],
+        ["next-live", 4, 7, 8, 3, "week"],
       ])
     case "atelier":
       // Calm and editorial: a welcome, a large lesson, the week beside it.
       return build(p, [
         ["welcome-video", 0, 0, 12, 4, "side"],
-        ["continue-lesson", 0, 4, 8, 3, "cover"],
-        ["first-week", 8, 4, 4, 3, "checklist"],
-        ["course-progress", 0, 7, 6, 3, "rings"],
-        ["this-week", 6, 7, 6, 4, "timeline"],
-        ["announcement", 0, 10, 6, 3, "post"],
+        ["continue-lesson", 0, 4, 8, 4, "cover"],
+        ["first-week", 8, 4, 4, 4, "checklist"],
+        ["course-progress", 0, 8, 6, 3, "rings"],
+        ["next-live", 6, 8, 6, 3, "week"],
+        ["announcement", 0, 11, 6, 3, "post"],
       ])
     case "pulse":
       // Stats on top, a tall leaderboard on the side.
@@ -171,12 +203,12 @@ export function defaultHome(template: TemplateId, coach: Coach): PageLayout {
         ["rules-followed", 4, 0, 4, 3, "streak"],
         ["my-rank", 8, 0, 4, 6, "leaderboard"],
         ["continue-lesson", 0, 3, 8, 3, "cover"],
-        ["next-live", 0, 6, 4, 3, "block"],
+        ["next-live", 0, 6, 4, 3, "countdown", "star"],
         ["journal-pnl", 4, 6, 8, 3, "heatmap"],
         ["discord", 0, 9, 4, 3, "online"],
         ["econ-news", 4, 9, 4, 3, "next"],
         ["course-progress", 8, 9, 4, 3, "rings"],
-        ["ai-ask", 0, 12, 12, 4, "chat"],
+        ["ai-ask", 0, 12, 12, 5, "chat"],
       ])
   }
 }

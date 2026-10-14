@@ -51,6 +51,11 @@ export const TYPE = {
 
 /** The widget's one accent: the coach's colour, or the text colour when the widget is Quiet. */
 export const ACCENT = "var(--w-accent, var(--primary))"
+/**
+ * The accent as text: the brand colour adjusted to stay readable on the card
+ * (--brand-text), the text colour when Quiet, the brand's own text colour on a Star card.
+ */
+export const ACCENT_TEXT = "var(--w-accent-text, var(--brand-text, var(--primary)))"
 
 export type Tone = "primary" | "profit" | "loss" | "highlight" | "muted" | "fg"
 export const TONE: Record<Tone, string> = {
@@ -62,7 +67,7 @@ export const TONE: Record<Tone, string> = {
   fg: "var(--foreground)",
 }
 const TEXT: Record<Tone, string> = {
-  primary: "text-[color:var(--w-accent,var(--primary))]",
+  primary: "text-[color:var(--w-accent-text,var(--brand-text,var(--primary)))]",
   profit: "text-profit",
   loss: "text-loss",
   highlight: "text-foreground",
@@ -85,7 +90,7 @@ export const pl = (v: number, strength = 80) => `color-mix(in oklab, ${v >= 0 ? 
  * swaps the accent for the text colour; Star puts the card on the coach's
  * colour (the contents re-tint, see .fx-hero). `brand` forces Star.
  */
-export function W({ children, className, style, brand }: { children: React.ReactNode; className?: string; style?: React.CSSProperties; brand?: boolean }) {
+export function W({ children, className, style, brand, row }: { children: React.ReactNode; className?: string; style?: React.CSSProperties; brand?: boolean; /** A one-row layout: tighter top and bottom padding, so it fits 56px on every spacing setting. */ row?: boolean }) {
   const { emphasis } = useFrame()
   const star = brand || emphasis === "star"
   return (
@@ -94,10 +99,33 @@ export function W({ children, className, style, brand }: { children: React.React
       data-emphasis={star ? "star" : emphasis}
       className={cn(
         "@container flex h-full min-h-0 flex-col gap-3 overflow-hidden rounded-(--radius) p-[calc(1rem*var(--density,1))]",
+        row && "py-2",
         star ? "fx-hero" : "bg-card text-card-foreground",
         className,
       )}
-      style={{ boxShadow: "var(--card-shadow)", ...(emphasis === "quiet" && !star ? { "--w-accent": "var(--foreground)" } : {}), ...style } as React.CSSProperties}
+      style={
+        {
+          boxShadow: "var(--card-shadow)",
+          // The brand colour itself (.fx-hero re-points --primary to the text colour inside).
+          // Secondary text stays at full strength: on a mid-tone brand, faded text fails contrast.
+          // Profit and loss become the text colour too: green or red on a brand colour is unreadable, and ▲/▼, +/− still say it.
+          ...(star
+            ? {
+                "--w-accent-text": "var(--on)",
+                "--muted-foreground": "var(--on)",
+                "--profit": "var(--on)",
+                "--loss": "var(--on)",
+                // Chips, avatars and pictures sit on shades away from the text colour, so they keep contrast.
+                "--muted": "var(--brand-shade)",
+                "--background": "var(--brand-shade)",
+                "--cover-bg": "var(--brand-deep)",
+                "--cover-fg": "var(--on)",
+                background: "var(--brand)",
+              }
+            : emphasis === "quiet" ? { "--w-accent": "var(--foreground)", "--w-accent-text": "var(--foreground)" } : {}),
+          ...style,
+        } as React.CSSProperties
+      }
     >
       {children}
     </div>
@@ -203,7 +231,7 @@ export function Row({
   className?: string
 }) {
   return (
-    <div className={cn("flex min-w-0 items-center gap-2.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5 last:border-b-0", me && "-mx-1.5 rounded-[min(var(--radius),6px)] border-transparent bg-muted px-1.5", className)}>
+    <div className={cn("flex min-w-0 items-center gap-2.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5 last:border-b-0", me && "-mx-1.5 rounded-[min(var(--radius),6px)] border-transparent bg-[color:color-mix(in_oklab,var(--foreground)_4%,transparent)] px-1.5", className)}>
       {rank !== undefined && <span className={cn("w-4 shrink-0 text-right text-xs tabular-nums", me ? "font-medium text-foreground" : "text-muted-foreground")}>{rank}</span>}
       {avatar}
       <span className="grid min-w-0 flex-1">

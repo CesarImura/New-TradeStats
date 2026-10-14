@@ -2,22 +2,29 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Bell, CalendarDays, CalendarX, Newspaper, Radio, TriangleAlert } from "@/components/icons"
+import { Bell, CalendarDays, CalendarX, Clock, Newspaper, Radio, TriangleAlert } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
-import { EVENTS, NOW_HOUR, TODAY, type CalEvent } from "@/lib/data/sample"
+import { EVENTS, MARKET_SESSIONS, NOW_HOUR, TODAY, type CalEvent } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Big, Caps, DayTimeline, Head, Key, TONE, Tip, Track, W, fill, series } from "./kit"
+import { ACCENT, Big, Caps, Countdown, DayTimeline, Head, Row, Stat, TYPE, Tip, W, series, useMore } from "./kit"
 import { WidgetEmpty, inWords, useEmpty, type WidgetProps } from "./shared"
 
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
 const WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+const TODAY_NAME = "Mon"
+/** Event types: shades of the one accent; news stays neutral. */
 const KIND: Record<CalEvent["kind"], { color: string; label: string }> = {
   live: { color: series(0), label: "Live" },
   call: { color: series(1), label: "Call" },
   workshop: { color: series(2), label: "Workshop" },
-  "one-on-one": { color: series(4), label: "1:1" },
-  news: { color: TONE.loss, label: "News" },
+  "one-on-one": { color: series(3), label: "1:1" },
+  news: { color: "color-mix(in oklab, var(--foreground) 28%, transparent)", label: "News" },
+}
+
+/** A list that shows as many whole rows as fit the widget's height and hides the rest. */
+function Fit({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", className)}>{children}</div>
 }
 
 function NothingPlanned({ news }: { news?: boolean }) {
@@ -29,99 +36,118 @@ function NothingPlanned({ news }: { news?: boolean }) {
   )
 }
 
-function NoTrade() {
+/** "No trade" as quiet loss-coloured text, never a block. */
+function NoTrade({ short }: { short?: boolean }) {
   return (
-    <span className="r-chip inline-flex items-center gap-1 bg-loss/12 px-1.5 py-0.5 text-[0.65rem] font-medium text-loss">
-      <TriangleAlert className="size-3" /> No trade
+    <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-loss">
+      <TriangleAlert className="size-3" />
+      {short ? null : "No trade"}
     </span>
   )
 }
 
-/** Next live: countdown (big timer), timeline (today with a now line), block (brand surface). */
-export function NextLive({ variant = "countdown" }: WidgetProps) {
+// ---------- Up next (was Next live + This week)
+
+/**
+ * Up next: countdown (time to the next session), timeline (today on a line),
+ * week (the five trading days as columns). Detail adds a supporting line, then
+ * a short list of what follows.
+ */
+export function NextLive({ variant = "countdown", props = {} }: WidgetProps) {
   const { coach, base } = useCoach()
   const empty = useEmpty()
+  const more = useMore("standard")
+  const detailed = useMore("detailed")
+  const [hover, setHover] = useState<string>()
   if (empty) return <NothingPlanned />
-  const live = EVENTS.find((e) => e.kind === "live")!
-  const mins = live.inMinutes ?? 0
-  const hh = String(Math.floor(mins / 60)).padStart(2, "0")
-  const mm = String(mins % 60).padStart(2, "0")
+  const items = EVENTS.filter((e) => props.news !== false || e.kind !== "news")
+  const sessions = EVENTS.filter((e) => e.kind !== "news")
+  const next = sessions.find((e) => e.inMinutes !== undefined) ?? sessions[0]
+  const mins = next.inMinutes ?? 0
+  const later = items.filter((e) => e.id !== next.id)
+
+  const laterList = (list: CalEvent[]) => (
+    <Fit>
+      {list.map((e) => (
+        <Row
+          key={e.id}
+          title={e.title}
+          sub={e.kind === "news" ? (e.noTrade ? <span className="text-loss">No trade</span> : "Market news") : KIND[e.kind].label}
+          value={
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {e.day} {e.time}
+            </span>
+          }
+        />
+      ))}
+    </Fit>
+  )
 
   if (variant === "timeline") {
+    const todays = TODAY.map((e) => ({ ...e, color: KIND[e.kind].color }))
     return (
       <W>
-        <Head icon={Radio} value={live.time} label="Today" right={`in ${inWords(mins)}`} />
-        <DayTimeline from={8} to={20} now={NOW_HOUR} events={TODAY.map((e) => ({ ...e, color: KIND[e.kind].color }))} />
+        <Head icon={CalendarDays} label="Today" right={`Next in ${inWords(mins)}`} />
+        <DayTimeline from={8} to={20} now={NOW_HOUR} events={todays} />
+        {more && !detailed && (
+          <span className={cn(TYPE.small, "truncate")}>
+            <span className="text-foreground">{next.title}</span> · {next.time}
+          </span>
+        )}
+        {detailed && (
+          <Fit className="max-h-24">
+            {TODAY.map((e) => (
+              <Row
+                key={e.title}
+                title={e.title}
+                value={<span className="text-xs text-muted-foreground tabular-nums">{`${Math.floor(e.start)}:${String(Math.round((e.start % 1) * 60)).padStart(2, "0")}`}</span>}
+              />
+            ))}
+          </Fit>
+        )}
       </W>
     )
   }
 
-  if (variant === "block") {
-    return (
-      <div className="fx-hero @container flex h-full flex-col justify-between gap-4 overflow-hidden rounded-(--radius) p-[calc(1rem*var(--density,1))]" style={{ boxShadow: "var(--card-shadow)" }}>
-        <div className="flex items-center gap-2 text-[0.65rem] font-medium tracking-wide uppercase opacity-80">
-          <Radio className="size-3.5" /> Next live
-          <span className="ml-auto tabular-nums">{live.time}</span>
-        </div>
-        <div className="min-w-0">
-          <div className="font-heading leading-none font-semibold tabular-nums" style={{ fontSize: "clamp(2rem, 17cqi, 3.25rem)" }}>
-            {hh}:{mm}
-          </div>
-          <div className="mt-1.5 truncate text-sm opacity-80">
-            {live.title} · with {coach.coachName}
-          </div>
-        </div>
-        <Button variant="secondary" className="w-full @[16rem]:w-fit" {...link(`${base}/calendar`)}>
-          <Bell /> Remind me
-        </Button>
-      </div>
-    )
-  }
-
-  const dayPct = ((NOW_HOUR - 8) / (15.5 - 8)) * 100
-  return (
-    <W>
-      <Head icon={Radio} label="Next live" right={live.seats} />
-      <Big size="lg" value={`${hh}:${mm}`} sub={`${live.title} · ${live.time}`} />
-      <div className="mt-auto grid gap-1.5">
-        <Track value={dayPct} />
-        <div className="flex justify-between">
-          <Caps>Now</Caps>
-          <Caps className="text-foreground">{live.time}</Caps>
-        </div>
-      </div>
-    </W>
-  )
-}
-
-/** This week: week (day columns with event marks), timeline (dots on a line), list. */
-export function ThisWeek({ variant = "week", props }: WidgetProps) {
-  const { coach, base } = useCoach()
-  const empty = useEmpty()
-  const [hover, setHover] = useState<string>()
-  if (empty) return <NothingPlanned />
-  const items = EVENTS.filter((e) => props.news !== false || e.kind !== "news")
-
   if (variant === "week") {
+    const nextLine = (
+      <span className={cn(TYPE.small, "truncate")}>
+        Next: <span className="text-foreground">{next.title}</span> · {next.day} {next.time}
+      </span>
+    )
     return (
       <W>
-        <Head icon={CalendarDays} value={items.length} label="Events" right="12–16 Oct" />
-        <div className="grid flex-1 grid-cols-5 gap-1.5">
+        <Head icon={CalendarDays} label="This week" right="12–16 Oct" />
+        <div className={cn("grid min-h-0 grid-cols-5 gap-1", detailed ? "shrink-0" : "flex-1")} onPointerLeave={() => setHover(undefined)}>
           {WEEK.map((d, i) => {
-            const ev = items.filter((e) => e.day === d)
-            const today = i === 0
+            const ev = items.filter((e) => e.day === d).sort((a, b) => a.time.localeCompare(b.time))
+            const today = d === TODAY_NAME
             return (
-              <div key={d} className={cn("r-inner flex min-w-0 flex-col gap-1 p-1.5", today ? "bg-primary text-primary-foreground" : "bg-muted/60")}>
-                <Caps className={cn(today && "text-primary-foreground/80")}>{d}</Caps>
-                <span className="font-heading text-lg leading-none font-semibold tabular-nums">{12 + i}</span>
-                <div className="mt-auto flex flex-col gap-1" onPointerLeave={() => setHover(undefined)}>
+              <div key={d} className={cn("r-inner flex min-w-0 flex-col gap-1.5 p-1.5", today && "bg-[color:color-mix(in_oklab,var(--foreground)_4%,transparent)]")}>
+                <div className="flex min-w-0 items-baseline gap-1">
+                  <Caps className={cn(today && "text-foreground")}>{d}</Caps>
+                  <span className={cn(TYPE.title, "tabular-nums leading-none", today && "font-semibold")}>{12 + i}</span>
+                  {today && <span className="r-dot size-1.5 shrink-0 self-center" style={{ background: ACCENT }} aria-label="Today" />}
+                </div>
+                <div className="flex min-h-0 flex-col gap-1">
                   {ev.map((e) => (
-                    <span
-                      key={e.id}
-                      onPointerEnter={() => setHover(e.id)}
-                      className={cn("r-bar relative h-1.5 transition-[opacity,transform] duration-150", hover === e.id && "scale-y-150")}
-                      style={{ background: today ? "currentColor" : KIND[e.kind].color, opacity: hover && hover !== e.id ? 0.4 : today ? 0.85 : 1 }}
-                    >
+                    <span key={e.id} className="relative" onPointerEnter={() => setHover(e.id)}>
+                      {/* Narrow: a thin mark per event. Wide: a neutral chip with its time. */}
+                      <span
+                        className={cn("r-bar block h-1 transition-opacity duration-150 @[26rem]:hidden", hover && hover !== e.id && "opacity-40")}
+                        style={{ background: e.noTrade ? "var(--loss)" : KIND[e.kind].color }}
+                      />
+                      <span
+                        className={cn(
+                          "r-chip hidden min-w-0 items-center gap-1 border-l-2 bg-muted px-1 py-0.5 text-[0.6875rem] leading-tight transition-opacity duration-150 @[26rem]:flex",
+                          hover && hover !== e.id && "opacity-50",
+                        )}
+                        style={{ borderLeftColor: KIND[e.kind].color }}
+                      >
+                        <span className="shrink-0 tabular-nums">{e.time}</span>
+                        <span className="hidden truncate text-muted-foreground @[40rem]:inline">{e.title}</span>
+                        {e.noTrade && <TriangleAlert className="ml-auto size-3 shrink-0 text-loss" />}
+                      </span>
                       {hover === e.id && <Tip x={i === 0 ? 0 : i === WEEK.length - 1 ? 100 : 50} y={0} place="above" label={`${e.day} ${e.time}`} value={e.title} />}
                     </span>
                   ))}
@@ -130,145 +156,233 @@ export function ThisWeek({ variant = "week", props }: WidgetProps) {
             )
           })}
         </div>
-        <div className="hidden flex-wrap gap-x-3 gap-y-1 @[18rem]:flex">
-          {(["live", "call", "workshop", "news"] as const).map((k) => (
-            <Key key={k} color={KIND[k].color}>
-              {KIND[k].label}
-            </Key>
-          ))}
-        </div>
+        {more && !detailed && <div className="mt-auto flex min-w-0">{nextLine}</div>}
+        {detailed && laterList(items)}
       </W>
     )
   }
 
-  if (variant === "timeline") {
-    return (
-      <W>
-        <Head icon={CalendarDays} label={coach.wording.calendar} right="This week" />
-        <ol className="relative grid flex-1 content-start gap-3 border-l pl-4">
-          {items.slice(0, 6).map((e) => (
-            <li key={e.id} className="relative flex min-w-0 items-baseline gap-2">
-              <span className="r-dot absolute top-1 -left-[1.33rem] size-2.5 ring-4 ring-card" style={{ background: KIND[e.kind].color }} />
-              <Caps className="hidden w-14 shrink-0 @[15rem]:block">
-                {e.day} {e.time}
-              </Caps>
-              <span className="truncate text-sm">{e.title}</span>
-            </li>
-          ))}
-        </ol>
-      </W>
-    )
-  }
-
+  // countdown
+  const hh = Math.floor(mins / 60)
+  const mm = mins % 60
+  const parts = hh >= 24 ? [{ value: Math.floor(hh / 24), unit: "d" }, { value: hh % 24, unit: "h" }] : [{ value: hh, unit: "h" }, { value: mm, unit: "min" }]
   return (
     <W>
-      <Head icon={CalendarDays} label={coach.wording.calendar} right="This week" />
-      <div className="grid flex-1 content-start gap-1.5">
-        {items.slice(0, 6).map((e) => (
-          <Link key={e.id} href={`${base}/calendar`} className="flex min-w-0 items-center gap-2.5 py-1">
-            <span className="r-bar h-7 w-1 shrink-0" style={{ background: KIND[e.kind].color }} />
-            <span className="grid w-10 shrink-0 leading-tight">
-              <Caps>{e.day}</Caps>
-              <span className="text-xs tabular-nums">{e.time}</span>
-            </span>
-            <span className="min-w-0 flex-1 truncate text-sm">{e.title}</span>
-            {e.noTrade && <TriangleAlert className="size-3.5 shrink-0 text-loss" />}
-          </Link>
-        ))}
+      <Head icon={Radio} label="Up next" right={next.seats} />
+      <div className="grid min-w-0 gap-1">
+        <Countdown parts={parts} />
+        <span className={cn(TYPE.body, "flex min-w-0 items-center gap-1.5")}>
+          <i className="r-dot size-1.5 shrink-0" style={{ background: ACCENT }} />
+          <span className="truncate">{next.title}</span>
+        </span>
       </div>
+      {more && (
+        <div className={cn("flex min-w-0 items-center gap-2", !detailed && "mt-auto")}>
+          <span className={cn(TYPE.small, "truncate")}>
+            {next.day} {next.time} · with {coach.coachName}
+          </span>
+          <Button size="sm" variant="outline" className="ml-auto hidden shrink-0 @[16rem]:inline-flex" {...link(`${base}/calendar`)}>
+            <Bell /> Remind me
+          </Button>
+        </div>
+      )}
+      {detailed && (
+        <div className="flex min-h-0 flex-1 flex-col gap-1">
+          <Caps>Later this week</Caps>
+          {laterList(later)}
+        </div>
+      )}
     </W>
   )
 }
 
-const IMPACT = { high: 3, medium: 2, low: 1 } as const
 
-/** Economic news: impact (bars across the week), next (the next big one), list. */
-export function EconNews({ variant = "impact" }: WidgetProps) {
+// ---------- Market calendar (economic news + market sessions)
+
+const IMPACT = { high: 3, medium: 2, low: 1 } as const
+const hhmm = (h: number) => `${String(Math.floor(h) % 24).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`
+const inHours = (h: number) => (h >= 1 ? `${Math.floor(h)}h ${Math.round((h % 1) * 60)}m` : `${Math.round(h * 60)}m`)
+function sessionState(s: { open: number; close: number }, now: number) {
+  const open = now >= s.open && now < s.close
+  const until = open ? s.close - now : (s.open - now + 24) % 24
+  return { open, until }
+}
+
+/** Three small dots: how much the release can move the market. Neutral, not red. */
+function ImpactDots({ impact = "low" }: { impact?: CalEvent["impact"] }) {
+  return (
+    <span className="flex shrink-0 gap-0.5" aria-label={`${impact} impact`}>
+      {[1, 2, 3].map((n) => (
+        <i key={n} className="r-dot size-1.5" style={{ background: n <= IMPACT[impact] ? "var(--foreground)" : "var(--muted)" }} />
+      ))}
+    </span>
+  )
+}
+
+/** Which sessions are open now: the accent dot marks open ones. */
+function SessionStrip() {
+  const open = MARKET_SESSIONS.filter((s) => sessionState(s, NOW_HOUR).open)
+  return (
+    <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+      <i className="r-dot size-1.5 shrink-0" style={{ background: ACCENT }} />
+      <span className="truncate">
+        <span className="text-foreground">{open.map((s) => s.name).join(", ")}</span> open
+      </span>
+    </span>
+  )
+}
+
+/**
+ * Market calendar: next (the next big release), week (this week's releases as
+ * a list), sessions (Sydney, Tokyo, London, New York over 24 hours with a now
+ * line). Open sessions show in the header of the other looks.
+ */
+export function EconNews({ variant = "next" }: WidgetProps) {
   const empty = useEmpty()
-  const [hover, setHover] = useState<string>()
+  const more = useMore("standard")
+  const detailed = useMore("detailed")
   if (empty) return <NothingPlanned news />
   const news = EVENTS.filter((e) => e.kind === "news")
   const big = news.find((e) => e.impact === "high")!
 
-  if (variant === "next") {
-    return (
-      <W>
-        <Head icon={TriangleAlert} tone="loss" value={big.day} label={big.time} right={big.noTrade ? <NoTrade /> : "High impact"} />
-        <Big value={big.title} sub={`in ${inWords(big.inMinutes ?? 0)}`} />
-        <div className="mt-auto grid grid-cols-2 gap-2">
-          {[
-            ["Forecast", big.forecast],
-            ["Previous", big.previous],
-          ].map(([l, v]) => (
-            <div key={l} className="r-inner grid gap-1 bg-muted/60 p-2">
-              <Caps>{l}</Caps>
-              <span className="font-heading text-xl leading-none font-semibold tabular-nums">{v}</span>
-            </div>
-          ))}
-        </div>
-      </W>
+  if (variant === "sessions") {
+    const now = NOW_HOUR
+    const open = MARKET_SESSIONS.filter((s) => sessionState(s, now).open)
+    const pos = (h: number) => `${(h / 24) * 100}%`
+    // Detailed adds a third column with "closes in" / "opens in" when there is room.
+    const cols = cn("grid grid-cols-[4.5rem_1fr] gap-x-2 @max-[16rem]:grid-cols-[3rem_1fr]", detailed && "@[22rem]:grid-cols-[4.5rem_1fr_6.5rem]")
+    const nowLine = (
+      <span className="pointer-events-none absolute inset-y-0 w-px bg-foreground" style={{ left: pos(now) }}>
+        <span className="r-dot absolute -top-1 -left-[3px] size-[7px]" style={{ background: ACCENT }} />
+      </span>
     )
-  }
-
-  if (variant === "list") {
     return (
       <W>
-        <Head icon={Newspaper} label="Economic news" right={`${news.length} this week`} />
-        <div className="grid flex-1 content-start gap-2">
-          {news.map((e) => (
-            <div key={e.id} className="flex min-w-0 items-center gap-2.5 text-sm">
-              <span className="flex shrink-0 gap-0.5">
-                {[1, 2, 3].map((n) => (
-                  <i key={n} className="r-dot size-1.5" style={{ background: n <= IMPACT[e.impact ?? "low"] ? TONE.loss : "var(--muted)" }} />
-                ))}
+        <Head icon={Clock} label="Sessions" value={open.length} unit="open" right={hhmm(now)} />
+        <div className={cn(cols, "min-h-0 flex-1")}>
+          <div className="grid content-evenly">
+            {MARKET_SESSIONS.map((s) => (
+              <span key={s.name} className={cn(TYPE.small, "flex h-5 items-center truncate", sessionState(s, now).open && "text-foreground")}>
+                {s.name}
               </span>
-              <Caps className="hidden w-16 shrink-0 @[16rem]:block">
-                {e.day} {e.time}
-              </Caps>
-              <span className="min-w-0 flex-1 truncate">{e.title}</span>
+            ))}
+          </div>
+          <div className="relative grid content-evenly">
+            {MARKET_SESSIONS.map((s) => {
+              const st = sessionState(s, now)
+              return (
+                <div key={s.name} className="relative flex h-5 items-center">
+                  <span className="r-bar absolute inset-x-0 h-1.5 bg-muted" />
+                  <span
+                    className="r-bar absolute h-1.5"
+                    style={{ left: pos(s.open), width: pos(s.close - s.open), background: st.open ? "color-mix(in oklab, var(--foreground) 60%, transparent)" : "color-mix(in oklab, var(--foreground) 18%, transparent)" }}
+                  />
+                </div>
+              )
+            })}
+            {nowLine}
+          </div>
+          {detailed && (
+            <div className="hidden content-evenly @[22rem]:grid">
+              {MARKET_SESSIONS.map((s) => {
+                const st = sessionState(s, now)
+                return (
+                  <span key={s.name} className="flex h-5 items-center justify-end text-xs text-muted-foreground tabular-nums">
+                    {st.open ? `closes ${inHours(st.until)}` : `opens ${inHours(st.until)}`}
+                  </span>
+                )
+              })}
             </div>
-          ))}
+          )}
         </div>
+        <div className={cols}>
+          <span />
+          <div className="flex justify-between">
+            {["00", "06", "12", "18", "24"].map((t) => (
+              <Caps key={t}>{t}</Caps>
+            ))}
+          </div>
+        </div>
+        {more && (
+          <span className={cn(TYPE.small, "flex min-w-0 items-center gap-1.5")}>
+            <span className="truncate">
+              Next big release: <span className="text-foreground">{big.title}</span> · {big.day} {big.time}
+            </span>
+            {big.noTrade && <NoTrade short />}
+          </span>
+        )}
       </W>
     )
   }
 
+  if (variant === "week") {
+    const list = more ? news : news.filter((e) => e.impact === "high")
+    return (
+      <W>
+        <Head icon={Newspaper} label="Market calendar" right={<SessionStrip />} />
+        <Fit>
+          {list.map((e) => (
+            <div key={e.id} className="flex min-w-0 items-center gap-2.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5 last:border-b-0">
+              <ImpactDots impact={e.impact} />
+              <span className="w-[4.5rem] shrink-0 text-xs text-muted-foreground tabular-nums @max-[15rem]:hidden">
+                {e.day} {e.time}
+              </span>
+              <span className="grid min-w-0 flex-1">
+                <span className={cn(TYPE.body, "truncate")}>{e.title}</span>
+                {detailed && e.forecast && (
+                  <span className={cn(TYPE.small, "truncate tabular-nums")}>
+                    Forecast {e.forecast} · Previous {e.previous}
+                  </span>
+                )}
+              </span>
+              {e.noTrade && <NoTrade short />}
+            </div>
+          ))}
+        </Fit>
+      </W>
+    )
+  }
+
+  // next
+  const others = news.filter((e) => e.id !== big.id)
   return (
     <W>
-      <Head icon={Newspaper} tone="loss" value={news.filter((e) => e.noTrade).length} label="No-trade events" right="This week" />
-      <div className="flex flex-1 items-end gap-1.5" onPointerLeave={() => setHover(undefined)}>
-        {WEEK.map((d, i) => {
-          const ev = news.filter((e) => e.day === d)
-          return (
-            <div key={d} className="flex h-full flex-1 flex-col justify-end gap-1.5" onPointerEnter={() => setHover(ev[0]?.id)}>
-              <div className="flex flex-1 items-end justify-center gap-0.5">
-                {ev.length === 0 && <span className="r-bar h-1 w-full bg-muted" />}
-                {ev.map((e) => (
-                  <span
-                    key={e.id}
-                    onPointerEnter={() => setHover(e.id)}
-                    className="r-bar relative w-full max-w-5 transition-opacity duration-150"
-                    style={{
-                      height: `${(IMPACT[e.impact ?? "low"] / 3) * 100}%`,
-                      background: e.noTrade ? fill("loss") : `color-mix(in oklab, ${TONE.loss} 28%, var(--muted))`,
-                      opacity: hover && hover !== e.id ? 0.35 : 1,
-                    }}
-                  >
-                    {hover === e.id && <Tip x={i === 0 ? 0 : i === WEEK.length - 1 ? 100 : 50} y={0} place="above" label={`${e.day} ${e.time}`} value={e.title} />}
+      <Head icon={Newspaper} label="Market calendar" right={<SessionStrip />} />
+      <div className="grid min-w-0 gap-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <ImpactDots impact={big.impact} />
+          <Caps className="tabular-nums">
+            {big.day} {big.time} · in {inWords(big.inMinutes ?? 0)}
+          </Caps>
+        </div>
+        <Big value={big.title} />
+        {big.noTrade && <NoTrade />}
+      </div>
+      {more && (
+        <div className={cn("grid grid-cols-2 gap-3", !detailed && "mt-auto")}>
+          <Stat label="Forecast" value={big.forecast} />
+          <Stat label="Previous" value={big.previous} />
+        </div>
+      )}
+      {detailed && (
+        <div className="flex min-h-0 flex-1 flex-col gap-1">
+          <Caps>Also this week</Caps>
+          <Fit>
+            {others.map((e) => (
+              <Row
+                key={e.id}
+                avatar={<ImpactDots impact={e.impact} />}
+                title={e.title}
+                value={
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {e.day} {e.time}
                   </span>
-                ))}
-              </div>
-              <Caps className="text-center">{d.slice(0, 1)}</Caps>
-            </div>
-          )
-        })}
-      </div>
-      <div className="flex min-w-0 items-center gap-2 text-xs">
-        <span className="truncate">Next: {big.title}</span>
-        <span className="ml-auto shrink-0 text-muted-foreground tabular-nums">
-          {big.day} {big.time}
-        </span>
-      </div>
+                }
+              />
+            ))}
+          </Fit>
+        </div>
+      )}
     </W>
   )
 }

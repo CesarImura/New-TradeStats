@@ -54,21 +54,21 @@ export function Cover({ color = "var(--primary)", label, className }: { color?: 
   return (
     <div
       className={cn("relative isolate overflow-hidden rounded-[min(var(--radius),8px)]", className)}
-      style={{ background: `color-mix(in oklab, ${color} 10%, color-mix(in oklab, var(--foreground) 88%, var(--background)))` }}
+      style={{ background: `var(--cover-bg, color-mix(in oklab, ${color} 10%, color-mix(in oklab, var(--foreground) 88%, var(--background))))` }}
     >
       <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="absolute inset-0 size-full" aria-hidden>
         {candles.map((h, i) => {
           const x = 6 + i * 9
           const up = i % 3 !== 1
           return (
-            <g key={i} stroke="var(--background)" fill={up ? "var(--background)" : "none"} opacity={i === candles.length - 1 ? 0.9 : 0.28}>
+            <g key={i} stroke="var(--cover-fg, var(--background))" fill={up ? "var(--cover-fg, var(--background))" : "none"} opacity={i === candles.length - 1 ? 0.9 : 0.28}>
               <line x1={x + 1.5} x2={x + 1.5} y1={60 - h - 5} y2={60 - h + 17} strokeWidth="0.4" />
               <rect x={x} y={60 - h} width="3" height={up ? 11 : 8} strokeWidth="0.4" />
             </g>
           )
         })}
       </svg>
-      {label && <span className="absolute bottom-2.5 left-3 font-heading text-[0.9375rem] leading-tight text-background">{label}</span>}
+      {label && <span className="absolute bottom-2.5 left-3 font-heading text-[0.9375rem] leading-tight text-[color:var(--cover-fg,var(--background))]">{label}</span>}
     </div>
   )
 }

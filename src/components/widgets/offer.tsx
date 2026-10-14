@@ -1,81 +1,104 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, BadgeCheck, Check, Minus, Sparkles } from "@/components/icons"
+import { ArrowRight, ArrowUpRight, BadgeCheck, Check, Minus, Sparkles } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { COACH_PROFILE, UPGRADE } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Caps, Head, W } from "./kit"
-import { Cover, type WidgetProps } from "./shared"
+import { CoachPhoto } from "./brand"
+import { Big, Caps, Head, Stat, TYPE, W, useMore } from "./kit"
+import type { WidgetProps } from "./shared"
 
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
+
+const HAIRLINE = "border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)]"
 
 // ---------- Upgrade
 
 /**
- * Upgrade: compare (your tier next to the next one), banner (brand surface), card (compact).
- * Shown only to students who have a higher tier to move to.
+ * Upgrade: compare (your tier next to the next one), banner (one line with the button), card (the price and what it adds).
+ * Shown only to students who have a higher tier to move to. The button is the accent.
  */
 export function Upgrade({ variant = "compare", props }: WidgetProps) {
   const { base } = useCoach()
+  const more = useMore("standard")
+  const detailed = useMore("detailed")
   const { current, next, features } = UPGRADE
   const extra = features.filter((f) => !f.current)
-  const cta = String(props.button || `Upgrade to ${next.name}`)
+  const cta = (
+    <Button size="sm" className="w-fit shrink-0" {...link(`${base}/profile`)}>
+      {String(props.button || `Upgrade to ${next.name}`)} <ArrowRight />
+    </Button>
+  )
+  const price = `${next.price} a ${next.cadence}`
 
   if (variant === "banner") {
     return (
-      <div className="fx-hero @container flex h-full flex-col justify-center gap-4 overflow-hidden rounded-(--radius) p-[calc(1.25rem*var(--density,1))] @xl:flex-row @xl:items-center @xl:justify-between" style={{ boxShadow: "var(--card-shadow)" }}>
+      <W className="justify-center gap-2 @xl:flex-row @xl:items-center @xl:justify-between @xl:gap-6">
         <div className="grid min-w-0 gap-1">
-          <span className="text-[0.65rem] font-medium tracking-wide uppercase opacity-80">You&apos;re on {current.name}</span>
-          <span className="font-heading leading-tight font-semibold text-balance" style={{ fontSize: "clamp(1.25rem, 5cqi, 1.9rem)" }}>
-            {next.name}: {extra.map((f) => f.label.toLowerCase()).join(", ")}
+          <Caps className="truncate">
+            You&apos;re on {current.name}
+            {detailed && ` · ${next.name} is ${price}`}
+          </Caps>
+          <span className={cn(TYPE.value, "truncate @xl:line-clamp-2 @xl:whitespace-normal")}>
+            {more ? `${next.name}: ${extra.map((f) => f.label.toLowerCase()).join(", ")}` : `Move up to ${next.name}`}
           </span>
         </div>
-        <Button variant="secondary" size="lg" className="shrink-0 self-start @xl:self-auto" {...link(`${base}/profile`)}>
-          {cta} <ArrowRight />
-        </Button>
-      </div>
+        {cta}
+      </W>
     )
   }
 
   if (variant === "card") {
     return (
       <W>
-        <Head icon={Sparkles} label={`Upgrade to ${next.name}`} right={`${next.price}/${next.cadence}`} />
-        <div className="flex flex-wrap gap-1.5">
-          {extra.map((f) => (
-            <span key={f.label} className="r-chip flex items-center gap-1 bg-primary/10 px-2 py-1 text-xs text-primary">
-              <Check className="size-3" /> {f.label}
-            </span>
-          ))}
-        </div>
-        <Button className="mt-auto w-fit" {...link(`${base}/profile`)}>
-          {cta} <ArrowRight />
-        </Button>
+        <Head icon={Sparkles} label={`Upgrade to ${next.name}`} />
+        <Big value={next.price} unit={`/ ${next.cadence}`} sub={detailed ? `You're on ${current.name} (${current.price})` : undefined} />
+        {detailed ? (
+          <ul className="grid gap-1">
+            {extra.map((f) => (
+              <li key={f.label} className={cn(TYPE.body, "flex min-w-0 items-center gap-2")}>
+                <Check className="size-3.5 shrink-0 text-muted-foreground" />
+                <span className="truncate">{f.label}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          more && <span className={cn(TYPE.small, "line-clamp-2")}>Adds {extra.map((f) => f.label.toLowerCase()).join(", ")}.</span>
+        )}
+        <div className="mt-auto">{cta}</div>
       </W>
     )
   }
 
+  const rows = more ? features : extra
   return (
     <W>
-      <Head icon={Sparkles} label="Your plan" right={`${next.price}/${next.cadence}`} />
-      <div className="grid flex-1 grid-cols-[1fr_auto_auto] content-start items-center gap-x-3 gap-y-2 text-sm">
+      <Head icon={Sparkles} label="Your plan" right={price} />
+      <div className={cn(TYPE.body, "grid flex-1 grid-cols-[minmax(0,1fr)_auto_auto] content-start items-stretch")}>
         <span />
-        <Caps className="text-center">{current.name}</Caps>
-        <Caps className="r-chip bg-primary px-1.5 py-1 text-center text-primary-foreground">{next.name}</Caps>
-        {features.map((f) => (
-          <div key={f.label} className="contents">
-            <span className={cn("min-w-0 truncate", !f.current && "font-medium")}>{f.label}</span>
-            <span className="grid place-items-center">{f.current ? <Check className="size-4 text-muted-foreground" /> : <Minus className="size-4 text-muted-foreground/50" />}</span>
-            <span className="grid place-items-center">{f.next && <Check className="size-4 text-primary" />}</span>
-          </div>
-        ))}
+        <Caps className="px-3 pt-1 pb-2 text-center">{current.name}</Caps>
+        <span className="rounded-t-[min(var(--radius),6px)] bg-muted px-3 pt-1 pb-2 text-center">
+          <Caps className="text-foreground">{next.name}</Caps>
+        </span>
+        {rows.map((f, i) => {
+          const last = i === rows.length - 1
+          return (
+            <div key={f.label} className="contents">
+              <span className={cn("min-w-0 truncate border-b py-1.5", HAIRLINE, last && "border-b-0", !f.current && "font-medium")}>{f.label}</span>
+              <span className={cn("grid place-items-center border-b px-3", HAIRLINE, last && "border-b-0")}>
+                {f.current ? <Check className="size-3.5 text-muted-foreground" /> : <Minus className="size-3.5 text-muted-foreground/50" />}
+              </span>
+              <span className={cn("grid place-items-center bg-muted px-3", last && "rounded-b-[min(var(--radius),6px)]")}>{f.next && <Check className="size-3.5 text-foreground" />}</span>
+            </div>
+          )
+        })}
       </div>
-      <Button className="w-full @[18rem]:w-fit" {...link(`${base}/profile`)}>
-        {cta} <ArrowRight />
-      </Button>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        {cta}
+        {detailed && <span className={TYPE.small}>Cancel anytime</span>}
+      </div>
     </W>
   )
 }
@@ -84,74 +107,76 @@ export function Upgrade({ variant = "compare", props }: WidgetProps) {
 
 function Socials() {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-x-3 gap-y-1">
       {COACH_PROFILE.socials.map((s) => (
-        <a key={s} href="#" className="r-chip border px-2 py-1 text-xs hover:bg-muted">
-          {s}
+        <a key={s} href="#" className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground">
+          {s} <ArrowUpRight className="size-3" />
         </a>
       ))}
     </div>
   )
 }
 
-/** Coach profile: card (photo, title, numbers, socials), hero (large with bio), compact (one row). */
+function Stats({ className }: { className?: string }) {
+  return (
+    <div className={cn("grid grid-cols-3 gap-4", className)}>
+      {COACH_PROFILE.stats.map((s) => (
+        <Stat key={s.label} label={s.label} value={s.value} />
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Coach profile: card (photo, title, numbers, socials), hero (a large photo beside the bio), compact (one row with Message).
+ * The verified mark (or the Message button) is the accent.
+ */
 export function CoachProfile({ variant = "card" }: WidgetProps) {
   const { coach } = useCoach()
-  const initials = coach.coachName.slice(0, 2).toUpperCase()
-  const avatar = (size: string) => (
-    <Avatar className={cn(size, "r-chip after:rounded-[inherit]")} style={{ borderRadius: "var(--r-chip)" }}>
-      <AvatarFallback className="bg-primary font-heading text-primary-foreground" style={{ borderRadius: "var(--r-chip)" }}>
-        {initials}
-      </AvatarFallback>
-    </Avatar>
-  )
-  const name = (
-    <span className="flex min-w-0 items-center gap-1.5">
-      <span className="truncate font-heading text-lg leading-tight font-semibold">{coach.coachName}</span>
-      <BadgeCheck className="size-4 shrink-0 text-primary" />
-    </span>
-  )
+  const more = useMore("standard")
+  const detailed = useMore("detailed")
+  const verified = (accent: boolean) => <BadgeCheck className={cn("size-4 shrink-0", accent ? "text-[color:var(--w-accent,var(--primary))]" : "text-muted-foreground")} />
 
   if (variant === "compact") {
     return (
       <W className="flex-row items-center gap-3">
-        {avatar("size-11")}
-        <div className="grid min-w-0 flex-1 gap-0.5">
-          {name}
-          <span className="truncate text-xs text-muted-foreground">{COACH_PROFILE.title}</span>
+        <CoachPhoto className="size-10" />
+        <div className="grid min-w-0 flex-1">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className={cn(TYPE.title, "truncate")}>{coach.coachName}</span>
+            {verified(false)}
+          </span>
+          <span className={cn(TYPE.small, "truncate")}>{detailed ? `${COACH_PROFILE.title} · ${COACH_PROFILE.stats[0].value} ${COACH_PROFILE.stats[0].label.toLowerCase()}` : COACH_PROFILE.title}</span>
         </div>
-        <Button variant="secondary" size="sm" className="hidden shrink-0 @[18rem]:inline-flex">
-          Message
-        </Button>
+        {more && (
+          <Button size="sm" className="hidden shrink-0 @[18rem]:inline-flex">
+            Message
+          </Button>
+        )}
       </W>
     )
   }
 
   if (variant === "hero") {
     return (
-      <W className="p-0">
-        <div className="grid h-full @xl:grid-cols-[2fr_3fr]">
-          <Cover className="hidden h-full min-h-32 rounded-none @xl:block" />
-          <div className="flex min-w-0 flex-col gap-3 p-[calc(1rem*var(--density,1))]">
-            <div className="flex items-center gap-3">
-              {avatar("size-12")}
-              <div className="grid min-w-0">
-                {name}
-                <Caps>{COACH_PROFILE.title}</Caps>
-              </div>
+      <W className="gap-0 p-0 @xl:flex-row">
+        <CoachPhoto className="hidden w-2/5 rounded-none @xl:block" />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 p-[calc(1rem*var(--density,1))]">
+          <div className="flex min-w-0 items-center gap-3">
+            <CoachPhoto className="size-10 @xl:hidden" />
+            <div className="grid min-w-0 gap-0.5">
+              <Caps>Your coach</Caps>
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className={cn(TYPE.valueLg, "truncate")}>{coach.coachName}</span>
+                {verified(true)}
+              </span>
+              <span className={cn(TYPE.small, "truncate")}>{COACH_PROFILE.title}</span>
             </div>
-            <p className="line-clamp-3 text-sm text-muted-foreground">{COACH_PROFILE.bio}</p>
-            <div className="mt-auto flex flex-wrap items-end justify-between gap-3">
-              <div className="flex gap-5">
-                {COACH_PROFILE.stats.map((s) => (
-                  <div key={s.label} className="grid gap-1">
-                    <span className="font-heading text-xl leading-none font-semibold tabular-nums">{s.value}</span>
-                    <Caps>{s.label}</Caps>
-                  </div>
-                ))}
-              </div>
-              <Socials />
-            </div>
+          </div>
+          {more && <p className={cn(TYPE.body, "line-clamp-3 font-heading text-muted-foreground")}>“{COACH_PROFILE.bio}”</p>}
+          <div className="mt-auto flex flex-wrap items-end justify-between gap-3">
+            <Stats className="max-w-xs flex-1" />
+            {detailed && <Socials />}
           </div>
         </div>
       </W>
@@ -160,21 +185,18 @@ export function CoachProfile({ variant = "card" }: WidgetProps) {
 
   return (
     <W>
-      <div className="flex items-center gap-3">
-        {avatar("size-12")}
+      <div className="flex min-w-0 items-center gap-3">
+        <CoachPhoto className="size-12" />
         <div className="grid min-w-0">
-          {name}
-          <span className="truncate text-xs text-muted-foreground">{COACH_PROFILE.title}</span>
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className={cn(TYPE.value, "truncate")}>{coach.coachName}</span>
+            {verified(true)}
+          </span>
+          <span className={cn(TYPE.small, "truncate")}>{COACH_PROFILE.title}</span>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        {COACH_PROFILE.stats.map((s) => (
-          <div key={s.label} className="r-inner grid gap-1 bg-muted/60 p-2">
-            <span className="font-heading text-lg leading-none font-semibold tabular-nums">{s.value}</span>
-            <Caps className="truncate">{s.label}</Caps>
-          </div>
-        ))}
-      </div>
+      {detailed && <p className={cn(TYPE.body, "line-clamp-3 text-muted-foreground")}>{COACH_PROFILE.bio}</p>}
+      {more && <Stats />}
       <div className="mt-auto">
         <Socials />
       </div>
