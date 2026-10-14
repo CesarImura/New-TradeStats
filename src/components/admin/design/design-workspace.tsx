@@ -70,7 +70,7 @@ const FLASH: Partial<Record<PickTarget, string[]>> = {
   buttons: ["corners"],
   headings: ["fonts"],
   labels: ["labels"],
-  cards: ["corners", "shadows", "density"],
+  cards: ["widget-style", "corners", "shadows", "density"],
   "brand-surface": ["shadows"],
   background: ["background"],
   highlight: ["highlight"],
@@ -392,6 +392,7 @@ function LookStep({ theme }: { theme: CoachTheme }) {
         />
         <SliderField id="shadows" label="Depth" value={depthOf(theme)} min={0} max={2} format={(d) => DEPTH_NAMES[d]} onChange={(d) => change({ theme: fromDepth(d) }, "depth")} />
         <SliderField id="density" label="Spacing" value={spacingOf(theme)} min={0} max={2} format={(s) => SPACING_NAMES[s]} onChange={(s) => change({ theme: fromSpacing(s) }, "spacing")} />
+        <DesignField id="widget-style" />
       </Section>
       <Section>
         <More label="Advanced">

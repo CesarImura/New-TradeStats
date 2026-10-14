@@ -94,6 +94,8 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
     // Brand visuals: a natural gradient ramp, a harmonious series palette, glow and texture.
     // The brand colour and its own text colour, kept separate so brand surfaces can re-tint --primary.
     "--brand": t.primary,
+    // Figures in widgets: the label font when it is a mono, otherwise Geist Mono (the Instrument style uses it).
+    "--font-figures": FONT_LIBRARY[t.fonts.label].kind === "mono" ? FONT_LIBRARY[t.fonts.label].css : FONT_LIBRARY["geist-mono"].css,
     "--on-brand": t.primaryForeground,
     // Shades of the brand away from its text colour (darker under white text, lighter under black),
     // for chips, avatars and pictures on a brand card: they keep or gain contrast instead of losing it.

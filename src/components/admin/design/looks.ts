@@ -12,7 +12,7 @@ export type Look = {
   name: string
   blurb: string
   template: TemplateId
-  set: Required<Pick<ThemeDraft, "radius" | "buttonShape" | "shadow" | "effects" | "borders" | "density" | "labelStyle" | "headingWeight">> & {
+  set: Required<Pick<ThemeDraft, "radius" | "buttonShape" | "shadow" | "effects" | "borders" | "density" | "labelStyle" | "headingWeight" | "widgetStyle">> & {
     fonts: CoachTheme["fonts"]
   }
 }
@@ -23,42 +23,42 @@ export const LOOKS: Look[] = [
     name: "Terminal",
     blurb: "Square, dense, mono labels",
     template: "terminal",
-    set: { radius: 2, buttonShape: "square", shadow: "none", effects: "soft", borders: true, density: "compact", labelStyle: "caps", headingWeight: 400, fonts: { heading: "archivo", body: "archivo", label: "space-mono" } },
+    set: { widgetStyle: "instrument", radius: 2, buttonShape: "square", shadow: "none", effects: "soft", borders: true, density: "compact", labelStyle: "caps", headingWeight: 400, fonts: { heading: "archivo", body: "archivo", label: "space-mono" } },
   },
   {
     id: "desk",
     name: "Trading desk",
     blurb: "Sharp and clean, plain labels",
     template: "terminal",
-    set: { radius: 4, buttonShape: "square", shadow: "none", effects: "flat", borders: true, density: "compact", labelStyle: "plain", headingWeight: 500, fonts: { heading: "geist", body: "geist", label: "geist-mono" } },
+    set: { widgetStyle: "instrument", radius: 4, buttonShape: "square", shadow: "none", effects: "flat", borders: true, density: "compact", labelStyle: "plain", headingWeight: 500, fonts: { heading: "geist", body: "geist", label: "geist-mono" } },
   },
   {
     id: "atelier",
     name: "Atelier",
     blurb: "Calm, serif headings, soft cards",
     template: "atelier",
-    set: { radius: 12, buttonShape: "rounded", shadow: "soft", effects: "flat", borders: false, density: "airy", labelStyle: "plain", headingWeight: 400, fonts: { heading: "fraunces", body: "dm-sans", label: "dm-sans" } },
+    set: { widgetStyle: "editorial", radius: 12, buttonShape: "rounded", shadow: "soft", effects: "flat", borders: false, density: "airy", labelStyle: "plain", headingWeight: 400, fonts: { heading: "fraunces", body: "dm-sans", label: "dm-sans" } },
   },
   {
     id: "elegant",
     name: "Elegant",
     blurb: "Fine serif, lots of air",
     template: "atelier",
-    set: { radius: 8, buttonShape: "rounded", shadow: "none", effects: "flat", borders: true, density: "airy", labelStyle: "caps", headingWeight: 400, fonts: { heading: "instrument-serif", body: "geist", label: "geist-mono" } },
+    set: { widgetStyle: "editorial", radius: 8, buttonShape: "rounded", shadow: "none", effects: "flat", borders: true, density: "airy", labelStyle: "caps", headingWeight: 400, fonts: { heading: "instrument-serif", body: "geist", label: "geist-mono" } },
   },
   {
     id: "pulse",
     name: "Pulse",
     blurb: "Bright, pill buttons, deep shadows",
     template: "pulse",
-    set: { radius: 16, buttonShape: "pill", shadow: "strong", effects: "vivid", borders: false, density: "comfortable", labelStyle: "plain", headingWeight: 700, fonts: { heading: "sora", body: "manrope", label: "sora" } },
+    set: { widgetStyle: "soft", radius: 16, buttonShape: "pill", shadow: "strong", effects: "vivid", borders: false, density: "comfortable", labelStyle: "plain", headingWeight: 700, fonts: { heading: "sora", body: "manrope", label: "sora" } },
   },
   {
     id: "friendly",
     name: "Friendly",
     blurb: "Round and soft, easy to read",
     template: "pulse",
-    set: { radius: 14, buttonShape: "rounded", shadow: "soft", effects: "soft", borders: false, density: "comfortable", labelStyle: "plain", headingWeight: 600, fonts: { heading: "manrope", body: "manrope", label: "manrope" } },
+    set: { widgetStyle: "soft", radius: 14, buttonShape: "rounded", shadow: "soft", effects: "soft", borders: false, density: "comfortable", labelStyle: "plain", headingWeight: 600, fonts: { heading: "manrope", body: "manrope", label: "manrope" } },
   },
 ]
 

@@ -13,7 +13,7 @@ import { themeToCss } from "@/lib/theme/css"
 import { onColor } from "@/lib/theme/derive"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
-import type { CoachTheme, TemplateId } from "@/lib/theme/types"
+import { widgetStyleOf, type CoachTheme, type TemplateId } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { BackgroundControl } from "./background-control"
 import { Field, More, Segmented, SliderField, Swatches } from "./controls"
@@ -390,6 +390,24 @@ function DensityField() {
   )
 }
 
+function WidgetStyleField() {
+  const { theme, change } = useDesign()
+  return (
+    <Field id="widget-style" label="Widget style" hint={{ instrument: "Mono figures, tick charts", soft: "Rounded, one surface", editorial: "Heading font, hairlines" }[widgetStyleOf(theme)]}>
+      <Segmented
+        label="Widget style"
+        value={widgetStyleOf(theme)}
+        onChange={(widgetStyle) => change({ theme: { widgetStyle } }, "widget-style")}
+        options={[
+          { value: "instrument", label: "Instrument" },
+          { value: "soft", label: "Soft" },
+          { value: "editorial", label: "Editorial" },
+        ]}
+      />
+    </Field>
+  )
+}
+
 function BackgroundField() {
   const { theme, change } = useDesign()
   return (
@@ -537,6 +555,7 @@ const FIELDS: Record<string, () => React.ReactNode> = {
   borders: BordersField,
   density: DensityField,
   background: BackgroundField,
+  "widget-style": WidgetStyleField,
   "nav-layout": NavLayoutField,
   "nav-style": NavStyleField,
   "nav-logo": NavLogoField,

@@ -20,6 +20,12 @@ import { cn } from "@/lib/utils"
  *
  * The coach decides, per widget (WidgetFrame): Emphasis (Quiet, Accent, Star)
  * and Detail (Compact, Standard, Detailed). Read them with useFrame().
+ *
+ * Card anatomy and signature visuals live in instrument.tsx (WCard, Num,
+ * Legend, Chip, TickGauge, TickBar, StepChart, DotStrip, HatchBar, Timeline):
+ * every widget uses WCard, and the coach's Widget style (Instrument, Soft,
+ * Editorial) decides how it is drawn. Data widgets may use meaning colours in
+ * legends and timelines (profit, loss, greys from GREY), never decoration.
  */
 
 export type Emphasis = "quiet" | "accent" | "star"
