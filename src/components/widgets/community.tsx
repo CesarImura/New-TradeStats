@@ -1,170 +1,237 @@
 "use client"
 
-import { ArrowUpRight, Heart, Megaphone, MessageCircle, MessageSquareText, Pin } from "@/components/icons"
+import { useState } from "react"
+import { ArrowUpRight, Eye, Heart, Megaphone, MessageCircle, MessageSquareText, Pin } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
-import { ANNOUNCEMENT, DISCORD, DISCORD_ACTIVITY } from "@/lib/data/sample"
+import { ANNOUNCEMENT, DISCORD } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Avatar, Bars, Big, Caps, Head, Row, TYPE, W, useMore } from "./kit"
+import { Axis, Chip, GREY, HatchBar, Label, Legend, Num, Rule, TickBar, WCard, useFigureFont } from "./instrument"
+import { ACCENT, ACCENT_TEXT, Avatar, TYPE, Tip, useMore } from "./kit"
 import { AvatarStack, WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
-
-/** Accent text: the one coloured thing in a widget, when it is a link rather than a button. */
-/** Brand-coloured text, in the readable version of the brand colour (see kit.tsx ACCENT_TEXT). */
-const ACCENT_TEXT = "text-[color:var(--w-accent-text,var(--brand-text,var(--primary)))]"
 
 const initials = (name: string) => name.slice(0, 2).toUpperCase()
 
+/** Everyone in the community: the coach's tiers added up. */
+const useAudience = () => {
+  const { coach } = useCoach()
+  return coach.tiers.reduce((a, t) => a + t.members, 0)
+}
+
 // ---------- Announcement
 
-/** Announcement: plain (a headline in the heading font), post (a feed post with its author and reactions), line (one line). */
+/** Who has read the latest announcement so far (sample). */
+const READ = 34
+const READERS = ["JP", "SK", "MS", "TB"]
+const WHEN = "2 h ago"
+
+/** Reactions as small mono figures: hearts, replies, reads. */
+function Reactions({ read = true, className }: { read?: boolean; className?: string }) {
+  const font = useFigureFont()
+  const items = [
+    { icon: Heart, n: ANNOUNCEMENT.reactions, label: "" },
+    { icon: MessageCircle, n: ANNOUNCEMENT.comments, label: "replies" },
+    ...(read ? [{ icon: Eye, n: READ, label: "read" }] : []),
+  ]
+  return (
+    <div className={cn("flex min-w-0 items-center gap-3.5 text-xs leading-4 tabular-nums", className)} style={{ fontFamily: font }}>
+      {items.map(({ icon: Icon, n, label }, i) => (
+        <span key={i} className="flex shrink-0 items-center gap-1">
+          <Icon className="size-3.5 text-muted-foreground" />
+          <span>{n}</span>
+          {label && <span className="hidden text-muted-foreground @[16rem]:inline">{label}</span>}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+const ReadLink = () => (
+  <a href="#" className="shrink-0 text-xs font-medium hover:underline" style={{ color: ACCENT_TEXT }}>
+    Read
+  </a>
+)
+
+/**
+ * Announcement: plain (the headline in the heading font, how many have read it),
+ * post (a feed post with its author, reactions and readers), line (one row).
+ */
 export function Announcement({ variant = "plain" }: WidgetProps) {
   const { coach } = useCoach()
+  const audience = useAudience()
   const empty = useEmpty()
   const more = useMore("standard")
   const detailed = useMore("detailed")
   if (empty) return <WidgetEmpty icon={Megaphone} title="No announcements yet" text={`News from ${coach.coachName} will show here.`} />
 
-  const read = (
-    <a href="#" className={cn("shrink-0 text-xs font-medium hover:underline", ACCENT_TEXT)}>
-      Read
-    </a>
-  )
+  const meta = `${coach.coachName} · ${WHEN} · ${READ} read`
+  const chip = ANNOUNCEMENT.pinned ? <Chip tone="neutral">Pinned</Chip> : <Chip>New</Chip>
 
   if (variant === "line") {
     return (
-      <W row className="flex-row items-center gap-2.5">
-        <Megaphone className="size-3.5 shrink-0 text-muted-foreground" />
-        <span className={cn(TYPE.body, "min-w-0 flex-1 truncate")}>
-          <span className="font-medium">{ANNOUNCEMENT.title}</span>
-          {more && <span className="hidden text-muted-foreground @2xl:inline"> · {ANNOUNCEMENT.body}</span>}
-        </span>
-        {detailed && <Caps className="hidden shrink-0 @lg:inline">{ANNOUNCEMENT.when}</Caps>}
-        {read}
-      </W>
+      <WCard row icon={Megaphone} title={ANNOUNCEMENT.title} meta={detailed ? `${meta} · ${ANNOUNCEMENT.body}` : more ? meta : undefined} chip={<Chip>New</Chip>}>
+        <ReadLink />
+      </WCard>
     )
   }
 
   if (variant === "post") {
     return (
-      <W>
+      <WCard icon={Megaphone} title="Latest announcement" meta={`${coach.name} · #announcements`} chip={chip}>
         <div className="flex min-w-0 items-center gap-2.5">
           <Avatar initials={initials(coach.coachName)} size={28} />
-          <div className="grid min-w-0">
+          <div className="grid min-w-0 flex-1">
             <span className={cn(TYPE.title, "truncate")}>{coach.coachName}</span>
-            <span className={TYPE.small}>{ANNOUNCEMENT.when}</span>
+            <span className={cn(TYPE.small, "truncate")}>Coach · {WHEN}</span>
           </div>
-          {ANNOUNCEMENT.pinned && <Pin className="ml-auto size-3.5 shrink-0 text-muted-foreground" />}
+          {ANNOUNCEMENT.pinned && <Pin className="size-3.5 shrink-0 text-muted-foreground" />}
         </div>
         <div className="grid min-w-0 gap-0.5">
           <span className={cn(TYPE.title, "line-clamp-2")}>{ANNOUNCEMENT.title}</span>
-          <p className={cn(TYPE.body, "text-muted-foreground", detailed ? "line-clamp-4" : more ? "line-clamp-2 @[18rem]:line-clamp-3" : "line-clamp-1")}>{ANNOUNCEMENT.body}</p>
+          {more && <p className={cn(TYPE.body, "text-muted-foreground", detailed ? "line-clamp-4" : "line-clamp-2")}>{ANNOUNCEMENT.body}</p>}
         </div>
-        <div className="mt-auto flex items-center gap-4 text-xs text-muted-foreground tabular-nums">
+        <div className="mt-auto flex min-w-0 items-center gap-3">
+          <Reactions read={false} />
           {more && (
-            <>
-              <span className="flex items-center gap-1">
-                <Heart className="size-3.5" /> {ANNOUNCEMENT.reactions}
-              </span>
-              <span className="flex items-center gap-1">
-                <MessageCircle className="size-3.5" /> {ANNOUNCEMENT.comments}
-                {detailed && " comments"}
-              </span>
-            </>
+            <span className="ml-auto hidden min-w-0 items-center gap-1.5 @[18rem]:flex">
+              <AvatarStack initials={READERS.slice(0, 3)} />
+              <span className={cn(TYPE.small, "truncate")}>+{READ - 3} read</span>
+            </span>
           )}
-          <span className="ml-auto">{read}</span>
+          {!more && (
+            <span className="ml-auto">
+              <ReadLink />
+            </span>
+          )}
         </div>
-      </W>
+      </WCard>
     )
   }
 
   return (
-    <W>
-      <div className="flex min-w-0 items-center gap-1.5 leading-none">
-        <Megaphone className="size-3.5 shrink-0 text-muted-foreground" />
-        <Caps className="truncate">From {coach.coachName}</Caps>
-        <Caps className="ml-auto hidden shrink-0 @[15rem]:inline">{ANNOUNCEMENT.when}</Caps>
-      </div>
+    <WCard icon={Megaphone} title="Latest announcement" meta={meta} chip={chip}>
       <h3 className={cn(TYPE.value, "line-clamp-2 text-balance")}>{ANNOUNCEMENT.title}</h3>
-      {more && <p className={cn(TYPE.body, "text-muted-foreground", detailed ? "line-clamp-4" : "line-clamp-2 @[18rem]:line-clamp-3")}>{ANNOUNCEMENT.body}</p>}
-      {detailed && <div className="mt-auto">{read}</div>}
-    </W>
+      {more && <p className={cn(TYPE.body, "text-muted-foreground", detailed ? "line-clamp-3" : "line-clamp-2")}>{ANNOUNCEMENT.body}</p>}
+      {detailed && (
+        <div className="grid gap-1.5">
+          <div className="flex items-baseline justify-between gap-2">
+            <Label>
+              Read by {READ} of {audience} {coach.wording.students.toLowerCase()}
+            </Label>
+            <Label>{Math.round((READ / audience) * 100)}%</Label>
+          </div>
+          <TickBar value={READ} max={audience} segments={40} height={8} />
+        </div>
+      )}
+      {more && (
+        <div className="mt-auto flex items-center justify-between gap-3">
+          <Reactions read={!detailed} />
+          <ReadLink />
+        </div>
+      )}
+    </WCard>
   )
 }
 
 // ---------- Discord
 
+/** Messages per hour over the last 24 hours, oldest first (sample). */
+const HOURS = [3, 2, 1, 1, 0, 0, 1, 2, 4, 6, 9, 12, 14, 11, 9, 13, 18, 22, 26, 19, 24, 28, 31, 27]
 /** New messages per channel since the student's last visit (sample). */
-const UNREAD = [12, 4, 7]
+const CHANNELS = [
+  { name: DISCORD.channels[0], unread: 12 },
+  { name: DISCORD.channels[1], unread: 7 },
+  { name: DISCORD.channels[2], unread: 4 },
+  { name: "#wins", unread: 3 },
+  { name: "#announcements", unread: 1 },
+]
+const UNREAD = CHANNELS.slice(0, 3).reduce((a, c) => a + c.unread, 0)
+const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
 
-/** Discord: online (who's around and activity today), card (channels with what's new), banner (one row with a Join button). */
+/** Activity of the last 24 h: one thin bar per hour, height = messages, the latest hour in the accent. */
+function HourTicks({ values, height = 28, className }: { values: number[]; height?: number; className?: string }) {
+  const [hover, setHover] = useState<number>()
+  const max = Math.max(...values, 1)
+  const last = values.length - 1
+  return (
+    <div className={cn("relative flex items-end gap-[2px]", className)} style={{ height }} onPointerLeave={() => setHover(undefined)}>
+      {values.map((v, i) => (
+        <span key={i} className="flex h-full flex-1 items-end" onPointerEnter={() => setHover(i)}>
+          <span
+            className="w-full rounded-[1px]"
+            style={{ height: `${Math.max(8, (v / max) * 100)}%`, background: v === 0 ? TRACK : i === last || i === hover ? ACCENT : GREY[2] }}
+          />
+        </span>
+      ))}
+      {hover !== undefined && <Tip x={((hover + 0.5) / values.length) * 100} y={100 - (values[hover] / max) * 100} label={hover === last ? "Last hour" : `${last - hover} h ago`} value={`${values[hover]} msgs`} />}
+    </div>
+  )
+}
+
+const channelLegend = (rows: typeof CHANNELS, empty: boolean) =>
+  rows.map((c, i) => ({ color: i === 0 && !empty ? ACCENT : GREY[Math.min(i, 3)], label: c.name, value: empty ? "Quiet" : `${c.unread} new` }))
+
+/** Discord: online (who's around and the last 24 h), card (channels with what's new), banner (one row with a Join button). */
 export function Discord({ variant = "online", props }: WidgetProps) {
+  const { coach } = useCoach()
   const empty = useEmpty()
   const more = useMore("standard")
   const detailed = useMore("detailed")
   const text = String(props.text || "Live chat, trade ideas and Q&A with the group.")
   const members = `${DISCORD.members.toLocaleString("en")} members`
+  const newChip = empty ? undefined : <Chip>{UNREAD} new</Chip>
+  const join = (
+    <Button size="sm" className="shrink-0">
+      Join
+    </Button>
+  )
 
   if (variant === "banner") {
     return (
-      <W className="flex-row items-center gap-3">
-        <MessageSquareText className="size-4 shrink-0 text-muted-foreground" />
-        <div className="grid min-w-0 flex-1 gap-0.5">
-          <span className={cn(TYPE.title, "truncate")}>{empty ? "Be the first one in" : `${DISCORD.online} people online now`}</span>
-          {more && <span className={cn(TYPE.small, "truncate")}>{detailed && !empty ? `${members} · ${text}` : text}</span>}
-        </div>
+      <WCard
+        row
+        icon={MessageSquareText}
+        title="Discord"
+        meta={empty ? "Be the first one in" : detailed ? `${DISCORD.online} online · ${members} · ${text}` : more ? `${DISCORD.online} online · ${CHANNELS[0].unread} new in ${CHANNELS[0].name}` : `${DISCORD.online} online`}
+        chip={newChip}
+      >
         {!empty && <AvatarStack initials={DISCORD.avatars.slice(0, 4)} className="hidden shrink-0 @lg:flex" />}
-        <Button size="sm" className="shrink-0">
-          Join
-        </Button>
-      </W>
+        {join}
+      </WCard>
     )
   }
 
   if (variant === "card") {
+    const rows = CHANNELS.slice(0, detailed ? 5 : more ? 3 : 2)
     return (
-      <W>
-        <Head icon={MessageSquareText} label="Discord" right={empty ? undefined : members} />
-        {detailed && <p className={cn(TYPE.body, "line-clamp-2 text-muted-foreground")}>{text}</p>}
-        <div className="grid min-h-0">
-          {DISCORD.channels.slice(0, more ? 3 : 2).map((c, i) => (
-            <Row key={c} title={c} value={<span className={TYPE.small}>{empty ? "Quiet" : `${UNREAD[i]} new`}</span>} />
-          ))}
-        </div>
+      <WCard icon={MessageSquareText} title="Discord" meta={empty ? `${coach.name} · ${members}` : `${rows.length} channels · since your last visit`} chip={newChip}>
+        <Num size="md" value={empty ? 0 : UNREAD} unit="new messages" delta={!empty && more ? `${DISCORD.online} online` : undefined} deltaTone="muted" />
+        <HatchBar parts={empty ? [] : CHANNELS.slice(0, 3).map((c, i) => ({ value: c.unread, color: i === 0 ? ACCENT : GREY[i + 1] }))} total={empty ? 1 : UNREAD} height={8} />
+        {more && <Legend items={channelLegend(rows, empty)} />}
+        {detailed && <p className={cn(TYPE.small, "line-clamp-2")}>{text}</p>}
         <Button size="sm" className="mt-auto w-fit">
           Open Discord <ArrowUpRight />
         </Button>
-      </W>
+      </WCard>
     )
   }
 
   return (
-    <W>
-      <Head
-        icon={MessageSquareText}
-        label="Discord"
-        right={
-          <span className="flex items-center gap-1.5">
-            <i className="r-dot size-1.5 bg-profit" />
-            <Caps>Live</Caps>
-          </span>
-        }
-      />
-      <div className="flex items-end justify-between gap-3">
-        <Big value={empty ? 0 : DISCORD.online} unit="online" sub={detailed ? members : undefined} />
-        {!empty && <AvatarStack initials={DISCORD.avatars.slice(0, 4)} className="hidden @[15rem]:flex" />}
+    <WCard icon={MessageSquareText} title="Discord" meta={empty ? "Be the first one in" : `${coach.name} · ${members}`} chip={newChip} bodyClassName="gap-2">
+      <div className="flex min-w-0 items-end justify-between gap-3">
+        <Num value={empty ? 0 : DISCORD.online} unit="online" delta={empty ? undefined : "+18 vs yesterday"} />
+        {!empty && <AvatarStack initials={DISCORD.avatars.slice(0, 5)} className="hidden shrink-0 pb-1 @[17rem]:flex" />}
       </div>
-      {more ? (
-        <Bars
-          values={empty ? DISCORD_ACTIVITY.map(() => 0) : DISCORD_ACTIVITY}
-          active={DISCORD_ACTIVITY.length - 1}
-          format={(v) => `${v} msgs`}
-          tips={DISCORD_ACTIVITY.map((_, i) => (i === DISCORD_ACTIVITY.length - 1 ? "Last hour" : `${DISCORD_ACTIVITY.length - 1 - i}h ago`))}
-        />
-      ) : (
-        <Button size="sm" className="mt-auto w-fit">
-          Join
-        </Button>
+      <div className="mt-auto grid gap-1">
+        <HourTicks values={empty ? HOURS.map(() => 0) : HOURS} height={more ? 28 : 22} />
+        {more && <Axis labels={["24 h ago", "12 h", "now"]} />}
+      </div>
+      {detailed && (
+        <>
+          <Rule />
+          <Legend items={channelLegend(CHANNELS.slice(0, 3), empty)} />
+        </>
       )}
-    </W>
+    </WCard>
   )
 }

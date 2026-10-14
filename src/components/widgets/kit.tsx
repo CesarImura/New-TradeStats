@@ -579,7 +579,7 @@ export function Radar({ axes, className }: { axes: { label: string; v: number }[
   const n = axes.length
   const pt = (i: number, r: number) => {
     const a = (Math.PI * 2 * i) / n - Math.PI / 2
-    return [50 + Math.cos(a) * r, 50 + Math.sin(a) * r] as const
+    return [Math.round((50 + Math.cos(a) * r) * 100) / 100, Math.round((50 + Math.sin(a) * r) * 100) / 100] as const
   }
   const poly = (r: (i: number) => number) => axes.map((_, i) => pt(i, r(i)).join(",")).join(" ")
   return (

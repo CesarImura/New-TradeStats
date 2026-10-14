@@ -1,22 +1,19 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, ArrowUpRight, Handshake, Play, Quote, Search, Sparkles } from "@/components/icons"
+import { ArrowRight, ArrowUpRight, Handshake, Image as ImageIcon, Play, Quote, Search, Sparkles, Type, Video } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { AI_INSIGHT, AI_SAMPLE, COACH_PROFILE, PARTNERS } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Avatar, Bars, Caps, Head, TYPE, W, useMore } from "./kit"
+import { Axis, Chip, GREY, HatchBar, Label, Legend, StepChart, TickBar, Timeline, WCard, useFigureFont } from "./instrument"
+import { ACCENT, ACCENT_TEXT, Avatar, TYPE, useMore } from "./kit"
 import { Cover, useEmpty, type WidgetProps } from "./shared"
 
 /** "Ask Kairo AI", but not "Ask Ask Marco" when the coach already named it that way. */
 const askAi = (name: string) => (/^ask\b/i.test(name) ? name : `Ask ${name}`)
 
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
-
-/** Accent text: the one coloured thing in a widget, when it is a link rather than a button. */
-/** Brand-coloured text, in the readable version of the brand colour (see kit.tsx ACCENT_TEXT). */
-const ACCENT_TEXT = "text-[color:var(--w-accent-text,var(--brand-text,var(--primary)))]"
 
 /** Initials for a name: "Marco" -> "MA", "IC Markets" -> "IM". */
 const initials = (name: string) => {
@@ -56,11 +53,27 @@ export function VideoThumb({ length = "2:14", className }: { length?: string; cl
 
 // ---------- Welcome video
 
+const LENGTH = { label: "2:14", s: 134 }
 const CHAPTERS = [
-  { title: "How the program works", at: "0:00" },
-  { title: "What to do in your first week", at: "0:48" },
-  { title: "How to reach me", at: "1:40" },
+  { title: "How the program works", at: "0:00", s: 0, len: "48 s" },
+  { title: "What to do in your first week", at: "0:48", s: 48, len: "52 s" },
+  { title: "How to reach me", at: "1:40", s: 100, len: "34 s" },
 ]
+/** Where the student stopped watching (sample): the start of chapter 2. */
+const WATCHED = 48
+
+/** The chapters as a timeline: the one to watch next carries the accent. */
+function Chapters({ className }: { className?: string }) {
+  const next = CHAPTERS.findIndex((c, i) => (CHAPTERS[i + 1]?.s ?? LENGTH.s) > WATCHED)
+  return <Timeline className={className} items={CHAPTERS.map((c, i) => ({ time: c.at, title: c.title, value: c.len, color: i === next ? ACCENT : i < next ? GREY[2] : GREY[1], strong: i === next }))} />
+}
+
+/** A scrubber under the video: watched so far in the accent, chapter starts as taller ticks. */
+function Scrubber() {
+  const n = 48
+  const starts = CHAPTERS.slice(1).map((c) => Math.round((c.s / LENGTH.s) * n))
+  return <TickBar value={WATCHED} max={LENGTH.s} segments={n} height={6} now={Math.round((WATCHED / LENGTH.s) * n)} mark={(i) => (starts.includes(i) ? GREY[0] : undefined)} />
+}
 
 /** Welcome video: side (video beside the words), stacked (video on top), minimal (the title as a quote). */
 export function WelcomeVideo({ variant = "side", props }: WidgetProps) {
@@ -69,67 +82,61 @@ export function WelcomeVideo({ variant = "side", props }: WidgetProps) {
   const detailed = useMore("detailed")
   const title = String(props.title || "Welcome in. Here's how to get the most out of it.")
   const text = String(props.text || "Two minutes on how the program works, what to do first, and how to reach me.")
+  const pct = Math.round((WATCHED / LENGTH.s) * 100)
+  const meta = `${coach.coachName} · ${LENGTH.label} · ${CHAPTERS.length} chapters`
+  const chip = <Chip>{pct}% watched</Chip>
   const watch = (
     <Button size="sm" className="w-fit shrink-0">
-      <Play /> Watch · 2 min
+      <Play /> Resume at {CHAPTERS[1].at}
     </Button>
-  )
-  const chapters = detailed && (
-    <ol className="grid">
-      {CHAPTERS.map((c) => (
-        <li key={c.at} className="flex items-baseline gap-2 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1 last:border-b-0">
-          <span className="w-8 shrink-0 text-xs text-muted-foreground tabular-nums">{c.at}</span>
-          <span className={cn(TYPE.body, "truncate")}>{c.title}</span>
-        </li>
-      ))}
-    </ol>
   )
 
   if (variant === "minimal") {
     return (
-      <W className="justify-center gap-4">
-        <Quote className="size-4 shrink-0 text-muted-foreground" />
-        <p className={cn(TYPE.value, "line-clamp-3 max-w-3xl font-normal text-balance @2xl:text-[1.75rem] @2xl:leading-8")}>“{title}”</p>
-        <div className="flex min-w-0 items-center gap-2.5">
+      <WCard icon={Quote} title="Welcome video" meta={meta} chip={chip}>
+        <p className={cn(TYPE.value, "line-clamp-2 max-w-3xl font-normal text-balance @2xl:text-[1.75rem] @2xl:leading-8")}>“{title}”</p>
+        {detailed && <Chapters />}
+        <div className="mt-auto flex min-w-0 items-center gap-2.5">
           <Avatar initials={initials(coach.coachName)} size={28} />
-          <span className="grid min-w-0">
+          <span className="grid min-w-0 flex-1">
             <span className={cn(TYPE.title, "truncate")}>{coach.coachName}</span>
             {more && <span className={cn(TYPE.small, "truncate")}>{COACH_PROFILE.title}</span>}
           </span>
-          <span className="ml-auto">{watch}</span>
+          {watch}
         </div>
-      </W>
+      </WCard>
     )
   }
 
   if (variant === "stacked") {
     return (
-      <W>
-        <VideoThumb className="flex-1" />
+      <WCard flush icon={Video} title="Welcome video" meta={meta} chip={chip}>
+        <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-2">
+          <VideoThumb length={LENGTH.label} className="h-full" />
+          {more && <Scrubber />}
+        </div>
         <div className="flex min-w-0 flex-col gap-3 @lg:flex-row @lg:items-end @lg:justify-between">
           <div className="grid min-w-0 gap-1">
-            <Caps>A message from {coach.coachName}</Caps>
             <h3 className={cn(TYPE.value, "line-clamp-2 text-balance")}>{title}</h3>
-            {more && <p className={cn(TYPE.body, "line-clamp-2 text-muted-foreground")}>{text}</p>}
+            {more && <p className={cn(TYPE.body, "line-clamp-1 text-muted-foreground")}>{text}</p>}
           </div>
           {watch}
         </div>
-        {chapters}
-      </W>
+        {detailed && <Chapters />}
+      </WCard>
     )
   }
 
   return (
-    <W className="@xl:flex-row @xl:items-center @xl:gap-6">
-      <VideoThumb className="aspect-video w-full flex-1 @xl:h-full @xl:max-w-[55%] @xl:flex-none" />
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <Caps>A message from {coach.coachName}</Caps>
-        <h3 className={cn(TYPE.value, "line-clamp-3 text-balance")}>{title}</h3>
-        {more && <p className={cn(TYPE.body, "line-clamp-3 hidden text-muted-foreground @xl:block")}>{text}</p>}
-        {chapters}
-        <div className="mt-1">{watch}</div>
+    <WCard flush icon={Video} title="Welcome video" meta={meta} chip={chip} bodyClassName="@xl:flex-row @xl:gap-5">
+      <VideoThumb length={LENGTH.label} className="min-h-20 w-full flex-1 @xl:h-full @xl:max-w-[50%]" />
+      <div className="flex min-w-0 flex-col gap-2 @xl:flex-1">
+        <h3 className={cn(TYPE.value, "line-clamp-2 text-balance")}>{title}</h3>
+        {more && <p className={cn(TYPE.body, "line-clamp-2 hidden text-muted-foreground @xl:block")}>{text}</p>}
+        {more && <Chapters className={cn(!detailed && "hidden @xl:grid")} />}
+        <div className="@xl:mt-auto">{watch}</div>
       </div>
-    </W>
+    </WCard>
   )
 }
 
@@ -137,7 +144,7 @@ export function WelcomeVideo({ variant = "side", props }: WidgetProps) {
 
 /** Banner: headline (words left, button right), picture (artwork beside the words), slim (one line). */
 export function Banner({ variant = "headline", props }: WidgetProps) {
-  const { base } = useCoach()
+  const { coach, base } = useCoach()
   const more = useMore("standard")
   const detailed = useMore("detailed")
   const title = String(props.title || "Inner Circle opens on 1 November")
@@ -150,41 +157,45 @@ export function Banner({ variant = "headline", props }: WidgetProps) {
   )
 
   if (variant === "slim") {
+    if (detailed) {
+      return (
+        <WCard row icon={ImageIcon} title={title} meta={text} chip={<Chip>{eyebrow}</Chip>}>
+          {cta}
+        </WCard>
+      )
+    }
     return (
-      <W row className="flex-row items-center gap-3">
-        <span className={cn(TYPE.body, "min-w-0 flex-1 truncate")}>
-          {detailed && <Caps className="mr-2">{eyebrow}</Caps>}
-          <span className="font-medium">{title}</span>
-          {more && <span className="hidden text-muted-foreground @2xl:inline"> · {text}</span>}
-        </span>
+      <WCard row crumb={more ? eyebrow : undefined} title={title}>
+        <span className="ml-auto" />
         {cta}
-      </W>
+      </WCard>
     )
   }
 
+  const words = (
+    <div className="grid min-w-0 gap-1">
+      <h3 className={cn(TYPE.value, "text-balance @3xl:text-[1.75rem] @3xl:leading-8", variant === "picture" ? "line-clamp-2" : "line-clamp-1")}>{title}</h3>
+      {more && <p className={cn(TYPE.body, "max-w-prose text-muted-foreground", detailed ? "line-clamp-3" : "line-clamp-1")}>{text}</p>}
+    </div>
+  )
+
   if (variant === "picture") {
     return (
-      <W className="flex-row items-stretch gap-4">
+      <WCard flush crumb={coach.org} title={eyebrow} chip={detailed ? <Chip tone="neutral">{coach.name}</Chip> : undefined} bodyClassName="flex-row items-stretch gap-4">
         <Cover className="hidden aspect-[4/3] h-full shrink-0 @lg:block" />
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
-          {detailed && <Caps>{eyebrow}</Caps>}
-          <h3 className={cn(TYPE.value, "line-clamp-2 text-balance @3xl:text-[1.75rem] @3xl:leading-8")}>{title}</h3>
-          {more && <p className={cn(TYPE.body, "line-clamp-2 max-w-prose text-muted-foreground")}>{text}</p>}
-          {cta && <div className="mt-1.5">{cta}</div>}
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-3">
+          {words}
+          {cta}
         </div>
-      </W>
+      </WCard>
     )
   }
 
   return (
-    <W className="flex-row items-center justify-between gap-6">
-      <div className="grid min-w-0 gap-1">
-        {detailed && <Caps>{eyebrow}</Caps>}
-        <h3 className={cn(TYPE.value, "truncate @3xl:text-[1.75rem] @3xl:leading-8")}>{title}</h3>
-        {more && <p className={cn(TYPE.body, "truncate text-muted-foreground")}>{text}</p>}
-      </div>
+    <WCard flush crumb={coach.org} title={eyebrow} bodyClassName="flex-row items-center justify-between gap-4 @lg:gap-6">
+      {words}
       {cta}
-    </W>
+    </WCard>
   )
 }
 
@@ -193,6 +204,7 @@ export function Banner({ variant = "headline", props }: WidgetProps) {
 /** Text: plain (heading and paragraph), quote (in the heading font, signed), steps (each sentence or line numbered). */
 export function TextBlock({ variant = "plain", props }: WidgetProps) {
   const { coach } = useCoach()
+  const font = useFigureFont()
   const more = useMore("standard")
   const detailed = useMore("detailed")
   const title = String(props.title || "How this works")
@@ -200,16 +212,9 @@ export function TextBlock({ variant = "plain", props }: WidgetProps) {
 
   if (variant === "quote") {
     return (
-      <W className="justify-center gap-3">
-        <blockquote className={cn(TYPE.value, "line-clamp-4 font-normal text-balance @2xl:text-[1.75rem] @2xl:leading-8")}>“{text.replace(/\n+/g, " ")}”</blockquote>
-        <figcaption className="flex min-w-0 items-center gap-2">
-          {more && <Avatar initials={initials(coach.coachName)} size={20} />}
-          <span className={cn(TYPE.small, "truncate")}>
-            {coach.coachName}
-            {detailed && ` · ${COACH_PROFILE.title}`}
-          </span>
-        </figcaption>
-      </W>
+      <WCard flush icon={Quote} title={coach.coachName} meta={more ? COACH_PROFILE.title : undefined} bodyClassName="justify-center">
+        <blockquote className={cn(TYPE.value, "font-normal text-balance @2xl:text-[1.75rem] @2xl:leading-8", detailed ? "line-clamp-5" : "line-clamp-3")}>“{text.replace(/\n+/g, " ")}”</blockquote>
+      </WCard>
     )
   }
 
@@ -219,25 +224,26 @@ export function TextBlock({ variant = "plain", props }: WidgetProps) {
       .map((s) => s.trim())
       .filter(Boolean)
     return (
-      <W>
-        {more && <span className={TYPE.title}>{title}</span>}
+      <WCard icon={Type} title={title} meta={more ? `From ${coach.coachName} · ${steps.length} steps` : undefined} chip={detailed ? <Chip tone="neutral">{steps.length} steps</Chip> : undefined}>
         <ol className="grid content-start gap-x-6 gap-y-2 @2xl:grid-flow-col @2xl:auto-cols-fr">
           {steps.map((s, i) => (
             <li key={i} className="flex min-w-0 gap-3 @2xl:flex-col @2xl:gap-1.5">
-              <span className="w-5 shrink-0 text-xs leading-5 font-medium text-muted-foreground tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+              <span className="w-5 shrink-0 text-xs leading-5 tabular-nums" style={{ fontFamily: font, color: i === 0 ? ACCENT_TEXT : "var(--muted-foreground)" }}>
+                {String(i + 1).padStart(2, "0")}
+              </span>
               <span className={cn(TYPE.body, "min-w-0")}>{s}</span>
             </li>
           ))}
         </ol>
-      </W>
+      </WCard>
     )
   }
 
   return (
-    <W className="gap-2">
-      <h3 className={cn(TYPE.value, "text-balance")}>{title}</h3>
-      <p className={cn(TYPE.body, "max-w-prose whitespace-pre-line text-muted-foreground", !more && "line-clamp-2")}>{text}</p>
-    </W>
+    <WCard flush icon={Type} title={`From ${coach.coachName}`} meta={more ? coach.name : undefined} bodyClassName="gap-1.5">
+      <h3 className={cn(TYPE.value, "line-clamp-2 text-balance")}>{title}</h3>
+      <p className={cn(TYPE.body, "max-w-prose whitespace-pre-line text-muted-foreground", detailed ? "" : more ? "line-clamp-3" : "line-clamp-1")}>{text}</p>
+    </WCard>
   )
 }
 
@@ -255,70 +261,95 @@ function Mark({ name, size = 28 }: { name: string; size?: number }) {
   )
 }
 
-/** Partner links: list (rows with notes), tiles (a logo wall), chips (one line). */
+/** The coach's own code or perk per partner (sample). The code carries the coach's name. */
+const usePerks = () => {
+  const { coach } = useCoach()
+  const code = coach.coachName.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 6)
+  const perks: Record<string, { perk: string; code?: string }> = {
+    "IC Markets": { perk: "−20% fees", code: `${code}20` },
+    FTMO: { perk: "−10%", code: `${code}10` },
+    TradingView: { perk: "$15 credit", code: code },
+  }
+  return perks
+}
+
+/** Partner links: list (legend rows with the coach's codes), tiles (a logo wall), chips (one row). */
 export function PartnerLinks({ variant = "list" }: WidgetProps) {
+  const { coach } = useCoach()
+  const perks = usePerks()
   const more = useMore("standard")
   const detailed = useMore("detailed")
+  const withCode = PARTNERS.filter((p) => perks[p.name]).length
+  const meta = `Tools ${coach.coachName} uses · ${withCode} codes`
   const disclosure = detailed && <span className={cn(TYPE.small, "mt-auto")}>Some of these are affiliate links.</span>
 
   if (variant === "chips") {
     return (
-      <W row className="flex-row items-center gap-3">
-        <Caps className="shrink-0">Our tools</Caps>
-        <div className="flex min-w-0 flex-1 gap-1.5 overflow-hidden [mask-image:linear-gradient(to_right,black_85%,transparent)]">
+      <WCard row icon={Handshake} title="Partner links" meta={more ? meta : undefined} chip={<Chip tone="neutral">{PARTNERS.length} links</Chip>}>
+        <div className="hidden min-w-0 flex-[2] justify-end gap-1.5 overflow-hidden [mask-image:linear-gradient(to_right,black_85%,transparent)] @[26rem]:flex">
           {PARTNERS.map((p) => (
             <a key={p.name} href="#" className="r-chip flex shrink-0 items-center gap-1.5 border py-1 pr-2 pl-1 text-xs hover:bg-muted">
               <Mark name={p.name} size={18} />
               {p.name}
+              {detailed && perks[p.name] && <span className="text-muted-foreground">{perks[p.name].perk}</span>}
             </a>
           ))}
         </div>
-      </W>
+      </WCard>
     )
   }
 
   if (variant === "tiles") {
     return (
-      <W>
-        <Head icon={Handshake} label="Tools and partners" />
+      <WCard icon={Handshake} title="Partner links" meta={meta} chip={<Chip tone="neutral">{PARTNERS.length} links</Chip>}>
         <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2 @xl:grid-cols-4">
-          {PARTNERS.map((p) => (
-            <a key={p.name} href="#" className="relative grid min-h-0 content-center justify-items-center gap-1 rounded-[min(var(--radius),8px)] border p-2 text-center hover:bg-muted">
-              {p.tag && <span className={cn("absolute top-1.5 right-2 text-[0.6875rem] leading-none font-medium", ACCENT_TEXT)}>{p.tag}</span>}
-              <span className="font-heading text-[0.9375rem] leading-5 font-medium tracking-tight">{p.name}</span>
+          {PARTNERS.map((p, i) => (
+            <a key={p.name} href="#" className="relative grid min-h-0 content-center justify-items-start gap-1 rounded-[min(var(--radius),8px)] border bg-card p-2.5 hover:bg-muted">
+              <span className="truncate font-heading text-[0.8125rem] leading-5 font-medium tracking-tight">{p.name}</span>
               {more && <span className={cn(TYPE.small, "line-clamp-1")}>{p.note}</span>}
+              {perks[p.name] && <Chip tone={i === 0 ? "accent" : "neutral"}>{perks[p.name].perk}</Chip>}
             </a>
           ))}
         </div>
         {disclosure}
-      </W>
+      </WCard>
     )
   }
 
   return (
-    <W>
-      <Head icon={Handshake} label="Tools and partners" right={`${PARTNERS.length} links`} />
+    <WCard icon={Handshake} title="Partner links" meta={meta} chip={<Chip tone="neutral">{PARTNERS.length} links</Chip>}>
       <div className="grid">
-        {PARTNERS.map((p) => (
-          <a key={p.name} href="#" className="group flex min-w-0 items-center gap-2.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5 last:border-b-0">
-            <Mark name={p.name} />
-            <span className="grid min-w-0 flex-1">
-              <span className={cn(TYPE.body, "truncate group-hover:underline")}>{p.name}</span>
-              {more && <span className={cn(TYPE.small, "truncate")}>{p.note}</span>}
-            </span>
-            {p.tag ? <span className={cn("shrink-0 text-xs font-medium", ACCENT_TEXT)}>{p.tag}</span> : <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground" />}
-          </a>
-        ))}
+        {PARTNERS.map((p, i) => {
+          const perk = perks[p.name]
+          return (
+            <a key={p.name} href="#" className="group flex min-w-0 items-center gap-2.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5 last:border-b-0">
+              <Mark name={p.name} size={more ? 28 : 22} />
+              <span className="grid min-w-0 flex-1">
+                <span className="truncate font-heading text-[0.8125rem] leading-5 font-medium tracking-tight group-hover:underline">{p.name}</span>
+                {more && <span className={cn(TYPE.small, "truncate")}>{p.note}</span>}
+              </span>
+              {perk ? (
+                <span className="flex shrink-0 items-center gap-1.5">
+                  {detailed && perk.code && <Label className="hidden @[20rem]:inline">{perk.code}</Label>}
+                  <Chip tone={i === 0 ? "accent" : "neutral"}>{perk.perk}</Chip>
+                </span>
+              ) : (
+                <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground" />
+              )}
+            </a>
+          )
+        })}
       </div>
       {disclosure}
-    </W>
+    </WCard>
   )
 }
 
 // ---------- Ask the AI (also carries the AI insight from the student's trades)
 
-const QUOTA = { used: 18, included: 50 }
+const QUOTA = { used: 18, included: 50, resetsIn: 17 }
 const SUGGESTIONS = ["Where should my stop go?", "Explain the A+ setup", "Why do I lose after lunch?"]
+const LEFT = QUOTA.included - QUOTA.used
 
 /** The question box. Its button is the widget's one accent. */
 function AskBox({ placeholder = "Ask about a lesson or your trades…" }: { placeholder?: string }) {
@@ -331,69 +362,91 @@ function AskBox({ placeholder = "Ask about a lesson or your trades…" }: { plac
   )
 }
 
-const quotaLine = `${QUOTA.included - QUOTA.used} of ${QUOTA.included} questions left this month`
+/** "32 of 50 questions left": what's used solid, what's left hatched. */
+function Quota() {
+  return (
+    <div className="grid gap-1.5">
+      <div className="flex items-baseline justify-between gap-2">
+        <Label className="truncate">
+          {LEFT} of {QUOTA.included} questions left
+        </Label>
+        <Label className="hidden shrink-0 @[18rem]:inline">Resets in {QUOTA.resetsIn} d</Label>
+      </div>
+      <HatchBar parts={[{ value: QUOTA.used, color: GREY[1] }]} total={QUOTA.included} height={8} />
+    </div>
+  )
+}
+
+const r = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(1)}R`
 
 /**
- * Ask the AI: search (a centred box), chat (an example exchange), insight
- * (one pattern from the student's journal, with the box to ask why).
- * Detailed adds example questions and the monthly allowance.
+ * Ask the AI: search (the question box and the monthly allowance), chat (an
+ * example exchange), insight (one pattern from the student's journal, with the
+ * box to ask why).
  */
 export function AiAsk({ variant = "search" }: WidgetProps) {
   const { coach, base } = useCoach()
   const empty = useEmpty()
   const more = useMore("standard")
   const detailed = useMore("detailed")
+  const lessonsMeta = `Answers from ${coach.coachName}'s lessons · not advice`
+  const left = <Chip tone="neutral">{LEFT} left</Chip>
 
   if (variant === "insight") {
     if (empty) {
       return (
-        <W>
-          <Head icon={Sparkles} label={coach.wording.ai} right="From your journal" />
+        <WCard icon={Sparkles} title={coach.wording.ai} meta="From your journal · 0 trades">
           <div className="grid gap-0.5">
             <span className={TYPE.title}>Insights appear after 20 trades</span>
             <span className={TYPE.small}>{coach.wording.ai} looks for patterns in your journal.</span>
           </div>
+          <HatchBar parts={[]} total={20} height={8} />
           <div className="mt-auto">
             <AskBox />
           </div>
-        </W>
+        </WCard>
       )
     }
+    const am = AI_INSIGHT.r.slice(0, 3)
+    const pm = AI_INSIGHT.r.slice(4)
+    const avg = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length
     return (
-      <W>
-        <Head icon={Sparkles} label={coach.wording.ai} right="From your journal" />
-        <div className="grid min-w-0 gap-0.5">
-          <span className={cn(TYPE.value, "line-clamp-2 text-balance")}>{AI_INSIGHT.title}</span>
-          {(!more || detailed) && <span className={cn(TYPE.small, "line-clamp-1")}>{AI_INSIGHT.text}</span>}
+      <WCard icon={Sparkles} title={coach.wording.ai} meta="From your journal · last 20 days · 19 trades" chip={<Chip tone="loss">{r(avg(pm))} after 12:00</Chip>}>
+        <span className={cn(TYPE.title, "line-clamp-1")}>{AI_INSIGHT.title}</span>
+        <div className="grid min-h-0 flex-1 gap-1">
+          <StepChart series={[{ values: AI_INSIGHT.r, label: "Avg R" }]} format={r} height={more ? 64 : 48} className="min-h-0" />
+          {more && <Axis labels={AI_INSIGHT.hours.map((h) => `${h}:00`)} className="[&>span:nth-child(even)]:hidden @[22rem]:[&>span:nth-child(even)]:inline" />}
         </div>
-        {more && (
-          <Bars diverging values={AI_INSIGHT.r} labels={AI_INSIGHT.hours} tips={AI_INSIGHT.hours.map((h) => `${h}:00`)} format={(v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}R`} />
-        )}
         {detailed && (
-          <Link href={`${base}/courses`} className="flex w-fit items-center gap-1 text-xs font-medium hover:underline">
-            Watch “{AI_INSIGHT.lesson}” <ArrowRight className="size-3.5" />
-          </Link>
+          <>
+            <Legend
+              items={[
+                { color: GREY[1], label: "Before 12:00, avg", value: r(avg(am)), valueTone: "profit" },
+                { color: ACCENT, label: "After 12:00, avg", value: r(avg(pm)), valueTone: "loss" },
+              ]}
+            />
+            <Link href={`${base}/courses`} className="flex w-fit items-center gap-1 text-xs font-medium hover:underline">
+              Watch “{AI_INSIGHT.lesson}” <ArrowRight className="size-3.5" />
+            </Link>
+          </>
         )}
-        <div className={cn(!more && "mt-auto")}>
-          <AskBox placeholder="Ask why…" />
-        </div>
-      </W>
+        <AskBox placeholder="Ask why…" />
+      </WCard>
     )
   }
 
   if (variant === "chat") {
     return (
-      <W className="@3xl:grid @3xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] @3xl:items-center @3xl:gap-8">
-        <div className="grid content-center gap-1.5">
-          <Head icon={Sparkles} label={coach.wording.ai} />
+      <WCard icon={Sparkles} title={coach.wording.ai} meta={lessonsMeta} chip={left} bodyClassName="@3xl:grid @3xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] @3xl:items-stretch @3xl:gap-8">
+        <div className="hidden content-center gap-3 @3xl:grid">
           <h3 className={cn(TYPE.value, "text-balance")}>Stuck? {askAi(coach.wording.ai)}.</h3>
-          {more && <p className={cn(TYPE.body, "hidden text-muted-foreground @3xl:block")}>Answers come from {coach.coachName}&apos;s own lessons, with a link to the exact moment. Not investment advice.</p>}
-          {detailed && <span className={cn(TYPE.small, "hidden @3xl:block")}>{quotaLine}</span>}
+          {more && <p className={cn(TYPE.body, "text-muted-foreground")}>Every answer links to the exact moment in a lesson.</p>}
+          {detailed && <Quota />}
         </div>
         <div className="flex min-h-0 flex-1 flex-col gap-2.5">
           <div className={cn(TYPE.body, "r-chip ml-auto max-w-[85%] bg-muted px-3 py-2")}>{AI_SAMPLE.question}</div>
           <div className="flex min-w-0 gap-2.5">
-            <Sparkles className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+            <Sparkles className="mt-0.5 size-3.5 shrink-0" style={{ color: ACCENT_TEXT }} />
             <div className="grid min-w-0 gap-1">
               <p className={cn(TYPE.body, more ? "line-clamp-3" : "line-clamp-2")}>{AI_SAMPLE.answer}</p>
               {more && (
@@ -407,19 +460,15 @@ export function AiAsk({ variant = "search" }: WidgetProps) {
             <AskBox placeholder="Ask a follow-up…" />
           </div>
         </div>
-      </W>
+      </WCard>
     )
   }
 
   return (
-    <W className="items-center justify-center gap-2.5 text-center">
-      {more && !detailed && <Sparkles className="size-4 text-muted-foreground" />}
-      <h3 className={cn(TYPE.value, "text-balance")}>{askAi(coach.wording.ai)} anything</h3>
-      <div className="w-full max-w-xl">
-        <AskBox />
-      </div>
+    <WCard icon={Sparkles} title={`${askAi(coach.wording.ai)} anything`} meta={lessonsMeta} chip={left}>
+      <AskBox />
       {detailed && (
-        <div className="flex max-w-xl flex-wrap justify-center gap-1.5">
+        <div className="flex flex-wrap gap-1.5 overflow-hidden">
           {SUGGESTIONS.map((s) => (
             <span key={s} className="r-chip border px-2 py-0.5 text-xs text-muted-foreground">
               {s}
@@ -427,8 +476,11 @@ export function AiAsk({ variant = "search" }: WidgetProps) {
           ))}
         </div>
       )}
-      {more && <p className={TYPE.small}>{detailed ? `${quotaLine}. ` : ""}Answers come from {coach.coachName}&apos;s lessons. Not investment advice.</p>}
-    </W>
+      {more && (
+        <div className="mt-auto">
+          <Quota />
+        </div>
+      )}
+    </WCard>
   )
 }
-

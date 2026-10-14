@@ -40,8 +40,11 @@ export const GREY = [
   "color-mix(in oklab, var(--foreground) 28%, transparent)",
   "color-mix(in oklab, var(--foreground) 14%, transparent)",
 ]
+/** Coloured text, nudged toward the text colour so it stays readable on tints and inset panels. */
+export const ink = (c: string) => `color-mix(in oklab, ${c} 74%, var(--foreground))`
+
 /** An empty tick or track. */
-const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
+export const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
 
 /** Figures: mono in Instrument, the heading font otherwise. */
 export function useFigureFont() {
@@ -64,12 +67,16 @@ export function Label({ children, className }: { children: React.ReactNode; clas
 /** A short value in a tinted pill: "58% win", "4 inputs". Accent by default. */
 export function Chip({ children, tone = "accent", className }: { children: React.ReactNode; tone?: "accent" | "neutral" | "profit" | "loss"; className?: string }) {
   const s = useWidgetStyle()
+  const star = useFrame().emphasis === "star"
   const color = tone === "accent" ? ACCENT : tone === "profit" ? "var(--profit)" : tone === "loss" ? "var(--loss)" : "var(--foreground)"
-  const text = tone === "accent" ? ACCENT_TEXT : tone === "neutral" ? "var(--muted-foreground)" : color
+  // On its own tint a colour loses contrast, so the text leans toward the text colour (darker on light cards, lighter on dark).
+  const base = tone === "accent" ? ACCENT_TEXT : tone === "neutral" ? "var(--muted-foreground)" : color
+  // Stronger than ink(): it sits on its own tint.
+  const text = `color-mix(in oklab, ${base} ${tone === "neutral" ? 72 : 62}%, var(--foreground))`
   return (
     <span
       className={cn("inline-flex h-5 shrink-0 items-center px-1.5 text-[0.6875rem] leading-none whitespace-nowrap tabular-nums", s === "soft" ? "rounded-full px-2" : "r-chip", className)}
-      style={{ background: `color-mix(in oklab, ${color} ${tone === "neutral" ? 8 : 13}%, transparent)`, color: text, fontFamily: s === "instrument" ? "var(--font-figures)" : undefined }}
+      style={{ background: star ? "var(--brand-shade)" : `color-mix(in oklab, ${color} ${tone === "neutral" ? 8 : 11}%, transparent)`, color: text, fontFamily: s === "instrument" ? "var(--font-figures)" : undefined }}
     >
       {children}
     </span>
@@ -111,11 +118,13 @@ export function WCard({
   const star = emphasis === "star"
   const inset = s === "instrument" && !flush
   const head = (
-    <div className={cn("flex min-w-0 items-center gap-2.5", s === "instrument" ? "px-2 pt-2 pb-2.5" : "", s === "editorial" && !row && "border-b border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] pb-3")}>
+    <div className={cn("flex min-w-0 items-center gap-2.5", s === "instrument" && !row ? "px-2 pt-2 pb-2.5" : "", s === "editorial" && !row && "border-b border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] pb-3")}>
       {crumb ? (
         <span className="flex min-w-0 items-baseline gap-1.5 text-[0.8125rem] leading-5">
           <span className="shrink-0 text-muted-foreground">{crumb}</span>
-          <span className="text-muted-foreground/60">/</span>
+          <span className="text-muted-foreground" aria-hidden>
+            /
+          </span>
           <span className="truncate font-medium">{title}</span>
         </span>
       ) : (
@@ -150,7 +159,7 @@ export function WCard({
           inset && "rounded-[max(2px,calc(var(--radius)-4px))] p-[calc(0.875rem*var(--density,1))]",
           bodyClassName,
         )}
-        style={inset ? { background: star ? "var(--brand-shade)" : "color-mix(in oklab, var(--foreground) 4%, var(--card))" } : undefined}
+        style={inset ? { background: star ? "var(--brand-shade)" : "color-mix(in oklab, var(--foreground) 3%, var(--card))" } : undefined}
       >
         {children}
       </div>
@@ -164,7 +173,7 @@ export function Num({ value, unit, delta, deltaTone, size = "lg", className }: {
   const font = useFigureFont()
   const star = emphasis === "star"
   const cls = size === "lg" ? (star ? TYPE.star : TYPE.valueLg) : star ? TYPE.valueLg : TYPE.value
-  const tone = deltaTone === "profit" ? "var(--profit)" : deltaTone === "loss" ? "var(--loss)" : deltaTone === "muted" ? "var(--muted-foreground)" : ACCENT_TEXT
+  const tone = deltaTone === "profit" ? ink("var(--profit)") : deltaTone === "loss" ? ink("var(--loss)") : deltaTone === "muted" ? "var(--muted-foreground)" : ink(ACCENT_TEXT)
   return (
     <div className={cn("flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5", className)}>
       <span className={cn(cls, "tracking-[-0.02em]")} style={{ fontFamily: font }}>
@@ -193,7 +202,7 @@ export function Legend({ items, className }: { items: { color?: string; label: R
           {it.value !== undefined && (
             <span
               className="shrink-0 tabular-nums"
-              style={{ color: it.valueTone === "profit" ? "var(--profit)" : it.valueTone === "loss" ? "var(--loss)" : it.valueTone === "accent" ? ACCENT_TEXT : "var(--foreground)", fontFamily: font }}
+              style={{ color: it.valueTone === "profit" ? ink("var(--profit)") : it.valueTone === "loss" ? ink("var(--loss)") : it.valueTone === "accent" ? ink(ACCENT_TEXT) : "var(--foreground)", fontFamily: font }}
             >
               {it.value}
             </span>
@@ -216,6 +225,9 @@ export function Axis({ labels, className }: { labels: React.ReactNode[]; classNa
   )
 }
 
+/** Rounded to 2 decimals, so server and browser draw the same numbers. */
+const r2 = (n: number) => Math.round(n * 100) / 100
+
 /**
  * A semicircle of ticks. Filled ticks ramp from grey to the accent at the
  * value; empty ticks are faint. `children` sits in the middle (the number).
@@ -232,12 +244,12 @@ export function TickGauge({ value, max = 100, ticks = 40, children, className }:
           return (
             <line
               key={i}
-              x1={110 + Math.cos(a) * 86}
-              y1={108 + Math.sin(a) * 86}
-              x2={110 + Math.cos(a) * 100}
-              y2={108 + Math.sin(a) * 100}
+              x1={r2(110 + Math.cos(a) * 86)}
+              y1={r2(108 + Math.sin(a) * 86)}
+              x2={r2(110 + Math.cos(a) * 100)}
+              y2={r2(108 + Math.sin(a) * 100)}
               stroke={!lit ? TRACK : head ? ACCENT : "var(--foreground)"}
-              strokeOpacity={!lit || head ? 1 : 0.35 + (0.5 * i) / Math.max(on, 1)}
+              strokeOpacity={!lit || head ? 1 : r2(0.35 + (0.5 * i) / Math.max(on, 1))}
               strokeWidth={3.2}
               style={{ strokeLinecap: "var(--cap)" as never }}
             />
@@ -365,7 +377,7 @@ export function Timeline({ items, className }: { items: { time: string; title: R
       {items.map((it, i) => (
         <div key={i} className="flex min-w-0 items-center gap-2 text-xs leading-6">
           <span className="r-dot size-[7px] shrink-0" style={{ background: it.color ?? GREY[1] }} />
-          <span className="w-10 shrink-0 tabular-nums" style={{ fontFamily: font, color: it.strong ? ACCENT_TEXT : "var(--muted-foreground)" }}>
+          <span className="w-10 shrink-0 tabular-nums" style={{ fontFamily: font, color: it.strong ? ink(ACCENT_TEXT) : "var(--muted-foreground)" }}>
             {it.time}
           </span>
           <span className={cn("min-w-0 flex-1 truncate", it.strong && "font-medium")}>{it.title}</span>

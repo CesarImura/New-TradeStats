@@ -12,7 +12,7 @@ import { themeToCss } from "@/lib/theme/css"
 import { BRANDED, type LabTheme } from "@/lib/theme/lab"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import { TS_SYSTEM_CSS } from "@/lib/theme/ts-system"
-import type { Mode } from "@/lib/theme/types"
+import type { Mode, WidgetStyle } from "@/lib/theme/types"
 import { LIMITS, RULES, checkWidget, type RuleId, type RuleResult } from "@/lib/widgets/checks"
 import { ROW_HEIGHT, type Detail, type Emphasis } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
@@ -64,8 +64,10 @@ export function WidgetWall() {
   const [onlyProblems, setOnlyProblems] = useState(false)
 
   const lab = THEMES.find((t) => t.id === themeId)!
-  const theme = lab.theme
-  const config = `${themeId}|${emphasis}|${detail}|${data}`
+  // "template" = the style the theme itself has (each template has a default).
+  const [wstyle, setWstyle] = useState<"template" | WidgetStyle>("template")
+  const theme = useMemo(() => (wstyle === "template" ? lab.theme : { ...lab.theme, widgetStyle: wstyle }), [lab.theme, wstyle])
+  const config = `${themeId}|${emphasis}|${detail}|${data}|${wstyle}`
 
   // Results by cell key; a cell reports after each measurement. Re-renders are batched.
   const results = useRef(new Map<string, Result>())
@@ -115,6 +117,7 @@ export function WidgetWall() {
           </div>
           <Seg label="Emphasis" value={emphasis} onChange={setEmphasis} options={[["quiet", "Quiet"], ["accent", "Accent"], ["star", "Star"]]} />
           <Seg label="Detail" value={detail} onChange={setDetail} options={[["compact", "Compact"], ["standard", "Standard"], ["detailed", "Detailed"]]} />
+          <Seg label="Widget style" value={wstyle} onChange={setWstyle} options={[["template", "Template’s"], ["instrument", "Instrument"], ["soft", "Soft"], ["editorial", "Editorial"]]} />
           <Seg label="Data" value={data} onChange={setData} options={[["sample", "Sample"], ["empty", "Empty"]]} />
           <label className="flex items-center gap-2">
             <span className={cn(mono, "text-white/45")}>Widget</span>

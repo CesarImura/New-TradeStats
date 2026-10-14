@@ -1,14 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useId, useState } from "react"
 import { Link2, ShieldAlert } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { ACCOUNT } from "@/lib/data/sample"
-import { cn } from "@/lib/utils"
-import { ACCENT, Big, Caps, Head, Stat, TYPE, Tip, Track, W, useMore } from "./kit"
+import { Axis, Chip, GREY, Label, Legend, Num, Rule, TickBar, TickGauge, WCard, useFigureFont } from "./instrument"
+import { ACCENT, useMore } from "./kit"
 import { WidgetEmpty, signed, useEmpty, type WidgetProps } from "./shared"
 
 const euro = (n: number) => `€${Math.round(n).toLocaleString("en")}`
+const neg = (n: number) => `−€${Math.abs(Math.round(n)).toLocaleString("en")}`
 
 function ConnectBroker() {
   return <WidgetEmpty icon={Link2} title="Connect your broker" text="This fills in from your own trades." action={<Button size="sm">Connect</Button>} />
@@ -16,72 +17,86 @@ function ConnectBroker() {
 
 // ---------- Risk limits (drawdown)
 
-/** Neutral fill for bars that are not the widget's one accent. */
-const NEUTRAL = "color-mix(in oklab, var(--foreground) 40%, transparent)"
-const HAIR = "border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)]"
+/** Today on the account: the daily loss limit, what is used, the last hour, trades against the cap. */
+const TODAY = { limit: 500, used: 281, lastHour: -94, trades: 3, maxTrades: 4 }
 
-/** Half-dial: a thin muted track, the share used in the accent. Scales to fit its box. */
-function Dial({ value, max }: { value: number; max: number }) {
-  const pct = Math.min(1, Math.max(0, value / max))
-  const r = 44
-  const len = Math.PI * r
-  const d = `M6,50 A${r},${r} 0 0 1 94,50`
+/** A gauge that fits whatever height the card leaves it (size container). */
+function FitGauge({ value, max, children }: { value: number; max: number; children?: React.ReactNode }) {
   return (
-    <svg viewBox="0 0 100 52" preserveAspectRatio="xMidYMax meet" className="absolute inset-0 size-full" aria-hidden>
-      <path d={d} fill="none" stroke="var(--muted)" strokeWidth={4} style={{ strokeLinecap: "var(--cap)" as never }} />
-      <path d={d} fill="none" stroke={ACCENT} strokeWidth={4} strokeDasharray={len} strokeDashoffset={len * (1 - pct)} style={{ strokeLinecap: "var(--cap)" as never }} />
-    </svg>
+    <div className="flex min-h-20 flex-1 items-end justify-center [container-type:size]">
+      <TickGauge value={value} max={max} className="w-[min(100cqw,189cqh)] max-w-80">
+        {children}
+      </TickGauge>
+    </div>
   )
 }
 
-/** Balance as a hairline, with the account's floor drawn where it really is. */
+/** Balance as a step line on a dotted grid, the account's floor as a dashed loss line where it really is. */
 function FloorChart({ values, floor }: { values: number[]; floor: number }) {
+  const id = useId()
+  const font = useFigureFont()
   const [hover, setHover] = useState<number>()
   const hi = Math.max(...values)
   const lo = Math.min(floor, ...values)
-  const pad = (hi - lo) * 0.08
-  const y = (v: number) => 6 + ((hi - v) / (hi - lo + pad)) * 88
-  const pts = values.map((v, i) => [(i / (values.length - 1)) * 100, y(v)] as const)
-  const line = pts.map(([x, py], i) => `${i ? "L" : "M"}${x},${py}`).join(" ")
-  const [lx, ly] = pts[hover ?? pts.length - 1]
+  const span = hi - lo || 1
+  const n = values.length
+  const x = (i: number) => (i / n) * 300
+  const y = (v: number) => 8 + ((hi - v) / span) * 88
+  const path = values.map((v, i) => `${i ? "H" + x(i).toFixed(1) + " V" : "M0 "}${y(v).toFixed(1)}`).join(" ") + " H300"
+  const at = hover ?? n - 1
   const fy = y(floor)
-  const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const b = e.currentTarget.getBoundingClientRect()
-    const t = Math.min(Math.max((e.clientX - b.left) / b.width, 0), 1)
-    setHover(Math.round(t * (values.length - 1)))
-  }
   return (
-    <div className="relative min-h-12 flex-1 touch-none" onPointerMove={onMove} onPointerLeave={() => setHover(undefined)}>
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 size-full overflow-visible" aria-hidden>
-        <line x1={0} x2={100} y1={fy} y2={fy} stroke="var(--loss)" strokeWidth={1} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" opacity={0.7} />
-        {hover !== undefined && <line x1={lx} x2={lx} y1={0} y2={100} stroke="var(--muted-foreground)" strokeWidth={1} vectorEffect="non-scaling-stroke" opacity={0.5} />}
-        <path d={line} fill="none" stroke={ACCENT} strokeWidth={1.5} vectorEffect="non-scaling-stroke" style={{ strokeLinejoin: "round", strokeLinecap: "var(--cap)" as never }} />
+    <div className="relative min-h-14 flex-1" onPointerLeave={() => setHover(undefined)}>
+      <svg viewBox="0 0 300 110" preserveAspectRatio="none" className="absolute inset-0 size-full overflow-visible" aria-hidden>
+        <defs>
+          <pattern id={`dots${id}`} width="15" height="15" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.7" fill="var(--foreground)" opacity="0.18" />
+          </pattern>
+        </defs>
+        <rect width="300" height="110" fill={`url(#dots${id})`} />
+        <path d={`${path} V${fy} H0 Z`} fill={ACCENT} opacity={0.08} />
+        <line x1={0} x2={300} y1={fy} y2={fy} stroke="var(--loss)" strokeWidth={1.2} strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
+        <path d={path} fill="none" stroke={ACCENT} strokeWidth={1.6} vectorEffect="non-scaling-stroke" />
       </svg>
-      <span className="r-dot absolute size-1.5 -translate-x-1/2 -translate-y-1/2" style={{ left: `${lx}%`, top: `${ly}%`, background: ACCENT, boxShadow: "0 0 0 2px var(--card)" }} />
-      <span className="absolute right-0 -translate-y-full pb-0.5" style={{ top: `${fy}%` }}>
-        <Caps className="text-loss">Limit {euro(floor)}</Caps>
-      </span>
-      {hover !== undefined && <Tip x={lx} y={ly} label={`Day ${hover + 1}`} value={euro(values[hover])} />}
-    </div>
-  )
-}
-
-/** One limit: what is used, out of what is allowed. */
-function LimitRow({ label, used, limit, accent }: { label: string; used: number; limit: number; accent?: boolean }) {
-  const p = (used / limit) * 100
-  return (
-    <div className="grid gap-1.5">
-      <div className="flex min-w-0 items-baseline gap-2">
-        <span className={cn(TYPE.body, "truncate")}>{label}</span>
-        <span className="ml-auto shrink-0 text-[0.8125rem] font-medium tabular-nums">{euro(used)}</span>
-        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">/ {euro(limit)}</span>
+      <div className="absolute inset-0 flex">
+        {values.map((_, i) => (
+          <span key={i} className="flex-1" onPointerEnter={() => setHover(i)} />
+        ))}
       </div>
-      <Track value={p} color={accent ? ACCENT : NEUTRAL} className="h-1.5" />
+      <span className="absolute right-0 -translate-y-full pb-0.5 text-[0.6875rem] leading-4 text-loss tabular-nums" style={{ top: `${(fy / 110) * 100}%`, fontFamily: font }}>
+        Floor {euro(floor)}
+      </span>
+      <span
+        className="pointer-events-none absolute size-2 -translate-1/2 rounded-full border-[1.5px] bg-card"
+        style={{ left: `${((at + 0.5) / n) * 100}%`, top: `${(y(values[at]) / 110) * 100}%`, borderColor: ACCENT }}
+      />
+      <span
+        className="pointer-events-none absolute -translate-x-1/2 -translate-y-[calc(100%+8px)] rounded-[min(var(--radius),4px)] bg-muted px-1.5 py-0.5 text-[0.6875rem] leading-4 whitespace-nowrap tabular-nums"
+        style={{ left: `${Math.min(86, Math.max(14, ((at + 0.5) / n) * 100))}%`, top: `${(y(values[at]) / 110) * 100}%`, fontFamily: font }}
+      >
+        Day {at + 1} · {euro(values[at])}
+      </span>
     </div>
   )
 }
 
-/** Risk limits: gauge (share of the max drawdown used), bars (daily and max limits), curve (balance above its floor). */
+/** One limit as a thin line: label, used / allowed, a tick bar. */
+function LimitLine({ label, used, limit, color = GREY[1] }: { label: string; used: number; limit: number; color?: string }) {
+  const font = useFigureFont()
+  return (
+    <div className="grid shrink-0 gap-1">
+      <div className="flex min-w-0 items-baseline gap-2 text-xs leading-5">
+        <span className="min-w-0 flex-1 truncate text-muted-foreground">{label}</span>
+        <span className="shrink-0 tabular-nums" style={{ fontFamily: font }}>
+          {euro(used)} <span className="text-muted-foreground">/ {euro(limit)}</span>
+        </span>
+      </div>
+      <TickBar value={used} max={limit} segments={40} height={6} color={color} />
+    </div>
+  )
+}
+
+/** Risk limits: gauge (share of the max drawdown used), bars (today's loss limit), curve (balance above its floor). */
 export function Drawdown({ variant = "gauge" }: WidgetProps) {
   const empty = useEmpty()
   const standard = useMore("standard")
@@ -89,78 +104,113 @@ export function Drawdown({ variant = "gauge" }: WidgetProps) {
   if (empty) return <ConnectBroker />
   const dd = ACCOUNT.peak - ACCOUNT.balance
   const left = ACCOUNT.maxDrawdown - dd
-  const used = (dd / ACCOUNT.maxDrawdown) * 100
-  const todayLoss = Math.max(0, -ACCOUNT.today)
-  const todayUsed = (todayLoss / ACCOUNT.dailyLimit) * 100
+  const ddPct = (dd / ACCOUNT.maxDrawdown) * 100
   const floor = ACCOUNT.peak - ACCOUNT.maxDrawdown
-  const danger = used > 75
+  const dayPct = (TODAY.used / TODAY.limit) * 100
+  const pctText = (p: number) => `${p.toFixed(1)}%`
 
   if (variant === "bars") {
-    // The accent goes to whichever limit is closer to being hit.
-    const ddFirst = used >= todayUsed
+    const q = TODAY.limit / 4
     return (
-      <W>
-        <Head icon={ShieldAlert} label="Risk limits" right={ACCOUNT.name} />
-        <div className="grid min-h-0 flex-1 content-evenly gap-3">
-          <LimitRow label="Max drawdown" used={dd} limit={ACCOUNT.maxDrawdown} accent={ddFirst} />
-          {standard && <LimitRow label="Today" used={todayLoss} limit={ACCOUNT.dailyLimit} accent={!ddFirst} />}
-        </div>
-        {detailed && (
-          <div className={cn("grid shrink-0 grid-cols-3 gap-3 border-t pt-3", HAIR)}>
-            <Stat label="Balance" value={euro(ACCOUNT.balance)} />
-            <Stat label="Peak" value={euro(ACCOUNT.peak)} />
-            <Stat label="Floor" value={euro(floor)} />
+      <WCard crumb="Risk" title="Daily loss limit" chip={<Chip tone={dayPct > 85 ? "loss" : "accent"}>{pctText(dayPct)}</Chip>}>
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="grid min-w-0 gap-1">
+            <Label>Used today</Label>
+            <Num value={euro(TODAY.used)} delta={`${neg(TODAY.lastHour)} last hr`} deltaTone="loss" />
           </div>
+          <div className="grid shrink-0 justify-items-end gap-1 text-right">
+            <Label>Left</Label>
+            <Num value={euro(TODAY.limit - TODAY.used)} />
+          </div>
+        </div>
+        <div className="grid gap-1.5">
+          <TickBar value={TODAY.used} max={TODAY.limit} />
+          <Axis labels={[0, q, q * 2, q * 3, TODAY.limit].map(euro)} />
+        </div>
+        {standard && (
+          <>
+            <Rule className="mt-auto" />
+            <Legend
+              className="shrink-0"
+              items={[
+                { label: <Label>Trades today</Label>, value: <Chip tone="neutral">{`${TODAY.trades} of ${TODAY.maxTrades} max`}</Chip> },
+                { label: <Label>Max drawdown</Label>, value: `${euro(dd)} / ${euro(ACCOUNT.maxDrawdown)}` },
+              ]}
+            />
+          </>
         )}
-      </W>
+        {detailed && (
+          <>
+            <LimitLine label={`Max drawdown · floor ${euro(floor)}`} used={dd} limit={ACCOUNT.maxDrawdown} />
+            <Legend
+              className="shrink-0 @[20rem]:grid-cols-2 @[20rem]:gap-x-5"
+              items={[
+                { label: "Balance", value: euro(ACCOUNT.balance) },
+                { label: "Peak", value: euro(ACCOUNT.peak) },
+              ]}
+            />
+          </>
+        )}
+      </WCard>
     )
   }
 
   if (variant === "curve") {
+    const days = ACCOUNT.history.length
     return (
-      <W>
-        <Head icon={ShieldAlert} label={ACCOUNT.name} right={`${euro(left)} to limit`} />
-        <Big size="lg" value={euro(ACCOUNT.balance)} sub={`${signed(ACCOUNT.balance - ACCOUNT.start)} since start · ${euro(left)} above the limit`} />
-        {standard && <FloorChart values={ACCOUNT.history} floor={floor} />}
-        {detailed && (
-          <div className={cn("grid shrink-0 grid-cols-3 gap-3 border-t pt-3", HAIR)}>
-            <Stat label="Peak" value={euro(ACCOUNT.peak)} />
-            <Stat label="Drawdown" value={euro(dd)} tone={danger ? "loss" : "fg"} />
-            <Stat label="Today" value={signed(ACCOUNT.today)} tone={ACCOUNT.today >= 0 ? "profit" : "loss"} />
-          </div>
+      <WCard icon={ShieldAlert} title="Risk limits" meta={`${ACCOUNT.name} · last ${days} days · floor ${euro(floor)}`} chip={<Chip tone="neutral">{euro(left)} to floor</Chip>}>
+        <Num value={euro(ACCOUNT.balance)} delta={`${signed(ACCOUNT.balance - ACCOUNT.start)} since start`} deltaTone={ACCOUNT.balance >= ACCOUNT.start ? "profit" : "loss"} />
+        <FloorChart values={ACCOUNT.history} floor={floor} />
+        {standard && (
+          <Legend
+            className="shrink-0 @[20rem]:grid-cols-2 @[20rem]:gap-x-5"
+            items={[
+              { color: ACCENT, label: "Balance", value: euro(ACCOUNT.balance) },
+              { color: "var(--loss)", label: "Loss floor", value: euro(floor) },
+            ]}
+          />
         )}
-      </W>
+        {detailed && (
+          <>
+            <Rule />
+            <Legend
+              className="shrink-0"
+              items={[
+                { label: "Peak", value: euro(ACCOUNT.peak) },
+                { label: "Down from peak", value: neg(dd), valueTone: "loss" },
+                { label: "Today", value: `${neg(TODAY.used)} of ${euro(TODAY.limit)}`, valueTone: "loss" },
+              ]}
+            />
+          </>
+        )}
+      </WCard>
     )
   }
 
-  // gauge
+  // gauge: the max drawdown used
   return (
-    <W>
-      <Head icon={ShieldAlert} label="Drawdown" right={ACCOUNT.name} />
-      <div className="relative min-h-16 flex-1">
-        <Dial value={dd} max={ACCOUNT.maxDrawdown} />
-        <div className="absolute inset-x-0 bottom-0 grid justify-items-center text-center">
-          <Big value={<span className={danger ? "text-loss" : undefined}>{Math.round(used)}%</span>} sub="of max drawdown" />
-        </div>
-      </div>
+    <WCard icon={ShieldAlert} title="Risk limits" meta={`${ACCOUNT.name} · max drawdown ${euro(ACCOUNT.maxDrawdown)}`} chip={<Chip tone={ddPct > 75 ? "loss" : "accent"}>{pctText(ddPct)} used</Chip>}>
+      <FitGauge value={dd} max={ACCOUNT.maxDrawdown}>
+        <Num value={euro(left)} className="justify-center" />
+        <Label>left before the floor</Label>
+      </FitGauge>
       {standard && (
-        <div className="flex justify-between text-xs text-muted-foreground tabular-nums">
-          <span>{euro(dd)} down</span>
-          <span className="text-foreground">{euro(left)} left</span>
-        </div>
+        <Legend
+          className="shrink-0"
+          items={[
+            { color: ACCENT, label: "Down from peak", value: euro(dd) },
+            { color: GREY[2], label: "Room to floor", value: euro(left) },
+            ...(detailed ? [] : [{ color: GREY[0], label: "Today", value: `${euro(TODAY.used)} / ${euro(TODAY.limit)}` }]),
+          ]}
+        />
       )}
       {detailed && (
-        <div className={cn("shrink-0 border-t pt-3", HAIR)}>
-          <LimitRow label="Today" used={todayLoss} limit={ACCOUNT.dailyLimit} />
-        </div>
+        <>
+          <Rule />
+          <LimitLine label="Daily loss limit" used={TODAY.used} limit={TODAY.limit} />
+          <Legend className="shrink-0" items={[{ label: "Trades today", value: `${TODAY.trades} of ${TODAY.maxTrades} max` }]} />
+        </>
       )}
-    </W>
+    </WCard>
   )
 }
-
-// ---------- Win rate by setup
-
-
-// ---------- R-multiple spread
-
-

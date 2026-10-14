@@ -7,134 +7,219 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { CALL_ALLOWANCE, CALL_SLOTS, FEEDBACK } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { ACCENT, ACCENT_TEXT, Avatar, Big, Caps, Head, Ring, Row, TYPE, W, useFrame, useMore } from "./kit"
+import { ACCENT, ACCENT_TEXT, Avatar, useFrame, useMore } from "./kit"
+import { Chip, GREY, HatchBar, Label, Legend, Num, Rule, WCard, useFigureFont } from "./instrument"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 
-// ---------- Coach feedback
+/** An empty tick or track (same as instrument.tsx). */
+const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
+const HATCH = `repeating-linear-gradient(135deg, ${TRACK} 0 2px, transparent 2px 5px)`
 
 /** A list that shows as many whole rows as fit the widget's height and hides the rest. */
 function Fit({ children, className }: { children: React.ReactNode; className?: string }) {
   return <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", className)}>{children}</div>
 }
 
-/** Review status as a small neutral mark: hollow while waiting, filled once answered. */
+/** A one-line legend: square swatches with label and figure, side by side. Hatched swatch for "left". */
+function InlineKey({ items }: { items: { color?: string; hatch?: boolean; label: string; value: React.ReactNode }[] }) {
+  const font = useFigureFont()
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-xs leading-5">
+      {items.map((it) => (
+        <span key={it.label} className="flex items-center gap-1.5 whitespace-nowrap">
+          <i className="size-2 shrink-0 rounded-[2px]" style={it.hatch ? { background: HATCH, boxShadow: `inset 0 0 0 1px ${TRACK}` } : { background: it.color }} />
+          <span className="text-muted-foreground">{it.label}</span>
+          <span className="tabular-nums" style={{ fontFamily: font }}>
+            {it.value}
+          </span>
+        </span>
+      ))}
+    </div>
+  )
+}
+
+// ---------- Coach feedback
+
+/** Review status: the accent once answered, a hollow ring while it waits. */
 function StatusDot({ waiting }: { waiting: boolean }) {
   return (
     <i
-      className={cn("r-dot size-2 shrink-0", waiting ? "border border-[color:color-mix(in_oklab,var(--foreground)_45%,transparent)]" : "bg-[color:color-mix(in_oklab,var(--foreground)_55%,transparent)]")}
+      className={cn("r-dot size-2 shrink-0", waiting && "border border-dashed border-[color:color-mix(in_oklab,var(--foreground)_55%,transparent)]")}
+      style={waiting ? undefined : { background: ACCENT }}
     />
   )
 }
 
+/** "NQ long · −1.2R" → the trade in grey type, the R in the profit or loss colour. */
+function TradeName({ trade }: { trade: string }) {
+  const font = useFigureFont()
+  const [name, r = ""] = trade.split(" · ")
+  const loss = r.startsWith("−") || r.startsWith("-")
+  return (
+    <span className="min-w-0 truncate tabular-nums" style={{ fontFamily: font }}>
+      {name}
+      {r && <span style={{ color: loss ? "var(--loss)" : "var(--profit)" }}> {r}</span>}
+    </span>
+  )
+}
+
+function QueueRow({ trade, status, when }: { trade: string; status: "waiting" | "answered"; when: string }) {
+  const waiting = status === "waiting"
+  return (
+    <div className="flex min-w-0 items-center gap-2 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1 text-xs leading-5 last:border-b-0">
+      <StatusDot waiting={waiting} />
+      <span className="flex min-w-0 flex-1">
+        <TradeName trade={trade} />
+      </span>
+      <span className={cn("shrink-0", waiting ? "text-muted-foreground" : "")} style={waiting ? undefined : { color: ACCENT_TEXT }}>
+        {waiting ? `waiting ${when}` : `answered ${when}`}
+      </span>
+    </div>
+  )
+}
+
+/** Hours the coach took on each answered review (sample) and last month's average. */
+const REPLY_HOURS = [6, 12]
+const LAST_MONTH_HOURS = 12
+
 /**
- * Coach feedback: queue (your review requests and where they stand), latest
- * (the coach's newest reply, as a quote), stats (how many are answered, how fast).
+ * Coach feedback: queue (your review requests with status dots, answered vs
+ * waiting), latest (the coach's newest reply as a quote), stats (answered vs
+ * waiting as a hatched bar, the reply time).
  */
 export function CoachFeedback({ variant = "queue" }: WidgetProps) {
   const { coach } = useCoach()
   const empty = useEmpty()
   const more = useMore("standard")
   const detailed = useMore("detailed")
+  const font = useFigureFont()
   if (empty)
     return <WidgetEmpty icon={MessageSquareReply} title="No reviews yet" text={`Mark a trade “Please review” in your journal and ${coach.coachName} will answer here.`} />
   const waiting = FEEDBACK.items.filter((i) => i.status === "waiting")
   const answered = FEEDBACK.items.filter((i) => i.status === "answered")
   const latest = answered[0]
   const initials = coach.coachName.slice(0, 2).toUpperCase()
+  const replyChip = <Chip tone="neutral">~{FEEDBACK.avgReplyHours}h reply</Chip>
+  const bar = <HatchBar parts={[{ value: FEEDBACK.answered, color: ACCENT }]} total={FEEDBACK.requested} />
+  const key = (
+    <InlineKey
+      items={[
+        { color: ACCENT, label: "answered", value: FEEDBACK.answered },
+        { hatch: true, label: "waiting", value: FEEDBACK.requested - FEEDBACK.answered },
+      ]}
+    />
+  )
+  const quote = (clamp: string) => (
+    <figure className="grid min-w-0 shrink-0 gap-1.5">
+      <blockquote className={cn("border-l-2 pl-3 text-[0.8125rem] leading-5", clamp)} style={{ borderLeftColor: ACCENT }}>
+        {latest.reply}
+      </blockquote>
+      <figcaption className="flex min-w-0 items-center gap-1.5 pl-3 text-xs leading-4 text-muted-foreground">
+        <span className="truncate">{coach.coachName}</span>
+        <span>·</span>
+        <TradeName trade={latest.trade} />
+        <span className="shrink-0">· {latest.when}</span>
+      </figcaption>
+    </figure>
+  )
 
   if (variant === "latest") {
     return (
-      <W>
-        <div className="flex min-w-0 items-center gap-2.5">
-          <Avatar initials={initials} size={28} />
-          <div className="grid min-w-0">
-            <span className={cn(TYPE.title, "truncate")}>{coach.coachName} replied</span>
-            <span className={cn(TYPE.small, "truncate tabular-nums")}>
-              {latest.trade} · {latest.when}
-            </span>
-          </div>
-        </div>
-        <p className={cn(TYPE.body, "border-l-2 pl-3", detailed ? "line-clamp-2" : "line-clamp-3")} style={{ borderLeftColor: ACCENT }}>
-          {latest.reply}
-        </p>
-        {more && !detailed && (
-          <span className={cn(TYPE.small, "mt-auto truncate")}>
-            {waiting.length} more waiting · usually within {FEEDBACK.avgReplyHours} hours
+      <WCard icon={MessageSquareReply} title="Coach feedback" meta={`${coach.coachName} replied · ${latest.when}`} chip={<Chip>{waiting.length} waiting</Chip>}>
+        <div className="flex min-w-0 shrink-0 gap-2.5">
+          <span className="hidden @[18rem]:block">
+            <Avatar initials={initials} size={24} />
           </span>
+          <div className="min-w-0 flex-1">{quote(more ? "line-clamp-2" : "line-clamp-3")}</div>
+        </div>
+        {more && (
+          <div className="mt-auto grid shrink-0 gap-1.5">
+            {bar}
+            {key}
+          </div>
         )}
         {detailed && (
-          <div className="flex min-h-0 flex-1 flex-col gap-1">
-            <Caps>Earlier</Caps>
-            <Fit>
+          <>
+            <Rule />
+            <Label>Earlier</Label>
+            <Fit className="-mt-2">
               {answered.slice(1).map((i) => (
-                <Row key={i.trade} title={i.reply} sub={`${i.trade} · ${i.when}`} />
+                <div key={i.trade} className="grid min-w-0 gap-0.5 py-1">
+                  <span className="flex min-w-0 text-xs leading-4">
+                    <TradeName trade={i.trade} />
+                    <span className="ml-auto shrink-0 pl-2 text-muted-foreground">{i.when}</span>
+                  </span>
+                  <span className="truncate text-xs leading-4 text-muted-foreground">{i.reply}</span>
+                </div>
               ))}
             </Fit>
-          </div>
+          </>
         )}
-      </W>
+      </WCard>
     )
   }
 
   if (variant === "stats") {
     return (
-      <W className={cn(!detailed && "justify-center")}>
-        <div className="flex min-w-0 items-center gap-3">
-          <Ring value={(FEEDBACK.answered / FEEDBACK.requested) * 100} size={44} stroke={4}>
-            <span className="text-xs font-medium tabular-nums">
-              {FEEDBACK.answered}/{FEEDBACK.requested}
-            </span>
-          </Ring>
-          <div className="grid min-w-0 gap-0.5">
-            <span className={cn(TYPE.title, "truncate")}>
-              {FEEDBACK.answered} of {FEEDBACK.requested} reviews answered
-            </span>
-            {more && <span className={cn(TYPE.small, "truncate")}>Usually within {FEEDBACK.avgReplyHours} hours</span>}
-          </div>
+      <WCard icon={MessageSquareReply} title="Coach feedback" meta={`Your reviews this month · ${coach.coachName}`} chip={replyChip}>
+        {detailed && <Num value={`${FEEDBACK.avgReplyHours}h`} unit="avg reply" delta={`−${LAST_MONTH_HOURS - FEEDBACK.avgReplyHours}h vs Sep`} deltaTone="profit" />}
+        <div className="flex min-w-0 shrink-0 items-center gap-3">
+          <div className="min-w-0 flex-1">{bar}</div>
+          <span className="shrink-0 text-xs leading-4 tabular-nums" style={{ fontFamily: font }}>
+            {FEEDBACK.answered}/{FEEDBACK.requested} <span className="text-muted-foreground">answered</span>
+          </span>
         </div>
         {detailed && (
-          <Fit>
-            {waiting.map((i) => (
-              <Row key={i.trade} avatar={<StatusDot waiting />} title={i.trade} value={<span className="text-xs text-muted-foreground">{i.when}</span>} />
-            ))}
-          </Fit>
+          <>
+            <Legend
+              className="shrink-0"
+              items={[
+                ...REPLY_HOURS.map((h, i) => ({ color: GREY[1], label: answered[i]?.trade ?? "Review", value: `${h}h` })),
+                { color: TRACK, label: "Waiting the longest", value: waiting[0]?.when ?? "–" },
+              ]}
+            />
+          </>
         )}
-      </W>
+      </WCard>
     )
   }
 
-  // queue: compact = what's waiting; standard = plus answered; detailed = plus the reply under each answer
+  // queue: compact = what's waiting; standard = + the answered/waiting bar and answered rows; detailed = + the latest reply as a quote
   const list = more ? [...waiting, ...answered] : waiting
   return (
-    <W>
-      <Head icon={MessageSquareReply} label="Coach feedback" value={waiting.length} unit="waiting" right={`~${FEEDBACK.avgReplyHours}h reply`} />
+    <WCard icon={MessageSquareReply} title="Coach feedback" meta={`Your trade reviews · ${coach.coachName} replies in ~${FEEDBACK.avgReplyHours}h`} chip={<Chip>{waiting.length} waiting</Chip>}>
+      <div className="flex min-w-0 shrink-0 items-center gap-3">
+        <Num size="md" value={`${FEEDBACK.answered}/${FEEDBACK.requested}`} unit="answered" />
+        {more && <div className="hidden min-w-0 flex-1 @[16rem]:block">{bar}</div>}
+      </div>
       <Fit>
         {list.map((i) => (
-          <Row
-            key={i.trade}
-            avatar={<StatusDot waiting={i.status === "waiting"} />}
-            title={<span className="tabular-nums">{i.trade}</span>}
-            sub={detailed && i.status === "answered" ? i.reply : undefined}
-            value={<span className="text-xs text-muted-foreground">{i.status === "waiting" ? `Waiting ${i.when}` : "Answered"}</span>}
-          />
+          <QueueRow key={i.trade} {...i} />
         ))}
       </Fit>
-    </W>
+      {detailed && (
+        <>
+          <Rule />
+          {quote("line-clamp-2")}
+        </>
+      )}
+    </WCard>
   )
 }
 
 // ---------- AI insight
 
-
 // ---------- Book a 1:1
 
 /**
- * Book a 1:1: slots (free times by day, tap to book), next (the next free time
- * with one button), allowance (calls left this month).
+ * Book a 1:1: slots (free times as chips in day columns, the month's
+ * allowance as a hatched bar), next (the next free time with one button),
+ * allowance (calls used, booked and left).
  */
 export function BookCall({ variant = "slots" }: WidgetProps) {
   const { coach } = useCoach()
   const { emphasis } = useFrame()
+  const font = useFigureFont()
   const empty = useEmpty()
   const more = useMore("standard")
   const detailed = useMore("detailed")
@@ -142,7 +227,8 @@ export function BookCall({ variant = "slots" }: WidgetProps) {
   const days = empty ? CALL_SLOTS.map((d) => ({ ...d, times: [] })) : CALL_SLOTS
   const free = days.flatMap((d) => d.times.map((t) => ({ ...d, time: t })))
   const next = free[0]
-  const left = CALL_ALLOWANCE.included - CALL_ALLOWANCE.used
+  const booked = picked ? 1 : 0
+  const left = Math.max(0, CALL_ALLOWANCE.included - CALL_ALLOWANCE.used - booked)
   const book = (label: string) => {
     setPicked(label)
     toast.success(`Booked: ${label} with ${coach.coachName}`, { description: "Added to your calendar. (Prototype)" })
@@ -150,87 +236,144 @@ export function BookCall({ variant = "slots" }: WidgetProps) {
 
   if (!next) return <WidgetEmpty icon={CalendarClock} title="No free times this week" text={`${coach.coachName} opens new 1:1 times every Sunday.`} />
 
-  const chip = (label: string, time: string) => (
-    <button
-      key={label}
-      onClick={() => book(label)}
-      className={cn("r-chip border px-2 py-1 text-xs tabular-nums transition-colors hover:border-foreground/40 hover:bg-muted", picked === label && "font-medium")}
-      style={picked === label ? { borderColor: ACCENT, color: ACCENT_TEXT } : undefined}
-    >
-      {picked === label ? `${time} · booked` : time}
-    </button>
+  const meta = `${CALL_ALLOWANCE.length}-min calls with ${coach.coachName}`
+  const leftChip = <Chip tone={left ? "accent" : "neutral"}>{`${left} of ${CALL_ALLOWANCE.included} left`}</Chip>
+  const allowanceBar = (
+    <HatchBar
+      parts={[
+        { value: CALL_ALLOWANCE.used, color: GREY[1] },
+        { value: booked, color: ACCENT },
+      ].filter((p) => p.value > 0)}
+      total={CALL_ALLOWANCE.included}
+    />
   )
+  const allowanceKey = (
+    <InlineKey
+      items={[
+        { color: GREY[1], label: "used", value: CALL_ALLOWANCE.used },
+        { color: ACCENT, label: "booked", value: booked },
+        { hatch: true, label: "left", value: left },
+      ]}
+    />
+  )
+
+  const slot = (label: string, time: string, wide?: boolean) => {
+    const on = picked === label
+    return (
+      <button
+        key={label}
+        onClick={() => book(label)}
+        disabled={!on && left === 0}
+        className={cn(
+          "r-chip flex h-6 shrink-0 items-center justify-center border px-1.5 text-[0.6875rem] leading-none whitespace-nowrap tabular-nums transition-colors hover:border-foreground/40 hover:bg-muted disabled:pointer-events-none disabled:opacity-40",
+          wide && "w-full",
+        )}
+        style={{
+          fontFamily: font,
+          ...(on ? { borderColor: ACCENT, color: ACCENT_TEXT, background: `color-mix(in oklab, ${ACCENT} 13%, transparent)` } : { borderColor: "color-mix(in oklab, var(--foreground) 16%, transparent)" }),
+        }}
+      >
+        {on ? `✓ ${time}` : time}
+      </button>
+    )
+  }
 
   if (variant === "allowance") {
     return (
-      <W className={cn(!detailed && "justify-center")}>
-        <div className="flex min-w-0 items-center gap-3">
-          <Ring value={(left / CALL_ALLOWANCE.included) * 100} size={44} stroke={4}>
-            <span className="text-xs font-medium tabular-nums">{left}</span>
-          </Ring>
-          <div className="grid min-w-0 gap-0.5">
-            <span className={cn(TYPE.title, "truncate")}>
-              {left} of {CALL_ALLOWANCE.included} calls left this month
-            </span>
-            {more && (
-              <span className={cn(TYPE.small, "truncate")}>
-                Next free: <span className="text-foreground tabular-nums">{next.day} {next.time}</span>
-              </span>
-            )}
-          </div>
+      <WCard icon={CalendarClock} title="1:1 calls" meta={`${meta} · October`} chip={leftChip}>
+        <div className="flex min-w-0 shrink-0 items-center gap-3">
+          <div className="min-w-0 flex-1">{allowanceBar}</div>
+          <span className="shrink-0 text-xs leading-4 tabular-nums" style={{ fontFamily: font }}>
+            {left} <span className="text-muted-foreground">left · next {next.day} {next.time}</span>
+          </span>
         </div>
-        {detailed && <div className="flex min-w-0 flex-wrap gap-1">{free.slice(0, 4).map((f) => chip(`${f.day} ${f.time}`, `${f.day} ${f.time}`))}</div>}
-      </W>
+        {detailed && (
+          <>
+            {allowanceKey}
+            <Rule />
+            <Label>Free this week</Label>
+            <div className="-mt-1.5 flex min-w-0 flex-wrap gap-1">{free.slice(0, 6).map((f) => slot(`${f.day} ${f.time}`, `${f.day} ${f.time}`))}</div>
+          </>
+        )}
+      </WCard>
     )
   }
 
   if (variant === "next") {
     const label = `${next.day} ${next.time}`
     return (
-      <W>
-        <Head icon={CalendarClock} label={`1:1 with ${coach.coachName}`} right={more ? `${left} of ${CALL_ALLOWANCE.included} left` : undefined} />
-        <Big value={label} sub={more ? `${next.date} · ${CALL_ALLOWANCE.length} min` : undefined} />
-        {detailed && (
-          <div className="flex min-w-0 flex-wrap items-center gap-1">
-            <Caps className="mr-1">Or</Caps>
-            {free.slice(1, 4).map((f) => chip(`${f.day} ${f.time}`, `${f.day} ${f.time}`))}
+      <WCard icon={CalendarClock} title={`1:1 with ${coach.coachName}`} meta={`${meta} · next free time`} chip={leftChip}>
+        <div className="flex min-w-0 shrink-0 items-end gap-3">
+          <div className="grid min-w-0 flex-1 gap-1">
+            <Label>Next free</Label>
+            <Num size="md" value={label} delta={`${next.date} · ${CALL_ALLOWANCE.length}m`} deltaTone="muted" />
+          </div>
+          <Button size="sm" variant={emphasis === "quiet" ? "outline" : "default"} className="hidden shrink-0 @[15rem]:inline-flex" disabled={!picked && left === 0} onClick={() => book(label)}>
+            {picked === label ? "Booked" : "Book"}
+          </Button>
+        </div>
+        {more && (
+          <div className="flex min-w-0 shrink-0 items-center gap-3">
+            <div className="min-w-0 flex-1">{allowanceBar}</div>
+            <span className="shrink-0 text-xs leading-4 text-muted-foreground tabular-nums" style={{ fontFamily: font }}>
+              {left} of {CALL_ALLOWANCE.included} left
+            </span>
           </div>
         )}
-        <Button size="sm" variant={emphasis === "quiet" ? "outline" : "default"} className="mt-auto w-full @[16rem]:w-fit" onClick={() => book(label)}>
-          {picked === label ? "Booked" : "Book this time"}
-        </Button>
-      </W>
+        {detailed && (
+          <>
+            {allowanceKey}
+            <div className="flex min-w-0 flex-wrap items-center gap-1">
+              <Label className="mr-1">Or</Label>
+              {free.slice(1, 5).map((f) => slot(`${f.day} ${f.time}`, `${f.day} ${f.time}`))}
+            </div>
+          </>
+        )}
+      </WCard>
     )
   }
 
-  // slots: compact = the days that still have times; standard = every day; detailed = plus the allowance
+  // slots: compact = the day columns of free times; standard = + the allowance bar and key; detailed = + the next free time line
   const shown = more ? days : days.filter((d) => d.times.length > 0)
   return (
-    <W>
-      <Head icon={CalendarClock} label="Book a 1:1" right={`${CALL_ALLOWANCE.length} min`} />
-      <Fit className="gap-1.5">
+    <WCard icon={CalendarClock} title="Book a 1:1" meta={`${meta} · ${free.length} free times this week`} chip={leftChip}>
+      <div className="grid min-h-0 flex-1 gap-1.5" style={{ gridTemplateColumns: `repeat(${shown.length}, minmax(0, 1fr))` }}>
         {shown.map((d) => (
-          <div key={d.day} className="grid grid-cols-[2.75rem_1fr] items-center gap-2">
-            <span className="grid leading-tight">
-              <Caps>{d.day}</Caps>
-              <span className="text-[0.6875rem] text-muted-foreground tabular-nums">{d.date.split(" ")[0]}</span>
-            </span>
-            <div className="flex min-w-0 flex-wrap gap-1">
-              {d.times.length === 0 && <span className={TYPE.small}>Full</span>}
-              {d.times.map((t) => chip(`${d.day} ${t}`, t))}
+          <div key={d.day} className="flex min-h-0 min-w-0 flex-col gap-1">
+            <div className="flex min-w-0 items-baseline gap-1">
+              <Label className={cn(d.times.length && "text-foreground")}>{d.day}</Label>
+              <span className="text-[0.6875rem] leading-4 text-muted-foreground tabular-nums" style={{ fontFamily: font }}>
+                {d.date.split(" ")[0]}
+              </span>
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden">
+              {d.times.length === 0 ? (
+                <span
+                  className="r-chip flex h-6 shrink-0 items-center justify-center text-[0.6875rem] leading-none text-muted-foreground"
+                  style={{ background: HATCH, boxShadow: `inset 0 0 0 1px ${TRACK}` }}
+                >
+                  full
+                </span>
+              ) : (
+                d.times.map((t) => slot(`${d.day} ${t}`, t, true))
+              )}
             </div>
           </div>
         ))}
-      </Fit>
+      </div>
+      {more && (
+        <div className="grid shrink-0 gap-1.5">
+          {allowanceBar}
+          {allowanceKey}
+        </div>
+      )}
       {detailed && (
-        <span className={cn(TYPE.small, "truncate")}>
-          {left} of {CALL_ALLOWANCE.included} calls left this month
+        <span className="truncate text-xs leading-4 text-muted-foreground">
+          Next free: <span className="text-foreground tabular-nums">{next.day} {next.date} · {next.time}</span> · invites go to your calendar
         </span>
       )}
-    </W>
+    </WCard>
   )
 }
 
 // ---------- Next unlock
-
-
