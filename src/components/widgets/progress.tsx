@@ -5,7 +5,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { DEMO_STUDENT, LEADERBOARD, RANK_HISTORY } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { ACCENT, ACCENT_TEXT, Avatar, TYPE, useMore } from "./kit"
-import { Axis, Chip, DotStrip, GREY, Label, Legend, Num, Rule, WCard, useFigureFont } from "./instrument"
+import { Axis, Chip, DotStrip, GREY, Label, Legend, Num, Rule, WCard, useFigureFont, useChartStyle } from "./instrument"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 
 /** An empty tick or track (the same faint grey instrument.tsx uses). */
@@ -32,16 +32,20 @@ type Step = ReturnType<typeof useFirstWeek>[number]
  * higher than the last, like a staircase. Done steps grey, the next step in
  * the accent, the rest faint.
  */
-function StepTrack({ items, next, height = 12, ticks = 5, className }: { items: Step[]; next?: Step; height?: number; ticks?: number; className?: string }) {
+function StepTrack({ items, next, height: h0 = 12, ticks: t0 = 5, className }: { items: Step[]; next?: Step; height?: number; ticks?: number; className?: string }) {
+  // Chart style: ticks (a staircase of tick groups), solid (one block per step), thin (a hairline per step).
+  const style = useChartStyle()
+  const height = style === "thin" ? 3 : h0
+  const ticks = style === "ticks" ? t0 : 1
   return (
     <div className={cn("flex items-end gap-[6px]", className)} style={{ height }} aria-hidden>
       {items.map((it, i) => {
-        const h = Math.round(height * (0.4 + (0.6 * (i + 1)) / items.length))
+        const h = style === "thin" ? height : Math.round(height * (0.4 + (0.6 * (i + 1)) / items.length))
         const color = it.done ? GREY[1] : it === next ? ACCENT : TRACK
         return (
           <div key={it.label} title={it.label} className="flex flex-1 items-end gap-[2px]" style={{ height: h }}>
             {Array.from({ length: ticks }, (_, k) => (
-              <span key={k} className="h-full flex-1 rounded-[1px]" style={{ background: color }} />
+              <span key={k} className={cn("h-full flex-1", style === "ticks" ? "rounded-[1px]" : "r-bar")} style={{ background: color }} />
             ))}
           </div>
         )

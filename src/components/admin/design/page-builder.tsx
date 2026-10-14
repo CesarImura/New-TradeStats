@@ -30,7 +30,7 @@ import {
 import { PageRenderer, isAvailable } from "@/components/widgets/page-renderer"
 import { WidgetFrame } from "@/components/widgets/kit"
 import { getWidget, heightFor, heightOf, lookOf } from "@/components/widgets/registry"
-import { DataModeProvider, type DataMode } from "@/components/widgets/shared"
+import { DataModeProvider, PageIdContext, PageTitleShownContext, type DataMode } from "@/components/widgets/shared"
 import type { Coach } from "@/lib/data/coaches"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { themeToCss } from "@/lib/theme/css"
@@ -96,7 +96,9 @@ export function useArrange({
   const save = (next: PageLayout, key: string, keep?: string) => {
     const items = oneStar(next.items, keep)
     const demoted = next.items.filter((w, i) => w.emphasis === "star" && items[i].emphasis !== "star")
-    savePages({ ...layouts, [tier]: { ...next, items } }, `${tier}-${key}`)
+    // Keep "title removed on purpose", and set it when this save drops the Page title.
+    const titleRemoved = page !== "home" && !items.some((w) => w.type === "page-header") ? true : undefined
+    savePages({ ...layouts, [tier]: { ...next, items, titleRemoved } }, `${tier}-${key}`)
     if (demoted.length) {
       const names = demoted.map((w) => getWidget(w.type)?.name ?? "A widget").join(", ")
       toast(`${names} gave up ${demoted.length > 1 ? "their" : "its"} star.`, { description: "Only one Star per page; it is Accent now." })
@@ -284,6 +286,8 @@ export function ArrangeCanvas({
   const canvasCtx = { ...ctx, coach, theme, base: `/c/${coach.slug}` }
 
   return (
+    <PageIdContext.Provider value={page}>
+    <PageTitleShownContext.Provider value={!layout.items.some((w) => w.type === "page-header")}>
     <CoachContext.Provider value={canvasCtx}>
       <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, scope) }} />
       <div ref={area} className="h-full min-h-[60svh] min-w-0 overflow-x-hidden overflow-y-auto p-4 lg:min-h-0" onClick={() => setSelected(null)}>
@@ -396,6 +400,8 @@ export function ArrangeCanvas({
         </div>
       </div>
     </CoachContext.Provider>
+    </PageTitleShownContext.Provider>
+    </PageIdContext.Provider>
   )
 }
 

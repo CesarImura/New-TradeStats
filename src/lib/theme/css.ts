@@ -32,8 +32,11 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
       : t.shadow === "soft"
         ? "0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05)"
         : `0 2px 4px rgb(0 0 0 / 0.06), 0 14px 36px color-mix(in oklab, ${t.primary} 16%, transparent)`
-  const ring = t.borders ? `0 0 0 1px ${p.border}` : ""
-  const cardShadow = [ring, shadow === "none" ? "" : shadow].filter(Boolean).join(", ") || "none"
+  // Card surface: raised (the palette's card), grey (a flat grey card on the page) or outline (no fill, a hairline).
+  const surface = t.cardSurface ?? "raised"
+  const card = surface === "grey" ? `color-mix(in oklab, ${p.foreground} ${isDark(p.background) ? 7 : 5}%, ${p.background})` : surface === "outline" ? p.background : p.card
+  const ring = t.borders || surface === "outline" ? `0 0 0 1px ${p.border}` : ""
+  const cardShadow = [ring, shadow === "none" || surface !== "raised" ? "" : shadow].filter(Boolean).join(", ") || "none"
   const buttonRadius =
     t.buttonShape === "pill" ? "9999px" : t.buttonShape === "square" ? `${Math.min(t.radius, 3)}px` : `${Math.max(6, t.radius * 0.7)}px`
 
@@ -44,7 +47,7 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
   const vars: Record<string, string> = {
     "--background": p.background,
     "--foreground": p.foreground,
-    "--card": p.card,
+    "--card": card,
     "--card-foreground": p.foreground,
     "--popover": p.card,
     "--popover-foreground": p.foreground,

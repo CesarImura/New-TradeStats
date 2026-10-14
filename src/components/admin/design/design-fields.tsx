@@ -13,7 +13,7 @@ import { themeToCss } from "@/lib/theme/css"
 import { onColor } from "@/lib/theme/derive"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
-import { widgetStyleOf, type CoachTheme, type TemplateId } from "@/lib/theme/types"
+import { chartStyleOf, widgetStyleOf, type CoachTheme, type TemplateId } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { BackgroundControl } from "./background-control"
 import { Field, More, Segmented, SliderField, Swatches } from "./controls"
@@ -408,6 +408,43 @@ function WidgetStyleField() {
   )
 }
 
+function ChartStyleField() {
+  const { theme, change } = useDesign()
+  return (
+    <Field id="chart-style" label="Bars and gauges" hint={{ ticks: "Segments, like an instrument", solid: "One filled bar", thin: "A fine line" }[chartStyleOf(theme)]}>
+      <Segmented
+        label="Bars and gauges"
+        value={chartStyleOf(theme)}
+        onChange={(chartStyle) => change({ theme: { chartStyle } }, "chart-style")}
+        options={[
+          { value: "ticks", label: "Ticks" },
+          { value: "solid", label: "Solid" },
+          { value: "thin", label: "Thin" },
+        ]}
+      />
+    </Field>
+  )
+}
+
+function CardSurfaceField() {
+  const { theme, change } = useDesign()
+  const surface = theme.cardSurface ?? "raised"
+  return (
+    <Field id="card-surface" label="Cards" hint={{ raised: "Cards stand on the page", grey: "Grey cards on the page colour", outline: "No fill, a fine outline" }[surface]}>
+      <Segmented
+        label="Cards"
+        value={surface}
+        onChange={(cardSurface) => change({ theme: { cardSurface } }, "card-surface")}
+        options={[
+          { value: "raised", label: theme.mode === "light" ? "White" : "Raised" },
+          { value: "grey", label: "Grey" },
+          { value: "outline", label: "Outline" },
+        ]}
+      />
+    </Field>
+  )
+}
+
 function BackgroundField() {
   const { theme, change } = useDesign()
   return (
@@ -556,6 +593,8 @@ const FIELDS: Record<string, () => React.ReactNode> = {
   density: DensityField,
   background: BackgroundField,
   "widget-style": WidgetStyleField,
+  "chart-style": ChartStyleField,
+  "card-surface": CardSurfaceField,
   "nav-layout": NavLayoutField,
   "nav-style": NavStyleField,
   "nav-logo": NavLogoField,

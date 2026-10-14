@@ -9,8 +9,9 @@ import { StudentCommunity } from "@/components/student/community"
 import { StudentJournal } from "@/components/student/journal"
 import { StudentRanking } from "@/components/student/ranking"
 import type { ModuleId } from "@/lib/data/coaches"
+import type { WidgetProps } from "./shared"
 
-const PAGES: Record<ModuleId, () => React.ReactNode> = {
+const PAGES: Record<ModuleId, (p: { props?: WidgetProps["props"] }) => React.ReactNode> = {
   courses: StudentCourses,
   calendar: StudentCalendar,
   charts: StudentCharts,
@@ -26,11 +27,11 @@ const PAGES: Record<ModuleId, () => React.ReactNode> = {
  */
 export function corePage(page: ModuleId) {
   const Page = PAGES[page]
-  function Core() {
+  function Core({ props }: WidgetProps) {
     return (
       <div className="g-core-body flex min-w-0 flex-col">
         <Suspense>
-          <Page />
+          <Page props={props} />
         </Suspense>
       </div>
     )

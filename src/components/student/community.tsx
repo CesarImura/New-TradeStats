@@ -14,6 +14,7 @@ import { ANNOUNCEMENTS } from "@/lib/data/people"
 import { DISCORD } from "@/lib/data/sample"
 import { useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
+import { OwnTitle } from "@/components/student/own-title"
 
 const NO_LIKES: string[] = []
 
@@ -30,10 +31,12 @@ export function StudentCommunity() {
 
   return (
     <div className="flex flex-col page-gap">
-      <div className="flex flex-col gap-1">
+      <OwnTitle>
+        <div className="flex flex-col gap-1">
         <span className="eyebrow">{DISCORD.members.toLocaleString("en")} members · {coach.name}</span>
         <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.community}</h1>
       </div>
+      </OwnTitle>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <section className="flex flex-col gap-3 max-lg:order-2">

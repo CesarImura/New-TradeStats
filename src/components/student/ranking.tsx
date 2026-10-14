@@ -16,6 +16,7 @@ import { BADGES, LEVELS, RANK_METRICS } from "@/lib/data/people"
 import { LEADERBOARD } from "@/lib/data/sample"
 import { useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
+import { OwnTitle } from "@/components/student/own-title"
 
 /** STU-25 leaderboards and competitions, STU-26 level, points, badges and streak. */
 export function StudentRanking() {
@@ -32,10 +33,12 @@ export function StudentRanking() {
 
   return (
     <div className="flex flex-col page-gap">
-      <div className="flex flex-col gap-1">
+      <OwnTitle>
+        <div className="flex flex-col gap-1">
         <span className="eyebrow">Ranked by {metric?.name.toLowerCase()} · {metric?.text}</span>
         <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.ranking}</h1>
       </div>
+      </OwnTitle>
 
       {live && (
         <Card className="fx-hero flex-row flex-wrap items-center gap-4 px-5">

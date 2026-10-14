@@ -16,7 +16,7 @@ export function WidgetPage({ page }: { page: ModuleId }) {
   const tier = useViewerTier(coach)
   return (
     <DataModeProvider value={params.get("data") === "empty" ? "empty" : "sample"}>
-      <PageRenderer layout={pageLayout(coach, page, theme.template, tier, heightOf)} />
+      <PageRenderer page={page} layout={pageLayout(coach, page, theme.template, tier, heightOf)} />
     </DataModeProvider>
   )
 }

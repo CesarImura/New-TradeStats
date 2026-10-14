@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { createContext, useContext, useState } from "react"
 import { addDays, addMinutes, differenceInMinutes, format, isSameDay } from "date-fns"
 import { Bell, CalendarPlus, CalendarX, Clock, Lock, Play, Radio, TriangleAlert, Users, Video } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
@@ -33,7 +34,8 @@ import {
 } from "@/lib/data/schedule"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { CalendarSurface, type View } from "./calendar-surface"
+import { CalendarSurface, type EventStyle, type View } from "./calendar-surface"
+import { OwnTitle } from "@/components/student/own-title"
 
 export const STUDENT_COLORS: Record<ItemKind, string> = {
   live: series(0),
@@ -42,12 +44,39 @@ export const STUDENT_COLORS: Record<ItemKind, string> = {
   "one-on-one": series(4),
   news: TONE.loss,
 }
+/** "A colour per type": distinct but calm hues; lives stay in the coach's colour. */
+const MULTI_COLORS: Record<ItemKind, string> = {
+  live: series(0),
+  call: "oklch(0.6 0.12 245)",
+  workshop: "oklch(0.62 0.12 160)",
+  "one-on-one": "oklch(0.66 0.13 70)",
+  news: TONE.loss,
+}
+/** "Greys, lives in my colour". */
+const MONO_COLORS: Record<ItemKind, string> = {
+  live: series(0),
+  call: "color-mix(in oklab, var(--foreground) 62%, var(--card))",
+  workshop: "color-mix(in oklab, var(--foreground) 45%, var(--card))",
+  "one-on-one": "color-mix(in oklab, var(--foreground) 30%, var(--card))",
+  news: TONE.loss,
+}
+const PALETTES: Record<string, Record<ItemKind, string>> = { shades: STUDENT_COLORS, multi: MULTI_COLORS, mono: MONO_COLORS }
+
+/** Where an event's details open, chosen by the coach on the calendar's core widget (Design → Pages). */
+type Opens = "tray" | "popover" | "popup"
+const ColorsContext = createContext(STUDENT_COLORS)
+const OpensContext = createContext<Opens>("tray")
+
 const KINDS: ItemKind[] = ["live", "call", "workshop", "one-on-one", "news"]
 const RANGE = { from: addDays(NOW, -45), to: addDays(NOW, 75) }
 
 /** STU-06 calendar with STU-07 event, STU-08 booking, STU-09 news detail and STU-27 my bookings. */
-export function StudentCalendar() {
+export function StudentCalendar({ props = {} }: { props?: Record<string, string | boolean> } = {}) {
   const { coach } = useCoach()
+  const colors = PALETTES[(props.colors as string) ?? "shades"] ?? STUDENT_COLORS
+  const opens = ((props.open as string) ?? "tray") as Opens
+  const eventStyle = ((props.style as string) ?? "tinted") as EventStyle
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const schedule = useSchedule(coach)
   const mine = useStudentCal(coach.slug)
   const tier = useStudentTier()
@@ -67,10 +96,12 @@ export function StudentCalendar() {
   return (
     <div className="flex flex-col page-gap">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-col gap-1">
+        <OwnTitle>
+          <div className="flex flex-col gap-1">
           <span className="eyebrow">Times in your time zone · CET</span>
           <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.calendar}</h1>
         </div>
+        </OwnTitle>
         {allowance > 0 && (
           <Button onClick={() => setBooking({})}>
             <CalendarPlus /> Book a 1:1
@@ -116,8 +147,12 @@ export function StudentCalendar() {
             onView={setView}
             cursor={cursor}
             onCursor={setCursor}
-            onSelect={setOpen}
-            colorOf={(k) => STUDENT_COLORS[k]}
+            onSelect={(i, el) => {
+              setAnchor(el ?? null)
+              setOpen(i)
+            }}
+            colorOf={(k) => colors[k]}
+            eventStyle={eventStyle}
             toolbar={
               <div className="flex flex-wrap gap-1.5">
                 {KINDS.map((k) => {
@@ -129,7 +164,7 @@ export function StudentCalendar() {
                       aria-pressed={on}
                       className={cn("r-chip flex items-center gap-1.5 border px-2.5 py-1 text-xs transition-opacity", !on && "opacity-45")}
                     >
-                      <span className="size-2 rounded-full" style={{ background: STUDENT_COLORS[k] }} />
+                      <span className="size-2 rounded-full" style={{ background: colors[k] }} />
                       {KIND_LABEL[k]}
                     </button>
                   )
@@ -140,11 +175,22 @@ export function StudentCalendar() {
         </TabsContent>
 
         <TabsContent value="mine">
-          <MyBookings items={upcomingMine} onOpen={setOpen} onReschedule={(b) => setBooking({ replace: b })} />
+          <MyBookings
+            items={upcomingMine}
+            onOpen={(i) => {
+              setAnchor(null)
+              setOpen(i)
+            }}
+            onReschedule={(b) => setBooking({ replace: b })}
+          />
         </TabsContent>
       </Tabs>
 
-      <ItemSheet item={open} onClose={() => setOpen(null)} onReschedule={(b) => (setOpen(null), setBooking({ replace: b }))} />
+      <ColorsContext.Provider value={colors}>
+        <OpensContext.Provider value={opens === "popover" && !anchor ? "popup" : opens}>
+          <ItemSheet item={open} anchor={anchor} onClose={() => setOpen(null)} onReschedule={(b) => (setOpen(null), setBooking({ replace: b }))} />
+        </OpensContext.Provider>
+      </ColorsContext.Provider>
       <BookDialog open={!!booking} replace={booking?.replace} onClose={() => setBooking(null)} allowance={allowance} used={used} />
     </div>
   )
@@ -152,41 +198,69 @@ export function StudentCalendar() {
 
 // ---------- detail sheet (STU-07 event, STU-09 news, own 1:1)
 
-function ItemSheet({ item, onClose, onReschedule }: { item: Item | null; onClose: () => void; onReschedule: (b: Booking) => void }) {
+/** An event's details: in a tray from the side, a popover by the event, or a pop-up in the middle. */
+function ItemSheet({ item, anchor, onClose, onReschedule }: { item: Item | null; anchor: HTMLElement | null; onClose: () => void; onReschedule: (b: Booking) => void }) {
+  const opens = useContext(OpensContext)
   const { coach } = useCoach()
   const mine = useStudentCal(coach.slug)
   const tier = useStudentTier()
   const [last, setLast] = useState<Item | null>(item)
   if (item && item !== last) setLast(item)
   const i = item ?? last
+  const body = (
+    <>
+      {i?.event && <EventDetail item={i} signedUp={mine.signups.includes(i.key)} tier={tier} />}
+      {i?.news && <NewsDetail item={i} />}
+      {i?.booking && <BookingDetail item={i} onReschedule={onReschedule} onDone={onClose} />}
+    </>
+  )
+  if (opens === "popover")
+    return (
+      <PopoverPrimitive.Root open={!!item} onOpenChange={(o) => !o && onClose()}>
+        <PopoverPrimitive.Portal>
+          <PopoverPrimitive.Positioner anchor={anchor} side="right" align="start" sideOffset={8} collisionPadding={12} className="isolate z-50">
+            <PopoverPrimitive.Popup className="flex max-h-[min(70vh,560px)] w-[22rem] flex-col overflow-y-auto rounded-(--radius) bg-popover text-sm text-popover-foreground shadow-lg ring-1 ring-foreground/10 outline-hidden [&_[data-slot=sheet-header]]:p-4 [&_[data-slot=sheet-footer]]:p-4">
+              {body}
+            </PopoverPrimitive.Popup>
+          </PopoverPrimitive.Positioner>
+        </PopoverPrimitive.Portal>
+      </PopoverPrimitive.Root>
+    )
+  if (opens === "popup")
+    return (
+      <Dialog open={!!item} onOpenChange={(o) => !o && onClose()}>
+        <DialogContent className="max-h-[85vh] gap-0 overflow-y-auto p-0 sm:max-w-lg">{body}</DialogContent>
+      </Dialog>
+    )
   return (
     <Sheet open={!!item} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full gap-0 sm:max-w-md">
-        {i?.event && <EventDetail item={i} signedUp={mine.signups.includes(i.key)} tier={tier} />}
-        {i?.news && <NewsDetail item={i} />}
-        {i?.booking && <BookingDetail item={i} onReschedule={onReschedule} onDone={onClose} />}
-      </SheetContent>
+      <SheetContent className="w-full gap-0 sm:max-w-md">{body}</SheetContent>
     </Sheet>
   )
 }
 
 function Head({ item, icon: Icon }: { item: Item; icon: React.ElementType }) {
   const live = isLiveNow(item)
+  const colors = useContext(ColorsContext)
+  // A popover has its own title parts; the tray and the pop-up are dialogs.
+  const popover = useContext(OpensContext) === "popover"
+  const Title = popover ? PopoverPrimitive.Title : SheetTitle
+  const Description = popover ? PopoverPrimitive.Description : SheetDescription
   return (
     <SheetHeader className="gap-3 border-b">
       <div className="flex items-center gap-2">
-        <span className="r-chip grid size-8 place-items-center text-white" style={{ background: STUDENT_COLORS[item.kind] }}>
+        <span className="r-chip grid size-8 place-items-center text-white" style={{ background: colors[item.kind] }}>
           <Icon className="size-4" />
         </span>
         <span className="eyebrow">{KIND_LABEL[item.kind]}</span>
         {live && <span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-xs font-medium text-white">Live now</span>}
       </div>
-      <SheetTitle className="font-heading text-2xl leading-tight">{item.title}</SheetTitle>
-      <SheetDescription className="flex items-center gap-1.5">
+      <Title className="font-heading text-2xl leading-tight">{item.title}</Title>
+      <Description className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <Clock className="size-4" />
         {format(item.start, "EEEE d MMMM")} · {hhmm(item.start)}
         {item.kind !== "news" && `–${hhmm(item.end)}`}
-      </SheetDescription>
+      </Description>
     </SheetHeader>
   )
 }

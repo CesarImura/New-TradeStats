@@ -12,6 +12,7 @@ import { DEFAULT_AI, SUGGESTED, aiAnswer, aiTradeAnswer, type AiReply } from "@/
 import { TRADES, fmtR } from "@/lib/data/trades"
 import { useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
+import { OwnTitle } from "@/components/student/own-title"
 
 type Msg = { from: "me" | "ai"; text: string; reply?: AiReply; typing?: boolean }
 
@@ -41,10 +42,12 @@ export function StudentAi() {
   return (
     <div className="flex flex-col page-gap">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-col gap-1">
+        <OwnTitle>
+          <div className="flex flex-col gap-1">
           <span className="eyebrow">Answers from {coach.coachName}&apos;s lessons</span>
           <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.ai}</h1>
         </div>
+        </OwnTitle>
         <div className="grid w-48 gap-1.5 text-sm">
           <span className="flex justify-between text-muted-foreground">
             Questions today <span className="text-foreground tabular-nums">{quota === 0 ? "Unlimited" : `${left} left`}</span>

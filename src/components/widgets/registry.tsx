@@ -2,6 +2,7 @@ import { BookOpen, ChartCandlestick, MessagesSquare, NotebookPen, CalendarDays, 
 import type { ModuleId } from "@/lib/data/coaches"
 import { CORE_H, COLS, coreType, type PageId } from "@/lib/widgets/layout"
 import { corePage } from "./core"
+import { PageHeader } from "./page"
 import { AiAsk, Banner, PartnerLinks, TextBlock, WelcomeVideo } from "./brand"
 import { EconNews, NextLive } from "./calendar"
 import { Announcement, Discord } from "./community"
@@ -46,6 +47,26 @@ const COURSE_OPTIONS = [
 ]
 
 export const WIDGETS: WidgetDef[] = [
+  {
+    type: "page-header",
+    name: "Page title",
+    description: "The page's title, with a small label and an intro",
+    group: "Page",
+    icon: Type,
+    variants: [
+      { value: "plain", label: "Plain", h: 2, minH: 1 },
+      { value: "centered", label: "Centred", h: 2, minH: 1 },
+      { value: "banner", label: "Banner", h: 3, minH: 2 },
+    ],
+    settings: [
+      { key: "title", label: "Title", type: "text", placeholder: "The page's name" },
+      { key: "eyebrow", label: "Small label", type: "text" },
+      { key: "text", label: "Intro", type: "textarea", placeholder: "One or two sentences for your students" },
+    ],
+    defaultW: 12,
+    minW: 4,
+    Component: PageHeader,
+  },
   {
     type: "continue-lesson",
     name: "Continue lesson",
@@ -392,6 +413,67 @@ export const WIDGETS: WidgetDef[] = [
   },
 ]
 
+/** Settings of a page's own tool (its core widget), shown when the coach selects it in Design → Pages. */
+const CORE_SETTINGS: Partial<Record<ModuleId, Setting[]>> = {
+  courses: [
+    {
+      key: "columns",
+      label: "Courses per row",
+      type: "select",
+      options: [
+        { value: "auto", label: "Fit the page" },
+        { value: "2", label: "2" },
+        { value: "3", label: "3" },
+        { value: "4", label: "4" },
+      ],
+    },
+    {
+      key: "card",
+      label: "Course cards",
+      type: "select",
+      options: [
+        { value: "cover", label: "Cover on top" },
+        { value: "side", label: "Cover beside" },
+        { value: "list", label: "List, no cover" },
+      ],
+    },
+    { key: "filters", label: "Filter by area", type: "toggle", defaultOn: true },
+    { key: "resume", label: "Pick up where you left off", type: "toggle", defaultOn: true },
+  ],
+  calendar: [
+    {
+      key: "open",
+      label: "An event opens in",
+      type: "select",
+      options: [
+        { value: "tray", label: "A tray from the side" },
+        { value: "popover", label: "A popover by the event" },
+        { value: "popup", label: "A pop-up in the middle" },
+      ],
+    },
+    {
+      key: "style",
+      label: "Event blocks",
+      type: "select",
+      options: [
+        { value: "tinted", label: "Tinted" },
+        { value: "solid", label: "Solid" },
+        { value: "outline", label: "Outline" },
+      ],
+    },
+    {
+      key: "colors",
+      label: "Colours",
+      type: "select",
+      options: [
+        { value: "shades", label: "Shades of my colour" },
+        { value: "multi", label: "A colour per type" },
+        { value: "mono", label: "Greys, lives in my colour" },
+      ],
+    },
+  ],
+}
+
 const CORE: { page: ModuleId; name: string; description: string; icon: LucideIcon }[] = [
   { page: "courses", name: "Courses", description: "The course catalogue and lessons", icon: BookOpen },
   { page: "calendar", name: "Calendar", description: "Lives, events and booking", icon: CalendarDays },
@@ -411,6 +493,7 @@ for (const c of CORE) {
     icon: c.icon,
     core: c.page,
     variants: [{ value: "page", label: "Full page", h: CORE_H, minH: 6 }],
+    settings: CORE_SETTINGS[c.page],
     defaultW: COLS,
     minW: 6,
     Component: corePage(c.page),
@@ -428,7 +511,7 @@ export const PAGE_WIDGETS: Record<ModuleId, string[]> = {
   ai: ["ai-ask"],
 }
 /** Widgets that make sense on any page. */
-export const ANYWHERE = ["banner", "text", "welcome-video", "announcement", "upgrade", "partner-links", "coach-profile", "book-call"]
+export const ANYWHERE = ["page-header", "banner", "text", "welcome-video", "announcement", "upgrade", "partner-links", "coach-profile", "book-call"]
 
 /** The library for a page, in sections. Home: by group, as before. */
 export function librarySections(page: PageId): { title: string; types: string[] }[] {

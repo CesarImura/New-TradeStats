@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { COURSES, DEMO_STUDENT, UNLOCKS, courseProgress, nextLesson } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { ACCENT, TYPE, series, useFrame, useMore } from "./kit"
-import { Axis, Chip, GREY, HatchBar, Label, Legend, Num, Rule, TickBar, Timeline, WCard, useFigureFont } from "./instrument"
+import { Axis, Chip, GREY, HatchBar, Label, Legend, Num, Rule, TickBar, Timeline, WCard, useFigureFont, useChartStyle } from "./instrument"
 import { Cover, WidgetEmpty, inWords, useEmpty, type WidgetProps } from "./shared"
 
 type Course = (typeof COURSES)[number]
@@ -53,17 +53,21 @@ function Go({ href, label, text }: { href: string; label: string; text?: boolean
  * grouped by module. Done lessons grey, the current one in the accent and a
  * little taller, the rest hatched. `modules` adds M1 · M2 · M3 under the groups.
  */
-function LessonBar({ course, current, height = 8, modules, className }: { course: Course; current: string; height?: number; modules?: boolean; className?: string }) {
+function LessonBar({ course, current, height: h0 = 8, modules, className }: { course: Course; current: string; height?: number; modules?: boolean; className?: string }) {
   const font = useFigureFont()
+  // Chart style: ticks (separate lessons, the rest hatched), solid (lessons joined, plain track), thin (a hairline).
+  const style = useChartStyle()
+  const height = style === "thin" ? 3 : h0
+  const rest = style === "ticks" ? HATCH : { background: TRACK }
   const mi = course.modules.findIndex((m) => m.lessons.some((l) => l.id === current))
   return (
     <div className={cn("grid gap-1", className)}>
-      <div className="flex items-end gap-[5px]" style={{ height: height + 4 }} aria-hidden>
+      <div className={cn("flex items-end", style === "ticks" ? "gap-[5px]" : "gap-[3px]")} style={{ height: height + 4 }} aria-hidden>
         {course.modules.map((m) => (
-          <div key={m.id} className="flex h-full items-end gap-[2px]" style={{ flex: m.lessons.reduce((n, l) => n + l.minutes, 0) }}>
+          <div key={m.id} className={cn("flex h-full items-end", style === "ticks" ? "gap-[2px]" : "gap-px")} style={{ flex: m.lessons.reduce((n, l) => n + l.minutes, 0) }}>
             {m.lessons.map((l) => {
               const now = l.id === current
-              return <span key={l.id} title={l.title} className="r-bar" style={{ flex: l.minutes, height: now ? height + 4 : height, ...(l.done ? { background: GREY[1] } : now ? { background: ACCENT } : HATCH) }} />
+              return <span key={l.id} title={l.title} className="r-bar" style={{ flex: l.minutes, height: now && style !== "thin" ? height + 4 : height, ...(l.done ? { background: GREY[1] } : now ? { background: ACCENT } : rest) }} />
             })}
           </div>
         ))}

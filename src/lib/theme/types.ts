@@ -25,6 +25,10 @@ export type NavLayout = "side" | "top"
 export type NavStyle = "labels" | "icons"
 /** How widgets are drawn: Instrument (mono figures, tick charts, inset panels), Soft (rounded, one surface), Editorial (heading font, hairlines). */
 export type WidgetStyle = "instrument" | "soft" | "editorial"
+/** How bars and gauges are drawn: Ticks (segments), Solid (one filled bar), Thin (a hairline). */
+export type ChartStyle = "ticks" | "solid" | "thin"
+/** Cards: Raised (the card colour, as the template has it), Grey (a grey card on the page), Outline (no fill, a hairline). */
+export type CardSurface = "raised" | "grey" | "outline"
 /** Plain, a texture (grid, glow, dots), a gradient from the brand colours, or an image. */
 export type BackgroundStyle = "plain" | "grid" | "glow" | "dots" | "gradient" | "image"
 
@@ -62,9 +66,15 @@ export type CoachTheme = {
   nav: { layout: NavLayout; style: NavStyle; logo: "left" | "center" }
   /** Widget style; each template has a default (widgetStyleOf). */
   widgetStyle?: WidgetStyle
+  /** Defaults from the widget style (chartStyleOf). */
+  chartStyle?: ChartStyle
+  cardSurface?: CardSurface
 }
 
 const WIDGET_STYLE_DEFAULT: Record<TemplateId, WidgetStyle> = { terminal: "instrument", atelier: "editorial", pulse: "soft" }
 export const widgetStyleOf = (t: Pick<CoachTheme, "template" | "widgetStyle">): WidgetStyle => t.widgetStyle ?? WIDGET_STYLE_DEFAULT[t.template]
+
+const CHART_STYLE_DEFAULT: Record<WidgetStyle, ChartStyle> = { instrument: "ticks", soft: "solid", editorial: "thin" }
+export const chartStyleOf = (t: Pick<CoachTheme, "template" | "widgetStyle" | "chartStyle">): ChartStyle => t.chartStyle ?? CHART_STYLE_DEFAULT[widgetStyleOf(t)]
 
 export type TemplateId = "terminal" | "atelier" | "pulse"

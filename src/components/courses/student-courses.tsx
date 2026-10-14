@@ -24,11 +24,27 @@ import {
 import { cn } from "@/lib/utils"
 import { groupOpening, useAccess, useViewerGroup } from "@/lib/data/access"
 import { CourseCover, UpgradeDialog, hours, useStudentTier } from "./shared"
+import { OwnTitle } from "@/components/student/own-title"
 
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
 
-/** STU-02 courses overview, with My notes (STU-29) as a second tab. */
-export function StudentCourses() {
+/** Courses per row, by the gallery's "Courses per row" setting (Design → Pages). */
+const COLUMNS: Record<string, string> = {
+  auto: "sm:grid-cols-2 xl:grid-cols-3",
+  "2": "sm:grid-cols-2",
+  "3": "sm:grid-cols-2 lg:grid-cols-3",
+  "4": "sm:grid-cols-2 lg:grid-cols-4",
+}
+
+/**
+ * STU-02 courses overview, with My notes (STU-29) as a second tab. As the
+ * Courses page's core widget it is a gallery the coach sets up: courses per
+ * row, card style (cover on top, cover beside, list), the area filter and the
+ * "pick up where you left off" card.
+ */
+export function StudentCourses({ props = {} }: { props?: Record<string, string | boolean> } = {}) {
+  const columns = COLUMNS[(props.columns as string) ?? "auto"] ?? COLUMNS.auto
+  const card = (props.card as string) ?? "cover"
   const { coach, base } = useCoach()
   const catalog = useCatalog(coach)
   const progress = useProgress(coach.slug)
@@ -62,12 +78,14 @@ export function StudentCourses() {
 
   return (
     <div className="flex flex-col page-gap">
-      <div className="flex flex-col gap-1">
+      <OwnTitle>
+        <div className="flex flex-col gap-1">
         <span className="eyebrow">
           {courses.length} {courses.length === 1 ? "course" : "courses"} · {coach.name}
         </span>
         <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.courses}</h1>
       </div>
+      </OwnTitle>
 
       {courses.length === 0 ? (
         <Card className="items-center gap-3 rounded-(--radius) px-6 py-12 text-center">
@@ -87,9 +105,9 @@ export function StudentCourses() {
           </TabsList>
 
           <TabsContent value="courses" className="flex flex-col page-gap">
-            {resume && <ResumeCard course={resume.course} lessonId={resume.lesson.id} />}
+            {resume && props.resume !== false && <ResumeCard course={resume.course} lessonId={resume.lesson.id} />}
 
-            {areas.length > 1 && (
+            {areas.length > 1 && props.filters !== false && (
               <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Area">
                 {["all", ...areas].map((a) => (
                   <button
@@ -108,7 +126,7 @@ export function StudentCourses() {
               </div>
             )}
 
-            <div className="grid gap-[var(--page-gap)] sm:grid-cols-2 xl:grid-cols-3">
+            <div className={cn("grid gap-[var(--page-gap)]", card === "list" ? "" : columns)}>
               {shown.map((c) => {
                 const opening = groupOpening(access, c.id, group)
                 const open = canAccess(c, tier) && (!opening || opening.open)
@@ -117,7 +135,7 @@ export function StudentCourses() {
                 const needs = coach.tiers.find((t) => c.tiers.includes(t.id))
                 const body = (
                   <>
-                    <CourseCover course={c} locked={!open} className="aspect-[16/8]" />
+                    {card !== "list" && <CourseCover course={c} locked={!open} className={card === "side" ? "aspect-[4/3] w-2/5 shrink-0 self-stretch" : "aspect-[16/8]"} />}
                     <div className="flex flex-1 flex-col gap-3 p-[calc(1rem*var(--density,1))]">
                       <div className="flex items-start justify-between gap-2">
                         <div className="grid gap-0.5">
@@ -151,7 +169,10 @@ export function StudentCourses() {
                     </div>
                   </>
                 )
-                const cls = "group flex flex-col overflow-hidden rounded-(--radius) bg-card text-left text-card-foreground transition-transform hover:-translate-y-0.5"
+                const cls = cn(
+                  "group flex overflow-hidden rounded-(--radius) bg-card text-left text-card-foreground transition-transform hover:-translate-y-0.5",
+                  card === "cover" ? "flex-col" : "flex-row",
+                )
                 if (waits)
                   return (
                     <div key={c.id} className={cls} style={{ boxShadow: "var(--card-shadow)" }} title={`Opens for ${group?.name} on ${opening?.date}`}>

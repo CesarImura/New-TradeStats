@@ -35,7 +35,11 @@ export type WidgetInstance = {
   hideOnPhone?: boolean
 }
 
-export type PageLayout = { items: WidgetInstance[] }
+export type PageLayout = {
+  items: WidgetInstance[]
+  /** The coach removed the Page title on purpose; don't add it back. */
+  titleRemoved?: boolean
+}
 
 /** One page's layouts: "default" plus optional per-tier versions. */
 export type HomeLayouts = Record<string, PageLayout>
@@ -148,15 +152,35 @@ export function normalizeLayout(l: PageLayout | { sections: LegacySection[] }, h
   return { items }
 }
 
-/** A module page before the coach arranges it: just its core widget, full width. */
+/** Rows the Page title widget gets on a new page. */
+const HEADER_H = 2
+
+/** A module page before the coach arranges it: its title as a widget, then its core widget, full width. */
 export function defaultPage(page: ModuleId): PageLayout {
-  return { items: [{ id: `core-${page}`, type: coreType(page), x: 0, y: 0, w: COLS, h: CORE_H }] }
+  // Courses: the "pick up where you left off" card is its own widget, so the gallery leaves its copy out.
+  if (page === "courses")
+    return {
+      items: [
+        { id: "title-courses", type: "page-header", x: 0, y: 0, w: COLS, h: HEADER_H },
+        { id: "resume-courses", type: "continue-lesson", variant: "cover", x: 0, y: HEADER_H, w: COLS, h: 3 },
+        { id: "core-courses", type: coreType(page), x: 0, y: HEADER_H + 3, w: COLS, h: CORE_H, props: { resume: false } },
+      ],
+    }
+  return {
+    items: [
+      { id: `title-${page}`, type: "page-header", x: 0, y: 0, w: COLS, h: HEADER_H },
+      { id: `core-${page}`, type: coreType(page), x: 0, y: HEADER_H, w: COLS, h: CORE_H },
+    ],
+  }
 }
 
 /** Saved layouts always keep the core widget; if one is missing, put it back on top. */
 export function withCore(page: ModuleId, l: PageLayout): PageLayout {
-  if (l.items.some((w) => w.type === coreType(page))) return l
-  return { items: [...defaultPage(page).items, ...l.items.map((w) => ({ ...w, y: w.y + CORE_H }))] }
+  if (!l.items.some((w) => w.type === coreType(page))) return { items: [...defaultPage(page).items, ...l.items.map((w) => ({ ...w, y: w.y + HEADER_H + CORE_H }))] }
+  // Pages saved before the title became a widget: put the title on top, so it stays where it was.
+  if (!l.items.some((w) => w.type === "page-header") && !l.titleRemoved)
+    return { items: [{ id: `title-${page}`, type: "page-header", x: 0, y: 0, w: COLS, h: HEADER_H }, ...l.items.map((w) => ({ ...w, y: w.y + HEADER_H }))] }
+  return l
 }
 
 // ---------- template defaults

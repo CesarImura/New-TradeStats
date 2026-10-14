@@ -19,6 +19,7 @@ import { EVENTS, MARKET_SESSIONS, NOW_HOUR } from "@/lib/data/sample"
 import { ACCOUNTS, COACH_CHARTS, chartDefaults, fmtPnl, fmtPrice, fmtR, MARKETS, tvSymbol, type ChartSettings, type CoachChart, type Market } from "@/lib/data/trades"
 import { useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
+import { OwnTitle } from "@/components/student/own-title"
 
 type Sym = { tv: string; name: string }
 type Mkt = Book & { meta: SymbolMeta }
@@ -59,7 +60,7 @@ export function StudentCharts() {
     const needed = coach.tiers.find((t) => s.tiers.includes(t.id))
     return (
       <div className="flex flex-col page-gap">
-        <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.charts}</h1>
+        <OwnTitle><h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.charts}</h1></OwnTitle>
         <div className="grid place-items-center gap-3 rounded-(--radius) border border-dashed px-6 py-16 text-center">
           <Lock className="size-7 text-muted-foreground" />
           <p className="font-medium">

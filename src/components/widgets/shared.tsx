@@ -16,6 +16,16 @@ const DataModeContext = createContext<DataMode>("sample")
 export const DataModeProvider = DataModeContext.Provider
 export const useEmpty = () => useContext(DataModeContext) === "empty"
 
+/** Which student page a widget sits on ("home" or a module), for widgets that adapt to their page. */
+export const PageIdContext = createContext<string>("home")
+export const usePageId = () => useContext(PageIdContext)
+/**
+ * False when the page has a Page title widget: the page's own tool (its core
+ * widget) then leaves its built-in title out, so the title is never shown twice.
+ */
+export const PageTitleShownContext = createContext(true)
+export const usePageTitleShown = () => useContext(PageTitleShownContext)
+
 /** Shown instead of a widget's content when there is nothing to show yet. */
 export function WidgetEmpty({
   icon: Icon,

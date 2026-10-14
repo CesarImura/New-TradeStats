@@ -27,6 +27,7 @@ import { addFeedback, allTrades, useFeedback } from "@/lib/data/feedback"
 import { AI_INSIGHT, DEMO_STUDENT, EQUITY, JOURNAL_DAYS, RULES, SETUPS } from "@/lib/data/sample"
 import { ACCOUNTS, BROKERS, STRATEGIES, fmtPnl, fmtR } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
+import { OwnTitle } from "@/components/student/own-title"
 
 type T = ReturnType<typeof allTrades>[number]
 const equityConfig = { v: { label: "Equity", color: "var(--primary)" } } satisfies ChartConfig
@@ -48,7 +49,7 @@ export function StudentJournal() {
   if (!broker.connected)
     return (
       <div className="flex flex-col page-gap">
-        <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.journal}</h1>
+        <OwnTitle><h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.journal}</h1></OwnTitle>
         <Card className="items-center gap-4 px-6 py-12 text-center">
           <span className="grid size-12 place-items-center rounded-(--r-inner) bg-primary text-primary-foreground">
             <Link2 className="size-6" />
@@ -74,12 +75,14 @@ export function StudentJournal() {
   return (
     <div className="flex flex-col page-gap">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-col gap-1">
+        <OwnTitle>
+          <div className="flex flex-col gap-1">
           <span className="eyebrow">
             {ACCOUNTS.length} accounts · synced {ACCOUNTS[0].synced}
           </span>
           <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.journal}</h1>
         </div>
+        </OwnTitle>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setConnecting(true)}>
             <Plus /> Account

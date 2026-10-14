@@ -6,6 +6,7 @@ import { GAP, ROW_HEIGHT, readingOrder, wMd, type PageLayout, type WidgetInstanc
 import { cn } from "@/lib/utils"
 import { WidgetFrame } from "./kit"
 import { getWidget } from "./registry"
+import { PageIdContext, PageTitleShownContext } from "./shared"
 
 export function isAvailable(w: WidgetInstance, coach: Coach) {
   const def = getWidget(w.type)
@@ -13,10 +14,12 @@ export function isAvailable(w: WidgetInstance, coach: Coach) {
 }
 
 /** Draws a page from its layout. Used by the live platform and the builder's tablet and phone views. */
-export function PageRenderer({ layout }: { layout: PageLayout }) {
+export function PageRenderer({ layout, page = "home" }: { layout: PageLayout; page?: string }) {
   const { coach, theme } = useCoach()
   const items = readingOrder(layout.items.filter((w) => isAvailable(w, coach)))
   return (
+    <PageIdContext.Provider value={page}>
+    <PageTitleShownContext.Provider value={!items.some((w) => w.type === "page-header")}>
     <div className="@container">
       <div className="g-page" style={{ "--gap": `${GAP[theme.density]}px`, "--row-h": `${ROW_HEIGHT}px` } as React.CSSProperties}>
         {items.map((w, i) => (
@@ -24,6 +27,8 @@ export function PageRenderer({ layout }: { layout: PageLayout }) {
         ))}
       </div>
     </div>
+    </PageTitleShownContext.Provider>
+    </PageIdContext.Provider>
   )
 }
 

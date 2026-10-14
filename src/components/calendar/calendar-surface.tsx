@@ -23,6 +23,7 @@ export function CalendarSurface({
   onCursor,
   onSelect,
   colorOf,
+  eventStyle = "tinted",
   toolbar,
   onEmptySlot,
 }: {
@@ -31,8 +32,11 @@ export function CalendarSurface({
   onView: (v: View) => void
   cursor: Date
   onCursor: (d: Date) => void
-  onSelect: (i: Item) => void
+  /** `el` is the clicked event, for a popover to point at. */
+  onSelect: (i: Item, el?: HTMLElement) => void
   colorOf: (k: ItemKind) => string
+  /** How event blocks are drawn: tinted (default), solid or outline. */
+  eventStyle?: EventStyle
   toolbar?: React.ReactNode
   /** Admin: click an empty time in the week view to create something there. */
   onEmptySlot?: (d: Date) => void
@@ -80,8 +84,8 @@ export function CalendarSurface({
         </div>
       </div>
 
-      {view === "month" && <Month items={items} cursor={cursor} onSelect={onSelect} colorOf={colorOf} onDay={(d) => (onCursor(d), onView("week"))} />}
-      {view === "week" && <Week items={items} start={weekStart} onSelect={onSelect} colorOf={colorOf} onEmptySlot={onEmptySlot} />}
+      {view === "month" && <Month items={items} cursor={cursor} onSelect={onSelect} colorOf={colorOf} eventStyle={eventStyle} onDay={(d) => (onCursor(d), onView("week"))} />}
+      {view === "week" && <Week items={items} start={weekStart} onSelect={onSelect} colorOf={colorOf} eventStyle={eventStyle} onEmptySlot={onEmptySlot} />}
       {view === "list" && (
         <List items={items} start={isSameDay(weekStart, startOfWeek(NOW, { weekStartsOn: 1 })) ? NOW : weekStart} onSelect={onSelect} colorOf={colorOf} />
       )}
@@ -98,16 +102,27 @@ function LiveDot() {
   )
 }
 
-function Chip({ item, color, onSelect }: { item: Item; color: string; onSelect: (i: Item) => void }) {
+export type EventStyle = "tinted" | "solid" | "outline"
+
+/** Colours of an event block in each style. Solid uses white text, so it reads on the coach's colour and the type shades. */
+export function blockStyle(color: string, style: EventStyle): React.CSSProperties {
+  if (style === "solid") return { background: color, borderColor: color, color: "#fff" }
+  if (style === "outline") return { background: "var(--card)", borderColor: color, boxShadow: `inset 0 0 0 1px ${color}` }
+  return { background: `color-mix(in oklab, ${color} 14%, var(--card))`, borderColor: color }
+}
+
+function Chip({ item, color, onSelect, eventStyle = "tinted" }: { item: Item; color: string; onSelect: (i: Item, el?: HTMLElement) => void; eventStyle?: EventStyle }) {
   const live = isLiveNow(item)
+  const tinted = eventStyle === "tinted"
   return (
     <button
-      onClick={(e) => (e.stopPropagation(), onSelect(item))}
-      className="flex w-full min-w-0 items-center gap-1.5 rounded-[var(--r-chip,6px)] px-1.5 py-0.5 text-left text-xs hover:bg-muted"
+      onClick={(e) => (e.stopPropagation(), onSelect(item, e.currentTarget))}
+      className={cn("flex w-full min-w-0 items-center gap-1.5 rounded-[var(--r-chip,6px)] px-1.5 py-0.5 text-left text-xs", tinted ? "hover:bg-muted" : "border hover:opacity-90")}
+      style={tinted ? undefined : blockStyle(color, eventStyle)}
       title={`${hhmm(item.start)} ${item.title}`}
     >
-      {live ? <LiveDot /> : <span className="size-1.5 shrink-0 rounded-full" style={{ background: color }} />}
-      <span className="shrink-0 text-muted-foreground tabular-nums">{hhmm(item.start)}</span>
+      {live ? <LiveDot /> : tinted && <span className="size-1.5 shrink-0 rounded-full" style={{ background: color }} />}
+      <span className={cn("shrink-0 tabular-nums", eventStyle === "solid" ? "opacity-85" : "text-muted-foreground")}>{hhmm(item.start)}</span>
       <span className={cn("truncate", item.news?.noTrade && "font-medium")}>{item.title}</span>
     </button>
   )
@@ -119,10 +134,12 @@ function Month({
   onSelect,
   colorOf,
   onDay,
+  eventStyle,
 }: {
   items: Item[]
   cursor: Date
-  onSelect: (i: Item) => void
+  onSelect: (i: Item, el?: HTMLElement) => void
+  eventStyle: EventStyle
   colorOf: (k: ItemKind) => string
   onDay: (d: Date) => void
 }) {
@@ -162,7 +179,7 @@ function Month({
                   {d.getDate()}
                 </span>
                 {list.slice(0, 3).map((i) => (
-                  <Chip key={i.key} item={i} color={colorOf(i.kind)} onSelect={onSelect} />
+                  <Chip key={i.key} item={i} color={colorOf(i.kind)} onSelect={onSelect} eventStyle={eventStyle} />
                 ))}
                 {list.length > 3 && <span className="px-1.5 text-xs text-muted-foreground">+{list.length - 3} more</span>}
               </div>
@@ -180,10 +197,12 @@ function Week({
   onSelect,
   colorOf,
   onEmptySlot,
+  eventStyle,
 }: {
   items: Item[]
   start: Date
-  onSelect: (i: Item) => void
+  onSelect: (i: Item, el?: HTMLElement) => void
+  eventStyle: EventStyle
   colorOf: (k: ItemKind) => string
   onEmptySlot?: (d: Date) => void
 }) {
@@ -266,22 +285,21 @@ function Week({
                     return (
                       <button
                         key={i.key}
-                        onClick={(e) => (e.stopPropagation(), onSelect(i))}
+                        onClick={(e) => (e.stopPropagation(), onSelect(i, e.currentTarget))}
                         className="absolute overflow-hidden rounded-[var(--r-chip,6px)] border-l-[3px] px-1.5 py-0.5 text-left text-[0.7rem] leading-tight shadow-xs transition-shadow hover:z-10 hover:shadow-md"
                         style={{
                           top: top(i.start),
                           height: h,
                           left: `calc(${(lane / n) * 100}% + 2px)`,
                           width: `calc(${100 / n}% - 4px)`,
-                          borderColor: color,
-                          background: `color-mix(in oklab, ${color} 14%, var(--card))`,
+                          ...blockStyle(color, eventStyle),
                         }}
                       >
                         <span className="flex items-center gap-1 font-medium">
                           {live && <LiveDot />}
                           <span className="truncate">{i.title}</span>
                         </span>
-                        {h > 30 && <span className="block text-muted-foreground tabular-nums">{hhmm(i.start)}</span>}
+                        {h > 30 && <span className={cn("block tabular-nums", eventStyle === "solid" ? "opacity-85" : "text-muted-foreground")}>{hhmm(i.start)}</span>}
                       </button>
                     )
                   })}
@@ -300,7 +318,7 @@ function Week({
   )
 }
 
-function List({ items, start, onSelect, colorOf }: { items: Item[]; start: Date; onSelect: (i: Item) => void; colorOf: (k: ItemKind) => string }) {
+function List({ items, start, onSelect, colorOf }: { items: Item[]; start: Date; onSelect: (i: Item, el?: HTMLElement) => void; colorOf: (k: ItemKind) => string }) {
   const days = Array.from({ length: 14 }, (_, i) => addDays(start, i))
   const groups = days.map((d) => ({ d, list: items.filter((i) => isSameDay(i.start, d) && (!isSameDay(d, NOW) || i.end > NOW)) })).filter((g) => g.list.length)
   if (!groups.length) return <p className="py-12 text-center text-sm text-muted-foreground">Nothing in the next two weeks.</p>
@@ -313,7 +331,7 @@ function List({ items, start, onSelect, colorOf }: { items: Item[]; start: Date;
             {list.map((i) => (
               <button
                 key={i.key}
-                onClick={() => onSelect(i)}
+                onClick={(e) => onSelect(i, e.currentTarget)}
                 className="flex w-full items-center gap-3 border-b px-4 py-3 text-left last:border-b-0 hover:bg-muted/50"
               >
                 <span className="w-12 shrink-0 text-sm tabular-nums">{hhmm(i.start)}</span>

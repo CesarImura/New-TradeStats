@@ -3,7 +3,7 @@
 import { useId, useState } from "react"
 import type { LucideIcon } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { widgetStyleOf, type WidgetStyle } from "@/lib/theme/types"
+import { chartStyleOf, widgetStyleOf, type ChartStyle, type WidgetStyle } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { ACCENT, ACCENT_TEXT, TYPE, W, useFrame } from "./kit"
 
@@ -31,6 +31,12 @@ import { ACCENT, ACCENT_TEXT, TYPE, W, useFrame } from "./kit"
 export function useWidgetStyle(): WidgetStyle {
   const { theme } = useCoach()
   return widgetStyleOf(theme)
+}
+
+/** How bars and gauges are drawn (Design → Look → Chart style): ticks, solid or thin. */
+export function useChartStyle(): ChartStyle {
+  const { theme } = useCoach()
+  return chartStyleOf(theme)
 }
 
 /** Greys for secondary series and legend swatches, strongest first. */
@@ -233,28 +239,47 @@ const r2 = (n: number) => Math.round(n * 100) / 100
  * value; empty ticks are faint. `children` sits in the middle (the number).
  */
 export function TickGauge({ value, max = 100, ticks = 40, children, className }: { value: number; max?: number; ticks?: number; children?: React.ReactNode; className?: string }) {
+  const style = useChartStyle()
   const on = Math.round((Math.min(value, max) / max) * ticks)
+  const pct = Math.min(Math.max(value, 0), max) / max
+  // Solid and thin: one arc with the share in the accent (thin is a hairline with a dot at the end).
+  const arc = (from: number, to: number) => {
+    const a0 = Math.PI + Math.PI * from
+    const a1 = Math.PI + Math.PI * to
+    return `M${r2(110 + Math.cos(a0) * 93)} ${r2(108 + Math.sin(a0) * 93)} A93 93 0 0 1 ${r2(110 + Math.cos(a1) * 93)} ${r2(108 + Math.sin(a1) * 93)}`
+  }
+  const w = style === "thin" ? 3 : 13
   return (
     <div className={cn("relative mx-auto w-full max-w-60", className)}>
       <svg viewBox="0 0 220 116" className="w-full" aria-hidden>
-        {Array.from({ length: ticks }, (_, i) => {
-          const a = Math.PI + (Math.PI * i) / (ticks - 1)
-          const lit = i < on
-          const head = lit && i >= on - Math.max(2, Math.round(ticks * 0.12))
-          return (
-            <line
-              key={i}
-              x1={r2(110 + Math.cos(a) * 86)}
-              y1={r2(108 + Math.sin(a) * 86)}
-              x2={r2(110 + Math.cos(a) * 100)}
-              y2={r2(108 + Math.sin(a) * 100)}
-              stroke={!lit ? TRACK : head ? ACCENT : "var(--foreground)"}
-              strokeOpacity={!lit || head ? 1 : r2(0.35 + (0.5 * i) / Math.max(on, 1))}
-              strokeWidth={3.2}
-              style={{ strokeLinecap: "var(--cap)" as never }}
-            />
-          )
-        })}
+        {style === "ticks" ? (
+          Array.from({ length: ticks }, (_, i) => {
+            const a = Math.PI + (Math.PI * i) / (ticks - 1)
+            const lit = i < on
+            const head = lit && i >= on - Math.max(2, Math.round(ticks * 0.12))
+            return (
+              <line
+                key={i}
+                x1={r2(110 + Math.cos(a) * 86)}
+                y1={r2(108 + Math.sin(a) * 86)}
+                x2={r2(110 + Math.cos(a) * 100)}
+                y2={r2(108 + Math.sin(a) * 100)}
+                stroke={!lit ? TRACK : head ? ACCENT : "var(--foreground)"}
+                strokeOpacity={!lit || head ? 1 : r2(0.35 + (0.5 * i) / Math.max(on, 1))}
+                strokeWidth={3.2}
+                style={{ strokeLinecap: "var(--cap)" as never }}
+              />
+            )
+          })
+        ) : (
+          <>
+            <path d={arc(0, 1)} fill="none" stroke={TRACK} strokeWidth={w} style={{ strokeLinecap: "var(--cap)" as never }} />
+            {pct > 0 && <path d={arc(0, pct)} fill="none" stroke={ACCENT} strokeWidth={w} style={{ strokeLinecap: "var(--cap)" as never }} />}
+            {style === "thin" && pct > 0 && (
+              <circle cx={r2(110 + Math.cos(Math.PI + Math.PI * pct) * 93)} cy={r2(108 + Math.sin(Math.PI + Math.PI * pct) * 93)} r={5} fill={ACCENT} />
+            )}
+          </>
+        )}
       </svg>
       {children && <div className="absolute inset-x-0 bottom-0 grid justify-items-center gap-0.5 text-center">{children}</div>}
     </div>
@@ -263,12 +288,22 @@ export function TickGauge({ value, max = 100, ticks = 40, children, className }:
 
 /** A segmented bar: segments up to the value in the accent (or a tone), the rest faint. `now` marks one segment taller. */
 export function TickBar({ value, max = 100, segments = 48, color = ACCENT, mark, now, height = 10, className }: { value: number; max?: number; segments?: number; color?: string; mark?: (i: number) => string | undefined; now?: number; height?: number; className?: string }) {
+  const style = useChartStyle()
   const on = Math.round((Math.min(Math.max(value, 0), max) / max) * segments)
+  const h = style === "thin" ? 3 : style === "solid" ? Math.max(6, height - 2) : height
+  // Ticks: separate segments. Solid and thin: the same segments joined into one rounded bar.
   return (
-    <div className={cn("flex items-end gap-[2px]", className)} style={{ height: height + 6 }} aria-hidden>
+    <div className={cn("relative flex items-end", style === "ticks" ? "gap-[2px]" : "r-bar overflow-hidden", className)} style={{ height: style === "ticks" ? height + 6 : h }} aria-hidden>
       {Array.from({ length: segments }, (_, i) => (
-        <span key={i} className="flex-1 rounded-[1px]" style={{ height: now === i ? height + 6 : height, background: now === i ? "var(--foreground)" : (mark?.(i) ?? (i < on ? color : TRACK)) }} />
+        <span
+          key={i}
+          className={cn("flex-1", style === "ticks" && "rounded-[1px]")}
+          style={{ height: style === "ticks" && now === i ? height + 6 : h, background: style === "ticks" && now === i ? "var(--foreground)" : (mark?.(i) ?? (i < on ? color : TRACK)) }}
+        />
       ))}
+      {style !== "ticks" && now !== undefined && (
+        <span className="absolute inset-y-0 w-0.5 bg-foreground" style={{ left: `${((now + 0.5) / segments) * 100}%` }} />
+      )}
     </div>
   )
 }
@@ -353,16 +388,18 @@ export function DotStrip({ values, me, min, max, split, mean, className }: { val
 
 /** A stacked bar with a hatched remainder: done | in progress | what's left. */
 export function HatchBar({ parts, total, height = 10, className }: { parts: { value: number; color: string }[]; total: number; height?: number; className?: string }) {
+  const style = useChartStyle()
   const used = parts.reduce((a, p) => a + p.value, 0)
+  const hatch = style === "ticks"
   return (
-    <div className={cn("flex gap-[3px]", className)} style={{ height }} aria-hidden>
+    <div className={cn("flex", hatch ? "gap-[3px]" : "r-bar gap-px overflow-hidden", className)} style={{ height: style === "thin" ? 4 : height }} aria-hidden>
       {parts.map((p, i) => (
         <span key={i} className="r-bar" style={{ flex: p.value, background: p.color }} />
       ))}
       {total > used && (
         <span
           className="r-bar"
-          style={{ flex: total - used, background: `repeating-linear-gradient(135deg, ${TRACK} 0 2px, transparent 2px 5px)`, boxShadow: `inset 0 0 0 1px ${TRACK}` }}
+          style={hatch ? { flex: total - used, background: `repeating-linear-gradient(135deg, ${TRACK} 0 2px, transparent 2px 5px)`, boxShadow: `inset 0 0 0 1px ${TRACK}` } : { flex: total - used, background: TRACK }}
         />
       )}
     </div>
