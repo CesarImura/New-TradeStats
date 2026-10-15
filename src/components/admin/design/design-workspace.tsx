@@ -213,7 +213,24 @@ export function DesignWorkspace() {
               <Button variant="outline" size="sm" nativeButton={false} render={<a href={src} target="_blank" rel="noreferrer" />} title="Open your platform as students see it, with your changes">
                 <ExternalLink /> Preview
               </Button>
-              <Button size="sm" disabled={!editor.dirty} onClick={editor.publish}>
+              {CAN_SAVE_TEMPLATE && (
+                <Button variant="outline" size="sm" onClick={() => setMenu("template")} title="Prototype: write this design into one of the starting templates">
+                  <FileDown /> Save as template
+                </Button>
+              )}
+              <Button
+                size="sm"
+                disabled={!editor.dirty}
+                onClick={() => {
+                  editor.publish()
+                  // Publishing changes this community only; say so, since templates are designed here too.
+                  if (CAN_SAVE_TEMPLATE)
+                    toast(`Published to ${coach.name} only`, {
+                      description: `The ${TEMPLATES[theme.template].name} template didn't change.`,
+                      action: { label: "Save as template", onClick: () => setMenu("template") },
+                    })
+                }}
+              >
                 Publish
               </Button>
             </div>
