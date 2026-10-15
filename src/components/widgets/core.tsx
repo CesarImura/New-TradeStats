@@ -6,7 +6,6 @@ import { StudentCourses } from "@/components/courses/student-courses"
 import { StudentAi } from "@/components/student/ai-chat"
 import { StudentCharts } from "@/components/student/charts"
 import { StudentCommunity } from "@/components/student/community"
-import { StudentDiscord } from "@/components/student/discord"
 import { StudentJournal } from "@/components/student/journal"
 import { StudentRanking } from "@/components/student/ranking"
 import type { ModuleId } from "@/lib/data/coaches"
@@ -17,7 +16,6 @@ const PAGES: Record<ModuleId, (p: { props?: WidgetProps["props"] }) => React.Rea
   calendar: StudentCalendar,
   charts: StudentCharts,
   community: StudentCommunity,
-  discord: StudentDiscord,
   journal: StudentJournal,
   ranking: StudentRanking,
   ai: StudentAi,

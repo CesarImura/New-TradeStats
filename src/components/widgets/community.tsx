@@ -1,7 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowUpRight, Eye, Heart, Megaphone, MessageCircle, MessageSquareText, MessagesSquare, Pin } from "@/components/icons"
+import { toast } from "sonner"
+import { useCommunityData } from "@/components/admin/kit"
+import { useStudentTier } from "@/components/courses/shared"
+import { ArrowUpRight, Check, Eye, Heart, Megaphone, MessageCircle, MessageSquareText, MessagesSquare, Pin } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { ANNOUNCEMENT, DISCORD } from "@/lib/data/sample"
@@ -275,9 +278,16 @@ function HourTicks({ values, height = 28, className }: { values: number[]; heigh
 const channelLegend = (rows: typeof CHANNELS, empty: boolean) =>
   rows.map((c, i) => ({ color: i === 0 && !empty ? ACCENT : GREY[Math.min(i, 3)], label: c.name, value: empty ? "Quiet" : `${c.unread} new` }))
 
-/** Discord: online (who's around and the last 24 h), card (channels with what's new), banner (one row with a Join button). */
+/**
+ * Discord: online (who's around and the last 24 h), card (channels with what's
+ * new), banner (one row with a Join button), join (link your Discord in one
+ * click; the role follows your tier; the Community page's default).
+ */
 export function Discord({ variant = "online", props }: WidgetProps) {
   const { coach } = useCoach()
+  const tier = useStudentTier()
+  const [linked, setLinked] = useCommunityData(coach.slug, "discord-linked", false)
+  const [busy, setBusy] = useState(false)
   const empty = useEmpty()
   const more = useMore("standard")
   const detailed = useMore("detailed")
@@ -301,6 +311,42 @@ export function Discord({ variant = "online", props }: WidgetProps) {
       >
         {!empty && <AvatarStack initials={DISCORD.avatars.slice(0, 4)} className="hidden shrink-0 @lg:flex" />}
         {join}
+      </WCard>
+    )
+  }
+
+  if (variant === "join") {
+    const role = coach.tiers.find((t) => t.id === tier)?.name ?? coach.tiers[0]?.name ?? "member"
+    const join = () => {
+      setBusy(true)
+      setTimeout(() => {
+        setLinked(true)
+        setBusy(false)
+        toast("Discord linked", { description: `You got the ${role} role and the private channels.` })
+      }, 900)
+    }
+    return (
+      <WCard icon={MessageSquareText} title={`${coach.org} on Discord`} meta={`${DISCORD.online} online · ${members}`} chip={linked ? <Chip>{role}</Chip> : newChip}>
+        <AvatarStack initials={DISCORD.avatars.slice(0, more ? 6 : 4)} />
+        {/* What's new per channel only once they're in; before that, just the channel names. */}
+        {more && <Legend items={channelLegend(CHANNELS.slice(0, detailed ? 5 : 3), empty).map((c) => (linked ? c : { ...c, value: undefined }))} />}
+        {linked ? (
+          <div className="mt-auto grid gap-2">
+            <span className="flex items-center gap-1.5 text-xs leading-4">
+              <Check className="size-3.5" style={{ color: ACCENT_TEXT }} /> Linked. You have the {role} role.
+            </span>
+            <Button size="sm" variant="outline" className="w-fit">
+              Open Discord <ArrowUpRight />
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-auto grid gap-2">
+            <Button size="sm" className="w-fit" disabled={busy} onClick={join}>
+              {busy ? "Opening Discord…" : "Join with Discord"}
+            </Button>
+            {detailed && <span className={TYPE.small}>Real-time chat stays on Discord. Your role follows your membership.</span>}
+          </div>
+        )}
       </WCard>
     )
   }

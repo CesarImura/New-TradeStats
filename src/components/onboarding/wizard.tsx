@@ -70,7 +70,7 @@ export function SetupWizard() {
       overrides: {},
       wording: DEFAULT_WORDING,
       modules: suggestedModules(a?.answers),
-      menu: ["courses", "calendar", "charts", "journal", "community", "discord", "ai", "ranking"],
+      menu: ["courses", "calendar", "charts", "journal", "community", "ai", "ranking"],
       tiers: [],
       status: "setup",
       createdAt: new Date().toISOString(),

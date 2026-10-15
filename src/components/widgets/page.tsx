@@ -14,7 +14,6 @@ function defaults(page: string, coach: ReturnType<typeof useCoach>["coach"]) {
     charts: "Markets",
     journal: "Your trades",
     community: coach.name,
-    discord: `${coach.org} server`,
     ranking: "This month",
     ai: `Answers from ${coach.coachName}'s lessons`,
   }

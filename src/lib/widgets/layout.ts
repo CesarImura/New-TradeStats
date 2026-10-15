@@ -167,6 +167,15 @@ export function defaultPage(page: ModuleId): PageLayout {
         { id: "core-courses", type: coreType(page), x: 0, y: HEADER_H + 3, w: COLS, h: CORE_H, props: { resume: false } },
       ],
     }
+  // Community: the coach's feed and Discord are separate widgets, side by side (the coach can move or remove either).
+  if (page === "community")
+    return {
+      items: [
+        { id: "title-community", type: "page-header", x: 0, y: 0, w: COLS, h: HEADER_H },
+        { id: "core-community", type: coreType(page), x: 0, y: HEADER_H, w: 8, h: CORE_H },
+        { id: "discord-community", type: "discord", variant: "join", x: 8, y: HEADER_H, w: 4, h: 5 },
+      ],
+    }
   return {
     items: [
       { id: `title-${page}`, type: "page-header", x: 0, y: 0, w: COLS, h: HEADER_H },

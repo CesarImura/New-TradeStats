@@ -51,7 +51,7 @@ export function suggestedModules(a?: Answers): Record<ModuleId, boolean> {
   if (!a) ["calendar", "charts", "journal", "community"].forEach((m) => on.add(m as ModuleId))
   // Traders who go live or send signals work on charts.
   if (a?.offers.some((o) => o === "live" || o === "signals")) on.add("charts")
-  return { courses: on.has("courses"), calendar: on.has("calendar"), charts: on.has("charts"), community: on.has("community"), discord: on.has("community"), journal: on.has("journal"), ranking: false, ai: true }
+  return { courses: on.has("courses"), calendar: on.has("calendar"), charts: on.has("charts"), community: on.has("community"), journal: on.has("journal"), ranking: false, ai: true }
 }
 
 /** A starting template that fits: a trading desk for live/signals, calm for courses and 1:1, social for big groups. */
