@@ -153,8 +153,8 @@ export function normalizeLayout(l: PageLayout | { sections: LegacySection[] }, h
   return { items }
 }
 
-/** Rows the Page title widget gets on a new page. */
-const HEADER_H = 2
+/** Rows the Page title widget gets on a new page: one, it turns compact to fit (see widgets/page.tsx). */
+const HEADER_H = 1
 
 /** A module page before the coach arranges it: its title as a widget, then its core widget, full width. */
 export function defaultPage(page: ModuleId): PageLayout {

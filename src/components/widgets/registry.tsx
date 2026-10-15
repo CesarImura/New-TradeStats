@@ -54,9 +54,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Page",
     icon: Type,
     variants: [
-      { value: "plain", label: "Plain", h: 2, minH: 1 },
-      { value: "centered", label: "Centred", h: 2, minH: 1 },
-      { value: "banner", label: "Banner", h: 3, minH: 2 },
+      { value: "plain", label: "Plain", h: 1, minH: 1 },
+      { value: "centered", label: "Centred", h: 1, minH: 1 },
+      { value: "banner", label: "Banner", h: 1, minH: 1 },
     ],
     settings: [
       { key: "title", label: "Title", type: "text", placeholder: "The page's name" },
