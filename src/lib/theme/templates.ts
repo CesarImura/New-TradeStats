@@ -1,157 +1,27 @@
+import type { PageId, WidgetInstance } from "@/lib/widgets/layout"
 import type { CoachTheme, TemplateId } from "./types"
+import data from "./template-data.json"
+
+/** A page as a template stores it: widgets without ids (they get ids per coach when used). */
+export type TemplatePage = { items: Omit<WidgetInstance, "id">[] }
+
+export type TemplateDef = {
+  name: string
+  blurb: string
+  theme: CoachTheme
+  /** Starting layouts: Home, and any module page that shouldn't start as just its title and tool. */
+  pages: Partial<Record<PageId, TemplatePage>>
+}
 
 /**
- * Starting templates. Each is a complete theme; a coach picks one and then
- * changes whatever they like. They are deliberately far apart.
+ * Starting templates. Each is a complete theme plus starting page layouts; a
+ * coach picks one and then changes whatever they like. They are deliberately
+ * far apart.
+ *
+ * The data lives in template-data.json so the prototype's "Save as template"
+ * (Design → More) can rewrite it from a design made in the editor; see
+ * app/api/dev/templates/route.ts.
  */
-export const TEMPLATES: Record<TemplateId, { name: string; blurb: string; theme: CoachTheme }> = {
-  terminal: {
-    name: "Terminal",
-    blurb: "Dark, crisp, mono labels. Built on the TradeStats look.",
-    theme: {
-      template: "terminal",
-      mode: "dark",
-      primary: "#ff5500",
-      primaryForeground: "#ffffff",
-      palettes: {
-        dark: {
-          background: "#050505",
-          card: "#0e0e10",
-          foreground: "#ffffff",
-          muted: "#18181b",
-          mutedForeground: "rgba(255,255,255,0.56)",
-          border: "rgba(255,255,255,0.11)",
-          sidebar: "#050505",
-          highlight: "#f8ff9e",
-          highlightForeground: "#050505",
-          profit: "#3ddc84",
-          loss: "#ff4d4f",
-        },
-        light: {
-          background: "#ffffff",
-          card: "#ffffff",
-          foreground: "#040404",
-          muted: "#f2f2f0",
-          mutedForeground: "rgba(4,4,4,0.58)",
-          border: "rgba(4,4,4,0.12)",
-          sidebar: "#fafafa",
-          highlight: "#f8ff9e",
-          highlightForeground: "#040404",
-          profit: "#0f8045",
-          loss: "#d12f24",
-        },
-      },
-      radius: 6,
-      buttonShape: "rounded",
-      shadow: "none",
-      borders: true,
-      density: "compact",
-      fonts: { heading: "archivo", body: "archivo", label: "space-mono" },
-      labelStyle: "caps",
-      headingWeight: 400,
-      background: "grid",
-      effects: "soft",
-      nav: { layout: "side", style: "labels", logo: "left" },
-    },
-  },
-  atelier: {
-    name: "Atelier",
-    blurb: "Light and calm. Serif headings, soft cards, top navigation.",
-    theme: {
-      template: "atelier",
-      mode: "light",
-      primary: "#1f5a45",
-      primaryForeground: "#ffffff",
-      palettes: {
-        light: {
-          background: "#ffffff",
-          card: "#f5f6f2",
-          foreground: "#15201b",
-          muted: "#eceee8",
-          mutedForeground: "#5f6b64",
-          border: "#e1e4dd",
-          sidebar: "#f5f6f2",
-          highlight: "#e9dcc3",
-          highlightForeground: "#3b2f17",
-          profit: "#286b49",
-          loss: "#b8452f",
-        },
-        dark: {
-          background: "#111614",
-          card: "#18201c",
-          foreground: "#eef2ee",
-          muted: "#222b26",
-          mutedForeground: "#9aa69f",
-          border: "#2a342f",
-          sidebar: "#151b18",
-          highlight: "#5b4a2a",
-          highlightForeground: "#f6ead3",
-          profit: "#6cc596",
-          loss: "#e48a74",
-        },
-      },
-      radius: 14,
-      buttonShape: "rounded",
-      shadow: "soft",
-      borders: false,
-      density: "airy",
-      fonts: { heading: "fraunces", body: "dm-sans", label: "dm-sans" },
-      labelStyle: "plain",
-      headingWeight: 500,
-      background: "plain",
-      effects: "soft",
-      nav: { layout: "top", style: "labels", logo: "left" },
-    },
-  },
-  pulse: {
-    name: "Pulse",
-    blurb: "Bright and energetic. Pill buttons, deep shadows, icon rail.",
-    theme: {
-      template: "pulse",
-      mode: "light",
-      primary: "#3d5afe",
-      primaryForeground: "#ffffff",
-      palettes: {
-        light: {
-          background: "#f2f3fa",
-          card: "#ffffff",
-          foreground: "#0b0f2b",
-          muted: "#e8eaf6",
-          mutedForeground: "#5b6083",
-          border: "#e1e3f0",
-          sidebar: "#0b0f2b",
-          highlight: "#00d39a",
-          highlightForeground: "#03231a",
-          profit: "#007a58",
-          loss: "#d01c4f",
-        },
-        dark: {
-          background: "#070a1f",
-          card: "#10153a",
-          foreground: "#eef0ff",
-          muted: "#1a2050",
-          mutedForeground: "#9aa0cc",
-          border: "#222a62",
-          sidebar: "#05071a",
-          highlight: "#00d39a",
-          highlightForeground: "#03231a",
-          profit: "#2de2a6",
-          loss: "#ff5c85",
-        },
-      },
-      radius: 20,
-      buttonShape: "pill",
-      shadow: "strong",
-      borders: false,
-      density: "comfortable",
-      fonts: { heading: "sora", body: "manrope", label: "sora" },
-      labelStyle: "plain",
-      headingWeight: 700,
-      background: "glow",
-      effects: "vivid",
-      nav: { layout: "side", style: "icons", logo: "left" },
-    },
-  },
-}
+export const TEMPLATES = data as unknown as Record<TemplateId, TemplateDef>
 
 export const TEMPLATE_IDS = Object.keys(TEMPLATES) as TemplateId[]

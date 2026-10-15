@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Check,
   ExternalLink,
+  FileDown,
   History,
   LayoutGrid,
   Monitor,
@@ -44,6 +45,7 @@ import { GuideDialog, VersionsSheet, useDraftEditor } from "./editor-shell"
 import { DEPTH_NAMES, LOOKS, SPACING_NAMES, currentLook, depthOf, fromDepth, fromRoundness, fromSpacing, roundnessOf, spacingOf, type Look } from "./looks"
 import { ArrangeCanvas, useArrange, type Device } from "./page-builder"
 import { PreviewFrame } from "./preview-frame"
+import { CAN_SAVE_TEMPLATE, SaveTemplateDialog } from "./save-template"
 
 type Step = "brand" | "look" | "menu" | "pages"
 const STEPS: { id: Step; label: string; text: string }[] = [
@@ -113,7 +115,7 @@ export function DesignWorkspace() {
   const [device, setDevice] = useState<Device>("desktop")
   const [widget, setWidget] = useState<string | null>(null)
   const [incoming, setIncoming] = useState<string | null>(null)
-  const [menu, setMenu] = useState<"versions" | "guide" | null>(null)
+  const [menu, setMenu] = useState<"versions" | "guide" | "template" | null>(null)
 
   const arrange = useArrange({ coach, theme, editor, page, tier, selected: widget, setSelected: setWidget })
   const panel = useRef<HTMLDivElement>(null)
@@ -196,6 +198,11 @@ export function DesignWorkspace() {
                   <DropdownMenuItem render={<Link href={`/admin/${slug}/design/pages/all${fromSetup ? "?from=setup" : ""}`} />}>
                     <LayoutGrid /> All pages side by side
                   </DropdownMenuItem>
+                  {CAN_SAVE_TEMPLATE && (
+                    <DropdownMenuItem onClick={() => setMenu("template")}>
+                      <FileDown /> Save as template…
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive" disabled={!editor.dirty} onClick={editor.discard}>
                     <Trash2 /> Discard changes
@@ -210,6 +217,8 @@ export function DesignWorkspace() {
               </Button>
             </div>
             <VersionsSheet slug={slug} open={menu === "versions"} onOpenChange={(o) => setMenu(o ? "versions" : null)} />
+            {/* Mounted only while open, so it starts from the design's current template each time. */}
+            {menu === "template" && <SaveTemplateDialog coach={coach} theme={theme} open onOpenChange={(o) => setMenu(o ? "template" : null)} />}
             <GuideDialog
               title="Designing your platform"
               text="Four short steps: your brand, a look, your menu, your pages. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."

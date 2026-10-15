@@ -1,4 +1,5 @@
 import type { Coach, ModuleId } from "@/lib/data/coaches"
+import { TEMPLATES } from "@/lib/theme/templates"
 import type { Density, TemplateId } from "@/lib/theme/types"
 
 /**
@@ -185,10 +186,16 @@ export function withCore(page: ModuleId, l: PageLayout): PageLayout {
 
 // ---------- template defaults
 
-type Spec = [type: string, x: number, y: number, w: number, h: number, variant?: string, emphasis?: Emphasis]
-
-function build(prefix: string, specs: Spec[]): PageLayout {
-  return { items: specs.map(([type, x, y, w, h, variant, emphasis], i) => ({ id: `${prefix}-${i}`, type, variant, emphasis, x, y, w, h })) }
+/**
+ * A template's starting layout for a page, with ids made unique per coach.
+ * Undefined when the template has none for that page (module pages then
+ * start as their title and tool).
+ */
+export function templatePage(template: TemplateId, page: PageId, coach: Pick<Coach, "slug">): PageLayout | undefined {
+  const l = TEMPLATES[template]?.pages?.[page]
+  if (!l) return undefined
+  const prefix = page === "home" ? `${coach.slug}-${template}` : `${coach.slug}-${template}-${page}`
+  return { items: l.items.map((w, i) => ({ ...w, id: `${prefix}-${i}` })) }
 }
 
 /**
@@ -197,43 +204,5 @@ function build(prefix: string, specs: Spec[]): PageLayout {
  * the page renders.
  */
 export function defaultHome(template: TemplateId, coach: Coach): PageLayout {
-  const p = `${coach.slug}-${template}`
-  switch (template) {
-    case "terminal":
-      // Dense trading desk: performance, discipline and risk up front, the next session on the right.
-      return build(p, [
-        ["continue-lesson", 0, 0, 8, 3, "progress"],
-        ["next-live", 8, 0, 4, 5, "countdown"],
-        ["journal-pnl", 0, 3, 4, 5, "curve"],
-        ["rules-followed", 4, 3, 4, 5, "radar"],
-        ["drawdown", 8, 5, 4, 4, "bars"],
-        ["econ-news", 0, 8, 4, 4, "next"],
-        ["course-progress", 4, 8, 4, 4, "bars"],
-        ["my-rank", 8, 9, 4, 4, "trend"],
-      ])
-    case "atelier":
-      // Calm and editorial: a welcome, a large lesson, the week beside it.
-      return build(p, [
-        ["welcome-video", 0, 0, 12, 4, "side"],
-        ["continue-lesson", 0, 4, 8, 4, "cover"],
-        ["first-week", 8, 4, 4, 4, "checklist"],
-        ["course-progress", 0, 8, 6, 3, "rings"],
-        ["next-live", 6, 8, 6, 4, "week"],
-        ["announcement", 0, 11, 6, 3, "post"],
-      ])
-    case "pulse":
-      // Stats on top, the next live as the star, a tall leaderboard on the side.
-      return build(p, [
-        ["journal-pnl", 0, 0, 4, 5, "curve"],
-        ["rules-followed", 4, 0, 4, 3, "streak"],
-        ["my-rank", 8, 0, 4, 6, "leaderboard"],
-        ["next-live", 4, 3, 4, 5, "countdown", "star"],
-        ["discord", 0, 5, 4, 3, "online"],
-        ["course-progress", 8, 6, 4, 3, "rings"],
-        ["continue-lesson", 0, 8, 8, 3, "cover"],
-        ["econ-news", 8, 9, 4, 4, "next"],
-        ["journal-pnl", 0, 11, 8, 4, "heatmap"],
-        ["ai-ask", 0, 15, 12, 5, "chat"],
-      ])
-  }
+  return templatePage(template, "home", coach) ?? { items: [] }
 }

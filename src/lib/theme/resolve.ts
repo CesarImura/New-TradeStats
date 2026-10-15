@@ -2,7 +2,7 @@ import { DEFAULT_WORDING, type Coach, type ModuleId } from "@/lib/data/coaches"
 import type { ContentDraft, ThemeDraft } from "@/lib/prototype-store"
 import { TEMPLATES } from "./templates"
 import type { CoachTheme, TemplateId } from "./types"
-import { defaultHome, defaultPage, normalizeLayout, withCore, type PageId, type PageLayout } from "@/lib/widgets/layout"
+import { defaultHome, defaultPage, normalizeLayout, templatePage, withCore, type PageId, type PageLayout } from "@/lib/widgets/layout"
 
 /** The coach with their saved name, logo, words, menu and modules applied. */
 export function resolveCoach(coach: Coach, c: ContentDraft = {}): Coach {
@@ -30,8 +30,8 @@ function pagesOf(coach: Coach, c: ContentDraft) {
 
 /**
  * The layout a student in this tier sees on a page: the tier's own layout,
- * the coach's default, or the starting one (the template's Home, or a module
- * page's core widget on its own).
+ * the coach's default, or the starting one (the template's layout for that
+ * page, else a module page's title and core widget on their own).
  */
 export function pageLayout(
   coach: Coach,
@@ -43,7 +43,9 @@ export function pageLayout(
   const layouts = coach.pages?.[page]
   const saved = (tier && layouts?.[tier]) || layouts?.default
   if (page === "home") return saved ? normalizeLayout(saved, heightOf) : defaultHome(template, coach)
-  return saved ? withCore(page, normalizeLayout(saved, heightOf)) : defaultPage(page)
+  if (saved) return withCore(page, normalizeLayout(saved, heightOf))
+  const start = templatePage(template, page, coach)
+  return start ? withCore(page, start) : defaultPage(page)
 }
 
 /**
