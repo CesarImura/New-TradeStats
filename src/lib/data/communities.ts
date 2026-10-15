@@ -1,3 +1,4 @@
+import type { Detail } from "@/lib/widgets/layout"
 import type { TemplateId } from "@/lib/theme/types"
 import type { Coach } from "./coaches"
 import type { Market } from "./trades"
@@ -23,6 +24,8 @@ export type CustomCommunity = Coach & {
     invited?: number
     /** The ready-made Home layout picked in setup, if not the template's own. */
     home?: TemplateId
+    /** How much every widget on Home shows, picked in setup (Standard when unset). */
+    detail?: Detail
     /** Markets picked in setup; they fill the default chart watchlist. */
     markets?: Market[]
     /** Free trial days and a second tier, from the first-tier step. */

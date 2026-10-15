@@ -193,6 +193,28 @@ export function withCore(page: ModuleId, l: PageLayout): PageLayout {
   return l
 }
 
+/**
+ * The same Detail for every widget on a page (setup's "How much each widget
+ * shows"). The page title and the page's own tool keep theirs. A widget that
+ * shows more gets the extra rows it needs (`grow`), and everything below it in
+ * the same columns moves down by as much, so the gaps and order stay.
+ */
+export function withDetail(l: PageLayout, detail: Detail, grow: (w: WidgetInstance, to: Detail) => number): PageLayout {
+  const order = readingOrder(l.items)
+  const placed: { w: WidgetInstance; delta: number; growth: number }[] = []
+  const items = order.map((w) => {
+    const fixed = w.type === "page-header" || isCoreType(w.type)
+    const growth = fixed ? 0 : grow(w, detail)
+    // Pushed down by the widgets above it that it shares columns with.
+    const delta = placed
+      .filter((p) => p.w.y + p.w.h <= w.y && p.w.x < w.x + w.w && w.x < p.w.x + p.w.w)
+      .reduce((m, p) => Math.max(m, p.delta + p.growth), 0)
+    placed.push({ w, delta, growth })
+    return fixed ? { ...w, y: w.y + delta } : { ...w, detail, y: w.y + delta, h: w.h + growth }
+  })
+  return { ...l, items }
+}
+
 // ---------- template defaults
 
 /**

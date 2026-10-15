@@ -2,10 +2,12 @@
 
 import Link from "next/link"
 import { ExternalLink, LayoutDashboard } from "@/components/icons"
-import { More } from "@/components/admin/design/controls"
+import { Field, More, Segmented } from "@/components/admin/design/controls"
 import { DesignField, useDesign } from "@/components/admin/design/design-fields"
 import type { TemplateId } from "@/lib/theme/types"
-import { defaultHome } from "@/lib/widgets/layout"
+import { getWidget, heightFor } from "@/components/widgets/registry"
+import { pageLayout } from "@/lib/theme/resolve"
+import { defaultHome, withDetail, type Detail, type WidgetInstance } from "@/lib/widgets/layout"
 import { Choice } from "./frame"
 import type { StepProps } from "./wizard"
 
@@ -51,31 +53,49 @@ const HOMES: { id: TemplateId; name: string; text: string }[] = [
   { id: "pulse", name: "Community", text: "Results, ranking and Discord on top" },
 ]
 
+const DETAILS: { value: Detail; label: string; hint: string }[] = [
+  { value: "compact", label: "Compact", hint: "Just the one essential thing per widget: calm and quick to read." },
+  { value: "standard", label: "Standard", hint: "The main figure with its chart or list." },
+  { value: "detailed", label: "Detailed", hint: "Everything each widget can show. Widgets grow taller to fit." },
+]
+
+/** Extra rows a widget needs at a Detail (Detailed adds rows; Compact and Standard share a height). */
+const growFor = (w: WidgetInstance, to: Detail) => {
+  const def = getWidget(w.type)
+  return def ? heightFor(def, w.variant, to) - heightFor(def, w.variant, w.detail) : 0
+}
+
 export function HomeStep({ community, update }: StepProps) {
   const { coach, theme, working, change } = useDesign()
-  const current = coach.pages?.home?.default ? community.setup?.home : undefined
-  const setHome = (id: TemplateId | undefined) => {
-    // Home lives in the draft's pages, as in Design; "keep the template's" clears it there.
+  const current = community.setup?.home
+  const detail = community.setup?.detail ?? "standard"
+  /**
+   * Home lives in the draft's pages, as in Design. It's rebuilt from the
+   * chosen layout each time, then given the chosen Detail; "the template's
+   * Home" at Standard clears it, so Home keeps following the template.
+   */
+  const apply = (home: TemplateId | undefined, d: Detail) => {
     const pages = { ...working.content.pages }
-    if (id) pages.home = { default: defaultHome(id, coach) }
-    else delete pages.home
+    if (!home && d === "standard") delete pages.home
+    else {
+      const base = home ? defaultHome(home, coach) : pageLayout({ ...coach, pages: { ...coach.pages, home: undefined } }, "home", theme.template)
+      pages.home = { default: d === "standard" ? base : withDetail(base, d, growFor) }
+    }
     change({ content: { home: undefined, pages } }, "home")
-    update({ home: undefined, setup: { ...community.setup, home: id } })
+    update({ home: undefined, setup: { ...community.setup, home, detail: d } })
   }
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-6">
       <div className="grid gap-2" role="radiogroup" aria-label="Home layout">
-        <Choice
-          checked={!current}
-          onClick={() => setHome(undefined)}
-          title="Keep the template's Home"
-          text="Made for the template you picked"
-          icon={<LayoutDashboard className="size-4" />}
-        />
+        <Choice checked={!current} onClick={() => apply(undefined, detail)} title="Keep the template's Home" text="Made for the template you picked" icon={<LayoutDashboard className="size-4" />} />
         {HOMES.filter((h) => h.id !== theme.template).map((h) => (
-          <Choice key={h.id} checked={current === h.id} onClick={() => setHome(h.id)} title={h.name} text={h.text} icon={<LayoutDashboard className="size-4" />} />
+          <Choice key={h.id} checked={current === h.id} onClick={() => apply(h.id, detail)} title={h.name} text={h.text} icon={<LayoutDashboard className="size-4" />} />
         ))}
       </div>
+      <Field id="widget-detail" label="How much each widget shows" hint="Per widget later, in Design">
+        <Segmented label="How much each widget shows" value={detail} options={DETAILS.map(({ value, label }) => ({ value, label }))} onChange={(d) => apply(current, d)} />
+        <p className="text-xs text-muted-foreground">{DETAILS.find((o) => o.value === detail)?.hint}</p>
+      </Field>
       <p className="text-xs text-muted-foreground">The preview on the right shows it with sample data. Move, resize and add widgets in the Home builder, any time.</p>
       <FullEditorLink slug={community.slug} page="design/home" />
     </div>
