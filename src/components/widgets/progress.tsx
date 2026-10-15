@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { ACCENT, ACCENT_TEXT, Avatar, TYPE, useMore } from "./kit"
 import { Axis, Chip, DotStrip, GREY, Label, Legend, Num, Rule, WCard, ink, useFigureFont, useChartStyle } from "./instrument"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
-import { BleedArea, HeroCard, Rail, type RailItem } from "./layouts"
+import { BleedArea, Compare, HeroCard, Rail, type RailItem } from "./layouts"
 
 /** An empty tick or track (the same faint grey instrument.tsx uses). */
 const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
@@ -305,6 +305,23 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
   const delta = me.change ? `${me.change > 0 ? "▲" : "▼"} ${Math.abs(me.change)}` : undefined
   const deltaTone = me.change >= 0 ? "profit" : "loss"
   const head = <Num value={`#${me.rank}`} unit={`of ${MEMBERS}`} delta={delta} deltaTone={deltaTone} />
+
+  if (variant === "compare") {
+    /** What goes into the discipline score: the student against the average of the top 10% (sample). */
+    const rows = [
+      { label: "Score", a: me.score, b: 95, aText: String(me.score), bText: "95", better: "higher" as const },
+      { label: "Clean days", a: 8, b: 9.6, aText: "8/10", bText: "9.6/10", better: "higher" as const },
+      { label: "Trades journaled", a: 68, b: 96, aText: "68%", bText: "96%", better: "higher" as const },
+      { label: "Lessons this week", a: 2, b: 3, aText: "2", bText: "3", better: "higher" as const },
+      { label: "Lives attended", a: 1, b: 2, aText: "1", bText: "2", better: "higher" as const },
+    ]
+    return (
+      <WCard icon={Trophy} title={coach.wording.ranking} meta={`You vs the top 10% · ${MEMBERS} ${coach.wording.students.toLowerCase()}`} chip={<Chip>{`You #${me.rank}`}</Chip>}>
+        <Compare a="You" b="Top 10% average" rows={standard ? rows : rows.slice(0, 3)} />
+        {detailed && <span className="shrink-0 truncate text-xs leading-4 text-muted-foreground">Biggest gap: journaling. Log every trade to close it.</span>}
+      </WCard>
+    )
+  }
 
   if (variant === "hero") {
     const ahead = others[others.length - 1]

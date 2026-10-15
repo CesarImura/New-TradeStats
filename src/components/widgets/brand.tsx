@@ -29,10 +29,10 @@ const initials = (name: string) => {
  */
 export function CoachPhoto({ className }: { className?: string }) {
   return (
-    <div className={cn("relative shrink-0 overflow-hidden rounded-[min(var(--radius),8px)]", className)} style={{ background: "color-mix(in oklab, var(--foreground) 86%, var(--background))" }} aria-hidden>
+    <div className={cn("relative shrink-0 overflow-hidden rounded-[min(var(--radius),8px)]", className)} style={{ background: "var(--cover-bg, color-mix(in oklab, var(--foreground) 86%, var(--background)))" }} aria-hidden>
       <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" className="absolute inset-0 size-full">
-        <circle cx="50" cy="42" r="16" fill="var(--background)" opacity="0.2" />
-        <path d="M16 104c0-21 15-36 34-36s34 15 34 36z" fill="var(--background)" opacity="0.2" />
+        <circle cx="50" cy="42" r="16" fill="var(--cover-fg, var(--background))" opacity="0.2" />
+        <path d="M16 104c0-21 15-36 34-36s34 15 34 36z" fill="var(--cover-fg, var(--background))" opacity="0.2" />
       </svg>
     </div>
   )

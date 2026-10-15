@@ -6,9 +6,9 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { JOURNAL_STATS, JOURNAL_WEEK, RULE_DAYS, R_STATS, SETUPS } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Chip, GREY, Label, Legend, Num, Rule, StepChart, TickBar, TickGauge, WCard, useFigureFont } from "./instrument"
+import { Chip, GREY, Label, Legend, Num, Rule, StepChart, TickBar, TickGauge, WCard, ink, useFigureFont } from "./instrument"
 import { ACCENT, ACCENT_TEXT, useMore } from "./kit"
-import { BleedArea, BleedBars, HeroCard } from "./layouts"
+import { BleedArea, BleedBars, Compare, HeatGrid, HeroCard, heatPl, heatShade } from "./layouts"
 import { WidgetEmpty, signed, useEmpty, type WidgetProps } from "./shared"
 
 const rr = (v: number, digits = 1) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(digits)}R`
@@ -60,6 +60,18 @@ const EQUITY_20 = DAILY.reduce<number[]>((a, v) => [...a, (a[a.length - 1] ?? 0)
 const MODEL_20 = [60, 110, 90, 180, 240, 300, 280, 360, 420, 470, 520, 560, 610, 700, 760, 850, 940, 1010, 1060, 1180]
 const BALANCE = { you: 52340, model: 51180 }
 const WEEKDAYS = ["M", "T", "W", "T", "F"]
+
+/** P&L by hour of day and weekday over the last 20 days (sample; adds up to the 20-day total): mornings pay, afternoons give it back. */
+const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16]
+const HOUR_PL: number[][] = [
+  [0, 180, 240, 90, -40, -120, 0, -60, 0],
+  [210, 220, 130, 0, -90, -60, -150, 0, -40],
+  [0, 140, 310, 120, 0, -80, -110, -70, 0],
+  [-30, 260, 180, 230, -60, 0, -130, -90, 0],
+  [0, 90, 150, 40, -120, -70, 0, 0, -50],
+]
+const AM = HOUR_PL.flat().filter((_, i) => HOURS[i % HOURS.length] < 12).reduce((a, b) => a + b, 0)
+const PM = HOUR_PL.flat().filter((_, i) => HOURS[i % HOURS.length] >= 12).reduce((a, b) => a + b, 0)
 
 /** Daily P&L as soft diverging bars, grouped by week, the week's total under each group. */
 function DayBars() {
@@ -226,6 +238,55 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
         }
         foot={standard ? <BleedArea values={EQUITY_20} /> : undefined}
       />
+    )
+  }
+
+  if (variant === "compare") {
+    /** The coach's model account over the same 20 days (sample). */
+    const MODEL = { pnl: MODEL_20[MODEL_20.length - 1], win: 62, expectancy: 0.55, avgLoss: 0.7, worst: 150, trades: 14 }
+    const gap = total - MODEL.pnl
+    const rows = [
+      { label: "P&L", a: total, b: MODEL.pnl, aText: signed(total), bText: signed(MODEL.pnl), better: "higher" as const },
+      { label: "Win rate", a: JOURNAL_STATS.winRate, b: MODEL.win, aText: `${JOURNAL_STATS.winRate}%`, bText: `${MODEL.win}%`, better: "higher" as const },
+      { label: "Expectancy", a: R_STATS.expectancy, b: MODEL.expectancy, aText: rr(R_STATS.expectancy, 2), bText: rr(MODEL.expectancy, 2), better: "higher" as const },
+      { label: "Avg loss", a: -R_STATS.avgLoss, b: MODEL.avgLoss, aText: rr(R_STATS.avgLoss), bText: rr(-MODEL.avgLoss), better: "lower" as const },
+      { label: "Worst day", a: -worst, b: MODEL.worst, aText: signed(worst), bText: signed(-MODEL.worst), better: "lower" as const },
+      { label: "Trades", a: JOURNAL_STATS.trades, b: MODEL.trades, aText: String(JOURNAL_STATS.trades), bText: String(MODEL.trades) },
+    ]
+    return (
+      <WCard icon={LineChart} title={`You vs ${coach.coachName}`} meta={`${coach.wording.journal} · last ${DAILY.length} days · ${coach.coachName}'s model account`} chip={<Chip tone={gap >= 0 ? "accent" : "neutral"}>{gap >= 0 ? `${signed(gap)} ahead` : `${signed(gap)} behind`}</Chip>}>
+        <Compare a="You" b={`${coach.coachName}'s model`} rows={standard ? rows : rows.slice(0, 3)} />
+      </WCard>
+    )
+  }
+
+  if (variant === "hours") {
+    const max = Math.max(...HOUR_PL.flat().map(Math.abs), 1)
+    const best = HOUR_PL.flat().reduce((m, v, i) => (v > HOUR_PL.flat()[m] ? i : m), 0)
+    return (
+      <WCard icon={LineChart} title="Performance by hour" meta={`${coach.wording.journal} · last ${DAILY.length} days · your time zone`} chip={<Chip>{`best ${String(HOURS[best % HOURS.length]).padStart(2, "0")}:00`}</Chip>}>
+        {standard && <Num size="md" value={signed(AM)} unit="before 12:00" delta={`${signed(PM)} after`} deltaTone={PM >= 0 ? "profit" : "loss"} />}
+        <HeatGrid
+          rowLabels={["Mon", "Tue", "Wed", "Thu", "Fri"]}
+          colLabels={HOURS.map((h, i) => (i % 2 === 0 ? String(h).padStart(2, "0") : undefined))}
+          rows={HOUR_PL.map((r, ri) =>
+            r.map((v, ci) => ({
+              fill: heatPl(v / max),
+              ring: ri * HOURS.length + ci === best ? ACCENT : undefined,
+              title: `${["Mon", "Tue", "Wed", "Thu", "Fri"][ri]} ${String(HOURS[ci]).padStart(2, "0")}:00 · ${v ? signed(v) : "no trades"}`,
+            })),
+          )}
+        />
+        {detailed && (
+          <Legend
+            className="shrink-0 @[20rem]:grid-cols-2 @[20rem]:gap-x-5"
+            items={[
+              { color: "var(--profit)", label: "Best hour", value: `${["Mon", "Tue", "Wed", "Thu", "Fri"][Math.floor(best / HOURS.length)]} ${String(HOURS[best % HOURS.length]).padStart(2, "0")}:00` },
+              { color: "var(--loss)", label: "After 12:00", value: signed(PM), valueTone: "loss" },
+            ]}
+          />
+        )}
+      </WCard>
     )
   }
 
@@ -397,6 +458,53 @@ export function RulesFollowed({ variant = "radar" }: WidgetProps) {
           ) : undefined
         }
       />
+    )
+  }
+
+  if (variant === "compare") {
+    /** Last week's rules kept, in % (sample). */
+    const LAST: Record<string, number> = { "Max 1% risk per trade": 100, "Stop set before entry": 82, "No trades in news": 71, "Never move a stop": 76, "Journal every trade": 53 }
+    const lastAll = 76
+    const pct = (r: (typeof RULE_SET)[number]) => Math.round((r.kept / r.total) * 100)
+    const rows = [
+      { label: "All rules", a: KEPT, b: lastAll, aText: `${KEPT}%`, bText: `${lastAll}%`, better: "higher" as const },
+      ...RULE_SET.map((r) => ({ label: r.rule, a: pct(r), b: LAST[r.rule], aText: `${pct(r)}%`, bText: `${LAST[r.rule]}%`, better: "higher" as const })),
+    ]
+    return (
+      <WCard icon={Shield} title="Discipline" meta={`${coach.coachName}'s ${RULE_SET.length} rules · this week vs last`} chip={<Chip>{`${KEPT - lastAll >= 0 ? "+" : "−"}${Math.abs(KEPT - lastAll)} pts`}</Chip>}>
+        <Compare a="This week" b="Last week" rows={standard ? rows : rows.slice(0, 3)} />
+      </WCard>
+    )
+  }
+
+  if (variant === "grid") {
+    // Rules broken per day (sample): the two broken days in RULE_DAYS carry every miss.
+    const MISSES: Record<string, Record<number, number>> = {
+      "Stop set before entry": { 2: 1, 6: 1 },
+      "No trades in news": { 2: 2, 6: 2 },
+      "Never move a stop": { 2: 1, 6: 2 },
+      "Journal every trade": { 2: 3, 6: 3 },
+    }
+    const days = RULE_DAYS.length
+    const short = ["Risk", "Stop", "News", "Move", "Log"]
+    return card(
+      <>
+        {standard && <Num size="md" value={`${clean}/${days}`} unit="clean days" delta={`${run} in a row`} deltaTone="accent" />}
+        <HeatGrid
+          rowLabels={short}
+          colLabels={Array.from({ length: days }, (_, i) => (i === days - 1 ? "today" : i % 3 === 0 ? `−${days - 1 - i}d` : undefined))}
+          rows={RULE_SET.map((r) =>
+            Array.from({ length: days }, (_, d) => {
+              const miss = MISSES[r.rule]?.[d] ?? 0
+              const today = d === days - 1
+              return miss
+                ? { ring: "var(--loss)", text: <span style={{ color: ink("var(--loss)") }}>{miss}</span>, title: `${r.rule} · broken ${miss}×` }
+                : { fill: today ? ACCENT : heatShade(0.08), title: `${r.rule} · kept` }
+            }),
+          )}
+        />
+        {detailed && <Legend className="shrink-0" items={RULE_SET.filter((r) => r.kept < r.total).map(ruleRow)} />}
+      </>,
     )
   }
 

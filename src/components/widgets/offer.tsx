@@ -10,7 +10,7 @@ import { CoachPhoto } from "./brand"
 import { Chip, GREY, HatchBar, Label, Legend, Num, Rule, WCard, useFigureFont } from "./instrument"
 import { ACCENT, ACCENT_TEXT, TYPE, W, useMore } from "./kit"
 import type { WidgetProps } from "./shared"
-import { Poster, SplitCard } from "./layouts"
+import { MEDIA_FG, MEDIA_FG2, MediaCard, Poster, SplitCard } from "./layouts"
 
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
 
@@ -223,6 +223,31 @@ export function CoachProfile({ variant = "card" }: WidgetProps) {
           </Button>
         )}
       </W>
+    )
+  }
+
+  if (variant === "media") {
+    return (
+      <MediaCard
+        side
+        image={<CoachPhoto className="absolute inset-0 rounded-none" />}
+        kicker="Your coach"
+        aside={more ? <BadgeCheck className="size-4" style={{ color: MEDIA_FG }} /> : undefined}
+        title={coach.coachName}
+        sub={more ? `${COACH_PROFILE.title} · ${stats.map((st) => `${st.value} ${st.label.toLowerCase()}`).join(" · ")}` : COACH_PROFILE.title}
+        footer={
+          <>
+            {detailed && (
+              <span className="min-w-0 flex-1 truncate font-heading text-xs leading-4" style={{ color: MEDIA_FG2 }}>
+                “{COACH_PROFILE.bio}”
+              </span>
+            )}
+            <Button size="sm" className="ml-auto shrink-0">
+              Message
+            </Button>
+          </>
+        }
+      />
     )
   }
 

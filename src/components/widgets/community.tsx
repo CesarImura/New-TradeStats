@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { Axis, Chip, GREY, HatchBar, Label, Legend, Num, Rule, TickBar, WCard, useFigureFont } from "./instrument"
 import { ACCENT, ACCENT_TEXT, Avatar, TYPE, Tip, useMore } from "./kit"
 import { AvatarStack, WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
+import { Artwork, HeatGrid, MEDIA_FG, MEDIA_FG2, MediaCard, heatShade } from "./layouts"
 
 const initials = (name: string) => name.slice(0, 2).toUpperCase()
 
@@ -62,6 +63,7 @@ export function Announcement({ variant = "plain" }: WidgetProps) {
   const empty = useEmpty()
   const more = useMore("standard")
   const detailed = useMore("detailed")
+  const font = useFigureFont()
   if (empty) return <WidgetEmpty icon={Megaphone} title="No announcements yet" text={`News from ${coach.coachName} will show here.`} />
 
   const meta = `${coach.coachName} · ${WHEN} · ${READ} read`
@@ -72,6 +74,39 @@ export function Announcement({ variant = "plain" }: WidgetProps) {
       <WCard row icon={Megaphone} title={ANNOUNCEMENT.title} meta={detailed ? `${meta} · ${ANNOUNCEMENT.body}` : more ? meta : undefined} chip={<Chip>New</Chip>}>
         <ReadLink />
       </WCard>
+    )
+  }
+
+  if (variant === "media") {
+    return (
+      <MediaCard
+        image={<Artwork />}
+        kicker={`${ANNOUNCEMENT.pinned ? "Pinned · " : ""}${coach.coachName} · ${WHEN}`}
+        title={ANNOUNCEMENT.title}
+        sub={more ? ANNOUNCEMENT.body : undefined}
+        footer={
+          <>
+            {more && (
+              <span className="flex min-w-0 items-center gap-3 text-xs leading-4 tabular-nums" style={{ color: MEDIA_FG2, fontFamily: font }}>
+                <span className="flex items-center gap-1">
+                  <Heart className="size-3.5" /> {ANNOUNCEMENT.reactions}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MessageCircle className="size-3.5" /> {ANNOUNCEMENT.comments}
+                </span>
+                {detailed && (
+                  <span className="flex items-center gap-1">
+                    <Eye className="size-3.5" /> {READ} of {audience}
+                  </span>
+                )}
+              </span>
+            )}
+            <a href="#" className="ml-auto shrink-0 text-xs font-medium underline-offset-2 hover:underline" style={{ color: MEDIA_FG }}>
+              Read post
+            </a>
+          </>
+        }
+      />
     )
   }
 
@@ -148,6 +183,11 @@ const CHANNELS = [
 const UNREAD = CHANNELS.slice(0, 3).reduce((a, c) => a + c.unread, 0)
 const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
 
+/** Messages by weekday and hour over the last week (sample): the 24-hour shape, busier on weekdays. */
+const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+const DAY_FACTOR = [1, 1.1, 0.95, 1.15, 0.9, 0.45, 0.35]
+const WEEK_ACTIVITY = DAY_FACTOR.map((f, d) => HOURS.map((v, h) => Math.round(v * f * (1 + (((d * 7 + h * 3) % 5) - 2) * 0.08))))
+
 /** Activity of the last 24 h: one thin bar per hour, height = messages, the latest hour in the accent. */
 function HourTicks({ values, height = 28, className }: { values: number[]; height?: number; className?: string }) {
   const [hover, setHover] = useState<number>()
@@ -197,6 +237,29 @@ export function Discord({ variant = "online", props }: WidgetProps) {
       >
         {!empty && <AvatarStack initials={DISCORD.avatars.slice(0, 4)} className="hidden shrink-0 @lg:flex" />}
         {join}
+      </WCard>
+    )
+  }
+
+  if (variant === "heatmap") {
+    const max = Math.max(...WEEK_ACTIVITY.flat(), 1)
+    const total = WEEK_ACTIVITY.flat().reduce((a, b) => a + b, 0)
+    // The current hour: Monday, the last hour of the sample day.
+    const now: [number, number] = [0, HOURS.length - 1]
+    return (
+      <WCard icon={MessageSquareText} title="Discord activity" meta={empty ? "Be the first one in" : `${coach.name} · last 7 days · your time zone`} chip={newChip}>
+        {more && <Num size="md" value={empty ? 0 : total.toLocaleString("en")} unit="messages" delta={empty ? undefined : `${DISCORD.online} online now`} deltaTone="muted" />}
+        <HeatGrid
+          rowLabels={WEEK_DAYS.map((d) => d.slice(0, 2))}
+          colLabels={HOURS.map((_, h) => (h % 6 === 0 ? String(h).padStart(2, "0") : undefined))}
+          rows={WEEK_ACTIVITY.map((r, d) =>
+            r.map((v, h) => ({
+              fill: empty ? undefined : d === now[0] && h === now[1] ? ACCENT : heatShade(v / max),
+              title: `${WEEK_DAYS[d]} ${String(h).padStart(2, "0")}:00 · ${empty ? 0 : v} messages`,
+            })),
+          )}
+        />
+        {detailed && !empty && <Legend className="shrink-0" items={[{ color: GREY[0], label: "Busiest", value: "weekdays 17:00–23:00" }, { color: ACCENT, label: "Now", value: `${HOURS[HOURS.length - 1]} msgs this hour` }]} />}
       </WCard>
     )
   }

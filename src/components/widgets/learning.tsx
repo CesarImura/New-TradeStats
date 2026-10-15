@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { ACCENT, TYPE, series, useFrame, useMore } from "./kit"
 import { Axis, Chip, GREY, HatchBar, Label, Legend, Num, Rule, TickBar, Timeline, WCard, useFigureFont, useChartStyle } from "./instrument"
 import { Cover, WidgetEmpty, inWords, useEmpty, type WidgetProps } from "./shared"
+import { Artwork, MEDIA_FG, MediaCard, MediaProgress } from "./layouts"
 
 type Course = (typeof COURSES)[number]
 
@@ -150,6 +151,29 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
           {upcoming}
         </div>
       </WCard>
+    )
+  }
+
+  if (variant === "media") {
+    return (
+      <MediaCard
+        image={<Artwork />}
+        kicker={`${label} · Module ${mi + 1}`}
+        aside={standard ? <span className="text-xs leading-4 tabular-nums">{next.lesson.minutes} min</span> : undefined}
+        title={next.lesson.title}
+        sub={standard ? `${course.title} · ${word} ${index + 1} of ${lessons.length}${detailed ? ` · ${inWords(minutesLeft)} left in the course` : ""}` : undefined}
+        footer={
+          <>
+            <MediaProgress value={(done / lessons.length) * 100} />
+            {standard && (
+              <span className="shrink-0 text-xs leading-4 tabular-nums" style={{ color: MEDIA_FG }}>
+                {done}/{lessons.length}
+              </span>
+            )}
+            <Go href={href} label={`Continue ${word}`} />
+          </>
+        }
+      />
     )
   }
 
