@@ -65,7 +65,8 @@ export function resolveTheme(coach: Coach, draft: ThemeDraft = {}): CoachTheme {
       template: templateId,
       nav: { ...acc.nav, ...l.nav },
       fonts: { ...acc.fonts, ...l.fonts },
-      palettes: acc.palettes,
+      // Single colours from the template palette editor (prototype); everything else stays the template's.
+      palettes: { light: { ...acc.palettes.light, ...l.palettes?.light }, dark: { ...acc.palettes.dark, ...l.palettes?.dark } },
     }),
     base,
   )

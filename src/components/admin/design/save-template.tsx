@@ -98,7 +98,7 @@ export function SaveTemplateDialog({ coach, theme, open, onOpenChange }: { coach
           </div>
           <div className="grid gap-1 rounded-lg bg-muted/60 p-3 text-xs leading-5 text-muted-foreground">
             <span>
-              <span className="font-medium text-foreground">Saved:</span> the look (colour, light/dark, fonts, corners, depth, spacing, background, menu layout), the Home
+              <span className="font-medium text-foreground">Saved:</span> the look (colour, light/dark, greys for both modes and how they follow the brand, fonts, corners, depth, spacing, background, menu layout), the Home
               {arranged.length ? ` and ${arranged.length} arranged page${arranged.length === 1 ? "" : "s"} (${arranged.join(", ")})` : ""}.
             </span>
             <span>

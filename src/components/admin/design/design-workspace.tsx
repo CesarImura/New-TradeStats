@@ -45,6 +45,7 @@ import { GuideDialog, VersionsSheet, useDraftEditor } from "./editor-shell"
 import { DEPTH_NAMES, LOOKS, SPACING_NAMES, currentLook, depthOf, fromDepth, fromRoundness, fromSpacing, roundnessOf, spacingOf, type Look } from "./looks"
 import { ArrangeCanvas, useArrange, type Device } from "./page-builder"
 import { PreviewFrame } from "./preview-frame"
+import { PaletteField } from "./palette-field"
 import { CAN_SAVE_TEMPLATE, SaveTemplateDialog } from "./save-template"
 
 type Step = "brand" | "look" | "menu" | "pages"
@@ -415,6 +416,7 @@ function LookStep({ theme }: { theme: CoachTheme }) {
           <DesignField id="effects" />
           <DesignField id="borders" />
           <DesignField id="background" />
+          {CAN_SAVE_TEMPLATE && <PaletteField />}
           <p className="text-xs text-muted-foreground">
             Looks are built on three templates ({Object.values(TEMPLATES).map((t) => t.name).join(", ")}). {coach.name} is on {TEMPLATES[theme.template].name}.
           </p>

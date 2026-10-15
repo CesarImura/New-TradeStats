@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react"
 import type { ModuleId, Wording } from "@/lib/data/coaches"
 import type { HomeLayouts, PageLayouts } from "@/lib/widgets/layout"
-import type { CoachTheme } from "@/lib/theme/types"
+import type { CoachTheme, Mode, Palette } from "@/lib/theme/types"
 
 /**
  * Prototype-only persistence, standing in for the backend. Per coach it keeps:
@@ -14,9 +14,11 @@ import type { CoachTheme } from "@/lib/theme/types"
  * (a separate document) stay in sync through storage events.
  */
 
-export type ThemeDraft = Partial<Omit<CoachTheme, "nav" | "fonts">> & {
+export type ThemeDraft = Partial<Omit<CoachTheme, "nav" | "fonts" | "palettes">> & {
   nav?: Partial<CoachTheme["nav"]>
   fonts?: Partial<CoachTheme["fonts"]>
+  /** Single palette colours changed per mode (prototype: the template palette editor). */
+  palettes?: Partial<Record<Mode, Partial<Palette>>>
 }
 
 export type ContentDraft = {
@@ -109,7 +111,13 @@ export function mergeOverrides(base: Overrides, patch: Partial<Overrides>): Over
   const t = patch.theme ?? {}
   const c = patch.content ?? {}
   return {
-    theme: { ...base.theme, ...t, nav: { ...base.theme.nav, ...t.nav }, fonts: { ...base.theme.fonts, ...t.fonts } },
+    theme: {
+      ...base.theme,
+      ...t,
+      nav: { ...base.theme.nav, ...t.nav },
+      fonts: { ...base.theme.fonts, ...t.fonts },
+      palettes: { light: { ...base.theme.palettes?.light, ...t.palettes?.light }, dark: { ...base.theme.palettes?.dark, ...t.palettes?.dark } },
+    },
     content: {
       ...base.content,
       ...c,
