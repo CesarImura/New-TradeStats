@@ -44,6 +44,7 @@ export const MODULE_NAMES: Record<ModuleId, string> = {
   calendar: "Calendar",
   charts: "Charts",
   community: "Community",
+  discord: "Discord",
   journal: "Journal",
   ranking: "Ranking",
   ai: "AI assistant",

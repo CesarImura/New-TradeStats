@@ -5,7 +5,7 @@ import { corePage } from "./core"
 import { PageHeader } from "./page"
 import { AiAsk, Banner, PartnerLinks, TextBlock, WelcomeVideo } from "./brand"
 import { EconNews, NextLive } from "./calendar"
-import { Announcement, Discord } from "./community"
+import { Announcement, CommunityFeed, Discord } from "./community"
 import { JournalPnl, RulesFollowed } from "./journal"
 import { ContinueLesson, CourseProgress } from "./learning"
 import { FirstWeek, MyRank } from "./progress"
@@ -228,12 +228,27 @@ export const WIDGETS: WidgetDef[] = [
     Component: Announcement,
   },
   {
+    type: "community-feed",
+    name: "Community feed",
+    description: "The newest posts from your own feed, pinned first",
+    group: "Community",
+    icon: MessagesSquare,
+    module: "community",
+    variants: [
+      { value: "list", label: "Recent posts", h: 4, minH: 3 },
+      { value: "line", label: "One row", h: 1, minH: 1 },
+    ],
+    defaultW: 4,
+    minW: 3,
+    Component: CommunityFeed,
+  },
+  {
     type: "discord",
     name: "Discord",
-    description: "Invite to your Discord server",
+    description: "Your Discord server: who's online, channels, join",
     group: "Community",
     icon: MessageSquareText,
-    module: "community",
+    module: "discord",
     variants: [
       { value: "online", label: "Who's online", h: 3, minH: 3 },
       { value: "card", label: "Channels", h: 4, minH: 3 },
@@ -497,7 +512,8 @@ const CORE: { page: ModuleId; name: string; description: string; icon: LucideIco
   { page: "courses", name: "Courses", description: "The course catalogue and lessons", icon: BookOpen },
   { page: "calendar", name: "Calendar", description: "Lives, events and booking", icon: CalendarDays },
   { page: "charts", name: "Chart", description: "The chart with the coach's view", icon: ChartCandlestick },
-  { page: "community", name: "Community feed", description: "Posts, channels and replies", icon: MessagesSquare },
+  { page: "community", name: "Community feed", description: "The coach's posts and announcements", icon: MessagesSquare },
+  { page: "discord", name: "Discord server", description: "Join with one click, roles by tier, channels", icon: MessageSquareText },
   { page: "journal", name: "Journal", description: "Trades, stats and feedback", icon: NotebookPen },
   { page: "ranking", name: "Leaderboard", description: "The ranking and its rules", icon: Trophy },
   { page: "ai", name: "AI chat", description: "Questions to the AI coach", icon: Sparkles },
@@ -525,7 +541,8 @@ export const PAGE_WIDGETS: Record<ModuleId, string[]> = {
   calendar: ["next-live", "econ-news", "book-call"],
   charts: ["econ-news", "journal-pnl"],
   journal: ["journal-pnl", "rules-followed", "drawdown", "coach-feedback", "ai-ask"],
-  community: ["announcement", "discord", "my-rank"],
+  community: ["community-feed", "announcement", "my-rank"],
+  discord: ["discord", "announcement"],
   ranking: ["my-rank", "first-week"],
   ai: ["ai-ask"],
 }

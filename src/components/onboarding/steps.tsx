@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { BookOpen, Bot, CalendarDays, ChartCandlestick, Check, CircleAlert, Landmark, Loader2, MessagesSquare, NotebookPen, Trophy } from "@/components/icons"
+import { BookOpen, Bot, CalendarDays, ChartCandlestick, Check, CircleAlert, Landmark, Loader2, MessageSquareText, MessagesSquare, NotebookPen, Trophy } from "@/components/icons"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -153,7 +153,8 @@ const MODULES: { id: ModuleId; name: string; text: string; icon: React.Component
   { id: "calendar", name: "Calendar", text: "Live sessions, replays and 1:1 bookings", icon: CalendarDays },
   { id: "charts", name: "Charts", text: "Full TradingView charts, watchlist and your marked-up levels", icon: ChartCandlestick },
   { id: "journal", name: "Journal", text: "Students log trades and ask you for reviews", icon: NotebookPen },
-  { id: "community", name: "Community", text: "Posts and chat, or a link to your Discord", icon: MessagesSquare },
+  { id: "community", name: "Community", text: "Your own feed: posts and announcements", icon: MessagesSquare },
+  { id: "discord", name: "Discord", text: "Your server, with roles that follow each tier", icon: MessageSquareText },
   { id: "ai", name: "AI assistant", text: "Answers questions from your own lessons", icon: Bot },
   { id: "ranking", name: "Ranking", text: "Leaderboard by consistency and progress", icon: Trophy, later: true },
 ]

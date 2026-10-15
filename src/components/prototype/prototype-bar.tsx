@@ -18,6 +18,8 @@ const TO_ADMIN: Record<string, string> = {
   calendar: "calendar",
   charts: "charts",
   community: "community",
+  // Discord's settings live on the admin Community page for now.
+  discord: "community",
   journal: "journal",
   ranking: "ranking",
   ai: "ai",

@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowUpRight, Eye, Heart, Megaphone, MessageCircle, MessageSquareText, Pin } from "@/components/icons"
+import { ArrowUpRight, Eye, Heart, Megaphone, MessageCircle, MessageSquareText, MessagesSquare, Pin } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { ANNOUNCEMENT, DISCORD } from "@/lib/data/sample"
+import { ANNOUNCEMENTS } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Axis, Chip, GREY, HatchBar, Label, Legend, Num, Rule, TickBar, WCard, useFigureFont } from "./instrument"
 import { ACCENT, ACCENT_TEXT, Avatar, TYPE, Tip, useMore } from "./kit"
@@ -164,6 +165,69 @@ export function Announcement({ variant = "plain" }: WidgetProps) {
           <ReadLink />
         </div>
       )}
+    </WCard>
+  )
+}
+
+// ---------- Community feed
+
+/** Likes and replies per post (sample). */
+const POST_STATS: Record<string, { likes: number; replies: number }> = { n1: { likes: 42, replies: 9 }, n2: { likes: 18, replies: 3 }, n3: { likes: 27, replies: 6 } }
+
+/**
+ * Community feed: the coach's own feed (posts and announcements), separate
+ * from Discord. list (the newest posts, pinned first), line (one row with
+ * what's new). Shown when the Community module is on.
+ */
+export function CommunityFeed({ variant = "list" }: WidgetProps) {
+  const { coach } = useCoach()
+  const empty = useEmpty()
+  const more = useMore("standard")
+  const detailed = useMore("detailed")
+  const font = useFigureFont()
+  if (empty) return <WidgetEmpty icon={MessagesSquare} title="No posts yet" text={`${coach.coachName}'s posts and announcements will show here.`} />
+  const posts = [...ANNOUNCEMENTS].sort((a, b) => Number(b.pinned) - Number(a.pinned))
+  const fresh = 2
+  const chip = <Chip>{fresh} new</Chip>
+
+  if (variant === "line") {
+    return (
+      <WCard row icon={MessagesSquare} title={posts[0].title} meta={more ? `${coach.wording.community} · ${posts[0].when}${detailed ? ` · ${fresh} new since your last visit` : ""}` : undefined} chip={chip}>
+        <ReadLink />
+      </WCard>
+    )
+  }
+
+  return (
+    <WCard icon={MessagesSquare} title={coach.wording.community} meta={`${coach.coachName}'s posts · ${posts.length} this week`} chip={chip}>
+      <div className="flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full">
+        {posts.map((p, i) => {
+          const st = POST_STATS[p.id] ?? { likes: 0, replies: 0 }
+          return (
+            <div key={p.id} className="grid min-w-0 gap-0.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-2 first:pt-0 last:border-b-0">
+              <div className="flex min-w-0 items-center gap-1.5">
+                {p.pinned && <Pin className="size-3 shrink-0" style={{ color: ACCENT_TEXT }} />}
+                <span className={cn(TYPE.title, "min-w-0 flex-1 truncate", i >= fresh && "font-normal")}>{p.title}</span>
+                <span className="shrink-0 text-[0.6875rem] leading-4 text-muted-foreground">{p.when}</span>
+              </div>
+              {more && i === 0 && <p className={cn(TYPE.small, "line-clamp-2")}>{p.body}</p>}
+              {detailed && (
+                <span className="flex items-center gap-3 text-[0.6875rem] leading-4 text-muted-foreground tabular-nums" style={{ fontFamily: font }}>
+                  <span className="flex items-center gap-1">
+                    <Heart className="size-3" /> {st.likes}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MessageCircle className="size-3" /> {st.replies}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Eye className="size-3" /> {p.reads}
+                  </span>
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </WCard>
   )
 }
