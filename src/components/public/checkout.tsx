@@ -48,8 +48,10 @@ export function Checkout() {
   const coupons = useStored(`${coach.slug}:coupons`, COUPONS)
   const paid = tiers.filter((t) => amount(t.price) > 0)
   const asked = tiers.find((t) => t.id === params.get("tier"))
-  const [tierId, setTierId] = useState(asked && amount(asked.price) > 0 ? asked.id : (paid.find((t) => t.featured && !t.hidden) ?? paid[0])?.id)
-  const tier = tiers.find((t) => t.id === tierId)
+  const firstPaid = (paid.find((t) => t.featured && !t.hidden) ?? paid[0])?.id
+  const [tierId, setTierId] = useState(asked && amount(asked.price) > 0 ? asked.id : firstPaid)
+  // Wizard-made communities arrive after the first render (the provider shows a stand-in until then), so fall back to the first paid tier.
+  const tier = tiers.find((t) => t.id === tierId) ?? tiers.find((t) => t.id === firstPaid)
   const [yearly, setYearly] = useState(params.get("cycle") === "yearly")
   const open = groups.filter((g) => tier && g.tiers.includes(tier.id) && !isFull(g) && g.end >= "2026-10-12")
   const [groupId, setGroupId] = useState(params.get("group") ?? "")

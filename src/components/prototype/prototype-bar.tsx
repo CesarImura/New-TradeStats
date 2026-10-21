@@ -21,6 +21,8 @@ const TO_ADMIN: Record<string, string> = {
   journal: "journal",
   ranking: "ranking",
   ai: "ai",
+  downloads: "downloads",
+  partners: "partners",
 }
 const TO_STUDENT: Record<string, ModuleId> = {
   content: "courses",
@@ -30,6 +32,8 @@ const TO_STUDENT: Record<string, ModuleId> = {
   community: "community",
   ranking: "ranking",
   ai: "ai",
+  downloads: "downloads",
+  partners: "partners",
 }
 
 function Segment<T extends string>({

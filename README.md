@@ -14,7 +14,8 @@ npm run dev
 | `/` | Launcher with the three demo coaches |
 | `/c/[coach]` | Student side, in the coach's theme (`northline`, `sophia`, `kairo`) |
 | `/admin/[coach]` | Admin area: the same dark TradeStats look in every community (near-square corners, yellow main action) |
-| `/setup` | Setup wizard (9 steps): every Design option is reachable here too, folded under “More” |
+| `/setup` | Setup wizard (7 steps: Brand · Look · Menu · Pages · Membership · Videos · Get paid, the first four identical to Design): every Design option is reachable here too, folded under “More” |
+| `/c/[coach]/p/[page]` | A page the coach added in Design → Menu (name, icon, built from widgets like every other page) |
 | `/site/[coach]` | Public pages in the coach's brand: sales page, checkout, account code, thank you, student onboarding, login, free join, invite, waiting list, legal (PUB-01 to PUB-12, STO-01 to STO-03) |
 
 The **Admin | Student** switch (bottom right) flips between views; the flask icon next to it changes community, template, navigation and light/dark.
@@ -29,7 +30,9 @@ Every section has an admin page and a student page; prototype data per community
 |---|---|---|
 | Students | – | List, profile sheet, import, messages |
 | Journal & feedback | Journal | Feedback written in the admin shows up on the student's trade (`src/lib/data/feedback.ts`) |
-| Charts | Charts | TradingView's free widget. It can't show exchange futures (CME etc.), so the samples use CFD symbols; see the PRD addendum |
+| Charts | Charts | One TradingView chart with the coach's view: game plan list, levels legend, my trades, the coach's note, Log a trade / Ask the coach. Free widget: no exchange futures (samples use CFD symbols), no candle colours |
+| Downloads | Downloads | Files beyond lessons: indicators, templates, checklists; categories, versions, tier access (`src/lib/data/downloads.ts`) |
+| Partners | Partners | Partner offers from our catalogue or the coach's own links, and the coach's affiliate program (`src/lib/data/partners.ts`) |
 | Community | Community | Announcements and the Discord connection |
 | AI assistant | AI assistant | Canned answers in `src/lib/data/ai.ts` |
 | Sales & payments | Profile → Subscription, My group; the public site | Tiers, groups, access, sales page, coupons, payments, payouts, affiliates |
@@ -55,6 +58,7 @@ Data: `src/lib/data/sales-page.ts` (blocks, the purchase handed from page to pag
 
 - `src/lib/theme/types.ts` – everything a coach can change (`CoachTheme`).
 - `src/lib/theme/templates.ts` – the starting templates: Terminal, Atelier, Pulse.
+- Trading colours (up/down) are set in Design → Brand; `derive.ts` keeps the exact hex for fills and an AA-adjusted shade for text (`--profit-text`, `--loss-text`).
 - `src/lib/theme/css.ts` – turns a theme into shadcn's CSS variables plus a few rules (button shape, shadow, density, label style). shadcn components are not modified.
 - `src/lib/theme/resolve.ts` – template → coach's published changes (or the draft in preview); also applies name, logo, words, menu and modules.
 - `src/lib/fonts.ts` – the font library.
@@ -72,7 +76,8 @@ Responsive by the width of the page area (`.g-page` / `.g-item` in `globals.css`
 
 - `src/lib/widgets/layout.ts` – layout data, responsive rules and each template's default Home.
 - `src/components/widgets/registry.tsx` – every widget: group, module, three looks (each with a height and minimum height), settings, default and minimum width.
-- `src/components/widgets/{learning,calendar,journal,progress,community,brand}.tsx` – the widgets, each with its empty state.
+- `src/components/widgets/{learning,calendar,journal,progress,community,brand,content}.tsx` – the widgets, each with its empty state. `content.tsx` is the "Your content" group: Text, Image, Button, Banner, Embed, Hero, filled by the coach.
+- Every widget can carry the coach's own text, button and picture (`note` on the instance, shown under the header) and a visibility rule (`show`: a phase such as first week, inactive or finished a course, or a group). The builder shows rules as an orange tag; `?data=empty|inactive|finished` previews a phase.
 - `src/components/admin/design/home-builder.tsx` – the grid editor, per-tier layouts, desktop/tablet/phone, sample or empty data.
 
 Note: react-grid-layout 2.2.4's `createScaledStrategy` measures drags from the page edge; the builder uses the standard strategy with `scale` instead, and corrects drop offsets for the scaled canvas.

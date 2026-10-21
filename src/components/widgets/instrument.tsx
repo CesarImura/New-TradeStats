@@ -3,9 +3,10 @@
 import { useId, useState } from "react"
 import type { LucideIcon } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { chartStyleOf, widgetStyleOf, type ChartStyle, type WidgetStyle } from "@/lib/theme/types"
+import { chartStyleOf, widgetFontOf, widgetHeaderOf, widgetStyleOf, type ChartStyle, type WidgetFont, type WidgetStyle } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
-import { ACCENT, ACCENT_TEXT, TYPE, W, useFrame } from "./kit"
+import { Button } from "@/components/ui/button"
+import { ACCENT, ACCENT_TEXT, TYPE, W, link, useFrame } from "./kit"
 
 /**
  * The widget anatomy and signature visuals (Instrument, Soft, Editorial).
@@ -23,6 +24,9 @@ import { ACCENT, ACCENT_TEXT, TYPE, W, useFrame } from "./kit"
  * - editorial: no icon tile, title in the heading font, a hairline under the
  *   header, figures in the heading font. Airy.
  *
+ * Figures and small labels follow the Widget font (Design → Look), which
+ * defaults to mono in Instrument and the heading font otherwise.
+ *
  * Colour: the accent (coach's colour) marks the main mark; greys (GREY) carry
  * the rest; profit/loss only where results are meant. Meaning colours are
  * allowed in legends and timelines, never decoration. Type stays on TYPE sizes.
@@ -39,6 +43,12 @@ export function useChartStyle(): ChartStyle {
   return chartStyleOf(theme)
 }
 
+/** The font for figures and small labels (Design → Look → Widget font). */
+export function useWidgetFont(): WidgetFont {
+  const { theme } = useCoach()
+  return widgetFontOf(theme)
+}
+
 /** Greys for secondary series and legend swatches, strongest first. */
 export const GREY = [
   "color-mix(in oklab, var(--foreground) 78%, transparent)",
@@ -52,18 +62,19 @@ export const ink = (c: string) => `color-mix(in oklab, ${c} 74%, var(--foregroun
 /** An empty tick or track. */
 export const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
 
-/** Figures: mono in Instrument, the heading font otherwise. */
+/** Figures, in the widget font. */
 export function useFigureFont() {
-  return useWidgetStyle() === "instrument" ? "var(--font-figures)" : "var(--font-heading)"
+  const f = useWidgetFont()
+  return f === "mono" ? "var(--font-figures)" : f === "heading" ? "var(--font-heading)" : "var(--coach-font-body, var(--font-sans))"
 }
 
-/** Small label: mono capitals in Instrument, the coach's label style otherwise. */
+/** Small label: mono capitals with the mono widget font, the coach's label style otherwise. */
 export function Label({ children, className }: { children: React.ReactNode; className?: string }) {
-  const s = useWidgetStyle()
+  const mono = useWidgetFont() === "mono"
   return (
     <span
-      className={cn(s === "instrument" ? "text-[0.6875rem] leading-4 tracking-[0.04em] text-muted-foreground uppercase" : TYPE.label, className)}
-      style={s === "instrument" ? { fontFamily: "var(--font-figures)" } : undefined}
+      className={cn(mono ? "text-[0.6875rem] leading-4 tracking-[0.04em] text-muted-foreground uppercase" : TYPE.label, className)}
+      style={mono ? { fontFamily: "var(--font-figures)" } : undefined}
     >
       {children}
     </span>
@@ -73,6 +84,7 @@ export function Label({ children, className }: { children: React.ReactNode; clas
 /** A short value in a tinted pill: "58% win", "4 inputs". Accent by default. */
 export function Chip({ children, tone = "accent", className }: { children: React.ReactNode; tone?: "accent" | "neutral" | "profit" | "loss"; className?: string }) {
   const s = useWidgetStyle()
+  const mono = useWidgetFont() === "mono"
   const star = useFrame().emphasis === "star"
   const color = tone === "accent" ? ACCENT : tone === "profit" ? "var(--profit)" : tone === "loss" ? "var(--loss)" : "var(--foreground)"
   // On its own tint a colour loses contrast, so the text leans toward the text colour (darker on light cards, lighter on dark).
@@ -82,10 +94,56 @@ export function Chip({ children, tone = "accent", className }: { children: React
   return (
     <span
       className={cn("inline-flex h-5 shrink-0 items-center px-1.5 text-[0.6875rem] leading-none whitespace-nowrap tabular-nums", s === "soft" ? "rounded-full px-2" : "r-chip", className)}
-      style={{ background: star ? "var(--brand-shade)" : `color-mix(in oklab, ${color} ${tone === "neutral" ? 8 : 11}%, transparent)`, color: text, fontFamily: s === "instrument" ? "var(--font-figures)" : undefined }}
+      style={{ background: star ? "var(--brand-shade)" : `color-mix(in oklab, ${color} ${tone === "neutral" ? 8 : 11}%, transparent)`, color: text, fontFamily: mono ? "var(--font-figures)" : undefined }}
     >
       {children}
     </span>
+  )
+}
+
+/** Where the coach's note button goes, or nothing when it has no label or no place to go. */
+function useNoteHref() {
+  const { base } = useCoach()
+  const { note } = useFrame()
+  if (!note?.button?.trim()) return undefined
+  if (note.target === "url") {
+    const u = note.url?.trim()
+    return u ? (/^[a-z][a-z\d+.-]*:/i.test(u) ? u : `https://${u}`) : undefined
+  }
+  return `${base}/${note.target || "courses"}`
+}
+
+/** The coach's own button on a widget. */
+function NoteButton({ className }: { className?: string }) {
+  const href = useNoteHref()
+  const { note } = useFrame()
+  if (!href) return null
+  return (
+    <Button variant="outline" size="sm" className={cn("w-fit shrink-0", className)} {...link(href)}>
+      {note?.button}
+    </Button>
+  )
+}
+
+/** The coach's own picture and text with a button, between a card's header and its body. */
+function Note({ inset }: { inset?: boolean }) {
+  const { note } = useFrame()
+  const href = useNoteHref()
+  const text = note?.text?.trim()
+  if (!note || (!note.image && !text && !href)) return null
+  return (
+    <div className={cn("flex shrink-0 flex-col gap-2", inset && "px-2 pb-2.5")}>
+      {note.image && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={note.image} alt="" className="aspect-video max-h-40 w-full rounded-(--radius) object-cover" />
+      )}
+      {(text || href) && (
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+          {text && <p className={cn(TYPE.small, "line-clamp-2 min-w-0 flex-1 basis-40")}>{text}</p>}
+          <NoteButton />
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -94,6 +152,11 @@ export function Chip({ children, tone = "accent", className }: { children: React
  * `chip` on the right; `crumb` puts a "Section / Title" breadcrumb instead of
  * the icon. `flush` drops the inset body panel (for media and lists that fill
  * the card). The body is a flex column with 12px gaps.
+ *
+ * Which header parts show (icon, title, description, value chip) follows
+ * Design → Look → Widget header, then the widget's own choice (widgetHeaderOf).
+ * With every part off there's no header at all. A one-row card always keeps
+ * its title: there it is the content.
  */
 export function WCard({
   icon: Icon,
@@ -120,12 +183,18 @@ export function WCard({
   bodyClassName?: string
 }) {
   const s = useWidgetStyle()
-  const { emphasis } = useFrame()
+  const { emphasis, header, core } = useFrame()
+  const { theme } = useCoach()
+  const h = widgetHeaderOf(theme, header)
   const star = emphasis === "star"
   const inset = s === "instrument" && !flush
-  const head = (
+  const showTitle = row || h.title
+  const showIcon = !!Icon && h.icon
+  const showMeta = !!meta && h.description
+  const showChip = !!chip && h.value
+  const head = !showTitle && !showIcon && !showMeta && !showChip ? null : (
     <div className={cn("flex min-w-0 items-center gap-2.5", s === "instrument" && !row ? "px-2 pt-2 pb-2.5" : "", s === "editorial" && !row && "border-b border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] pb-3")}>
-      {crumb ? (
+      {crumb && showTitle ? (
         <span className="flex min-w-0 items-baseline gap-1.5 text-[0.8125rem] leading-5">
           <span className="shrink-0 text-muted-foreground">{crumb}</span>
           <span className="text-muted-foreground" aria-hidden>
@@ -135,7 +204,7 @@ export function WCard({
         </span>
       ) : (
         <>
-          {Icon && s !== "editorial" && (
+          {showIcon && Icon && (
             <span
               className={cn(
                 "grid size-7 shrink-0 place-items-center",
@@ -146,19 +215,21 @@ export function WCard({
             </span>
           )}
           <span className="grid min-w-0 flex-1">
-            <span className={cn("truncate leading-5", s === "editorial" ? "font-heading text-[0.9375rem]" : "text-[0.8125rem] font-medium")}>{title}</span>
-            {meta && <span className="truncate text-[0.6875rem] leading-4 text-muted-foreground">{meta}</span>}
+            {showTitle && <span className={cn("truncate leading-5", s === "editorial" ? "font-heading text-[0.9375rem]" : "text-[0.8125rem] font-medium")}>{title}</span>}
+            {showMeta && <span className="truncate text-[0.6875rem] leading-4 text-muted-foreground">{meta}</span>}
           </span>
         </>
       )}
-      {chip && <span className={cn("hidden shrink-0 @[14rem]:inline-flex", crumb && "ml-auto")}>{chip}</span>}
+      {showChip && <span className={cn("hidden shrink-0 @[14rem]:inline-flex", crumb && "ml-auto")}>{chip}</span>}
       {row && children}
+      {row && !core && <NoteButton />}
     </div>
   )
   if (row) return <W row className={cn("justify-center", className)}>{head}</W>
   return (
     <W className={cn(s === "instrument" && "gap-0 p-1.5", s === "soft" && "gap-3.5", className)}>
       {head}
+      {!core && <Note inset={s === "instrument"} />}
       <div
         className={cn(
           "flex min-h-0 flex-1 flex-col gap-3",

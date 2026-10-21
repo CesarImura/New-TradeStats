@@ -2,7 +2,10 @@
 
 import { createContext, useContext } from "react"
 import type { LucideIcon } from "@/components/icons"
+import { useCoach } from "@/components/coach/coach-provider"
 import { Card } from "@/components/ui/card"
+import { useStudentStart } from "@/lib/data/student-start"
+import type { WidgetPhase } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 
 export type WidgetProps = { variant?: string; props: Record<string, string | boolean> }
@@ -10,11 +13,30 @@ export type WidgetProps = { variant?: string; props: Record<string, string | boo
 /**
  * "sample": widgets show realistic example data.
  * "empty": what a brand-new student in a brand-new community sees.
+ * "inactive": a student who has stopped showing up (the data is the sample's).
+ * "finished": a student who completed a course (the data is the sample's).
  */
-export type DataMode = "sample" | "empty"
+export type DataMode = "sample" | "empty" | "inactive" | "finished"
 const DataModeContext = createContext<DataMode>("sample")
 export const DataModeProvider = DataModeContext.Provider
 export const useEmpty = () => useContext(DataModeContext) === "empty"
+
+/** `?data=` on a student page to a DataMode. */
+export const dataModeOf = (v: string | null): DataMode => (v === "empty" || v === "inactive" || v === "finished" ? v : "sample")
+
+/**
+ * Where the student is in their life with the coach, for widgets shown to some students only.
+ * "regular" is everyone else. On the live page a student still in onboarding counts as in their first week.
+ */
+export function usePhase(): WidgetPhase | "regular" {
+  const mode = useContext(DataModeContext)
+  const { coach } = useCoach()
+  const start = useStudentStart(coach.slug)
+  if (mode === "empty") return "first-week"
+  if (mode === "inactive") return "inactive"
+  if (mode === "finished") return "finished"
+  return start.stage !== "done" ? "first-week" : "regular"
+}
 
 /** Which student page a widget sits on ("home" or a module), for widgets that adapt to their page. */
 export const PageIdContext = createContext<string>("home")

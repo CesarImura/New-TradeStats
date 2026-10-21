@@ -1,6 +1,7 @@
 "use client"
 
 import type { Coach } from "./coaches"
+import type { CourseDraft } from "./communities"
 import { readStored, setStored, useStored } from "@/lib/prototype-store"
 
 /**
@@ -236,7 +237,41 @@ function seed(coach: Coach): Catalog {
 }
 
 const SEEDS = new Map<string, Catalog>()
-const seedFor = (coach: Coach) => {
+
+const draftsOf = (coach: Coach): CourseDraft[] => {
+  const drafts = (coach as { setup?: { courses?: CourseDraft[] } }).setup?.courses
+  return Array.isArray(drafts) ? drafts : []
+}
+
+const fromDrafts = (drafts: CourseDraft[]): Catalog => ({
+  areas: ["Core"],
+  courses: drafts.map((d, i) => ({
+    id: d.id,
+    title: d.title,
+    tagline: "Uploaded in setup",
+    area: "Core",
+    status: "published",
+    tiers: [],
+    color: i,
+    modules: [
+      {
+        id: `${d.id}-m1`,
+        title: "Lessons",
+        lessons: d.lessons.map((l) => ({ id: l.id, title: l.title, minutes: l.minutes, status: "published", chapters: [], downloads: [] })),
+      },
+    ],
+  })),
+})
+
+// The seed follows the coach's setup uploads, so the wizard preview shows their own
+// courses instead of the sample. Without uploads it stays the memoised sample.
+const seedFor = (coach: Coach): Catalog => {
+  const drafts = draftsOf(coach)
+  if (drafts.length > 0) {
+    const key = `${coach.slug}:${JSON.stringify(drafts)}`
+    if (!SEEDS.has(key)) SEEDS.set(key, fromDrafts(drafts))
+    return SEEDS.get(key)!
+  }
   if (!SEEDS.has(coach.slug)) SEEDS.set(coach.slug, seed(coach))
   return SEEDS.get(coach.slug)!
 }

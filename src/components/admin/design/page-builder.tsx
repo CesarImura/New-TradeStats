@@ -32,13 +32,15 @@ import { WidgetFrame } from "@/components/widgets/kit"
 import { getWidget, heightFor, heightOf, lookOf } from "@/components/widgets/registry"
 import { DataModeProvider, PageIdContext, PageTitleShownContext, type DataMode } from "@/components/widgets/shared"
 import type { Coach } from "@/lib/data/coaches"
+import { useGroups } from "@/lib/data/access"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { themeToCss } from "@/lib/theme/css"
 import { pageLayout } from "@/lib/theme/resolve"
 import type { CoachTheme } from "@/lib/theme/types"
+import { isPageId } from "@/lib/data/coaches"
 import { COLS, GAP, ROW_HEIGHT, normalizeLayout, oneStar, uid, withCore, type Detail, type Emphasis, type PageId, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
-import { DETAIL, EMPHASIS } from "./builder-panels"
+import { DETAIL, EMPHASIS, PHASE_LABEL } from "./builder-panels"
 import type { useDraftEditor } from "./editor-shell"
 
 const DEVICE_WIDTH: Record<Device, number> = { desktop: 1180, tablet: 820, phone: 390 }
@@ -82,7 +84,7 @@ export function useArrange({
   const layouts = coach.pages?.[page] ?? {}
   const baseLayout = pageLayout(coach, page, theme.template, undefined, heightOf)
   const inherits = tier !== "default" && !layouts[tier]
-  const own = (l: PageLayout) => (page === "home" ? l : withCore(page, l))
+  const own = (l: PageLayout) => (page === "home" || isPageId(page) ? l : withCore(page, l))
   const layout = tier === "default" || !layouts[tier] ? baseLayout : own(normalizeLayout(layouts[tier], heightOf))
   const tierName = coach.tiers.find((t) => t.id === tier)?.name
   const savePages = (next: typeof layouts, key: string) =>
@@ -516,8 +518,12 @@ function WidgetMenu({
 
 function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: WidgetInstance; selected: boolean; available: boolean; onRemove: () => void; onDuplicate: () => void }) {
   const def = getWidget(w.type)
+  const { coach } = useCoach()
+  const groups = useGroups(coach)
   if (!def) return null
   const C = def.Component
+  // Widgets with a visibility rule stay on the canvas, tagged with who sees them.
+  const rule = [w.show?.phase && PHASE_LABEL[w.show.phase], w.show?.group && (groups.find((g) => g.id === w.show?.group)?.name ?? "A group")].filter(Boolean).join(" · ")
   return (
     <div
       className={cn(
@@ -533,6 +539,11 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
         {def.core ? `${def.name} · main part of the page` : def.name}
         {w.emphasis === "star" && " · Star"} · {w.w}×{w.h}
       </span>
+      {rule && (
+        <span className="pointer-events-none absolute top-2 right-2 z-10 max-w-[60%] truncate rounded-[3px] bg-[#ff5500] px-1.5 py-0.5 font-mono text-[10px] leading-none font-medium tracking-[0.04em] text-black uppercase">
+          {rule}
+        </span>
+      )}
       {/* Quick actions; .no-drag keeps clicks here from starting a drag */}
       <div
         className="no-drag absolute top-2 right-2 z-20 flex items-center gap-0.5 rounded-lg border bg-background p-0.5 font-[family-name:var(--ff-geist)] text-foreground opacity-0 shadow-sm transition-opacity group-hover/w:opacity-100 data-[on=true]:opacity-100"
@@ -560,7 +571,7 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
       </div>
       <div className="pointer-events-none flex min-h-0 flex-1 flex-col overflow-hidden select-none [&>*]:flex-1">
         {available ? (
-          <WidgetFrame emphasis={w.emphasis} detail={w.detail}>
+          <WidgetFrame emphasis={w.emphasis} detail={w.detail} header={w.header} note={w.note} core={Boolean(def.core)}>
             <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
           </WidgetFrame>
         ) : (

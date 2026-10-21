@@ -31,22 +31,18 @@ import type { DataMode } from "@/components/widgets/shared"
 import { getDemoCoach } from "@/lib/data/coaches"
 import { useCustomCommunities } from "@/lib/data/use-communities"
 import { describe, targetsForField, type PickMessage, type PickTarget } from "@/lib/design-pick"
-import { themeToCss } from "@/lib/theme/css"
-import { onColor } from "@/lib/theme/derive"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import { TEMPLATES } from "@/lib/theme/templates"
-import type { CoachTheme } from "@/lib/theme/types"
 import type { PageId } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { WidgetLibrary, WidgetSettings } from "./builder-panels"
-import { More, RevealContext, Segmented, SliderField } from "./controls"
-import { DesignField, DesignProvider, useDesign } from "./design-fields"
+import { More, RevealContext, Segmented } from "./controls"
+import { DesignProvider, useDesign } from "./design-fields"
 import { GuideDialog, VersionsSheet, useDraftEditor } from "./editor-shell"
-import { DEPTH_NAMES, LOOKS, SPACING_NAMES, currentLook, depthOf, fromDepth, fromRoundness, fromSpacing, roundnessOf, spacingOf, type Look } from "./looks"
 import { ArrangeCanvas, useArrange, type Device } from "./page-builder"
 import { PreviewFrame } from "./preview-frame"
-import { PaletteField } from "./palette-field"
 import { CAN_SAVE_TEMPLATE, SaveTemplateDialog } from "./save-template"
+import { BrandFields, LookStep, MenuStep, Section } from "./design-steps"
 
 type Step = "brand" | "look" | "menu" | "pages"
 const STEPS: { id: Step; label: string; text: string }[] = [
@@ -143,7 +139,7 @@ export function DesignWorkspace() {
 
   const fromSetup = params.get("from") === "setup"
   const pageInfo = arrange.pageInfo
-  const src = `${step === "pages" ? pageInfo.href : `/c/${slug}`}?preview=draft${step === "pages" && tier !== "default" ? `&tier=${tier}` : ""}${step === "pages" && data === "empty" ? "&data=empty" : ""}`
+  const src = `${step === "pages" ? pageInfo.href : `/c/${slug}`}?preview=draft${step === "pages" && tier !== "default" ? `&tier=${tier}` : ""}${step === "pages" && data !== "sample" ? `&data=${data}` : ""}`
   const canvasClass = cn("hb-canvas", theme.mode === "dark" ? "dark" : "light")
   const i = STEPS.findIndex((s) => s.id === step)
   const next = STEPS[i + 1]
@@ -358,87 +354,11 @@ export function DesignWorkspace() {
   )
 }
 
-/* ---------- Steps ---------- */
-
-function Section({ title, children }: { title?: string; children: React.ReactNode }) {
-  return (
-    <section className="grid gap-4 border-b px-4 pt-3.5 pb-5 last:border-b-0">
-      {title && <h3 className="text-[0.6875rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{title}</h3>}
-      {children}
-    </section>
-  )
-}
-
 function BrandStep() {
   return (
     <>
-      <Section>
-        <DesignField id="logo" />
-        <DesignField id="name" />
-        <DesignField id="primary" />
-        <DesignField id="mode" />
-        <More label="Second colour">
-          <DesignField id="highlight" />
-        </More>
-      </Section>
+      <BrandFields />
       <DesignHelp />
-    </>
-  )
-}
-
-function LookStep({ theme }: { theme: CoachTheme }) {
-  const { coach, change } = useDesign()
-  const active = currentLook(theme)
-  return (
-    <>
-      <Section>
-        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Look">
-          {LOOKS.map((l) => (
-            <LookCard
-              key={l.id}
-              look={l}
-              theme={theme}
-              selected={active?.id === l.id}
-              onSelect={() => {
-                change({ theme: { template: l.template, ...l.set } }, "look")
-                toast(`${l.name} look applied. Your colours and logo stay.`)
-              }}
-            />
-          ))}
-        </div>
-        {!active && <p className="text-xs text-muted-foreground">Your own mix. Pick a look to start again from it.</p>}
-      </Section>
-      <Section title="Fine-tune">
-        <SliderField
-          id="corners"
-          label="Roundness"
-          value={roundnessOf(theme)}
-          min={0}
-          max={24}
-          format={(r) => (r <= 3 ? "Sharp" : r >= 16 ? "Very round" : "Round")}
-          onChange={(r) => change({ theme: fromRoundness(r) }, "roundness")}
-        />
-        <SliderField id="shadows" label="Depth" value={depthOf(theme)} min={0} max={2} format={(d) => DEPTH_NAMES[d]} onChange={(d) => change({ theme: fromDepth(d) }, "depth")} />
-        <SliderField id="density" label="Spacing" value={spacingOf(theme)} min={0} max={2} format={(s) => SPACING_NAMES[s]} onChange={(s) => change({ theme: fromSpacing(s) }, "spacing")} />
-        <DesignField id="card-surface" />
-        <DesignField id="widget-style" />
-        <DesignField id="chart-style" />
-      </Section>
-      <Section>
-        <More label="Advanced">
-          <DesignField id="fonts" />
-          <DesignField id="heading-weight" />
-          <DesignField id="labels" />
-          <DesignField id="buttons" />
-          <DesignField id="effects" />
-          <DesignField id="borders" />
-          <DesignField id="background" />
-          {CAN_SAVE_TEMPLATE && <PaletteField />}
-          <p className="text-xs text-muted-foreground">
-            Looks are built on three templates ({Object.values(TEMPLATES).map((t) => t.name).join(", ")}). {coach.name} is on {TEMPLATES[theme.template].name}.
-          </p>
-        </More>
-      </Section>
     </>
   )
 }
@@ -503,36 +423,20 @@ function PagesStep({
               value={data}
               onChange={onData}
               options={[
-                { value: "sample", label: "Sample data" },
-                { value: "empty", label: "A new student" },
+                { value: "sample", label: <span title="Sample data">Sample</span> },
+                { value: "empty", label: <span title="A new student">New</span> },
+                { value: "inactive", label: <span title="An inactive student">Inactive</span> },
+                { value: "finished", label: <span title="A student who finished a course">Finished</span> },
               ]}
             />
+            <p className="text-xs text-muted-foreground">
+              {{ sample: "Sample data", empty: "A new student: their first week", inactive: "An inactive student", finished: "A student who finished a course" }[data]}
+            </p>
           </div>
         </More>
       </Section>
       <div className="border-b px-4 pt-3 text-[0.6875rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">Add a widget</div>
       {library}
-    </>
-  )
-}
-
-function MenuStep() {
-  return (
-    <>
-      <Section>
-        <DesignField id="menu-items" />
-      </Section>
-      <Section>
-        <More label="Menu layout">
-          <DesignField id="nav-layout" />
-          <DesignField id="nav-frame" />
-          <DesignField id="nav-style" />
-          <DesignField id="nav-logo" />
-        </More>
-        <More label="What you call things">
-          <DesignField id="wording" />
-        </More>
-      </Section>
     </>
   )
 }
@@ -554,47 +458,6 @@ function DesignHelp() {
         </Button>
       </div>
     </div>
-  )
-}
-
-/** A look as a small card drawn in that look, with the coach's own colour. */
-function LookCard({ look, theme, selected, onSelect }: { look: Look; theme: CoachTheme; selected: boolean; onSelect: () => void }) {
-  const t: CoachTheme = {
-    ...TEMPLATES[look.template].theme,
-    ...look.set,
-    mode: theme.mode,
-    primary: theme.primary,
-    primaryForeground: onColor(theme.primary),
-  }
-  const cls = `tpl-look-${look.id}`
-  return (
-    <button
-      role="radio"
-      aria-checked={selected}
-      onClick={onSelect}
-      className={cn(
-        "grid gap-1.5 rounded-[6px] border p-1.5 text-left outline-none hover:border-[#3a3a40] focus-visible:border-[var(--ts-interactive)]",
-        selected && "border-[var(--ts-interactive)] hover:border-[var(--ts-interactive)]",
-      )}
-    >
-      <style dangerouslySetInnerHTML={{ __html: themeToCss(t, `.${cls}`) }} />
-      <span className={cn(cls, t.mode === "light" && "light", "grid aspect-[16/10] content-start gap-1.5 overflow-hidden rounded-[4px] bg-background p-2 text-foreground")}>
-        <span className="text-base leading-none" style={{ fontFamily: "var(--coach-font-heading)", fontWeight: look.set.headingWeight }}>
-          Aa
-        </span>
-        <span className="grid gap-1 rounded-[min(var(--radius),12px)] bg-card p-1.5" style={{ boxShadow: "var(--card-shadow)", border: look.set.borders ? "1px solid var(--border)" : undefined }}>
-          <span className="h-1 w-10 rounded-full bg-foreground/40" />
-          <span className="h-2.5 w-9 rounded-[var(--button-radius)] bg-primary" />
-        </span>
-      </span>
-      <span className="grid px-0.5">
-        <span className="flex items-center gap-1 text-xs font-medium">
-          {look.name}
-          {selected && <Check className="size-3 text-[var(--ts-interactive)]" />}
-        </span>
-        <span className="truncate text-[0.6875rem] text-muted-foreground">{look.blurb}</span>
-      </span>
-    </button>
   )
 }
 

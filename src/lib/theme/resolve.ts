@@ -1,21 +1,24 @@
-import { DEFAULT_WORDING, type Coach, type ModuleId } from "@/lib/data/coaches"
+import { DEFAULT_WORDING, isPageId, pageIdOf, type Coach, type MenuId, type ModuleId } from "@/lib/data/coaches"
 import type { ContentDraft, ThemeDraft } from "@/lib/prototype-store"
 import { TEMPLATES } from "./templates"
 import type { CoachTheme, TemplateId } from "./types"
-import { defaultHome, defaultPage, normalizeLayout, templatePage, withCore, type PageId, type PageLayout } from "@/lib/widgets/layout"
+import { defaultCustomPage, defaultHome, defaultPage, normalizeLayout, templatePage, withCore, type PageId, type PageLayout } from "@/lib/widgets/layout"
 
 /** The coach with their saved name, logo, words, menu and modules applied. */
 export function resolveCoach(coach: Coach, c: ContentDraft = {}): Coach {
   // Menus saved before a module existed don't list it yet: add it at the end, switched off.
-  const menu = c.menu ?? coach.menu
+  const customPages = c.customPages ?? coach.customPages ?? []
+  const menu = (c.menu ?? coach.menu).filter((m) => !isPageId(m) || customPages.some((p) => p.id === pageIdOf(m)))
   const all = Object.keys(DEFAULT_WORDING).filter((k) => !["home", "student", "students", "lesson"].includes(k)) as ModuleId[]
   return {
     ...coach,
     name: c.name || coach.name,
+    tagline: c.tagline || coach.tagline,
     mark: c.mark || coach.mark,
     logo: c.logo ?? coach.logo,
     wording: { ...DEFAULT_WORDING, ...coach.wording, ...c.wording },
-    menu: [...menu, ...all.filter((m) => !menu.includes(m))],
+    menu: [...menu, ...all.filter((m) => !menu.includes(m)), ...customPages.map((p) => `page:${p.id}` as MenuId).filter((m) => !menu.includes(m))],
+    customPages,
     modules: { ...Object.fromEntries(all.map((m) => [m, false])), ...coach.modules, ...c.modules } as Coach["modules"],
     pages: pagesOf(coach, c),
   }
@@ -42,6 +45,7 @@ export function pageLayout(
 ): PageLayout {
   const layouts = coach.pages?.[page]
   const saved = (tier && layouts?.[tier]) || layouts?.default
+  if (isPageId(page)) return saved ? normalizeLayout(saved, heightOf) : defaultCustomPage(pageIdOf(page))
   if (page === "home") return saved ? normalizeLayout(saved, heightOf) : defaultHome(template, coach)
   if (saved) return withCore(page, normalizeLayout(saved, heightOf))
   const start = templatePage(template, page, coach)

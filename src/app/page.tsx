@@ -1,10 +1,7 @@
 import Link from "next/link"
-import { ArrowRight, ArrowUpRight } from "@/components/icons"
+import { ArrowRight } from "@/components/icons"
+import { LauncherCards } from "@/components/onboarding/launcher-cards"
 import { LauncherOnboarding } from "@/components/onboarding/launcher-section"
-import { COACHES } from "@/lib/data/coaches"
-import { themeToCss } from "@/lib/theme/css"
-import { resolveTheme } from "@/lib/theme/resolve"
-import { TEMPLATES } from "@/lib/theme/templates"
 
 const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
 
@@ -35,57 +32,7 @@ export default function Launcher() {
 
         <LauncherOnboarding />
 
-        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {COACHES.map((c) => {
-            const theme = resolveTheme(c)
-            const scope = `.pv-${c.slug}`
-            return (
-              <article key={c.slug} className="flex flex-col gap-3 rounded-[6px] bg-[#161618] p-3 shadow-[0_0_0_1px_#2a2a2f]">
-                <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, scope) }} />
-                <div className="flex items-center justify-between">
-                  <span className={`${mono} text-white/50`}>Template · {TEMPLATES[c.template].name}</span>
-                  <span className={`${mono} text-white/50`}>{theme.nav.layout} nav</span>
-                </div>
-
-                {/* Live mini preview rendered with the coach's real theme */}
-                <div className={`pv-${c.slug} overflow-hidden rounded-[4px] bg-background p-4 text-foreground shadow-[0_0_0_1px_#2a2a2f]`} style={{ fontFamily: "var(--coach-font-body)" }}>
-                  <div className="mb-4 flex items-center gap-2">
-                    <span className="grid size-7 place-items-center rounded-[min(var(--radius),8px)] bg-primary text-xs text-primary-foreground" style={{ fontFamily: "var(--coach-font-heading)" }}>
-                      {c.mark}
-                    </span>
-                    <span className="text-sm" style={{ fontFamily: "var(--coach-font-heading)" }}>{c.name}</span>
-                  </div>
-                  <div className="flex flex-col gap-3 rounded-[var(--radius)] bg-card p-4" style={{ boxShadow: "var(--card-shadow)" }}>
-                    <span className="eyebrow">Start here</span>
-                    <span className="text-xl leading-tight" style={{ fontFamily: "var(--coach-font-heading)", fontWeight: "var(--coach-heading-weight)" as never }}>
-                      Pick up where you left off
-                    </span>
-                    <div className="h-1 overflow-hidden rounded-full bg-muted">
-                      <div className="h-full w-3/5 bg-primary" />
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="rounded-[var(--button-radius)] bg-primary px-3 py-1.5 text-xs text-primary-foreground">Continue</span>
-                      <span className="rounded-[var(--button-radius)] bg-highlight px-3 py-1.5 text-xs text-highlight-foreground">{c.wording.courses}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <h2 className="text-[0.875rem] font-semibold">{c.name}</h2>
-                  <p className="text-xs text-[#a8a8b1]">{c.tagline}</p>
-                </div>
-                <div className="mt-auto flex flex-wrap gap-2">
-                  <Link href={`/c/${c.slug}`} className="inline-flex h-7 items-center gap-1.5 rounded-[4px] bg-[#f8ff9e] px-2.5 text-[0.78125rem] font-medium text-[#040404] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),0_0_0_1px_rgb(0_0_0/0.5)] hover:bg-[#ecf38a]">
-                    Student side <ArrowRight className="size-3.5" />
-                  </Link>
-                  <Link href={`/admin/${c.slug}`} className="inline-flex h-7 items-center gap-1.5 rounded-[4px] border border-[#2a2a2f] bg-[#222226] px-2.5 text-[0.78125rem] font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_1px_1px_rgb(0_0_0/0.4)] hover:bg-[#2e2e33]">
-                    Admin area <ArrowUpRight className="size-3.5" />
-                  </Link>
-                </div>
-              </article>
-            )
-          })}
-        </section>
+        <LauncherCards />
 
         <section className="grid gap-3 rounded-[6px] bg-[#161618] p-4 shadow-[0_0_0_1px_#2a2a2f] md:grid-cols-[1fr_2fr]">
           <span className={`${mono} text-white/50`}>Built so far</span>

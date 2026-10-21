@@ -5,7 +5,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { PageRenderer } from "@/components/widgets/page-renderer"
 import { heightOf } from "@/components/widgets/registry"
 import { StartHere } from "./getting-started"
-import { DataModeProvider } from "@/components/widgets/shared"
+import { DataModeProvider, dataModeOf } from "@/components/widgets/shared"
 import { useViewerTier } from "@/lib/data/access"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { pageLayout } from "@/lib/theme/resolve"
@@ -17,7 +17,7 @@ export function StudentHome() {
   // The demo student is in the first tier; the builder's preview can ask for another tier or for empty data.
   const tier = useViewerTier(coach)
   return (
-    <DataModeProvider value={params.get("data") === "empty" ? "empty" : "sample"}>
+    <DataModeProvider value={dataModeOf(params.get("data"))}>
       <div className="flex flex-col page-gap">
         <div className="flex flex-col gap-1">
           <span className="eyebrow">Monday, 12 October</span>

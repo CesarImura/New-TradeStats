@@ -35,8 +35,10 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
   // Card surface: raised (the palette's card), grey (a flat grey card on the page) or outline (no fill, a hairline).
   const surface = t.cardSurface ?? "raised"
   const card = surface === "grey" ? `color-mix(in oklab, ${p.foreground} ${isDark(p.background) ? 7 : 5}%, ${p.background})` : surface === "outline" ? p.background : p.card
-  const ring = t.borders || surface === "outline" ? `0 0 0 1px ${p.border}` : ""
-  const cardShadow = [ring, shadow === "none" || surface !== "raised" ? "" : shadow].filter(Boolean).join(", ") || "none"
+  // The hairline is an inset outline, not a 1px shadow ring: a ring sits outside the card and on rounded
+  // corners the page shows through between the two, so the corners read as a different colour.
+  const cardEdge = t.borders || surface === "outline" ? p.border : "transparent"
+  const cardShadow = shadow === "none" || surface !== "raised" ? "none" : shadow
   const buttonRadius =
     t.buttonShape === "pill" ? "9999px" : t.buttonShape === "square" ? `${Math.min(t.radius, 3)}px` : `${Math.max(6, t.radius * 0.7)}px`
 
@@ -85,6 +87,9 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
     "--highlight-foreground": p.highlightForeground,
     "--profit": p.profit,
     "--loss": p.loss,
+    // Profit and loss read as text: the same colour, moved to a readable shade when the coach picked their own.
+    "--profit-text": p.profitText,
+    "--loss-text": p.lossText,
     "--coach-font-heading": FONT_LIBRARY[t.fonts.heading].css,
     "--coach-font-body": FONT_LIBRARY[t.fonts.body].css,
     "--coach-font-label": FONT_LIBRARY[t.fonts.label].css,
@@ -96,6 +101,7 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
     "--page-gap": PAGE_GAP[t.density],
     "--button-radius": buttonRadius,
     "--card-shadow": cardShadow,
+    "--card-edge": cardEdge,
     // Brand visuals: a natural gradient ramp, a harmonious series palette, glow and texture.
     // The brand colour and its own text colour, kept separate so brand surfaces can re-tint --primary.
     "--brand": t.primary,
@@ -136,8 +142,11 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
   return `
 ${scope}{${body}color-scheme:${t.mode};}
 ${within(".text-primary")}{color:var(--brand-text);}
+${within(".text-profit")}{color:var(--profit-text);}
+${within(".text-loss")}{color:var(--loss-text);}
 ${within(".border-primary")}{border-color:var(--brand-mark);}
 ${within("[data-slot=button]")}{border-radius:var(--button-radius)!important;}
+${within(':is([data-slot=card],[style*="var(--card-shadow)"])')}{outline:1px solid var(--card-edge);outline-offset:-1px;}
 ${within("[data-slot=card]")}{box-shadow:var(--card-shadow);--card-spacing:calc(var(--spacing) * 4 * var(--density))!important;}
 ${within(":is([data-slot=sidebar-menu-button],[data-slot=sidebar-menu-sub-button],[data-slot=tabs-trigger],[data-slot=dropdown-menu-item],[data-slot=dropdown-menu-sub-trigger],[data-slot=select-item],[data-slot=context-menu-item],[data-slot=command-item])")}{border-radius:var(--r-menu)!important;}
 ${within(":is([data-slot=dropdown-menu-content],[data-slot=dropdown-menu-sub-content],[data-slot=popover-content],[data-slot=select-content],[data-slot=context-menu-content],[data-slot=tooltip-content])")}{border-radius:var(--r-panel)!important;}

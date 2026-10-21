@@ -1,22 +1,21 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { BookOpen, Bot, CalendarDays, ChartCandlestick, Check, CircleAlert, Landmark, Loader2, MessagesSquare, NotebookPen, Trophy } from "@/components/icons"
+import { BookOpen, Bot, CalendarDays, ChartCandlestick, Check, CircleAlert, Download, Handshake, Landmark, Loader2, MessagesSquare, NotebookPen, Trophy } from "@/components/icons"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { More } from "@/components/admin/design/controls"
 import { DesignField, useDesign } from "@/components/admin/design/design-fields"
+import { PagesField } from "@/components/admin/design/pages-field"
 import { COACHES, type ModuleId } from "@/lib/data/coaches"
 import { customCommunities, slugify } from "@/lib/data/communities"
 import { useAccount } from "@/lib/data/use-communities"
-import { TEMPLATES } from "@/lib/theme/templates"
 import { MARKETS, type Market } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { Choice, mono } from "./frame"
-import { FullEditorLink, MenuOptions } from "./look-steps"
-import { suggestedTemplate } from "./suggest"
+import { FullEditorLink } from "./look-steps"
 import type { StepProps } from "./wizard"
 
 function Row({ label, hint, htmlFor, children }: { label: string; hint?: React.ReactNode; htmlFor?: string; children: React.ReactNode }) {
@@ -33,30 +32,11 @@ function Row({ label, hint, htmlFor, children }: { label: string; hint?: React.R
   )
 }
 
-// ---------- ONB-08 · Template
-
-export function TemplateStep() {
-  const acc = useAccount()
-  const suggested = suggestedTemplate(acc?.answers)
-  return (
-    <div className="grid gap-3">
-      <DesignField id="template" />
-      <p className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Badge variant="outline" className={cn(mono, "h-5 border-[var(--ts-interactive)]/50 text-[0.58rem] text-[var(--ts-interactive)]")}>
-          Fits you
-        </Badge>
-        {TEMPLATES[suggested].name}: {TEMPLATES[suggested].blurb}
-      </p>
-      <p className="text-xs text-muted-foreground">Click one to see it full size on the right. You can switch template any time from Design.</p>
-    </div>
-  )
-}
-
-// ---------- ONB-09 · Name & address
+// ---------- ONB-09 · Name & address (rows of the Brand step)
 
 const RESERVED = ["admin", "app", "www", "help", "api", "login", "signup", "setup", "tradestats"]
 
-export function AddressStep({ community, update, setReady }: StepProps) {
+export function NameRows({ community, update, setReady }: StepProps) {
   const [touched, setTouched] = useState(!!community.address)
   const address = community.address ?? slugify(community.name)
   const taken =
@@ -76,7 +56,6 @@ export function AddressStep({ community, update, setReady }: StepProps) {
           value={community.name}
           maxLength={40}
           autoFocus
-          
           onChange={(e) => {
             const name = e.target.value
             const initials = name
@@ -120,33 +99,28 @@ export function AddressStep({ community, update, setReady }: StepProps) {
       <Row label="What do students call you?" htmlFor="cname" hint="Used in messages like “Marco replied”">
         <Input id="cname" value={community.coachName} onChange={(e) => update({ coachName: e.target.value })} />
       </Row>
-
-      <More label="What you call things">
-        <DesignField id="wording" />
-      </More>
     </div>
   )
 }
 
-// ---------- ONB-10 · Logo & colours
+// ---------- ONB-10 · Brand (same order as Design → Brand)
 
-export function BrandStep({ community }: StepProps) {
+export function BrandStep({ community, update, setReady }: StepProps) {
   return (
     <div className="grid gap-7">
       <DesignField id="logo" />
+      <NameRows community={community} update={update} setReady={setReady} />
       <DesignField id="primary" />
       <DesignField id="mode" />
-      <More label="More colours and background">
+      <More label="Second colour">
         <DesignField id="highlight" />
-        <DesignField id="effects" />
-        <DesignField id="background" />
       </More>
       <FullEditorLink slug={community.slug} />
     </div>
   )
 }
 
-// ---------- ONB-11 · Modules
+// ---------- ONB-11 · Menu (sections, names and the same folds as Design → Menu)
 
 const MODULES: { id: ModuleId; name: string; text: string; icon: React.ComponentType<{ className?: string }>; later?: boolean }[] = [
   { id: "courses", name: "Courses", text: "Video lessons in modules, with progress", icon: BookOpen },
@@ -156,6 +130,8 @@ const MODULES: { id: ModuleId; name: string; text: string; icon: React.Component
   { id: "community", name: "Community", text: "Posts and chat, or a link to your Discord", icon: MessagesSquare },
   { id: "ai", name: "AI assistant", text: "Answers questions from your own lessons", icon: Bot },
   { id: "ranking", name: "Ranking", text: "Leaderboard by consistency and progress", icon: Trophy, later: true },
+  { id: "downloads", name: "Downloads", text: "Indicators, templates and files for your students", icon: Download },
+  { id: "partners", name: "Partners", text: "Broker and prop firm offers, with your affiliate links", icon: Handshake },
 ]
 
 export function ModulesStep({ community, update }: StepProps) {
@@ -217,7 +193,19 @@ export function ModulesStep({ community, update }: StepProps) {
           </div>
         </Row>
       )}
-      <MenuOptions />
+      <More label="Menu layout">
+        <DesignField id="nav-layout" />
+        <DesignField id="nav-frame" />
+        <DesignField id="nav-style" />
+        <DesignField id="nav-logo" />
+      </More>
+      <More label="What you call things">
+        <DesignField id="wording" />
+      </More>
+      <More label="Your own pages">
+        <p className="text-xs text-muted-foreground">Pages built from widgets, like Rules or Resources. Arrange them in Design → Pages.</p>
+        <PagesField />
+      </More>
     </div>
   )
 }

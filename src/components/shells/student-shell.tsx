@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, LogOut, Search, Settings, User } from "@/components/icons"
+import { useState } from "react"
+import { Bell, LogOut, MoreHorizontal, Search, Settings, User } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CommunitySwitcher } from "@/components/student/community-switcher"
 import { PreviewAsBanner, Tour } from "@/components/student/getting-started"
@@ -32,6 +33,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { backdropStyle, dimOf } from "@/lib/theme/backdrops"
 import { cn } from "@/lib/utils"
@@ -246,27 +248,59 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
   )
 }
 
-/** Phone: both layouts become a bottom bar with the first five items. */
+/** Phone: both layouts become a bottom bar. Up to five items show; with more, four show and the rest sit under "More". */
 function MobileBar({ items }: { items: NavItem[] }) {
   const isActive = useActive(useCoach().base)
+  const [open, setOpen] = useState(false)
+  const overflow = items.length > 5
+  const shown = overflow ? items.slice(0, 4) : items
+  const hidden = overflow ? items.slice(4) : []
+  const itemClass = "flex w-full flex-col items-center gap-1 py-2.5 text-[0.7rem] text-muted-foreground data-[active=true]:text-primary"
   return (
     <nav data-edit="nav" className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
       <ul className="grid grid-cols-5">
-        {items.slice(0, 5).map((item) => (
+        {shown.map((item) => (
           <li key={item.id}>
-            <Link
-              href={item.href}
-              data-active={isActive(item)}
-              data-tour={item.id}
-              data-edit={`menu:${item.id}`}
-              className="flex flex-col items-center gap-1 py-2.5 text-[0.7rem] text-muted-foreground data-[active=true]:text-primary"
-            >
+            <Link href={item.href} data-active={isActive(item)} data-tour={item.id} data-edit={`menu:${item.id}`} className={itemClass}>
               <item.icon className="size-5" />
               <span className="max-w-full truncate px-1">{item.label}</span>
             </Link>
           </li>
         ))}
+        {overflow && (
+          <li>
+            <button type="button" data-active={hidden.some(isActive)} aria-haspopup="dialog" onClick={() => setOpen(true)} className={itemClass}>
+              <MoreHorizontal className="size-5" />
+              <span className="max-w-full truncate px-1">More</span>
+            </button>
+          </li>
+        )}
       </ul>
+      {overflow && (
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent side="bottom" className="pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <SheetHeader>
+              <SheetTitle>More</SheetTitle>
+            </SheetHeader>
+            <ul className="grid gap-1 px-2">
+              {hidden.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    href={item.href}
+                    data-active={isActive(item)}
+                    data-tour={item.id}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 rounded-[var(--r-menu)] px-3 py-3 text-sm text-muted-foreground hover:bg-muted data-[active=true]:bg-muted data-[active=true]:text-primary"
+                  >
+                    <item.icon className="size-5" />
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </SheetContent>
+        </Sheet>
+      )}
     </nav>
   )
 }

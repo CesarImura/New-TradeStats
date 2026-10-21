@@ -1,6 +1,6 @@
 import type { Coach, ModuleId } from "@/lib/data/coaches"
 import { TEMPLATES } from "@/lib/theme/templates"
-import type { Density, TemplateId } from "@/lib/theme/types"
+import type { Density, TemplateId, WidgetHeader } from "@/lib/theme/types"
 
 /**
  * The Home is one grid: 12 columns, rows of a fixed height. Every widget
@@ -22,12 +22,33 @@ export type Emphasis = "quiet" | "accent" | "star"
 /** How much a widget shows. */
 export type Detail = "compact" | "standard" | "detailed"
 
+/** The coach's own content on a widget: a short text with a button, and a picture. */
+export type WidgetNote = {
+  text?: string
+  button?: string
+  /** A page id ("courses", "calendar", …) or "url" (then `url` holds the address). */
+  target?: string
+  url?: string
+  /** A data URL. */
+  image?: string
+}
+
+/** Who sees a widget. Unset means everyone. */
+export type WidgetPhase = "first-week" | "inactive" | "finished"
+export type WidgetShow = { phase?: WidgetPhase; group?: string }
+
 export type WidgetInstance = {
   id: string
   type: string
   variant?: string
   emphasis?: Emphasis
   detail?: Detail
+  /** This widget's own header parts (icon, title, description, value); unset parts follow Design → Look. */
+  header?: Partial<WidgetHeader>
+  /** The coach's own text, button and picture, shown with the widget's data. */
+  note?: WidgetNote
+  /** Show it only to a phase of the student's life, or to one group. */
+  show?: WidgetShow
   x: number
   y: number
   w: number
@@ -46,7 +67,7 @@ export type PageLayout = {
 export type HomeLayouts = Record<string, PageLayout>
 
 /** Every student page is a widget grid: Home, and one page per module. */
-export type PageId = "home" | ModuleId
+export type PageId = "home" | ModuleId | `page:${string}`
 export type PageLayouts = Partial<Record<PageId, HomeLayouts>>
 
 /** The widget holding a module page's own tool (its trades, calendar, chart…). Pinned: it can move and resize, not go. */
@@ -180,6 +201,16 @@ export function defaultPage(page: ModuleId): PageLayout {
     items: [
       { id: `title-${page}`, type: "page-header", x: 0, y: 0, w: COLS, h: HEADER_H },
       { id: `core-${page}`, type: coreType(page), x: 0, y: HEADER_H, w: COLS, h: CORE_H },
+    ],
+  }
+}
+
+/** A page the coach added, before they arrange it: its title, then a text to write in. No core widget. */
+export function defaultCustomPage(id: string): PageLayout {
+  return {
+    items: [
+      { id: `title-${id}`, type: "page-header", x: 0, y: 0, w: COLS, h: HEADER_H },
+      { id: `text-${id}`, type: "text", variant: "plain", x: 0, y: HEADER_H, w: 12, h: 4 },
     ],
   }
 }

@@ -2,7 +2,9 @@
 
 import { useId } from "react"
 import { cn } from "@/lib/utils"
-import { ACCENT, ACCENT_TEXT, TYPE, W } from "./kit"
+import { useCoach } from "@/components/coach/coach-provider"
+import { widgetHeaderOf } from "@/lib/theme/types"
+import { ACCENT, ACCENT_TEXT, TYPE, W, useFrame } from "./kit"
 import { GREY, Label, Num, TRACK, ink, useFigureFont } from "./instrument"
 
 /**
@@ -54,12 +56,17 @@ export function HeroCard({
   foot?: React.ReactNode
 }) {
   const font = useFigureFont()
+  const { header } = useFrame()
+  const { theme } = useCoach()
+  const h = widgetHeaderOf(theme, header)
   return (
     <W className="gap-0 p-0">
-      <div className={cn("flex min-w-0 shrink-0 items-center gap-2 pt-[calc(0.875rem*var(--density,1))]", PAD)}>
-        <Label className="min-w-0 flex-1 truncate">{title}</Label>
-        {chip && <span className="hidden shrink-0 @[13rem]:inline-flex">{chip}</span>}
-      </div>
+      {(h.title || (chip && h.value)) && (
+        <div className={cn("flex min-w-0 shrink-0 items-center gap-2 pt-[calc(0.875rem*var(--density,1))]", PAD)}>
+          <Label className="min-w-0 flex-1 truncate">{h.title ? title : null}</Label>
+          {chip && h.value && <span className="hidden shrink-0 @[13rem]:inline-flex">{chip}</span>}
+        </div>
+      )}
       <div className={cn("flex min-h-0 flex-1 flex-col justify-end gap-1 pb-[calc(0.875rem*var(--density,1))]", PAD)}>
         {label && <span className={cn(TYPE.small, "truncate")}>{label}</span>}
         <Num value={value} unit={unit} delta={delta} deltaTone={deltaTone} />

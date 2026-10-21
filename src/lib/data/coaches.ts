@@ -1,8 +1,32 @@
 import type { CoachTheme, TemplateId } from "@/lib/theme/types"
 import type { HomeLayouts, PageLayouts } from "@/lib/widgets/layout"
+import { CircleHelp, Download, FileText, Flag, Gift, Info, Lightbulb, Link2, Star, Users, type LucideIcon } from "@/components/icons"
 import { customCommunities } from "./communities"
 
-export type ModuleId = "courses" | "calendar" | "charts" | "community" | "journal" | "ranking" | "ai"
+export type ModuleId = "courses" | "calendar" | "charts" | "community" | "journal" | "ranking" | "ai" | "downloads" | "partners"
+
+/** An id in the student menu: a module, or `page:<id>` for a page the coach added. */
+export type MenuId = ModuleId | `page:${string}`
+export const isPageId = (m: string): m is `page:${string}` => m.startsWith("page:")
+export const pageIdOf = (m: string) => m.slice(5)
+
+export type PageIcon = "star" | "file" | "link" | "download" | "flag" | "gift" | "info" | "lightbulb" | "help" | "users"
+
+export const PAGE_ICONS: Record<PageIcon, LucideIcon> = {
+  star: Star,
+  file: FileText,
+  link: Link2,
+  download: Download,
+  flag: Flag,
+  gift: Gift,
+  info: Info,
+  lightbulb: Lightbulb,
+  help: CircleHelp,
+  users: Users,
+}
+
+/** A page the coach added to the student menu. Built from widgets like every other page; its layout lives in `Coach.pages["page:<id>"]`. */
+export type CustomPage = { id: string; name: string; icon: PageIcon; on?: boolean }
 
 /** Words the coach can rename. Keys are ours; values are what students see. */
 export type Wording = {
@@ -14,6 +38,8 @@ export type Wording = {
   journal: string
   ranking: string
   ai: string
+  downloads: string
+  partners: string
   student: string
   students: string
   lesson: string
@@ -36,7 +62,9 @@ export type Coach = {
   overrides: Partial<CoachTheme>
   wording: Wording
   modules: Record<ModuleId, boolean>
-  menu: ModuleId[]
+  menu: MenuId[]
+  /** Pages the coach added to the menu (each is in `menu` as `page:<id>`). */
+  customPages?: CustomPage[]
   /** Older communities (and the setup wizard) keep Home's layouts here; resolveCoach moves them into pages.home. */
   home?: HomeLayouts
   /** Layouts the coach built, per page and tier. Without one, Home follows the template and a module page is just its core widget. */
@@ -54,6 +82,8 @@ export const DEFAULT_WORDING: Wording = {
   journal: "Journal",
   ranking: "Ranking",
   ai: "AI assistant",
+  downloads: "Downloads",
+  partners: "Partners",
   student: "Student",
   students: "Students",
   lesson: "Lesson",
@@ -70,8 +100,8 @@ export const COACHES: Coach[] = [
     template: "terminal",
     overrides: {},
     wording: { ...DEFAULT_WORDING, courses: "Playbook", charts: "Desk", students: "Traders", student: "Trader", ai: "Ask Marco" },
-    modules: { courses: true, calendar: true, charts: true, community: true, journal: true, ranking: false, ai: true },
-    menu: ["courses", "calendar", "charts", "journal", "community", "ai", "ranking"],
+    modules: { courses: true, calendar: true, charts: true, community: true, journal: true, ranking: false, ai: true, downloads: true, partners: true },
+    menu: ["courses", "calendar", "charts", "journal", "community", "ai", "ranking", "downloads", "partners"],
     tiers: [
       { id: "core", name: "Core", price: "€149", cadence: "month", members: 141 },
       { id: "desk", name: "Trading Desk", price: "€390", cadence: "month", members: 37 },
@@ -98,8 +128,8 @@ export const COACHES: Coach[] = [
       student: "Mentee",
       ai: "Study buddy",
     },
-    modules: { courses: true, calendar: true, charts: false, community: true, journal: true, ranking: false, ai: true },
-    menu: ["courses", "calendar", "community", "journal", "charts", "ai", "ranking"],
+    modules: { courses: true, calendar: true, charts: false, community: true, journal: true, ranking: false, ai: true, downloads: true, partners: false },
+    menu: ["courses", "calendar", "community", "journal", "charts", "ai", "ranking", "downloads", "partners"],
     tiers: [
       { id: "academy", name: "Academy", price: "€79", cadence: "month", members: 412 },
       { id: "circle", name: "Inner Circle", price: "€249", cadence: "month", members: 58 },
@@ -115,8 +145,8 @@ export const COACHES: Coach[] = [
     template: "pulse",
     overrides: { primary: "#6b3dff" },
     wording: { ...DEFAULT_WORDING, courses: "Bootcamp", calendar: "Live room", charts: "Markets", ai: "Kairo AI" },
-    modules: { courses: true, calendar: true, charts: true, community: true, journal: true, ranking: true, ai: true },
-    menu: ["courses", "charts", "calendar", "journal", "ranking", "community", "ai"],
+    modules: { courses: true, calendar: true, charts: true, community: true, journal: true, ranking: true, ai: true, downloads: true, partners: true },
+    menu: ["courses", "charts", "calendar", "journal", "ranking", "community", "ai", "downloads", "partners"],
     tiers: [
       { id: "free", name: "Free", price: "€0", cadence: "month", members: 1830 },
       { id: "pro", name: "Pro", price: "€99", cadence: "month", members: 266 },
@@ -133,8 +163,8 @@ export const COACHES: Coach[] = [
     template: "terminal",
     overrides: { primary: "#16a34a", mode: "light", nav: { layout: "top", style: "labels", logo: "left" } },
     wording: { ...DEFAULT_WORDING, courses: "Lab", students: "Members", student: "Member" },
-    modules: { courses: true, calendar: true, charts: false, community: true, journal: false, ranking: false, ai: false },
-    menu: ["courses", "calendar", "community", "journal", "charts", "ai", "ranking"],
+    modules: { courses: true, calendar: true, charts: false, community: true, journal: false, ranking: false, ai: false, downloads: true, partners: false },
+    menu: ["courses", "calendar", "community", "journal", "charts", "ai", "ranking", "downloads", "partners"],
     tiers: [{ id: "lab", name: "Lab", price: "€59", cadence: "month", members: 96 }],
   },
 ]

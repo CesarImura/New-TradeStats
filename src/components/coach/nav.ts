@@ -5,6 +5,8 @@ import {
   ChartCandlestick,
   CreditCard,
   GraduationCap,
+  Download,
+  Handshake,
   House,
   LayoutDashboard,
   MessagesSquare,
@@ -16,7 +18,7 @@ import {
   Users,
   type LucideIcon,
 } from "@/components/icons"
-import type { Coach, ModuleId } from "@/lib/data/coaches"
+import { PAGE_ICONS, isPageId, pageIdOf, type Coach, type ModuleId } from "@/lib/data/coaches"
 
 export type NavItem = { id: string; label: string; href: string; icon: LucideIcon; screens: string }
 
@@ -28,6 +30,8 @@ const MODULE_ICON: Record<ModuleId, LucideIcon> = {
   journal: NotebookPen,
   ranking: Trophy,
   ai: Sparkles,
+  downloads: Download,
+  partners: Handshake,
 }
 
 /** Screen IDs from the platform map, shown on placeholder pages. */
@@ -39,22 +43,22 @@ export const MODULE_SCREENS: Record<ModuleId, string> = {
   journal: "STU-13 to STU-16, STU-28",
   ranking: "STU-25, STU-26",
   ai: "STU-17, STU-18",
+  downloads: "STU-34",
+  partners: "STU-35",
 }
 
-/** The student menu: only modules the coach switched on, in the coach's order and words. */
+/** The student menu: modules the coach switched on and pages the coach added, in the coach's order and words. */
 export function studentNav(coach: Coach, base: string): NavItem[] {
-  return [
-    { id: "home", label: coach.wording.home, href: base, icon: House, screens: "STU-01" },
-    ...coach.menu
-      .filter((m) => coach.modules[m])
-      .map((m) => ({
-        id: m,
-        label: coach.wording[m],
-        href: `${base}/${m}`,
-        icon: MODULE_ICON[m],
-        screens: MODULE_SCREENS[m],
-      })),
-  ]
+  const items: NavItem[] = []
+  for (const m of coach.menu) {
+    if (isPageId(m)) {
+      const page = coach.customPages?.find((p) => p.id === pageIdOf(m))
+      if (page && page.on !== false)
+        items.push({ id: m, label: page.name, href: `${base}/p/${page.id}`, icon: PAGE_ICONS[page.icon], screens: "custom" })
+    } else if (coach.modules[m])
+      items.push({ id: m, label: coach.wording[m], href: `${base}/${m}`, icon: MODULE_ICON[m], screens: MODULE_SCREENS[m] })
+  }
+  return [{ id: "home", label: coach.wording.home, href: base, icon: House, screens: "STU-01" }, ...items]
 }
 
 /** The admin menu is the same for every community, in our words, not the coach's. */
@@ -70,6 +74,7 @@ export function adminNav(_coach: Coach, base: string): { group: string; items: N
         { id: "students", label: "Students", href: `${base}/students`, icon: Users, screens: "ADM-02 to ADM-07" },
         { id: "journal", label: "Journal & feedback", href: `${base}/journal`, icon: NotebookPen, screens: "ADM-05, ADM-06, ADM-16" },
         { id: "content", label: "Content", href: `${base}/content`, icon: GraduationCap, screens: "ADM-08 to ADM-15" },
+        { id: "downloads", label: "Downloads", href: `${base}/downloads`, icon: Download, screens: "ADM-59" },
         { id: "calendar", label: "Calendar", href: `${base}/calendar`, icon: CalendarDays, screens: "ADM-19 to ADM-23" },
         { id: "charts", label: "Charts", href: `${base}/charts`, icon: ChartCandlestick, screens: "ADM-57, ADM-58" },
         { id: "community", label: "Community", href: `${base}/community`, icon: MessagesSquare, screens: "ADM-17, ADM-18" },
@@ -80,6 +85,7 @@ export function adminNav(_coach: Coach, base: string): { group: string; items: N
       group: "Business",
       items: [
         { id: "sales", label: "Sales & payments", href: `${base}/sales`, icon: CreditCard, screens: "ADM-29 to ADM-36, ADM-41" },
+        { id: "partners", label: "Partners", href: `${base}/partners`, icon: Handshake, screens: "ADM-60" },
         { id: "ranking", label: "Ranking", href: `${base}/ranking`, icon: BarChart3, screens: "ADM-53, ADM-54" },
       ],
     },

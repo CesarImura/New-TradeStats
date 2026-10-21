@@ -6,18 +6,21 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import type { Coach, ModuleId } from "@/lib/data/coaches"
+import { isPageId, type Coach, type ModuleId } from "@/lib/data/coaches"
 import { FONT_LIBRARY, type FontId } from "@/lib/fonts"
 import type { Overrides } from "@/lib/prototype-store"
 import { themeToCss } from "@/lib/theme/css"
 import { onColor } from "@/lib/theme/derive"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
-import { chartStyleOf, widgetStyleOf, type CoachTheme, type TemplateId } from "@/lib/theme/types"
+import { chartStyleOf, widgetFontOf, widgetHeaderOf, widgetStyleOf, type CoachTheme, type TemplateId } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { BackgroundControl } from "./background-control"
 import { Field, More, Segmented, SliderField, Swatches } from "./controls"
+import { HeaderParts } from "./header-parts"
+import { AddPageButton, PageRow } from "./pages-field"
 import { BRAND_COLORS, FONT_PAIRS, HIGHLIGHT_COLORS } from "./options"
+import { TradingColoursField } from "./trading-colours"
 
 /**
  * Every Design setting, defined once by id. The left panel (Brand kit, Menu
@@ -47,6 +50,8 @@ export const MODULE_NAMES: Record<ModuleId, string> = {
   journal: "Journal",
   ranking: "Ranking",
   ai: "AI assistant",
+  downloads: "Downloads",
+  partners: "Partners",
 }
 
 /** One setting by id. Menu items are `menu-<module>` (and `menu-home`). */
@@ -426,6 +431,34 @@ function ChartStyleField() {
   )
 }
 
+function WidgetFontField() {
+  const { theme, change } = useDesign()
+  return (
+    <Field id="widget-font" label="Widget font" hint={{ mono: "Figures and small labels in mono", heading: "Figures in your heading font", body: "Figures in your text font" }[widgetFontOf(theme)]}>
+      <Segmented
+        label="Widget font"
+        value={widgetFontOf(theme)}
+        onChange={(widgetFont) => change({ theme: { widgetFont } }, "widget-font")}
+        options={[
+          { value: "mono", label: "Mono" },
+          { value: "heading", label: "Heading" },
+          { value: "body", label: "Normal" },
+        ]}
+      />
+    </Field>
+  )
+}
+
+function WidgetHeaderField() {
+  const { theme, change } = useDesign()
+  const h = widgetHeaderOf(theme)
+  return (
+    <Field id="widget-header" label="Widget header" hint="For every widget; each can differ">
+      <HeaderParts idPrefix="widget-header" value={h} onChange={(key, on) => change({ theme: { widgetHeader: { ...theme.widgetHeader, [key]: on } } }, `widget-header-${key}`)} />
+    </Field>
+  )
+}
+
 function CardSurfaceField() {
   const { theme, change } = useDesign()
   const surface = theme.cardSurface ?? "raised"
@@ -536,6 +569,7 @@ function MenuRow({ id }: { id: string }) {
         <span className="w-[4.25rem] shrink-0" />
       </div>
     )
+  if (isPageId(id)) return <PageRow id={id} />
   const m = id as ModuleId
   const i = coach.menu.indexOf(m)
   if (i < 0) return null
@@ -566,11 +600,12 @@ function MenuItemsField() {
   const { coach } = useDesign()
   return (
     <div className="grid gap-1.5">
-      <p className="text-xs text-muted-foreground">Rename, reorder or hide what students see. Hidden items disappear from the menu and Home.</p>
+      <p className="text-xs text-muted-foreground">Rename, reorder or hide what students see. Hidden items disappear from the menu and Home. Add your own pages, built from widgets like every other page.</p>
       <MenuRow id="home" />
       {coach.menu.map((m) => (
         <MenuRow key={m} id={m} />
       ))}
+      <AddPageButton />
     </div>
   )
 }
@@ -598,6 +633,7 @@ const FIELDS: Record<string, () => React.ReactNode> = {
   logo: LogoField,
   primary: PrimaryField,
   highlight: HighlightField,
+  trading: TradingColoursField,
   mode: ModeField,
   fonts: FontsField,
   "heading-weight": HeadingWeightField,
@@ -611,6 +647,8 @@ const FIELDS: Record<string, () => React.ReactNode> = {
   background: BackgroundField,
   "widget-style": WidgetStyleField,
   "chart-style": ChartStyleField,
+  "widget-font": WidgetFontField,
+  "widget-header": WidgetHeaderField,
   "card-surface": CardSurfaceField,
   "nav-layout": NavLayoutField,
   "nav-style": NavStyleField,
@@ -726,7 +764,7 @@ function TemplateCard({ id, selected, primary, onSelect }: { id: TemplateId; sel
   )
 }
 
-function move<T>(list: T[], i: number, by: number) {
+export function move<T>(list: T[], i: number, by: number) {
   const next = [...list]
   const [item] = next.splice(i, 1)
   next.splice(i + by, 0, item)

@@ -4,17 +4,61 @@ import Link from "next/link"
 import { BookOpen, Check, Hourglass, Lock, Play, PlayCircle } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
-import { COURSES, DEMO_STUDENT, UNLOCKS, courseProgress, nextLesson } from "@/lib/data/sample"
+import { useViewerTier } from "@/lib/data/access"
+import { canAccess, courseStats, openLessons, resumeLesson, studentCourses, useCatalog, useProgress, type Course, type Progress } from "@/lib/data/learning"
+import { DEMO_STUDENT } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { ACCENT, TYPE, series, useFrame, useMore } from "./kit"
 import { Axis, Chip, GREY, HatchBar, Label, Legend, Num, Rule, TickBar, Timeline, WCard, useFigureFont, useChartStyle } from "./instrument"
 import { Cover, WidgetEmpty, inWords, useEmpty, type WidgetProps } from "./shared"
 import { Artwork, MEDIA_FG, MediaCard, MediaProgress } from "./layouts"
 
-type Course = (typeof COURSES)[number]
-
 const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
-const lessonsOf = (c: Course) => c.modules.flatMap((m) => m.lessons)
+/** The modules a student sees, each with only its published lessons. */
+const modulesOf = (c: Course) => c.modules.map((m) => ({ ...m, lessons: m.lessons.filter((l) => l.status === "published") })).filter((m) => m.lessons.length > 0)
+
+/** The coach's catalogue, the student's progress and tier: what every widget here reads. */
+function useLearning() {
+  const { coach } = useCoach()
+  const catalog = useCatalog(coach)
+  const progress = useProgress(coach.slug)
+  const tier = useViewerTier(coach)
+  const courses = studentCourses(catalog)
+  const open = courses.filter((c) => canAccess(c, tier))
+  // The course the student is in: the first open one that isn't finished.
+  const current = open.find((c) => courseStats(c, progress).pct < 100) ?? open[0] ?? courses[0]
+  /** What a locked course asks for: the name of the first tier that gets it. */
+  const needs = (c: Course) => coach.tiers.find((t) => t.id === c.tiers[0])?.name ?? "Locked"
+  return { courses, open, current, progress, tier, needs }
+}
+
+/** Prototype "today" is Monday 12 October 2026, 22:00: unlocks are dated "Thu 15 Oct" in the catalogue. */
+const NOW = Date.UTC(2026, 9, 12, 22)
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+/** Hours until a date like "Thu 15 Oct", or null if it can't be read. */
+function hoursUntil(date: string) {
+  const m = /(\d{1,2})\s+([A-Za-z]{3})/.exec(date)
+  const month = m ? MONTHS.indexOf(m[2][0].toUpperCase() + m[2].slice(1, 3).toLowerCase()) : -1
+  if (!m || month < 0) return null
+  return Math.max(0, Math.round((Date.UTC(2026, month, Number(m[1])) - NOW) / 36e5))
+}
+/** What opens next: scheduled lessons in the catalogue, grouped by module and date, soonest first. */
+function unlocksOf(courses: Course[]) {
+  const groups = new Map<string, { title: string; lessons: number; inHours: number; date: string }>()
+  for (const c of courses)
+    c.modules.forEach((m, i) => {
+      for (const l of m.lessons) {
+        if (l.status !== "scheduled" || !l.unlockAt) continue
+        const inHours = hoursUntil(l.unlockAt)
+        if (inHours === null) continue
+        const key = `${c.id}/${m.id}/${l.unlockAt}`
+        const g = groups.get(key) ?? { title: `Module ${i + 1} · ${m.title}`, lessons: 0, inHours, date: l.unlockAt }
+        g.lessons += 1
+        groups.set(key, g)
+      }
+    })
+  return [...groups.values()].sort((a, b) => a.inHours - b.inHours)
+}
 /** An empty tick or track (the same faint grey instrument.tsx uses). */
 const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
 /** What's still ahead: faint diagonal hatching, like HatchBar's remainder. */
@@ -54,28 +98,29 @@ function Go({ href, label, text }: { href: string; label: string; text?: boolean
  * grouped by module. Done lessons grey, the current one in the accent and a
  * little taller, the rest hatched. `modules` adds M1 · M2 · M3 under the groups.
  */
-function LessonBar({ course, current, height: h0 = 8, modules, className }: { course: Course; current: string; height?: number; modules?: boolean; className?: string }) {
+function LessonBar({ course, progress, current, height: h0 = 8, modules, className }: { course: Course; progress: Progress; current: string; height?: number; modules?: boolean; className?: string }) {
   const font = useFigureFont()
   // Chart style: ticks (separate lessons, the rest hatched), solid (lessons joined, plain track), thin (a hairline).
   const style = useChartStyle()
   const height = style === "thin" ? 3 : h0
   const rest = style === "ticks" ? HATCH : { background: TRACK }
-  const mi = course.modules.findIndex((m) => m.lessons.some((l) => l.id === current))
+  const mods = modulesOf(course)
+  const mi = mods.findIndex((m) => m.lessons.some((l) => l.id === current))
   return (
     <div className={cn("grid gap-1", className)}>
       <div className={cn("flex items-end", style === "ticks" ? "gap-[5px]" : "gap-[3px]")} style={{ height: height + 4 }} aria-hidden>
-        {course.modules.map((m) => (
+        {mods.map((m) => (
           <div key={m.id} className={cn("flex h-full items-end", style === "ticks" ? "gap-[2px]" : "gap-px")} style={{ flex: m.lessons.reduce((n, l) => n + l.minutes, 0) }}>
             {m.lessons.map((l) => {
               const now = l.id === current
-              return <span key={l.id} title={l.title} className="r-bar" style={{ flex: l.minutes, height: now && style !== "thin" ? height + 4 : height, ...(l.done ? { background: GREY[1] } : now ? { background: ACCENT } : rest) }} />
+              return <span key={l.id} title={l.title} className="r-bar" style={{ flex: l.minutes, height: now && style !== "thin" ? height + 4 : height, ...(progress.done.includes(l.id) ? { background: GREY[1] } : now ? { background: ACCENT } : rest) }} />
             })}
           </div>
         ))}
       </div>
       {modules && (
         <div className="flex gap-[5px] text-[0.6875rem] leading-4 tabular-nums" style={{ fontFamily: font }}>
-          {course.modules.map((m, i) => (
+          {mods.map((m, i) => (
             <span key={m.id} className={cn("min-w-0 truncate", i === mi ? "text-foreground" : "text-muted-foreground")} style={{ flex: m.lessons.reduce((n, l) => n + l.minutes, 0) }}>
               M{i + 1}
             </span>
@@ -97,15 +142,17 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
   const empty = useEmpty()
   const standard = useMore("standard")
   const detailed = useMore("detailed")
-  const course = COURSES.find((c) => c.id === props.course) ?? COURSES[0]
-  const next = nextLesson(course)
-  if (empty || !next) return <NoCourses />
-  const lessons = lessonsOf(course)
+  const { open, current: now, progress } = useLearning()
+  // The chosen course if the student can open it, otherwise the one they're in.
+  const course = open.find((c) => c.id === props.course) ?? now
+  const next = course ? resumeLesson(course, progress) : null
+  if (empty || !course || !next) return <NoCourses />
+  const lessons = openLessons(course)
   const index = lessons.findIndex((l) => l.id === next.lesson.id)
-  const done = lessons.filter((l) => l.done).length
-  const mi = course.modules.indexOf(next.module)
+  const done = courseStats(course, progress).done
+  const mi = modulesOf(course).findIndex((m) => m.id === next.module.id)
   const moduleName = next.module.title.split(" · ").pop()
-  const minutesLeft = lessons.filter((l) => !l.done).reduce((n, l) => n + l.minutes, 0)
+  const minutesLeft = lessons.filter((l) => !progress.done.includes(l.id)).reduce((n, l) => n + l.minutes, 0)
   const href = `${base}/courses/${course.id}/${next.lesson.id}`
   const word = coach.wording.lesson.toLowerCase()
   const label = String(props.title || "Up next")
@@ -132,10 +179,10 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
   if (variant === "cover") {
     return (
       <WCard icon={PlayCircle} title="Continue lesson" meta={meta} chip={chip} bodyClassName="@[26rem]:flex-row @[26rem]:items-stretch @[26rem]:gap-4">
-        <Cover color={series(COURSES.indexOf(course))} label={course.title} className="hidden min-h-16 @[26rem]:block @[26rem]:w-[42%] @[26rem]:max-w-64 @[26rem]:shrink-0" />
+        <Cover color={series(course.color)} label={course.title} className="hidden min-h-16 @[26rem]:block @[26rem]:w-[42%] @[26rem]:max-w-64 @[26rem]:shrink-0" />
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <Cover color={series(COURSES.indexOf(course))} className="hidden h-10 w-14 shrink-0 @[16rem]:block @[26rem]:hidden" />
+            <Cover color={series(course.color)} className="hidden h-10 w-14 shrink-0 @[16rem]:block @[26rem]:hidden" />
             <div className="grid min-w-0 flex-1 gap-0.5">
               <Label className="truncate">
                 {label} · {next.lesson.minutes} min
@@ -145,7 +192,7 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
             <Go href={href} label={`Continue ${word}`} />
           </div>
           <div className="mt-auto grid gap-1.5">
-            <LessonBar course={course} current={next.lesson.id} height={6} />
+            <LessonBar course={course} progress={progress} current={next.lesson.id} height={6} />
             {standard && footer}
           </div>
           {upcoming}
@@ -180,7 +227,7 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
   if (variant === "card") {
     const line = (
       <>
-        <LessonBar course={course} current={next.lesson.id} height={6} className="hidden w-28 shrink-0 @[30rem]:grid" />
+        <LessonBar course={course} progress={progress} current={next.lesson.id} height={6} className="hidden w-28 shrink-0 @[30rem]:grid" />
         <Go href={href} label={`Continue ${word}`} />
       </>
     )
@@ -216,7 +263,7 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
         <Go href={href} label={`Continue ${word}`} text />
       </div>
       <div className="mt-auto grid gap-1.5">
-        <LessonBar course={course} current={next.lesson.id} modules={detailed} />
+        <LessonBar course={course} progress={progress} current={next.lesson.id} modules={detailed} />
         {standard && footer}
       </div>
       {upcoming}
@@ -230,10 +277,10 @@ const until = (h: number) => `${Math.floor(h / 24)}d ${String(h % 24).padStart(2
 const WEEK_H = 7 * 24
 
 /** A lesson ring: one arc per lesson, done ones lit, the lesson in progress grey, the rest faint. */
-function LessonRing({ course, accent, className, children }: { course: Course; accent: boolean; className?: string; children?: React.ReactNode }) {
-  const lessons = lessonsOf(course)
+function LessonRing({ course, progress, locked, accent, className, children }: { course: Course; progress: Progress; locked: boolean; accent: boolean; className?: string; children?: React.ReactNode }) {
+  const lessons = openLessons(course)
   const n = lessons.length
-  const next = nextLesson(course)
+  const next = resumeLesson(course, progress)
   const gap = n > 1 ? 7 : 0
   const arc = (i: number) => {
     const a0 = ((i * 360) / n + gap / 2 - 90) * (Math.PI / 180)
@@ -251,8 +298,8 @@ function LessonRing({ course, accent, className, children }: { course: Course; a
             d={arc(i)}
             fill="none"
             strokeWidth={2.5}
-            stroke={course.locked ? TRACK : l.done ? (accent ? ACCENT : GREY[1]) : accent && next?.lesson.id === l.id ? GREY[2] : TRACK}
-            strokeDasharray={course.locked ? "1.5 2.5" : undefined}
+            stroke={locked ? TRACK : progress.done.includes(l.id) ? (accent ? ACCENT : GREY[1]) : accent && next?.lesson.id === l.id ? GREY[2] : TRACK}
+            strokeDasharray={locked ? "1.5 2.5" : undefined}
             style={{ strokeLinecap: "var(--cap)" as never }}
           />
         ))}
@@ -274,24 +321,26 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
   const standard = useMore("standard")
   const detailed = useMore("detailed")
   const font = useFigureFont()
-  if (empty) {
+  const { courses, open, current, progress, tier, needs } = useLearning()
+  const unlocks = unlocksOf(courses)
+  if (empty || courses.length === 0) {
     if (variant === "unlocks") return <WidgetEmpty icon={Lock} title="Everything is unlocked" text={`New ${coach.wording.courses.toLowerCase()} content appears here when it's scheduled.`} />
     return <NoCourses />
   }
   const word = coach.wording.lesson.toLowerCase()
-  const open = COURSES.filter((c) => !c.locked)
-  const all = open.flatMap(lessonsOf)
-  const done = all.filter((l) => l.done).length
-  const overall = Math.round((done / all.length) * 100)
-  const minutesLeft = all.filter((l) => !l.done).reduce((n, l) => n + l.minutes, 0)
-  // The course the student is in: the first open one that isn't finished.
-  const current = open.find((c) => courseProgress(c) < 100) ?? COURSES[0]
-  const meta = `${DEMO_STUDENT.first} · ${done} of ${all.length} ${word}s · ${inWords(minutesLeft)} to go`
+  const stats = open.map((c) => courseStats(c, progress))
+  const total = stats.reduce((n, x) => n + x.lessons, 0)
+  const done = stats.reduce((n, x) => n + x.done, 0)
+  const overall = total ? Math.round((done / total) * 100) : 0
+  const minutesLeft = open.flatMap(openLessons).filter((l) => !progress.done.includes(l.id)).reduce((n, l) => n + l.minutes, 0)
+  const currentStats = courseStats(current, progress)
+  const meta = `${DEMO_STUDENT.first} · ${done} of ${total} ${word}s · ${inWords(minutesLeft)} to go`
 
   if (variant === "unlocks") {
-    const [first, ...later] = UNLOCKS
-    const waited = WEEK_H - first.inHours
-    const locked = COURSES.find((c) => c.locked)
+    if (unlocks.length === 0) return <WidgetEmpty icon={Lock} title="Everything is unlocked" text={`New ${coach.wording.courses.toLowerCase()} content appears here when it's scheduled.`} />
+    const [first, ...later] = unlocks
+    const waited = Math.min(WEEK_H, Math.max(0, WEEK_H - first.inHours))
+    const locked = courses.find((c) => !canAccess(c, tier))
     return (
       <WCard icon={Hourglass} crumb={coach.wording.courses} title="Next unlock" chip={<Chip>{first.date}</Chip>}>
         <div className="grid min-w-0 gap-0.5">
@@ -317,43 +366,44 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
           </div>
         )}
         {detailed && locked && (
-          <Legend items={[{ color: GREY[3], label: `${locked.title} · needs ${locked.locked}`, value: <Lock className="size-3 text-muted-foreground" /> }]} />
+          <Legend items={[{ color: GREY[3], label: `${locked.title} · needs ${needs(locked)}`, value: <Lock className="size-3 text-muted-foreground" /> }]} />
         )}
       </WCard>
     )
   }
 
   if (variant === "bars") {
-    const shown = standard ? COURSES : COURSES.slice(0, 2)
+    const shown = courses.slice(0, standard ? 4 : 2)
     const inProgress = 1
     return (
       <WCard icon={BookOpen} title={coach.wording.courses} meta={meta} chip={<Chip>{overall}%</Chip>}>
-        <Num value={`${done}/${all.length}`} unit={`${word}s`} delta={`+${DONE_THIS_WEEK} this week`} />
+        <Num value={`${done}/${total}`} unit={`${word}s`} delta={`+${DONE_THIS_WEEK} this week`} />
         <div className="grid flex-1 content-start gap-2.5">
           {shown.map((c) => {
-            const n = lessonsOf(c)
-            const d = n.filter((l) => l.done).length
-            const p = courseProgress(c)
-            const here = c === current
+            const st = courseStats(c, progress)
+            const d = st.done
+            const p = st.pct
+            const here = c.id === current.id
+            const locked = !canAccess(c, tier)
             return (
               <div key={c.id} className="grid min-w-0 gap-1.5">
                 <div className="flex min-w-0 items-baseline gap-2">
-                  <span className={cn(TYPE.body, "truncate", c.locked && "text-muted-foreground", here && "font-medium")}>{c.title}</span>
+                  <span className={cn(TYPE.body, "truncate", locked && "text-muted-foreground", here && "font-medium")}>{c.title}</span>
                   <span className="ml-auto flex shrink-0 items-center gap-1.5 text-xs leading-4 tabular-nums" style={{ fontFamily: font }}>
-                    {c.locked ? (
+                    {locked ? (
                       <>
                         <Lock className="size-3 text-muted-foreground" />
-                        <Chip tone="neutral">{c.locked}</Chip>
+                        <Chip tone="neutral">{needs(c)}</Chip>
                       </>
                     ) : p === 100 ? (
                       <>
-                        <Check className="size-3" /> {d}/{n.length}
+                        <Check className="size-3" /> {d}/{st.lessons}
                       </>
                     ) : (
                       <>
                         <span className="hidden text-muted-foreground @[18rem]:inline">{p}%</span>
                         <span>
-                          {d}/{n.length}
+                          {d}/{st.lessons}
                         </span>
                       </>
                     )}
@@ -361,8 +411,8 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
                 </div>
                 <HatchBar
                   height={6}
-                  total={n.length}
-                  parts={c.locked ? [] : [{ value: d, color: here ? ACCENT : GREY[1] }, ...(here ? [{ value: inProgress, color: GREY[2] }] : [])]}
+                  total={st.lessons}
+                  parts={locked ? [] : [{ value: d, color: here ? ACCENT : GREY[1] }, ...(here ? [{ value: inProgress, color: GREY[2] }] : [])]}
                 />
               </div>
             )
@@ -375,8 +425,8 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
               items={[
                 { color: ACCENT, label: "Done", value: done },
                 { color: GREY[2], label: "In progress", value: inProgress },
-                { color: TRACK, label: "Left", value: `${all.length - done - inProgress} · ${inWords(minutesLeft)}` },
-                { color: GREY[3], label: `Next unlock · ${UNLOCKS[0].date}`, value: `in ${until(UNLOCKS[0].inHours)}` },
+                { color: TRACK, label: "Left", value: `${Math.max(0, total - done - inProgress)} · ${inWords(minutesLeft)}` },
+                ...(unlocks[0] ? [{ color: GREY[3], label: `Next unlock · ${unlocks[0].date}`, value: `in ${until(unlocks[0].inHours)}` }] : []),
               ]}
             />
           </>
@@ -389,14 +439,15 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
   return (
     <WCard icon={BookOpen} title={coach.wording.courses} meta={meta} chip={<Chip>{overall}%</Chip>}>
       <div className="grid flex-1 grid-cols-3 items-center gap-2">
-        {COURSES.map((c) => {
-          const p = courseProgress(c)
-          const n = lessonsOf(c)
-          const here = c === current
+        {courses.slice(0, 3).map((c) => {
+          const st = courseStats(c, progress)
+          const p = st.pct
+          const here = c.id === current.id
+          const locked = !canAccess(c, tier)
           return (
             <div key={c.id} className="flex min-w-0 flex-col items-center gap-1.5 text-center">
-              <LessonRing course={c} accent={here} className="size-14 @[22rem]:size-16">
-                {c.locked ? (
+              <LessonRing course={c} progress={progress} locked={locked} accent={here} className="size-14 @[22rem]:size-16">
+                {locked ? (
                   <Lock className="size-3.5 text-muted-foreground" />
                 ) : (
                   <span className={cn("text-xs tabular-nums", here ? "text-foreground" : "text-muted-foreground")} style={{ fontFamily: font }}>
@@ -408,7 +459,7 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
                 <span className={cn("truncate text-xs leading-4", here ? "font-medium text-foreground" : "text-muted-foreground")}>{c.title}</span>
                 {standard && (
                   <span className="truncate text-[0.6875rem] leading-4 text-muted-foreground tabular-nums" style={{ fontFamily: font }}>
-                    {c.locked ? c.locked : `${n.filter((l) => l.done).length}/${n.length}`}
+                    {locked ? needs(c) : `${st.done}/${st.lessons}`}
                   </span>
                 )}
               </div>
@@ -421,9 +472,9 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
           <Rule />
           <Legend
             items={[
-              { color: ACCENT, label: `${current.title} · now`, value: `${lessonsOf(current).filter((l) => l.done).length}/${lessonsOf(current).length}` },
-              { color: GREY[1], label: `${word[0].toUpperCase()}${word.slice(1)}s done, all ${coach.wording.courses.toLowerCase()}`, value: `${done}/${all.length}` },
-              { color: GREY[3], label: `Next unlock · ${UNLOCKS[0].date}`, value: `in ${until(UNLOCKS[0].inHours)}` },
+              { color: ACCENT, label: `${current.title} · now`, value: `${currentStats.done}/${currentStats.lessons}` },
+              { color: GREY[1], label: `${word[0].toUpperCase()}${word.slice(1)}s done, all ${coach.wording.courses.toLowerCase()}`, value: `${done}/${total}` },
+              ...(unlocks[0] ? [{ color: GREY[3], label: `Next unlock · ${unlocks[0].date}`, value: `in ${until(unlocks[0].inHours)}` }] : []),
             ]}
           />
         </>

@@ -1,19 +1,38 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, ArrowUpRight, Handshake, Image as ImageIcon, Play, Quote, Search, Sparkles, Type, Video } from "@/components/icons"
+import { ArrowRight, Handshake, Image as ImageIcon, Play, Quote, Search, Sparkles, Type, Video } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
-import { AI_INSIGHT, AI_SAMPLE, COACH_PROFILE, PARTNERS } from "@/lib/data/sample"
+import { AI_INSIGHT, AI_SAMPLE, COACH_PROFILE } from "@/lib/data/sample"
+import { KIND_LABEL, useOffers, type PartnerOffer } from "@/lib/data/partners"
 import { cn } from "@/lib/utils"
 import { Axis, Chip, GREY, HatchBar, Label, Legend, StepChart, TickBar, Timeline, WCard, useFigureFont } from "./instrument"
 import { ACCENT, ACCENT_TEXT, Avatar, TYPE, useMore } from "./kit"
-import { Cover, useEmpty, type WidgetProps } from "./shared"
+import { Cover, WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 
 /** "Ask Kairo AI", but not "Ask Ask Marco" when the coach already named it that way. */
 const askAi = (name: string) => (/^ask\b/i.test(name) ? name : `Ask ${name}`)
 
-const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
+export const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
+
+/** A web address the coach typed, made safe to open: http(s) only, "example.com" becomes "https://example.com". Anything else is undefined. */
+export function webUrl(raw: unknown): URL | undefined {
+  const v = String(raw ?? "").trim()
+  if (!v) return undefined
+  try {
+    const u = new URL(/^[a-z][a-z0-9+.-]*:/i.test(v) ? v : `https://${v}`)
+    return u.protocol === "https:" || u.protocol === "http:" ? u : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** Where a coach's button goes: one of the student pages, or (target "url") a web address in a new tab. */
+export const ctaLink = (base: string, props: WidgetProps["props"], fallback = "courses") => {
+  if (props.target === "url") return { nativeButton: false as const, render: <a href={webUrl(props.url)?.href ?? "#"} target="_blank" rel="noreferrer" /> }
+  return link(`${base}/${String(props.target || fallback)}`)
+}
 
 /** Initials for a name: "Marco" -> "MA", "IC Markets" -> "IM". */
 const initials = (name: string) => {
@@ -151,7 +170,7 @@ export function Banner({ variant = "headline", props }: WidgetProps) {
   const text = String(props.text || "Small group, weekly 1:1 reviews, and the full playbook.")
   const eyebrow = String(props.eyebrow || "Limited places")
   const cta = props.button !== "" && (
-    <Button size="sm" className="w-fit shrink-0" {...link(`${base}/${String(props.target || "courses")}`)}>
+    <Button size="sm" className="w-fit shrink-0" {...ctaLink(base, props)}>
       {String(props.button || "Find out more")} <ArrowRight />
     </Button>
   )
@@ -203,12 +222,18 @@ export function Banner({ variant = "headline", props }: WidgetProps) {
 
 /** Text: plain (heading and paragraph), quote (in the heading font, signed), steps (each sentence or line numbered). */
 export function TextBlock({ variant = "plain", props }: WidgetProps) {
-  const { coach } = useCoach()
+  const { coach, base } = useCoach()
   const font = useFigureFont()
   const more = useMore("standard")
   const detailed = useMore("detailed")
   const title = String(props.title || "How this works")
   const text = String(props.text || "Watch one lesson a day.\nJoin Monday's live session.\nJournal every trade, and ask for a review whenever you're unsure.")
+  // Text with a button: no button text, no button (unlike Banner).
+  const cta = !!props.button && (
+    <Button size="sm" className="w-fit shrink-0" {...ctaLink(base, props)}>
+      {String(props.button)} <ArrowRight />
+    </Button>
+  )
 
   if (variant === "quote") {
     return (
@@ -235,6 +260,7 @@ export function TextBlock({ variant = "plain", props }: WidgetProps) {
             </li>
           ))}
         </ol>
+        {cta && <div className="mt-auto">{cta}</div>}
       </WCard>
     )
   }
@@ -243,6 +269,7 @@ export function TextBlock({ variant = "plain", props }: WidgetProps) {
     <WCard flush icon={Type} title={`From ${coach.coachName}`} meta={more ? coach.name : undefined} bodyClassName="gap-1.5">
       <h3 className={cn(TYPE.value, "line-clamp-2 text-balance")}>{title}</h3>
       <p className={cn(TYPE.body, "max-w-prose whitespace-pre-line text-muted-foreground", detailed ? "" : more ? "line-clamp-3" : "line-clamp-1")}>{text}</p>
+      {cta && <div className="mt-auto pt-1">{cta}</div>}
     </WCard>
   )
 }
@@ -250,7 +277,7 @@ export function TextBlock({ variant = "plain", props }: WidgetProps) {
 // ---------- Partner links
 
 /** A partner's mark until the coach uploads a logo: initials in the heading font, no colour. */
-function Mark({ name, size = 28 }: { name: string; size?: number }) {
+export function Mark({ name, size = 28 }: { name: string; size?: number }) {
   return (
     <span
       className="r-chip grid shrink-0 place-items-center border bg-background font-heading font-medium tracking-tight text-foreground"
@@ -261,37 +288,31 @@ function Mark({ name, size = 28 }: { name: string; size?: number }) {
   )
 }
 
-/** The coach's own code or perk per partner (sample). The code carries the coach's name. */
-const usePerks = () => {
-  const { coach } = useCoach()
-  const code = coach.coachName.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 6)
-  const perks: Record<string, { perk: string; code?: string }> = {
-    "IC Markets": { perk: "−20% fees", code: `${code}20` },
-    FTMO: { perk: "−10%", code: `${code}10` },
-    TradingView: { perk: "$15 credit", code: code },
-  }
-  return perks
-}
-
-/** Partner links: list (legend rows with the coach's codes), tiles (a logo wall), chips (one row). */
+/** Partner links: list (legend rows with the coach's codes), tiles (a logo wall), chips (one row). Reads the offers the coach switched on in Partners. */
 export function PartnerLinks({ variant = "list" }: WidgetProps) {
-  const { coach } = useCoach()
-  const perks = usePerks()
+  const { coach, base } = useCoach()
+  const offers = useOffers(coach).filter((o) => o.on)
   const more = useMore("standard")
   const detailed = useMore("detailed")
-  const withCode = PARTNERS.filter((p) => perks[p.name]).length
+  const withCode = offers.filter((o) => o.code).length
   const meta = `Tools ${coach.coachName} uses · ${withCode} codes`
   const disclosure = detailed && <span className={cn(TYPE.small, "mt-auto")}>Some of these are affiliate links.</span>
+  const href = (o: PartnerOffer) => o.url
+  const ext = { target: "_blank", rel: "noreferrer" } as const
+
+  if (offers.length === 0) {
+    return <WidgetEmpty icon={Handshake} title="No partner offers yet" text={`Offers from the brokers, prop firms and tools ${coach.coachName} works with show here.`} />
+  }
 
   if (variant === "chips") {
     return (
-      <WCard row icon={Handshake} title="Partner links" meta={more ? meta : undefined} chip={<Chip tone="neutral">{PARTNERS.length} links</Chip>}>
+      <WCard row icon={Handshake} title="Partner links" meta={more ? meta : undefined} chip={<Chip tone="neutral">{offers.length} links</Chip>}>
         <div className="hidden min-w-0 flex-[2] justify-end gap-1.5 overflow-hidden [mask-image:linear-gradient(to_right,black_85%,transparent)] @[26rem]:flex">
-          {PARTNERS.map((p) => (
-            <a key={p.name} href="#" className="r-chip flex shrink-0 items-center gap-1.5 border py-1 pr-2 pl-1 text-xs hover:bg-muted">
-              <Mark name={p.name} size={18} />
-              {p.name}
-              {detailed && perks[p.name] && <span className="text-muted-foreground">{perks[p.name].perk}</span>}
+          {offers.map((o) => (
+            <a key={o.id} href={href(o)} {...ext} className="r-chip flex shrink-0 items-center gap-1.5 border py-1 pr-2 pl-1 text-xs hover:bg-muted">
+              <Mark name={o.name} size={18} />
+              {o.name}
+              {detailed && <span className="text-muted-foreground">{o.offer}</span>}
             </a>
           ))}
         </div>
@@ -301,13 +322,13 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
 
   if (variant === "tiles") {
     return (
-      <WCard icon={Handshake} title="Partner links" meta={meta} chip={<Chip tone="neutral">{PARTNERS.length} links</Chip>}>
+      <WCard icon={Handshake} title="Partner links" meta={meta} chip={<Chip tone="neutral">{offers.length} links</Chip>}>
         <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2 @xl:grid-cols-4">
-          {PARTNERS.map((p, i) => (
-            <a key={p.name} href="#" className="relative grid min-h-0 content-center justify-items-start gap-1 rounded-[min(var(--radius),8px)] border bg-card p-2.5 hover:bg-muted">
-              <span className="truncate font-heading text-[0.8125rem] leading-5 font-medium tracking-tight">{p.name}</span>
-              {more && <span className={cn(TYPE.small, "line-clamp-1")}>{p.note}</span>}
-              {perks[p.name] && <Chip tone={i === 0 ? "accent" : "neutral"}>{perks[p.name].perk}</Chip>}
+          {offers.slice(0, detailed ? 8 : 4).map((o, i) => (
+            <a key={o.id} href={href(o)} {...ext} className="relative grid min-h-0 content-center justify-items-start gap-1 rounded-[min(var(--radius),8px)] border bg-card p-2.5 hover:bg-muted">
+              <span className="truncate font-heading text-[0.8125rem] leading-5 font-medium tracking-tight">{o.name}</span>
+              {more && <span className={cn(TYPE.small, "line-clamp-1")}>{KIND_LABEL[o.kind]}</span>}
+              <Chip tone={i === 0 ? "accent" : "neutral"}>{o.offer}</Chip>
             </a>
           ))}
         </div>
@@ -317,29 +338,23 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
   }
 
   return (
-    <WCard icon={Handshake} title="Partner links" meta={meta} chip={<Chip tone="neutral">{PARTNERS.length} links</Chip>}>
+    <WCard icon={Handshake} title="Partner links" meta={meta} chip={<Chip tone="neutral">{offers.length} links</Chip>}>
       <div className="grid">
-        {PARTNERS.map((p, i) => {
-          const perk = perks[p.name]
-          return (
-            <a key={p.name} href="#" className="group flex min-w-0 items-center gap-2.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5 last:border-b-0">
-              <Mark name={p.name} size={more ? 28 : 22} />
-              <span className="grid min-w-0 flex-1">
-                <span className="truncate font-heading text-[0.8125rem] leading-5 font-medium tracking-tight group-hover:underline">{p.name}</span>
-                {more && <span className={cn(TYPE.small, "truncate")}>{p.note}</span>}
-              </span>
-              {perk ? (
-                <span className="flex shrink-0 items-center gap-1.5">
-                  {detailed && perk.code && <Label className="hidden @[20rem]:inline">{perk.code}</Label>}
-                  <Chip tone={i === 0 ? "accent" : "neutral"}>{perk.perk}</Chip>
-                </span>
-              ) : (
-                <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground" />
-              )}
-            </a>
-          )
-        })}
+        {offers.map((o, i) => (
+          <a key={o.id} href={href(o)} {...ext} className="group flex min-w-0 items-center gap-2.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5 last:border-b-0">
+            <Mark name={o.name} size={more ? 28 : 22} />
+            <span className="grid min-w-0 flex-1">
+              <span className="truncate font-heading text-[0.8125rem] leading-5 font-medium tracking-tight group-hover:underline">{o.name}</span>
+              {more && <span className={cn(TYPE.small, "truncate")}>{KIND_LABEL[o.kind]}</span>}
+            </span>
+            <span className="flex shrink-0 items-center gap-1.5">
+              {detailed && o.code && <Label className="hidden @[20rem]:inline">{o.code}</Label>}
+              <Chip tone={i === 0 ? "accent" : "neutral"}>{o.offer}</Chip>
+            </span>
+          </a>
+        ))}
       </div>
+      <Link href={`${base}/partners`} className={cn(TYPE.small, "mt-auto w-fit hover:underline")}>All offers</Link>
       {disclosure}
     </WCard>
   )

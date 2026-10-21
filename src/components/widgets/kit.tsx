@@ -1,6 +1,9 @@
 "use client"
 
+import Link from "next/link"
 import { createContext, useContext, useState } from "react"
+import type { WidgetHeader } from "@/lib/theme/types"
+import type { WidgetNote } from "@/lib/widgets/layout"
 import type { LucideIcon } from "@/components/icons"
 import { cn } from "@/lib/utils"
 
@@ -30,12 +33,29 @@ import { cn } from "@/lib/utils"
 
 export type Emphasis = "quiet" | "accent" | "star"
 export type Detail = "compact" | "standard" | "detailed"
-const FrameCtx = createContext<{ emphasis: Emphasis; detail: Detail }>({ emphasis: "accent", detail: "standard" })
+const FrameCtx = createContext<{ emphasis: Emphasis; detail: Detail; header?: Partial<WidgetHeader>; note?: WidgetNote; core?: boolean }>({ emphasis: "accent", detail: "standard" })
 
-/** Wraps one placed widget with its Emphasis and Detail. */
-export function WidgetFrame({ emphasis = "accent", detail = "standard", children }: { emphasis?: Emphasis; detail?: Detail; children: React.ReactNode }) {
-  return <FrameCtx.Provider value={{ emphasis, detail }}>{children}</FrameCtx.Provider>
+/** Wraps one placed widget with its Emphasis, Detail, own header parts and own content (note). `core`: the page's own tool, which takes no note. */
+export function WidgetFrame({
+  emphasis = "accent",
+  detail = "standard",
+  header,
+  note,
+  core,
+  children,
+}: {
+  emphasis?: Emphasis
+  detail?: Detail
+  header?: Partial<WidgetHeader>
+  note?: WidgetNote
+  core?: boolean
+  children: React.ReactNode
+}) {
+  return <FrameCtx.Provider value={{ emphasis, detail, header, note, core }}>{children}</FrameCtx.Provider>
 }
+
+/** Props that turn a Button into a link: inside the app for a path, a new tab for a web address. */
+export const link = (p: string) => ({ nativeButton: false as const, render: /^(https?:|mailto:)/.test(p) ? <a href={p} target="_blank" rel="noreferrer" /> : <Link href={p} /> })
 export const useFrame = () => useContext(FrameCtx)
 /** True from the given detail level up: `useMore("detailed")` is only true on Detailed. */
 export function useMore(level: Detail = "standard") {

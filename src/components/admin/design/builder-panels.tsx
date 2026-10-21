@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Copy, EyeOff, GripVertical, Lock, Maximize2, MousePointerClick, Plus, Search, Trash2, X } from "@/components/icons"
+import { useRef, useState } from "react"
+import { Copy, EyeOff, GripVertical, ImagePlus, Lock, Maximize2, MousePointerClick, Plus, Search, Trash2, X } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -9,10 +9,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { getWidget, librarySections, lookOf, type WidgetDef } from "@/components/widgets/registry"
 import { WidgetFrame } from "@/components/widgets/kit"
 import { DataModeProvider } from "@/components/widgets/shared"
+import { useGroups } from "@/lib/data/access"
 import type { Coach } from "@/lib/data/coaches"
-import { ROW_HEIGHT, type Detail, type Emphasis, type PageId, type WidgetInstance } from "@/lib/widgets/layout"
+import { ROW_HEIGHT, type Detail, type Emphasis, type PageId, type WidgetInstance, type WidgetNote, type WidgetPhase } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { Field, Segmented } from "./controls"
+import { useDesign } from "./design-fields"
+import { HeaderParts } from "./header-parts"
+import { widgetHeaderOf } from "@/lib/theme/types"
 
 /** Per-widget Emphasis and Detail (see the rules in widgets/kit.tsx). Shared with the grid's right-click menu. */
 export const EMPHASIS: { value: Emphasis; label: string; hint: string }[] = [
@@ -26,7 +30,80 @@ export const DETAIL: { value: Detail; label: string; hint: string }[] = [
   { value: "detailed", label: "Detailed", hint: "Everything this widget can show." },
 ]
 
-const MODULE_LABEL = { courses: "Courses", calendar: "Calendar", charts: "Charts", community: "Community", journal: "Journal", ranking: "Ranking", ai: "AI assistant" }
+/** Visibility rules: the phases of a student's life a widget can be limited to. */
+export const PHASE_LABEL: Record<WidgetPhase, string> = { "first-week": "First week", inactive: "Inactive", finished: "Finished a course" }
+const PHASES: { value: WidgetPhase | ""; label: string }[] = [
+  { value: "", label: "Everyone" },
+  { value: "first-week", label: "Their first week" },
+  { value: "inactive", label: "Inactive students" },
+  { value: "finished", label: "Finished a course" },
+]
+
+/** Where a widget's own button can lead: the pages the banner offers, plus any web address. */
+function noteTargets() {
+  const t = getWidget("banner")?.settings?.find((s) => s.key === "target")
+  const pages = t?.type === "select" ? t.options : [{ value: "courses", label: "Courses" }]
+  return [...pages, { value: "url", label: "A web address" }]
+}
+
+/** A picture as a data URL, scaled down so saved pages stay small. */
+async function pictureOf(file: File, max = 960) {
+  const url = await new Promise<string>((res) => {
+    const r = new FileReader()
+    r.onload = () => res(r.result as string)
+    r.readAsDataURL(file)
+  })
+  if (url.startsWith("data:image/svg") || url.startsWith("data:image/gif")) return url
+  const img = new Image()
+  img.src = url
+  await img.decode()
+  const s = Math.min(1, max / Math.max(img.width, img.height))
+  const c = document.createElement("canvas")
+  c.width = Math.round(img.width * s)
+  c.height = Math.round(img.height * s)
+  c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height)
+  return c.toDataURL("image/jpeg", 0.85)
+}
+
+/** Upload a picture: a thumbnail, Upload or Replace, and Remove. An empty value means the widget's sample picture. */
+function PictureUpload({ value, onChange, label = "picture" }: { value?: string; onChange: (dataUrl: string) => void; label?: string }) {
+  const input = useRef<HTMLInputElement>(null)
+  return (
+    <div className="flex items-center gap-3">
+      {value ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={value} alt="" className="h-10 w-16 shrink-0 rounded-md border object-cover" />
+      ) : (
+        <span className="grid h-10 w-16 shrink-0 place-items-center rounded-md border border-dashed text-muted-foreground">
+          <ImagePlus className="size-4" />
+        </span>
+      )}
+      <div className="flex flex-wrap gap-1.5">
+        <Button variant="outline" size="sm" onClick={() => input.current?.click()}>
+          {value ? "Replace" : `Upload ${label}`}
+        </Button>
+        {value && (
+          <Button variant="ghost" size="sm" onClick={() => onChange("")}>
+            Remove
+          </Button>
+        )}
+      </div>
+      <input
+        ref={input}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={async (e) => {
+          const f = e.target.files?.[0]
+          e.target.value = ""
+          if (f) onChange(await pictureOf(f))
+        }}
+      />
+    </div>
+  )
+}
+
+const MODULE_LABEL = { courses: "Courses", calendar: "Calendar", charts: "Charts", community: "Community", journal: "Journal", ranking: "Ranking", ai: "AI assistant", downloads: "Downloads", partners: "Partners" }
 
 /** Size of one column and one gap on the 1180px desktop canvas, for thumbnails. */
 const COL_PX = 72
@@ -37,7 +114,7 @@ const GAP_PX = 24
  * laid out at the size it gets on the page by default, then scaled down so
  * the whole widget fits.
  */
-export function WidgetThumb({ def, variant, canvasClass, box }: { def: WidgetDef; variant?: string; canvasClass: string; box: { w: number; h: number } }) {
+export function WidgetThumb({ def, variant, canvasClass, box, header }: { def: WidgetDef; variant?: string; canvasClass: string; box: { w: number; h: number }; header?: WidgetInstance["header"] }) {
   const look = lookOf(def, variant)
   const width = def.defaultW * COL_PX + (def.defaultW - 1) * GAP_PX
   const height = look.h * ROW_HEIGHT + (look.h - 1) * GAP_PX
@@ -50,8 +127,8 @@ export function WidgetThumb({ def, variant, canvasClass, box }: { def: WidgetDef
           className={cn(canvasClass, "pointer-events-none flex flex-col bg-background font-sans text-foreground select-none [&>*]:flex-1")}
           style={{ width, height, zoom: scale, containerType: "inline-size" }}
         >
-          {/* Library and layout thumbnails always show the default Emphasis and Detail. */}
-          <WidgetFrame>
+          {/* Library and layout thumbnails show the default Emphasis and Detail; a layout thumbnail shows the widget's own header. */}
+          <WidgetFrame header={header}>
             <C variant={look.value} props={{}} />
           </WidgetFrame>
         </div>
@@ -170,6 +247,13 @@ export function WidgetSettings({
   const pick = (v: (typeof def.variants)[number]) => onChange({ variant: v.value, h: Math.max(w.h, v.minH) }, `${w.id}-variant`)
   const emphasis = w.emphasis ?? "accent"
   const detail = w.detail ?? "standard"
+  const { theme, coach } = useDesign()
+  const groups = useGroups(coach)
+  const header = widgetHeaderOf(theme, w.header)
+  const note = w.note ?? {}
+  const setNote = (k: keyof WidgetNote, v: string) => onChange({ note: { ...w.note, [k]: v || undefined } }, `${w.id}-note-${k}`)
+  const setShow = (k: "phase" | "group", v: string) => onChange({ show: { ...w.show, [k]: v || undefined } }, `${w.id}-show-${k}`)
+  const selectClass = "h-8 rounded-lg border bg-background px-2 text-sm"
   return (
     <div className="grid gap-5 p-4">
       <div className="flex items-start gap-3">
@@ -198,6 +282,55 @@ export function WidgetSettings({
         <Segmented label="Detail" value={detail} options={DETAIL} onChange={(v) => onChange({ detail: v }, `${w.id}-detail`)} />
         <p className="text-xs text-muted-foreground">{DETAIL.find((o) => o.value === detail)?.hint}</p>
       </Field>
+      {!pinned && (
+        <Field label="Header">
+          <HeaderParts idPrefix={`${w.id}-header`} value={header} onChange={(key, on) => onChange({ header: { ...w.header, [key]: on } }, `${w.id}-header-${key}`)} />
+          {w.header && Object.keys(w.header).length > 0 ? (
+            <button type="button" onClick={() => onChange({ header: undefined }, `${w.id}-header-reset`)} className="w-fit text-xs font-medium text-muted-foreground hover:text-foreground">
+              Same as all widgets (Design → Look)
+            </button>
+          ) : (
+            <p className="text-xs text-muted-foreground">Follows Widget header in Look. Change a switch to make this widget different.</p>
+          )}
+        </Field>
+      )}
+
+      {!pinned && def.type !== "page-header" && (
+        <Field label="Your own content">
+          <Textarea value={note.text ?? ""} placeholder="Text" aria-label="Text" onChange={(e) => setNote("text", e.target.value)} />
+          <Input value={note.button ?? ""} placeholder="Button text" aria-label="Button text" onChange={(e) => setNote("button", e.target.value)} />
+          <select value={note.target ?? noteTargets()[0].value} aria-label="Opens" onChange={(e) => setNote("target", e.target.value)} className={selectClass}>
+            {noteTargets().map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          {note.target === "url" && <Input value={note.url ?? ""} placeholder="Web address" aria-label="Web address" onChange={(e) => setNote("url", e.target.value)} />}
+          <PictureUpload value={note.image} onChange={(v) => setNote("image", v)} />
+          <p className="text-xs text-muted-foreground">Shows under the widget&apos;s header, next to its data. The button needs a text.</p>
+        </Field>
+      )}
+      {!pinned && (
+        <Field label="Who sees it">
+          <select value={w.show?.phase ?? ""} aria-label="Phase" onChange={(e) => setShow("phase", e.target.value)} className={selectClass}>
+            {PHASES.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <select value={w.show?.group ?? ""} aria-label="Group" onChange={(e) => setShow("group", e.target.value)} className={selectClass}>
+            <option value="">Everyone</option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">Tiers have their own layouts: pick one under Per tier and preview data.</p>
+        </Field>
+      )}
 
       {def.variants.length > 1 && (
         <Field label="Layout">
@@ -223,7 +356,7 @@ export function WidgetSettings({
                   look.value === v.value && "border-foreground ring-1 ring-foreground",
                 )}
               >
-                <WidgetThumb def={def} variant={v.value} canvasClass={canvasClass} box={{ w: 306, h: 120 }} />
+                <WidgetThumb def={def} variant={v.value} canvasClass={canvasClass} box={{ w: 306, h: 120 }} header={w.header} />
                 <span className="block border-t px-2.5 py-1.5 text-xs font-medium">{v.label}</span>
               </div>
             ))}
@@ -264,6 +397,12 @@ export function WidgetSettings({
                   </option>
                 ))}
               </select>
+            </Field>
+          )
+        if (s.type === "image")
+          return (
+            <Field key={s.key} label={s.label}>
+              <PictureUpload value={typeof props[s.key] === "string" ? String(props[s.key]) : ""} onChange={(v) => setProp(s.key, v)} />
             </Field>
           )
         return (

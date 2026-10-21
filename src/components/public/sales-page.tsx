@@ -31,6 +31,11 @@ export function SalesPage() {
     window.addEventListener("message", show)
     return () => window.removeEventListener("message", show)
   }, [])
+  // Blocks render after load, so a #hash in the address (the setup wizard opens #tiers) scrolls here, once they exist.
+  useEffect(() => {
+    const el = location.hash && document.getElementById(location.hash.slice(1))
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64 })
+  }, [blocks.length])
   return (
     <div className="flex flex-col">
       {blocks.map((b, i) => (

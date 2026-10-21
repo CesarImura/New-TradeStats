@@ -6,7 +6,9 @@ import { StudentCourses } from "@/components/courses/student-courses"
 import { StudentAi } from "@/components/student/ai-chat"
 import { StudentCharts } from "@/components/student/charts"
 import { StudentCommunity } from "@/components/student/community"
+import { StudentDownloads } from "@/components/student/downloads"
 import { StudentJournal } from "@/components/student/journal"
+import { StudentPartners } from "@/components/student/partners"
 import { StudentRanking } from "@/components/student/ranking"
 import type { ModuleId } from "@/lib/data/coaches"
 import type { WidgetProps } from "./shared"
@@ -19,6 +21,8 @@ const PAGES: Record<ModuleId, (p: { props?: WidgetProps["props"] }) => React.Rea
   journal: StudentJournal,
   ranking: StudentRanking,
   ai: StudentAi,
+  downloads: StudentDownloads,
+  partners: StudentPartners,
 }
 
 /**

@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { AlertTriangle, Check, Copy, ExternalLink, Landmark, Loader2, MoreHorizontal, Plus, RotateCcw } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
@@ -17,7 +17,7 @@ import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { COUPONS, MONEY, TRANSACTIONS, type Txn } from "@/lib/data/people"
-import { PARTNERS, REVENUE_MONTHS } from "@/lib/data/sample"
+import { REVENUE_MONTHS } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { Field, Mono, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
 import { AccessOverview, PreviewAsMenu } from "./access-overview"
@@ -97,7 +97,7 @@ export function SalesAdmin() {
           <Payouts />
         </TabsContent>
         <TabsContent value="affiliates">
-          <Affiliates name={coach.name} />
+          <Affiliates />
         </TabsContent>
       </Tabs>
     </Page>
@@ -504,72 +504,21 @@ function Payouts() {
   )
 }
 
-// ---------- ADM-33 / ADM-34 Affiliates and partner links
+// ---------- ADM-33 / ADM-34 Affiliates and partner links (moved to Partners)
 
-function Affiliates({ name }: { name: string }) {
-  const [on, setOn] = useState(true)
+function Affiliates() {
+  const { base } = useCoach()
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <section className="grid content-start gap-2">
-        <h2 className="font-medium">Students bring students</h2>
-        <div className="divide-y rounded-lg border bg-card px-3">
-          <SettingRow label="Affiliate program" text={`Every student gets their own link to ${name}`}>
-            <Switch checked={on} onCheckedChange={setOn} />
-          </SettingRow>
-          {on && (
-            <>
-              <SettingRow label="Commission" text="Of what the new student pays">
-                <NativeSelect defaultValue="20">
-                  <option value="10">10%</option>
-                  <option value="20">20%</option>
-                  <option value="30">30%</option>
-                </NativeSelect>
-              </SettingRow>
-              <SettingRow label="For how long">
-                <NativeSelect defaultValue="12">
-                  <option value="1">First payment</option>
-                  <option value="12">12 months</option>
-                  <option value="forever">As long as they stay</option>
-                </NativeSelect>
-              </SettingRow>
-            </>
-          )}
-        </div>
-        {on && (
-          <div className="grid gap-2 rounded-lg border bg-card p-3 text-sm">
-            <Mono className="text-muted-foreground">Top affiliates · October</Mono>
-            {[
-              ["Jonas Pereira", 6, 268],
-              ["Sara Kowalski", 3, 134],
-              ["Tariq Bello", 1, 30],
-            ].map(([n, k, e]) => (
-              <div key={n} className="flex justify-between">
-                <span>{n}</span>
-                <span className="text-muted-foreground tabular-nums">
-                  {k} students · €{e}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-      <section className="grid content-start gap-2">
-        <div className="flex items-center justify-between">
-          <h2 className="font-medium">Partner links</h2>
-          <Button size="sm" variant="outline" onClick={() => toast("Add a link: broker, prop firm, YouTube…")}>
-            <Plus /> Link
-          </Button>
-        </div>
-        <div className="divide-y rounded-lg border bg-card px-3">
-          {PARTNERS.map((p) => (
-            <SettingRow key={p.name} label={p.name} text={p.note}>
-              {p.tag && <Badge variant="outline">Our partner</Badge>}
-              <Switch defaultChecked />
-            </SettingRow>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground">Partner links are labelled for students. Commissions from our broker partners show up in Overview.</p>
-      </section>
-    </div>
+    <Card className="max-w-xl">
+      <CardHeader>
+        <CardTitle>Affiliates moved to Partners</CardTitle>
+        <CardDescription>The affiliate program, your partner offers and what they earn are now in one place.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button variant="outline" nativeButton={false} render={<Link href={`${base}/partners`} />}>
+          Open Partners
+        </Button>
+      </CardContent>
+    </Card>
   )
 }

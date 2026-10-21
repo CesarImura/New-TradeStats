@@ -1,7 +1,7 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
-import type { ModuleId, Wording } from "@/lib/data/coaches"
+import type { CustomPage, MenuId, ModuleId, Wording } from "@/lib/data/coaches"
 import type { HomeLayouts, PageLayouts } from "@/lib/widgets/layout"
 import type { CoachTheme, Mode, Palette } from "@/lib/theme/types"
 
@@ -19,14 +19,18 @@ export type ThemeDraft = Partial<Omit<CoachTheme, "nav" | "fonts" | "palettes">>
   fonts?: Partial<CoachTheme["fonts"]>
   /** Single palette colours changed per mode (prototype: the template palette editor). */
   palettes?: Partial<Record<Mode, Partial<Palette>>>
+  /** The coach's profit and loss colours; empty strings = use the template's. */
+  trading?: CoachTheme["trading"]
 }
 
 export type ContentDraft = {
   name?: string
+  tagline?: string
   mark?: string
   logo?: string // data URL of the uploaded logo
   wording?: Partial<Wording>
-  menu?: ModuleId[]
+  menu?: MenuId[]
+  customPages?: CustomPage[]
   modules?: Partial<Record<ModuleId, boolean>>
   /** Older drafts kept only Home here; it now lives in pages.home. */
   home?: HomeLayouts
@@ -52,11 +56,14 @@ function read<T>(key: string, fallback: T): T {
   try {
     raw = localStorage.getItem(key)
   } catch {}
+  // Nothing saved: hand back the fallback itself, so a fallback that follows other
+  // data (e.g. the catalog seeded from setup uploads) isn't frozen at first read.
+  if (raw == null) return fallback
   const hit = cache.get(key)
   if (hit && hit.raw === raw) return hit.value as T
   let value: T = fallback
   try {
-    if (raw) value = JSON.parse(raw)
+    value = JSON.parse(raw)
   } catch {}
   cache.set(key, { raw, value })
   return value
@@ -151,6 +158,13 @@ export function patchPublishedTheme(slug: string, patch: ThemeDraft | null) {
   write(k.pub(slug), mergeOverrides(pub, { theme: patch }))
   const draft = read<Overrides | null>(k.draft(slug), null)
   if (draft) write(k.draft(slug), mergeOverrides(draft, { theme: patch }))
+}
+
+/** Start page: save edits straight to the live design (and any open draft). */
+export function patchPublished(slug: string, patch: Partial<Overrides>) {
+  write(k.pub(slug), mergeOverrides(read<Overrides>(k.pub(slug), EMPTY), patch))
+  const draft = read<Overrides | null>(k.draft(slug), null)
+  if (draft) write(k.draft(slug), mergeOverrides(draft, patch))
 }
 
 // ---------- other stored data (courses, calendar, student activity)

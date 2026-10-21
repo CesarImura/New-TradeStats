@@ -27,6 +27,10 @@ export type NavStyle = "labels" | "icons"
 export type WidgetStyle = "instrument" | "soft" | "editorial"
 /** How bars and gauges are drawn: Ticks (segments), Solid (one filled bar), Thin (a hairline). */
 export type ChartStyle = "ticks" | "solid" | "thin"
+/** The font for widget figures and small labels: mono, the heading font, or the body ("normal") font. */
+export type WidgetFont = "mono" | "heading" | "body"
+/** Which parts of a widget's header show: the icon, the title, the grey description line under it, and the value chip on the right. */
+export type WidgetHeader = { icon: boolean; title: boolean; description: boolean; value: boolean }
 /** Cards: Raised (the card colour, as the template has it), Grey (a grey card on the page), Outline (no fill, a hairline). */
 export type CardSurface = "raised" | "grey" | "outline"
 /** Plain, a texture (grid, glow, dots), a gradient from the brand colours, or an image. */
@@ -69,7 +73,16 @@ export type CoachTheme = {
   widgetStyle?: WidgetStyle
   /** Defaults from the widget style (chartStyleOf). */
   chartStyle?: ChartStyle
+  /** Defaults from the widget style (widgetFontOf). */
+  widgetFont?: WidgetFont
+  /** Header parts for every widget; each widget can override them. Defaults: all on, but no icon in Editorial. */
+  widgetHeader?: Partial<WidgetHeader>
   cardSurface?: CardSurface
+  /**
+   * The coach's own profit and loss colours (hex). They replace the template palette's in both modes.
+   * Empty strings mean "not set" (that is how the editor resets them, so the reset survives a save).
+   */
+  trading?: { profit: string; loss: string }
 }
 
 const WIDGET_STYLE_DEFAULT: Record<TemplateId, WidgetStyle> = { terminal: "instrument", atelier: "editorial", pulse: "soft" }
@@ -77,5 +90,18 @@ export const widgetStyleOf = (t: Pick<CoachTheme, "template" | "widgetStyle">): 
 
 const CHART_STYLE_DEFAULT: Record<WidgetStyle, ChartStyle> = { instrument: "ticks", soft: "solid", editorial: "thin" }
 export const chartStyleOf = (t: Pick<CoachTheme, "template" | "widgetStyle" | "chartStyle">): ChartStyle => t.chartStyle ?? CHART_STYLE_DEFAULT[widgetStyleOf(t)]
+
+const WIDGET_FONT_DEFAULT: Record<WidgetStyle, WidgetFont> = { instrument: "mono", soft: "heading", editorial: "heading" }
+export const widgetFontOf = (t: Pick<CoachTheme, "template" | "widgetStyle" | "widgetFont">): WidgetFont => t.widgetFont ?? WIDGET_FONT_DEFAULT[widgetStyleOf(t)]
+
+/** The header parts a widget shows: the style's default, then the coach's choice for all widgets, then the widget's own. */
+export const widgetHeaderOf = (t: Pick<CoachTheme, "template" | "widgetStyle" | "widgetHeader">, own?: Partial<WidgetHeader>): WidgetHeader => ({
+  icon: widgetStyleOf(t) !== "editorial",
+  title: true,
+  description: true,
+  value: true,
+  ...t.widgetHeader,
+  ...own,
+})
 
 export type TemplateId = "terminal" | "atelier" | "pulse"

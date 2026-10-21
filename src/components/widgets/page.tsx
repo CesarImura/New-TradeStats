@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react"
 import { useCoach } from "@/components/coach/coach-provider"
-import type { ModuleId } from "@/lib/data/coaches"
+import { isPageId, pageIdOf, type ModuleId } from "@/lib/data/coaches"
 import { cn } from "@/lib/utils"
 import { Cover, usePageId, type WidgetProps } from "./shared"
 
@@ -17,6 +17,7 @@ function defaults(page: string, coach: ReturnType<typeof useCoach>["coach"]) {
     ranking: "This month",
     ai: `Answers from ${coach.coachName}'s lessons`,
   }
+  if (isPageId(page)) return { title: coach.customPages?.find((p) => p.id === pageIdOf(page))?.name ?? coach.name, eyebrow: coach.name }
   return { title: page === "home" ? coach.name : coach.wording[page as ModuleId], eyebrow: eyebrow[page] ?? coach.name }
 }
 

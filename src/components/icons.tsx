@@ -57,6 +57,7 @@ import {
   Favorite as CFavorite,
   Fire as CFire,
   Flag as CFlag,
+  Gift as CGift,
   Forum as CForum,
   Grid as CGrid,
   Hashtag as CHashtag,
@@ -199,7 +200,9 @@ export const EyeOff = i(CViewOff, "EyeOff")
 export const FileDown = i(CDocumentDownload, "FileDown")
 export const FileSpreadsheet = i(CReport, "FileSpreadsheet")
 export const FileUp = i(CDocumentExport, "FileUp")
+export const FileText = i(CDocument, "FileText")
 export const Flag = i(CFlag, "Flag")
+export const Gift = i(CGift, "Gift")
 export const Flame = i(CFire, "Flame")
 export const FlaskConical = i(CChemistry, "FlaskConical")
 export const FolderUp = i(CCloudUpload, "FolderUp")

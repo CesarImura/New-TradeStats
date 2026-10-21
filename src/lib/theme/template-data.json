@@ -6,21 +6,8 @@
       "template": "terminal",
       "mode": "dark",
       "primary": "#ff5500",
-      "primaryForeground": "#ffffff",
+      "primaryForeground": "#0b0b0b",
       "palettes": {
-        "dark": {
-          "background": "#050505",
-          "card": "#0e0e10",
-          "foreground": "#ffffff",
-          "muted": "#18181b",
-          "mutedForeground": "rgba(255,255,255,0.56)",
-          "border": "rgba(255,255,255,0.11)",
-          "sidebar": "#050505",
-          "highlight": "#f8ff9e",
-          "highlightForeground": "#050505",
-          "profit": "#3ddc84",
-          "loss": "#ff4d4f"
-        },
         "light": {
           "background": "#ffffff",
           "card": "#ffffff",
@@ -33,10 +20,23 @@
           "highlightForeground": "#040404",
           "profit": "#0f8045",
           "loss": "#d12f24"
+        },
+        "dark": {
+          "background": "#050505",
+          "card": "#0e0e10",
+          "foreground": "#ffffff",
+          "muted": "#18181b",
+          "mutedForeground": "rgba(255,255,255,0.56)",
+          "border": "rgba(255,255,255,0.11)",
+          "sidebar": "#050505",
+          "highlight": "#f8ff9e",
+          "highlightForeground": "#050505",
+          "profit": "#3ddc84",
+          "loss": "#ff4d4f"
         }
       },
-      "radius": 6,
-      "buttonShape": "rounded",
+      "radius": 2,
+      "buttonShape": "square",
       "shadow": "none",
       "borders": true,
       "density": "compact",
@@ -48,79 +48,241 @@
       "labelStyle": "caps",
       "headingWeight": 400,
       "background": "grid",
-      "effects": "soft",
+      "effects": "flat",
       "nav": {
         "layout": "side",
         "style": "labels",
         "logo": "left"
-      }
+      },
+      "widgetStyle": "soft",
+      "cardSurface": "grey",
+      "chartStyle": "thin"
     },
     "pages": {
       "home": {
         "items": [
           {
-            "type": "continue-lesson",
-            "variant": "progress",
+            "type": "course-progress",
             "x": 0,
             "y": 0,
-            "w": 8,
+            "w": 4,
+            "h": 5,
+            "variant": "bars",
+            "detail": "detailed",
+            "emphasis": "accent"
+          },
+          {
+            "type": "continue-lesson",
+            "variant": "media",
+            "x": 8,
+            "y": 0,
+            "w": 4,
             "h": 3
           },
           {
             "type": "next-live",
-            "variant": "countdown",
-            "x": 8,
+            "x": 4,
             "y": 0,
             "w": 4,
-            "h": 5
+            "h": 3,
+            "variant": "countdown",
+            "emphasis": "accent"
+          },
+          {
+            "type": "continue-lesson",
+            "variant": "card",
+            "props": {
+              "course": "foundations"
+            },
+            "hideOnPhone": false,
+            "x": 0,
+            "y": 14,
+            "w": 8,
+            "h": 2
+          },
+          {
+            "type": "partner-links",
+            "x": 4,
+            "y": 10,
+            "w": 8,
+            "h": 4
+          },
+          {
+            "type": "next-live",
+            "variant": "card",
+            "x": 0,
+            "y": 20,
+            "w": 4,
+            "h": 3
+          },
+          {
+            "type": "ai-ask",
+            "x": 4,
+            "y": 20,
+            "w": 4,
+            "h": 3
           },
           {
             "type": "journal-pnl",
             "variant": "curve",
             "x": 0,
-            "y": 3,
+            "y": 8,
             "w": 4,
-            "h": 5
-          },
-          {
-            "type": "rules-followed",
-            "variant": "radar",
-            "x": 4,
-            "y": 3,
-            "w": 4,
-            "h": 5
-          },
-          {
-            "type": "drawdown",
-            "variant": "bars",
-            "x": 8,
-            "y": 5,
-            "w": 4,
-            "h": 4
+            "h": 6
           },
           {
             "type": "econ-news",
-            "variant": "next",
-            "x": 0,
-            "y": 8,
+            "x": 8,
+            "y": 17,
             "w": 4,
-            "h": 4
+            "h": 6
           },
           {
             "type": "course-progress",
-            "variant": "bars",
-            "x": 4,
-            "y": 8,
-            "w": 4,
+            "variant": "list",
+            "x": 0,
+            "y": 16,
+            "w": 8,
             "h": 4
           },
           {
-            "type": "my-rank",
-            "variant": "trend",
+            "type": "announcement",
+            "variant": "plain",
             "x": 8,
-            "y": 9,
+            "y": 14,
+            "w": 4,
+            "h": 3
+          },
+          {
+            "type": "journal-pnl",
+            "x": 0,
+            "y": 5,
+            "w": 4,
+            "h": 3,
+            "variant": "bars",
+            "detail": "compact"
+          },
+          {
+            "type": "rules-followed",
+            "x": 4,
+            "y": 3,
+            "w": 4,
+            "h": 3,
+            "variant": "radar"
+          },
+          {
+            "type": "ai-ask",
+            "x": 8,
+            "y": 3,
+            "w": 4,
+            "h": 7,
+            "variant": "chat"
+          },
+          {
+            "type": "drawdown",
+            "x": 4,
+            "y": 6,
             "w": 4,
             "h": 4
+          }
+        ]
+      },
+      "courses": {
+        "items": [
+          {
+            "type": "page-header",
+            "x": 0,
+            "y": 0,
+            "w": 12,
+            "h": 1
+          },
+          {
+            "type": "continue-lesson",
+            "variant": "cover",
+            "x": 0,
+            "y": 1,
+            "w": 6,
+            "h": 3
+          },
+          {
+            "type": "page-courses",
+            "x": 0,
+            "y": 4,
+            "w": 12,
+            "h": 6,
+            "props": {
+              "resume": false
+            }
+          },
+          {
+            "type": "course-progress",
+            "x": 6,
+            "y": 1,
+            "w": 6,
+            "h": 3
+          }
+        ]
+      },
+      "calendar": {
+        "items": [
+          {
+            "type": "page-header",
+            "x": 0,
+            "y": 0,
+            "w": 12,
+            "h": 1
+          },
+          {
+            "type": "page-calendar",
+            "x": 0,
+            "y": 1,
+            "w": 12,
+            "h": 10,
+            "emphasis": "accent",
+            "detail": "detailed",
+            "props": {
+              "open": "popover",
+              "style": "tinted"
+            }
+          }
+        ]
+      },
+      "charts": {
+        "items": [
+          {
+            "type": "page-header",
+            "x": 0,
+            "y": 0,
+            "w": 12,
+            "h": 1
+          },
+          {
+            "type": "page-charts",
+            "x": 0,
+            "y": 1,
+            "w": 12,
+            "h": 10,
+            "detail": "detailed"
+          }
+        ]
+      },
+      "community": {
+        "items": [
+          {
+            "type": "page-header",
+            "x": 0,
+            "y": 0,
+            "w": 12,
+            "h": 1
+          },
+          {
+            "type": "page-community",
+            "x": 0,
+            "y": 1,
+            "w": 12,
+            "h": 8,
+            "emphasis": "accent",
+            "detail": "standard"
           }
         ]
       }

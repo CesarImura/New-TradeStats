@@ -19,6 +19,9 @@ export type ResolvedColors = Palette & {
   brandText: string
   /** The brand colour as a mark on the page: focus rings, selected outlines (3:1). */
   brandMark: string
+  /** Profit and loss as text (4.5:1). Equal to profit / loss unless the coach set trading colours; `profit` and `loss` stay exact for fills. */
+  profitText: string
+  lossText: string
 }
 
 export type EngineOptions = { fixes?: boolean }
@@ -28,14 +31,26 @@ export function resolveColors(t: CoachTheme, { fixes = true }: EngineOptions = {
   let p: Palette = t.highlight
     ? { ...base, highlight: t.highlight, highlightForeground: isDark(t.highlight) ? "#ffffff" : "#0a0a0a" }
     : base
-  if (!fixes) return { ...p, brandText: t.primary, brandMark: t.primary }
+  // The coach's trading colours replace the palette's profit and loss in both modes.
+  const own = tradingOf(t)
+  if (own) p = { ...p, ...own }
+  if (!fixes) return { ...p, brandText: t.primary, brandMark: t.primary, profitText: p.profit, lossText: p.loss }
   if (t.highlight) p = { ...p, highlightForeground: onColor(t.highlight) }
   p = tintNeutrals(p, t.primary, t.tint ?? "brand")
   return {
     ...p,
     brandText: readableOn(t.primary, [p.card, p.background], 4.5),
     brandMark: readableOn(t.primary, [p.background], 3),
+    // A palette's own colours are already checked; only the coach's are moved to the nearest readable shade.
+    profitText: own ? readableOn(p.profit, [p.card, p.background], 4.5) : p.profit,
+    lossText: own ? readableOn(p.loss, [p.card, p.background], 4.5) : p.loss,
   }
+}
+
+/** The coach's trading colours, if both are set. */
+export function tradingOf(t: Pick<CoachTheme, "trading">) {
+  const x = t.trading
+  return x?.profit && x.loss ? { profit: x.profit, loss: x.loss } : null
 }
 
 /** White or near-black, whichever reads better on this colour. */

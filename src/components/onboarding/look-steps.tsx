@@ -2,50 +2,52 @@
 
 import Link from "next/link"
 import { ExternalLink, LayoutDashboard } from "@/components/icons"
-import { Field, More, Segmented } from "@/components/admin/design/controls"
-import { DesignField, useDesign } from "@/components/admin/design/design-fields"
+import { Field, Segmented } from "@/components/admin/design/controls"
+import { useDesign } from "@/components/admin/design/design-fields"
+import { LookStep } from "@/components/admin/design/design-steps"
+import { useAccount } from "@/lib/data/use-communities"
 import type { TemplateId } from "@/lib/theme/types"
 import { getWidget, heightFor } from "@/components/widgets/registry"
 import { pageLayout } from "@/lib/theme/resolve"
 import { defaultHome, withDetail, type Detail, type WidgetInstance } from "@/lib/widgets/layout"
 import { Choice } from "./frame"
+import { suggestedTemplate } from "./suggest"
 import type { StepProps } from "./wizard"
 
 /**
- * The wizard's look steps show the Design workspace's own fields
- * (design-fields.tsx), editing the same draft, inside <WizardDesign>.
+ * Parts of the wizard's Pages step, and the link to the full Design editor.
+ * The Brand, Look and Menu steps use the Design workspace's own panels
+ * (design-steps.tsx), editing the same draft, inside <WizardDesign>.
  */
 
-/** "Open the full Design editor", with a way back to the same step. */
-export function FullEditorLink({ slug, page = "design" }: { slug: string; page?: string }) {
+/**
+ * A link to the full Design editor, with a way back to setup. `query` picks the
+ * step it opens on (e.g. "step=look"); `href` replaces the whole link.
+ */
+export function FullEditorLink({ slug, query, href, label = "Open the full Design editor" }: { slug: string; query?: string; href?: string; label?: string }) {
   return (
-    <Link href={`/admin/${slug}/${page}?from=setup`} className="flex w-fit items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
-      <ExternalLink className="size-3.5" /> Open the full {page === "design" ? "Design editor" : "Home builder"}
+    <Link href={href ?? `/admin/${slug}/design?${query ? `${query}&` : ""}from=setup`} className="flex w-fit items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
+      <ExternalLink className="size-3.5" /> {label}
     </Link>
   )
 }
 
-// ---------- ONB-16 · Fonts & style
+// ---------- ONB-16 · Look (the Design editor's Look step, with the look that fits marked)
 
-export function StyleStep({ community }: StepProps) {
+export function LookPanel({ community }: StepProps) {
+  const { theme } = useDesign()
+  const acc = useAccount()
   return (
-    <div className="grid gap-7">
-      <DesignField id="fonts" />
-      <DesignField id="corners" />
-      <More label="More style options">
-        <DesignField id="heading-weight" />
-        <DesignField id="labels" />
-        <DesignField id="buttons" />
-        <DesignField id="shadows" />
-        <DesignField id="density" />
-        <DesignField id="borders" />
-      </More>
-      <FullEditorLink slug={community.slug} />
+    <div className="-mx-4 -mt-5 md:-mx-5">
+      <LookStep theme={theme} suggested={suggestedTemplate(acc?.answers)} />
+      <div className="px-4 pb-5 md:px-5">
+        <FullEditorLink slug={community.slug} query="step=look" />
+      </div>
     </div>
   )
 }
 
-// ---------- ONB-17 · Home page
+// ---------- ONB-17 · Pages (the Home page)
 
 const HOMES: { id: TemplateId; name: string; text: string }[] = [
   { id: "terminal", name: "Trading desk", text: "Next live, journal and news up front" },
@@ -97,20 +99,7 @@ export function HomeStep({ community, update }: StepProps) {
         <p className="text-xs text-muted-foreground">{DETAILS.find((o) => o.value === detail)?.hint}</p>
       </Field>
       <p className="text-xs text-muted-foreground">The preview on the right shows it with sample data. Move, resize and add widgets in the Home builder, any time.</p>
-      <FullEditorLink slug={community.slug} page="design/home" />
+      <FullEditorLink slug={community.slug} href={`/admin/${community.slug}/design?step=pages&from=setup`} label="Open Design → Pages" />
     </div>
-  )
-}
-
-// ---------- ONB-11 · Sections & menu (the extended module step uses these)
-
-export function MenuOptions() {
-  return (
-    <More label="Menu order, position and more">
-      <DesignField id="nav-layout" />
-      <DesignField id="nav-style" />
-      <DesignField id="nav-logo" />
-      <DesignField id="menu-items" />
-    </More>
   )
 }

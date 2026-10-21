@@ -4,13 +4,13 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, Loader2, Monitor, Smartphone } from "@/components/icons"
+import { currentLook } from "@/components/admin/design/looks"
 import { PreviewFrame } from "@/components/admin/design/preview-frame"
 import { Button } from "@/components/ui/button"
 import { renameSlug, setAccount, slugify, updateCommunity } from "@/lib/data/communities"
 import { useAccount, useCustomCommunities } from "@/lib/data/use-communities"
 import { publish as publishDraft, useOverrides } from "@/lib/prototype-store"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
-import { TEMPLATES } from "@/lib/theme/templates"
 import { cn } from "@/lib/utils"
 import { OnbFrame, mono } from "./frame"
 import { DoneRow } from "./wizard"
@@ -29,7 +29,7 @@ export function PublishStep() {
   // The look and menu are in the draft the wizard and Design share.
   const draft = useOverrides(base?.slug ?? "", "draft")
   const c = base && { ...base, ...resolveCoach(base, draft.content) }
-  const template = c && resolveTheme(c, draft.theme).template
+  const look = c && currentLook(resolveTheme(c, draft.theme))
 
   if (!c) {
     return (
@@ -86,7 +86,7 @@ export function PublishStep() {
           </div>
 
           <ul className="grid gap-3">
-            <DoneRow done>{TEMPLATES[template ?? c.template].name} template</DoneRow>
+            <DoneRow done>{look ? `${look.name} look` : "Your own look"}</DoneRow>
             <DoneRow done={!!c.name}>{c.name || "Name"}</DoneRow>
             <DoneRow done={!!c.logo}>{c.logo ? "Logo and colour" : "Colour set · no logo yet"}</DoneRow>
             <DoneRow done>{sections} sections switched on</DoneRow>
@@ -96,7 +96,7 @@ export function PublishStep() {
           </ul>
 
           <div className="mt-auto grid gap-3">
-            <Button className="w-full justify-between" onClick={publish} disabled={busy}>
+            <Button size="lg" className="h-12 w-full justify-between px-4 text-[0.9375rem]" onClick={publish} disabled={busy}>
               {busy ? (
                 <>
                   Publishing… <Loader2 className="animate-spin" />
