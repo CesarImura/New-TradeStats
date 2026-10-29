@@ -1,6 +1,6 @@
 "use client"
 
-import { Component, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { Check as CheckIcon, TriangleAlert } from "@/components/icons"
 import { CoachContext } from "@/components/coach/coach-provider"
 import { WidgetFrame } from "@/components/widgets/kit"
@@ -8,13 +8,12 @@ import { DETAILED_EXTRA_ROWS, WIDGETS, type WidgetDef } from "@/components/widge
 import { DataModeProvider, type DataMode } from "@/components/widgets/shared"
 import { getDemoCoach } from "@/lib/data/coaches"
 import { themeToCss } from "@/lib/theme/css"
-import { BRANDED, type LabTheme } from "@/lib/theme/lab"
-import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
-import type { Mode, WidgetStyle } from "@/lib/theme/types"
+import type { CoachTheme } from "@/lib/theme/types"
 import { LIMITS, RULES, checkWidget, type RuleId, type RuleResult } from "@/lib/widgets/checks"
 import { ROW_HEIGHT, type Detail, type Emphasis } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { CONTROL_FOCUS, LabButton, LabSeg, LabSelect, LabSummary, LabToolbar } from "./lab-controls"
+import { saveWallSummary, type WallSummary } from "./quality"
 
 /** The real grid: 12 columns of 80px on a 1136px page, 16px gaps, 56px rows. */
 const COL_PX = 80
@@ -29,15 +28,6 @@ const SIZES = [
   { id: "l", label: "Large", cols: (d: WidgetDef) => (d.defaultW >= 8 ? d.defaultW : 8) },
 ] as const
 
-/** The three templates in light and dark, then a few coach colours that push the engine hardest. */
-const EXTREME_IDS = ["neon", "pastel", "yellow-light", "navy-dark", "black-brand", "gold", "cyan-pulse", "mixed"]
-const THEMES: LabTheme[] = [
-  ...TEMPLATE_IDS.flatMap((id) =>
-    (["light", "dark"] as Mode[]).map((mode) => ({ id: `${id}-${mode}`, name: `${TEMPLATES[id].name} · ${mode}`, theme: { ...TEMPLATES[id].theme, mode } })),
-  ),
-  ...BRANDED.filter((t) => EXTREME_IDS.includes(t.id)),
-]
-
 const SCOPE = "wl-canvas"
 const coach = getDemoCoach("northline")!
 const LIBRARY = WIDGETS.filter((w) => !w.core)
@@ -51,21 +41,13 @@ const failsOf = (r: Result | undefined) => (r === "error" ? 1 : r ? r.filter((x)
  * widget rules (type size, contrast, brand coverage, overflow). Lives in the
  * library (Tools), under its heading and in its chrome.
  */
-export function WidgetWall() {
-  const [themeId, setThemeId] = useState(THEMES[0].id)
-  const [emphasis, setEmphasis] = useState<Emphasis>("accent")
-  const [detail, setDetail] = useState<Detail>("standard")
+export function WidgetWall({ theme, themeName, emphasis, detail, onOpen }: { theme: CoachTheme; themeName: string; emphasis: Emphasis; detail: Detail; onOpen: (type: string, variant: string) => void }) {
   // Detailed widgets get extra rows in the builder too (see heightFor in the registry).
   const extra = detail === "detailed" ? DETAILED_EXTRA_ROWS : 0
   const [data, setData] = useState<DataMode>("sample")
   const [filter, setFilter] = useState("all")
-  const [onlyProblems, setOnlyProblems] = useState(false)
-
-  const lab = THEMES.find((t) => t.id === themeId)!
-  // "template" = the style the theme itself has (each template has a default).
-  const [wstyle, setWstyle] = useState<"template" | WidgetStyle>("template")
-  const theme = useMemo(() => (wstyle === "template" ? lab.theme : { ...lab.theme, widgetStyle: wstyle }), [lab.theme, wstyle])
-  const config = `${themeId}|${emphasis}|${detail}|${data}|${wstyle}`
+  const [onlyProblems, setOnlyProblems] = useState(true)
+  const config = `${JSON.stringify(theme)}|${emphasis}|${detail}|${data}`
 
   // Results by cell key; a cell reports after each measurement. Re-renders are batched.
   const results = useRef(new Map<string, Result>())
@@ -83,16 +65,15 @@ export function WidgetWall() {
   }, [])
 
   const widgets = filter === "all" ? LIBRARY : LIBRARY.filter((w) => w.type === filter)
-  const cells = widgets.flatMap((def) =>
-    def.variants.flatMap((v) => SIZES.map((s) => ({ def, variant: v, size: s, key: `${config}|${def.type}|${v.value}|${s.id}` }))),
-  )
+  const cells = widgets.flatMap((def) => def.variants.flatMap((v) => SIZES.map((s) => ({ def, variant: v, size: s, key: `${config}|${def.type}|${v.value}|${s.id}` }))))
   const measured = cells.filter((c) => res.has(c.key))
   const failing = measured.filter((c) => failsOf(res.get(c.key)) > 0)
   const issues = measured.reduce((n, c) => n + failsOf(res.get(c.key)), 0)
-  const byRule = (id: RuleId) => measured.filter((c) => {
-    const r = res.get(c.key)
-    return r !== "error" && r?.some((x) => x.id === id && !x.pass)
-  }).length
+  const byRule = (id: RuleId) =>
+    measured.filter((c) => {
+      const r = res.get(c.key)
+      return r !== "error" && r?.some((x) => x.id === id && !x.pass)
+    }).length
   const crashed = measured.filter((c) => res.get(c.key) === "error").length
   /** With "only problems", hide a cell once it is measured and clean; unknown cells still render so they get measured. */
   const hidden = (key: string) => onlyProblems && res.has(key) && failsOf(res.get(key)) === 0
@@ -103,12 +84,36 @@ export function WidgetWall() {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-6 pb-16">
       <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, `.${SCOPE}`) }} />
+      <SaveSummary
+        done={measured.length === cells.length && filter === "all"}
+        themeName={themeName}
+        pass={measured.length - failing.length}
+        total={cells.length}
+        issues={issues}
+        byRule={RULES.map((r) => ({ label: r.label, fails: byRule(r.id) }))}
+        problems={failing.slice(0, 40).map((c) => ({
+          type: c.def.type,
+          name: c.def.name,
+          variant: c.variant.value,
+          label: c.variant.label,
+          size: c.size.label,
+          rules: (() => {
+            const r = res.get(c.key)
+            return r === "error" ? ["Crashed"] : (r ?? []).filter((x) => !x.pass).map((x) => x.label)
+          })(),
+        }))}
+      />
 
       <LabToolbar>
-        <LabSeg label="Emphasis" value={emphasis} onChange={setEmphasis} options={[["quiet", "Quiet"], ["accent", "Accent"], ["star", "Star"]]} />
-        <LabSeg label="Detail" value={detail} onChange={setDetail} options={[["compact", "Compact"], ["standard", "Standard"], ["detailed", "Detailed"]]} />
-        <LabSeg label="Style" value={wstyle} onChange={setWstyle} options={[["template", "Template’s"], ["instrument", "Instrument"], ["soft", "Soft"], ["editorial", "Editorial"]]} />
-        <LabSeg label="Data" value={data} onChange={setData} options={[["sample", "Sample"], ["empty", "Empty"]]} />
+        <LabSeg
+          label="Data"
+          value={data}
+          onChange={setData}
+          options={[
+            ["sample", "Sample"],
+            ["empty", "Empty"],
+          ]}
+        />
         <LabSelect label="Widget" value={filter} onChange={setFilter}>
           <option value="all">All widgets ({LIBRARY.length})</option>
           {LIBRARY.map((w) => (
@@ -122,30 +127,6 @@ export function WidgetWall() {
         </LabButton>
       </LabToolbar>
 
-      {/* The coach theme every widget is drawn in: the templates in light and dark, then the brands that push the engine hardest. */}
-      <div role="radiogroup" aria-label="Theme" className="flex flex-wrap gap-1.5">
-        {THEMES.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="radio"
-            aria-checked={t.id === themeId}
-            onClick={() => setThemeId(t.id)}
-            title={t.note}
-            className={cn(
-              "flex h-8 items-center gap-1.5 rounded-full border px-3 text-[0.8125rem] transition-colors duration-150",
-              CONTROL_FOCUS,
-              t.id === themeId ? "bg-(--c-bar) font-medium text-(--c-t1) shadow-[0_1px_2px_0_rgb(0_0_0/0.1)]" : "text-(--c-t2) hover:bg-(--c-on) hover:text-(--c-t1)",
-            )}
-            style={{ borderColor: t.id === themeId ? "var(--c-t3)" : "var(--c-hair)" }}
-          >
-            <span className="size-2.5 rounded-full shadow-[0_0_0_1px_var(--c-hair)]" style={{ background: t.theme.primary }} />
-            <span className={cn("size-2.5 rounded-full shadow-[0_0_0_1px_var(--c-hair)]", t.theme.mode === "dark" ? "bg-black" : "bg-white")} />
-            {t.name}
-          </button>
-        ))}
-      </div>
-
       <div className="grid gap-2">
         <LabSummary
           value={measured.length - failing.length}
@@ -154,8 +135,8 @@ export function WidgetWall() {
           chips={RULES.map((r) => ({ label: r.label, fails: byRule(r.id) }))}
         />
         <p className="px-1 text-xs text-(--c-t3)">
-          Limits: type ≤ {LIMITS.maxFont}px ({LIMITS.maxFontStar}px on Star) · contrast {LIMITS.contrastSmall}:1, {LIMITS.contrastLarge}:1 from {LIMITS.largeTextPx}px · brand ≤ {LIMITS.maxBrandShare * 100}% (not on
-          Star) · no overflow
+          Limits: type ≤ {LIMITS.maxFont}px ({LIMITS.maxFontStar}px on Star) · contrast {LIMITS.contrastSmall}:1, {LIMITS.contrastLarge}:1 from {LIMITS.largeTextPx}px · brand ≤ {LIMITS.maxBrandShare * 100}% (not on Star)
+          · no overflow
         </p>
       </div>
 
@@ -169,6 +150,9 @@ export function WidgetWall() {
                 <section key={def.type} className="flex flex-col gap-4">
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b pb-2" style={{ borderColor: "var(--c-hair)" }}>
                     <h2 className="text-base font-medium">{def.name}</h2>
+                    <button type="button" onClick={() => onOpen(def.type, def.variants[0].value)} className={cn("ml-auto rounded text-xs text-(--c-t2) hover:text-(--c-t1)", CONTROL_FOCUS)}>
+                      Open widget →
+                    </button>
                     <span className="text-xs text-(--c-t3)">
                       {def.type} · {def.group} · default {def.defaultW} cols · min {def.minW}
                     </span>
@@ -179,13 +163,15 @@ export function WidgetWall() {
                         {v.label} <span className="text-(--c-t3)">· {v.h + extra} rows</span>
                       </span>
                       {/* Three widths side by side; scrolls sideways on a narrow screen instead of squeezing the widgets. */}
-                      <div className="-mx-1 flex items-start gap-4 overflow-x-auto px-1 pb-2">
+                      <div className="flex flex-wrap items-start gap-4">
                         {SIZES.map((s) => {
                           const key = `${config}|${def.type}|${v.value}|${s.id}`
                           if (hidden(key)) return null
                           const cols = s.cols(def)
+                          // A variant that stacks when narrow gets the extra rows the builder gives it there.
+                          const vh = v.narrow && cols < v.narrow.below ? Math.max(v.h, v.narrow.minH) : v.h
                           return (
-                            <div key={s.id} className="flex shrink-0 flex-col gap-1.5" style={{ width: px(cols) + 24 }}>
+                            <div key={s.id} className="flex max-w-full shrink-0 flex-col gap-1.5" style={{ width: px(cols) + 24 }}>
                               <div
                                 data-coach-scope
                                 className={cn(SCOPE, theme.mode === "dark" ? "dark" : "light", "rounded-xl border border-(--c-hair) bg-background p-3 text-foreground")}
@@ -199,9 +185,9 @@ export function WidgetWall() {
                                   } as React.CSSProperties
                                 }
                               >
-                                <Cell def={def} variant={v.value} emphasis={emphasis} detail={detail} width={px(cols)} height={rowsPx(v.h + extra)} cellKey={key} star={star} report={report} />
+                                <Cell def={def} variant={v.value} emphasis={emphasis} detail={detail} width={px(cols)} height={rowsPx(vh + extra)} cellKey={key} star={star} report={report} />
                               </div>
-                              <Badge size={`${s.label} · ${cols} cols · ${px(cols)}×${rowsPx(v.h + extra)}`} result={res.get(key)} />
+                              <Badge size={`${s.label} · ${cols} cols · ${px(cols)}×${rowsPx(vh + extra)}`} result={res.get(key)} />
                             </div>
                           )
                         })}
@@ -298,12 +284,7 @@ function Cell({
 
   const C = def.Component
   return (
-    <div
-      ref={ref}
-      className="pointer-events-none relative flex flex-col overflow-hidden select-none [&>*]:min-h-0 [&>*]:flex-1"
-      style={{ width, height, containerType: "inline-size" }}
-      inert
-    >
+    <div ref={ref} className="pointer-events-none relative flex flex-col overflow-hidden select-none [&>*]:min-h-0 [&>*]:flex-1" style={{ width, height, containerType: "inline-size" }} inert>
       <Boundary onError={() => report(cellKey, "error")} name={def.name}>
         <WidgetFrame emphasis={emphasis} detail={detail}>
           <C variant={variant} props={{}} />
@@ -374,4 +355,13 @@ function Badge({ size, result }: { size: string; result: Result | undefined }) {
       ))}
     </div>
   )
+}
+
+/** When a full run is measured, keep its result for Quality's overview. */
+function SaveSummary({ done, themeName, ...rest }: Omit<WallSummary, "at" | "theme"> & { done: boolean; themeName: string }) {
+  const json = JSON.stringify(rest)
+  useEffect(() => {
+    if (done) saveWallSummary({ ...JSON.parse(json), theme: themeName, at: Date.now() })
+  }, [done, json, themeName])
+  return null
 }

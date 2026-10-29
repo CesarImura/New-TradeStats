@@ -55,8 +55,9 @@ export function resolveColors(t: CoachTheme, { fixes = true }: EngineOptions = {
     brandMark: readableOn(t.primary, [p.background], 3),
     // Moved to the nearest readable shade on the card the widgets really use (a grey card is darker), with a
     // little headroom (4.9) for inset panels and tints that sit a few percent darker still.
-    profitText: readableOn(p.profit, [cardOf(t, p), p.background], 4.9),
-    lossText: readableOn(p.loss, [cardOf(t, p), p.background], 4.9),
+    // The inner panel counts too: figures in a ranking row or a feedback card sit on it.
+    profitText: readableOn(p.profit, [cardOf(t, p), p.background, ladder.extra.panel], 4.9),
+    lossText: readableOn(p.loss, [cardOf(t, p), p.background, ladder.extra.panel], 4.9),
   }
 }
 

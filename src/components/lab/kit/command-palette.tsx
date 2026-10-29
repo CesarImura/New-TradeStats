@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
 /** Anything the palette can open: a widget or a component. */
-export type PaletteItem = { id: string; kind: "Widget" | "Component"; name: string; group: string; description: string; tags: string[]; isNew?: boolean }
+export type PaletteItem = { id: string; kind: "Widget" | "Component" | "Theme" | "Layout" | "Page"; name: string; group: string; description: string; tags: string[]; isNew?: boolean }
 
 const RECENT_KEY = "wb-recent"
 

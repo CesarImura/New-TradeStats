@@ -418,7 +418,8 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
     return (
       <WCard icon={Trophy} title={coach.wording.ranking} meta={meta} chip={<Chip>{`Top ${topPct}%`}</Chip>}>
         {head}
-        <div ref={list} className="grid min-h-0 flex-1 content-start overflow-hidden [&>[data-row]]:contents">
+        {/* -mx/px: the rows' tint bleeds 6px past the text on each side; the clipping box makes room for it. */}
+        <div ref={list} className="-mx-1.5 grid min-h-0 flex-1 content-start overflow-hidden px-1.5 [&>[data-row]]:contents">
           {top.map((p) => (
             <div key={p.rank} data-row>
               <RankRow p={p} />

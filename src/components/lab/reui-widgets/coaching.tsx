@@ -60,7 +60,7 @@ function TradeName({ trade }: { trade: string }) {
   return (
     <span className="min-w-0 truncate tabular-nums" style={{ fontFamily: font }}>
       {name}
-      {r && <span style={{ color: loss ? "var(--loss)" : "var(--profit)" }}> {r}</span>}
+      {r && <span style={{ color: loss ? "var(--loss-text)" : "var(--profit-text)" }}> {r}</span>}
     </span>
   )
 }

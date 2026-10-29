@@ -574,12 +574,13 @@ export function EconNews({ variant = "next" }: WidgetProps) {
   // next
   const others = news.filter((e) => e.id !== big.id)
   return (
-    <WCard icon={Newspaper} title="Market calendar" meta={meta} chip={<OpenChip />}>
+    // Three rows tall at most, so the parts sit closer (gap-2) and the release line is one 16px line.
+    <WCard icon={Newspaper} title="Market calendar" meta={meta} chip={<OpenChip />} bodyClassName="gap-2">
       <div className="grid shrink-0 gap-1">
         <Label>Next high impact</Label>
         <Num value={big.title} delta={`in ${short(big.inMinutes ?? 0)}`} deltaTone="accent" />
       </div>
-      <div className="flex min-w-0 shrink-0 items-center gap-2 text-[0.6875rem] leading-5" style={{ fontFamily: font }}>
+      <div className="flex min-w-0 shrink-0 items-center gap-2 text-[0.6875rem] leading-4" style={{ fontFamily: font }}>
         <ImpactTicks impact={big.impact} big />
         <span className="shrink-0 whitespace-nowrap text-muted-foreground tabular-nums">
           {big.day} {big.date.split(" ")[0]} · {big.time}
@@ -596,7 +597,7 @@ export function EconNews({ variant = "next" }: WidgetProps) {
           </span>
         )}
       </div>
-      {more && <WeekBar news={news} />}
+      <Drop level={2}>{more && <WeekBar news={news} />}</Drop>
       {detailed && (
         <>
           <Rule />

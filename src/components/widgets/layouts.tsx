@@ -306,7 +306,8 @@ export function HeatGrid({ rows, rowLabels, colLabels, className }: { rows: Heat
     <div className={cn("flex min-h-16 flex-1 flex-col justify-center gap-[3px]", className)} onPointerLeave={() => setHover(undefined)}>
       {rows.map((r, ri) => (
         <div key={ri} className="grid min-h-2 max-h-8 flex-1 justify-center gap-[3px]" style={grid}>
-          <span className={cn("self-center truncate text-[0.6875rem] leading-4 transition-colors duration-150", hover?.[0] === ri ? "text-foreground" : "text-muted-foreground")} style={{ fontFamily: font }}>
+          {/* A tight line: the label must not make a row taller than its cells need, or a short card's grid spills. */}
+          <span className={cn("self-center truncate text-[0.6875rem] leading-[0.875rem] transition-colors duration-150", hover?.[0] === ri ? "text-foreground" : "text-muted-foreground")} style={{ fontFamily: font }}>
             {rowLabels[ri]}
           </span>
           {r.map((c, ci) => {
@@ -336,7 +337,8 @@ export function HeatGrid({ rows, rowLabels, colLabels, className }: { rows: Heat
           {colLabels.map((l, i) => (
             <span
               key={i}
-              className={cn("overflow-visible text-[0.6875rem] leading-4 whitespace-nowrap tabular-nums transition-colors duration-150", hover?.[1] === i ? "text-foreground" : "text-muted-foreground")}
+              // The last label ends at the grid's edge and runs left, so a long one ("today") never pokes out of the card.
+              className={cn("overflow-visible text-[0.6875rem] leading-4 whitespace-nowrap tabular-nums transition-colors duration-150", i === colLabels.length - 1 && "justify-self-end", hover?.[1] === i ? "text-foreground" : "text-muted-foreground")}
               style={{ fontFamily: font }}
             >
               {l ?? ""}

@@ -1,124 +1,58 @@
 "use client"
 
-import { ArrowLeft, ChevronRight, Command, Eye, Menu, Moon, Search, SlidersHorizontal, Sun, X } from "lucide-react"
+import { ArrowDownUp, ArrowLeft, Check, Columns3, Menu, Palette, PanelsTopLeft, Shapes, ShieldCheck, Moon, Search, SlidersHorizontal, Sun, X } from "lucide-react"
 import Link from "next/link"
-import { Component, useEffect, useMemo, useState, useSyncExternalStore } from "react"
+import { Component, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { CoachContext } from "@/components/coach/coach-provider"
 import { WidgetFrame } from "@/components/lab/reui-widgets/kit"
+import { DataModeProvider, type DataMode } from "@/components/lab/reui-widgets/shared"
 import { DETAILED_EXTRA_ROWS, WIDGETS, type WidgetDef } from "@/components/lab/reui-widgets/registry"
 import { getDemoCoach } from "@/lib/data/coaches"
 import { themeToCss } from "@/lib/theme/css"
 import { resolveCoach } from "@/lib/theme/resolve"
-import { TEMPLATES } from "@/lib/theme/templates"
 import type { CoachTheme, Mode } from "@/lib/theme/types"
 import { ROW_HEIGHT, type Detail, type Emphasis } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { checkWidget } from "@/lib/widgets/checks"
-import { LabButton, LabDivider, LabPopover, LabSeg } from "./lab-controls"
+import { LabButton, LabPopover, LabSeg } from "./lab-controls"
 import { CommandPalette, type PaletteItem } from "./kit/command-palette"
 import { ComponentModal } from "./kit/component-modal"
 import { COMPONENT_GROUPS, COMPONENTS, type KitDef } from "./kit/components"
 import { KitPane } from "./kit/preview"
 import { NEW_TYPES, NEW_WIDGETS, WIDGET_TAGS } from "./new-widgets/registry"
-import { AnatomyCompare } from "./anatomy-compare"
+import { CompareBar, CompareView, type CompareSource } from "./compare-view"
+import { duplicateLayout, useLabLayouts } from "./lab-layouts"
+import { LayoutBar, LayoutGallery, LayoutView, type Device, type LayoutCompare } from "./layout-views"
+import { colourOf, createTheme, duplicateTheme, resolveLab, useLabThemes } from "./lab-themes"
+import { ThemeEditor, labUiCss } from "./theme-editor"
+import { QualityOverview } from "./quality"
+import { ThemeGallery } from "./theme-gallery"
+import { PANEL, panelStyle, ThemeSwitcher, useDismiss } from "./theme-switcher"
 import { StressTool } from "./stress-bench"
-import { WidgetProof } from "./widget-proof"
 import { WidgetWall } from "./widget-wall"
-import { THEME_SETS, ThemeLabControls, ThemeLabGrid, themeSetSize, useThemeLab, type ThemeSet } from "./theme-lab"
+import { THEME_SETS, ThemeLabControls, ThemeLabGrid, useThemeLab, type ThemeSet } from "./theme-lab"
 import { WidgetModal } from "./widget-modal"
 
 /** The real grid: 80px columns, 16px gaps, 56px rows. */
 export const px = (cols: number) => cols * 80 + (cols - 1) * 16
 export const rowsPx = (h: number) => h * ROW_HEIGHT + (h - 1) * 16
 
-/**
- * The white-label base: no coach colour, no template personality. Neutral
- * greys, the accent is the text colour, Geist, plain cards. Every
- * personality setting is at its plainest, so what shows is the structure.
- */
-const BASE: CoachTheme = {
-  ...TEMPLATES.pulse.theme,
-  template: "pulse",
-  palettes: {
-    light: {
-      background: "#f4f4f5",
-      card: "#ffffff",
-      foreground: "#0a0a0a",
-      muted: "#f4f4f5",
-      mutedForeground: "#5f5f66",
-      border: "#e4e4e7",
-      sidebar: "#f4f4f5",
-      highlight: "#e4e4e7",
-      highlightForeground: "#0a0a0a",
-      // A matched pair: same weight, so a loss doesn't shout louder than a profit.
-      profit: "#1a7f37",
-      loss: "#cf222e",
-    },
-    dark: {
-      background: "#0a0a0b",
-      card: "#161618",
-      foreground: "#f4f4f5",
-      muted: "#202023",
-      mutedForeground: "#a1a1aa",
-      border: "#2a2a2e",
-      sidebar: "#0a0a0b",
-      highlight: "#27272a",
-      highlightForeground: "#f4f4f5",
-      // Calmer than the pastel 400s on a near-black card; text still gets its 4.5:1 from derive.
-      profit: "#3fb950",
-      loss: "#f85149",
-    },
-  },
-  tint: "none",
-  radius: 12,
-  buttonShape: "rounded",
-  shadow: "none",
-  borders: true,
-  density: "comfortable",
-  fonts: { heading: "geist", body: "geist", label: "geist" },
-  labelStyle: "plain",
-  headingWeight: 500,
-  background: "plain",
-  effects: "flat",
-  widgetStyle: "soft",
-  widgetFont: "body",
-  widgetSet: "cards",
-  cardSurface: "raised",
-  headerForm: "top",
-  figureStyle: "plain",
-  chartStyle: "solid",
-  panelStyle: "filled",
-  starStyle: "brand",
-  widgetFinish: "none",
-  widgetHeader: undefined,
-  trading: undefined,
-  highlight: undefined,
-}
-
-export type Colour = "minimal" | "mono"
-
-/**
- * The accent. Minimal: a calm placeholder blue, like a component library's
- * demo, for the one mark per widget. Mono: the text colour (black on light,
- * near-white on dark), so only profit and loss carry colour.
- */
-export const themeFor = (mode: Mode, colour: Colour): CoachTheme => ({
-  ...BASE,
-  mode,
-  // The same blue on dark: white text on it keeps 5:1 (a lighter blue drops under 4.5:1); readable blue text comes from derive.
-  primary: colour === "mono" ? (mode === "light" ? "#18181b" : "#f4f4f5") : "#2563eb",
-  primaryForeground: colour === "mono" && mode === "dark" ? "#0a0a0a" : "#ffffff",
-})
+import { type Colour } from "./lab-themes"
+export { themeFor, type Colour } from "./lab-themes"
 
 /**
  * Meaning colours beside profit (success) and loss (destructive): warning
  * (amber) and info (the accent). Only where they mean something: urgency,
  * high impact, a status. Mono keeps them grey.
  */
-export const meaningCss = (colour: Colour) =>
+export const meaningCss = (colour: Colour) => meaningFor(colour, "light", ".wb-light") + meaningFor(colour, "dark", ".wb-dark")
+/** The meaning colours for one theme scope in one mode (Compare and the theme gallery give every theme its own). */
+export const meaningFor = (colour: Colour, mode: Mode, sel: string) =>
   colour === "mono"
-    ? ".wb-light,.wb-dark{--warning:var(--muted-foreground);--info:var(--foreground);--warning-text:var(--muted-foreground);--info-text:var(--foreground)}"
-    : ".wb-light{--warning:#d97706;--warning-text:#b45309;--info:#2563eb;--info-text:var(--brand-text)}.wb-dark{--warning:#f59e0b;--warning-text:#fbbf24;--info:#3b82f6;--info-text:var(--brand-text)}"
+    ? `${sel}{--warning:var(--muted-foreground);--info:var(--foreground);--warning-text:var(--muted-foreground);--info-text:var(--foreground)}`
+    : mode === "light"
+      ? `${sel}{--warning:#d97706;--warning-text:#b45309;--info:#2563eb;--info-text:var(--brand-text)}`
+      : `${sel}{--warning:#f59e0b;--warning-text:#fbbf24;--info:#3b82f6;--info-text:var(--brand-text)}`
 
 /** Every widget in the library: the app's (minus pages' core widgets) and the ones added in the lab. */
 export const LIBRARY = [...WIDGETS.filter((w) => !w.core), ...NEW_WIDGETS]
@@ -126,7 +60,7 @@ export const LIBRARY = [...WIDGETS.filter((w) => !w.core), ...NEW_WIDGETS]
 const ADDED = new Map(LIBRARY.map((w, i) => [w.type, NEW_TYPES.has(w.type) ? 1000 + i : i]))
 /** The sidebar's order: the student's day first, the coach's own content after. */
 const ORDER = ["Page", "Learning", "Calendar", "Journal", "Progress", "Community", "Coach and brand", "Your content", "AI", "Coaching"]
-const GROUPS = [...new Set(LIBRARY.map((w) => w.group as string))].sort((a, b) => (ORDER.indexOf(a) + 99) % 99 - (ORDER.indexOf(b) + 99) % 99)
+const GROUPS = [...new Set(LIBRARY.map((w) => w.group as string))].sort((a, b) => ((ORDER.indexOf(a) + 99) % 99) - ((ORDER.indexOf(b) + 99) % 99))
 const SORTED = GROUPS.flatMap((g) => LIBRARY.filter((w) => w.group === g))
 const coach = resolveCoach(getDemoCoach("northline")!)
 
@@ -137,28 +71,60 @@ const coach = resolveCoach(getDemoCoach("northline")!)
  * not pure white and dark is not pure black, so the widgets' cards stand out.
  */
 const CHROME: Record<Mode, Record<string, string>> = {
-  light: { "--c-page": "#f4f4f5", "--c-side": "#fafafa", "--c-bar": "#ffffff", "--c-cell": "#e9e9ec", "--c-cell-on": "#e2e2e6", "--c-hair": "#dcdce0", "--c-on": "#e3e3e7", "--c-t1": "#18181b", "--c-t2": "#4b4b53", "--c-t3": "#63636b" },
-  dark: { "--c-page": "#111113", "--c-side": "#0c0c0e", "--c-bar": "#161618", "--c-cell": "#0b0b0d", "--c-cell-on": "#07070a", "--c-hair": "#2c2c31", "--c-on": "#232327", "--c-t1": "#f4f4f5", "--c-t2": "#c0c0c8", "--c-t3": "#9a9aa3" },
+  light: {
+    "--c-page": "#f4f4f5",
+    "--c-side": "#fafafa",
+    "--c-bar": "#ffffff",
+    "--c-cell": "#e9e9ec",
+    "--c-cell-on": "#e2e2e6",
+    "--c-hair": "#dcdce0",
+    "--c-on": "#e3e3e7",
+    "--c-t1": "#18181b",
+    "--c-t2": "#4b4b53",
+    "--c-t3": "#63636b",
+  },
+  dark: {
+    "--c-page": "#111113",
+    "--c-side": "#0c0c0e",
+    "--c-bar": "#161618",
+    "--c-cell": "#0b0b0d",
+    "--c-cell-on": "#07070a",
+    "--c-hair": "#2c2c31",
+    "--c-on": "#232327",
+    "--c-t1": "#f4f4f5",
+    "--c-t2": "#c0c0c8",
+    "--c-t3": "#9a9aa3",
+  },
 }
 export const t2 = "text-(--c-t2)"
 export const t3 = "text-(--c-t3)"
 export const hair = { borderColor: "var(--c-hair)" }
 
-type Scope = "widgets" | "components" | "everything"
+type Scope = "all" | "widgets" | "components"
 type Sort = "category" | "az" | "recent"
 const KIT_CATS = COMPONENT_GROUPS.map((g) => `kit:${g}`)
 const kitOf = (cat: string) => (cat === "kit" ? "all" : cat.startsWith("kit:") ? cat.slice(4) : null)
-const THEME_CATS = THEME_SETS.map((t) => `themes:${t.id}`)
-const themeOf = (cat: string) => (cat.startsWith("themes:") ? (cat.slice(7) as ThemeSet) : null)
-const THEME_COUNTS = new Map(THEME_SETS.map((t) => [t.id, themeSetSize(t.id)]))
-
-/** The lab's benches, each a page of the library: they check widgets and themes rather than show them. */
-const TOOLS = [
-  { id: "wall", label: "Widget wall", blurb: "Every widget, every layout, at three widths in one coach theme, each measured against the widget rules: type size, contrast, brand share and overflow.", ownModes: true },
-  { id: "anatomy", label: "Across templates", blurb: "The same widgets under Terminal, Atelier and Pulse side by side: do two coaches look like different products?", ownModes: false },
-  { id: "stress", label: "Stress bench", blurb: "One widget's layouts at many grid sizes and amounts of content, to find where it cuts, squeezes or leaves a gap.", ownModes: false },
-  { id: "proof", label: "Base proof", blurb: "Up next, Performance and Discipline on the base structure, for each template in light and dark, with the personality settings to try on all of them at once.", ownModes: true },
+/** The Themes section's pages: every theme to pick, edit and delete, and the readability check. */
+const THEME_VIEWS = [
+  { id: "gallery", label: "Manage themes", blurb: "Every theme, drawn in itself. Click one to see the whole library in it; its menu edits, copies, compares or deletes it." },
+  { id: "check", label: "Readability check", blurb: "Many themes at once against the readability rules: coaches' own brands, every template with every brand colour, or settings picked at random." },
 ] as const
+type ThemeView = (typeof THEME_VIEWS)[number]["id"]
+const THEME_CATS = THEME_VIEWS.map((t) => `themes:${t.id}`)
+const themeOf = (cat: string) => THEME_VIEWS.find((t) => `themes:${t.id}` === cat)?.id ?? null
+
+/** The lab's checks, each a page of the library: they measure widgets rather than show them. (Across templates became Compare.) */
+const TOOLS = [
+  { id: "wall", label: "Widget rules", blurb: "Every widget, every variant, at three widths in the theme above, measured against the widget rules: type size, contrast, brand share and overflow.", ownModes: false },
+  { id: "stress", label: "Stress test", blurb: "One widget's variants at many grid sizes and amounts of content. Cells that cut or overflow are marked.", ownModes: false },
+] as const
+/** Quality: the overview, then each check. */
+const QUALITY = [
+  { cat: "quality", label: "Overview" },
+  { cat: "tool:wall", label: "Widget rules" },
+  { cat: "themes:check", label: "Readability" },
+  { cat: "tool:stress", label: "Stress test" },
+]
 type ToolId = (typeof TOOLS)[number]["id"]
 const TOOL_CATS = TOOLS.map((t) => `tool:${t.id}`)
 const toolOf = (cat: string) => TOOLS.find((t) => `tool:${t.id}` === cat) ?? null
@@ -174,26 +140,48 @@ export function WidgetBase() {
   const [emphasis, setEmphasis] = useState<Emphasis>("accent")
   const [detail, setDetail] = useState<Detail>("standard")
   const [layout, setLayout] = useState<"first" | "all">("all")
+  const [data, setData] = useStored<DataMode>("wb-data", "sample", ["sample", "empty", "inactive", "finished"])
   const [menu, setMenu] = useState(false)
   const [query, setQuery] = useState("")
   const [palette, setPalette] = useState(false)
   const [mode, setMode] = useStored<Mode>("wb-mode", "dark", ["light", "dark"])
   const [size, setSize] = useStored<Size>("wb-size", "auto", ["auto", "s", "m", "l"])
-  const [colour, setColour] = useStored<Colour>("wb-colour", "minimal", ["minimal", "mono"])
-  const [cat, setCat] = useStored<string>("wb-cat", "all", ["all", ...GROUPS, "kit", ...KIT_CATS, ...THEME_CATS, ...TOOL_CATS])
-  const [scopeView, setScopeView] = useStored<Scope>("wb-scope", "widgets", ["widgets", "components", "everything"])
+  const [cat, setCat] = useStored<string>("wb-cat", "all", ["all", ...GROUPS, "kit", ...KIT_CATS, ...THEME_CATS, "layouts", "layout", "quality", ...TOOL_CATS])
+  const [scopeView, setScopeView] = useStored<Scope>("wb-scope-v2", "all", ["all", "widgets", "components"])
   const [sort, setSort] = useStored<Sort>("wb-sort", "category", ["category", "az", "recent"])
-  const [openW, setOpenW] = useState(true)
-  const [openK, setOpenK] = useState(true)
-  const [openT, setOpenT] = useState(true)
-  const [openX, setOpenX] = useState(true)
-  const themeSet = themeOf(cat)
-  const themeLab = useThemeLab(themeSet ?? "branded", query)
+  const [checkSet, setCheckSet] = useStored<ThemeSet>("wb-check-set", "branded", ["branded", "matrix", "random"])
+  const [compareOn, setCompareOn] = useStored<"on" | "off">("wb-compare", "off", ["on", "off"])
+  const [compareSource, setCompareSource] = useStored<CompareSource>("wb-compare-source", "view", ["view", "picked"])
+  const [editing, setEditing] = useState<string | null>(null)
+  const lab = useLabThemes()
+  const layouts = useLabLayouts()
+  const [stressType, setStressType] = useState(LIBRARY[0].type)
+  const [layoutEditing, setLayoutEditing] = useState(false)
+  const [layoutCompare, setLayoutCompare] = useStored<LayoutCompare>("wb-layout-compare", "off", ["off", "themes", "layouts"])
+  const [device, setDevice] = useStored<Device>("wb-device", "desktop", ["desktop", "tablet", "phone"])
+  const layoutView = cat === "layouts" ? "gallery" : cat === "layout" ? "page" : null
+  /** Open one layout's page; `edit` opens it on the grid (a starting point is copied first). */
+  const openLayout = (id: string, edit = false) => {
+    const l = layouts.byId(id)
+    if (!l) return
+    if (edit && l.builtIn) duplicateLayout(l, `My ${l.name}`)
+    else layouts.pick(id)
+    setLayoutEditing(edit)
+    setMenu(false)
+    setCat("layout")
+    window.scrollTo(0, 0)
+  }
+  const themeView: ThemeView | null = themeOf(cat)
+  const themeSet = themeView === "check" ? checkSet : null
+  const themeLab = useThemeLab(checkSet, query)
   const tool = toolOf(cat)
   const scale = scaleFor(size, useViewportWidth())
   const extra = detail === "detailed" ? DETAILED_EXTRA_ROWS : 0
-  const light = themeFor("light", colour)
-  const dark = themeFor("dark", colour)
+  // The library's theme: everything below is drawn in it, in the page's light or dark.
+  const colour = colourOf(lab.active)
+  const light = useMemo(() => resolveLab(lab.active, "light"), [lab.active])
+  const dark = useMemo(() => resolveLab(lab.active, "dark"), [lab.active])
+  const editEntry = editing ? lab.byId(editing) : undefined
   const theme = mode === "light" ? light : dark
   const scope = mode === "light" ? "wb-light" : "wb-dark"
 
@@ -202,7 +190,7 @@ export function WidgetBase() {
   const found = SORTED.filter((w) => !q || `${w.name} ${w.group} ${w.description} ${tagsOf(w).join(" ")}`.toLowerCase().includes(q))
   const foundK = COMPONENTS.filter((c) => !q || `${c.name} ${c.group} ${c.description} ${c.tags.join(" ")}`.toLowerCase().includes(q))
   const kitCat = kitOf(cat)
-  const showW = cat === "all" ? scopeView !== "components" : !kitCat && !themeSet && !tool
+  const showW = cat === "all" ? scopeView !== "components" : !kitCat && !themeView && !layoutView && !tool
   const showK = cat === "all" ? scopeView !== "widgets" : !!kitCat
   const sortW = (list: WidgetDef[]) => (sort === "az" ? [...list].sort((x, y) => x.name.localeCompare(y.name)) : sort === "recent" ? [...list].sort((x, y) => ADDED.get(y.type)! - ADDED.get(x.type)!) : list)
   const sortK = (list: KitDef[]) => (sort === "az" ? [...list].sort((x, y) => x.name.localeCompare(y.name)) : list)
@@ -213,6 +201,51 @@ export function WidgetBase() {
   const shownDef = shown && LIBRARY.find((w) => w.type === shown.type)
   const [kit, setKit] = useState<{ id: string; i: number } | null>(null)
   const kitDef = kit && COMPONENTS.find((c) => c.id === kit.id)
+
+  // Compare: the widgets of this view (category and filter), or a picked set, under every compared theme.
+  const comparing = compareOn === "on" && !themeView && !layoutView && !tool && !kitCat
+  const viewWidgets = sortW(GROUPS.includes(cat) ? found.filter((w) => w.group === cat) : found)
+  const compareRows = (compareSource === "picked" ? SORTED.filter((w) => lab.picked.includes(w.type)) : viewWidgets).flatMap((def) => variantsOf(def).map((v) => [def, v.value] as [WidgetDef, string]))
+  const startCompare = () => {
+    setCompareOn("on")
+    if (themeView || layoutView || tool || kitCat) setCat("all")
+    window.scrollTo(0, 0)
+  }
+  /** Edit a theme in the side panel; a starting point is copied first, so it stays as it is. */
+  const edit = (id: string) => {
+    const entry = lab.byId(id)
+    if (!entry) return
+    const target = entry.builtIn ? duplicateTheme(entry, `My ${entry.name}`) : id
+    lab.pick(target)
+    setEditing(target)
+  }
+  const newTheme = () => setEditing(createTheme(lab.active.builtIn ? lab.active.base : "whitelabel"))
+
+  // [ and ] step through themes, C toggles Compare, E edits the theme in use, Esc closes the editor.
+  const keys = { lab, comparing, editing, edit, startCompare, setCompareOn, setEditing }
+  const keysRef = useRef(keys)
+  useEffect(() => {
+    keysRef.current = keys
+  })
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const k = keysRef.current
+      if (e.key === "Escape" && k.editing) return k.setEditing(null)
+      if (e.metaKey || e.ctrlKey || e.altKey || (e.target as HTMLElement)?.closest("input, textarea, select, [contenteditable], [role=dialog]")) return
+      if (e.key === "[" || e.key === "]") {
+        const ids = k.lab.all.map((t) => t.id)
+        const i = ids.indexOf(k.lab.active.id)
+        k.lab.pick(ids[(i + (e.key === "]" ? 1 : ids.length - 1)) % ids.length])
+      } else if (e.key === "c" || e.key === "C") {
+        if (k.comparing) k.setCompareOn("off")
+        else k.startCompare()
+      } else if (e.key === "e" || e.key === "E") k.edit(k.lab.active.id)
+      else return
+      e.preventDefault()
+    }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [])
 
   /** Open a category (or All) from the top. */
   const open = (g: string) => {
@@ -251,13 +284,20 @@ export function WidgetBase() {
     if (type === "kit" && COMPONENTS.some((c) => c.id === variant)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setKit({ id: variant, i: Number(idx) || 0 })
+    } else if (type === "tools" && variant === "anatomy") {
+      // Across templates became Compare.
+      setCompareOn("on")
+      setCat("all")
+      history.replaceState(null, "", location.pathname)
     } else if (type === "tools" && TOOLS.some((t) => t.id === variant)) {
       // #tools/wall opens a bench (the old /lab/widgets, /lab/anatomy and /lab/proof send here).
       setCat(`tool:${variant as ToolId}`)
       history.replaceState(null, "", location.pathname)
     } else if (type === "themes") {
-      // #themes or #themes/matrix opens the readability check (the old Theme lab).
-      setCat(`themes:${THEME_SETS.find((t) => t.id === variant)?.id ?? "branded"}`)
+      // #themes opens Manage themes; #themes/matrix (or another set) the readability check (the old Theme lab).
+      const set = THEME_SETS.find((t) => t.id === variant)?.id
+      if (set) setCheckSet(set)
+      setCat(set || variant === "check" ? "themes:check" : "themes:gallery")
       history.replaceState(null, "", location.pathname)
     } else if (type && LIBRARY.some((w) => w.type === type)) {
       const def = LIBRARY.find((w) => w.type === type)!
@@ -266,31 +306,126 @@ export function WidgetBase() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const paletteItems = useMemo<PaletteItem[]>(
-    () => [
-      ...SORTED.map((w) => ({ id: `w:${w.type}`, kind: "Widget" as const, name: w.name, group: w.group, description: w.description, tags: WIDGET_TAGS[w.type] ?? [], isNew: NEW_TYPES.has(w.type) })),
-      ...COMPONENTS.map((c) => ({ id: `k:${c.id}`, kind: "Component" as const, name: c.name, group: c.group, description: c.description, tags: c.tags })),
-    ],
-    [],
-  )
+  /** Go to a page by its id; "tool:stress:<type>" opens the Stress test on that widget. */
+  const goTo = (id: string) => {
+    if (id.startsWith("tool:stress:")) {
+      setStressType(id.slice(12))
+      return open("tool:stress")
+    }
+    open(id)
+  }
+  /** A breadcrumb goes back up to its page. */
+  const goCrumb = (c: string) => {
+    if (c === "Catalog") return open("all")
+    if (c === "Widgets" || c === "Components") return (setScopeView(c === "Widgets" ? "widgets" : "components"), open("all"))
+    if (c === "Quality") return open("quality")
+    if (c === "Layouts") return open("layouts")
+    if (c === "Themes") return open("themes:gallery")
+    if (c === "Compare") return startCompare()
+  }
+  // Once the page title scrolls away, it shows in the top bar, so you still know where you are.
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const [titleOut, setTitleOut] = useState(false)
+  useEffect(() => {
+    const el = titleRef.current
+    if (!el) return
+    const io = new IntersectionObserver(([e]) => setTitleOut(!e.isIntersecting), { rootMargin: "-64px 0px 0px 0px" })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
-  const themeDef = THEME_SETS.find((t) => t.id === themeSet)
-  const crumbs = cat === "all" ? ["Library"] : tool ? ["Library", "Tools", tool.label] : themeDef ? ["Library", "Themes", themeDef.label] : kitCat ? ["Library", "Components", ...(kitCat === "all" ? [] : [kitCat])] : ["Library", "Widgets", cat]
-  const title = cat === "all" ? (scopeView === "components" ? "Components" : scopeView === "everything" ? "Everything" : "TradeHub widgets") : tool ? tool.label : themeDef ? themeDef.label : kitCat === "all" ? "Components" : (kitCat ?? cat)
-  const count = tool ? null : themeDef ? themeLab.shown.length : widgets.length + kits.length
-  const blurb = tool
-    ? tool.blurb
-    : themeDef
-    ? `${themeDef.blurb} Each shows a slice of the student Home in that theme, with its readability check.`
-    : cat === "all"
-      ? scopeView === "components"
-        ? "The pieces widgets are made of: actions, inputs, navigation, feedback, data and charts. Open one to try its variants and states."
-        : scopeView === "everything"
-          ? "Every widget and every component in one place."
-          : "Every student widget in its white-label base. Open one to see its layouts at real size."
-      : kitCat
-        ? "Components to build widgets with. Open one to try its variants and states."
-        : `Every layout of the ${cat.toLowerCase()} widgets. Open one to use it at real size.`
+  const paletteItems: PaletteItem[] = [
+    ...SORTED.map((w) => ({ id: `w:${w.type}`, kind: "Widget" as const, name: w.name, group: w.group, description: w.description, tags: WIDGET_TAGS[w.type] ?? [], isNew: NEW_TYPES.has(w.type) })),
+    ...COMPONENTS.map((c) => ({ id: `k:${c.id}`, kind: "Component" as const, name: c.name, group: c.group, description: c.description, tags: c.tags })),
+    ...lab.all.map((t) => ({ id: `t:${t.id}`, kind: "Theme" as const, name: t.name, group: t.builtIn ? "Starting point" : "My themes", description: "Show the library in this theme", tags: ["theme"] })),
+    ...layouts.all.map((l) => ({ id: `l:${l.id}`, kind: "Layout" as const, name: l.name, group: l.builtIn ? "Starting point" : "My layouts", description: `${l.items.length} widgets`, tags: ["layout", "page"] })),
+    ...[["themes:gallery", "Themes"], ["layouts", "Layouts"], ["compare", "Compare"], ...QUALITY.map((q) => [q.cat, q.cat === "quality" ? "Quality" : q.label])].map(([id, name]) => ({
+      id: `p:${id}`,
+      kind: "Page" as const,
+      name,
+      group: "Library",
+      description: "",
+      tags: ["page"],
+    })),
+  ]
+  /** ⌘K: open what was picked, whatever it is. */
+  const pick = (x: PaletteItem) => {
+    const id = x.id.slice(2)
+    if (x.kind === "Widget") show(id)
+    else if (x.kind === "Component") showKit(id)
+    else if (x.kind === "Theme") lab.pick(id)
+    else if (x.kind === "Layout") openLayout(id)
+    else if (id === "compare") startCompare()
+    else open(id)
+  }
+
+  const catLabel = cat === "all" ? null : GROUPS.includes(cat) ? cat : null
+  const isQuality = cat === "quality" || !!tool || themeView === "check"
+  const section = comparing ? "compare" : themeView === "gallery" ? "themes" : layoutView ? "layouts" : isQuality ? "quality" : "catalog"
+  const qualityLabel = QUALITY.find((q) => q.cat === cat)?.label
+  const crumbs = comparing
+    ? ["Compare", ...(compareSource === "view" && catLabel ? [catLabel] : [])]
+    : layoutView
+      ? ["Layouts", ...(layoutView === "page" ? [layouts.active.name] : [])]
+      : isQuality
+        ? ["Quality", ...(cat !== "quality" && qualityLabel ? [qualityLabel] : [])]
+        : themeView === "gallery"
+          ? ["Themes"]
+          : kitCat
+            ? ["Catalog", "Components", kitCat]
+            : cat === "all"
+              ? ["Catalog"]
+              : ["Catalog", "Widgets", cat]
+  const title = comparing
+    ? `Compare ${lab.compared.length} themes`
+    : layoutView === "gallery"
+      ? "Layouts"
+      : layoutView === "page"
+        ? layouts.active.name
+        : cat === "quality"
+          ? "Quality"
+          : isQuality
+            ? (qualityLabel ?? "")
+            : themeView === "gallery"
+              ? "Themes"
+              : cat === "all"
+                ? "Catalog"
+                : (kitCat ?? cat)
+  const count = comparing
+    ? compareRows.length
+    : layoutView === "gallery"
+      ? layouts.all.length
+      : layoutView === "page"
+        ? layouts.active.items.length
+        : cat === "quality" || tool
+          ? null
+          : themeView === "gallery"
+            ? lab.all.length
+            : themeView === "check"
+              ? themeLab.shown.length
+              : widgets.length + kits.length
+  const inTheme = lab.active.id === "whitelabel" ? "in the white-label base" : `in ${lab.active.name}`
+  const blurb = comparing
+    ? `The same widgets in every theme below, one column each, rows aligned. ${compareSource === "view" ? "Widgets come from the sidebar and the search; pick a set to compare exactly those." : "Showing the widgets you picked."}`
+    : layoutView === "gallery"
+      ? "Student pages: which widgets they hold, where and how big. Any layout shows in any theme."
+      : layoutView === "page"
+        ? layoutEditing
+          ? `Arranging on the real grid, ${inTheme}.`
+          : `${layouts.active.builtIn ? "A template’s Home" : "Your layout"}, ${inTheme}.`
+        : cat === "quality"
+          ? "Where the library stands against its rules, and what to fix first."
+          : tool
+            ? tool.blurb
+            : themeView === "check"
+              ? THEME_VIEWS[1].blurb
+              : themeView === "gallery"
+                ? "Click a theme to see the whole library in it. Its menu edits, copies, compares or deletes it."
+                : cat === "all"
+                  ? `Every widget and the components they are made of, ${inTheme}. Open one to see it at real size.`
+                  : kitCat
+                    ? `Components to build widgets with, ${inTheme}.`
+                    : `Every variant of the ${cat.toLowerCase()} widgets, ${inTheme}.`
   const cellCols = { gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${Math.round(CELL_W * scale)}px), 1fr))` }
 
   // `mode` as a class too: Tailwind's dark: variant follows .dark / .light, not this page's own toggle.
@@ -298,11 +433,11 @@ export function WidgetBase() {
   return (
     <div
       // Not on Themes, the wall or the proof: their cells set their own .light or .dark, and a page-level .light would switch off dark: inside a dark one.
-      className={cn(scope, !themeSet && !tool?.ownModes && mode, "min-h-svh font-[family-name:var(--ff-geist)] text-[0.8125rem]")}
+      className={cn(scope, !themeView && !layoutView && !tool?.ownModes && mode, "min-h-svh font-[family-name:var(--ff-geist)] text-[0.8125rem]")}
       // The sidebar widens with the widget size (272px at real size, ~288px at 1.15×, ~312px at 1.3×); the side padding follows the screen.
       style={{ ...CHROME[mode], background: "var(--c-page)", color: "var(--c-t1)", colorScheme: mode, "--sb": `${Math.round(272 * (1 + (scale - 1) / 2))}px`, "--gutter": "clamp(24px, 3vw, 64px)" } as React.CSSProperties}
     >
-      <style dangerouslySetInnerHTML={{ __html: themeToCss(light, ".wb-light") + themeToCss(dark, ".wb-dark") + meaningCss(colour) }} />
+      <style dangerouslySetInnerHTML={{ __html: themeToCss(light, ".wb-light") + themeToCss(dark, ".wb-dark") + meaningCss(colour) + labUiCss(CHROME[mode]) }} />
 
       {/* Narrow screens: a top bar, the sidebar opens over the page. */}
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b px-4 lg:hidden" style={{ ...hair, background: "var(--c-bar)" }}>
@@ -315,289 +450,574 @@ export function WidgetBase() {
         </button>
       </div>
 
-      <aside
-        className={cn("fixed top-14 bottom-0 left-0 z-20 w-full overflow-y-auto border-r sm:w-72 lg:top-0 lg:block lg:w-(--sb)", menu ? "block" : "hidden")}
-        style={{ ...hair, background: "var(--c-side)" }}
-      >
-        <div className="grid gap-3 px-4 pb-6">
+      <aside className={cn("fixed top-14 bottom-0 left-0 z-20 w-full overflow-y-auto border-r sm:w-72 lg:top-0 lg:block lg:w-(--sb)", menu ? "block" : "hidden")} style={{ ...hair, background: "var(--c-side)" }}>
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-3 px-3 pb-6">
           <div className="hidden h-14 items-center gap-3 lg:flex">
             <BackHome />
             <Wordmark />
           </div>
-          <label className="mt-4 flex h-9 items-center gap-2 rounded-lg border px-3 focus-within:ring-2 focus-within:ring-(--brand-mark) lg:mt-0" style={{ ...hair, background: "var(--c-bar)" }}>
+          {/* One search: typing filters the catalog; ⌘K finds anything (widgets, components, themes, layouts, pages). */}
+          <label className="mt-4 flex h-9 items-center gap-2 rounded-lg border pr-1.5 pl-3 focus-within:ring-2 focus-within:ring-(--brand-mark) lg:mt-0" style={{ ...hair, background: "var(--c-bar)" }}>
             <Search className={cn("size-4 shrink-0", t3)} />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Filter the library…" aria-label="Filter the library" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-(--c-t3)" />
-            {query && (
-              <button type="button" onClick={() => setQuery("")} aria-label="Clear filter" className={cn("grid size-5 place-items-center rounded", t3, FOCUS)}>
+            <input
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                if (section !== "catalog" && !comparing) setCat("all")
+              }}
+              placeholder="Search the library…"
+              aria-label="Search the library"
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-(--c-t3)"
+            />
+            {query ? (
+              <button type="button" onClick={() => setQuery("")} aria-label="Clear search" className={cn("grid size-6 place-items-center rounded", t3, FOCUS)}>
                 <X className="size-3.5" />
+              </button>
+            ) : (
+              <button type="button" onClick={() => setPalette(true)} title="Find anything (⌘K)" className={cn("rounded border px-1.5 text-[0.6875rem] leading-5 hover:text-(--c-t1)", t3, FOCUS)} style={hair}>
+                ⌘K
               </button>
             )}
           </label>
-          <button type="button" onClick={() => setPalette(true)} className={cn("flex h-9 items-center gap-2 rounded-lg px-3 text-sm transition-colors duration-150 hover:bg-(--c-on)", t2, FOCUS)}>
-            <Command className="size-4" />
-            <span className="flex-1 text-left">Search everything</span>
-            <kbd className="rounded border px-1.5 text-[0.6875rem]" style={hair}>
-              ⌘K
-            </kbd>
-          </button>
+
+          {/* The main places, one row each; only the open one shows what is inside it. */}
           <nav className="grid gap-0.5" aria-label="Library">
-            <NavRow active={cat === "all"} onClick={() => open("all")} label="All" count={found.length + foundK.length} strong />
-
-            <Section label="Widgets" count={found.length} open={openW} onToggle={() => setOpenW(!openW)} />
-            {openW && (
-              <>
+            <MainRow icon={<Shapes className="size-4" />} label="Catalog" count={found.length + foundK.length} active={section === "catalog"} onClick={() => (setScopeView("all"), setCompareOn("off"), open("all"))} />
+            {section === "catalog" && (
+              <SubList>
+                <SubHeading>Widgets</SubHeading>
                 {GROUPS.map((g) => {
-                  const items = found.filter((w) => w.group === g)
-                  if (!items.length) return null
-                  const on = cat === g
-                  return (
-                    <div key={g} className="grid gap-0.5">
-                      <NavRow active={on} onClick={() => open(g)} label={g} count={items.length} expanded={on} />
-                      {on && (
-                        <div className="my-0.5 ml-3 grid gap-0.5 border-l pl-2" style={hair}>
-                          {items.map((w) => (
-                            <a
-                              key={w.type}
-                              href={`#${w.type}`}
-                              onClick={(e) => {
-                                e.preventDefault()
-                                show(w.type)
-                              }}
-                              aria-current={shown?.type === w.type ? "location" : undefined}
-                              className={cn("flex h-8 items-center gap-2 rounded-lg px-3 text-[0.8125rem] transition-colors duration-150", FOCUS, shown?.type === w.type ? "bg-(--c-on) font-medium text-(--c-t1)" : cn(t2, "hover:bg-(--c-on) hover:text-(--c-t1)"))}
-                            >
-                              <span className="truncate">{w.name}</span>
-                              {NEW_TYPES.has(w.type) && <NewBadge />}
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )
+                  const n = found.filter((w) => w.group === g).length
+                  return n ? <SubRow key={g} active={cat === g} onClick={() => open(g)} label={g} count={n} /> : null
                 })}
-              </>
-            )}
-
-            <Section label="Components" count={foundK.length} open={openK} onToggle={() => setOpenK(!openK)} />
-            {openK && (
-              <>
-                <NavRow active={cat === "kit"} onClick={() => open("kit")} label="All components" count={foundK.length} />
+                <SubHeading>Components</SubHeading>
                 {COMPONENT_GROUPS.map((g) => {
                   const n = foundK.filter((c) => c.group === g).length
-                  return n ? <NavRow key={g} active={cat === `kit:${g}`} onClick={() => open(`kit:${g}`)} label={g} count={n} /> : null
+                  return n ? <SubRow key={g} active={cat === `kit:${g}`} onClick={() => open(`kit:${g}`)} label={g} count={n} /> : null
                 })}
-              </>
+              </SubList>
             )}
-
-            <Section label="Themes" count={THEME_SETS.length} open={openT} onToggle={() => setOpenT(!openT)} />
-            {openT && THEME_SETS.map((t) => <NavRow key={t.id} active={cat === `themes:${t.id}`} onClick={() => open(`themes:${t.id}`)} label={t.label} count={THEME_COUNTS.get(t.id)!} />)}
-
-            <Section label="Tools" count={TOOLS.length} open={openX} onToggle={() => setOpenX(!openX)} />
-            {openX && TOOLS.map((t) => <NavRow key={t.id} active={cat === `tool:${t.id}`} onClick={() => open(`tool:${t.id}`)} label={t.label} />)}
+            <MainRow icon={<Palette className="size-4" />} label="Themes" count={lab.all.length} active={section === "themes"} onClick={() => open("themes:gallery")} />
+            <MainRow icon={<PanelsTopLeft className="size-4" />} label="Layouts" count={layouts.all.length} active={section === "layouts"} onClick={() => open("layouts")} />
+            <MainRow icon={<Columns3 className="size-4" />} label="Compare" count={lab.compared.length} active={section === "compare"} onClick={() => (setMenu(false), startCompare())} />
+            <MainRow icon={<ShieldCheck className="size-4" />} label="Quality" active={section === "quality"} onClick={() => open("quality")} />
+            {section === "quality" && (
+              <SubList>
+                {QUALITY.map((q) => (
+                  <SubRow key={q.cat} active={cat === q.cat} onClick={() => open(q.cat)} label={q.label} />
+                ))}
+              </SubList>
+            )}
           </nav>
         </div>
       </aside>
 
-      <main className="lg:pl-(--sb)">
-        {/* Every look control, always in reach: a sticky bar in two clusters, widget state on the left and the view on the right. */}
-        <div className="sticky top-14 z-10 border-b lg:top-0" style={{ ...hair, background: "var(--c-bar)" }}>
-          <div className="flex h-14 items-center gap-3 px-6">
-            {tool ? (
-              <span className="flex-1" />
-            ) : themeSet ? (
-              <>
-                {/* The readability check's controls: inline from 1280px, in a Controls panel below. */}
-                <div className="hidden items-center gap-3 xl:flex">
-                  <ThemeLabControls lab={themeLab} />
-                </div>
-                <div className="xl:hidden">
-                  <LabPopover label="Controls" align="start" icon={<SlidersHorizontal className="size-4" />}>
+      <DataModeProvider value={data}>
+        <main className={cn("lg:pl-(--sb) transition-[padding] duration-200", editEntry && "sm:pr-[23rem]")}>
+          {/* The bar: what the library is shown in on the left (theme, Compare), how widgets are drawn and light or dark on the right. */}
+          <div className="sticky top-14 z-10 border-b lg:top-0" style={{ ...hair, background: "var(--c-bar)" }}>
+            <div className="flex min-h-14 flex-wrap items-center gap-2 px-4 py-2.5 sm:h-14 sm:flex-nowrap sm:gap-3 sm:px-6 sm:py-0">
+              {/* The theme everything is drawn in, and Compare, first: the two things to reach for most. */}
+              {themeView !== "check" && !tool?.ownModes && (
+                <>
+                  <ThemeSwitcher lab={lab} mode={mode} onEdit={edit} onNew={newTheme} onManage={() => open("themes:gallery")} onCompare={startCompare} />
+                  <LabButton onClick={() => (comparing ? setCompareOn("off") : startCompare())} label="Compare" hint="Compare themes side by side (C)" pressed={comparing}>
+                    <Columns3 className="size-4" />
+                  </LabButton>
+                </>
+              )}
+              {/* The page's title, once it has scrolled out of view. */}
+              <span
+                aria-hidden={!titleOut}
+                className={cn("hidden min-w-0 items-center gap-2 truncate text-sm font-medium transition-opacity duration-200 md:flex", titleOut ? "opacity-100" : "pointer-events-none opacity-0")}
+              >
+                <span className="h-5 w-px shrink-0" style={{ background: "var(--c-hair)" }} />
+                <span className="truncate">{title}</span>
+              </span>
+              {themeSet ? (
+                <>
+                  {/* The readability check's controls: inline from 1280px, in a Controls panel below. */}
+                  <div className="hidden items-center gap-3 xl:flex">
+                    <LabSeg label="Set" value={checkSet} onChange={setCheckSet} options={THEME_SETS.map((t) => [t.id, t.label] as [ThemeSet, string])} />
                     <ThemeLabControls lab={themeLab} />
-                  </LabPopover>
-                </div>
-                <span className="flex-1" />
-              </>
-            ) : (
-              <>
-                {/* Widget state: inline from 1280px, in a Controls panel below. */}
-                <div className="hidden items-center gap-3 xl:flex">
-                  <LabSeg label="Emphasis" value={emphasis} onChange={setEmphasis} options={[["quiet", "Quiet"], ["accent", "Accent"], ["star", "Star"]]} />
-                  <LabSeg label="Detail" value={detail} onChange={setDetail} options={[["compact", "Compact"], ["standard", "Standard"], ["detailed", "Detailed"]]} />
-                </div>
-                <div className="xl:hidden">
-                  <LabPopover label="Controls" align="start" icon={<SlidersHorizontal className="size-4" />}>
-                    <LabSeg label="Emphasis" value={emphasis} onChange={setEmphasis} options={[["quiet", "Quiet"], ["accent", "Accent"], ["star", "Star"]]} />
-                    <LabSeg label="Detail" value={detail} onChange={setDetail} options={[["compact", "Compact"], ["standard", "Standard"], ["detailed", "Detailed"]]} />
-                  </LabPopover>
-                </div>
-                <span className="flex-1" />
-                {/* View: inline from 1760px, in a View menu below, so nothing wraps. */}
-                <div className="hidden items-center gap-3 min-[1760px]:flex">
-                  <LabSeg label="Layouts" value={layout} onChange={setLayout} options={[["all", "All"], ["first", "Default"]]} />
-                  <LabSeg label="Colour" value={colour} onChange={setColour} options={[["minimal", "Minimal"], ["mono", "Mono"]]} />
-                  <LabSeg label="Size" value={size} onChange={setSize} options={[["auto", "Auto"], ["s", "S"], ["m", "M"], ["l", "L"]]} />
-                </div>
-                <div className="min-[1760px]:hidden">
-                  <LabPopover label="View" icon={<Eye className="size-4" />}>
-                    <LabSeg label="Layouts" value={layout} onChange={setLayout} options={[["all", "All"], ["first", "Default"]]} />
-                    <LabSeg label="Colour" value={colour} onChange={setColour} options={[["minimal", "Minimal"], ["mono", "Mono"]]} />
-                    <LabSeg label="Size" value={size} onChange={setSize} options={[["auto", "Auto"], ["s", "S"], ["m", "M"], ["l", "L"]]} />
-                  </LabPopover>
-                </div>
-              </>
-            )}
-            <LabDivider />
-            <LabButton onClick={() => setMode(mode === "light" ? "dark" : "light")} label={mode === "light" ? "Dark" : "Light"} hint={mode === "light" ? "Switch to dark mode" : "Switch to light mode"}>
-              {mode === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
-            </LabButton>
+                  </div>
+                  <div className="xl:hidden">
+                    <LabPopover label="Controls" align="start" icon={<SlidersHorizontal className="size-4" />}>
+                      <LabSeg label="Set" value={checkSet} onChange={setCheckSet} options={THEME_SETS.map((t) => [t.id, t.label] as [ThemeSet, string])} />
+                      <ThemeLabControls lab={themeLab} />
+                    </LabPopover>
+                  </div>
+                </>
+              ) : null}
+              <span className="flex-1" />
+              {/* How widgets are drawn, in one menu that says what is set; only where there are widgets to draw. */}
+              {(!tool || tool.id === "wall") && !layoutView && !themeSet && cat !== "quality" && (
+                <DisplayMenu
+                  value={{ emphasis, detail, data, variants: layout, size }}
+                  showVariants={GROUPS.includes(cat) || comparing}
+                  onChange={(p) => {
+                    if (p.emphasis) setEmphasis(p.emphasis)
+                    if (p.detail) setDetail(p.detail)
+                    if (p.data) setData(p.data)
+                    if (p.variants) setLayout(p.variants)
+                    if (p.size) setSize(p.size)
+                  }}
+                />
+              )}
+              <ModeToggle mode={mode} onMode={setMode} />
+            </div>
           </div>
-        </div>
 
-        <div className="px-4 sm:px-8 lg:px-(--gutter)">
-          <header className="grid gap-2 py-6">
-            <nav aria-label="Breadcrumb" className={cn("flex items-center gap-1.5 text-[0.8125rem]", t2)}>
-              {crumbs.map((c, n) => (
-                <span key={c} className="flex items-center gap-1.5">
-                  {n > 0 && (
-                    <span aria-hidden className={t3}>
-                      /
+          <div className="px-4 sm:px-8 lg:px-(--gutter)">
+            <header className="grid gap-1.5 pt-5 pb-6">
+              {crumbs.length > 1 && (
+                <nav aria-label="Breadcrumb" className={cn("flex items-center gap-1.5 text-xs", t3)}>
+                  {crumbs.map((c, n) => (
+                    <span key={c} className="flex items-center gap-1.5">
+                      {n > 0 && <span aria-hidden>/</span>}
+                      {n < crumbs.length - 1 ? (
+                        <button type="button" onClick={() => goCrumb(c)} className={cn("rounded hover:text-(--c-t1)", FOCUS)}>
+                          {c}
+                        </button>
+                      ) : (
+                        <span className={t2}>{c}</span>
+                      )}
+                    </span>
+                  ))}
+                </nav>
+              )}
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                <h1 ref={titleRef} className="flex min-w-0 items-center gap-3 text-[1.75rem] leading-9 font-medium tracking-[-0.02em]">
+                  <span className="truncate">{title}</span>
+                  {count !== null && (
+                    <span className={cn("rounded-full border px-2.5 text-[0.8125rem] leading-6 font-normal tracking-normal tabular-nums", t2)} style={hair}>
+                      {count}
                     </span>
                   )}
-                  {n < crumbs.length - 1 ? (
-                    <button type="button" onClick={() => open(n === 0 ? "all" : c === "Components" ? "kit" : c === "Themes" ? "themes:branded" : c === "Tools" ? "tool:wall" : "all")} className={cn("rounded hover:text-(--c-t1)", FOCUS)}>
-                      {c}
+                </h1>
+                {section === "catalog" && <SortMenu value={sort} onChange={setSort} />}
+              </div>
+              <p className={cn("line-clamp-2 max-w-2xl text-[0.8125rem]", t2)}>{blurb}</p>
+              {query && (section === "catalog" || comparing) && (
+                <div className="mt-1.5 flex">
+                  <span className="flex h-7 items-center gap-1.5 rounded-full border pr-1 pl-2.5 text-[0.8125rem]" style={{ ...hair, background: "var(--c-bar)" }}>
+                    <Search className={cn("size-3.5", t3)} />
+                    Search: “{query}”
+                    <button type="button" onClick={() => setQuery("")} aria-label="Clear search" className={cn("grid size-5 place-items-center rounded-full hover:bg-(--c-on)", t3, FOCUS)}>
+                      <X className="size-3.5" />
                     </button>
-                  ) : (
-                    <span className="text-(--c-t1)">{c}</span>
-                  )}
-                </span>
-              ))}
-            </nav>
-            <h1 className="flex items-center gap-3 text-[1.75rem] leading-9 font-medium tracking-[-0.02em]">
-              {title}
-              {count !== null && (
-                <span className={cn("rounded-full border px-2.5 text-[0.8125rem] leading-6 font-normal tracking-normal tabular-nums", t2)} style={hair}>
-                  {count}
-                </span>
+                  </span>
+                </div>
               )}
-            </h1>
-            <p className={cn("max-w-2xl text-sm", t2)}>{blurb}</p>
-            {/* What to show (on All) and how to order it; the themes' own controls sit in the bar. */}
-            {!themeSet && !tool && (
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                {cat === "all" && (
-                  <LabSeg inline label="Show" value={scopeView} onChange={setScopeView} options={[["widgets", "Widgets"], ["components", "Components"], ["everything", "Everything"]]} />
-                )}
-                <LabSeg inline label="Sort" value={sort} onChange={setSort} options={[["category", "Category"], ["az", "A–Z"], ["recent", "Recently added"]]} />
+              {layoutView === "page" && (
+                <LayoutBar
+                  layout={layouts.active}
+                  layouts={layouts}
+                  lab={lab}
+                  mode={mode}
+                  editing={layoutEditing}
+                  onEditing={setLayoutEditing}
+                  compare={layoutCompare}
+                  onCompare={setLayoutCompare}
+                  device={device}
+                  onDevice={setDevice}
+                />
+              )}
+              {comparing && <CompareBar lab={lab} mode={mode} source={compareSource} onSource={setCompareSource} viewCount={viewWidgets.length} />}
+              {/* The catalog's tabs: all of it, or one kind; All first and the default. */}
+              {section === "catalog" && cat === "all" && (
+                <div role="tablist" aria-label="Show" className="mt-3 flex gap-5 border-b" style={hair}>
+                  {(
+                    [
+                      ["all", "All", found.length + foundK.length],
+                      ["widgets", "Widgets", found.length],
+                      ["components", "Components", foundK.length],
+                    ] as [Scope, string, number][]
+                  ).map(([v, l, n]) => (
+                    <button
+                      key={v}
+                      type="button"
+                      role="tab"
+                      aria-selected={scopeView === v}
+                      onClick={() => setScopeView(v)}
+                      className={cn(
+                        "-mb-px flex h-10 items-center gap-1.5 border-b-2 text-sm transition-colors duration-150",
+                        FOCUS,
+                        scopeView === v ? "border-(--c-t1) font-medium text-(--c-t1)" : cn("border-transparent hover:text-(--c-t1)", t2),
+                      )}
+                    >
+                      {l}
+                      <span className={cn("text-xs font-normal tabular-nums", t3)}>{n}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </header>
+
+            {themeView === "check" && <ThemeLabGrid lab={themeLab} />}
+            {themeView === "gallery" && <ThemeGallery lab={lab} mode={mode} emphasis={emphasis} detail={detail} onEdit={edit} />}
+            {comparing && <CompareView lab={lab} mode={mode} rows={compareRows} scale={scale} emphasis={emphasis} detail={detail} onEdit={edit} />}
+            {layoutView === "gallery" && <LayoutGallery layouts={layouts} theme={theme} scope={scope} onOpen={(id) => openLayout(id)} onEdit={(id) => openLayout(id, true)} />}
+            {layoutView === "page" && <LayoutView layout={layouts.active} layouts={layouts} lab={lab} mode={mode} theme={theme} scope={scope} editing={layoutEditing} compare={layoutCompare} device={device} />}
+            {cat === "quality" && <QualityOverview lab={lab} go={goTo} onWidget={(t, v) => show(t, v)} onTheme={(id) => edit(id)} />}
+            {tool?.id === "wall" && <WidgetWall theme={theme} themeName={lab.active.name} emphasis={emphasis} detail={detail} onOpen={(t, v) => show(t, v)} />}
+            {tool?.id === "stress" && <StressTool mode={mode} theme={theme} type={stressType} onType={setStressType} />}
+
+            {!themeView && !layoutView && !tool && !comparing && count === 0 && (
+              <div className="grid justify-items-start gap-3 rounded-xl border border-dashed px-6 py-12" style={hair}>
+                <p className="text-sm font-medium">Nothing matches “{query}”</p>
+                <p className={t2}>Try a name, a category or a tag, like “calendar”, “inputs” or “chart”.</p>
+                <button type="button" onClick={() => setQuery("")} className={cn("h-8 rounded-lg border px-3 transition-colors duration-150 hover:bg-(--c-on)", FOCUS)} style={hair}>
+                  Clear filter
+                </button>
               </div>
             )}
-          </header>
 
-          {themeSet && <ThemeLabGrid lab={themeLab} />}
-          {tool?.id === "wall" && <WidgetWall />}
-          {tool?.id === "anatomy" && <AnatomyCompare mode={mode} />}
-          {tool?.id === "stress" && <StressTool mode={mode} theme={theme} />}
-          {tool?.id === "proof" && <WidgetProof />}
-
-          {!themeSet && !tool && count === 0 && (
-            <div className="grid justify-items-start gap-3 rounded-xl border border-dashed px-6 py-12" style={hair}>
-              <p className="text-sm font-medium">Nothing matches “{query}”</p>
-              <p className={t2}>Try a name, a category or a tag, like “calendar”, “inputs” or “chart”.</p>
-              <button type="button" onClick={() => setQuery("")} className={cn("h-8 rounded-lg border px-3 transition-colors duration-150 hover:bg-(--c-on)", FOCUS)} style={hair}>
-                Clear filter
-              </button>
-            </div>
-          )}
-
-          {widgets.length > 0 && (
-            // One equal cell per widget (All) or per layout (a category), rows aligned; each sits centred at real size, scaled down only to fit.
-            <section aria-label="Widgets" className="grid gap-4 pb-12">
-              {cat === "all" && scopeView === "everything" && <h2 className="text-sm font-medium">Widgets</h2>}
-              <div className="grid gap-x-6 gap-y-8" style={cellCols}>
-                {cat === "all"
-                  ? widgets.map((def) => (
-                      <Cell
-                        key={def.type}
-                        def={def}
-                        variant={def.variants[0]}
-                        extra={extra}
-                        scale={scale}
-                        mode={mode}
-                        theme={theme}
-                        emphasis={emphasis}
-                        detail={detail}
-                        name={def.name}
-                        note={`${def.variants.length} ${def.variants.length === 1 ? "layout" : "layouts"}`}
-                        tags={tagsOf(def)}
-                        isNew={NEW_TYPES.has(def.type)}
-                        onOpen={() => show(def.type)}
-                      />
-                    ))
-                  : widgets.flatMap((def) =>
-                      variantsOf(def).map((v) => (
+            {!comparing && widgets.length > 0 && (
+              // One equal cell per widget (All) or per layout (a category), rows aligned; each sits centred at real size, scaled down only to fit.
+              <section aria-label="Widgets" className="grid gap-4 pb-12">
+                {cat === "all" && scopeView === "all" && <h2 className="text-sm font-medium">Widgets</h2>}
+                <div className="grid gap-x-6 gap-y-8" style={cellCols}>
+                  {cat === "all"
+                    ? widgets.map((def) => (
                         <Cell
-                          key={`${def.type}/${v.value}`}
+                          key={def.type}
                           def={def}
-                          variant={v}
+                          variant={def.variants[0]}
                           extra={extra}
                           scale={scale}
                           mode={mode}
                           theme={theme}
                           emphasis={emphasis}
                           detail={detail}
-                          name={`${def.name} · ${v.label}`}
+                          name={def.name}
+                          note={`${def.variants.length} ${def.variants.length === 1 ? "variant" : "variants"}`}
+                          tags={tagsOf(def)}
                           isNew={NEW_TYPES.has(def.type)}
-                          onOpen={() => show(def.type, v.value)}
+                          onOpen={() => show(def.type)}
                         />
-                      )),
-                    )}
-              </div>
-            </section>
-          )}
+                      ))
+                    : widgets.flatMap((def) =>
+                        variantsOf(def).map((v) => (
+                          <Cell
+                            key={`${def.type}/${v.value}`}
+                            def={def}
+                            variant={v}
+                            extra={extra}
+                            scale={scale}
+                            mode={mode}
+                            theme={theme}
+                            emphasis={emphasis}
+                            detail={detail}
+                            name={`${def.name} · ${v.label}`}
+                            isNew={NEW_TYPES.has(def.type)}
+                            onOpen={() => show(def.type, v.value)}
+                          />
+                        )),
+                      )}
+                </div>
+              </section>
+            )}
 
-          {kits.length > 0 && (
-            <section aria-label="Components" className="grid gap-4 pb-16">
-              {cat === "all" && scopeView === "everything" && <h2 className="text-sm font-medium">Components</h2>}
-              {/* Category order: one heading per group; A–Z: one flat grid. */}
-              {(sort === "az" || (kitCat && kitCat !== "all") ? [["", kits] as [string, KitDef[]]] : COMPONENT_GROUPS.map((g) => [g, kits.filter((c) => c.group === g)] as [string, KitDef[]])).map(([g, list]) =>
-                list.length ? (
-                  <div key={g || "all"} className="grid gap-3">
-                    {g && <h3 className={cn("text-xs", t2)}>{g}</h3>}
-                    <div className="grid gap-x-6 gap-y-8" style={cellCols}>
-                      {list.map((c) => (
-                        <KitCell key={c.id} def={c} scale={scale} mode={mode} theme={theme} emphasis={emphasis} detail={detail} onOpen={() => showKit(c.id)} />
-                      ))}
+            {!comparing && kits.length > 0 && (
+              <section aria-label="Components" className="grid gap-4 pb-16">
+                {cat === "all" && scopeView === "all" && <h2 className="text-sm font-medium">Components</h2>}
+                {/* Category order: one heading per group; A–Z: one flat grid. */}
+                {(sort === "az" || (kitCat && kitCat !== "all") ? [["", kits] as [string, KitDef[]]] : COMPONENT_GROUPS.map((g) => [g, kits.filter((c) => c.group === g)] as [string, KitDef[]])).map(([g, list]) =>
+                  list.length ? (
+                    <div key={g || "all"} className="grid gap-3">
+                      {g && <h3 className={cn("text-xs", t2)}>{g}</h3>}
+                      <div className="grid gap-x-6 gap-y-8" style={cellCols}>
+                        {list.map((c) => (
+                          <KitCell key={c.id} def={c} scale={scale} mode={mode} theme={theme} emphasis={emphasis} detail={detail} onOpen={() => showKit(c.id)} />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : null,
-              )}
-            </section>
-          )}
-        </div>
-      </main>
+                  ) : null,
+                )}
+              </section>
+            )}
+          </div>
+        </main>
 
-      {shownDef && shown && (
-        <WidgetModal def={shownDef} variant={shown.variant} onVariant={(v) => show(shownDef.type, v)} onClose={hide} extra={extra} scale={scale} mode={mode} theme={theme} emphasis={emphasis} detail={detail} />
-      )}
-      {kitDef && kit && <ComponentModal def={kitDef} index={kit.i} onIndex={(i) => showKit(kitDef.id, i)} onClose={hide} mode={mode} theme={theme} emphasis={emphasis} detail={detail} />}
-      <CommandPalette
-        items={paletteItems}
-        open={palette}
-        onOpenChange={setPalette}
-        onPick={(x) => (x.kind === "Widget" ? show(x.id.slice(2)) : showKit(x.id.slice(2)))}
-      />
+        {shownDef && shown && (
+          <WidgetModal
+            lab={lab}
+            data={data}
+            onData={setData}
+            onCompare={() => (hide(), startCompare())}
+            def={shownDef}
+            variant={shown.variant}
+            onVariant={(v) => show(shownDef.type, v)}
+            onClose={hide}
+            extra={extra}
+            scale={scale}
+            mode={mode}
+            theme={theme}
+            emphasis={emphasis}
+            detail={detail}
+          />
+        )}
+        {kitDef && kit && <ComponentModal def={kitDef} index={kit.i} onIndex={(i) => showKit(kitDef.id, i)} onClose={hide} mode={mode} theme={theme} emphasis={emphasis} detail={detail} />}
+      </DataModeProvider>
+      {editEntry && !editEntry.builtIn && <ThemeEditor key={editEntry.id} entry={editEntry} lab={lab} mode={mode} onClose={() => setEditing(null)} onCompare={startCompare} />}
+      <CommandPalette items={paletteItems} open={palette} onOpenChange={setPalette} onPick={pick} />
     </div>
   )
 }
 
-/** A sidebar section heading: Widgets or Components, with its count; click to fold. */
-function Section({ label, count, open, onToggle }: { label: string; count: number; open: boolean; onToggle: () => void }) {
+const EMPHASIS_OPTS: [Emphasis, string][] = [
+  ["quiet", "Quiet"],
+  ["accent", "Accent"],
+  ["star", "Star"],
+]
+const DETAIL_OPTS: [Detail, string][] = [
+  ["compact", "Compact"],
+  ["standard", "Standard"],
+  ["detailed", "Detailed"],
+]
+const SIZE_OPTS: [Size, string][] = [
+  ["auto", "Auto"],
+  ["s", "S"],
+  ["m", "M"],
+  ["l", "L"],
+]
+
+const DATA_OPTS: [DataMode, string][] = [
+  ["sample", "Sample"],
+  ["empty", "Empty"],
+  ["inactive", "Inactive"],
+  ["finished", "Finished"],
+]
+export type DisplayState = { emphasis: Emphasis; detail: Detail; data: DataMode; variants: "first" | "all"; size: Size }
+export const DISPLAY_DEFAULT: DisplayState = { emphasis: "accent", detail: "standard", data: "sample", variants: "all", size: "auto" }
+
+/**
+ * How the widgets are drawn, in one menu. Its button names only what differs
+ * from the default (Accent · Standard · Sample data), with a dot, so a changed
+ * setting is never forgotten. Two groups: the widgets' own state (the same
+ * settings a coach picks per widget, here for all at once, plus which
+ * student's data they show) and the grid. Variants shows only where a
+ * widget's variants are listed.
+ */
+function DisplayMenu({ value, onChange, showVariants }: { value: DisplayState; onChange: (patch: Partial<DisplayState>) => void; showVariants: boolean }) {
+  const name = (opts: [string, string][], v: string) => opts.find((o) => o[0] === v)?.[1]
+  const diff = [
+    value.emphasis !== "accent" && name(EMPHASIS_OPTS, value.emphasis),
+    value.detail !== "standard" && name(DETAIL_OPTS, value.detail),
+    value.data !== "sample" && `${name(DATA_OPTS, value.data)} data`,
+    showVariants && value.variants === "first" && "Default variants",
+    value.size !== "auto" && `Size ${name(SIZE_OPTS, value.size)}`,
+  ].filter(Boolean) as string[]
   return (
-    <button type="button" onClick={onToggle} aria-expanded={open} className={cn("mt-4 flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-medium tracking-wide uppercase transition-colors duration-150 hover:text-(--c-t1)", t3, FOCUS)}>
-      <ChevronRight className={cn("size-3.5 transition-transform duration-150", open && "rotate-90")} />
-      <span className="flex-1 text-left">{label}</span>
-      <span className="font-normal tabular-nums">{count}</span>
+    <LabPopover
+      label={diff.length ? diff.join(" · ") : "Display"}
+      icon={
+        <span className="relative">
+          {diff.length > 0 && <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full" style={{ background: "var(--brand-mark)" }} />}
+          <SlidersHorizontal className="size-4" />
+        </span>
+      }
+    >
+      <div className="grid w-[23rem] max-w-full gap-4 p-2">
+        <GroupTitle>Widgets</GroupTitle>
+        <DisplayRow title="Emphasis" hint="How much each stands out">
+          <Choice label="Emphasis" value={value.emphasis} onChange={(emphasis) => onChange({ emphasis })} options={EMPHASIS_OPTS} />
+        </DisplayRow>
+        <DisplayRow title="Detail" hint="How much each shows">
+          <Choice label="Detail" value={value.detail} onChange={(detail) => onChange({ detail })} options={DETAIL_OPTS} />
+        </DisplayRow>
+        <DisplayRow title="Student data" hint="See empty and edge states">
+          <Choice label="Student data" value={value.data} onChange={(data) => onChange({ data })} options={DATA_OPTS} />
+        </DisplayRow>
+        <div className="h-px" style={{ background: "var(--c-hair)" }} />
+        <GroupTitle>Grid</GroupTitle>
+        {showVariants && (
+          <DisplayRow title="Variants" hint="All of each widget, or its default">
+            <Choice
+              label="Variants"
+              value={value.variants}
+              onChange={(variants) => onChange({ variants })}
+              options={[
+                ["all", "Every variant"],
+                ["first", "Default only"],
+              ]}
+            />
+          </DisplayRow>
+        )}
+        <DisplayRow title="Card size" hint="Auto follows the screen">
+          <Choice label="Card size" value={value.size} onChange={(size) => onChange({ size })} options={SIZE_OPTS} />
+        </DisplayRow>
+        {diff.length > 0 && (
+          <button type="button" onClick={() => onChange(DISPLAY_DEFAULT)} className={cn("h-8 justify-self-start rounded-lg px-2 text-[0.8125rem] text-(--c-t2) hover:bg-(--c-on) hover:text-(--c-t1)", FOCUS)}>
+            Back to the default
+          </button>
+        )}
+      </div>
+    </LabPopover>
+  )
+}
+
+function GroupTitle({ children }: { children: React.ReactNode }) {
+  return <span className={cn("-mb-1 text-[0.6875rem] font-medium tracking-wide uppercase", t3)}>{children}</span>
+}
+
+/** A full-width segmented choice with no label of its own (the row titles it). */
+function Choice<T extends string>({ label, value, onChange, options }: { label: string; value: T; onChange: (v: T) => void; options: [T, string][] }) {
+  return (
+    <div role="radiogroup" aria-label={label} className="grid h-9 auto-cols-fr grid-flow-col gap-0.5 rounded-lg border p-[3px]" style={{ ...hair, background: "var(--c-page)" }}>
+      {options.map(([v, l]) => (
+        <button
+          key={v}
+          type="button"
+          role="radio"
+          aria-checked={v === value}
+          onClick={() => onChange(v)}
+          className={cn(
+            "h-full rounded-md px-2 text-sm whitespace-nowrap transition-colors duration-150",
+            FOCUS,
+            v === value ? "bg-(--c-bar) font-medium text-(--c-t1) shadow-[0_0_0_1px_var(--c-hair),0_1px_2px_0_rgb(0_0_0/0.1)]" : "text-(--c-t2) hover:text-(--c-t1)",
+          )}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function DisplayRow({ title, hint, children }: { title: string; hint: string; children: React.ReactNode }) {
+  return (
+    <div className="grid gap-1.5">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-[0.8125rem] font-medium">{title}</span>
+        <span className="truncate text-xs text-(--c-t3)">{hint}</span>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+/** Light or dark, as two icons: the one on is raised. */
+function ModeToggle({ mode, onMode }: { mode: Mode; onMode: (m: Mode) => void }) {
+  return (
+    <div role="radiogroup" aria-label="Light or dark" className="flex h-9 shrink-0 items-center gap-0.5 rounded-lg border p-[3px]" style={{ ...hair, background: "var(--c-page)" }}>
+      {(
+        [
+          ["light", <Sun key="l" className="size-4" />, "Light"],
+          ["dark", <Moon key="d" className="size-4" />, "Dark"],
+        ] as const
+      ).map(([m, icon, label]) => (
+        <button
+          key={m}
+          type="button"
+          role="radio"
+          aria-checked={mode === m}
+          aria-label={label}
+          title={label}
+          onClick={() => onMode(m)}
+          className={cn(
+            "grid h-full w-8 place-items-center rounded-md transition-colors duration-150",
+            FOCUS,
+            mode === m ? "bg-(--c-bar) text-(--c-t1) shadow-[0_0_0_1px_var(--c-hair),0_1px_2px_0_rgb(0_0_0/0.1)]" : "text-(--c-t3) hover:text-(--c-t1)",
+          )}
+        >
+          {icon}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** A main place in the sidebar: an icon, its name and how many things are in it. */
+function MainRow({ icon, label, count, active, onClick }: { icon: React.ReactNode; label: string; count?: number; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-left text-sm transition-colors duration-150",
+        FOCUS,
+        active ? "bg-(--c-on) font-medium text-(--c-t1)" : cn(t2, "hover:bg-(--c-on) hover:text-(--c-t1)"),
+      )}
+    >
+      <span className={active ? "text-(--c-t1)" : t3}>{icon}</span>
+      <span className="flex-1 truncate">{label}</span>
+      {count !== undefined && <span className={cn("text-xs font-normal tabular-nums", t3)}>{count}</span>}
     </button>
+  )
+}
+
+/** What is inside the open place, indented under it on a hairline. */
+function SubList({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-0.5 mb-2 ml-[1.125rem] grid gap-px border-l pl-2" style={hair}>
+      {children}
+    </div>
+  )
+}
+function SubHeading({ children }: { children: React.ReactNode }) {
+  return <span className={cn("px-2.5 pt-2.5 pb-1 text-[0.6875rem] font-medium tracking-wide uppercase", t3)}>{children}</span>
+}
+function SubRow({ active, onClick, label, count }: { active: boolean; onClick: () => void; label: string; count?: number }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex h-8 items-center justify-between gap-2 rounded-lg px-2.5 text-left text-[0.8125rem] transition-colors duration-150",
+        FOCUS,
+        active ? "bg-(--c-on) font-medium text-(--c-t1)" : cn(t2, "hover:bg-(--c-on) hover:text-(--c-t1)"),
+      )}
+    >
+      <span className="truncate">{label}</span>
+      {count !== undefined && <span className={cn("text-xs font-normal tabular-nums", t3)}>{count}</span>}
+    </button>
+  )
+}
+
+const SORTS: [Sort, string][] = [
+  ["category", "Category"],
+  ["az", "A–Z"],
+  ["recent", "Recently added"],
+]
+/** How the catalog is ordered: a small menu, since it changes rarely. */
+function SortMenu({ value, onChange }: { value: Sort; onChange: (v: Sort) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useDismiss(open, ref, () => setOpen(false))
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className={cn("flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[0.8125rem] transition-colors duration-150 hover:bg-(--c-on)", t2, FOCUS, open && "bg-(--c-on)")}
+      >
+        <ArrowDownUp className="size-3.5" />
+        Sort: <span className="text-(--c-t1)">{SORTS.find((x) => x[0] === value)?.[1]}</span>
+      </button>
+      {open && (
+        <div role="menu" className={cn(PANEL, "top-10 right-0 w-48")} style={panelStyle}>
+          {SORTS.map(([v, l]) => (
+            <button
+              key={v}
+              type="button"
+              role="menuitemradio"
+              aria-checked={v === value}
+              onClick={() => (onChange(v), setOpen(false))}
+              className={cn("flex h-8 items-center justify-between rounded-lg px-2.5 text-left text-sm hover:bg-(--c-on)", FOCUS)}
+            >
+              {l}
+              {v === value && <Check className="size-4" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -628,7 +1048,12 @@ function KitCell({ def, scale, mode, theme, emphasis, detail, onOpen }: { def: K
       aria-label={`Open ${def.name}`}
       className={cn("group grid min-w-0 cursor-pointer content-start gap-3 rounded-[14px]", FOCUS)}
     >
-      <div inert aria-hidden className="grid place-items-center overflow-hidden rounded-xl border bg-(--c-cell) transition-colors duration-150 group-hover:bg-(--c-cell-on)" style={{ height: Math.round(CELL_H * scale), ...hair }}>
+      <div
+        inert
+        aria-hidden
+        className="grid place-items-center overflow-hidden rounded-xl border bg-(--c-cell) transition-colors duration-150 group-hover:bg-(--c-cell-on)"
+        style={{ height: Math.round(CELL_H * scale), ...hair }}
+      >
         <KitPane mode={mode} theme={theme} emphasis={emphasis} detail={detail} scale={fit * scale} width={v.width} bare={v.bare}>
           {v.render()}
         </KitPane>
@@ -666,26 +1091,6 @@ function CellCaption({ name, note, tags = [], isNew }: { name: string; note?: st
 /** The page's focus ring: the accent, 2px, only for keyboard focus. */
 export const FOCUS = "outline-none focus-visible:ring-2 focus-visible:ring-(--brand-mark) focus-visible:ring-offset-1 focus-visible:ring-offset-(--c-page)"
 
-/** A sidebar row: a label with its count on the right. */
-function NavRow({ active, onClick, label, count, strong, expanded }: { active: boolean; onClick: () => void; label: string; count?: number; strong?: boolean; expanded?: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-current={active ? "page" : undefined}
-      aria-expanded={expanded}
-      className={cn(
-        "flex h-[34px] items-center justify-between rounded-lg px-3 text-left text-sm transition-colors duration-150",
-        FOCUS,
-        active ? "bg-(--c-on) font-medium text-(--c-t1)" : strong ? "text-(--c-t1) hover:bg-(--c-on)" : cn(t2, "hover:bg-(--c-on) hover:text-(--c-t1)"),
-      )}
-    >
-      {label}
-      {count !== undefined && <span className={cn("text-xs font-normal tabular-nums", t3)}>{count}</span>}
-    </button>
-  )
-}
-
 /** Narrowest All cell at real size; the widget is scaled to fit it, like a catalogue thumbnail. */
 const CELL_W = 300
 /** Height of an All cell's preview area at real size. */
@@ -698,7 +1103,35 @@ type Variant = WidgetDef["variants"][number]
  * area, scaled down only when it is larger than the area. The preview is
  * inert (looking, not using); the cell opens the widget's detail sheet.
  */
-function Cell({ def, variant, extra, scale, mode, theme, emphasis, detail, name, note, tags, isNew, onOpen }: { def: WidgetDef; variant: Variant; extra: number; scale: number; mode: Mode; theme: CoachTheme; emphasis: Emphasis; detail: Detail; name: string; note?: string; tags?: string[]; isNew?: boolean; onOpen: () => void }) {
+function Cell({
+  def,
+  variant,
+  extra,
+  scale,
+  mode,
+  theme,
+  emphasis,
+  detail,
+  name,
+  note,
+  tags,
+  isNew,
+  onOpen,
+}: {
+  def: WidgetDef
+  variant: Variant
+  extra: number
+  scale: number
+  mode: Mode
+  theme: CoachTheme
+  emphasis: Emphasis
+  detail: Detail
+  name: string
+  note?: string
+  tags?: string[]
+  isNew?: boolean
+  onOpen: () => void
+}) {
   const w = px(colsOf(def, variant.value))
   const h = rowsOf(def, variant.value) + extra
   // Fit the layout's largest box inside the preview, with 24px of room on each side.
@@ -732,7 +1165,13 @@ function BackHome({ compact }: { compact?: boolean }) {
       href="/"
       aria-label="Back to the start screen"
       title="Back to the start screen"
-      className={cn("flex h-8 shrink-0 items-center gap-1.5 rounded-lg border text-[0.8125rem] transition-colors duration-150 hover:bg-(--c-on)", compact ? "w-8 justify-center" : "px-2.5", t2, "hover:text-(--c-t1)", FOCUS)}
+      className={cn(
+        "flex h-8 shrink-0 items-center gap-1.5 rounded-lg border text-[0.8125rem] transition-colors duration-150 hover:bg-(--c-on)",
+        compact ? "w-8 justify-center" : "px-2.5",
+        t2,
+        "hover:text-(--c-t1)",
+        FOCUS,
+      )}
       style={hair}
     >
       <ArrowLeft className="size-4" />
@@ -815,7 +1254,33 @@ export const colsOf = (def: WidgetDef, variant?: string) => {
 const NO_PROPS: Record<string, string | boolean> = {}
 
 /** `fill`: the widget takes the box it is given (a builder grid cell) instead of its own size. */
-export function Pane({ def, variant, h, scale, mode, theme, emphasis, detail, fill, fixed = fill, props, scope: own }: { def: WidgetDef; variant: string; h: number; scale: number; mode: Mode; theme: CoachTheme; emphasis: Emphasis; detail: Detail; fill?: boolean; /** The box sets the height (a grid cell), so the card may size itself by it; false for a phone's column. */ fixed?: boolean; /** The widget's own settings; empty shows its sample content. */ props?: Record<string, string | boolean>; /** The class its theme's CSS is scoped to, when not the library's own (another template's). */ scope?: string }) {
+export function Pane({
+  def,
+  variant,
+  h,
+  scale,
+  mode,
+  theme,
+  emphasis,
+  detail,
+  fill,
+  fixed = fill,
+  props,
+  scope: own,
+}: {
+  def: WidgetDef
+  variant: string
+  h: number
+  scale: number
+  mode: Mode
+  theme: CoachTheme
+  emphasis: Emphasis
+  detail: Detail
+  fill?: boolean
+  /** The box sets the height (a grid cell), so the card may size itself by it; false for a phone's column. */ fixed?: boolean
+  /** The widget's own settings; empty shows its sample content. */ props?: Record<string, string | boolean>
+  /** The class its theme's CSS is scoped to, when not the library's own (another template's). */ scope?: string
+}) {
   const scope = own ?? (mode === "light" ? "wb-light" : "wb-dark")
   const ctx = useMemo(() => ({ coach, theme, base: "/c/northline", scope: `.${scope}`, preview: false }), [theme, scope])
   const cols = colsOf(def, variant)
@@ -843,7 +1308,12 @@ class Boundary extends Component<{ name: string; children: React.ReactNode }, { 
     return { error: e instanceof Error ? e.message : String(e) }
   }
   render() {
-    if (this.state.error) return <div className="grid h-full place-items-center rounded-[4px] border border-dashed border-[#fa4d56] p-3 text-xs text-[#fa4d56]">{this.props.name} crashed: {this.state.error}</div>
+    if (this.state.error)
+      return (
+        <div className="grid h-full place-items-center rounded-[4px] border border-dashed border-[#fa4d56] p-3 text-xs text-[#fa4d56]">
+          {this.props.name} crashed: {this.state.error}
+        </div>
+      )
     return this.props.children
   }
 }

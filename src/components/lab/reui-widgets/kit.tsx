@@ -415,7 +415,8 @@ function cut(card: HTMLElement) {
       }
       if (o.overflowY === "visible" && o.overflowX === "visible") continue
       const b = box.getBoundingClientRect()
-      limit = Math.min(limit, b.bottom - (box === card ? parseFloat(o.paddingBottom) / 2 : 0))
+      // The card may lend half its bottom padding; an inner panel keeps its padding (2px slack, as the overflow rule allows).
+      limit = Math.min(limit, b.bottom - (box === card ? parseFloat(o.paddingBottom) / 2 : parseFloat(o.paddingBottom) + parseFloat(o.borderBottomWidth) - 2))
       right = Math.min(right, b.right)
     }
     // Rows a Fit list wraps out of sight sit to the right of its box.

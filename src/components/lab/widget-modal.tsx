@@ -1,14 +1,19 @@
 "use client"
 
 import { AnimateUIProvider } from "@animate-ui/react/provider"
-import { Check, ChevronLeft, ChevronRight, Link2, Info, MousePointerClick, RotateCcw, X } from "lucide-react"
+import { Check, ChevronLeft, ChevronRight, Columns3, Link2, MousePointerClick, RotateCcw, X } from "lucide-react"
 import { MotionConfig, motion, useReducedMotion } from "motion/react"
 import { useEffect, useRef, useState } from "react"
 import { DETAILED_EXTRA_ROWS, type WidgetDef } from "@/components/lab/reui-widgets/registry"
 import type { CoachTheme, Mode } from "@/lib/theme/types"
 import type { Detail, Emphasis } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
-import { LabButton, LabDivider, LabIconButton, LabSeg } from "./lab-controls"
+import type { DataMode } from "@/components/lab/reui-widgets/shared"
+import { AddThemes, CompareView } from "./compare-view"
+import { LabButton, LabIconButton, LabSeg, LabSelect } from "./lab-controls"
+import type { LabThemes } from "./lab-themes"
+import { StressTool } from "./stress-bench"
+import { ThemeChip } from "./theme-switcher"
 import { colsOf, FOCUS, hair, Pane, px, rowsOf, rowsPx, t2, t3 } from "./widget-base"
 import { StageCanvas } from "./stage-canvas"
 import { ABOUT } from "./widget-about"
@@ -63,6 +68,18 @@ function useDetailLevels(key: string) {
 const CARD_W = 224
 const CARD_H = 136
 
+type Tab = "preview" | "grid" | "themes" | "stress" | "about"
+/** The modal's tabs, in order (1–5 on the keyboard). */
+const TABS: { id: Tab; label: string; hint: string }[] = [
+  { id: "preview", label: "Preview", hint: "The widget alone, large and live" },
+  { id: "grid", label: "On the grid", hint: "On a real-size grid, to move and resize it" },
+  { id: "themes", label: "Themes", hint: "This variant in every theme Compare shows" },
+  { id: "stress", label: "Stress test", hint: "Every variant at every size and amount of content, cuts marked" },
+  { id: "about", label: "About", hint: "What it is, what it's for and what to try" },
+]
+/** The tab last used, so the next widget opens on it. */
+let lastTab: Tab = "preview"
+
 /** The size of an element, kept up to date. */
 function useBox<T extends HTMLElement>() {
   const ref = useRef<T>(null)
@@ -94,6 +111,10 @@ export function WidgetModal({
   theme,
   emphasis: pageEmphasis,
   detail: pageDetail,
+  lab,
+  data,
+  onData,
+  onCompare,
 }: {
   def: WidgetDef
   variant: string
@@ -106,6 +127,13 @@ export function WidgetModal({
   /** The page's values when the modal opens; changes here stay in the modal. */
   emphasis: Emphasis
   detail: Detail
+  /** The library's themes: the one in use, and the ones Compare shows. */
+  lab: LabThemes
+  /** Which student's data the widgets show (library-wide). */
+  data: DataMode
+  onData: (d: DataMode) => void
+  /** Leave the modal for the library's Compare. */
+  onCompare: () => void
 }) {
   const [emphasis, setEmphasis] = useState(pageEmphasis)
   const [detail, setDetail] = useState(pageDetail)
@@ -130,22 +158,14 @@ export function WidgetModal({
   // Inspecting interactions: replay the entry animations, outline what is clickable, slow or stop motion, list what to try.
   const [run, setRun] = useState(0)
   const [hits, setHits] = useState(false)
-  // The About panel starts closed; the choice is remembered for the session.
-  const [notes, setNotesState] = useState(() => {
-    try {
-      return sessionStorage.getItem("wb-about") === "open"
-    } catch {
-      return false
-    }
-  })
-  const setNotes = (open: boolean) => {
-    setNotesState(open)
-    try {
-      sessionStorage.setItem("wb-about", open ? "open" : "closed")
-    } catch {}
+  // The modal's tabs: the widget alone (Preview), on a real grid, in every compared theme, at every size, and about it.
+  const [tab, setTabState] = useState<Tab>(lastTab)
+  const setTab = (t: Tab) => {
+    lastTab = t
+    setTabState(t)
   }
-  // Preview: the widget alone, large. Builder: on a real-size grid, to select, move and resize it.
-  const [view, setView] = useState<"preview" | "builder">("preview")
+  const view = tab === "grid" ? "builder" : "preview"
+  const [stressType, setStressType] = useState(def.type)
   const tries = INTERACTIONS[def.type] ?? []
 
   useEffect(() => {
@@ -165,8 +185,6 @@ export function WidgetModal({
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        // Escape inside the About panel closes the panel, not the modal.
-        if ((e.target as HTMLElement | null)?.closest("[data-about]")) return setNotes(false)
         return onClose()
       }
       // Tab stays inside the modal.
@@ -186,8 +204,9 @@ export function WidgetModal({
       // Arrows switch layouts, unless the reader is typing or is inside the widget (its own controls may use them).
       const t = e.target as HTMLElement | null
       if (t?.closest("input, textarea, select, [data-stage]")) return
-      // B switches between Preview and Builder.
-      if (e.key.toLowerCase() === "b" && !e.metaKey && !e.ctrlKey) setView((x) => (x === "preview" ? "builder" : "preview"))
+      // 1–5 switch tabs.
+      const n = Number(e.key)
+      if (n >= 1 && n <= TABS.length && !e.metaKey && !e.ctrlKey && !e.altKey) setTab(TABS[n - 1].id)
       if (e.key === "ArrowRight") step(1)
       if (e.key === "ArrowLeft") step(-1)
     }
@@ -229,13 +248,22 @@ export function WidgetModal({
         animate={{ opacity: 1, transform: "translateY(0px) scale(1)" }}
         transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
       >
-        {/* Header, two rows: where this is and the ways out; then the name with its states. */}
-        <div className="grid gap-4 border-b px-6 pt-5 pb-6" style={hair}>
+        {/* Header: where this is and the ways out; the name; then the tabs. */}
+        <div className="grid gap-3 border-b px-6 pt-4" style={hair}>
           <div className="flex items-center justify-between gap-4">
-            <span className={cn("text-[0.8125rem]", t2)}>
-              {def.group} · {n} {n === 1 ? "layout" : "layouts"}
-            </span>
+            <span className={cn("text-xs", t3)}>Catalog / {def.group}</span>
             <div className="flex items-center gap-2">
+              {/* The theme everything is drawn in; changing it here changes the library's. */}
+              <label className="flex h-9 items-center gap-2 rounded-lg border pr-1 pl-1.5 text-sm" style={{ ...hair, background: "var(--c-page)" }} title="Theme the widget is shown in">
+                <ThemeChip entry={lab.active} mode={mode} />
+                <select value={lab.active.id} onChange={(e) => lab.pick(e.target.value)} aria-label="Theme" className="h-full max-w-[11rem] min-w-0 bg-transparent pr-1 text-sm outline-none">
+                  {lab.all.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <LabIconButton onClick={copy} label={copied ? "Link copied" : "Copy link"}>
                 {copied ? <Check className="size-4" /> : <Link2 className="size-4" />}
               </LabIconButton>
@@ -244,14 +272,39 @@ export function WidgetModal({
               </LabIconButton>
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
-            <div className="grid min-w-0 gap-1.5">
-              <h2 className="text-2xl leading-8 font-medium tracking-[-0.015em]">
-                {def.name} <span className={cn("font-normal", t2)}>· {v.label}</span>
-              </h2>
-              {def.description && <p className={cn("max-w-2xl text-sm", t2)}>{def.description}</p>}
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
+          <div className="grid min-w-0 gap-1">
+            <h2 className="text-2xl leading-8 font-medium tracking-[-0.015em]">
+              {def.name} <span className={cn("font-normal", t2)}>· {v.label}</span>
+            </h2>
+            {def.description && <p className={cn("max-w-2xl text-[0.8125rem]", t2)}>{def.description}</p>}
+          </div>
+          <div role="tablist" aria-label="View" className="-mb-px flex gap-5 overflow-x-auto [scrollbar-width:none]">
+            {TABS.map((t, k) => (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.id}
+                onClick={() => setTab(t.id)}
+                title={`${t.hint} (${k + 1})`}
+                className={cn(
+                  "flex h-10 shrink-0 items-center gap-1.5 border-b-2 text-sm transition-colors duration-150",
+                  FOCUS,
+                  tab === t.id ? "border-(--c-t1) font-medium text-(--c-t1)" : cn("border-transparent hover:text-(--c-t1)", t2),
+                )}
+              >
+                {t.label}
+                {t.id === "themes" && <span className={cn("text-xs font-normal tabular-nums", t3)}>{lab.compared.length}</span>}
+                {t.id === "about" && tries.length > 0 && <span className={cn("text-xs font-normal tabular-nums", t3)}>{tries.length}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative flex min-h-0 flex-1 flex-col bg-(--c-page)">
+          {/* The widget's state, for the tabs that draw it: the same settings a coach picks for this widget. */}
+          {(tab === "preview" || tab === "grid" || tab === "themes") && (
+            <div className="flex flex-wrap items-center gap-3 px-6 pt-4">
               <LabSeg
                 label="Emphasis"
                 value={emphasis}
@@ -262,43 +315,40 @@ export function WidgetModal({
                   ["star", "Star"],
                 ]}
               />
-            </div>
-          </div>
-        </div>
-
-        <div className="relative flex min-h-0 flex-1 bg-(--c-page)">
-          <div className="flex min-w-0 flex-1 flex-col">
-            {/* Inspection tools for the live widget. */}
-            <div className="flex flex-wrap items-center gap-3 px-6 pt-4">
-              <LabSeg
-                inline
-                label="Stage"
-                value={view}
-                onChange={setView}
-                options={[
-                  ["preview", "Preview"],
-                  ["builder", "Builder"],
-                ]}
-              />
-              <LabDivider />
-              <LabButton onClick={() => setRun((r) => r + 1)} label="Replay" hint="Mount the widget again so its entry animations play">
-                <RotateCcw className="size-4" />
-              </LabButton>
-              <LabButton onClick={() => setHits(!hits)} label="Hit areas" hint="Outline everything that can be clicked or focused" pressed={hits}>
-                <MousePointerClick className="size-4" />
-              </LabButton>
-              <LabDivider />
               {levels && levels.length < 2 ? (
                 <span className={cn("text-xs", t3)}>One detail level</span>
               ) : (
-                <LabSeg inline label="Detail" value={shownDetail} onChange={setDetail} options={(levels ?? DETAILS).map((d) => [d, DETAIL_LABEL[d]] as [Detail, string])} />
+                <LabSeg label="Detail" value={shownDetail} onChange={setDetail} options={(levels ?? DETAILS).map((d) => [d, DETAIL_LABEL[d]] as [Detail, string])} />
               )}
+              <LabSelect label="Data" value={data} onChange={(d) => onData(d as DataMode)}>
+                <option value="sample">Sample</option>
+                <option value="empty">Empty</option>
+                <option value="inactive">Inactive</option>
+                <option value="finished">Finished</option>
+              </LabSelect>
               <span className="flex-1" />
-              <LabButton onClick={() => setNotes(!notes)} label="About" hint="What this widget is, what it\u2019s for and what to try" expanded={notes}>
-                <Info className="size-4" />
-              </LabButton>
+              {tab !== "themes" ? (
+                <>
+                  <LabIconButton onClick={() => setRun((r) => r + 1)} label="Replay the entry animations">
+                    <RotateCcw className="size-4" />
+                  </LabIconButton>
+                  <LabIconButton onClick={() => setHits(!hits)} label="Outline what can be clicked" pressed={hits}>
+                    <MousePointerClick className="size-4" />
+                  </LabIconButton>
+                </>
+              ) : (
+                <>
+                  <AddThemes lab={lab} mode={mode} />
+                  <LabButton onClick={onCompare} label="Open in Compare" hint="Compare more widgets in these themes">
+                    <Columns3 className="size-4" />
+                  </LabButton>
+                </>
+              )}
             </div>
-            {/* Stage: the chosen layout, large and live; the stage keeps its size whichever layout shows. */}
+          )}
+
+          {(tab === "preview" || tab === "grid") && (
+            /* Stage: the chosen variant, large and live; the stage keeps its size whichever variant shows. */
             <div className="relative min-h-0 flex-1">
               <div ref={stage} data-stage data-hits={hits || undefined} className="absolute inset-0 overflow-auto">
                 <style>{HIT_CSS}</style>
@@ -323,18 +373,36 @@ export function WidgetModal({
               </div>
               {n > 1 && view === "preview" && (
                 <>
-                  <StepButton side="left" onClick={() => step(-1)} label={`Previous layout: ${def.variants[(i - 1 + n) % n].label}`} />
-                  <StepButton side="right" onClick={() => step(1)} label={`Next layout: ${def.variants[(i + 1) % n].label}`} />
+                  <StepButton side="left" onClick={() => step(-1)} label={`Previous variant: ${def.variants[(i - 1 + n) % n].label}`} />
+                  <StepButton side="right" onClick={() => step(1)} label={`Next variant: ${def.variants[(i + 1) % n].label}`} />
                 </>
               )}
             </div>
-          </div>
-          {/* Hidden in Builder: the 12-column grid needs the full width. */}
-          {notes && view === "preview" && <AboutPanel type={def.type} current={v.value} variants={def.variants} tries={tries} onVariant={onVariant} />}
+          )}
+
+          {tab === "themes" && (
+            <div className="min-h-0 flex-1 overflow-auto px-6 pt-4">
+              <CompareView stickyHeaders={false} lab={lab} mode={mode} rows={[[def, v.value]]} scale={1} emphasis={emphasis} detail={shownDetail} onEdit={() => onCompare()} />
+            </div>
+          )}
+
+          {tab === "stress" && (
+            <div className="min-h-0 flex-1 overflow-auto px-6 pt-4">
+              <StressTool fixed mode={mode} theme={theme} type={stressType} onType={setStressType} />
+            </div>
+          )}
+
+          {tab === "about" && (
+            <div className="min-h-0 flex-1 overflow-auto">
+              <AboutPanel type={def.type} current={v.value} variants={def.variants} tries={tries} onVariant={onVariant} />
+            </div>
+          )}
         </div>
 
         {/* Carousel: every layout as a card. */}
-        <Carousel def={def} current={v.value} index={i} onPick={onVariant} extra={extra} mode={mode} theme={theme} emphasis={emphasis} detail={shownDetail} />
+        {(tab === "preview" || tab === "grid" || tab === "themes") && (
+          <Carousel def={def} current={v.value} index={i} onPick={onVariant} extra={extra} mode={mode} theme={theme} emphasis={emphasis} detail={shownDetail} />
+        )}
         {/* Offscreen: the layout at each detail level, compared once to find which levels differ. */}
         {!levels && (
           <div ref={probe} aria-hidden inert className="pointer-events-none fixed top-0 -left-[20000px] invisible">
@@ -359,14 +427,12 @@ function AboutPanel({ type, current, variants, tries, onVariant }: { type: strin
     ["Data", a?.data],
   ]
   return (
-    // Beside the stage on wide screens (the stage rescales); over it on narrow ones.
     <motion.aside
       data-about
-      initial={still ? { opacity: 0 } : { opacity: 0, transform: "translateX(16px)" }}
-      animate={{ opacity: 1, transform: "translateX(0px)" }}
+      initial={still ? { opacity: 0 } : { opacity: 0, transform: "translateY(6px)" }}
+      animate={{ opacity: 1, transform: "translateY(0px)" }}
       transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-      className="absolute inset-y-0 right-0 z-20 w-72 shrink-0 overflow-y-auto border-l p-5 shadow-[-12px_0_32px_-16px_rgb(0_0_0/0.35)] lg:static lg:shadow-none"
-      style={{ ...hair, background: "var(--c-bar)" }}
+      className="mx-auto w-full max-w-3xl px-6 py-8"
       aria-label="About this widget"
     >
       <dl className="grid gap-4">
@@ -379,7 +445,7 @@ function AboutPanel({ type, current, variants, tries, onVariant }: { type: strin
             </div>
           ))}
         <div className="grid gap-1.5">
-          <dt className={cn("text-xs", t3)}>Layouts</dt>
+          <dt className={cn("text-xs", t3)}>Variants</dt>
           <dd className="grid gap-1">
             {variants.map((x) => {
               const on = x.value === current
@@ -399,7 +465,7 @@ function AboutPanel({ type, current, variants, tries, onVariant }: { type: strin
           </dd>
         </div>
       </dl>
-      <details className="mt-5 border-t pt-4" style={hair}>
+      <details open className="mt-5 border-t pt-4" style={hair}>
         <summary className={cn("cursor-pointer text-xs font-medium select-none", t2)}>Interactions{tries.length ? ` · ${tries.length}` : ""}</summary>
         {tries.length ? (
           <ul className="mt-3 grid gap-2">
@@ -444,7 +510,7 @@ function Carousel({
   const [ends, setEnds] = useState({ start: true, end: true })
   const w = px(Math.max(...def.variants.map((x) => colsOf(def, x.value))))
   const n = def.variants.length
-  // Which ends still have cards past them, for the arrows and the fades.
+  // Which ends still have cards past them, for the arrows.
   const measure = () => {
     const r = rail.current
     if (r)
@@ -474,21 +540,20 @@ function Carousel({
       left: d * (rail.current.clientWidth - CARD_W),
       behavior: "smooth",
     })
-  const fade = `linear-gradient(to right, ${ends.start ? "black" : "transparent"}, black 40px, black calc(100% - 40px), ${ends.end ? "black" : "transparent"})`
   return (
     <div className="grid gap-3 border-t px-6 pt-4 pb-5" style={hair}>
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm">
-          <span className="font-medium">Layouts</span>
+          <span className="font-medium">Variants</span>
           <span className={cn("ml-2 tabular-nums", t3)}>
             {index + 1} / {n}
           </span>
         </p>
         <div className={cn("flex gap-1.5", ends.start && ends.end && "invisible")}>
-          <LabIconButton onClick={() => page(-1)} label="Previous layouts" disabled={ends.start}>
+          <LabIconButton onClick={() => page(-1)} label="Previous variants" disabled={ends.start}>
             <ChevronLeft className="size-4" />
           </LabIconButton>
-          <LabIconButton onClick={() => page(1)} label="Next layouts" disabled={ends.end}>
+          <LabIconButton onClick={() => page(1)} label="Next variants" disabled={ends.end}>
             <ChevronRight className="size-4" />
           </LabIconButton>
         </div>
@@ -496,10 +561,10 @@ function Carousel({
       <div
         ref={rail}
         role="radiogroup"
-        aria-label="Layouts"
+        aria-label="Variants"
         onScroll={measure}
-        className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-1 pt-1 pb-2 [scrollbar-width:thin]"
-        style={{ maskImage: fade, WebkitMaskImage: fade }}
+        // Full bleed: the rail runs to the modal's edges, so the next card peeks in whole up to the edge instead of being sliced inside the padding.
+        className="-mx-6 flex scroll-px-6 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-6 pt-1 pb-2 [scrollbar-width:none]"
       >
         {def.variants.map((x) => {
           const on = x.value === current
@@ -511,7 +576,7 @@ function Carousel({
               role="radio"
               tabIndex={on ? 0 : -1}
               aria-checked={on}
-              aria-label={`Show layout ${x.label}`}
+              aria-label={`Show variant ${x.label}`}
               data-variant={x.value}
               onClick={() => onPick(x.value)}
               onKeyDown={(e) => {
