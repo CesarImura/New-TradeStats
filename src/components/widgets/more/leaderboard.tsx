@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Chip, WCard } from "@/components/lab/reui-widgets/instrument"
-import { Spark, useFitRows, useMore } from "@/components/lab/reui-widgets/kit"
-import type { WidgetProps } from "@/components/lab/reui-widgets/shared"
+import { Chip, WCard } from "@/components/widgets/instrument"
+import { Spark, useFitRows, useMore } from "@/components/widgets/kit"
+import type { WidgetProps } from "@/components/widgets/shared"
 import { Trophy } from "@/components/icons"
 import { cn } from "@/lib/utils"
 

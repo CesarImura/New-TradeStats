@@ -5,8 +5,8 @@ import { Link2, ShieldAlert } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ACCOUNT } from "@/lib/data/sample"
-import { Axis, Chip, FitGauge, GREY, GridLines, Label, Legend, Num, Rule, TickBar, useFigureFont, WCard } from "./instrument"
-import { ACCENT, Drop, SPLIT, useMore } from "./kit"
+import { Axis, Chip, Donut, DonutFigure, GREY, GridLines, Label, Legend, Num, RING, RING_BODY, Rule, ShareRows, TickBar, useFigureFont, WCard } from "./instrument"
+import { ACCENT, AreaFill, Drop, SPLIT, useMore } from "./kit"
 import { BleedArea, HeroCard } from "./layouts"
 import { WidgetEmpty, signed, useEmpty, type WidgetProps } from "./shared"
 
@@ -39,7 +39,7 @@ function FloorChart({ values, floor }: { values: number[]; floor: number }) {
     <div className="relative min-h-14 flex-1" onPointerLeave={() => setHover(undefined)}>
       <svg viewBox="0 0 300 110" preserveAspectRatio="none" className="absolute inset-0 size-full overflow-visible" aria-hidden>
         <GridLines />
-        <path d={`${path} V${fy} H0 Z`} fill={ACCENT} opacity={0.05} />
+        <AreaFill d={`${path} V${fy} H0 Z`} />
         <line x1={0} x2={300} y1={fy} y2={fy} stroke="var(--loss)" strokeWidth={1.2} strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
         <path d={path} fill="none" stroke={ACCENT} strokeWidth={1.6} vectorEffect="non-scaling-stroke" />
       </svg>
@@ -94,10 +94,9 @@ function LimitLine({ label, used, limit, color = GREY[1] }: { label: string; use
   )
 }
 
-/** Risk limits: gauge (share of the max drawdown used), bars (today's loss limit), curve (balance above its floor). */
+/** Risk limits: gauge (a ring of the max drawdown used), bars (today's loss limit), curve (balance above its floor). */
 export function Drawdown({ variant = "gauge" }: WidgetProps) {
   const empty = useEmpty()
-  const font = useFigureFont()
   const standard = useMore("standard")
   const detailed = useMore("detailed")
   if (empty) return <ConnectBroker />
@@ -227,44 +226,24 @@ export function Drawdown({ variant = "gauge" }: WidgetProps) {
       title="Risk limits"
       meta={`${ACCOUNT.name} · max drawdown ${euro(ACCOUNT.maxDrawdown)}`}
       chip={<Chip tone={ddPct > 75 ? "loss" : "accent"}>{pctText(ddPct)} used</Chip>}
-      // Wide and short: the gauge and its figures side by side as one centred group (not pushed to opposite edges).
-      bodyClassName="[@container_card_(min-aspect-ratio:2/1)]:flex-row [@container_card_(min-aspect-ratio:2/1)]:items-center [@container_card_(min-aspect-ratio:2/1)]:justify-center [@container_card_(min-aspect-ratio:2/1)]:gap-[clamp(1.5rem,5cqw,4rem)]"
+      // A ring of the drawdown used, the room left in its middle, and the limits beside it (stacked in a tall, narrow cell).
+      bodyClassName={RING_BODY}
     >
-      <FitGauge
-        value={dd}
-        max={ACCOUNT.maxDrawdown}
-        className="[@container_card_(min-aspect-ratio:2/1)]:h-full [@container_card_(min-aspect-ratio:2/1)]:flex-none [@container_card_(min-aspect-ratio:2/1)]:w-[min(46%,26rem,max(calc((100cqh-6.5rem)*1.15),min(calc((100cqh-6.5rem)*1.8),17rem)))]"
-      >
-        {/* The figure and its caption scale with the gauge (cqw of the gauge), so a large gauge isn't a small number in a big arc. */}
-        <span className="font-heading text-[clamp(1.25rem,12cqw,3.5rem)] leading-none font-medium tracking-[-0.02em] tabular-nums" style={{ fontFamily: font }}>
-          {euro(left)}
-        </span>
-        <Label className="text-[clamp(0.6875rem,3.6cqw,1rem)] leading-tight">left before the floor</Label>
-      </FitGauge>
-      {/* Beside the gauge the legend reads at body size with room between its rows, and stays narrow so each value sits near its name. */}
-      <div className="grid shrink-0 gap-3 [@container_card_(min-aspect-ratio:2/1)]:w-[min(36%,15rem)] [@container_card_(min-aspect-ratio:2/1)]:content-center [@container_card_(min-aspect-ratio:2/1)]:[&_[data-legend]]:gap-3 [@container_card_(min-aspect-ratio:2/1)]:[&_[data-legend]>div]:text-sm [@container_card_(min-aspect-ratio:2/1)]:[&_[data-legend]>div]:leading-6">
-        <Drop level={2}>
-          {standard && (
-            <Legend
-              className="shrink-0"
-              items={[
-                { color: ACCENT, label: "Down from peak", value: euro(dd) },
-                { color: GREY[2], label: "Room to floor", value: euro(left) },
-                ...(detailed ? [] : [{ color: GREY[0], label: "Today", value: `${euro(TODAY.used)} / ${euro(TODAY.limit)}` }]),
-              ]}
-            />
-          )}
-        </Drop>
-        <Drop level={3}>
-          {detailed && (
-            <>
-              <Rule />
-              <LimitLine label="Daily loss limit" used={TODAY.used} limit={TODAY.limit} />
-              <Legend className="shrink-0" items={[{ label: "Trades today", value: `${TODAY.trades} of ${TODAY.maxTrades} max` }]} />
-            </>
-          )}
-        </Drop>
-      </div>
+      <Donut className={RING} total={ACCOUNT.maxDrawdown} parts={[{ value: dd, color: ddPct > 75 ? "var(--loss)" : ACCENT }]} label={`${euro(left)} left before the floor`}>
+        <DonutFigure value={euro(left)} caption="left before the floor" />
+      </Donut>
+      <Drop level={2}>
+        {standard && (
+          <ShareRows
+            className="min-w-0 flex-1"
+            rows={[
+              { label: "Down from peak", value: euro(dd), share: dd / ACCOUNT.maxDrawdown, on: true },
+              { label: "Today", value: `${euro(TODAY.used)} / ${euro(TODAY.limit)}`, share: TODAY.used / TODAY.limit, tone: TODAY.used / TODAY.limit > 0.75 ? ("loss" as const) : undefined },
+              ...(detailed ? [{ label: "Trades today", value: `${TODAY.trades} of ${TODAY.maxTrades}`, share: TODAY.trades / TODAY.maxTrades }] : []),
+            ]}
+          />
+        )}
+      </Drop>
     </WCard>
   )
 }

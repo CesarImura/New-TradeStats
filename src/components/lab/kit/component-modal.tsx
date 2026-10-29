@@ -27,7 +27,7 @@ export function ComponentModal({ def, index, onIndex, onClose, mode, theme, emph
   const dialog = useRef<HTMLDivElement>(null)
   const close = useRef<HTMLButtonElement>(null)
   const downOnBackdrop = useRef(false)
-  const [emphasis, setEmphasis] = useState(pageEmphasis)
+  const emphasis = pageEmphasis
   const [detail, setDetail] = useState(pageDetail)
   const [run, setRun] = useState(0)
   const [hits, setHits] = useState(false)
@@ -127,7 +127,6 @@ export function ComponentModal({ def, index, onIndex, onClose, mode, theme, emph
               </h2>
               <p className={cn("max-w-2xl text-sm", t2)}>{def.description}</p>
             </div>
-            <LabSeg label="Emphasis" value={emphasis} onChange={setEmphasis} options={[["quiet", "Quiet"], ["accent", "Accent"], ["star", "Star"]]} />
           </div>
         </div>
 

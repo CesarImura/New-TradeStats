@@ -1,6 +1,6 @@
 "use client"
 
-import { getWidget } from "@/components/lab/reui-widgets/registry"
+import { getWidget } from "@/components/widgets/registry"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import { uid, type WidgetInstance } from "@/lib/widgets/layout"
 import { read, useKey, write } from "./lab-themes"

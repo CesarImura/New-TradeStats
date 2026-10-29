@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { CoachContext } from "@/components/coach/coach-provider"
-import { WidgetFrame } from "@/components/lab/reui-widgets/kit"
+import { WidgetFrame } from "@/components/widgets/kit"
 import { getDemoCoach } from "@/lib/data/coaches"
 import { resolveCoach } from "@/lib/theme/resolve"
 import type { CoachTheme, Mode } from "@/lib/theme/types"

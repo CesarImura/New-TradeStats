@@ -4,13 +4,14 @@ import { ArrowDownUp, ArrowLeft, Check, Columns3, Menu, Palette, PanelsTopLeft, 
 import Link from "next/link"
 import { Component, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { CoachContext } from "@/components/coach/coach-provider"
-import { WidgetFrame } from "@/components/lab/reui-widgets/kit"
-import { DataModeProvider, type DataMode } from "@/components/lab/reui-widgets/shared"
-import { DETAILED_EXTRA_ROWS, WIDGETS, type WidgetDef } from "@/components/lab/reui-widgets/registry"
+import { WidgetFrame } from "@/components/widgets/kit"
+import { DataModeProvider, type DataMode } from "@/components/widgets/shared"
+import { extraRows, WIDGETS, type WidgetDef } from "@/components/widgets/registry"
 import { getDemoCoach } from "@/lib/data/coaches"
+import { backdropStyle, dimOf } from "@/lib/theme/backdrops"
 import { themeToCss } from "@/lib/theme/css"
 import { resolveCoach } from "@/lib/theme/resolve"
-import type { CoachTheme, Mode } from "@/lib/theme/types"
+import { widgetFinishOf, widgetSetOf, type CoachTheme, type Mode } from "@/lib/theme/types"
 import { ROW_HEIGHT, type Detail, type Emphasis } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { checkWidget } from "@/lib/widgets/checks"
@@ -19,9 +20,10 @@ import { CommandPalette, type PaletteItem } from "./kit/command-palette"
 import { ComponentModal } from "./kit/component-modal"
 import { COMPONENT_GROUPS, COMPONENTS, type KitDef } from "./kit/components"
 import { KitPane } from "./kit/preview"
-import { NEW_TYPES, NEW_WIDGETS, WIDGET_TAGS } from "./new-widgets/registry"
+import { NEW_TYPES, WIDGET_TAGS } from "@/components/widgets/more/registry"
 import { CompareBar, CompareView, type CompareSource } from "./compare-view"
 import { duplicateLayout, useLabLayouts } from "./lab-layouts"
+import { DeviceSwitch } from "@/components/admin/design/settings-panel"
 import { LayoutBar, LayoutGallery, LayoutView, type Device, type LayoutCompare } from "./layout-views"
 import { colourOf, createTheme, duplicateTheme, resolveLab, useLabThemes } from "./lab-themes"
 import { ThemeEditor, labUiCss } from "./theme-editor"
@@ -55,7 +57,7 @@ export const meaningFor = (colour: Colour, mode: Mode, sel: string) =>
       : `${sel}{--warning:#f59e0b;--warning-text:#fbbf24;--info:#3b82f6;--info-text:var(--brand-text)}`
 
 /** Every widget in the library: the app's (minus pages' core widgets) and the ones added in the lab. */
-export const LIBRARY = [...WIDGETS.filter((w) => !w.core), ...NEW_WIDGETS]
+export const LIBRARY = WIDGETS.filter((w) => !w.core)
 /** For "Recently added": the lab's new widgets first, newest first, then the rest. */
 const ADDED = new Map(LIBRARY.map((w, i) => [w.type, NEW_TYPES.has(w.type) ? 1000 + i : i]))
 /** The sidebar's order: the student's day first, the coach's own content after. */
@@ -137,7 +139,8 @@ const toolOf = (cat: string) => TOOLS.find((t) => `tool:${t.id}` === cat) ?? nul
  * to fit; a cell opens its widget or component in a modal.
  */
 export function WidgetBase() {
-  const [emphasis, setEmphasis] = useState<Emphasis>("accent")
+  // Widgets are always drawn at Accent: Quiet and Star are no longer offered in the library.
+  const emphasis: Emphasis = "accent"
   const [detail, setDetail] = useState<Detail>("standard")
   const [layout, setLayout] = useState<"first" | "all">("all")
   const [data, setData] = useStored<DataMode>("wb-data", "sample", ["sample", "empty", "inactive", "finished"])
@@ -154,6 +157,11 @@ export function WidgetBase() {
   const [compareSource, setCompareSource] = useStored<CompareSource>("wb-compare-source", "view", ["view", "picked"])
   const [editing, setEditing] = useState<string | null>(null)
   const lab = useLabThemes()
+  // A prerendered copy of this page can stay in the document, hidden (a Suspense boundary that rendered on the
+  // client instead), and its styles, drawn for the default theme and mode, would win over the live ones.
+  useEffect(() => {
+    document.querySelectorAll('[id^="S:"] style').forEach((el) => el.remove())
+  }, [])
   const layouts = useLabLayouts()
   const [stressType, setStressType] = useState(LIBRARY[0].type)
   const [layoutEditing, setLayoutEditing] = useState(false)
@@ -176,7 +184,6 @@ export function WidgetBase() {
   const themeLab = useThemeLab(checkSet, query)
   const tool = toolOf(cat)
   const scale = scaleFor(size, useViewportWidth())
-  const extra = detail === "detailed" ? DETAILED_EXTRA_ROWS : 0
   // The library's theme: everything below is drawn in it, in the page's light or dark.
   const colour = colourOf(lab.active)
   const light = useMemo(() => resolveLab(lab.active, "light"), [lab.active])
@@ -213,9 +220,9 @@ export function WidgetBase() {
   }
   /** Edit a theme in the side panel; a starting point is copied first, so it stays as it is. */
   const edit = (id: string) => {
+    // A theme made a moment ago (New theme, Import) isn't in this render's list yet; it is a made one, so it opens as it is.
     const entry = lab.byId(id)
-    if (!entry) return
-    const target = entry.builtIn ? duplicateTheme(entry, `My ${entry.name}`) : id
+    const target = entry?.builtIn ? duplicateTheme(entry, `My ${entry.name}`) : id
     lab.pick(target)
     setEditing(target)
   }
@@ -437,7 +444,9 @@ export function WidgetBase() {
       // The sidebar widens with the widget size (272px at real size, ~288px at 1.15×, ~312px at 1.3×); the side padding follows the screen.
       style={{ ...CHROME[mode], background: "var(--c-page)", color: "var(--c-t1)", colorScheme: mode, "--sb": `${Math.round(272 * (1 + (scale - 1) / 2))}px`, "--gutter": "clamp(24px, 3vw, 64px)" } as React.CSSProperties}
     >
-      <style dangerouslySetInnerHTML={{ __html: themeToCss(light, ".wb-light") + themeToCss(dark, ".wb-dark") + meaningCss(colour) + labUiCss(CHROME[mode]) }} />
+      <style dangerouslySetInnerHTML={{ __html: themeToCss(light, ".wb-light") + themeToCss(dark, ".wb-dark") + meaningCss(colour) }} />
+      {/* Both modes at once, each under its own page class. */}
+      <style dangerouslySetInnerHTML={{ __html: labUiCss(CHROME.light, "wb-light") + labUiCss(CHROME.dark, "wb-dark") }} />
 
       {/* Narrow screens: a top bar, the sidebar opens over the page. */}
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b px-4 lg:hidden" style={{ ...hair, background: "var(--c-bar)" }}>
@@ -513,7 +522,7 @@ export function WidgetBase() {
       </aside>
 
       <DataModeProvider value={data}>
-        <main className={cn("lg:pl-(--sb) transition-[padding] duration-200", editEntry && "sm:pr-[23rem]")}>
+        <main className="lg:pl-(--sb)">
           {/* The bar: what the library is shown in on the left (theme, Compare), how widgets are drawn and light or dark on the right. */}
           <div className="sticky top-14 z-10 border-b lg:top-0" style={{ ...hair, background: "var(--c-bar)" }}>
             <div className="flex min-h-14 flex-wrap items-center gap-2 px-4 py-2.5 sm:h-14 sm:flex-nowrap sm:gap-3 sm:px-6 sm:py-0">
@@ -553,10 +562,9 @@ export function WidgetBase() {
               {/* How widgets are drawn, in one menu that says what is set; only where there are widgets to draw. */}
               {(!tool || tool.id === "wall") && !layoutView && !themeSet && cat !== "quality" && (
                 <DisplayMenu
-                  value={{ emphasis, detail, data, variants: layout, size }}
+                  value={{ detail, data, variants: layout, size }}
                   showVariants={GROUPS.includes(cat) || comparing}
                   onChange={(p) => {
-                    if (p.emphasis) setEmphasis(p.emphasis)
                     if (p.detail) setDetail(p.detail)
                     if (p.data) setData(p.data)
                     if (p.variants) setLayout(p.variants)
@@ -684,7 +692,6 @@ export function WidgetBase() {
                           key={def.type}
                           def={def}
                           variant={def.variants[0]}
-                          extra={extra}
                           scale={scale}
                           mode={mode}
                           theme={theme}
@@ -703,7 +710,6 @@ export function WidgetBase() {
                             key={`${def.type}/${v.value}`}
                             def={def}
                             variant={v}
-                            extra={extra}
                             scale={scale}
                             mode={mode}
                             theme={theme}
@@ -750,7 +756,6 @@ export function WidgetBase() {
             variant={shown.variant}
             onVariant={(v) => show(shownDef.type, v)}
             onClose={hide}
-            extra={extra}
             scale={scale}
             mode={mode}
             theme={theme}
@@ -760,17 +765,18 @@ export function WidgetBase() {
         )}
         {kitDef && kit && <ComponentModal def={kitDef} index={kit.i} onIndex={(i) => showKit(kitDef.id, i)} onClose={hide} mode={mode} theme={theme} emphasis={emphasis} detail={detail} />}
       </DataModeProvider>
-      {editEntry && !editEntry.builtIn && <ThemeEditor key={editEntry.id} entry={editEntry} lab={lab} mode={mode} onClose={() => setEditing(null)} onCompare={startCompare} />}
+      {editEntry && !editEntry.builtIn && (
+        <DataModeProvider value={data}>
+          <ThemeStudio mode={mode} onMode={setMode} theme={theme} detail={detail}>
+            <ThemeEditor key={editEntry.id} entry={editEntry} lab={lab} mode={mode} onClose={() => setEditing(null)} onCompare={() => (setEditing(null), startCompare())} onLayouts={() => (setEditing(null), open("layouts"))} />
+          </ThemeStudio>
+        </DataModeProvider>
+      )}
       <CommandPalette items={paletteItems} open={palette} onOpenChange={setPalette} onPick={pick} />
     </div>
   )
 }
 
-const EMPHASIS_OPTS: [Emphasis, string][] = [
-  ["quiet", "Quiet"],
-  ["accent", "Accent"],
-  ["star", "Star"],
-]
 const DETAIL_OPTS: [Detail, string][] = [
   ["compact", "Compact"],
   ["standard", "Standard"],
@@ -789,12 +795,12 @@ const DATA_OPTS: [DataMode, string][] = [
   ["inactive", "Inactive"],
   ["finished", "Finished"],
 ]
-export type DisplayState = { emphasis: Emphasis; detail: Detail; data: DataMode; variants: "first" | "all"; size: Size }
-export const DISPLAY_DEFAULT: DisplayState = { emphasis: "accent", detail: "standard", data: "sample", variants: "all", size: "auto" }
+export type DisplayState = { detail: Detail; data: DataMode; variants: "first" | "all"; size: Size }
+export const DISPLAY_DEFAULT: DisplayState = { detail: "standard", data: "sample", variants: "all", size: "auto" }
 
 /**
  * How the widgets are drawn, in one menu. Its button names only what differs
- * from the default (Accent · Standard · Sample data), with a dot, so a changed
+ * from the default (Standard · Sample data), with a dot, so a changed
  * setting is never forgotten. Two groups: the widgets' own state (the same
  * settings a coach picks per widget, here for all at once, plus which
  * student's data they show) and the grid. Variants shows only where a
@@ -803,7 +809,6 @@ export const DISPLAY_DEFAULT: DisplayState = { emphasis: "accent", detail: "stan
 function DisplayMenu({ value, onChange, showVariants }: { value: DisplayState; onChange: (patch: Partial<DisplayState>) => void; showVariants: boolean }) {
   const name = (opts: [string, string][], v: string) => opts.find((o) => o[0] === v)?.[1]
   const diff = [
-    value.emphasis !== "accent" && name(EMPHASIS_OPTS, value.emphasis),
     value.detail !== "standard" && name(DETAIL_OPTS, value.detail),
     value.data !== "sample" && `${name(DATA_OPTS, value.data)} data`,
     showVariants && value.variants === "first" && "Default variants",
@@ -821,9 +826,6 @@ function DisplayMenu({ value, onChange, showVariants }: { value: DisplayState; o
     >
       <div className="grid w-[23rem] max-w-full gap-4 p-2">
         <GroupTitle>Widgets</GroupTitle>
-        <DisplayRow title="Emphasis" hint="How much each stands out">
-          <Choice label="Emphasis" value={value.emphasis} onChange={(emphasis) => onChange({ emphasis })} options={EMPHASIS_OPTS} />
-        </DisplayRow>
         <DisplayRow title="Detail" hint="How much each shows">
           <Choice label="Detail" value={value.detail} onChange={(detail) => onChange({ detail })} options={DETAIL_OPTS} />
         </DisplayRow>
@@ -1106,7 +1108,6 @@ type Variant = WidgetDef["variants"][number]
 function Cell({
   def,
   variant,
-  extra,
   scale,
   mode,
   theme,
@@ -1120,7 +1121,6 @@ function Cell({
 }: {
   def: WidgetDef
   variant: Variant
-  extra: number
   scale: number
   mode: Mode
   theme: CoachTheme
@@ -1133,7 +1133,7 @@ function Cell({
   onOpen: () => void
 }) {
   const w = px(colsOf(def, variant.value))
-  const h = rowsOf(def, variant.value) + extra
+  const h = rowsOf(def, variant.value) + extraRows(def, variant.value, detail)
   // Fit the layout's largest box inside the preview, with 24px of room on each side.
   const fit = Math.min(1, (CELL_W - 48) / w, (CELL_H - 48) / rowsPx(h))
   return (
@@ -1154,6 +1154,85 @@ function Cell({
         <Pane def={def} variant={variant.value} h={h} scale={fit * scale} mode={mode} theme={theme} emphasis={emphasis} detail={detail} />
       </div>
       <CellCaption name={name} note={note} tags={tags} isNew={isNew} />
+    </div>
+  )
+}
+
+/** The width each screen size shows the widgets at; null is the whole area. */
+const SCREEN: Record<Device, number | null> = { desktop: null, tablet: 768, phone: 390 }
+const TEXTURE: Record<string, string> = { grid: "coach-bg-grid", glow: "coach-bg-glow", dots: "coach-bg-dots" }
+
+/**
+ * Editing a theme: a full screen with every widget of the library in it, on
+ * the theme's own page background, and the editor beside them. The theme
+ * being edited is the library's theme, so each change redraws them at once.
+ * On a phone the editor sits under the widgets.
+ */
+function ThemeStudio({ mode, onMode, theme, detail, children }: { mode: Mode; onMode: (m: Mode) => void; theme: CoachTheme; detail: Detail; children: React.ReactNode }) {
+  const backdrop = backdropStyle(theme)
+  const vw = useViewportWidth()
+  const [device, setDevice] = useState<Device>("desktop")
+  const screen = vw >= 640 ? SCREEN[device] : null
+  // The page behind stays where it was and doesn't scroll under the studio.
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [])
+  return (
+    <div role="dialog" aria-modal aria-label="Edit theme" className={cn(mode, "fixed inset-0 z-40 flex flex-col sm:flex-row")} style={{ background: "var(--c-page)" }}>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="lab-ui flex h-14 shrink-0 items-center gap-3 border-b px-4 sm:px-6" style={{ ...hair, background: "var(--c-bar)" }}>
+          <span className="grid min-w-0 leading-tight">
+            <span className="truncate text-sm font-medium">Every widget, live</span>
+            <span className={cn("truncate text-xs", t3)}>{LIBRARY.length} widgets · each change shows as you make it</span>
+          </span>
+          <span className="flex-1" />
+          <span className="hidden sm:contents">
+            <DeviceSwitch value={device} onChange={setDevice} />
+          </span>
+          <ModeToggle mode={mode} onMode={onMode} />
+        </div>
+        {/* The theme's page background, as the student shell draws it: a texture on the page, or an image or gradient on a layer under it. */}
+        <div className="relative min-h-0 flex-1 overflow-hidden" style={{ background: "var(--background)", color: "var(--foreground)" }}>
+          {backdrop && (
+            <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+              <div className="absolute inset-0" style={backdrop} />
+              {theme.background === "image" && <div className="absolute inset-0 bg-background" style={{ opacity: dimOf(theme) / 100 }} />}
+            </div>
+          )}
+          <div className={cn("absolute inset-0 overflow-y-auto", !backdrop && TEXTURE[theme.background])}>
+          {/* Tablet and phone: the widgets in a screen that wide, as they would wrap there. */}
+          <div className={cn("mx-auto grid content-start gap-8 px-4 py-6 sm:px-8", screen && "my-6 rounded-xl border sm:px-5")} style={screen ? { width: screen, maxWidth: "calc(100% - 2rem)", borderColor: "var(--border)", background: "var(--background)" } : undefined}>
+            {GROUPS.map((g) => (
+              <section key={g} aria-label={g} className="grid gap-3">
+                <h2 className="text-xs font-medium" style={{ color: "var(--muted-foreground)", fontFamily: "var(--ff-geist)" }}>
+                  {g}
+                </h2>
+                {/* The page's own widget set and finish (Sheet, Open, corner brackets, grid), as on a student page. */}
+                <div className="g-page" data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", gap: 16, "--gap": "16px" } as React.CSSProperties}>
+                  {LIBRARY.filter((w) => w.group === g).map((def) => {
+                    const v = def.variants[0]
+                    // Real size; on a phone, a widget wider than the screen is scaled down to fit it.
+                    const room = Math.min(vw, screen ?? vw) - (screen ? 72 : 32)
+                    const fit = room < 640 ? Math.min(1, room / px(colsOf(def, v.value))) : 1
+                    return (
+                      // A page tile is size-contained, so it gets the widget's width (its scaled grid width) instead of taking it from the content.
+                      <div key={def.type} inert className={cn("g-item max-w-full", (def.core || def.type === "page-header") && "g-plain")} style={{ width: Math.round(px(colsOf(def, v.value)) * fit) }}>
+                        <Pane def={def} variant={v.value} h={rowsOf(def, v.value) + extraRows(def, v.value, detail)} scale={fit} mode={mode} theme={theme} emphasis="accent" detail={detail} />
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+          </div>
+        </div>
+      </div>
+      {children}
     </div>
   )
 }

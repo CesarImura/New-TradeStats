@@ -211,7 +211,7 @@ export function CommunityFeed({ variant = "list" }: WidgetProps) {
         {posts.map((p, i) => {
           const st = POST_STATS[p.id] ?? { likes: 0, replies: 0 }
           return (
-            <div key={p.id} className="grid min-w-0 gap-0.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-2 first:pt-0 last:border-b-0">
+            <div key={p.id} className="grid min-w-0 gap-0.5 border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-2 first:pt-0">
               <div className="flex min-w-0 items-center gap-1.5">
                 {p.pinned && <Pin className="size-3 shrink-0" style={{ color: ACCENT_TEXT }} />}
                 <span className={cn(TYPE.title, "min-w-0 flex-1 truncate", i >= fresh && "font-normal")}>{p.title}</span>

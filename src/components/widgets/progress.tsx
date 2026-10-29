@@ -96,7 +96,7 @@ function Checklist({ items, next, hints, times = true }: { items: Step[]; next?:
     // Whole rows only, and in a cell that sets the height the rows open up to share it.
     <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS)}>
       {items.map((i) => (
-        <div key={i.label} className={cn("flex min-w-0 items-center gap-2.5 border-b py-1.5 last:border-b-0", HAIRLINE)}>
+        <div key={i.label} className={cn("flex min-w-0 items-center gap-2.5 py-1.5", HAIRLINE)}>
           <StepMark done={i.done} next={i === next} />
           <span className="grid min-w-0 flex-1">
             <span className={cn(TYPE.body, "truncate", i.done && "text-muted-foreground line-through", i === next && "font-medium")}>{i.label}</span>

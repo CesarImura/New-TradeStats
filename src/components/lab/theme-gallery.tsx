@@ -9,8 +9,8 @@ import type { Mode } from "@/lib/theme/types"
 import type { Detail, Emphasis } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { CONTROL_FOCUS } from "./lab-controls"
-import { BASES, baseLabel, colourOf, createTheme, deleteTheme, duplicateTheme, importTheme, resolveLab, restoreTheme, setCompared, type LabThemeEntry, type LabThemes, type ThemeBase } from "./lab-themes"
-import { MenuAction, PANEL, panelStyle, ThemeChip, useDismiss } from "./theme-switcher"
+import { BASES, baseLabel, colourOf, createTheme, duplicateTheme, importTheme, resolveLab, setCompared, type LabThemeEntry, type LabThemes, type ThemeBase } from "./lab-themes"
+import { DeleteConfirm, MenuAction, PANEL, panelStyle, removeTheme, RowTool, ThemeChip, useDismiss } from "./theme-switcher"
 import { LIBRARY, meaningFor, Pane } from "./widget-base"
 
 /** What each card shows of its theme: a chart widget and a list widget, the two that differ most between themes. */
@@ -116,7 +116,7 @@ function ThemeCard({ entry, lab, mode, emphasis, detail, onEdit }: { entry: LabT
   const scope = `gal-${entry.id}`
   const changed = Object.keys(entry.draft).length
   return (
-    <div className="group grid content-start gap-3">
+    <div className="group relative grid content-start gap-3">
       <div
         role="button"
         tabIndex={0}
@@ -145,6 +145,7 @@ function ThemeCard({ entry, lab, mode, emphasis, detail, onEdit }: { entry: LabT
         </span>
         {active && <span className="absolute top-2.5 left-2.5 rounded-full bg-(--c-t1) px-2 text-[0.6875rem] leading-5 font-medium text-(--c-page)">In use</span>}
       </div>
+      <CardTools entry={entry} onEdit={onEdit} />
       <div className="flex items-start gap-2.5 px-1">
         <ThemeChip entry={entry} mode={mode} />
         <div className="grid min-w-0 flex-1 gap-0.5">
@@ -159,6 +160,37 @@ function ThemeCard({ entry, lab, mode, emphasis, detail, onEdit }: { entry: LabT
         </div>
         <CardMenu entry={entry} lab={lab} onEdit={onEdit} />
       </div>
+    </div>
+  )
+}
+
+/** On the card's hover: edit, and for a made theme delete, which asks first. */
+function CardTools({ entry, onEdit }: { entry: LabThemeEntry; onEdit: (id: string) => void }) {
+  const [confirm, setConfirm] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useDismiss(confirm, ref, () => setConfirm(false))
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "absolute top-2 right-2 flex gap-0.5 rounded-lg border p-0.5 shadow-[0_4px_12px_-6px_rgb(0_0_0/0.3)] transition-opacity duration-150",
+        confirm ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+      )}
+      style={panelStyle}
+    >
+      <RowTool label={entry.builtIn ? `Customize a copy of ${entry.name}` : `Edit ${entry.name}`} onClick={() => onEdit(entry.id)}>
+        <Pencil className="size-3.5" />
+      </RowTool>
+      {!entry.builtIn && (
+        <RowTool label={`Delete ${entry.name}`} onClick={() => setConfirm(!confirm)} danger>
+          <Trash2 className="size-3.5" />
+        </RowTool>
+      )}
+      {confirm && (
+        <div className={cn(PANEL, "top-10 right-0 w-64")} style={panelStyle}>
+          <DeleteConfirm name={entry.name} onDelete={() => (setConfirm(false), removeTheme(entry))} onKeep={() => setConfirm(false)} />
+        </div>
+      )}
     </div>
   )
 }
@@ -178,10 +210,7 @@ function CardMenu({ entry, lab, onEdit }: { entry: LabThemeEntry; lab: LabThemes
   }
   const ids = lab.compared.map((t) => t.id)
   const compared = ids.includes(entry.id)
-  const remove = () => {
-    const gone = deleteTheme(entry.id)
-    if (gone) toast(`Deleted ${gone.name}`, { action: { label: "Undo", onClick: () => restoreTheme(gone) } })
-  }
+  const remove = () => removeTheme(entry)
   return (
     <div ref={ref} className="relative">
       <button
@@ -196,18 +225,7 @@ function CardMenu({ entry, lab, onEdit }: { entry: LabThemeEntry; lab: LabThemes
       {open && (
         <div role="menu" className={cn(PANEL, "top-9 right-0 w-56")} style={panelStyle}>
           {confirm ? (
-            <div className="grid gap-2 p-2">
-              <p className="text-sm">Delete {entry.name}?</p>
-              <p className="text-[0.8125rem] text-(--c-t2)">You can undo it right after.</p>
-              <div className="flex gap-1.5">
-                <button type="button" onClick={close(remove)} className={cn("h-8 flex-1 rounded-lg px-3 text-sm font-medium text-white", CONTROL_FOCUS)} style={{ background: "#cf222e" }}>
-                  Delete
-                </button>
-                <button type="button" onClick={() => setConfirm(false)} className={cn("h-8 flex-1 rounded-lg border px-3 text-sm hover:bg-(--c-on)", CONTROL_FOCUS)} style={{ borderColor: "var(--c-hair)" }}>
-                  Keep
-                </button>
-              </div>
-            </div>
+            <DeleteConfirm name={entry.name} onDelete={close(remove)} onKeep={() => setConfirm(false)} />
           ) : (
             <>
               <MenuAction icon={<Pencil className="size-4" />} label={entry.builtIn ? "Customize a copy" : "Edit"} onClick={close(() => onEdit(entry.id))} />

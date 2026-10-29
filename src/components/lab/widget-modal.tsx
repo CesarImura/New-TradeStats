@@ -4,11 +4,11 @@ import { AnimateUIProvider } from "@animate-ui/react/provider"
 import { Check, ChevronLeft, ChevronRight, Columns3, Link2, MousePointerClick, RotateCcw, X } from "lucide-react"
 import { MotionConfig, motion, useReducedMotion } from "motion/react"
 import { useEffect, useRef, useState } from "react"
-import { DETAILED_EXTRA_ROWS, type WidgetDef } from "@/components/lab/reui-widgets/registry"
+import { extraRows, type WidgetDef } from "@/components/widgets/registry"
 import type { CoachTheme, Mode } from "@/lib/theme/types"
 import type { Detail, Emphasis } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
-import type { DataMode } from "@/components/lab/reui-widgets/shared"
+import type { DataMode } from "@/components/widgets/shared"
 import { AddThemes, CompareView } from "./compare-view"
 import { LabButton, LabIconButton, LabSeg, LabSelect } from "./lab-controls"
 import type { LabThemes } from "./lab-themes"
@@ -120,7 +120,6 @@ export function WidgetModal({
   variant: string
   onVariant: (v: string) => void
   onClose: () => void
-  extra: number
   scale: number
   mode: Mode
   theme: CoachTheme
@@ -135,13 +134,14 @@ export function WidgetModal({
   /** Leave the modal for the library's Compare. */
   onCompare: () => void
 }) {
-  const [emphasis, setEmphasis] = useState(pageEmphasis)
+  // Emphasis is fixed at the page's (Accent): the library no longer offers Quiet or Star.
+  const emphasis = pageEmphasis
   const [detail, setDetail] = useState(pageDetail)
   // Only the detail levels this layout actually renders differently (see useDetailLevels).
   const [probe, levels, groupOf] = useDetailLevels(`${def.type}/${variant}/${emphasis}`)
   const shownDetail = groupOf(detail)
-  // The modal's own Detail decides the extra rows, not the page's.
-  const extra = shownDetail === "detailed" ? DETAILED_EXTRA_ROWS : 0
+  // The modal's own Detail decides the extra rows, not the page's (per layout: see heightFor in the registry).
+  const extra = extraRows(def, variant, shownDetail)
   const i = Math.max(
     0,
     def.variants.findIndex((x) => x.value === variant),
@@ -305,16 +305,6 @@ export function WidgetModal({
           {/* The widget's state, for the tabs that draw it: the same settings a coach picks for this widget. */}
           {(tab === "preview" || tab === "grid" || tab === "themes") && (
             <div className="flex flex-wrap items-center gap-3 px-6 pt-4">
-              <LabSeg
-                label="Emphasis"
-                value={emphasis}
-                onChange={setEmphasis}
-                options={[
-                  ["quiet", "Quiet"],
-                  ["accent", "Accent"],
-                  ["star", "Star"],
-                ]}
-              />
               {levels && levels.length < 2 ? (
                 <span className={cn("text-xs", t3)}>One detail level</span>
               ) : (
@@ -401,13 +391,13 @@ export function WidgetModal({
 
         {/* Carousel: every layout as a card. */}
         {(tab === "preview" || tab === "grid" || tab === "themes") && (
-          <Carousel def={def} current={v.value} index={i} onPick={onVariant} extra={extra} mode={mode} theme={theme} emphasis={emphasis} detail={shownDetail} />
+          <Carousel def={def} current={v.value} index={i} onPick={onVariant} mode={mode} theme={theme} emphasis={emphasis} detail={shownDetail} />
         )}
         {/* Offscreen: the layout at each detail level, compared once to find which levels differ. */}
         {!levels && (
           <div ref={probe} aria-hidden inert className="pointer-events-none fixed top-0 -left-[20000px] invisible">
             {DETAILS.map((d) => (
-              <Pane key={d} def={def} variant={v.value} h={rowsOf(def, v.value) + (d === "detailed" ? DETAILED_EXTRA_ROWS : 0)} scale={1} mode={mode} theme={theme} emphasis={emphasis} detail={d} />
+              <Pane key={d} def={def} variant={v.value} h={rowsOf(def, v.value) + extraRows(def, v.value, d)} scale={1} mode={mode} theme={theme} emphasis={emphasis} detail={d} />
             ))}
           </div>
         )}
@@ -477,7 +467,7 @@ function AboutPanel({ type, current, variants, tries, onVariant }: { type: strin
             ))}
           </ul>
         ) : (
-          <p className={cn("mt-3 text-xs leading-4", t2)}>None: this widget is static. Its look follows Emphasis and Detail.</p>
+          <p className={cn("mt-3 text-xs leading-4", t2)}>None: this widget is static. Its look follows Detail.</p>
         )}
         <p className={cn("mt-3 text-xs leading-4", t3)}>Tab moves through the widget&rsquo;s controls. ← and → change the layout when focus is outside the widget.</p>
       </details>
@@ -490,7 +480,6 @@ function Carousel({
   current,
   index,
   onPick,
-  extra,
   mode,
   theme,
   emphasis,
@@ -500,7 +489,6 @@ function Carousel({
   current: string
   index: number
   onPick: (v: string) => void
-  extra: number
   mode: Mode
   theme: CoachTheme
   emphasis: Emphasis
@@ -568,7 +556,7 @@ function Carousel({
       >
         {def.variants.map((x) => {
           const on = x.value === current
-          const fit = Math.min(1, (CARD_W - 28) / w, (CARD_H - 24) / rowsPx(rowsOf(def, x.value) + extra))
+          const fit = Math.min(1, (CARD_W - 28) / w, (CARD_H - 24) / rowsPx(rowsOf(def, x.value) + extraRows(def, x.value, detail)))
           return (
             // Not a <button>: the thumbnail holds the widget's own buttons, and buttons cannot nest.
             <div
@@ -598,7 +586,7 @@ function Carousel({
                   boxShadow: on ? "0 0 0 1px var(--brand-mark)" : undefined,
                 }}
               >
-                <Pane def={def} variant={x.value} h={rowsOf(def, x.value) + extra} scale={fit} mode={mode} theme={theme} emphasis={emphasis} detail={detail} />
+                <Pane def={def} variant={x.value} h={rowsOf(def, x.value) + extraRows(def, x.value, detail)} scale={fit} mode={mode} theme={theme} emphasis={emphasis} detail={detail} />
               </span>
               <span className="flex min-w-0 items-center justify-between gap-2 px-1 text-xs">
                 <span className={cn("truncate", on ? "font-medium text-(--c-t1)" : cn(t2, "group-hover:text-(--c-t1)"))}>{x.label}</span>

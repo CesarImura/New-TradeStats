@@ -61,7 +61,7 @@
       "chartStyle": "ticks",
       "figureStyle": "mono",
       "panelStyle": "outline",
-      "starStyle": "brand",
+      "starStyle": "spotlight",
       "widgetFinish": "corners"
     },
     "pages": {
@@ -435,7 +435,7 @@
       "figureStyle": "marked",
       "chartStyle": "blocks",
       "panelStyle": "filled",
-      "starStyle": "brand",
+      "starStyle": "spotlight",
       "widgetFinish": "none"
     },
     "pages": {

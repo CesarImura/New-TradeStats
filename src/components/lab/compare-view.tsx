@@ -2,7 +2,7 @@
 
 import { Check, ListChecks, Pencil, Plus, Search, X } from "lucide-react"
 import { useLayoutEffect, useMemo, useRef, useState } from "react"
-import type { WidgetDef } from "@/components/lab/reui-widgets/registry"
+import type { WidgetDef } from "@/components/widgets/registry"
 import { themeToCss } from "@/lib/theme/css"
 import type { Mode } from "@/lib/theme/types"
 import type { Detail, Emphasis } from "@/lib/widgets/layout"

@@ -5,14 +5,14 @@ import { CountingNumber } from "@animate-ui/react/primitives/texts/counting-numb
 import { SlidingNumber } from "@animate-ui/react/primitives/texts/sliding-number"
 import { useShouldReduceMotion, useTempoTransition } from "@animate-ui/react/utils/motion"
 import { motion, useReducedMotion } from "motion/react"
-import { createContext, useContext, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react"
-import type { LucideIcon } from "@/components/icons"
+import { createContext, useContext, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react"
+import { ArrowRight, type LucideIcon } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { chartStyleOf, figureStyleOf, headerFormOf, panelStyleOf, widgetFontOf, widgetHeaderOf, widgetStyleOf, type ChartStyle, type FigureStyle, type PanelStyle, type WidgetFont, type WidgetStyle } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ACCENT, ACCENT_TEXT, MOTION, TYPE, W, link, useFrame } from "./kit"
+import { ACCENT, ACCENT_TEXT, AreaFill, MOTION, TYPE, W, link, useFrame, useMore } from "./kit"
 
 /**
  * The widget anatomy and signature visuals (Instrument, Soft, Editorial).
@@ -81,6 +81,12 @@ export const ink = (c: string) => `color-mix(in oklab, ${c} 74%, var(--foregroun
 export const TRACK = "var(--w-track, color-mix(in oklab, var(--foreground) 12%, transparent))"
 /** A hairline inside a widget. */
 export const HAIR = "var(--w-hair, color-mix(in oklab, var(--foreground) 10%, transparent))"
+/** The card's own lines: its edge and the rules between header, body and foot. A step stronger than --border. */
+export const LINE = "color-mix(in oklab, var(--border), var(--foreground) 6%)"
+/** A chart that runs edge to edge of the card body (it cancels the body's side padding): line and step charts have no panel. */
+export const BLEED = "-mx-[calc(1rem*var(--density,1))]"
+/** A step off the card: the foot band and the header's icon tile. */
+export const RAISED = "color-mix(in oklab, var(--muted), var(--foreground) 2%)"
 
 /** Figures, in the widget font; the Numbers setting wins when it names a font (Mono, Display). */
 export function useFigureFont() {
@@ -182,7 +188,7 @@ function Note({ inset }: { inset?: boolean }) {
   const text = note?.text?.trim()
   if (!note || (!note.image && !text && !href)) return null
   return (
-    <div className={cn("flex shrink-0 flex-col gap-2", inset && "px-2 pb-2.5")}>
+    <div className={cn("flex shrink-0 flex-col gap-2", inset && "px-4 pt-4")}>
       {note.image && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={note.image} alt="" className="aspect-video max-h-40 w-full rounded-(--radius) object-cover" />
@@ -198,14 +204,18 @@ function Note({ inset }: { inset?: boolean }) {
 }
 
 /**
- * The header's icon: the bare glyph, no tile around it, 20px (Carbon's own
- * 20px grid, so it stays crisp). It is centred on the whole name block, title
- * and context line together: aligned to the title alone, Carbon's glyphs
- * (weighted to the bottom-left) read as sitting low. Muted, so the name leads.
+ * The header's icon: a 20px glyph (Carbon's own grid, so it stays crisp) on a
+ * 35px square tile (no taller than the name block) a step off the card, centred on the whole name block (title
+ * and context line together). Muted, so the name leads.
  */
 function HeadIcon({ icon: Icon }: { icon: LucideIcon }) {
+  const star = useFrame().emphasis === "star"
   return (
-    <span className="flex shrink-0 items-center self-center text-muted-foreground" aria-hidden>
+    <span
+      className="flex size-[2.1875rem] shrink-0 items-center justify-center self-center rounded-[max(2px,calc(var(--radius)/3))] border text-muted-foreground"
+      style={star ? { borderColor: "transparent", background: "var(--brand-shade)" } : { borderColor: "transparent", background: RAISED }}
+      aria-hidden
+    >
       <Icon className="size-5" />
     </span>
   )
@@ -277,7 +287,11 @@ export function WCard({
   const showTitle = row || h.title
   // Label, Caption and Path headers carry no icon: the name is type, not a badge. Top and Tag show the bare glyph.
   const showIcon = !!Icon && h.icon && (form === "top" || form === "tag")
-  const showMeta = !!meta && h.description
+  const detailed = useMore("detailed")
+  const panel = usePanelStyle()
+  // Less on the card: the context line shows on Detailed (and in a one-row card, where it is the content); otherwise it is the name's tooltip.
+  const showMeta = !!meta && h.description && (row || detailed)
+  const metaTip = typeof meta === "string" ? meta : undefined
   const showChip = !!chip && h.value
   const empty = !showTitle && !showIcon && !showMeta && !showChip && !control
   // In a one-row card the chip gives way first, so the name and the action keep their room.
@@ -296,10 +310,10 @@ export function WCard({
         <span className="shrink-0 text-muted-foreground" aria-hidden>
           /
         </span>
-        <span className="min-w-0 truncate font-medium">{title}</span>
+        <span className="min-w-0 truncate [font-weight:var(--w-title-weight,500)]">{title}</span>
       </span>
     ) : (
-      <span className={cn("truncate leading-5", big && s === "editorial" ? "font-heading text-[0.8125rem]" : "text-[0.8125rem] font-medium")}>{title}</span>
+      <span title={showMeta ? undefined : metaTip} className={cn("truncate leading-5", big && s === "editorial" ? "font-heading text-[0.8125rem]" : "text-[0.8125rem] [font-weight:var(--w-title-weight,500)]")}>{title}</span>
     )
   let head: React.ReactNode = null
   let foot: React.ReactNode = null
@@ -307,10 +321,10 @@ export function WCard({
     // Label: one quiet line, the name as a small label, the context after it, the value as plain text.
     head = (
       <PlainChipCtx.Provider value>
-        <div className="flex min-w-0 items-baseline gap-2 px-2.5 pt-1.5 pb-2">
+        <div className="flex min-w-0 items-baseline gap-2 px-4 pt-4">
           <span className="flex min-w-0 flex-1 items-baseline gap-1.5 overflow-hidden">
             {/* A long name truncates too, but the context line gives way first. */}
-            {showTitle && <Label className="min-w-0 truncate font-medium text-foreground">{crumb ? `${crumb} / ${title}` : title}</Label>}
+            {showTitle && <Label className="min-w-0 truncate [font-weight:var(--w-title-weight,500)] text-foreground">{crumb ? `${crumb} / ${title}` : title}</Label>}
             {showTitle && showMeta && (
               <span className="shrink-0 text-[0.6875rem] leading-4 text-muted-foreground" aria-hidden>
                 ·
@@ -326,7 +340,7 @@ export function WCard({
   } else if (!empty && form === "path") {
     // Path: "Journal / Performance" in small capitals or plain, the value on the right, the context under it, a hairline below.
     head = (
-      <div className="grid shrink-0 gap-1 px-2.5 pt-1.5 pb-2">
+      <div className="grid shrink-0 gap-1 px-4 pt-4">
         <div className="flex min-w-0 items-center gap-2">
           {showTitle && (
             <span className="flex min-w-0 flex-1 items-baseline gap-1.5 overflow-hidden">
@@ -352,7 +366,7 @@ export function WCard({
     // Tag: the icon and the name in a pill beside it, the context as a sentence under them.
     head = (
       // The pill row is 24px, so the Tag header keeps its padding and gap tight: it is already the tallest header.
-      <div className="grid shrink-0 gap-1 px-2.5 pt-1 pb-1.5">
+      <div className="grid shrink-0 gap-1 px-4 pt-3">
         <div className="flex min-w-0 items-center gap-2">
           {showIcon && Icon && <HeadIcon icon={Icon} />}
           {showTitle && (
@@ -371,7 +385,7 @@ export function WCard({
     // Caption: the content leads; the name sits under it, after a hairline, like a caption. The value is plain text, as in Label.
     foot = (
       <PlainChipCtx.Provider value>
-        <div className="flex min-w-0 shrink-0 items-baseline gap-2 px-2.5 pt-2 pb-1">
+        <div className="flex min-w-0 shrink-0 items-baseline gap-2 px-4 pb-4">
           <span className="flex min-w-0 flex-1 items-baseline gap-2 overflow-hidden">
             {showTitle && <span className="flex min-w-0">{titleEl(true)}</span>}
             {showMeta && <span className="min-w-0 shrink-[999] truncate text-[0.6875rem] leading-4 text-muted-foreground">{meta}</span>}
@@ -383,7 +397,7 @@ export function WCard({
     )
   } else if (!empty) {
     head = (
-      <div className={cn("flex min-w-0 items-center gap-2", !row && "px-2.5 pt-1.5 pb-2")}>
+      <div className={cn("flex min-w-0 items-center gap-2", !row && "px-4 pt-4")}>
         {crumb && showTitle ? (
           titleEl()
         ) : (
@@ -404,50 +418,61 @@ export function WCard({
     )
   }
   if (row) return <W row className={cn("justify-center", className)}>{head}</W>
-  // Band 5: a short note and the action. Above a Caption name it shares the caption's hairline; otherwise it has its own.
+  // Band 5: the way out of the widget. The action is a full-width row on the card's own panel surface (label left,
+  // the note and an arrow right), inset 8px so it reads as part of the card rather than a link left in a corner.
+  // A theme without panel fills gets the panel outline instead, so the row always reads as a button. Without an action, the note is a plain line.
   const actionHref = action?.href && (action.href.startsWith("/") || /^https?:/.test(action.href) ? action.href : `${base}/${action.href}`)
+  const note = footnote && detailed ? <span className="min-w-0 shrink-[999] truncate text-[0.6875rem] leading-4 text-muted-foreground">{footnote}</span> : null
+  const rowCls =
+    "group flex h-8 w-full min-w-0 items-center gap-3 rounded-(--r-inner) px-2 text-left text-[0.8125rem] leading-5 outline-none transition-[box-shadow,scale] hover:shadow-[inset_0_0_0_100vmax_color-mix(in_oklab,var(--foreground)_5%,transparent)] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-(--brand-mark)"
+  const rowStyle: React.CSSProperties =
+    panel === "filled" ? { background: star ? "var(--brand-shade)" : "var(--w-panel, var(--muted))" } : { border: `1px solid ${star ? "var(--border)" : HAIR}` }
+  const rowInner = action && (
+    <>
+      <span className="min-w-0 truncate [font-weight:var(--w-title-weight,500)]">{action.label}</span>
+      <span className="flex-1" />
+      {note}
+      {actionHref && <ArrowRight aria-hidden className="size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 motion-reduce:transition-none" />}
+    </>
+  )
   const foot5 =
-    bands && (action || footnote) ? (
+    bands && (action || note) ? (
       // The foot gives way last when the card is too short (data-drop 1).
-      <div data-drop="1" className="flex min-w-0 shrink-0 items-center gap-3 pt-1 pr-1 pl-2.5">
-        <span className="flex min-w-0 flex-1 items-baseline gap-2">
-          {footnote && (
-            <>
-              <span className="r-chip size-2 shrink-0 translate-y-[1px] self-center" style={{ background: ACCENT }} aria-hidden />
-              <span className="min-w-0 truncate text-[0.6875rem] leading-4 text-muted-foreground">{footnote}</span>
-            </>
-          )}
-        </span>
-        {action &&
-          (actionHref ? (
-            <Link href={actionHref} className="group shrink-0 -my-0.5 inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[0.8125rem] font-medium transition-[background-color,scale] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] outline-none hover:bg-(--card) active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-(--brand-mark)">
-              {action.label} <span aria-hidden className="inline-block transition-transform duration-150 group-hover:translate-x-0.5">→</span>
+      action ? (
+        <div data-drop="1" className="flex min-w-0 shrink-0 px-2 pb-2">
+          {actionHref ? (
+            <Link href={actionHref} className={rowCls} style={rowStyle}>
+              {rowInner}
             </Link>
           ) : (
-            <button type="button" onClick={action.onClick} className="shrink-0 -my-0.5 inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[0.8125rem] font-medium transition-[background-color,scale] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] outline-none hover:bg-(--card) active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-(--brand-mark)">
-              {action.label}
+            <button type="button" onClick={action.onClick} className={rowCls} style={rowStyle}>
+              {rowInner}
             </button>
-          ))}
-      </div>
+          )}
+        </div>
+      ) : (
+        <div data-drop="1" className="flex min-w-0 shrink-0 px-4 pb-4">
+          {note}
+        </div>
+      )
     ) : null
   return (
     <W
-      className={cn("gap-0 p-1", !star && "border", className)}
-      style={star ? undefined : { background: "color-mix(in oklab, var(--muted) 55%, var(--card))", borderColor: "var(--border)" }}
+      className={cn("gap-0 p-0", className)}
+      // Fill, outline or both follow Design → Cards and Borders (W's bg-card and the theme's --card-edge): nothing forced here.
     >
       {head}
       {!core && <Note inset />}
       <div
         data-slot="frame-panel"
         className={cn(
-          "flex min-h-0 flex-1 flex-col overflow-hidden rounded-[max(2px,calc(var(--radius)-5px))]",
+          // Flat on the card: the header and foot rules frame it, no inset panel of its own.
+          "flex min-h-0 flex-1 flex-col overflow-hidden",
           bands ? "gap-[calc(1rem*var(--density,1))]" : "gap-3",
-          // Always padded: in the library a picture sits inset on the panel like everything else, so text never touches the edge.
-          "p-[calc(0.75rem*var(--density,1))]",
-          !star && "border shadow-[0_1px_2px_0_rgb(0_0_0/0.05)]",
+          // Always padded, so text never touches the edge; a chart can bleed to the edges with Bleed.
+          "p-[calc(1rem*var(--density,1))]",
           bodyClassName,
         )}
-        style={{ background: star ? "var(--brand-shade)" : "var(--card)", borderColor: "var(--border)" }}
       >
         {children}
       </div>
@@ -590,22 +615,22 @@ export function Panel({ children, className, pad = true }: { children: React.Rea
   )
 }
 
-/** Up to three small stats side by side, each on its own panel: a label over a 20px figure. */
+/** Up to three small stats side by side, each on its own panel: a label over a 20px figure, centred. */
 export function MiniStats({ items, className }: { items: { label: React.ReactNode; value: React.ReactNode; tone?: "profit" | "loss" | "accent" }[]; className?: string }) {
   const font = useFigureFont()
   const panel = usePanelStyle()
   return (
-    // Side by side; in a tall, narrow cell they stack as rows (name left, figure right), which uses the height and reads better than three squeezed tiles.
+    // Side by side; in a tall, narrow cell (taller than 5:4) they stack as rows (name left, figure right), which uses the height and reads better than three squeezed tiles.
     <div
-      className={cn("grid shrink-0 grid-cols-[repeat(var(--n),minmax(0,1fr))] gap-2 [@container_card_(max-aspect-ratio:6/5)]:grid-cols-1", panel === "none" && "gap-4", className)}
+      className={cn("grid shrink-0 grid-cols-[repeat(var(--n),minmax(0,1fr))] gap-2 [@container_card_(max-aspect-ratio:4/5)]:grid-cols-1", panel === "none" && "gap-4", className)}
       style={{ "--n": items.length } as React.CSSProperties}
     >
       {items.map((it, i) => (
-        <Panel key={i} className={cn("gap-1 [@container_card_(max-aspect-ratio:6/5)]:flex-row [@container_card_(max-aspect-ratio:6/5)]:items-baseline [@container_card_(max-aspect-ratio:6/5)]:justify-between", panel === "none" && i > 0 && "border-l pl-4 [@container_card_(max-aspect-ratio:6/5)]:border-l-0 [@container_card_(max-aspect-ratio:6/5)]:pl-0")} pad={panel !== "none"}>
+        <Panel key={i} className={cn("items-center justify-center gap-1 text-center [@container_card_(max-aspect-ratio:4/5)]:flex-row [@container_card_(max-aspect-ratio:4/5)]:text-left [@container_card_(max-aspect-ratio:4/5)]:items-baseline [@container_card_(max-aspect-ratio:4/5)]:justify-between")} pad={panel !== "none"}>
           {/* A long name takes a second line rather than ending in "…" when the tiles are narrow. */}
           <Label className="line-clamp-2">{it.label}</Label>
           <span
-            className={cn(TYPE.value, "truncate leading-6 @max-[24rem]:text-lg")}
+            className={cn(TYPE.value, "truncate leading-6")}
             style={{ fontFamily: font, color: it.tone === "profit" ? "var(--profit-text)" : it.tone === "loss" ? "var(--loss-text)" : it.tone === "accent" ? ink(ACCENT_TEXT) : undefined }}
           >
             {it.value}
@@ -667,7 +692,7 @@ export function Legend({ items, className }: { items: { color?: string; label: R
   const font = useFigureFont()
   const mono = useWidgetStyle() === "instrument"
   return (
-    <div data-legend className={cn("grid gap-1", className)}>
+    <div data-legend className={cn("grid gap-1.5", className)}>
       {items.map((it, i) => (
         <div key={i} className="flex min-w-0 items-center gap-2 text-[0.8125rem] leading-5" style={mono ? { fontFamily: font } : undefined}>
           {it.color && <span className={cn("size-2 shrink-0", it.dot ? "r-dot" : "rounded-[2px]")} style={{ background: it.color }} />}
@@ -687,8 +712,10 @@ export function Legend({ items, className }: { items: { color?: string; label: R
 }
 
 /** Axis labels spread under a chart: "0%  25%  50%  75%  100%". */
-export function Axis({ labels, className }: { labels: React.ReactNode[]; className?: string }) {
+export function Axis({ labels: all, className }: { labels: React.ReactNode[]; className?: string }) {
   const font = useFigureFont()
+  // Only the ends until Detailed: the chart says the rest.
+  const labels = useMore("detailed") || all.length <= 2 ? all : [all[0], all[all.length - 1]]
   return (
     <div className={cn("flex justify-between text-[0.6875rem] leading-4 text-muted-foreground tabular-nums", className)} style={{ fontFamily: font }}>
       {labels.map((l, i) => (
@@ -807,6 +834,113 @@ export function FitGauge({ value, max = 100, children, className }: { value: num
   )
 }
 
+/**
+ * A ring of rounded segments on a faint track, the figure in its middle:
+ * the shape that replaces the tick gauge. `parts` are drawn clockwise from
+ * the top with a small gap between them; a `hatch` part is striped (what is
+ * left, a projection). The ring is square and as large as its box allows;
+ * the middle's type scales with it (cqw of the ring).
+ */
+export function Donut({ parts, total, children, className, label }: { parts: { value: number; color: string; hatch?: boolean }[]; total: number; children?: React.ReactNode; className?: string; /** For screen readers: what the ring shows. */ label?: string }) {
+  const still = useShouldReduceMotion()
+  const draw = useTempoTransition({ duration: MOTION.draw + 0.2, ease: MOTION.ease })
+  const id = useId().replace(/[^a-z0-9]/gi, "")
+  const w = 9 // stroke width, in a 100-unit box
+  const r = 50 - w / 2 - 0.5
+  const c = 2 * Math.PI * r
+  const gap = parts.length > 1 ? 2.2 : 0 // % of the ring between parts
+  const shares = parts.map((p) => Math.max(0, Math.min(1, p.value / (total || 1))))
+  const starts = shares.map((_, i) => shares.slice(0, i).reduce((a, b) => a + b, 0) * c)
+  return (
+    <div role="img" aria-label={label} className={cn("relative aspect-square [container-type:inline-size]", className)}>
+      <svg viewBox="0 0 100 100" className="absolute inset-0 size-full -rotate-90" aria-hidden>
+        <defs>
+          <pattern id={`h${id}`} width="3.7" height="3.7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)" style={{ color: TRACK }}>
+            <rect width="1.5" height="3.7" style={{ fill: "currentColor" }} />
+          </pattern>
+        </defs>
+        {/* The rest of the ring is hatched, like the empty part of a bar (see HatchBar). */}
+        <circle cx="50" cy="50" r={r} fill="none" stroke={`url(#h${id})`} strokeWidth={w} />
+        {parts.map((p, i) => {
+          const share = shares[i]
+          // Each part gives up the gap at its end, so parts keep their share and stay apart.
+          const len = Math.max(0.01, share * c - (gap / 100) * c)
+          if (share <= 0) return null
+          return (
+            <motion.circle
+              key={i}
+              cx="50"
+              cy="50"
+              r={r}
+              fill="none"
+              stroke={p.hatch ? `url(#h${id})` : p.color}
+              style={p.hatch ? { color: p.color } : undefined}
+              strokeWidth={w}
+              strokeLinecap="butt"
+              strokeDashoffset={-starts[i]}
+              initial={still ? false : { strokeDasharray: `0 ${c}` }}
+              animate={{ strokeDasharray: `${len} ${c}` }}
+              transition={{ ...draw, delay: still ? 0 : i * 0.06 }}
+            />
+          )
+        })}
+      </svg>
+      <div className="absolute inset-[14%] grid place-content-center justify-items-center gap-0.5 text-center">{children}</div>
+    </div>
+  )
+}
+
+/** The figure in a Donut's middle: 20px in a small ring, 28px from a ring of about 11rem. */
+export function DonutFigure({ value, caption }: { value: React.ReactNode; caption?: React.ReactNode }) {
+  const font = useFigureFont()
+  return (
+    <>
+      <span className="font-heading text-xl leading-7 [font-weight:var(--w-value-weight,500)] tracking-[-0.02em] tabular-nums @[11rem]:text-[1.75rem] @[11rem]:leading-8" style={{ fontFamily: font }}>
+        {value}
+      </span>
+      {caption && <span className="max-w-full truncate text-[0.6875rem] leading-4 text-muted-foreground">{caption}</span>}
+    </>
+  )
+}
+
+/**
+ * Rows that explain a ring or a total: the name, its figure, and a thin bar
+ * of its share under them. Space between rows, no lines. One row can carry
+ * the accent (`on`); the rest are grey, a loss in the loss colour.
+ */
+export function ShareRows({ rows, className, onFocus }: { rows: { label: React.ReactNode; value: React.ReactNode; share: number; tone?: "accent" | "loss" | "muted"; on?: boolean }[]; className?: string; /** Pointing at a row (undefined when the pointer leaves). */ onFocus?: (i: number | undefined) => void }) {
+  const font = useFigureFont()
+  const fill = useFillIn()
+  return (
+    <div className={cn("grid min-w-0 content-center gap-3", className)} onPointerLeave={() => onFocus?.(undefined)}>
+      {rows.map((r, i) => {
+        const color = r.tone === "loss" ? "var(--loss)" : r.on || r.tone === "accent" ? ACCENT : GREY[1]
+        return (
+          <div key={i} className="grid min-w-0 gap-1.5" onPointerEnter={() => onFocus?.(i)}>
+            <div className="flex min-w-0 items-baseline gap-3 text-[0.8125rem] leading-5">
+              <span className={cn("min-w-0 flex-1 truncate", r.on ? "text-foreground" : "text-muted-foreground")}>{r.label}</span>
+              <span className="shrink-0 tabular-nums" style={{ fontFamily: font, color: r.tone === "loss" ? "var(--loss-text)" : undefined }}>
+                {r.value}
+              </span>
+            </div>
+            <span className="r-bar relative block h-1 overflow-hidden" style={{ background: TRACK }} aria-hidden>
+              <motion.span {...fill} className="r-bar absolute inset-y-0 left-0" style={{ width: `${Math.max(0, Math.min(1, r.share)) * 100}%`, background: color }} />
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * Body classes for a ring beside its rows: side by side in any cell wider than
+ * tall, stacked (ring on top) in a tall narrow one. The ring sizes to the
+ * height in a fixed cell. Put on WCard's bodyClassName; the ring gets RING.
+ */
+export const RING_BODY = "flex-row items-center gap-[clamp(1rem,5cqw,2rem)] [@container_card_(max-aspect-ratio:4/5)]:flex-col [@container_card_(max-aspect-ratio:4/5)]:items-stretch"
+export const RING = "w-[min(42%,11.5rem)] shrink-0 self-center [@container_card_(min-height:0px)]:max-w-[calc(100cqh-7.5rem)] [@container_card_(max-aspect-ratio:4/5)]:w-[min(66%,12rem)]"
+
 /** A segmented bar: segments up to the value in the accent (or a tone), the rest faint. `now` marks one segment taller. */
 /** A bar that fills in once, left to right (a clip, so segments and rounded ends keep their shape); still with reduced motion. */
 function useFillIn() {
@@ -924,7 +1058,7 @@ export function StepChart({ series, format = (v) => v.toLocaleString("en"), heig
         transition={draw}
       >
         <GridLines />
-        <path d={`${path(series[0].values)} V110 H0 Z`} fill={accent} opacity={0.07} />
+        <AreaFill d={`${path(series[0].values)} V110 H0 Z`} color={accent} />
         {series.slice(1).map((s, i) => (
           <path key={i} d={path(s.values)} fill="none" stroke={s.color ?? GREY[i + 1]} strokeWidth={1.25} strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
         ))}
@@ -1027,7 +1161,7 @@ export function HatchBar({ parts, total, height = 10, className }: { parts: { va
 export function Timeline({ items, className }: { items: { time: string; title: React.ReactNode; value?: React.ReactNode; color?: string; strong?: boolean }[]; className?: string }) {
   const font = useFigureFont()
   return (
-    <div className={cn("grid gap-0.5", className)}>
+    <div className={cn("grid gap-3", className)}>
       {items.map((it, i) => (
         <div key={i} className="flex min-w-0 items-center gap-2 text-[0.8125rem] leading-6">
           <span className="r-dot size-[7px] shrink-0" style={{ background: it.color ?? GREY[1] }} />
@@ -1048,5 +1182,6 @@ export function Timeline({ items, className }: { items: { time: string; title: R
 
 /** A hairline divider inside a widget body. */
 export function Rule({ className }: { className?: string }) {
-  return <hr className={cn("border-0 border-t border-[color:var(--w-hair,color-mix(in_oklab,var(--foreground)_9%,transparent))]", className)} />
+  // Blocks are set apart by space, not lines: the rule keeps its place in the flow but draws nothing.
+  return <hr aria-hidden className={cn("border-0", className)} />
 }

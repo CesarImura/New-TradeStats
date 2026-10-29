@@ -4,7 +4,7 @@ import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, us
 import { Check as CheckIcon, TriangleAlert } from "@/components/icons"
 import { CoachContext } from "@/components/coach/coach-provider"
 import { WidgetFrame } from "@/components/widgets/kit"
-import { DETAILED_EXTRA_ROWS, WIDGETS, type WidgetDef } from "@/components/widgets/registry"
+import { extraRows, heightFor, WIDGETS, type WidgetDef } from "@/components/widgets/registry"
 import { DataModeProvider, type DataMode } from "@/components/widgets/shared"
 import { getDemoCoach } from "@/lib/data/coaches"
 import { themeToCss } from "@/lib/theme/css"
@@ -42,8 +42,7 @@ const failsOf = (r: Result | undefined) => (r === "error" ? 1 : r ? r.filter((x)
  * library (Tools), under its heading and in its chrome.
  */
 export function WidgetWall({ theme, themeName, emphasis, detail, onOpen }: { theme: CoachTheme; themeName: string; emphasis: Emphasis; detail: Detail; onOpen: (type: string, variant: string) => void }) {
-  // Detailed widgets get extra rows in the builder too (see heightFor in the registry).
-  const extra = detail === "detailed" ? DETAILED_EXTRA_ROWS : 0
+  // Each layout's rows at this Detail, as the builder gives them (heightFor in the registry).
   const [data, setData] = useState<DataMode>("sample")
   const [filter, setFilter] = useState("all")
   const [onlyProblems, setOnlyProblems] = useState(true)
@@ -160,7 +159,7 @@ export function WidgetWall({ theme, themeName, emphasis, detail, onOpen }: { the
                   {rows.map((v) => (
                     <div key={v.value} className="flex flex-col gap-2">
                       <span className="text-xs text-(--c-t2)">
-                        {v.label} <span className="text-(--c-t3)">· {v.h + extra} rows</span>
+                        {v.label} <span className="text-(--c-t3)">· {heightFor(def, v.value, detail)} rows</span>
                       </span>
                       {/* Three widths side by side; scrolls sideways on a narrow screen instead of squeezing the widgets. */}
                       <div className="flex flex-wrap items-start gap-4">
@@ -185,9 +184,9 @@ export function WidgetWall({ theme, themeName, emphasis, detail, onOpen }: { the
                                   } as React.CSSProperties
                                 }
                               >
-                                <Cell def={def} variant={v.value} emphasis={emphasis} detail={detail} width={px(cols)} height={rowsPx(vh + extra)} cellKey={key} star={star} report={report} />
+                                <Cell def={def} variant={v.value} emphasis={emphasis} detail={detail} width={px(cols)} height={rowsPx(vh + extraRows(def, v.value, detail))} cellKey={key} star={star} report={report} />
                               </div>
-                              <Badge size={`${s.label} · ${cols} cols · ${px(cols)}×${rowsPx(vh + extra)}`} result={res.get(key)} />
+                              <Badge size={`${s.label} · ${cols} cols · ${px(cols)}×${rowsPx(vh + extraRows(def, v.value, detail))}`} result={res.get(key)} />
                             </div>
                           )
                         })}

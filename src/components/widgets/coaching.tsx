@@ -68,7 +68,7 @@ function TradeName({ trade }: { trade: string }) {
 function QueueRow({ trade, status, when }: { trade: string; status: "waiting" | "answered"; when: string }) {
   const waiting = status === "waiting"
   return (
-    <div className="flex min-w-0 items-center gap-2 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1 text-[0.8125rem] leading-5 last:border-b-0">
+    <div className="flex min-w-0 items-center gap-2 border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1 text-[0.8125rem] leading-5">
       <StatusDot waiting={waiting} />
       <span className="flex min-w-0 flex-1">
         <TradeName trade={trade} />

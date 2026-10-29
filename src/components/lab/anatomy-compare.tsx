@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Pane } from "@/components/lab/widget-base"
-import { WIDGETS } from "@/components/lab/reui-widgets/registry"
+import { WIDGETS } from "@/components/widgets/registry"
 import { themeToCss } from "@/lib/theme/css"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import type { CoachTheme, Mode } from "@/lib/theme/types"

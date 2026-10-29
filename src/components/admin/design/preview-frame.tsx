@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react"
 
-const SIZES = { desktop: { w: 1280, h: 860 }, tablet: { w: 820, h: 1180 }, phone: { w: 390, h: 844 } } as const
+// Desktop at 1440: with the menu beside it the page area stays over 60rem, so the preview shows the same
+// three-column layout as the platform on a desktop screen (at 1280 it fell back to the two-column one).
+const SIZES = { desktop: { w: 1440, h: 900 }, tablet: { w: 820, h: 1180 }, phone: { w: 390, h: 844 } } as const
 
 /**
  * The coach's real platform, loaded in a frame with ?preview=draft so it

@@ -1,4 +1,4 @@
-import type { Setting, WidgetDef } from "@/components/lab/reui-widgets/registry"
+import type { Setting, WidgetDef } from "@/components/widgets/registry"
 
 /**
  * Amounts of content to try a widget with (prototype only), in the stress

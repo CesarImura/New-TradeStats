@@ -6,7 +6,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { JOURNAL_STATS, JOURNAL_WEEK, RULE_DAYS, R_STATS, SETUPS } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Chip, FitGauge, GREY, ink, Label, Legend, MiniStats, Num, Panel, Rule, Seg, StepChart, TickBar, useFigureFont, WCard } from "./instrument"
+import { BLEED, Chip, Donut, DonutFigure, GREY, ink, Label, Legend, Num, RING, RING_BODY, Rule, Seg, ShareRows, StepChart, TickBar, useFigureFont, useMonoFigures, WCard } from "./instrument"
 import { ACCENT, ACCENT_TEXT, Drop, SPLIT, Tip, useMore } from "./kit"
 import { BleedArea, BleedBars, Compare, HeatGrid, HeroCard, heatPl, heatShade } from "./layouts"
 import { WidgetEmpty, signed, useEmpty, type WidgetProps } from "./shared"
@@ -30,13 +30,26 @@ function Fig({ label, value, color }: { label: string; value: React.ReactNode; c
   return (
     <div className="grid min-w-0 gap-0.5">
       <Label className="truncate">{label}</Label>
-      <span className="truncate text-[0.8125rem] leading-5 tabular-nums" style={{ fontFamily: font, color }}>
+      <span className="truncate text-[0.8125rem] leading-5 [font-weight:var(--w-value-weight,500)] tabular-nums" style={{ fontFamily: font, color }}>
         {value}
       </span>
     </div>
   )
 }
 
+/** A big mono figure with its thousands commas set in half a cell, so "+€1,220" doesn't read as "+€1 , 220". */
+function tightComma(text: string) {
+  return text.split(",").flatMap((part, i) => (i ? [<span key={i} className="-mx-[0.25ch]">,</span>, part] : [part]))
+}
+
+/** The model account's key: a short dashed grey stroke, as the line it names in the step chart. */
+function ModelKey() {
+  return (
+    <svg aria-hidden viewBox="0 0 12 2" className="h-0.5 w-3 shrink-0 overflow-visible">
+      <line x1="0" y1="1" x2="12" y2="1" stroke={GREY[1]} strokeWidth="1.5" strokeDasharray="3 2" />
+    </svg>
+  )
+}
 
 // ---------- Performance
 
@@ -200,6 +213,8 @@ type Period = keyof typeof PERIODS
 export function JournalPnl({ variant = "curve" }: WidgetProps) {
   const { coach } = useCoach()
   const [period, setPeriod] = useState<Period>("4w")
+  const font = useFigureFont()
+  const mono = useMonoFigures()
   const empty = useEmpty()
   const standard = useMore("standard")
   const detailed = useMore("detailed")
@@ -383,9 +398,22 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
       footnote={detailed ? `${days.filter((v) => v > 0).length} green days of ${days.filter((v) => v !== 0).length}` : undefined}
       bodyClassName={SPLIT}
     >
-      <Num value={signed(gain)} delta={signed(gap)} deltaTone={gap >= 0 ? "profit" : "loss"} caption={`vs ${coach.coachName}'s model`} />
+      {/* The period's P&L alone on its line; the comparison is a sentence under it, keyed to the dashed model line. */}
+      <div className="grid min-w-0 shrink-0 gap-1.5">
+        {/* Mono figures give the comma a whole cell ("1 , 220"): at this size the comma is pulled in to half a cell. */}
+        <Num value={mono ? tightComma(signed(gain)) : signed(gain)} />
+        <span className="flex min-w-0 items-center gap-2 text-[0.8125rem] leading-5 text-muted-foreground">
+          <ModelKey />
+          <span className="min-w-0 truncate">
+            <span className="tabular-nums" style={{ color: plColor(gap), fontFamily: font }}>
+              {euro(Math.abs(gap))}
+            </span>{" "}
+            <span style={{ color: plColor(gap) }}>{gap >= 0 ? "ahead of" : "behind"}</span> {coach.coachName}&apos;s model
+          </span>
+        </span>
+      </div>
       <div data-main className="flex min-h-min flex-1 flex-col">
-        <Panel className="min-h-16 flex-1">
+        <div className={cn("flex min-h-16 flex-1 flex-col", BLEED)}>
           <StepChart
             className="min-h-12 flex-1"
             height={0}
@@ -395,15 +423,18 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
               { values: model, label: `${coach.coachName}'s model account` },
             ]}
           />
-        </Panel>
+        </div>
       </div>
+      {/* The figures read as one short statement under the chart: name left, value right, like the legend they continue.
+          Detailed adds the two balances to the same list. */}
       <Drop level={2}>
         {standard && (
-          <MiniStats
+          <Legend
+            className="shrink-0"
             items={[
               { label: "Win rate", value: `${JOURNAL_STATS.winRate}%` },
               { label: "Expectancy", value: rr(R_STATS.expectancy, 2) },
-              { label: "Best day", value: signed(Math.max(...days)), tone: "profit" },
+              { label: "Best day", value: signed(Math.max(...days)), valueTone: "profit" },
             ]}
           />
         )}
@@ -414,7 +445,7 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
             className="shrink-0"
             items={[
               { color: ACCENT, label: "Your equity", value: euro(BALANCE.you) },
-              { color: GREY[1], label: `${coach.coachName}'s model account`, value: euro(BALANCE.model) },
+              { color: GREY[1], label: `${coach.coachName}'s model`, value: euro(BALANCE.model) },
             ]}
           />
         )}
@@ -477,11 +508,10 @@ function RuleTracks({ rules, className }: { rules: typeof RULE_SET; className?: 
   )
 }
 
-/** Discipline: radar (drawn as a tick gauge), streak (clean days), rules (each of the coach's rules). */
+/** Discipline: radar (a ring of rules kept), streak (clean days), rules (each of the coach's rules). */
 export function RulesFollowed({ variant = "radar" }: WidgetProps) {
   const { coach } = useCoach()
   const [focus, setFocus] = useState<number>()
-  const font = useFigureFont()
   const empty = useEmpty()
   const standard = useMore("standard")
   const detailed = useMore("detailed")
@@ -651,41 +681,24 @@ export function RulesFollowed({ variant = "radar" }: WidgetProps) {
       chip={<Chip>{`${run} clean in a row`}</Chip>}
       action={standard ? { label: `Open ${coach.wording.journal.toLowerCase()}`, href: "journal" } : undefined}
       footnote={standard ? `${clean} of ${RULE_DAYS.length} days clean` : undefined}
-      // Wide and short (twice as wide as tall, in a fixed cell): the gauge on the left, the rules beside it, instead of a stretched stack.
-      bodyClassName="[@container_card_(min-aspect-ratio:2/1)]:flex-row [@container_card_(min-aspect-ratio:2/1)]:items-center [@container_card_(min-aspect-ratio:2/1)]:justify-center [@container_card_(min-aspect-ratio:2/1)]:gap-[clamp(1.5rem,5cqw,4rem)]"
+      // A ring of rules kept beside the rules (stacked in a tall, narrow cell); pointing at a rule puts it on the ring.
+      bodyClassName={RING_BODY}
     >
-      <Panel className="min-h-20 flex-1 justify-end p-2 [@container_card_(min-aspect-ratio:2/1)]:h-full [@container_card_(min-aspect-ratio:2/1)]:flex-none [@container_card_(min-aspect-ratio:2/1)]:w-[min(46%,26rem,max(calc((100cqh-6.5rem)*1.15),min(calc((100cqh-6.5rem)*1.8),17rem)))] [@container_card_(min-aspect-ratio:2/1)]:justify-center">
-        <FitGauge value={pct}>
-          {/* Scales with the gauge (cqw of the gauge). */}
-          <span className="text-[clamp(1.25rem,12cqw,3.5rem)] leading-none font-medium tracking-[-0.02em] tabular-nums" style={{ fontFamily: font }}>
-            {pct}%
-          </span>
-          <Label className="max-w-[70cqw] truncate text-[clamp(0.6875rem,3.6cqw,1rem)] leading-tight">{shown ? (shown.miss ?? shown.rule) : "of rules kept"}</Label>
-        </FitGauge>
-      </Panel>
+      <Donut className={RING} total={100} parts={[{ value: pct, color: shown?.miss ? "var(--loss)" : ACCENT }]} label={`${pct}% ${shown ? (shown.miss ?? shown.rule) : "of rules kept"}`}>
+        <DonutFigure value={`${pct}%`} caption={shown ? (shown.miss ?? shown.rule) : "rules kept"} />
+      </Donut>
       {standard && (
-        <div className="grid shrink-0 [@container_card_(min-aspect-ratio:2/1)]:w-[min(36%,15rem)] [@container_card_(min-aspect-ratio:2/1)]:content-center [@container_card_(min-aspect-ratio:2/1)]:gap-1 [@container_card_(min-aspect-ratio:2/1)]:[&>button]:h-9 [@container_card_(min-aspect-ratio:2/1)]:[&>button]:text-sm" onPointerLeave={() => setFocus(undefined)}>
-          {rows.map((r, i) => {
-            const on = focus === i
-            const weak = r === order[0]
-            return (
-              <button
-                key={r.rule}
-                type="button"
-                onPointerEnter={() => setFocus(i)}
-                onFocus={() => setFocus(i)}
-                onBlur={() => setFocus(undefined)}
-                className={cn("flex h-7 min-w-0 items-center gap-2 rounded-sm text-left text-[0.8125rem] leading-5 outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-(--brand-mark)")}
-              >
-                <span className="size-2 shrink-0 rounded-[2px]" style={{ background: r.miss ? "var(--loss)" : on || (weak && focus === undefined) ? ACCENT : GREY[2] }} />
-                <span className={cn("min-w-0 flex-1 truncate", on ? "text-foreground underline decoration-1 underline-offset-4" : "text-muted-foreground")}>{r.miss ?? r.rule}</span>
-                <span className="shrink-0 tabular-nums" style={{ fontFamily: font, color: r.miss ? "var(--loss-text)" : undefined }}>
-                  {r.miss ? `${r.total - r.kept}×` : `${r.kept}/${r.total}`}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+        <ShareRows
+          className="min-w-0 flex-1"
+          onFocus={setFocus}
+          rows={rows.map((r, i) => ({
+            label: r.miss ?? r.rule,
+            value: r.miss ? `${r.total - r.kept}×` : `${r.kept}/${r.total}`,
+            share: r.miss ? (r.total - r.kept) / r.total : r.kept / r.total,
+            tone: r.miss ? ("loss" as const) : undefined,
+            on: focus === undefined ? r === order[0] && !r.miss : focus === i,
+          }))}
+        />
       )}
     </WCard>
   )

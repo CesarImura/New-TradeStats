@@ -1,7 +1,7 @@
 "use client"
 
-import { DataModeProvider } from "@/components/lab/reui-widgets/shared"
-import type { WidgetDef } from "@/components/lab/reui-widgets/registry"
+import { DataModeProvider } from "@/components/widgets/shared"
+import type { WidgetDef } from "@/components/widgets/registry"
 import { themeToCss } from "@/lib/theme/css"
 import { COLS, type Detail } from "@/lib/widgets/layout"
 import type { CoachTheme, Mode } from "@/lib/theme/types"

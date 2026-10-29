@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useShouldReduceMotion, useTempoTransition } from "@animate-ui/react/utils/motion"
 import { motion } from "motion/react"
-import { createContext, useContext, useLayoutEffect, useRef, useState } from "react"
+import { createContext, useContext, useId, useLayoutEffect, useRef, useState } from "react"
 import { starStyleOf, widgetFinishOf, type WidgetHeader } from "@/lib/theme/types"
 import { CoachContext } from "@/components/coach/coach-provider"
 import type { WidgetNote } from "@/lib/widgets/layout"
@@ -161,6 +161,47 @@ export const CTA = "min-w-0 max-w-full shrink"
  * a card is as tall as its content it does nothing.
  */
 export const GROW_ROWS = "[@container_card_(min-height:0px)]:*:grow [@container_card_(min-height:0px)]:*:max-h-[4.5rem]"
+
+/**
+ * The gap between a list's rows, in a cell that sets the height: as many whole
+ * rows as fit with at least `min` between them, then the spare height shared
+ * between those rows up to `max` (the design's gap is 12). So a row that
+ * almost fits squeezes in instead of dropping out and leaving a hole, and a
+ * roomy card spaces its rows out a little. Where the card is as tall as its
+ * content the gap is just `base`. Returns the ref for the list (flex-col
+ * flex-wrap, `min-h-0 flex-1`) and its row-gap.
+ */
+export function useFitGap<T extends HTMLElement>({ min = 4, base = 12, max = 20 }: { min?: number; base?: number; max?: number } = {}) {
+  const { fixed } = useFrame()
+  const ref = useRef<T>(null)
+  const [gap, setGap] = useState(base)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el || !fixed) return setGap(base)
+    const fit = () => {
+      const rows = [...el.children].filter((c): c is HTMLElement => c instanceof HTMLElement && getComputedStyle(c).display !== "none")
+      if (rows.length < 2) return
+      const H = el.clientHeight
+      let sum = 0
+      let m = 0
+      for (const r of rows) {
+        const h = r.offsetHeight
+        if (sum + h + m * min > H + 0.5) break
+        sum += h
+        m++
+      }
+      const next = m < 2 ? base : Math.max(min, Math.min(max, (H - sum) / (m - 1)))
+      // Whole pixels, a hair under the exact share: rows that add up to the list's height to the pixel would wrap away.
+      const px = Math.max(min, Math.floor(next - 0.25))
+      setGap((g) => (g === px ? g : px))
+    }
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [fixed, min, base, max])
+  return [ref, gap] as const
+}
 /** The same for rows without separators (bars, tracks): the free height is shared out between them instead. */
 export const SPREAD_ROWS = "[@container_card_(min-height:0px)]:justify-evenly"
 
@@ -178,10 +219,10 @@ export const TYPE = {
   label: "text-[0.6875rem] leading-4 font-medium text-muted-foreground [text-transform:var(--label-transform,none)] [letter-spacing:var(--label-tracking,0)]",
   body: "text-[0.8125rem] leading-5",
   small: "text-[0.6875rem] leading-4 text-muted-foreground",
-  title: "text-[0.8125rem] leading-5 font-medium",
-  value: "font-heading text-xl leading-7 font-medium tracking-tight tabular-nums",
-  valueLg: "font-heading text-[1.75rem] leading-8 font-medium tracking-tight tabular-nums",
-  star: "font-heading text-[2.5rem] leading-[2.75rem] font-medium tracking-tight tabular-nums",
+  title: "text-[0.8125rem] leading-5 [font-weight:var(--w-title-weight,500)]",
+  value: "font-heading text-xl leading-7 [font-weight:var(--w-value-weight,500)] tracking-tight tabular-nums",
+  valueLg: "font-heading text-[1.75rem] leading-8 [font-weight:var(--w-value-weight,500)] tracking-tight tabular-nums",
+  star: "font-heading text-[2.5rem] leading-[2.75rem] [font-weight:var(--w-value-weight,500)] tracking-tight tabular-nums",
 } as const
 
 /** The widget's one accent: the coach's colour, or the text colour when the widget is Quiet. */
@@ -210,6 +251,26 @@ const TEXT: Record<Tone, string> = {
   fg: "text-foreground",
 }
 
+/**
+ * The tint under a chart's main line: the colour fading to nothing at the
+ * baseline, so a chart that runs to the card's edges has no hard bottom edge.
+ * The one gradient widgets use (asked for on 2026-10-29); decoration stays flat.
+ */
+export function AreaFill({ d, color = ACCENT, strength = 0.18 }: { d: string; color?: string; strength?: number }) {
+  const id = `af${useId().replace(/[^a-z0-9]/gi, "")}`
+  return (
+    <>
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style={{ stopColor: color, stopOpacity: strength }} />
+          <stop offset="1" style={{ stopColor: color, stopOpacity: 0 }} />
+        </linearGradient>
+      </defs>
+      <path d={d} fill={`url(#${id})`} />
+    </>
+  )
+}
+
 /** A flat fill. (Gradients were tried and look cheap; see the vault.) */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const fill = (tone: Tone | string, _dir?: string) => (tone in TONE ? TONE[tone as Tone] : tone)
@@ -228,8 +289,12 @@ export const pl = (v: number, strength = 80) => `color-mix(in oklab, ${v >= 0 ? 
 export function W({ children, className, style, brand, row }: { children: React.ReactNode; className?: string; style?: React.CSSProperties; brand?: boolean; /** A one-row layout: tighter top and bottom padding, so it fits 56px on every spacing setting. */ row?: boolean }) {
   const { emphasis, fixed } = useFrame()
   const theme = useContext(CoachContext)?.theme
-  const star = brand || emphasis === "star"
-  // Inverted Star (Design → Look → Widgets): the text colour as the card, the brand only as the one mark.
+  const starred = brand || emphasis === "star"
+  // Spotlight Star (the default, Design → Look → Widgets): a plain card, the figure at Star size, the brand on its marks and
+  // edge. Only Brand and Inverted fill the card.
+  const spotlight = starred && !brand && (!theme || starStyleOf(theme) === "spotlight")
+  const star = starred && !spotlight
+  // Inverted Star: the text colour as the card, the brand only as the one mark.
   const inverted = star && !brand && !!theme && starStyleOf(theme) === "inverted"
   const corners = !!theme && widgetFinishOf(theme) === "corners" && !row
   const ref = useRef<HTMLDivElement>(null)
@@ -244,7 +309,7 @@ export function W({ children, className, style, brand, row }: { children: React.
       animate={{ opacity: 1, transform: "translateY(0px)" }}
       transition={enter}
       data-slot="widget"
-      data-emphasis={star ? "star" : emphasis}
+      data-emphasis={starred ? "star" : emphasis}
       className={cn(
         // The card is the container its contents ask about, named "card": by width always, by shape and height when its cell sets the height.
         fixed ? "[container:card/size]" : "@container/card",
@@ -292,6 +357,11 @@ export function W({ children, className, style, brand, row }: { children: React.
                 "--media-bg": "light-dark(color-mix(in oklab, var(--foreground) 90%, var(--background)), color-mix(in oklab, var(--foreground) 10%, var(--background)))",
                 "--media-fg": "light-dark(var(--background), var(--foreground))",
                 ...(emphasis === "quiet" ? { "--w-accent": "var(--foreground)", "--w-accent-text": "var(--foreground)" } : {}),
+                // Spotlight: parts that sit on a brand shade on a filled Star (chips, the icon tile, panels) take the card's own shades,
+                // and a brand edge (an inset hairline, over the theme's own outline) says this is the page's one Star.
+                ...(spotlight
+                  ? { "--brand-shade": "var(--muted)", "--brand-deep": "var(--muted)", boxShadow: "var(--card-shadow), inset 0 0 0 1px color-mix(in oklab, var(--brand, var(--primary)) 55%, transparent)" }
+                  : {}),
               }),
           ...style,
         } as React.CSSProperties
@@ -516,15 +586,19 @@ export function Drop({ level = 3, children }: { level?: number; children: React.
 /** A grid tile's drop level: below every part, the last tile first, so a short card shows whole tiles from the start. */
 export const tileDrop = (i: number) => 0.5 + i / 100
 
-/** Widget finish Corners: four small brackets at the widget's corners, in a strong hairline. */
+/**
+ * Widget finish Corners: four small brackets at the widget's corners, in a
+ * strong hairline. They follow Corners (Design → Shape): on a round card each
+ * bracket is the corner's own curve, as long as the radius and at least 10px.
+ */
 function Corners() {
-  const c = "pointer-events-none absolute size-2.5 border-[color:color-mix(in_oklab,var(--foreground)_45%,transparent)]"
+  const c = "pointer-events-none absolute size-[max(0.625rem,var(--radius))] border-[color:color-mix(in_oklab,var(--foreground)_45%,transparent)]"
   return (
     <>
-      <span aria-hidden className={cn(c, "top-0 left-0 border-t-[1.5px] border-l-[1.5px]")} />
-      <span aria-hidden className={cn(c, "top-0 right-0 border-t-[1.5px] border-r-[1.5px]")} />
-      <span aria-hidden className={cn(c, "bottom-0 left-0 border-b-[1.5px] border-l-[1.5px]")} />
-      <span aria-hidden className={cn(c, "right-0 bottom-0 border-r-[1.5px] border-b-[1.5px]")} />
+      <span aria-hidden data-corner className={cn(c, "top-0 left-0 rounded-tl-(--radius) border-t-[1.5px] border-l-[1.5px]")} />
+      <span aria-hidden data-corner className={cn(c, "top-0 right-0 rounded-tr-(--radius) border-t-[1.5px] border-r-[1.5px]")} />
+      <span aria-hidden data-corner className={cn(c, "bottom-0 left-0 rounded-bl-(--radius) border-b-[1.5px] border-l-[1.5px]")} />
+      <span aria-hidden data-corner className={cn(c, "right-0 bottom-0 rounded-br-(--radius) border-r-[1.5px] border-b-[1.5px]")} />
     </>
   )
 }
@@ -628,7 +702,7 @@ export function Row({
   className?: string
 }) {
   return (
-    <div className={cn("flex min-w-0 items-center gap-2.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5 last:border-b-0", me && "-mx-1.5 rounded-[min(var(--radius),6px)] border-transparent bg-[color:color-mix(in_oklab,var(--foreground)_4%,transparent)] px-1.5", className)}>
+    <div className={cn("flex min-w-0 items-center gap-2.5 border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5", me && "-mx-1.5 rounded-[min(var(--radius),6px)] border-transparent bg-[color:color-mix(in_oklab,var(--foreground)_4%,transparent)] px-1.5", className)}>
       {rank !== undefined && <span className={cn("w-4 shrink-0 text-right text-[0.6875rem] tabular-nums", me ? "font-medium text-foreground" : "text-muted-foreground")}>{rank}</span>}
       {avatar}
       <span className="grid min-w-0 flex-1">
@@ -714,7 +788,8 @@ export function Media({ image, title, sub, side, children, className }: { image:
 
 /**
  * Hover label for charts. Sits above the point (or below it when the point is
- * near the top) and stays inside the chart horizontally.
+ * near the top) and stays inside the chart horizontally. Inverted (the text
+ * colour as its fill), so it reads above any series.
  */
 export function Tip({ x, y, label, value, place, color }: { x: number; y: number; label?: React.ReactNode; value: React.ReactNode; place?: "above" | "below"; /** A swatch before the value: the series' colour. */ color?: string }) {
   const below = place ? place === "below" : y < 22
@@ -725,9 +800,9 @@ export function Tip({ x, y, label, value, place, color }: { x: number; y: number
       role="tooltip"
       className="pointer-events-none absolute z-20 grid gap-0.5 rounded-[min(var(--radius),8px)] border px-2 py-1.5 whitespace-nowrap shadow-[0_6px_20px_-6px_rgb(0_0_0/0.25),0_1px_2px_rgb(0_0_0/0.06)] duration-100 animate-in fade-in-0 zoom-in-95"
       // It grows from the point it labels (its bottom edge when above, its top when below), not from its own centre.
-      style={{ left: `${x}%`, top: `${y}%`, transform: `translate(${tx}, ${below ? "10px" : "calc(-100% - 10px)"})`, transformOrigin: below ? "top center" : "bottom center", background: "var(--popover)", color: "var(--popover-foreground)", borderColor: "var(--border)" }}
+      style={{ left: `${x}%`, top: `${y}%`, transform: `translate(${tx}, ${below ? "10px" : "calc(-100% - 10px)"})`, transformOrigin: below ? "top center" : "bottom center", background: "var(--foreground)", color: "var(--background)", borderColor: "transparent" }}
     >
-      {label && <span className="text-[0.6875rem] leading-4 text-muted-foreground">{label}</span>}
+      {label && <span className="text-[0.6875rem] leading-4 opacity-70">{label}</span>}
       <span className="flex items-center gap-1.5 text-[0.8125rem] leading-4 font-medium tabular-nums">
         {color && <i className="r-chip size-2 shrink-0" style={{ background: color }} />}
         {value}
@@ -818,9 +893,7 @@ export function Bars({
       >
         {diverging ? (
           <span aria-hidden className="absolute inset-x-0 top-1/2 border-t border-dashed" style={{ borderColor: "color-mix(in oklab, var(--foreground) 22%, transparent)" }} />
-        ) : (
-          <span aria-hidden className="absolute inset-x-0 bottom-0 h-px" style={{ background: "color-mix(in oklab, var(--foreground) 14%, transparent)" }} />
-        )}
+        ) : null}
         {values.map((v, i) => {
           const pct = (Math.abs(v) / max) * (diverging ? 50 : 100)
           const h = Math.max(pct, v === 0 ? 0 : 3)
@@ -828,6 +901,8 @@ export function Bars({
           return (
             <div key={i} className="relative flex flex-1 justify-center" onPointerEnter={() => setHover(i)}>
               {hover === i && <span aria-hidden className="absolute inset-y-0 inset-x-[8%] rounded-[min(var(--radius),6px)] bg-[color-mix(in_oklab,var(--foreground)_5%,transparent)]" />}
+              {/* A ghost track to the top: the bar reads against its full height, with no baseline or grid. */}
+              {!diverging && <span aria-hidden className="r-bar absolute inset-y-0 w-[min(62%,1.125rem)]" style={{ background: "color-mix(in oklab, var(--foreground) 5%, transparent)" }} />}
               <motion.span
                 aria-hidden
                 className="r-bar absolute w-[min(62%,1.125rem)] transition-[background-color] duration-150"
@@ -945,7 +1020,7 @@ export function Spark({
           [20, 50, 80].map((y) => (
             <line key={y} x1={0} x2={100} y1={y} y2={y} stroke="color-mix(in oklab, var(--foreground) 9%, transparent)" strokeWidth={1} strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />
           ))}
-        {area && <path d={`${line} L100,100 L0,100 Z`} fill={color} opacity={0.07} />}
+        {area && <AreaFill d={`${line} L100,100 L0,100 Z`} color={color} />}
         {hover !== undefined && <line x1={lx} x2={lx} y1={0} y2={100} stroke="color-mix(in oklab, var(--foreground) 35%, transparent)" strokeWidth={1} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />}
         <path d={line} fill="none" stroke={color} strokeWidth={1.75} vectorEffect="non-scaling-stroke" style={{ strokeLinejoin: "round", strokeLinecap: "round" }} />
       </motion.svg>

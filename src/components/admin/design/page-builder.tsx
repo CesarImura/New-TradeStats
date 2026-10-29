@@ -1,11 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import ReactGridLayout from "react-grid-layout"
-import { transformStrategy, verticalCompactor, type Layout, type LayoutItem, type PositionStrategy } from "react-grid-layout/core"
-import { GridBackground } from "react-grid-layout/extras"
-import "react-grid-layout/css/styles.css"
-import "react-resizable/css/styles.css"
+import { verticalCompactor } from "react-grid-layout/core"
 import { ArrowDownToLine, ArrowUpToLine, Copy, EyeOff, Info, LayoutGrid, Lock, Pencil, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { CoachContext, useCoach } from "@/components/coach/coach-provider"
@@ -27,7 +23,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import { PageRenderer, isAvailable } from "@/components/widgets/page-renderer"
+import { Masonry, PageRenderer, isAvailable } from "@/components/widgets/page-renderer"
 import { WidgetFrame } from "@/components/widgets/kit"
 import { getWidget, heightFor, heightOf, lookOf } from "@/components/widgets/registry"
 import { DataModeProvider, PageIdContext, PageTitleShownContext, type DataMode } from "@/components/widgets/shared"
@@ -38,21 +34,13 @@ import { themeToCss } from "@/lib/theme/css"
 import { pageLayout } from "@/lib/theme/resolve"
 import { widgetFinishOf, widgetSetOf, type CoachTheme } from "@/lib/theme/types"
 import { isPageId } from "@/lib/data/coaches"
-import { COLS, GAP, ROW_HEIGHT, normalizeLayout, oneStar, uid, withCore, type Detail, type Emphasis, type PageId, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
+import { COLS, GAP, ROW_HEIGHT, normalizeLayout, readingOrder, oneStar, uid, withCore, type Detail, type Emphasis, type PageId, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { DETAIL, EMPHASIS, PHASE_LABEL } from "./builder-panels"
 import type { useDraftEditor } from "./editor-shell"
 
 const DEVICE_WIDTH: Record<Device, number> = { desktop: 1180, tablet: 820, phone: 390 }
 const PAD = { desktop: 32, tablet: 24, phone: 16 }
-const DROP_ID = "__dropping__"
-
-/**
- * The canvas is scaled down with a CSS transform. The library's own scaled
- * strategy measures drags from the page edge (moving widgets too far), so use
- * the standard strategy and only tell it the scale.
- */
-const scaled = (scale: number): PositionStrategy => ({ ...transformStrategy, scale })
 
 export type Device = "desktop" | "tablet" | "phone"
 
@@ -189,9 +177,10 @@ export function useArrange({
 export type Arrange = ReturnType<typeof useArrange>
 
 /**
- * The page as a snap-to-grid canvas in the coach's draft theme, at real device
- * width and scaled to fit. Drag to move, drag edges to resize, drop widgets in
- * from the library, right-click for more.
+ * The page as students see it (a masonry, see Masonry in page-renderer) in
+ * the coach's draft theme, at real device width and scaled to fit. Drag a card
+ * to change the order, drop widgets in from the library, right-click for more
+ * (look, detail, width: one column or full width).
  */
 export function ArrangeCanvas({
   arrange,
@@ -214,7 +203,39 @@ export function ArrangeCanvas({
   const ctx = useCoach()
   const { page, layout, selected, setSelected, save, updateItem, removeWidget, duplicateWidget, moveTo } = arrange
   const gap = GAP[theme.density]
-  const [active, setActive] = useState(false) // a drag or resize is in progress on the grid
+  // The card being dragged, and where it would land (before or after a card).
+  const [dragging, setDragging] = useState<string | null>(null)
+  const [target, setTarget] = useState<{ id: string; after: boolean } | null>(null)
+  /** Saves the page in a new order: a card moved to `at`, or a widget from the library inserted there. */
+  const drop = (e: React.DragEvent, at: number) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const order = readingOrder(layout.items)
+    const moved = e.dataTransfer.getData("text/x-widget")
+    const type = incoming
+    setDragging(null)
+    setTarget(null)
+    let next = order
+    let key = `order-${uid()}`
+    if (moved) {
+      const from = order.findIndex((o) => o.id === moved)
+      if (from < 0) return
+      next = [...order]
+      const [m] = next.splice(from, 1)
+      next.splice(at > from ? at - 1 : at, 0, m)
+    } else if (type) {
+      onDropped()
+      const def = getWidget(type)
+      if (!def) return
+      const w: WidgetInstance = { id: uid(), type, x: 0, y: 0, w: def.defaultW >= COLS ? COLS : 4, h: def.variants[0].h }
+      next = [...order]
+      next.splice(at, 0, w)
+      key = `drop-${w.id}`
+      setSelected(w.id)
+    } else return
+    // Order is the layout now: one row per card, top to bottom (the masonry places them).
+    save({ items: next.map((w, i) => ({ ...w, x: 0, y: i })) }, key)
+  }
 
   // Delete / Backspace removes the selected widget, Escape deselects.
   useEffect(() => {
@@ -248,40 +269,8 @@ export function ArrangeCanvas({
     ro.observe(c)
     return () => ro.disconnect()
   }, [])
-  // A new screen size ends any drag in progress.
-  const [lastDevice, setLastDevice] = useState(device)
-  if (lastDevice !== device) {
-    setLastDevice(device)
-    setActive(false)
-  }
   const logicalWidth = DEVICE_WIDTH[device]
   const scale = areaWidth ? Math.min(1, (areaWidth - 32) / logicalWidth) : 1
-  const gridWidth = logicalWidth - PAD[device] * 2
-
-  /** Take positions from the grid after a move, resize or drop. */
-  const fromGrid = (grid: Layout, extra?: WidgetInstance) => {
-    const pos = new Map(grid.map((g) => [g.i, g]))
-    const items = layout.items.map((w) => {
-      const g = pos.get(w.id)
-      return g ? { ...w, x: g.x, y: g.y, w: g.w, h: g.h } : w
-    })
-    return { items: extra ? [...items, extra] : items }
-  }
-
-  // Grid items. Hidden-module widgets stay on the grid (marked) so their place is kept.
-  const gridLayout: LayoutItem[] = layout.items.map((w) => {
-    const def = getWidget(w.type)
-    const look = def ? lookOf(def, w.variant) : undefined
-    return { i: w.id, x: w.x, y: w.y, w: w.w, h: w.h, minW: def?.minW ?? 2, minH: look?.minH ?? 2, maxW: COLS }
-  })
-  const incomingDef = incoming ? getWidget(incoming) : undefined
-  const incomingSize = incomingDef ? { w: incomingDef.defaultW, h: incomingDef.variants[0].h } : { w: 4, h: 3 }
-  const rows = layout.items.reduce((m, w) => Math.max(m, w.y + w.h), 0) + 4
-  // The library centres a dropped widget on the pointer but subtracts half its
-  // width before undoing the canvas scale; compensate so it lands under the pointer.
-  const colWidth = (gridWidth - gap * (COLS - 1)) / COLS
-  const itemPx = { w: incomingSize.w * colWidth + (incomingSize.w - 1) * gap, h: incomingSize.h * ROW_HEIGHT + (incomingSize.h - 1) * gap }
-  const dropOffset = { dragOffsetX: (itemPx.w / 2) * (1 - scale), dragOffsetY: (itemPx.h / 2) * (1 - scale) }
 
   const scope = ".hb-canvas"
   const canvasClass = cn("hb-canvas", theme.mode === "dark" ? "dark" : "light")
@@ -316,81 +305,74 @@ export function ArrangeCanvas({
 
               {device === "desktop" ? (
                 <div className="hb-set relative" data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ minHeight: 6 * (ROW_HEIGHT + gap), "--gap": `${gap}px` } as React.CSSProperties}>
-                  {(active || incoming) && (
-                    <GridBackground
-                      width={gridWidth}
-                      cols={COLS}
-                      rowHeight={ROW_HEIGHT}
-                      margin={[gap, gap]}
-                      containerPadding={[0, 0]}
-                      rows={rows}
-                      color="color-mix(in oklab, var(--primary) 9%, transparent)"
-                      borderRadius={6}
-                      className="pointer-events-none absolute inset-0"
-                    />
-                  )}
-                  {layout.items.length === 0 && !incoming && (
-                    <div className="pointer-events-none absolute inset-0 grid place-items-center rounded-(--radius) border-2 border-dashed text-sm text-muted-foreground">
-                      <span className="flex items-center gap-2">
-                        <LayoutGrid className="size-4" /> Drag widgets from Add widget onto this grid
+                  {layout.items.length === 0 && (
+                    <div
+                      className="grid min-h-48 place-items-center rounded-(--radius) border-2 border-dashed text-sm text-muted-foreground"
+                      onDragOver={(e) => incoming && e.preventDefault()}
+                      onDrop={(e) => drop(e, layout.items.length)}
+                    >
+                      <span className="pointer-events-none flex items-center gap-2">
+                        <LayoutGrid className="size-4" /> Drag widgets from Add widget onto the page
                       </span>
                     </div>
                   )}
-                  <ReactGridLayout
-                    width={gridWidth}
-                    layout={gridLayout}
-                    gridConfig={{ cols: COLS, rowHeight: ROW_HEIGHT, margin: [gap, gap], containerPadding: [0, 0] }}
-                    positionStrategy={scaled(scale)}
-                    dragConfig={{ enabled: true, threshold: 4, cancel: ".react-resizable-handle, .no-drag" }}
-                    resizeConfig={{ enabled: true, handles: ["n", "e", "s", "w", "ne", "nw", "se", "sw"] }}
-                    dropConfig={{ enabled: true, defaultItem: incomingSize, onDragOver: () => ({ ...incomingSize, ...dropOffset }) }}
-                    droppingItem={{ i: DROP_ID, x: 0, y: 0, ...incomingSize }}
-                    style={{ minHeight: 6 * (ROW_HEIGHT + gap) }}
-                    onDragStart={(_l, _o, item) => {
-                      setActive(true)
-                      if (item) setSelected(item.i)
-                    }}
-                    onResizeStart={(_l, _o, item) => {
-                      setActive(true)
-                      if (item) setSelected(item.i)
-                    }}
-                    onDragStop={(l) => {
-                      setActive(false)
-                      save(fromGrid(l), `move-${uid()}`)
-                    }}
-                    onResizeStop={(l) => {
-                      setActive(false)
-                      save(fromGrid(l), `resize-${uid()}`)
-                    }}
-                    onDrop={(l, item) => {
-                      const type = incoming
-                      onDropped()
-                      // The library treats a drop as a drag that never "stops"; end it here.
-                      setActive(false)
-                      if (!type || !item) return
-                      const w: WidgetInstance = { id: uid(), type, x: item.x, y: item.y, w: item.w, h: item.h }
-                      save(fromGrid(l.filter((g) => g.i !== DROP_ID), w), `drop-${w.id}`)
-                      setSelected(w.id)
-                    }}
-                  >
-                    {layout.items.map((w) => (
-                      <div key={w.id} className={cn((getWidget(w.type)?.core || w.type === "page-header") && "g-plain")} onClick={(e) => { e.stopPropagation(); setSelected(w.id) }}>
-                        <WidgetMenu
-                          w={w}
-                          onOpen={() => setSelected(w.id)}
-                          onLook={(variant, minH) => updateItem(w.id, { variant, h: Math.max(w.h, minH) }, `${w.id}-variant`)}
-                          onEmphasis={(emphasis) => updateItem(w.id, { emphasis }, `${w.id}-emphasis`)}
-                          onDetail={(detail) => updateItem(w.id, { detail }, `${w.id}-detail`)}
-                          onDuplicate={() => duplicateWidget(w.id)}
-                          onMove={(where) => moveTo(w.id, where)}
-                          onPhone={(hideOnPhone) => updateItem(w.id, { hideOnPhone }, `${w.id}-phone`)}
-                          onRemove={() => removeWidget(w.id)}
-                        >
-                          <GridWidget w={w} selected={selected === w.id} available={isAvailable(w, coach)} onRemove={() => removeWidget(w.id)} onDuplicate={() => duplicateWidget(w.id)} />
-                        </WidgetMenu>
+                  {/* The page as students see it (a masonry: every card at its own height); dragging a card only changes the order. */}
+                  <Masonry
+                    items={readingOrder(layout.items)}
+                    render={(w) => (
+                      <WidgetMenu
+                        w={w}
+                        onOpen={() => setSelected(w.id)}
+                        onLook={(variant, minH) => updateItem(w.id, { variant, h: Math.max(w.h, minH) }, `${w.id}-variant`)}
+                        onEmphasis={(emphasis) => updateItem(w.id, { emphasis }, `${w.id}-emphasis`)}
+                        onDetail={(detail) => updateItem(w.id, { detail }, `${w.id}-detail`)}
+                        onWidth={(wide) => updateItem(w.id, { w: wide ? COLS : 4 }, `${w.id}-width`)}
+                        onDuplicate={() => duplicateWidget(w.id)}
+                        onMove={(where) => moveTo(w.id, where)}
+                        onPhone={(hideOnPhone) => updateItem(w.id, { hideOnPhone }, `${w.id}-phone`)}
+                        onRemove={() => removeWidget(w.id)}
+                      >
+                        <GridWidget w={w} selected={selected === w.id} available={isAvailable(w, coach)} onRemove={() => removeWidget(w.id)} onDuplicate={() => duplicateWidget(w.id)} />
+                      </WidgetMenu>
+                    )}
+                    wrap={(w, item) => (
+                      <div
+                        draggable
+                        className={cn("relative", dragging === w.id && "opacity-40")}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelected(w.id)
+                        }}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("text/x-widget", w.id)
+                          e.dataTransfer.effectAllowed = "move"
+                          setDragging(w.id)
+                          setSelected(w.id)
+                        }}
+                        onDragEnd={() => {
+                          setDragging(null)
+                          setTarget(null)
+                        }}
+                        onDragOver={(e) => {
+                          if (!dragging && !incoming) return
+                          e.preventDefault()
+                          const r = e.currentTarget.getBoundingClientRect()
+                          const after = e.clientY > r.top + r.height / 2
+                          setTarget({ id: w.id, after })
+                        }}
+                        onDrop={(e) => {
+                          const order = readingOrder(layout.items)
+                          const at = order.findIndex((o) => o.id === w.id) + (target?.id === w.id && target.after ? 1 : 0)
+                          drop(e, at)
+                        }}
+                      >
+                        {target?.id === w.id && (
+                          <span aria-hidden className={cn("pointer-events-none absolute inset-x-0 z-30 h-1 rounded-full bg-primary", target.after ? "-bottom-[calc(var(--gap)/2+2px)]" : "-top-[calc(var(--gap)/2+2px)]")} />
+                        )}
+                        {item}
                       </div>
-                    ))}
-                  </ReactGridLayout>
+                    )}
+                  />
                 </div>
               ) : (
                 <div className="pointer-events-none">
@@ -416,6 +398,7 @@ function WidgetMenu({
   onLook,
   onEmphasis,
   onDetail,
+  onWidth,
   onDuplicate,
   onMove,
   onPhone,
@@ -427,6 +410,8 @@ function WidgetMenu({
   onLook: (variant: string, minH: number) => void
   onEmphasis: (emphasis: Emphasis) => void
   onDetail: (detail: Detail) => void
+  /** One column or the page's full width. */
+  onWidth: (wide: boolean) => void
   onDuplicate: () => void
   onMove: (where: "top" | "bottom") => void
   onPhone: (hide: boolean) => void
@@ -482,6 +467,17 @@ function WidgetMenu({
               </ContextMenuRadioGroup>
             </ContextMenuSubContent>
           </ContextMenuSub>
+          {!def.core && w.type !== "page-header" && (
+            <ContextMenuSub>
+              <ContextMenuSubTrigger>Width</ContextMenuSubTrigger>
+              <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
+                <ContextMenuRadioGroup value={w.w >= COLS ? "full" : "column"} onValueChange={(v) => onWidth(v === "full")}>
+                  <ContextMenuRadioItem value="column">One column</ContextMenuRadioItem>
+                  <ContextMenuRadioItem value="full">Full width</ContextMenuRadioItem>
+                </ContextMenuRadioGroup>
+              </ContextMenuSubContent>
+            </ContextMenuSub>
+          )}
         </ContextMenuGroup>
         <ContextMenuSeparator />
         <ContextMenuGroup>
@@ -527,7 +523,7 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
   return (
     <div
       className={cn(
-        "group/w relative flex size-full cursor-grab flex-col rounded-[calc(var(--radius)+2px)] outline-2 outline-offset-2 outline-transparent hover:outline-primary/40 active:cursor-grabbing",
+        "group/w relative flex cursor-grab flex-col rounded-[calc(var(--radius)+2px)] outline-2 outline-offset-2 outline-transparent hover:outline-primary/40 active:cursor-grabbing",
         selected && "outline-primary",
       )}
     >
@@ -537,7 +533,7 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
       >
         {def.core && <Lock className="mr-1 inline size-2.5 align-[-1px]" />}
         {def.core ? `${def.name} · main part of the page` : def.name}
-        {w.emphasis === "star" && " · Star"} · {w.w}×{w.h}
+        {w.emphasis === "star" && " · Star"} · {w.w >= COLS ? "full width" : "one column"}
       </span>
       {rule && (
         <span className="pointer-events-none absolute top-2 right-2 z-10 max-w-[60%] truncate rounded-[3px] bg-[#ff5500] px-1.5 py-0.5 font-mono text-[10px] leading-none font-medium tracking-[0.04em] text-black uppercase">
@@ -569,9 +565,9 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
           </>
         )}
       </div>
-      <div className="pointer-events-none flex min-h-0 flex-1 flex-col overflow-hidden select-none [&>*]:flex-1">
+      <div className="pointer-events-none flex flex-col select-none">
         {available ? (
-          <WidgetFrame emphasis={w.emphasis} detail={w.detail} header={w.header} note={w.note} core={Boolean(def.core)}>
+          <WidgetFrame emphasis={w.emphasis} detail={w.detail} header={w.header} note={w.note} core={Boolean(def.core)} fixed={false}>
             <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
           </WidgetFrame>
         ) : (

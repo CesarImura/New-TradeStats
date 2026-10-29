@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { More } from "@/components/admin/design/controls"
 import { DesignField, useDesign } from "@/components/admin/design/design-fields"
+import { LogoColoursField } from "@/components/admin/design/settings-fields"
 import { PagesField } from "@/components/admin/design/pages-field"
 import { COACHES, type ModuleId } from "@/lib/data/coaches"
 import { customCommunities, slugify } from "@/lib/data/communities"
@@ -110,10 +111,13 @@ export function BrandStep({ community, update, setReady }: StepProps) {
     <div className="grid gap-7">
       <DesignField id="logo" />
       <NameRows community={community} update={update} setReady={setReady} />
-      <DesignField id="primary" />
+      {/* The same order as Design → Brand. */}
       <DesignField id="mode" />
-      <More label="Second colour">
-        <DesignField id="highlight" />
+      <DesignField id="primary" />
+      <DesignField id="highlight" />
+      <LogoColoursField />
+      <More label="Profit and loss colours">
+        <DesignField id="trading" />
       </More>
       <FullEditorLink slug={community.slug} />
     </div>

@@ -1,11 +1,12 @@
 "use client"
 
-import { Check, ChevronDown, Columns3, LayoutGrid, Pencil, Plus } from "lucide-react"
+import { Check, ChevronDown, Columns3, LayoutGrid, Pencil, Plus, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
 import type { Mode } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { CONTROL_FOCUS } from "./lab-controls"
-import { baseLabel, resolveLab, type LabThemeEntry, type LabThemes } from "./lab-themes"
+import { baseLabel, deleteTheme, resolveLab, restoreTheme, type LabThemeEntry, type LabThemes } from "./lab-themes"
 
 /**
  * A theme's colours in a 20px chip: the page, a card on it and the brand
@@ -93,12 +94,12 @@ export function ThemeSwitcher({ lab, mode, onEdit, onNew, onManage, onCompare }:
         <div role="menu" className={cn(PANEL, "left-0 max-h-[min(36rem,calc(100svh-6rem))] overflow-y-auto")} style={panelStyle}>
           <PanelHeading>Starting points</PanelHeading>
           {built.map((t) => (
-            <ThemeRow key={t.id} entry={t} mode={mode} active={t.id === active.id} onPick={close(() => lab.pick(t.id))} />
+            <ThemeRow key={t.id} entry={t} mode={mode} active={t.id === active.id} onPick={close(() => lab.pick(t.id))} onEdit={close(() => onEdit(t.id))} />
           ))}
           <PanelHeading>My themes</PanelHeading>
           {mine.length === 0 && <p className="px-2.5 pb-2 text-[0.8125rem] text-(--c-t3)">None yet. Make one from any starting point.</p>}
           {mine.map((t) => (
-            <ThemeRow key={t.id} entry={t} mode={mode} active={t.id === active.id} onPick={close(() => lab.pick(t.id))} onEdit={close(() => onEdit(t.id))} />
+            <ThemeRow key={t.id} entry={t} mode={mode} active={t.id === active.id} onPick={close(() => lab.pick(t.id))} onEdit={close(() => onEdit(t.id))} onDelete={() => removeTheme(t)} />
           ))}
           <div className="my-1 h-px" style={{ background: "var(--c-hair)" }} />
           <MenuAction icon={<Plus className="size-4" />} label="New theme" onClick={close(onNew)} />
@@ -111,8 +112,59 @@ export function ThemeSwitcher({ lab, mode, onEdit, onNew, onManage, onCompare }:
   )
 }
 
-/** One theme in a list: chip, name and base; ticked when it is the one in use. */
-export function ThemeRow({ entry, mode, active, onPick, onEdit, role = "menuitemradio" }: { entry: LabThemeEntry; mode: Mode; active: boolean; onPick: () => void; onEdit?: () => void; role?: string }) {
+/** Delete a made theme, with Undo in the toast. */
+export function removeTheme(entry: LabThemeEntry) {
+  const gone = deleteTheme(entry.id)
+  if (gone)
+    toast(`Deleted ${gone.name}`, {
+      action: { label: "Undo", onClick: () => restoreTheme(gone) },
+    })
+}
+
+/** The delete warning, in place: what goes, and Delete or Keep. */
+export function DeleteConfirm({ name, onDelete, onKeep }: { name: string; onDelete: () => void; onKeep: () => void }) {
+  return (
+    <div role="alertdialog" aria-label={`Delete ${name}?`} className="grid gap-2 p-2">
+      <p className="text-sm font-medium">Delete {name}?</p>
+      <p className="text-[0.8125rem] text-(--c-t2)">It is removed from this browser. You can undo it right after.</p>
+      <div className="flex gap-1.5">
+        <button type="button" autoFocus onClick={onDelete} className={cn("h-8 flex-1 rounded-lg px-3 text-sm font-medium text-white", CONTROL_FOCUS)} style={{ background: "#cf222e" }}>
+          Delete
+        </button>
+        <button type="button" onClick={onKeep} className={cn("h-8 flex-1 rounded-lg border px-3 text-sm hover:bg-(--c-on)", CONTROL_FOCUS)} style={{ borderColor: "var(--c-hair)" }}>
+          Keep
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** One theme in a list: chip, name and base; ticked when it is the one in use. On hover, edit and (for made themes) delete, which asks first. */
+export function ThemeRow({
+  entry,
+  mode,
+  active,
+  onPick,
+  onEdit,
+  onDelete,
+  role = "menuitemradio",
+}: {
+  entry: LabThemeEntry
+  mode: Mode
+  active: boolean
+  onPick: () => void
+  onEdit?: () => void
+  onDelete?: () => void
+  role?: string
+}) {
+  const [confirm, setConfirm] = useState(false)
+  if (confirm && onDelete)
+    return (
+      <div className="my-0.5 rounded-lg" style={{ background: "var(--c-on)" }}>
+        <DeleteConfirm name={entry.name} onDelete={() => (setConfirm(false), onDelete())} onKeep={() => setConfirm(false)} />
+      </div>
+    )
+  const tools = onEdit || onDelete
   return (
     <div className="group/row relative flex items-center">
       <button
@@ -123,27 +175,42 @@ export function ThemeRow({ entry, mode, active, onPick, onEdit, role = "menuitem
         className={cn("flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2.5 text-left text-sm transition-colors duration-150", CONTROL_FOCUS, active ? "bg-(--c-on)" : "hover:bg-(--c-on)")}
       >
         <ThemeChip entry={entry} mode={mode} />
-        <span className="grid min-w-0 flex-1 leading-tight">
+        <span className={cn("grid min-w-0 flex-1 leading-tight", tools && "group-hover/row:pr-14 group-focus-within/row:pr-14")}>
           <span className={cn("truncate", active && "font-medium")}>{entry.name}</span>
           {!entry.builtIn && <span className="truncate text-[0.6875rem] text-(--c-t3)">on {baseLabel(entry.base)}</span>}
         </span>
-        {active && <Check className={cn("size-4 shrink-0", onEdit && "group-hover/row:invisible group-focus-within/row:invisible")} />}
+        {active && <Check className={cn("size-4 shrink-0", tools && "group-hover/row:invisible group-focus-within/row:invisible")} />}
       </button>
-      {onEdit && (
-        <button
-          type="button"
-          onClick={onEdit}
-          aria-label={`Edit ${entry.name}`}
-          title="Edit"
-          className={cn(
-            "absolute right-1.5 grid size-7 place-items-center rounded-md text-(--c-t2) opacity-0 transition-opacity duration-150 group-hover/row:opacity-100 group-focus-within/row:opacity-100 hover:bg-(--c-bar) hover:text-(--c-t1)",
-            CONTROL_FOCUS,
+      {tools && (
+        <span className="absolute right-1.5 flex gap-0.5 opacity-0 transition-opacity duration-150 group-hover/row:opacity-100 group-focus-within/row:opacity-100">
+          {onEdit && (
+            <RowTool label={entry.builtIn ? `Customize a copy of ${entry.name}` : `Edit ${entry.name}`} onClick={onEdit}>
+              <Pencil className="size-3.5" />
+            </RowTool>
           )}
-        >
-          <Pencil className="size-3.5" />
-        </button>
+          {onDelete && (
+            <RowTool label={`Delete ${entry.name}`} onClick={() => setConfirm(true)} danger>
+              <Trash2 className="size-3.5" />
+            </RowTool>
+          )}
+        </span>
       )}
     </div>
+  )
+}
+
+/** A small icon button that shows on a row's hover. */
+export function RowTool({ label, onClick, danger, children }: { label: string; onClick: () => void; danger?: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => (e.stopPropagation(), onClick())}
+      aria-label={label}
+      title={label}
+      className={cn("grid size-7 place-items-center rounded-md text-(--c-t2) transition-colors duration-150 hover:bg-(--c-bar)", danger ? "hover:text-[#cf222e]" : "hover:text-(--c-t1)", CONTROL_FOCUS)}
+    >
+      {children}
+    </button>
   )
 }
 

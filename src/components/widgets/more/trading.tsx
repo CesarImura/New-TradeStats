@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Chip, Label, Legend, MiniStats, Num, Panel, Rolling, Seg, StepChart, WCard } from "@/components/lab/reui-widgets/instrument"
-import { Bars, Drop, Heat, Spark, SPLIT, SPREAD_ROWS, useFitRows, useFrame, useMore } from "@/components/lab/reui-widgets/kit"
-import type { WidgetProps } from "@/components/lab/reui-widgets/shared"
+import { Chip, Label, Legend, MiniStats, Num, Panel, Rolling, Seg, StepChart, WCard } from "@/components/widgets/instrument"
+import { Bars, Drop, Heat, Spark, SPLIT, SPREAD_ROWS, useFitRows, useFrame, useMore } from "@/components/widgets/kit"
+import type { WidgetProps } from "@/components/widgets/shared"
 import { BarChart3, FileSpreadsheet, LayoutGrid, LineChart, Sigma, Wallet } from "@/components/icons"
 import { cn } from "@/lib/utils"
 
@@ -87,7 +87,7 @@ export function RecentTrades({ variant = "table" }: WidgetProps) {
         <div ref={body} className="min-h-0 flex-1 overflow-hidden">
         <ul className="grid">
           {sorted.slice(0, per).map((t) => (
-            <li key={t.id} className="flex items-center gap-3 border-b py-2 last:border-b-0" style={{ borderColor: "var(--w-hair, var(--border))" }}>
+            <li key={t.id} className="flex items-center gap-3 py-2" style={{ borderColor: "var(--w-hair, var(--border))" }}>
               <span className="w-12 shrink-0 text-xs text-muted-foreground tabular-nums">{t.time}</span>
               <span className="min-w-0 flex-1 truncate">
                 <span className="font-medium">{t.sym}</span> <span className="text-muted-foreground">{t.side.toLowerCase()}</span>

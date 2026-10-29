@@ -1,10 +1,12 @@
 "use client"
 
 import Link from "next/link"
+import { useState } from "react"
 import { ExternalLink, LayoutDashboard } from "@/components/icons"
 import { Field, Segmented } from "@/components/admin/design/controls"
 import { useDesign } from "@/components/admin/design/design-fields"
-import { LookStep } from "@/components/admin/design/design-steps"
+import { LookCards } from "@/components/admin/design/design-steps"
+import { designTabs, SettingsPanel, without } from "@/components/admin/design/settings-panel"
 import { useAccount } from "@/lib/data/use-communities"
 import type { TemplateId } from "@/lib/theme/types"
 import { getWidget, heightFor } from "@/components/widgets/registry"
@@ -17,7 +19,7 @@ import type { StepProps } from "./wizard"
 /**
  * Parts of the wizard's Pages step, and the link to the full Design editor.
  * The Brand, Look and Menu steps use the Design workspace's own panels
- * (design-steps.tsx), editing the same draft, inside <WizardDesign>.
+ * (design-steps.tsx, settings-panel.tsx), editing the same draft, inside <WizardDesign>.
  */
 
 /**
@@ -32,15 +34,23 @@ export function FullEditorLink({ slug, query, href, label = "Open the full Desig
   )
 }
 
-// ---------- ONB-16 · Look (the Design editor's Look step, with the look that fits marked)
+// ---------- ONB-16 · Look (the looks, with the one that fits marked, then the Design editor's own fine-tune sections)
+
+/** The theme sections of the Design editor, for fine-tuning a look here the same way. */
+const FINE_TUNE = designTabs({}, ["type", "shape", "widgets", "page"])
 
 export function LookPanel({ community }: StepProps) {
-  const { theme } = useDesign()
+  const { working, commit } = useDesign()
   const acc = useAccount()
+  const [tab, setTab] = useState("type")
   return (
     <div className="-mx-4 -mt-5 md:-mx-5">
-      <LookStep theme={theme} suggested={suggestedTemplate(acc?.answers)} />
-      <div className="px-4 pb-5 md:px-5">
+      <LookCards suggested={suggestedTemplate(acc?.answers)} />
+      <div className="px-4 pt-4 pb-2 text-[0.6875rem] font-medium tracking-[0.06em] text-muted-foreground uppercase md:px-5">Fine-tune</div>
+      <div className="flex h-[30rem] border-y">
+        <SettingsPanel tabs={FINE_TUNE} tab={tab} onTab={setTab} draft={working.theme} onReset={(keys) => commit({ ...working, theme: without(working.theme, keys) }, "reset")} />
+      </div>
+      <div className="px-4 py-5 md:px-5">
         <FullEditorLink slug={community.slug} query="step=look" />
       </div>
     </div>

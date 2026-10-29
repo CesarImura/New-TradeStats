@@ -319,41 +319,66 @@
 .hb-canvas .react-grid-item > .react-resizable-handle-sw::after,
 .hb-canvas .react-grid-item > .react-resizable-handle-se::after { width: 9px; height: 9px; }
 
-/* Widget set (Design → Look → Widgets sit as). Sheet: the widgets form one surface split by hairlines; the card
-   colour spreads into the half-gap around each widget, so neighbours join, and each widget's outline sits in the
-   middle of the gap, so neighbours share one line. Open: no box, a hairline above each widget. The page title
-   and the page's own tool (g-plain) keep their usual look. The Star widget keeps its brand fill in both. */
+/* Widget set (Design → Widgets → Card). Sheet: the widgets form a surface split by hairlines. On a page (a masonry of
+   columns, page-renderer.tsx) each column is that surface: the card colour, rounded by Corners, its widgets stacked
+   with no gap and a hairline between them; the gaps between columns stay page. Where widgets sit side by side with no
+   columns (the library's own grid) the card colour spreads into the half-gap around each one instead. Open: no fill,
+   a fine outline around each widget. The page title and the page's own tool (g-plain) keep their usual look. The
+   Star widget keeps its brand fill in both. */
 .g-page[data-set="sheet"],
 .g-page[data-set="open"],
 .hb-set[data-set="sheet"],
 .hb-set[data-set="open"] {
   --set-hair: var(--w-hair, color-mix(in oklab, var(--foreground) 12%, transparent));
 }
-.g-page[data-set="sheet"] > .g-item:not(.g-plain),
-.hb-set[data-set="sheet"] .react-grid-item:not(.g-plain, .react-grid-placeholder) {
+.g-page[data-set="sheet"] > :not(.g-item) {
+  --gap: 0px;
+  background: var(--card);
+  border-radius: var(--radius);
+  outline: 1px solid var(--set-hair);
+  outline-offset: -1px;
+  overflow: hidden;
+}
+.g-page[data-set="sheet"] > :not(.g-item) > * + * {
+  border-top: 1px solid var(--set-hair);
+}
+.g-page[data-set="sheet"] > .g-item:not(.g-plain) {
   background: var(--card);
   box-shadow: 0 0 0 calc(var(--gap) / 2) var(--card);
   outline: 1px solid var(--set-hair);
   outline-offset: calc(var(--gap) / 2 - 0.5px);
+  border-radius: var(--radius);
 }
-.g-page:is([data-set="sheet"], [data-set="open"]) > .g-item:not(.g-plain) [data-slot="widget"],
+.g-page:is([data-set="sheet"], [data-set="open"]) .g-item:not(.g-plain) [data-slot="widget"],
 .hb-set:is([data-set="sheet"], [data-set="open"]) .react-grid-item:not(.g-plain) [data-slot="widget"] {
   --card-shadow: none;
   --card-edge: transparent;
 }
-.g-page:is([data-set="sheet"], [data-set="open"]) > .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
+.g-page:is([data-set="sheet"], [data-set="open"]) .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
 .hb-set:is([data-set="sheet"], [data-set="open"]) .react-grid-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]) {
   background: transparent;
   border-radius: 0;
 }
-.g-page[data-set="sheet"] > .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
+.g-page[data-set="sheet"] .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
 .hb-set[data-set="sheet"] .react-grid-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]) {
   padding: calc(0.5rem * var(--density, 1));
 }
-.g-page[data-set="open"] > .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
+/* Open: no fill, the page shows through, but every widget keeps a fine outline at its own corners, so it never
+   loses its edge against the page. */
+.g-page[data-set="open"] .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
 .hb-set[data-set="open"] .react-grid-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]) {
-  padding: calc(0.875rem * var(--density, 1)) 0 0;
-  border-top: 1px solid var(--set-hair);
+  --card-edge: var(--set-hair);
+  border-radius: var(--radius);
+}
+
+/* Widget finish Corners: only on square cards (lib/theme/css.ts sets --w-corners from Corners). */
+[data-corner] {
+  display: var(--w-corners, block);
+}
+/* In a Sheet the lines run in the gaps between widgets, not at their edges, so brackets there would float: none. */
+.g-page[data-set="sheet"] .g-item [data-corner],
+.hb-set[data-set="sheet"] .react-grid-item [data-corner] {
+  display: none;
 }
 
 /* Widget finish Grid (Design → Look → Widgets): a field of small crosses on the page behind the widgets, in the hairline colour.

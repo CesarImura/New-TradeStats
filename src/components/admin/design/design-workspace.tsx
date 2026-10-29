@@ -6,16 +6,12 @@ import { useSearchParams } from "next/navigation"
 import {
   ArrowLeft,
   ArrowRight,
-  Check,
   ExternalLink,
   FileDown,
   History,
   LayoutGrid,
-  Monitor,
   MoreHorizontal,
   PlayCircle,
-  Smartphone,
-  Tablet,
   Trash2,
   Undo2,
   Wand2,
@@ -26,51 +22,48 @@ import { studentNav } from "@/components/coach/nav"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useSidebar } from "@/components/ui/sidebar"
 import type { DataMode } from "@/components/widgets/shared"
 import { getDemoCoach } from "@/lib/data/coaches"
 import { useCustomCommunities } from "@/lib/data/use-communities"
 import { describe, targetsForField, type PickMessage, type PickTarget } from "@/lib/design-pick"
+import { auditTheme } from "@/lib/theme/contrast"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import { TEMPLATES } from "@/lib/theme/templates"
 import type { PageId } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { WidgetLibrary, WidgetSettings } from "./builder-panels"
 import { More, RevealContext, Segmented } from "./controls"
+import { designTabs, DeviceSwitch, Readability, ResetButton, SettingsPanel, THEME_GROUPS, without } from "./settings-panel"
 import { DesignProvider, useDesign } from "./design-fields"
 import { GuideDialog, VersionsSheet, useDraftEditor } from "./editor-shell"
 import { ArrangeCanvas, useArrange, type Device } from "./page-builder"
 import { PreviewFrame } from "./preview-frame"
 import { CAN_SAVE_TEMPLATE, SaveTemplateDialog } from "./save-template"
-import { BrandFields, LookStep, MenuStep, Section } from "./design-steps"
+import { LookCards, MenuStep, Section } from "./design-steps"
 
-type Step = "brand" | "look" | "menu" | "pages"
-const STEPS: { id: Step; label: string; text: string }[] = [
-  { id: "brand", label: "Brand", text: "Your name, logo and colour." },
-  { id: "look", label: "Look", text: "Pick a look. Fine-tune it if you like." },
-  { id: "menu", label: "Menu", text: "What the menu shows and what you call things." },
-  { id: "pages", label: "Pages", text: "What's on each page. Drag widgets on the right." },
-]
+/** Design's sections, in the order a coach goes through them; the theme ones are the library's theme editor's. */
+type Step = "brand" | "look" | "type" | "shape" | "widgets" | "page" | "menu" | "pages"
+const STEP_IDS: Step[] = ["brand", "look", "type", "shape", "widgets", "page", "menu", "pages"]
 
-/** Where a part clicked in the preview is set. Buttons and cards land on Fine-tune, not on the brand colour. */
+/** Where a part clicked in the preview is set. */
 const STEP_OF: Record<string, Step> = {
   logo: "brand",
   highlight: "brand",
   nav: "menu",
-  buttons: "look",
-  headings: "look",
-  labels: "look",
-  cards: "look",
-  "brand-surface": "look",
-  background: "look",
+  buttons: "shape",
+  headings: "type",
+  labels: "type",
+  cards: "widgets",
+  "brand-surface": "shape",
+  background: "page",
 }
-/** The settings to flash after a click (Fine-tune's sliders stand for the detailed ones). */
+/** The settings to flash after a click. */
 const FLASH: Partial<Record<PickTarget, string[]>> = {
-  buttons: ["corners"],
-  headings: ["fonts"],
+  buttons: ["corners", "buttons"],
+  headings: ["fonts", "heading-weight"],
   labels: ["labels"],
-  cards: ["widget-style", "corners", "shadows", "density"],
-  "brand-surface": ["shadows"],
+  cards: ["widget-style", "widget-set"],
+  "brand-surface": ["effects"],
   background: ["background"],
   highlight: ["highlight"],
   logo: ["logo", "name"],
@@ -80,7 +73,9 @@ const FLASH: Partial<Record<PickTarget, string[]>> = {
 const StepCtx = createContext<{ go: (s: Step) => void }>({ go: () => {} })
 
 /**
- * ADM-37 to ADM-44: Design in four short steps (Brand, Look, Menu, Pages).
+ * ADM-37 to ADM-44: Design, in the same editor as the library's themes: an
+ * icon rail of sections (Brand, Look, Type, Shape, Widgets, Page, Menu,
+ * Pages), each in small groups that reset on their own, and one search.
  * Menu comes before Pages: a module switched off there hides its widgets, so
  * the coach decides that first. One panel on the left, the coach's real platform on the right. Clicking a part
  * of the platform opens the step and setting that changes it. On Pages the
@@ -103,7 +98,7 @@ export function DesignWorkspace() {
   // Where to start, from the link that opened Design (setup, all pages, old Pages links).
   const params = useSearchParams()
   const asked = params.get("step") ?? (params.get("mode") === "arrange" || params.get("panel") === "pages" ? "pages" : params.get("panel") === "menu" ? "menu" : "brand")
-  const [step, setStep] = useState<Step>(STEPS.some((s) => s.id === asked) ? (asked as Step) : "brand")
+  const [step, setStep] = useState<Step>(STEP_IDS.includes(asked as Step) ? (asked as Step) : "brand")
   const pages = studentNav(coach, `/c/${slug}`)
   const [pageAsked, setPage] = useState(params.get("page") ?? "home")
   const page = (pages.some((p) => p.id === pageAsked) ? pageAsked : "home") as PageId
@@ -122,37 +117,75 @@ export function DesignWorkspace() {
     panel.current?.scrollTo({ top: 0 })
   }
   const pick = usePreviewPick(step !== "pages", (target) => {
-    const to = target.startsWith("menu:") ? "menu" : (STEP_OF[target] ?? "look")
+    const to = target.startsWith("menu:") ? "menu" : (STEP_OF[target] ?? "brand")
     setStep(to)
     return target.startsWith("menu:") ? describe(target).fields : (FLASH[target] ?? describe(target).fields)
   })
   useFlash(panel, pick.reveal)
 
-  // Give the canvas room: fold the admin menu to icons while designing, and restore it on leaving.
-  const { open: menuOpen, setOpen: setMenuOpen } = useSidebar()
-  const menuWasOpen = useRef(menuOpen)
-  useEffect(() => {
-    const restore = menuWasOpen.current
-    setMenuOpen(false)
-    return () => setMenuOpen(restore)
-  }, [setMenuOpen])
 
   const fromSetup = params.get("from") === "setup"
   const pageInfo = arrange.pageInfo
   const src = `${step === "pages" ? pageInfo.href : `/c/${slug}`}?preview=draft${step === "pages" && tier !== "default" ? `&tier=${tier}` : ""}${step === "pages" && data !== "sample" ? `&data=${data}` : ""}`
   const canvasClass = cn("hb-canvas", theme.mode === "dark" ? "dark" : "light")
-  const i = STEPS.findIndex((s) => s.id === step)
-  const next = STEPS[i + 1]
+  const checks = auditTheme(theme, { fixes: true })
+  const pagesContent = arrange.selWidget ? (
+    <div>
+      <div className="border-b px-3 py-1.5">
+        <Button variant="ghost" size="sm" onClick={() => setWidget(null)}>
+          <ArrowLeft /> All widgets
+        </Button>
+      </div>
+      <WidgetSettings
+        key={arrange.selWidget.id}
+        w={arrange.selWidget}
+        pinned={arrange.pinned(arrange.selWidget.id)}
+        canvasClass={canvasClass}
+        onChange={(patch, key) => arrange.updateItem(arrange.selWidget!.id, patch, key)}
+        onDuplicate={() => arrange.duplicateWidget(arrange.selWidget!.id)}
+        onRemove={() => arrange.removeWidget(arrange.selWidget!.id)}
+      />
+    </div>
+  ) : (
+    <PagesStep
+      pages={pages}
+      page={page}
+      onPage={(id) => {
+        setPage(id)
+        setWidget(null)
+      }}
+      tier={tier}
+      onTier={(t) => {
+        setTier(t)
+        setWidget(null)
+      }}
+      data={data}
+      onData={setData}
+      arrange={arrange}
+      library={<WidgetLibrary key={page} page={page} coach={coach} canvasClass={canvasClass} onAdd={arrange.addWidget} onDragType={setIncoming} />}
+    />
+  )
+  const tabs = designTabs({
+    brand: { groups: [{ title: "Your platform", fields: ["logo", "name", "mode"], keys: ["mode"], words: "logo name platform light dark mode" }, ...THEME_GROUPS.colour] },
+    look: { content: <LookTab /> },
+    menu: { content: <MenuStep /> },
+    pages: { blurb: "What's on each page. Drag widgets on the right.", content: pagesContent },
+  })
 
   return (
     <DesignProvider value={{ coach, theme, working, change, commit }}>
       <StepCtx.Provider value={{ go }}>
-        <div className="-mx-4 -mt-6 -mb-10 grid min-h-[calc(100svh-4.5rem)] grid-rows-[auto_1fr] md:-mx-10 md:-mt-8 lg:h-[calc(100svh-4.5rem)]">
+        {/* A screen of its own, over the admin: one menu (the editor's sections) instead of two side by side. */}
+        <div role="dialog" aria-modal aria-label="Design" className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-y-auto bg-background lg:overflow-hidden">
           {/* Top bar: the way back, status, and the three things you do: undo, preview, publish. */}
           <div className="flex items-center gap-2 border-b px-4 py-2">
-            {fromSetup && (
+            {fromSetup ? (
               <Button size="sm" nativeButton={false} render={<Link href="/setup" />}>
                 <ArrowLeft /> Back to setup
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" nativeButton={false} render={<Link href={`/admin/${slug}`} />} title="Back to the admin">
+                <ArrowLeft /> Admin
               </Button>
             )}
             <span className="px-1 text-[0.8125rem] font-semibold">Design</span>
@@ -166,21 +199,24 @@ export function DesignWorkspace() {
               </Badge>
             )}
             <div className="ml-auto flex items-center gap-1">
-              <div className="mr-1 w-[6.5rem]">
-                <Segmented
-                  label="Screen size"
-                  value={device}
-                  onChange={setDevice}
-                  options={[
-                    { value: "desktop", label: <Monitor className="size-3.5" aria-label="Desktop" /> },
-                    { value: "tablet", label: <Tablet className="size-3.5" aria-label="Tablet" /> },
-                    { value: "phone", label: <Smartphone className="size-3.5" aria-label="Phone" /> },
-                  ]}
-                />
+              <div className="mr-1 flex items-center gap-2">
+                <Readability fails={checks.filter((c) => !c.pass)} total={checks.length} />
+                <DeviceSwitch value={device} onChange={setDevice} />
               </div>
               <Button variant="ghost" size="icon-sm" onClick={editor.undo} disabled={!editor.canUndo} aria-label="Undo" title="Undo (⌘Z)">
                 <Undo2 />
               </Button>
+              <ResetButton
+                title="Back to the original design?"
+                text={`Every design change goes back to how ${coach.name} started: colours, type, shape, widgets and background. Your name, logo and menu stay. You can undo it (⌘Z).`}
+                option="Also put every page's layout back"
+                onReset={(pagesToo) => {
+                  const content = { ...working.content }
+                  if (pagesToo) delete content.pages
+                  commit({ theme: {}, content }, "reset-original")
+                  toast("Back to the original design", { description: pagesToo ? "Pages too." : "Pages kept.", action: { label: "Undo", onClick: editor.undo } })
+                }}
+              />
               <DropdownMenu>
                 <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More" />}>
                   <MoreHorizontal />
@@ -235,99 +271,26 @@ export function DesignWorkspace() {
             {menu === "template" && <SaveTemplateDialog coach={coach} theme={theme} open onOpenChange={(o) => setMenu(o ? "template" : null)} />}
             <GuideDialog
               title="Designing your platform"
-              text="Four short steps: your brand, a look, your menu, your pages. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."
+              text="Your brand and a look first; then type, shape, widgets and background to fine-tune; then your menu and pages. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."
               open={menu === "guide"}
               onOpenChange={(o) => setMenu(o ? "guide" : null)}
             />
           </div>
 
-          <div className="grid min-h-0 grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)]">
-            {/* The one panel: steps across the top, the step's settings, then Next. */}
-            <aside className="flex min-h-0 flex-col border-b lg:border-r lg:border-b-0">
-              <nav aria-label="Design steps" className="grid grid-cols-4 gap-1 border-b p-2">
-                {STEPS.map((s, n) => (
-                  <button
-                    key={s.id}
-                    onClick={() => go(s.id)}
-                    aria-current={s.id === step ? "step" : undefined}
-                    className={cn(
-                      "grid justify-items-center gap-1 rounded-[4px] py-1.5 text-xs text-muted-foreground hover:bg-[var(--ts-hover-1)] hover:text-foreground",
-                      s.id === step && "bg-[var(--ts-layer-2)] text-foreground",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "grid size-5 place-items-center rounded-full border text-[0.6875rem] tabular-nums",
-                        s.id === step && "border-[var(--ts-interactive)] bg-[var(--ts-interactive)] text-black",
-                      )}
-                    >
-                      {n + 1}
-                    </span>
-                    {s.label}
-                  </button>
-                ))}
-              </nav>
-              <div className="border-b px-4 py-2.5 text-xs text-muted-foreground">{STEPS[i].text}</div>
-
+          <div className="grid min-h-0 grid-cols-1 lg:grid-cols-[400px_minmax(0,1fr)]">
+            {/* The one panel: the same editor as the library's themes, with Design's own sections (brand, look, menu, pages) around the theme's. */}
+            <aside className="flex min-h-[70svh] flex-col border-b lg:min-h-0 lg:border-r lg:border-b-0">
               <RevealContext.Provider value={pick.reveal}>
-                <div ref={panel} className="min-h-0 flex-1 overflow-y-auto" onPointerOver={pick.onPanelHover} onPointerLeave={pick.onPanelLeave}>
-                  {step === "brand" && <BrandStep />}
-                  {step === "look" && <LookStep theme={theme} />}
-                  {step === "menu" && <MenuStep />}
-                  {step === "pages" &&
-                    (arrange.selWidget ? (
-                      <div>
-                        <div className="border-b px-3 py-1.5">
-                          <Button variant="ghost" size="sm" onClick={() => setWidget(null)}>
-                            <ArrowLeft /> All widgets
-                          </Button>
-                        </div>
-                        <WidgetSettings
-                          key={arrange.selWidget.id}
-                          w={arrange.selWidget}
-                          pinned={arrange.pinned(arrange.selWidget.id)}
-                          canvasClass={canvasClass}
-                          onChange={(patch, key) => arrange.updateItem(arrange.selWidget!.id, patch, key)}
-                          onDuplicate={() => arrange.duplicateWidget(arrange.selWidget!.id)}
-                          onRemove={() => arrange.removeWidget(arrange.selWidget!.id)}
-                        />
-                      </div>
-                    ) : (
-                      <PagesStep
-                        pages={pages}
-                        page={page}
-                        onPage={(id) => {
-                          setPage(id)
-                          setWidget(null)
-                        }}
-                        tier={tier}
-                        onTier={(t) => {
-                          setTier(t)
-                          setWidget(null)
-                        }}
-                        data={data}
-                        onData={setData}
-                        arrange={arrange}
-                        library={<WidgetLibrary key={page} page={page} coach={coach} canvasClass={canvasClass} onAdd={arrange.addWidget} onDragType={setIncoming} />}
-                      />
-                    ))}
-                </div>
+                <SettingsPanel
+                  tabs={tabs}
+                  tab={step}
+                  onTab={(id) => go(id as Step)}
+                  draft={working.theme}
+                  onReset={(keys) => commit({ ...working, theme: without(working.theme, keys) }, "reset")}
+                  bodyRef={panel}
+                  bodyProps={{ onPointerOver: pick.onPanelHover, onPointerLeave: pick.onPanelLeave }}
+                />
               </RevealContext.Provider>
-
-              <div className="flex items-center justify-between gap-2 border-t px-3 py-2">
-                <Button variant="ghost" size="sm" disabled={i === 0} onClick={() => go(STEPS[i - 1].id)}>
-                  <ArrowLeft /> Back
-                </Button>
-                {next ? (
-                  <Button variant="outline" size="sm" onClick={() => go(next.id)}>
-                    Next: {next.label} <ArrowRight />
-                  </Button>
-                ) : (
-                  <Button size="sm" disabled={!editor.dirty} onClick={editor.publish}>
-                    <Check /> Publish
-                  </Button>
-                )}
-              </div>
             </aside>
 
             {/* The platform. On Pages it's the widget grid; elsewhere, click a part to change it. */}
@@ -336,7 +299,7 @@ export function DesignWorkspace() {
                 {step === "pages"
                   ? arrange.inherits
                     ? `${arrange.tierName} uses the everyone layout. Changing it gives ${arrange.tierName} its own.`
-                    : `${pageInfo.label}: drag to move, drag edges to resize, right-click for more`
+                    : `${pageInfo.label}: drag to reorder, right-click for more`
                   : "Click any part of your platform to change it"}
               </p>
               <div className="min-h-0 min-w-0 overflow-hidden">
@@ -354,10 +317,11 @@ export function DesignWorkspace() {
   )
 }
 
-function BrandStep() {
+/** The ready-made looks, then the way to a design of their own. */
+function LookTab() {
   return (
     <>
-      <BrandFields />
+      <LookCards />
       <DesignHelp />
     </>
   )
@@ -453,8 +417,8 @@ function DesignHelp() {
         <Button variant="outline" size="sm" onClick={() => toast("Design packages open from Settings → Our subscription.")}>
           See design packages
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => go("look")}>
-          Or pick a look <ArrowRight />
+        <Button variant="ghost" size="sm" onClick={() => go("type")}>
+          Or fine-tune it <ArrowRight />
         </Button>
       </div>
     </div>

@@ -4,8 +4,8 @@ import { useId, useState } from "react"
 import { cn } from "@/lib/utils"
 import { useCoach } from "@/components/coach/coach-provider"
 import { widgetHeaderOf } from "@/lib/theme/types"
-import { ACCENT, ACCENT_TEXT, Drop, GROW_ROWS, SPREAD_ROWS, Tip, TYPE, useFrame, W } from "./kit"
-import { GREY, Label, Num, TRACK, ink, useFigureFont } from "./instrument"
+import { ACCENT, ACCENT_TEXT, AreaFill, Drop, GROW_ROWS, SPREAD_ROWS, Tip, TYPE, useFrame, W } from "./kit"
+import { Chip, GREY, LINE, Label, Num, TRACK, ink, useFigureFont } from "./instrument"
 
 /**
  * Shared layout types, so widgets differ in SHAPE, not just in their chart:
@@ -122,7 +122,7 @@ export function BleedArea({ values, floor, invert }: { values: number[]; floor?:
           </clipPath>
         </defs>
         <g clipPath={`url(#c${id})`}>
-          <path d={`${line} L100 52 L0 52 Z`} fill={ACCENT} opacity={0.05} />
+          <AreaFill d={`${line} L100 52 L0 52 Z`} />
           {fl !== undefined && <line x1={0} x2={100} y1={y(fl)} y2={y(fl)} stroke="var(--loss)" strokeWidth={1} strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />}
           <path d={line} fill="none" stroke={ACCENT} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
         </g>
@@ -235,6 +235,14 @@ export const MEDIA_FG2 = `color-mix(in oklab, ${MEDIA_FG} 78%, ${MEDIA_BG})`
  * an optional footer row (progress, reactions, a button). The picture is a
  * flat dark panel, never a gradient scrim, so text contrast is known.
  */
+/**
+ * A content card in the bento-article style: the picture inset on the card
+ * (rounded, a step in from the edge), then a tag, the title, a short excerpt
+ * and the footer (a button, progress). It follows the cell's shape: picture on
+ * top in a tall or square cell, on the left in a wide one (half again as wide
+ * as tall), and gone when the cell is too short for it, so the words always
+ * fit. The words sit on the card itself, never on the picture.
+ */
 export function MediaCard({
   image,
   kicker,
@@ -242,36 +250,67 @@ export function MediaCard({
   title,
   sub,
   footer,
-  side,
 }: {
-  /** Fills the card, e.g. <Artwork /> or a coach photo. */
+  /** Fills the picture tile, e.g. <Artwork /> or a coach photo. */
   image: React.ReactNode
-  /** A photo: it takes the right ~45% and the words stay on the plain panel, so a busy picture never sits behind text. */
+  /** Kept for callers: a photo now sits like any other picture (left when wide, on top when tall). */
   side?: boolean
+  /** The tag over the title: what this is and when. */
   kicker?: React.ReactNode
   aside?: React.ReactNode
   title: React.ReactNode
   sub?: React.ReactNode
   footer?: React.ReactNode
 }) {
+  // Wide (a fixed cell half again as wide as tall, or one 34rem across where the card is as tall as its words): picture left.
   return (
-    // The card itself carries the media colour, so the colour behind the text is real (the picture layer only adds detail).
-    <W className="relative gap-0 p-0" style={{ background: MEDIA_BG }}>
-      <div className={side ? "absolute inset-y-0 right-0 w-[45%]" : "absolute inset-0"}>{image}</div>
-      <div className="relative flex min-h-0 flex-1 flex-col gap-2 p-[calc(1rem*var(--density,1))]" style={{ color: MEDIA_FG }}>
-        <div className="flex min-w-0 items-center gap-2">
-          {kicker && <span className="min-w-0 flex-1 truncate text-[0.6875rem] leading-4 font-medium tracking-[0.04em] uppercase">{kicker}</span>}
-          {aside && <span className="ml-auto shrink-0">{aside}</span>}
-        </div>
-        <div className={cn("mt-auto grid min-w-0 gap-1", side && "max-w-[55%] pr-3")}>
-          <span className="line-clamp-2 font-heading text-xl leading-7 font-medium tracking-tight">{title}</span>
-          {sub && (
-            <span className="line-clamp-2 text-[0.8125rem] leading-5" style={{ color: MEDIA_FG2 }}>
-              {sub}
-            </span>
+    <W className="gap-0 p-0">
+      <div className={cn("flex min-h-0 flex-1 flex-col gap-3 p-4", "[@container_card_(min-aspect-ratio:3/2)]:flex-row @[34rem]:flex-row [@container_card_(min-aspect-ratio:3/2)]:gap-4 @[34rem]:gap-4")}>
+        {/* The picture goes before any words when the card runs short (Drop 2.5: after Detailed-only parts, before the rest). */}
+        <Drop level={2.5}>
+          {/* A 2:1 tile where the card is as tall as its words, the free height in a fixed cell, the left part when wide. */}
+          <div
+            data-main
+            className={cn(
+              "relative aspect-[2/1] shrink-0 overflow-hidden rounded-[max(2px,calc(var(--radius)-7px))] border",
+              "[@container_card_(min-height:0px)]:aspect-auto [@container_card_(min-height:0px)]:min-h-20 [@container_card_(min-height:0px)]:flex-1 [@container_card_(max-height:15rem)]:hidden",
+              "[@container_card_(min-aspect-ratio:3/2)]:block @[34rem]:block [@container_card_(min-aspect-ratio:3/2)]:w-[46%] @[34rem]:w-[46%] [@container_card_(min-aspect-ratio:3/2)]:flex-none @[34rem]:flex-none [@container_card_(min-aspect-ratio:3/2)]:aspect-auto @[34rem]:aspect-auto",
+            )}
+            // A hairline edge: the placeholder artwork is near the card's own colour in dark mode.
+            style={{ background: MEDIA_BG, borderColor: LINE }}
+          >
+            {image}
+          </div>
+        </Drop>
+        {/* The words, on the card: the media colours point at the card's own here, so footers written for the old cover read right. */}
+        <div
+          className={cn("flex min-w-0 shrink-0 flex-col gap-2", "[@container_card_(min-aspect-ratio:3/2)]:flex-1 @[34rem]:flex-1 [@container_card_(min-aspect-ratio:3/2)]:justify-center @[34rem]:justify-center")}
+          style={{ "--cover-fg": "var(--foreground)", "--cover-bg": "var(--card)" } as React.CSSProperties}
+        >
+          {(kicker || aside) && (
+            <div className="flex min-w-0 items-center gap-2">
+              {kicker && (
+                <Chip tone="neutral" className="max-w-full min-w-0">
+                  <span className="min-w-0 truncate">{kicker}</span>
+                </Chip>
+              )}
+              {aside && <span className="ml-auto shrink-0 text-muted-foreground">{aside}</span>}
+            </div>
+          )}
+          <div className="grid min-w-0 gap-1">
+            <span className={cn("line-clamp-2 font-heading text-xl leading-7 [font-weight:var(--w-title-weight,500)] tracking-tight text-balance", "[@container_card_(min-aspect-ratio:3/2)]:line-clamp-3 @[34rem]:line-clamp-3")}>{title}</span>
+            {sub && (
+              <Drop level={2}>
+                <span className={cn(TYPE.body, "line-clamp-2 text-muted-foreground", "[@container_card_(min-aspect-ratio:3/2)]:line-clamp-3 @[34rem]:line-clamp-3")}>{sub}</span>
+              </Drop>
+            )}
+          </div>
+          {footer && (
+            <Drop level={1}>
+              <div className="flex min-w-0 shrink-0 items-center gap-3 pt-1">{footer}</div>
+            </Drop>
           )}
         </div>
-        {footer && <div className="flex min-w-0 shrink-0 items-center gap-3 pt-1">{footer}</div>}
       </div>
     </W>
   )

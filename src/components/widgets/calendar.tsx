@@ -6,7 +6,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { EVENTS, MARKET_SESSIONS, NOW_HOUR, type CalEvent } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ACCENT, Drop, GROW_ROWS, SPLIT, Tip, useFrame, useMore } from "./kit"
+import { ACCENT, Drop, SPLIT, Tip, useFitGap, useFrame, useMore } from "./kit"
 import { Poster, Rail, SplitCard, type RailItem } from "./layouts"
 import { Axis, Chip, GREY, Label, Legend, Num, Panel, Rolling, Rule, TickBar, Timeline, WCard, useFigureFont } from "./instrument"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
@@ -41,8 +41,14 @@ function short(minutes: number) {
 const overlaps = (start: number, len: number, from: number, to: number) => start < to && start + len > from
 
 /** A list that shows as many whole rows as fit the widget's height and hides the rest. */
-function Fit({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS, className)}>{children}</div>
+function Fit({ children, className, gap }: { children: React.ReactNode; className?: string; /** The design's gap between rows (12, releases 8). */ gap?: number }) {
+  // The gap bends between 4px and 20px so whole rows fill the card: no row drops out to leave a hole (see useFitGap).
+  const [ref, rowGap] = useFitGap<HTMLDivElement>({ base: gap })
+  return (
+    <div ref={ref} className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", className)} style={{ rowGap }}>
+      {children}
+    </div>
+  )
 }
 
 function NothingPlanned({ news }: { news?: boolean }) {
@@ -537,7 +543,7 @@ export function EconNews({ variant = "next" }: WidgetProps) {
       <WCard icon={Newspaper} title="Market calendar" meta={meta} chip={<OpenChip />}>
         <Num size="md" value={`${news.length} releases`} delta={`${noTrade.length} no-trade`} deltaTone="loss" />
         {detailed && <WeekBar news={news} />}
-        <Fit>
+        <Fit gap={8}>
           {list.map((e) => (
             <ReleaseRow key={e.id} e={e} figures={detailed} />
           ))}
@@ -601,7 +607,7 @@ export function EconNews({ variant = "next" }: WidgetProps) {
       {detailed && (
         <>
           <Rule />
-          <Fit className="-mt-1">
+          <Fit className="-mt-1" gap={8}>
             {others.map((e) => (
               <ReleaseRow key={e.id} e={e} />
             ))}

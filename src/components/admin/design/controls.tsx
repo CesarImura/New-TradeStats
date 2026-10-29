@@ -32,8 +32,9 @@ export function useReveal(ref: React.RefObject<HTMLElement | null>, open: () => 
 
 const LABEL = "text-xs leading-5 font-medium text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)] select-none"
 const VALUE = "text-xs leading-5 tabular-nums text-muted-foreground"
+// The --ctl-* variables let a host restyle the fields (the library's theme editor sets them for its light chrome); unset, the admin's faint fill and edge apply.
 const BOX =
-  "h-7 rounded-[4px] border border-[color:color-mix(in_oklab,var(--foreground)_12%,transparent)] bg-[color:color-mix(in_oklab,var(--foreground)_5%,transparent)] text-xs outline-none transition-colors hover:border-[color:color-mix(in_oklab,var(--foreground)_20%,transparent)] focus-within:border-[color:var(--ring)]"
+  "h-7 rounded-[4px] border border-[color:var(--ctl-line,color-mix(in_oklab,var(--foreground)_12%,transparent))] bg-[color:var(--ctl-box,color-mix(in_oklab,var(--foreground)_5%,transparent))] text-xs outline-none transition-colors hover:border-[color:var(--ctl-line-hover,color-mix(in_oklab,var(--foreground)_20%,transparent))] focus-within:border-[color:var(--ring)]"
 
 /** A labelled row in the editor panel. `id` lets a click in the preview find it. */
 export function Field({ id, label, hint, children }: { id?: string; label: string; hint?: React.ReactNode; children: React.ReactNode }) {
@@ -139,7 +140,7 @@ export function SliderField({
         className="w-full"
       >
         <SliderPrimitive.Control className="group/slider relative flex h-[18px] w-full touch-none items-center select-none">
-          <SliderPrimitive.Track className="relative h-px w-full grow rounded-full bg-[color:color-mix(in_oklab,var(--muted-foreground)_38%,transparent)]">
+          <SliderPrimitive.Track className="relative h-px w-full grow rounded-full bg-[color:var(--ctl-track,color-mix(in_oklab,var(--muted-foreground)_38%,transparent))]">
             <SliderPrimitive.Indicator className="h-full bg-foreground" />
           </SliderPrimitive.Track>
           <SliderPrimitive.Thumb className="relative block size-[9px] shrink-0 cursor-grab rounded-[2px] bg-foreground transition-transform outline-none select-none before:absolute before:top-1/2 before:left-1/2 before:size-[18px] before:-translate-1/2 hover:scale-125 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)] active:cursor-grabbing data-[dragging]:scale-125" />
@@ -168,7 +169,7 @@ export function Segmented<T extends string | number>({
   label: string
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn(BOX, "flex items-stretch gap-0.5 p-0.5 focus-within:border-[color:color-mix(in_oklab,var(--foreground)_12%,transparent)]")}>
+    <div role="radiogroup" aria-label={label} className={cn(BOX, "flex items-stretch gap-0.5 p-0.5 focus-within:border-[color:var(--ctl-line,color-mix(in_oklab,var(--foreground)_12%,transparent))]")}>
       {options.map((o) => (
         <button
           key={String(o.value)}
@@ -178,7 +179,7 @@ export function Segmented<T extends string | number>({
           onClick={() => onChange(o.value)}
           className={cn(
             "flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[3px] px-2 text-xs font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:outline-1 focus-visible:outline-[color:var(--ring)]",
-            o.value === value && "bg-[color:color-mix(in_oklab,var(--foreground)_12%,transparent)] text-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]",
+            o.value === value && "bg-[color:var(--ctl-on,color-mix(in_oklab,var(--foreground)_12%,transparent))] text-foreground shadow-[var(--ctl-on-shadow,inset_0_1px_0_rgb(255_255_255/0.06))]",
           )}
         >
           {o.label}

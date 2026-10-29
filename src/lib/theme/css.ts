@@ -37,7 +37,8 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
   const card = surface === "grey" ? `color-mix(in oklab, ${p.foreground} ${isDark(p.background) ? 7 : 5}%, ${p.background})` : surface === "outline" ? p.background : p.card
   // The hairline is an inset outline, not a 1px shadow ring: a ring sits outside the card and on rounded
   // corners the page shows through between the two, so the corners read as a different colour.
-  const cardEdge = t.borders || surface === "outline" ? p.border : "transparent"
+  // Every card keeps a soft hairline (the widgets' stroke); Borders on, or an outline card, makes it the full border colour.
+  const cardEdge = t.borders || surface === "outline" ? p.border : `color-mix(in oklab, ${p.border}, ${p.foreground} 6%)`
   const cardShadow = shadow === "none" || surface !== "raised" ? "none" : shadow
   const buttonRadius =
     t.buttonShape === "pill" ? "9999px" : t.buttonShape === "square" ? `${Math.min(t.radius, 3)}px` : `${Math.max(6, t.radius * 0.7)}px`
@@ -102,6 +103,11 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
     "--coach-font-body": FONT_LIBRARY[t.fonts.body].css,
     "--coach-font-label": FONT_LIBRARY[t.fonts.label].css,
     "--coach-heading-weight": String(t.headingWeight),
+    // Widgets follow the heading weight too: their big figures take it as is, their small titles at most semibold.
+    "--w-value-weight": String(t.headingWeight),
+    "--w-title-weight": String(Math.min(t.headingWeight, 600)),
+    // Corner brackets (Widget finish Corners) are a square-card detail: on a rounded card they would sit on the curve as a seam.
+    "--w-corners": t.radius <= 4 ? "block" : "none",
     "--label-transform": t.labelStyle === "caps" ? "uppercase" : "none",
     "--label-tracking": t.labelStyle === "caps" ? "0.06em" : "0",
     "--label-size": t.labelStyle === "caps" ? "0.6875rem" : "0.8125rem",

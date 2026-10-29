@@ -37,7 +37,7 @@ const MIX_OPTIONS: { key: keyof Mix; label: string; options: [string, string][] 
   { key: "figureStyle", label: "Numbers", options: [["plain", "Plain"], ["marked", "Marked"], ["mono", "Mono"], ["display", "Display"]] },
   { key: "chartStyle", label: "Bars", options: [["ticks", "Ticks"], ["solid", "Solid"], ["thin", "Thin"], ["blocks", "Blocks"], ["dots", "Dots"]] },
   { key: "panelStyle", label: "Panels", options: [["none", "None"], ["filled", "Filled"], ["outline", "Outline"]] },
-  { key: "starStyle", label: "Star", options: [["brand", "Brand"], ["inverted", "Inverted"]] },
+  { key: "starStyle", label: "Star", options: [["spotlight", "Spotlight"], ["brand", "Brand"], ["inverted", "Inverted"]] },
   { key: "widgetFinish", label: "Finish", options: [["none", "None"], ["corners", "Corners"], ["grid", "Grid"]] },
 ]
 

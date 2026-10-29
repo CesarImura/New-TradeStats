@@ -396,11 +396,12 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
         <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2 @xl:grid-cols-4">
           {offers.slice(0, detailed ? 8 : 4).map((o, i) => (
             <Drop key={o.id} level={tileDrop(i)}>
-              <a href={href(o)} {...ext} className={cn("group relative grid min-h-0 content-center justify-items-start gap-1 rounded-[min(var(--radius),8px)] border bg-card p-2.5", FX.tile, FX.focus)}>
+              <a href={href(o)} {...ext} className={cn("group relative grid min-h-0 content-center justify-items-start gap-1 rounded-[min(var(--radius),8px)] border bg-card p-2", FX.tile, FX.focus)}>
                 <span className="max-w-full truncate pr-5 font-heading text-[0.8125rem] leading-5 font-medium tracking-tight">{o.name}</span>
                 {/* Opens the partner's site: the arrow says so, and wakes up on hover. */}
-                <ArrowUpRight aria-hidden className="absolute top-2.5 right-2.5 size-3.5 text-muted-foreground transition-[color,translate] duration-150 group-hover:translate-x-px group-hover:-translate-y-px group-hover:text-foreground" />
-                {more && <span className={cn(TYPE.small, "line-clamp-1")}>{KIND_LABEL[o.kind]}</span>}
+                <ArrowUpRight aria-hidden className="absolute top-2 right-2 size-3.5 text-muted-foreground transition-[color,translate] duration-150 group-hover:translate-x-px group-hover:-translate-y-px group-hover:text-foreground" />
+                {/* The kind goes first when the tiles run short (a tall header, a short cell). */}
+                <Drop level={2}>{more && <span className={cn(TYPE.small, "line-clamp-1")}>{KIND_LABEL[o.kind]}</span>}</Drop>
                 {/* A long offer ends in "…" inside its tile (mono figures run wider). */}
                 <Chip tone={i === 0 ? "accent" : "neutral"} className="max-w-full overflow-hidden">
                   <span className="min-w-0 truncate">{o.offer}</span>
@@ -423,7 +424,7 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
             key={o.id}
             href={href(o)}
             {...ext}
-            className={cn("group flex min-w-0 items-center gap-2.5 border-b focus-visible:rounded-sm border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5 last:border-b-0", FX.focus)}
+            className={cn("group flex min-w-0 items-center gap-2.5 focus-visible:rounded-sm border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5", FX.focus)}
           >
             <Mark name={o.name} size={more ? 28 : 22} />
             <span className="grid min-w-0 flex-1">

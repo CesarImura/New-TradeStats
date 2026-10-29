@@ -477,12 +477,13 @@ function PanelStyleField() {
 function StarStyleField() {
   const { theme, change } = useDesign()
   return (
-    <Field id="star-style" label="Star widget" hint={{ brand: "On your brand colour", inverted: "Black on light pages, white on dark; your colour as one mark" }[starStyleOf(theme)]}>
+    <Field id="star-style" label="Star widget" hint={{ spotlight: "A plain card, the figure at its largest, your colour on its mark and edge", brand: "On your brand colour", inverted: "Black on light pages, white on dark; your colour as one mark" }[starStyleOf(theme)]}>
       <Segmented
         label="Star widget"
         value={starStyleOf(theme)}
         onChange={(starStyle) => change({ theme: { starStyle } }, "star-style")}
         options={[
+          { value: "spotlight", label: "Spotlight" },
           { value: "brand", label: "Brand" },
           { value: "inverted", label: "Inverted" },
         ]}

@@ -1,6 +1,6 @@
 /**
  * What can be tried on each widget in the review modal (prototype only).
- * Written from reading the lab copy of the widgets (reui-widgets/); an empty
+ * Written from reading the widgets (src/components/widgets/); an empty
  * list means the widget is static.
  */
 export const INTERACTIONS: Record<string, string[]> = {

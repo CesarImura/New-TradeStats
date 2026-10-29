@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Chip, Label, Legend, Num, Panel, WCard } from "@/components/lab/reui-widgets/instrument"
-import { Drop, GROW_ROWS, Ring, SPLIT, Spark, Streak, Track, tileDrop, useFrame, useMore } from "@/components/lab/reui-widgets/kit"
-import type { WidgetProps } from "@/components/lab/reui-widgets/shared"
+import { Chip, Label, Legend, Num, Panel, WCard } from "@/components/widgets/instrument"
+import { Drop, GROW_ROWS, Ring, SPLIT, Spark, Streak, Track, tileDrop, useFrame, useMore } from "@/components/widgets/kit"
+import type { WidgetProps } from "@/components/widgets/shared"
 import { Eye, Flag, Flame, NotebookPen } from "@/components/icons"
 import { cn } from "@/lib/utils"
 
@@ -57,7 +57,7 @@ export function Watchlist({ variant = "list" }: WidgetProps) {
       {/* Whole rows only: a short card keeps the first markets. */}
       <ul className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS)}>
         {rows.map((w) => (
-          <li key={w.sym} className="grid grid-cols-[1fr_4.5rem_auto] items-center gap-3 border-b py-2 last:border-b-0 @[24rem]:grid-cols-[minmax(6rem,12rem)_minmax(5rem,1fr)_4.5rem_auto] @[24rem]:gap-x-6" style={{ borderColor: "var(--w-hair, var(--border))" }}>
+          <li key={w.sym} className="grid grid-cols-[1fr_4.5rem_auto] items-center gap-3 py-2 @[24rem]:grid-cols-[minmax(6rem,12rem)_minmax(5rem,1fr)_4.5rem_auto] @[24rem]:gap-x-6" style={{ borderColor: "var(--w-hair, var(--border))" }}>
             <span className="min-w-0">
               <span className="block font-medium">{w.sym}</span>
               {standard && <span className="block truncate text-xs text-muted-foreground">{w.name}</span>}
@@ -166,10 +166,10 @@ export function TradingStreak({ variant = "month" }: WidgetProps) {
   const runStart = MONTH.lastIndexOf(false) + 1
   return (
     <WCard icon={Flame} title="Trading streak" meta="October · rules kept" chip={<Chip>{`${run} in a row`}</Chip>} bodyClassName={SPLIT}>
-      {/* In a cell that sets the height the month takes it: four week rows share the height, and the width is held to keep the days square. */}
+      {/* In a cell that sets the height the month takes it: four week rows share the height, and the width is held to keep the days square. Elsewhere it stays 18rem at most, so square days never outgrow the card. */}
       <div
         data-main
-        className="grid gap-1.5 [@container_card_(min-height:0px)]:mx-auto [@container_card_(min-height:0px)]:min-h-0 [@container_card_(min-height:0px)]:w-full [@container_card_(min-height:0px)]:max-w-[calc((100cqh-8.5rem)*1.75)] [@container_card_(min-height:0px)]:flex-1 [@container_card_(min-height:0px)]:grid-rows-[auto_repeat(4,minmax(0,1fr))]"
+        className="mx-auto grid w-full max-w-[18rem] gap-1.5 [@container_card_(min-height:0px)]:mx-auto [@container_card_(min-height:0px)]:min-h-0 [@container_card_(min-height:0px)]:w-full [@container_card_(min-height:0px)]:max-w-[calc((100cqh-8.5rem)*1.75)] [@container_card_(min-height:0px)]:flex-1 [@container_card_(min-height:0px)]:grid-rows-[auto_repeat(4,minmax(0,1fr))]"
       >
         <div className="grid grid-cols-7 gap-1.5 text-center text-[0.6875rem] text-muted-foreground">
           {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
@@ -188,16 +188,19 @@ export function TradingStreak({ variant = "month" }: WidgetProps) {
                   key={di}
                   title={d === null ? "No trading" : d ? "All rules kept" : "A rule broken"}
                   className={cn(
-                    "aspect-square rounded-[min(var(--radius),5px)] [@container_card_(min-height:0px)]:aspect-auto [@container_card_(min-height:0px)]:h-full",
+                    "relative aspect-square rounded-[min(var(--radius),5px)] [@container_card_(min-height:0px)]:aspect-auto [@container_card_(min-height:0px)]:h-full",
                     last && "ring-2 ring-offset-1 ring-offset-(--card)",
                   )}
                   style={{
-                    background: d === null ? "transparent" : inRun ? "var(--w-accent, var(--primary))" : d ? "color-mix(in oklab, var(--foreground) 22%, transparent)" : "transparent",
+                    // The streak is a mark in the accent on a kept day, not a filled block: a big cell would turn the card into brand colour.
+                    background: d ? "color-mix(in oklab, var(--foreground) 14%, transparent)" : "transparent",
                     boxShadow: d === null ? "inset 0 0 0 1px var(--w-hair, var(--border))" : d === false ? "inset 0 0 0 1.5px var(--loss)" : undefined,
                     // @ts-expect-error CSS variable for the ring colour
                     "--tw-ring-color": "var(--w-accent, var(--primary))",
                   }}
-                />
+                >
+                  {inRun && <i className="r-dot absolute top-1/2 left-1/2 size-2 -translate-1/2" style={{ background: "var(--w-accent, var(--primary))" }} />}
+                </span>
               )
             })}
           </div>
@@ -285,7 +288,7 @@ export function SessionCheckIn({ variant = "mood" }: WidgetProps) {
             <Label>Last sessions</Label>
             <ul className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS)}>
               {HISTORY.map((h) => (
-                <li key={h.day} className="flex min-w-0 items-center gap-3 border-b py-1.5 text-xs last:border-b-0" style={{ borderColor: "var(--w-hair, var(--border))" }}>
+                <li key={h.day} className="flex min-w-0 items-center gap-3 py-1.5 text-xs" style={{ borderColor: "var(--w-hair, var(--border))" }}>
                   <span className="w-12 shrink-0 text-muted-foreground tabular-nums">{h.day}</span>
                   <span className="min-w-0 flex-1 truncate">{h.mood}</span>
                   <span className="shrink-0 text-muted-foreground tabular-nums">{h.sleep} h sleep</span>

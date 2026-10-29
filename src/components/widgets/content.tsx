@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { VideoThumb, ctaLink, webUrl } from "./brand"
 import { Chip, Label, Rolling, WCard, useFigureFont } from "./instrument"
 import { CTA, Drop, FitText, FX, TYPE, useMore, W, GROW_ROWS } from "./kit"
+import { MediaCard } from "./layouts"
 import { Cover, type WidgetProps } from "./shared"
 
 // The coach's own content: pictures, buttons, embeds and a hero. These are the
@@ -64,18 +65,13 @@ export function ImageBlock({ variant = "cover", props }: WidgetProps) {
   }
 
   if (variant === "side") {
+    // A bento article: the picture beside the words when the cell is wide, over them when it is tall.
     return (
-      <W className="flex-row items-stretch gap-4 p-[calc(0.625rem*var(--density,1))]">
-        <Picture src={props.image} alt={title || SAMPLE_CAPTION} className="w-[42%] shrink-0 @xl:w-[36%]" />
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 pr-1">
-          <h3 className={cn(TYPE.value, "line-clamp-2 text-balance")}>{title || SAMPLE_CAPTION}</h3>
-          {more && (
-            <FitText lines={3} className={cn(TYPE.body, "text-muted-foreground")}>
-              {text || "Where the weekly reviews are recorded."}
-            </FitText>
-          )}
-        </div>
-      </W>
+      <MediaCard
+        image={<Picture flush src={props.image} alt={title || SAMPLE_CAPTION} className="absolute inset-0" />}
+        title={title || SAMPLE_CAPTION}
+        sub={more ? text || "Where the weekly reviews are recorded." : undefined}
+      />
     )
   }
 
@@ -409,7 +405,7 @@ export function Links({ variant = "list", props }: WidgetProps) {
       {/* In a cell taller than the links, the rows share the spare height instead of leaving it under the last one. */}
       <div className={cn("flex flex-1 flex-col *:shrink-0", GROW_ROWS)}>
         {items.map((x, i) => (
-          <A key={i} item={x} className="group flex min-w-0 items-center gap-2.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-2 last:border-b-0">
+          <A key={i} item={x} className="group flex min-w-0 items-center gap-2.5 border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-2">
             <span className="grid min-w-0 flex-1">
               <span className="truncate font-heading text-[0.8125rem] leading-5 font-medium tracking-tight group-hover:underline">{x.name}</span>
               {detailed && <span className={cn(TYPE.small, "truncate")}>{x.host}</span>}

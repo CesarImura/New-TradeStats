@@ -44,7 +44,7 @@ export type FigureStyle = "plain" | "marked" | "mono" | "display"
 /** Whether a widget's chart and small stats sit on an inner panel: None, Filled (a step darker or lighter than the card) or Outline (a hairline box). */
 export type PanelStyle = "none" | "filled" | "outline"
 /** The Star widget: on the brand colour, or Inverted (the text colour as the card, the brand only as one mark). */
-export type StarStyle = "brand" | "inverted"
+export type StarStyle = "brand" | "inverted" | "spotlight"
 /** A fine finishing touch: none, corner brackets on each widget, or a grid of crosses on the page behind the widgets. */
 export type WidgetFinish = "none" | "corners" | "grid"
 /** Cards: Raised (the card colour, as the template has it), Grey (a grey card on the page), Outline (no fill, a hairline). */
@@ -140,7 +140,7 @@ export const figureStyleOf = (t: Pick<CoachTheme, "template" | "widgetStyle" | "
 const PANEL_STYLE_DEFAULT: Record<WidgetStyle, PanelStyle> = { instrument: "outline", soft: "filled", editorial: "none" }
 export const panelStyleOf = (t: Pick<CoachTheme, "template" | "widgetStyle" | "panelStyle">): PanelStyle => t.panelStyle ?? PANEL_STYLE_DEFAULT[widgetStyleOf(t)]
 
-const STAR_STYLE_DEFAULT: Record<WidgetStyle, StarStyle> = { instrument: "brand", soft: "brand", editorial: "inverted" }
+const STAR_STYLE_DEFAULT: Record<WidgetStyle, StarStyle> = { instrument: "spotlight", soft: "spotlight", editorial: "inverted" }
 export const starStyleOf = (t: Pick<CoachTheme, "template" | "widgetStyle" | "starStyle">): StarStyle => t.starStyle ?? STAR_STYLE_DEFAULT[widgetStyleOf(t)]
 
 const FINISH_DEFAULT: Record<WidgetStyle, WidgetFinish> = { instrument: "corners", soft: "none", editorial: "none" }

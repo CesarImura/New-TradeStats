@@ -9,11 +9,12 @@ import "react-grid-layout/css/styles.css"
 import "react-resizable/css/styles.css"
 import { toast } from "sonner"
 import { CoachContext } from "@/components/coach/coach-provider"
-import { WidgetFrame } from "@/components/lab/reui-widgets/kit"
-import { PageRenderer } from "@/components/lab/reui-widgets/page-renderer"
-import { getWidget } from "@/components/lab/reui-widgets/registry"
-import { PageIdContext, PageTitleShownContext } from "@/components/lab/reui-widgets/shared"
+import { WidgetFrame } from "@/components/widgets/kit"
+import { PageRenderer } from "@/components/widgets/page-renderer"
+import { getWidget } from "@/components/widgets/registry"
+import { PageIdContext, PageTitleShownContext } from "@/components/widgets/shared"
 import { getDemoCoach } from "@/lib/data/coaches"
+import { DeviceSwitch } from "@/components/admin/design/settings-panel"
 import { backdropStyle } from "@/lib/theme/backdrops"
 import { themeToCss } from "@/lib/theme/css"
 import { resolveCoach } from "@/lib/theme/resolve"
@@ -339,16 +340,10 @@ export function LayoutBar({
         )}
         {!editing && (
           <>
-            <LabSeg
-              label="Device"
-              value={device}
-              onChange={onDevice}
-              options={[
-                ["desktop", "Desktop"],
-                ["tablet", "Tablet"],
-                ["phone", "Phone"],
-              ]}
-            />
+            {/* The same screen-size switch as the theme editor and the admin's Design (drawn in the library's chrome). */}
+            <span className="lab-ui contents">
+              <DeviceSwitch value={device} onChange={onDevice} />
+            </span>
             <LabSeg
               label="Compare"
               value={compare}

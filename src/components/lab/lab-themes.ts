@@ -71,7 +71,7 @@ const WHITE_LABEL: CoachTheme = {
   figureStyle: "plain",
   chartStyle: "solid",
   panelStyle: "filled",
-  starStyle: "brand",
+  starStyle: "spotlight",
   widgetFinish: "none",
   widgetHeader: undefined,
   trading: undefined,

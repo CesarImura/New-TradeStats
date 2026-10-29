@@ -9,15 +9,15 @@ import { onColor } from "@/lib/theme/derive"
 import { TEMPLATES } from "@/lib/theme/templates"
 import type { CoachTheme, TemplateId } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
-import { More, SliderField } from "./controls"
+import { More } from "./controls"
 import { DesignField, useDesign } from "./design-fields"
-import { DEPTH_NAMES, LOOKS, SPACING_NAMES, currentLook, depthOf, fromDepth, fromRoundness, fromSpacing, roundnessOf, spacingOf, type Look } from "./looks"
+import { LOOKS, currentLook, type Look } from "./looks"
 import { PaletteField } from "./palette-field"
 import { CAN_SAVE_TEMPLATE } from "./save-template"
 
 /**
- * The Design steps' panels, shared by the Design workspace and the setup
- * wizard (the wizard's first steps are these same panels).
+ * Design's own panels (brand, looks, menu), shared by the Design workspace
+ * and the setup wizard; the theme's settings are in settings-panel.tsx.
  */
 export function Section({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
@@ -44,70 +44,40 @@ export function BrandFields() {
   )
 }
 
-/** `suggested`: the template to mark "Fits you" (the first look on it). */
-export function LookStep({ theme, suggested }: { theme: CoachTheme; suggested?: TemplateId }) {
-  const { coach, change } = useDesign()
+/**
+ * The ready-made looks as cards; picking one keeps the coach's colours and
+ * logo. Fine-tuning is in the editor's Type, Shape, Widgets and Page sections.
+ * `suggested`: the template to mark "Fits you" (the first look on it);
+ * `templates`: the note on which template the coach is on, and the palette tool.
+ */
+export function LookCards({ suggested, templates = true }: { suggested?: TemplateId; templates?: boolean }) {
+  const { theme, coach, change } = useDesign()
   const active = currentLook(theme)
   return (
-    <>
-      <Section>
-        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Look">
-          {LOOKS.map((l) => (
-            <LookCard
-              key={l.id}
-              look={l}
-              theme={theme}
-              selected={active?.id === l.id}
-              fits={!!suggested && l.id === LOOKS.find((x) => x.template === suggested)?.id}
-              onSelect={() => {
-                change({ theme: { template: l.template, ...l.set } }, "look")
-                toast(`${l.name} look applied. Your colours and logo stay.`)
-              }}
-            />
-          ))}
-        </div>
-        {!active && <p className="text-xs text-muted-foreground">Your own mix. Pick a look to start again from it.</p>}
-      </Section>
-      <Section title="Fine-tune">
-        <SliderField
-          id="corners"
-          label="Roundness"
-          value={roundnessOf(theme)}
-          min={0}
-          max={24}
-          format={(r) => (r <= 3 ? "Sharp" : r >= 16 ? "Very round" : "Round")}
-          onChange={(r) => change({ theme: fromRoundness(r) }, "roundness")}
-        />
-        <SliderField id="shadows" label="Depth" value={depthOf(theme)} min={0} max={2} format={(d) => DEPTH_NAMES[d]} onChange={(d) => change({ theme: fromDepth(d) }, "depth")} />
-        <SliderField id="density" label="Spacing" value={spacingOf(theme)} min={0} max={2} format={(s) => SPACING_NAMES[s]} onChange={(s) => change({ theme: fromSpacing(s) }, "spacing")} />
-        <DesignField id="widget-style" />
-        <DesignField id="widget-set" />
-        <DesignField id="card-surface" />
-        <DesignField id="header-form" />
-        <DesignField id="figure-style" />
-        <DesignField id="chart-style" />
-        <DesignField id="panel-style" />
-        <DesignField id="star-style" />
-        <DesignField id="widget-finish" />
-        <DesignField id="widget-header" />
-      </Section>
-      <Section>
-        <More label="Advanced">
-          <DesignField id="fonts" />
-          <DesignField id="heading-weight" />
-          <DesignField id="widget-font" />
-          <DesignField id="labels" />
-          <DesignField id="buttons" />
-          <DesignField id="effects" />
-          <DesignField id="borders" />
-          <DesignField id="background" />
-          {CAN_SAVE_TEMPLATE && <PaletteField />}
-          <p className="text-xs text-muted-foreground">
-            Looks are built on three templates ({Object.values(TEMPLATES).map((t) => t.name).join(", ")}). {coach.name} is on {TEMPLATES[theme.template].name}.
-          </p>
-        </More>
-      </Section>
-    </>
+    <Section>
+      <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Look">
+        {LOOKS.map((l) => (
+          <LookCard
+            key={l.id}
+            look={l}
+            theme={theme}
+            selected={active?.id === l.id}
+            fits={!!suggested && l.id === LOOKS.find((x) => x.template === suggested)?.id}
+            onSelect={() => {
+              change({ theme: { template: l.template, ...l.set } }, "look")
+              toast(`${l.name} look applied. Your colours and logo stay.`)
+            }}
+          />
+        ))}
+      </div>
+      {!active && <p className="text-xs text-muted-foreground">Your own mix. Pick a look to start again from it.</p>}
+      {templates && CAN_SAVE_TEMPLATE && <PaletteField />}
+      {templates && (
+        <p className="text-xs text-muted-foreground">
+          Looks are built on three templates ({Object.values(TEMPLATES).map((t) => t.name).join(", ")}). {coach.name} is on {TEMPLATES[theme.template].name}.
+        </p>
+      )}
+    </Section>
   )
 }
 

@@ -76,7 +76,7 @@ export function LatestDownloads({ variant = "list", props }: WidgetProps) {
       {/* Whole rows only; "All files" below stays, it's the way to the rest. */}
       <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS)}>
         {shown.map((d) => (
-          <Link key={d.id} href={href} className={cn("group flex min-w-0 items-center gap-2.5 border-b focus-visible:rounded-sm border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5 last:border-b-0", FX.focus)}>
+          <Link key={d.id} href={href} className={cn("group flex min-w-0 items-center gap-2.5 focus-visible:rounded-sm border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5", FX.focus)}>
             <span className="grid min-w-0 flex-1">
               <span className="truncate text-[0.8125rem] leading-5 font-medium group-hover:underline">{d.title}</span>
               {more && (
