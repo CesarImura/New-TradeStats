@@ -30,7 +30,7 @@ const RULES: Rule[] = [
   { target: "labels", selector: ".eyebrow", label: "Small labels", fields: ["labels", "fonts"] },
   { target: "highlight", selector: '[data-slot="badge"], .bg-highlight', label: "Highlight colour", fields: ["highlight"] },
   { target: "brand-surface", selector: ".fx-hero", label: "Brand card", fields: ["primary", "effects"] },
-  { target: "cards", selector: '[data-slot="card"], [data-slot="widget"]', label: "Cards and widgets", fields: ["card-surface", "widget-style", "chart-style", "widget-font", "corners", "shadows", "borders", "density"] },
+  { target: "cards", selector: '[data-slot="card"], [data-slot="widget"]', label: "Cards and widgets", fields: ["widget-set", "card-surface", "widget-style", "header-form", "chart-style", "widget-font", "corners", "shadows", "borders", "density"] },
 ]
 
 const MARKED: Record<string, { label: string; fields: string[] }> = {

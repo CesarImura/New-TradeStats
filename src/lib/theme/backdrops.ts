@@ -40,18 +40,15 @@ export const BACKDROPS: { id: string; name: string; css: string; size: string }[
   { id: "candles", name: "Candles", css: svg(candleArt()), size: "800px auto" },
   { id: "topo", name: "Contours", css: svg(topoArt()), size: "800px auto" },
   {
-    id: "aurora",
-    name: "Aurora",
-    css: "radial-gradient(60% 50% at 20% 10%, #6b3dff 0%, transparent 70%), radial-gradient(50% 50% at 90% 30%, #00d39a 0%, transparent 70%), radial-gradient(60% 60% at 60% 100%, #ff5500 0%, transparent 70%)",
-    size: "cover",
-  },
-  {
     id: "desk",
     name: "Trading desk",
     css: "repeating-linear-gradient(90deg, rgb(255 255 255 / .05) 0 1px, transparent 1px 48px), repeating-linear-gradient(0deg, rgb(255 255 255 / .05) 0 1px, transparent 1px 48px), linear-gradient(160deg, #0d1b2a, #1b263b 50%, #0b0c10)",
     size: "cover",
   },
 ]
+
+/** Retired presets and what saved themes show instead: Aurora (a decorative colour wash) became Contours. */
+const RETIRED: Record<string, string> = { "preset:aurora": "preset:topo" }
 
 /** The CSS for the backdrop layer behind the platform, or null when the background is plain or a texture. */
 export function backdropStyle(t: CoachTheme): CSSProperties | null {
@@ -62,7 +59,8 @@ export function backdropStyle(t: CoachTheme): CSSProperties | null {
     }
   }
   if (t.background === "image" && t.bgImage) {
-    const preset = t.bgImage.startsWith("preset:") ? BACKDROPS.find((b) => `preset:${b.id}` === t.bgImage) : null
+    const id = RETIRED[t.bgImage] ?? t.bgImage
+    const preset = id.startsWith("preset:") ? BACKDROPS.find((b) => `preset:${b.id}` === id) : null
     return {
       backgroundImage: preset ? preset.css : `url("${t.bgImage}")`,
       backgroundSize: preset ? preset.size : "cover",

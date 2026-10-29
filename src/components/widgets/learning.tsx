@@ -8,7 +8,7 @@ import { useViewerTier } from "@/lib/data/access"
 import { canAccess, courseStats, openLessons, resumeLesson, studentCourses, useCatalog, useProgress, type Course, type Progress } from "@/lib/data/learning"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { ACCENT, TYPE, series, useFrame, useMore } from "./kit"
+import { ACCENT, Drop, GROW_ROWS, TYPE, series, useFrame, useMore } from "./kit"
 import { Axis, Chip, GREY, HatchBar, Label, Legend, Num, Rule, TickBar, Timeline, WCard, useFigureFont, useChartStyle } from "./instrument"
 import { Cover, WidgetEmpty, inWords, useEmpty, type WidgetProps } from "./shared"
 import { Artwork, MEDIA_FG, MediaCard, MediaProgress } from "./layouts"
@@ -113,7 +113,14 @@ function LessonBar({ course, progress, current, height: h0 = 8, modules, classNa
           <div key={m.id} className={cn("flex h-full items-end", style === "ticks" ? "gap-[2px]" : "gap-px")} style={{ flex: m.lessons.reduce((n, l) => n + l.minutes, 0) }}>
             {m.lessons.map((l) => {
               const now = l.id === current
-              return <span key={l.id} title={l.title} className="r-bar" style={{ flex: l.minutes, height: now && style !== "thin" ? height + 4 : height, ...(progress.done.includes(l.id) ? { background: GREY[1] } : now ? { background: ACCENT } : rest) }} />
+              return (
+                <span
+                  key={l.id}
+                  title={l.title}
+                  className="r-bar"
+                  style={{ flex: l.minutes, height: now && style !== "thin" ? height + 4 : height, ...(progress.done.includes(l.id) ? { background: GREY[1] } : now ? { background: ACCENT } : rest) }}
+                />
+              )
             })}
           </div>
         ))}
@@ -139,6 +146,7 @@ function LessonBar({ course, progress, current, height: h0 = 8, modules, classNa
  */
 export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
   const { coach, base } = useCoach()
+  const { fixed } = useFrame()
   const empty = useEmpty()
   const standard = useMore("standard")
   const detailed = useMore("detailed")
@@ -160,19 +168,28 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
   const chip = <Chip>{inWords(minutesLeft)} left</Chip>
 
   /** This lesson and the next ones, as a timeline (Detail = detailed). */
-  const upcoming = detailed && (
-    <div className="mt-auto hidden min-h-0 gap-1 @[16rem]:grid">
-      <Rule />
-      <Timeline
-        items={lessons.slice(index, index + 4).map((l, k) => ({
-          time: String(index + k + 1).padStart(2, "0"),
-          title: l.title,
-          value: `${l.minutes} min`,
-          color: k === 0 ? ACCENT : GREY[2],
-          strong: k === 0,
-        }))}
-      />
-    </div>
+  // The next lessons: on Detailed, and in any cell tall enough to hold them (they give way first when it isn't).
+  // The lessons ahead (then the ones done): on Detailed, a short list at the foot; in a cell that sets the height, as many
+  // whole rows as it holds right under the progress, each row opening up a little, so the height carries the course, not a gap.
+  const ahead = fixed ? [...lessons.slice(index), ...lessons.slice(0, index)] : lessons.slice(index, index + 4)
+  const upcoming = (detailed || fixed) && (
+    <Drop level={3}>
+      <div className={cn("hidden min-h-0 gap-1 @[16rem]:grid", fixed ? "mt-1 flex-1 grid-rows-[auto_minmax(0,1fr)]" : "mt-auto")}>
+        <Rule />
+        <div className={cn("flex min-h-0 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS)}>
+          {ahead.map((l) => {
+            const n = lessons.indexOf(l)
+            return (
+              <Timeline
+                key={l.id}
+                items={[{ time: String(n + 1).padStart(2, "0"), title: l.title, value: n < index ? "done" : `${l.minutes} min`, color: n === index ? ACCENT : n < index ? GREY[1] : GREY[2], strong: n === index }]}
+                className={cn("items-center", n < index && "opacity-60")}
+              />
+            )
+          })}
+        </div>
+      </div>
+    </Drop>
   )
   const footer = <Axis labels={[`${done}/${lessons.length} done`, `${inWords(minutesLeft)} left`]} />
 
@@ -206,14 +223,14 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
       <MediaCard
         image={<Artwork />}
         kicker={`${label} · Module ${mi + 1}`}
-        aside={standard ? <span className="text-xs leading-4 tabular-nums">{next.lesson.minutes} min</span> : undefined}
+        aside={standard ? <span className="text-[0.6875rem] leading-4 tabular-nums">{next.lesson.minutes} min</span> : undefined}
         title={next.lesson.title}
         sub={standard ? `${course.title} · ${word} ${index + 1} of ${lessons.length}${detailed ? ` · ${inWords(minutesLeft)} left in the course` : ""}` : undefined}
         footer={
           <>
             <MediaProgress value={(done / lessons.length) * 100} />
             {standard && (
-              <span className="shrink-0 text-xs leading-4 tabular-nums" style={{ color: MEDIA_FG }}>
+              <span className="shrink-0 text-[0.6875rem] leading-4 tabular-nums" style={{ color: MEDIA_FG }}>
                 {done}/{lessons.length}
               </span>
             )}
@@ -262,7 +279,8 @@ export function ContinueLesson({ variant = "progress", props }: WidgetProps) {
         </div>
         <Go href={href} label={`Continue ${word}`} text />
       </div>
-      <div className="mt-auto grid gap-1.5">
+      {/* With the next lessons under it (a tall cell), the bar stays with the title instead of sinking to the foot. */}
+      <div className={cn("grid gap-1.5", upcoming ? "mt-2" : "mt-auto")}>
         <LessonBar course={course} progress={progress} current={next.lesson.id} modules={detailed} />
         {standard && footer}
       </div>
@@ -317,6 +335,7 @@ function LessonRing({ course, progress, locked, accent, className, children }: {
  */
 export function CourseProgress({ variant = "rings" }: WidgetProps) {
   const { coach } = useCoach()
+  const { fixed } = useFrame()
   const empty = useEmpty()
   const standard = useMore("standard")
   const detailed = useMore("detailed")
@@ -332,7 +351,10 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
   const total = stats.reduce((n, x) => n + x.lessons, 0)
   const done = stats.reduce((n, x) => n + x.done, 0)
   const overall = total ? Math.round((done / total) * 100) : 0
-  const minutesLeft = open.flatMap(openLessons).filter((l) => !progress.done.includes(l.id)).reduce((n, l) => n + l.minutes, 0)
+  const minutesLeft = open
+    .flatMap(openLessons)
+    .filter((l) => !progress.done.includes(l.id))
+    .reduce((n, l) => n + l.minutes, 0)
   const currentStats = courseStats(current, progress)
   const meta = `${DEMO_STUDENT.first} · ${done} of ${total} ${word}s · ${inWords(minutesLeft)} to go`
 
@@ -365,9 +387,7 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
             />
           </div>
         )}
-        {detailed && locked && (
-          <Legend items={[{ color: GREY[3], label: `${locked.title} · needs ${needs(locked)}`, value: <Lock className="size-3 text-muted-foreground" /> }]} />
-        )}
+        {detailed && locked && <Legend items={[{ color: GREY[3], label: `${locked.title} · needs ${needs(locked)}`, value: <Lock className="size-3 text-muted-foreground" /> }]} />}
       </WCard>
     )
   }
@@ -389,7 +409,7 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
               <div key={c.id} className="grid min-w-0 gap-1.5">
                 <div className="flex min-w-0 items-baseline gap-2">
                   <span className={cn(TYPE.body, "truncate", locked && "text-muted-foreground", here && "font-medium")}>{c.title}</span>
-                  <span className="ml-auto flex shrink-0 items-center gap-1.5 text-xs leading-4 tabular-nums" style={{ fontFamily: font }}>
+                  <span className="ml-auto flex shrink-0 items-center gap-1.5 text-[0.6875rem] leading-4 tabular-nums" style={{ fontFamily: font }}>
                     {locked ? (
                       <>
                         <Lock className="size-3 text-muted-foreground" />
@@ -409,11 +429,7 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
                     )}
                   </span>
                 </div>
-                <HatchBar
-                  height={6}
-                  total={st.lessons}
-                  parts={locked ? [] : [{ value: d, color: here ? ACCENT : GREY[1] }, ...(here ? [{ value: inProgress, color: GREY[2] }] : [])]}
-                />
+                <HatchBar height={6} total={st.lessons} parts={locked ? [] : [{ value: d, color: here ? ACCENT : GREY[1] }, ...(here ? [{ value: inProgress, color: GREY[2] }] : [])]} />
               </div>
             )
           })}
@@ -438,28 +454,42 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
   // rings
   return (
     <WCard icon={BookOpen} title={coach.wording.courses} meta={meta} chip={<Chip>{overall}%</Chip>}>
-      <div className="grid flex-1 grid-cols-3 items-center gap-2">
+      {/* Three columns; a tall, narrow card stacks them as rows (ring beside its name), so the height is used, not left blank. */}
+      <div className="grid flex-1 grid-cols-3 content-center items-start gap-2 [@container_card_(max-aspect-ratio:6/5)]:grid-cols-1 [@container_card_(max-aspect-ratio:6/5)]:content-evenly">
         {courses.slice(0, 3).map((c) => {
           const st = courseStats(c, progress)
           const p = st.pct
           const here = c.id === current.id
           const locked = !canAccess(c, tier)
           return (
-            <div key={c.id} className="flex min-w-0 flex-col items-center gap-1.5 text-center">
-              <LessonRing course={c} progress={progress} locked={locked} accent={here} className="size-14 @[22rem]:size-16">
+            // Wide (twice as wide as tall, 40rem up) or stacked: each course's name sits beside its ring instead of under it.
+            <div
+              key={c.id}
+              className="flex min-w-0 flex-col items-center gap-0.5 text-center [@container_card_(max-aspect-ratio:6/5)]:flex-row [@container_card_(max-aspect-ratio:6/5)]:gap-3 [@container_card_(max-aspect-ratio:6/5)]:text-left [@container_card_(min-aspect-ratio:2/1)_and_(min-width:40rem)]:flex-row [@container_card_(min-aspect-ratio:2/1)_and_(min-width:40rem)]:gap-3 [@container_card_(min-aspect-ratio:2/1)_and_(min-width:40rem)]:text-left"
+            >
+              {/* In a fixed cell the ring follows the card's height too (cqh), so a taller card gets bigger rings, not empty bands. */}
+              <LessonRing
+                course={c}
+                progress={progress}
+                locked={locked}
+                accent={here}
+                className={fixed ? "size-[clamp(3.25rem,min(28cqh,16cqw),7.5rem)] [@container_card_(max-aspect-ratio:6/5)]:size-[clamp(2.75rem,min(18cqh,22cqw),5.5rem)]" : "size-[3.25rem] @[22rem]:size-15"}
+              >
                 {locked ? (
                   <Lock className="size-3.5 text-muted-foreground" />
                 ) : (
-                  <span className={cn("text-xs tabular-nums", here ? "text-foreground" : "text-muted-foreground")} style={{ fontFamily: font }}>
+                  <span className={cn("text-[0.6875rem] tabular-nums", here ? "text-foreground" : "text-muted-foreground")} style={{ fontFamily: font }}>
                     {p}%
                   </span>
                 )}
               </LessonRing>
               <div className="grid max-w-full">
-                <span className={cn("truncate text-xs leading-4", here ? "font-medium text-foreground" : "text-muted-foreground")}>{c.title}</span>
+                <span className={cn("line-clamp-2 text-[0.6875rem] leading-4 text-balance", here ? "font-medium text-foreground" : "text-muted-foreground")} title={c.title}>
+                  {c.title}
+                </span>
                 {standard && (
                   <span className="truncate text-[0.6875rem] leading-4 text-muted-foreground tabular-nums" style={{ fontFamily: font }}>
-                    {locked ? needs(c) : `${st.done}/${st.lessons}`}
+                    {locked ? `In ${needs(c)}` : `${st.done}/${st.lessons}`}
                   </span>
                 )}
               </div>

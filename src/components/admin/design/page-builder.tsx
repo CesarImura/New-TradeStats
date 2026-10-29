@@ -36,7 +36,7 @@ import { useGroups } from "@/lib/data/access"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { themeToCss } from "@/lib/theme/css"
 import { pageLayout } from "@/lib/theme/resolve"
-import type { CoachTheme } from "@/lib/theme/types"
+import { widgetFinishOf, widgetSetOf, type CoachTheme } from "@/lib/theme/types"
 import { isPageId } from "@/lib/data/coaches"
 import { COLS, GAP, ROW_HEIGHT, normalizeLayout, oneStar, uid, withCore, type Detail, type Emphasis, type PageId, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
@@ -315,7 +315,7 @@ export function ArrangeCanvas({
               )}
 
               {device === "desktop" ? (
-                <div className="relative" style={{ minHeight: 6 * (ROW_HEIGHT + gap) }}>
+                <div className="hb-set relative" data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ minHeight: 6 * (ROW_HEIGHT + gap), "--gap": `${gap}px` } as React.CSSProperties}>
                   {(active || incoming) && (
                     <GridBackground
                       width={gridWidth}
@@ -374,7 +374,7 @@ export function ArrangeCanvas({
                     }}
                   >
                     {layout.items.map((w) => (
-                      <div key={w.id} onClick={(e) => { e.stopPropagation(); setSelected(w.id) }}>
+                      <div key={w.id} className={cn((getWidget(w.type)?.core || w.type === "page-header") && "g-plain")} onClick={(e) => { e.stopPropagation(); setSelected(w.id) }}>
                         <WidgetMenu
                           w={w}
                           onOpen={() => setSelected(w.id)}

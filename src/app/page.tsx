@@ -26,7 +26,7 @@ export default function Launcher() {
             button to switch template, navigation and mode.
           </p>
           <Link href="/lab" className={`${mono} flex w-fit items-center gap-1.5 text-white/60 hover:text-white`}>
-            Theme lab: every theme side by side, with a readability check <ArrowRight className="size-3.5" />
+            Library: every widget and component, and every theme&apos;s readability check <ArrowRight className="size-3.5" />
           </Link>
         </header>
 

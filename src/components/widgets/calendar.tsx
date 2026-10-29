@@ -6,9 +6,9 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { EVENTS, MARKET_SESSIONS, NOW_HOUR, type CalEvent } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ACCENT, Tip, useFrame, useMore } from "./kit"
+import { ACCENT, Drop, GROW_ROWS, SPLIT, Tip, useFrame, useMore } from "./kit"
 import { Poster, Rail, SplitCard, type RailItem } from "./layouts"
-import { Axis, Chip, GREY, Label, Legend, Num, Rule, TickBar, Timeline, WCard, useFigureFont } from "./instrument"
+import { Axis, Chip, GREY, Label, Legend, Num, Panel, Rolling, Rule, TickBar, Timeline, WCard, useFigureFont } from "./instrument"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 
 const WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri"]
@@ -16,6 +16,8 @@ const TODAY_NAME = "Mon"
 /** An empty tick (same as instrument.tsx's track). */
 const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
 const LOSS = "var(--loss)"
+/** Loss as text: the shade that stays readable on the card. */
+const LOSS_TEXT = "var(--loss-text)"
 /** How long each kind of event runs, in minutes (sample). */
 const LENGTH: Record<CalEvent["kind"], number> = { live: 90, call: 45, workshop: 60, "one-on-one": 30, news: 30 }
 const KIND_LABEL: Record<CalEvent["kind"], string> = { live: "Live", call: "Call", workshop: "Workshop", "one-on-one": "1:1", news: "News" }
@@ -40,7 +42,7 @@ const overlaps = (start: number, len: number, from: number, to: number) => start
 
 /** A list that shows as many whole rows as fit the widget's height and hides the rest. */
 function Fit({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", className)}>{children}</div>
+  return <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS, className)}>{children}</div>
 }
 
 function NothingPlanned({ news }: { news?: boolean }) {
@@ -100,7 +102,7 @@ function agendaRow(a: AgendaItem) {
     color: a.noTrade ? LOSS : a.kind === "live" ? ACCENT : GREY[1],
     value: a.impact ? (
       <>
-        <span style={{ color: LOSS }}>{a.impact}</span> {a.mins}m
+        <span style={{ color: LOSS_TEXT }}>{a.impact}</span> {a.mins}m
       </>
     ) : (
       `${a.mins}m`
@@ -148,9 +150,12 @@ export function NextLive({ variant = "countdown", props = {} }: WidgetProps) {
     const blocked = agenda.filter((a) => a.noTrade).reduce((s, a) => s + a.mins, 0)
     const free = (DAY_TO - NOW_HOUR) * 60 - coachMins - blocked
     return (
-      <WCard icon={CalendarDays} title="Today" meta={`Mon 12 Oct · ${agenda.length} on your day with ${coach.coachName}`} chip={<Chip>in {short(mins)}</Chip>}>
-        {detailed && <Num size="md" value={`${agenda.length} events`} delta={`next ${next.time}`} deltaTone="accent" />}
-        <DayBar agenda={agenda} height={20} />
+      <WCard icon={CalendarDays} title="Today" meta={`Mon 12 Oct · ${agenda.length} on your day with ${coach.coachName}`} chip={<Chip>in {short(mins)}</Chip>} bodyClassName={SPLIT}>
+        {/* Wide and short: the day's bar on the left, the agenda beside it. */}
+        <div data-main className="flex shrink-0 flex-col justify-center gap-3">
+          {detailed && <Num size="md" value={`${agenda.length} events`} delta={`next ${next.time}`} deltaTone="accent" />}
+          <DayBar agenda={agenda} height={20} />
+        </div>
         <FitTimeline items={(more ? agenda : agenda.slice(0, 1)).map(agendaRow)} />
         {detailed && (
           <Legend
@@ -205,12 +210,14 @@ export function NextLive({ variant = "countdown", props = {} }: WidgetProps) {
                           ? GREY[2]
                           : TRACK
                     return (
+                      // Each hour is a row: a hairline when free, a thin bar (not a block) when something is on.
                       <span
                         key={i}
-                        className={cn("min-h-px flex-1 rounded-[1px] transition-opacity duration-150", hover && ev && hover !== ev.id && "opacity-40")}
-                        style={{ background: color, marginRight: isNow || ev ? 0 : "30%" }}
+                        className={cn("flex min-h-px flex-1 items-center transition-opacity duration-150", hover && ev && hover !== ev.id && "opacity-40")}
                         onPointerEnter={() => setHover(ev?.id)}
-                      />
+                      >
+                        <i className="r-bar block w-full" style={{ background: color, height: isNow || ev ? "max(2px, 40%)" : 1, marginRight: isNow || ev ? 0 : "30%" }} />
+                      </span>
                     )
                   })}
                   {evs.map((e) =>
@@ -261,8 +268,10 @@ export function NextLive({ variant = "countdown", props = {} }: WidgetProps) {
   const hh = Math.floor(secs / 3600)
   const clock = (
     <>
-      {hh >= 24 ? `${Math.floor(hh / 24)}d ${pad(hh % 24)}` : `${pad(hh)}:${pad(Math.floor((secs % 3600) / 60))}`}
-      <span className="text-muted-foreground">:{pad(secs % 60)}</span>
+      <Rolling value={hh >= 24 ? `${Math.floor(hh / 24)}d ${pad(hh % 24)}` : `${pad(hh)}:${pad(Math.floor((secs % 3600) / 60))}`} />
+      <span className="text-muted-foreground">
+        :<Rolling value={pad(secs % 60)} />
+      </span>
     </>
   )
 
@@ -275,7 +284,7 @@ export function NextLive({ variant = "countdown", props = {} }: WidgetProps) {
           <Label>Starts in</Label>
           <Num value={clock} />
         </div>
-        {more && next.seats && <span className="truncate text-xs leading-4 text-muted-foreground">{next.seats} · reminder 15 min before</span>}
+        {more && next.seats && <span className="line-clamp-2 text-[0.6875rem] leading-4 text-muted-foreground">{next.seats} · reminder 15 min before</span>}
         {detailed && (
           <>
             <Rule />
@@ -292,54 +301,67 @@ export function NextLive({ variant = "countdown", props = {} }: WidgetProps) {
     )
   }
 
-  // countdown
-  const later = items.filter((e) => e.id !== next.id)
+  // countdown, on the base structure: time to the next session, today's bar on a panel, the agenda (three at most;
+  // the rest of the week on Detailed), and a reminder in the foot.
+  const later = items.filter((e) => e.id !== next.id).slice(0, 3)
   return (
-    <WCard icon={Radio} title="Up next" meta={meta} chip={next.seats ? <Chip>{next.seats}</Chip> : undefined}>
-      <div className="grid shrink-0 gap-1">
-        {more && <Label>Starts in</Label>}
-        <Num
-          value={
-            <>
-              {hh >= 24 ? `${Math.floor(hh / 24)}d ${pad(hh % 24)}` : `${pad(hh)}:${pad(Math.floor((secs % 3600) / 60))}`}
-              <span className="text-muted-foreground">:{pad(secs % 60)}</span>
-            </>
-          }
-          delta={`${next.day === TODAY_NAME ? "today" : next.day} ${next.time}`}
-          deltaTone="muted"
-        />
+    <WCard
+      bands
+      icon={Radio}
+      title="Up next"
+      section={coach.wording.calendar}
+      meta={meta}
+      chip={next.seats ? <Chip>{next.seats}</Chip> : undefined}
+      footnote={more ? (remind ? "We'll remind you 15 min before" : `${KIND_LABEL[next.kind]} · ${LENGTH[next.kind]} min`) : undefined}
+      action={more ? { label: remind ? "Reminder on" : "Remind me", onClick: () => setRemind((r) => !r) } : undefined}
+      // Wide and short: the countdown and the day on the left, the agenda beside them.
+      bodyClassName={SPLIT}
+    >
+      <div data-main className="flex shrink-0 flex-col justify-center gap-3">
+        <div className="grid shrink-0 gap-1">
+          <Drop level={2}>
+            {more && <Label>Starts in</Label>}
+          </Drop>
+          <Num value={clock} delta={`${next.day === TODAY_NAME ? "today" : next.day} ${next.time}`} deltaTone="muted" />
+        </div>
+        <Panel className="shrink-0">
+          <DayBar agenda={agenda} />
+        </Panel>
       </div>
-      <DayBar agenda={agenda} />
-      {more && <FitTimeline items={agenda.map(agendaRow)} className={cn(detailed && "max-h-[4.75rem] flex-none")} />}
-      {detailed && (
-        <>
-          <Rule />
-          <Label>Later this week</Label>
-          <Fit className="-mt-2">
-            {later.map((e) => (
-              <Legend
-                key={e.id}
-                items={[
-                  {
-                    dot: true,
-                    color: e.noTrade ? LOSS : e.kind === "news" ? GREY[1] : ACCENT,
-                    label: (
-                      <>
-                        <span className="tabular-nums">
-                          {e.day} {e.time}
-                        </span>{" "}
-                        <span className="text-foreground">{e.title}</span>
-                      </>
-                    ),
-                    value: e.noTrade ? "no trade" : e.seats ?? KIND_LABEL[e.kind],
-                    valueTone: e.noTrade ? "loss" : undefined,
-                  },
-                ]}
-              />
-            ))}
-          </Fit>
-        </>
-      )}
+      <Drop level={2}>
+        {more && <FitTimeline items={agenda.slice(0, 3).map(agendaRow)} className="min-h-6 flex-1" />}
+      </Drop>
+      <Drop level={3}>
+        {detailed && (
+          <>
+            <Rule />
+            <Label>Later this week</Label>
+            <Fit className="-mt-2 flex-none">
+              {later.map((e) => (
+                <Legend
+                  key={e.id}
+                  items={[
+                    {
+                      dot: true,
+                      color: e.noTrade ? LOSS : e.kind === "news" ? GREY[1] : ACCENT,
+                      label: (
+                        <>
+                          <span className="tabular-nums">
+                            {e.day} {e.time}
+                          </span>{" "}
+                          <span className="text-foreground">{e.title}</span>
+                        </>
+                      ),
+                      value: e.noTrade ? "no trade" : e.seats ?? KIND_LABEL[e.kind],
+                      valueTone: e.noTrade ? "loss" : undefined,
+                    },
+                  ]}
+                />
+              ))}
+            </Fit>
+          </>
+        )}
+      </Drop>
     </WCard>
   )
 }
@@ -370,7 +392,7 @@ function ImpactTicks({ impact = "low", big }: { impact?: CalEvent["impact"]; big
 function ReleaseRow({ e, figures }: { e: CalEvent; figures?: boolean }) {
   const font = useFigureFont()
   return (
-    <div className="flex min-w-0 items-center gap-2 text-xs leading-6">
+    <div className="flex min-w-0 items-center gap-2 text-[0.8125rem] leading-6">
       <span className="w-[4.25rem] shrink-0 text-muted-foreground tabular-nums @max-[15rem]:hidden" style={{ fontFamily: font }}>
         {e.day} {e.time}
       </span>
@@ -382,7 +404,7 @@ function ReleaseRow({ e, figures }: { e: CalEvent; figures?: boolean }) {
         </span>
       )}
       {e.noTrade && (
-        <span className="flex shrink-0 items-center gap-1" style={{ color: LOSS }}>
+        <span className="flex shrink-0 items-center gap-1" style={{ color: LOSS_TEXT }}>
           <i className="r-dot size-[7px]" style={{ background: LOSS }} />
           <span className="hidden @[17rem]:inline">no trade</span>
         </span>
@@ -404,7 +426,7 @@ function WeekBar({ news }: { news: CalEvent[] }) {
     const day = WEEK[Math.floor(i / PER)]
     const from = 6 + (i % PER) * 2
     const ev = news.find((e) => e.day === day && overlaps(toHour(e.time), 0.5, from, from + 2))
-    if (ev) return ev.noTrade ? LOSS : ev.impact === "high" ? "var(--foreground)" : GREY[1]
+    if (ev) return ev.noTrade ? LOSS : ev.impact === "high" ? "var(--warning)" : GREY[1]
     if (day === TODAY_NAME && from + 2 <= NOW_HOUR) return GREY[2]
     return undefined
   }
@@ -426,7 +448,6 @@ function WeekBar({ news }: { news: CalEvent[] }) {
  * New York as tick bars over 24 hours with a now line).
  */
 export function EconNews({ variant = "next" }: WidgetProps) {
-  const { coach } = useCoach()
   const empty = useEmpty()
   const more = useMore("standard")
   const detailed = useMore("detailed")
@@ -435,7 +456,8 @@ export function EconNews({ variant = "next" }: WidgetProps) {
   const news = EVENTS.filter((e) => e.kind === "news").sort((a, b) => WEEK.indexOf(a.day) - WEEK.indexOf(b.day) || a.time.localeCompare(b.time))
   const big = news.find((e) => e.impact === "high")!
   const noTrade = news.filter((e) => e.noTrade)
-  const meta = `Your time zone · ${news.length} releases · ${noTrade.length} on ${coach.coachName}'s no-trade list`
+  // The no-trade count is in the chip or the rows; the context line stays short enough to read whole.
+  const meta = `This week · ${news.length} releases`
 
   if (variant === "sessions") {
     const now = NOW_HOUR
@@ -446,20 +468,22 @@ export function EconNews({ variant = "next" }: WidgetProps) {
     const overlap = london && ny ? [Math.max(london.open, ny.open), Math.min(london.close, ny.close)] : undefined
     return (
       <WCard icon={Clock} title="Market sessions" meta={`Your time zone · now ${hhmm(now)}`} chip={<OpenChip />}>
-        {more && (
-          <Num
-            size="md"
-            value={open.length ? open[open.length - 1].name : "Closed"}
-            delta={open.length ? `closes in ${short(sessionState(open[open.length - 1], now).until * 60)}` : undefined}
-            deltaTone="accent"
-          />
-        )}
+        <Drop level={2}>
+          {more && (
+            <Num
+              size="md"
+              value={open.length ? open[open.length - 1].name : "Closed"}
+              delta={open.length ? `closes in ${short(sessionState(open[open.length - 1], now).until * 60)}` : undefined}
+              deltaTone="accent"
+            />
+          )}
+        </Drop>
         <div className="grid shrink-0 gap-1">
           {MARKET_SESSIONS.map((s) => {
             const st = sessionState(s, now)
             return (
               <div key={s.name} className={cols}>
-                <span className={cn("truncate text-xs leading-4", st.open ? "font-medium" : "text-muted-foreground")}>{s.name}</span>
+                <span className={cn("truncate text-[0.6875rem] leading-4", st.open ? "font-medium" : "text-muted-foreground")}>{s.name}</span>
                 <TickBar
                   value={0}
                   segments={48}
@@ -475,28 +499,34 @@ export function EconNews({ variant = "next" }: WidgetProps) {
               </div>
             )
           })}
-          {more && (
-            <div className={cols}>
-              <span />
-              <Axis labels={["00", "06", "12", "18", "24"]} />
-            </div>
-          )}
+          <Drop level={3}>
+            {more && (
+              <div className={cols}>
+                <span />
+                <Axis labels={["00", "06", "12", "18", "24"]} />
+              </div>
+            )}
+          </Drop>
         </div>
-        {more && overlap && (
-          <Legend
-            className="shrink-0"
-            items={[
-              { color: ACCENT, label: "Open now", value: open.map((s) => s.name).join(", ") || "none" },
-              ...(detailed ? [{ color: GREY[2], label: "London · New York overlap", value: `${hhmm(overlap[0])}–${hhmm(overlap[1])}` }] : []),
-            ]}
-          />
-        )}
-        {detailed && (
-          <>
-            <Rule />
-            <ReleaseRow e={big} />
-          </>
-        )}
+        <Drop level={2}>
+          {more && overlap && (
+            <Legend
+              className="shrink-0"
+              items={[
+                { color: ACCENT, label: "Open now", value: open.map((s) => s.name).join(", ") || "none" },
+                ...(detailed ? [{ color: GREY[2], label: "London · New York overlap", value: `${hhmm(overlap[0])}–${hhmm(overlap[1])}` }] : []),
+              ]}
+            />
+          )}
+        </Drop>
+        <Drop level={3}>
+          {detailed && (
+            <>
+              <Rule />
+              <ReleaseRow e={big} />
+            </>
+          )}
+        </Drop>
       </WCard>
     )
   }
@@ -530,7 +560,7 @@ export function EconNews({ variant = "next" }: WidgetProps) {
           title: e.title,
           state: e.id === big.id ? "next" : "ahead",
           color: e.noTrade ? LOSS : undefined,
-          sub: more && (e.forecast || e.noTrade) ? [e.noTrade && "no trade", detailed && e.forecast && `f ${e.forecast} · p ${e.previous}`].filter(Boolean).join(" · ") || undefined : undefined,
+          sub: more && (e.forecast || e.noTrade) ? [e.noTrade && "no trade", detailed && e.forecast && `Forecast ${e.forecast} · Prior ${e.previous}`].filter(Boolean).join(" · ") || undefined : undefined,
           aside: <ImpactTicks impact={e.impact} />,
         })
     }
@@ -549,18 +579,18 @@ export function EconNews({ variant = "next" }: WidgetProps) {
         <Label>Next high impact</Label>
         <Num value={big.title} delta={`in ${short(big.inMinutes ?? 0)}`} deltaTone="accent" />
       </div>
-      <div className="flex min-w-0 shrink-0 items-center gap-2 text-xs leading-5" style={{ fontFamily: font }}>
+      <div className="flex min-w-0 shrink-0 items-center gap-2 text-[0.6875rem] leading-5" style={{ fontFamily: font }}>
         <ImpactTicks impact={big.impact} big />
-        <span className="text-muted-foreground tabular-nums">
+        <span className="shrink-0 whitespace-nowrap text-muted-foreground tabular-nums">
           {big.day} {big.date.split(" ")[0]} · {big.time}
         </span>
         {big.forecast && (
           <span className="hidden truncate text-muted-foreground tabular-nums @[18rem]:inline">
-            · f <span className="text-foreground">{big.forecast}</span> p {big.previous}
+            · Forecast <span className="text-foreground">{big.forecast}</span> · Prior {big.previous}
           </span>
         )}
         {big.noTrade && (
-          <span className="ml-auto flex shrink-0 items-center gap-1" style={{ color: LOSS }}>
+          <span className="ml-auto flex shrink-0 items-center gap-1" style={{ color: LOSS_TEXT }}>
             <i className="r-dot size-[7px]" style={{ background: LOSS }} />
             no trade
           </span>

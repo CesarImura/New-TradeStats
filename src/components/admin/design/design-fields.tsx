@@ -13,7 +13,7 @@ import { themeToCss } from "@/lib/theme/css"
 import { onColor } from "@/lib/theme/derive"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
-import { chartStyleOf, widgetFontOf, widgetHeaderOf, widgetStyleOf, type CoachTheme, type TemplateId } from "@/lib/theme/types"
+import { chartStyleOf, figureStyleOf, headerFormOf, panelStyleOf, starStyleOf, widgetFinishOf, widgetFontOf, widgetHeaderOf, widgetSetOf, widgetStyleOf, type CoachTheme, type TemplateId } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { BackgroundControl } from "./background-control"
 import { Field, More, Segmented, SliderField, Swatches } from "./controls"
@@ -416,7 +416,7 @@ function WidgetStyleField() {
 function ChartStyleField() {
   const { theme, change } = useDesign()
   return (
-    <Field id="chart-style" label="Bars and gauges" hint={{ ticks: "Segments, like an instrument", solid: "One filled bar", thin: "A fine line" }[chartStyleOf(theme)]}>
+    <Field id="chart-style" label="Bars and gauges" hint={{ ticks: "Segments, like an instrument", solid: "One filled bar", thin: "A fine line", blocks: "A few thick blocks", dots: "A row of small squares" }[chartStyleOf(theme)]}>
       <Segmented
         label="Bars and gauges"
         value={chartStyleOf(theme)}
@@ -425,6 +425,84 @@ function ChartStyleField() {
           { value: "ticks", label: "Ticks" },
           { value: "solid", label: "Solid" },
           { value: "thin", label: "Thin" },
+          { value: "blocks", label: "Blocks" },
+          { value: "dots", label: "Dots" },
+        ]}
+      />
+    </Field>
+  )
+}
+
+function FigureStyleField() {
+  const { theme, change } = useDesign()
+  return (
+    <Field
+      id="figure-style"
+      label="Numbers"
+      hint={{ plain: "The number with its change beside it", marked: "A bar in your colour beside the number", mono: "Figures in mono, like a terminal", display: "Your heading font, the change underneath" }[figureStyleOf(theme)]}
+    >
+      <Segmented
+        label="Numbers"
+        value={figureStyleOf(theme)}
+        onChange={(figureStyle) => change({ theme: { figureStyle } }, "figure-style")}
+        options={[
+          { value: "plain", label: "Plain" },
+          { value: "marked", label: "Marked" },
+          { value: "mono", label: "Mono" },
+          { value: "display", label: "Display" },
+        ]}
+      />
+    </Field>
+  )
+}
+
+function PanelStyleField() {
+  const { theme, change } = useDesign()
+  return (
+    <Field id="panel-style" label="Chart panels" hint={{ none: "Charts sit right on the widget", filled: "Charts sit on a soft inner panel", outline: "Charts sit in a fine-line box" }[panelStyleOf(theme)]}>
+      <Segmented
+        label="Chart panels"
+        value={panelStyleOf(theme)}
+        onChange={(panelStyle) => change({ theme: { panelStyle } }, "panel-style")}
+        options={[
+          { value: "none", label: "None" },
+          { value: "filled", label: "Filled" },
+          { value: "outline", label: "Outline" },
+        ]}
+      />
+    </Field>
+  )
+}
+
+function StarStyleField() {
+  const { theme, change } = useDesign()
+  return (
+    <Field id="star-style" label="Star widget" hint={{ brand: "On your brand colour", inverted: "Black on light pages, white on dark; your colour as one mark" }[starStyleOf(theme)]}>
+      <Segmented
+        label="Star widget"
+        value={starStyleOf(theme)}
+        onChange={(starStyle) => change({ theme: { starStyle } }, "star-style")}
+        options={[
+          { value: "brand", label: "Brand" },
+          { value: "inverted", label: "Inverted" },
+        ]}
+      />
+    </Field>
+  )
+}
+
+function WidgetFinishField() {
+  const { theme, change } = useDesign()
+  return (
+    <Field id="widget-finish" label="Finish" hint={{ none: "Nothing extra", corners: "Small brackets on each widget's corners", grid: "A field of small crosses behind the widgets" }[widgetFinishOf(theme)]}>
+      <Segmented
+        label="Finish"
+        value={widgetFinishOf(theme)}
+        onChange={(widgetFinish) => change({ theme: { widgetFinish } }, "widget-finish")}
+        options={[
+          { value: "none", label: "None" },
+          { value: "corners", label: "Corners" },
+          { value: "grid", label: "Grid" },
         ]}
       />
     </Field>
@@ -443,6 +521,50 @@ function WidgetFontField() {
           { value: "mono", label: "Mono" },
           { value: "heading", label: "Heading" },
           { value: "body", label: "Normal" },
+        ]}
+      />
+    </Field>
+  )
+}
+
+function WidgetSetField() {
+  const { theme, change } = useDesign()
+  const set = widgetSetOf(theme)
+  const forced = (theme.widgetSet ?? set) === "open" && set === "sheet"
+  return (
+    <Field
+      id="widget-set"
+      label="Widgets sit as"
+      hint={forced ? "Open needs a plain background; on a picture or gradient they sit on a sheet" : { cards: "One card each", sheet: "One surface, split by fine lines", open: "No box, a fine line above each" }[set]}
+    >
+      <Segmented
+        label="Widgets sit as"
+        value={theme.widgetSet ?? set}
+        onChange={(widgetSet) => change({ theme: { widgetSet } }, "widget-set")}
+        options={[
+          { value: "cards", label: "Cards" },
+          { value: "sheet", label: "Sheet" },
+          { value: "open", label: "Open" },
+        ]}
+      />
+    </Field>
+  )
+}
+
+function HeaderFormField() {
+  const { theme, change } = useDesign()
+  return (
+    <Field id="header-form" label="Widget names" hint={{ top: "Icon, name and value on top", label: "A small label line, no icon", caption: "Under the content, like a caption", tag: "The icon in a tile, the name in a pill", path: "Section / name, a fine line under it" }[headerFormOf(theme)]}>
+      <Segmented
+        label="Widget names"
+        value={headerFormOf(theme)}
+        onChange={(headerForm) => change({ theme: { headerForm } }, "header-form")}
+        options={[
+          { value: "top", label: "Top" },
+          { value: "label", label: "Label" },
+          { value: "caption", label: "Caption" },
+          { value: "tag", label: "Tag" },
+          { value: "path", label: "Path" },
         ]}
       />
     </Field>
@@ -649,6 +771,12 @@ const FIELDS: Record<string, () => React.ReactNode> = {
   "chart-style": ChartStyleField,
   "widget-font": WidgetFontField,
   "widget-header": WidgetHeaderField,
+  "widget-set": WidgetSetField,
+  "header-form": HeaderFormField,
+  "figure-style": FigureStyleField,
+  "panel-style": PanelStyleField,
+  "star-style": StarStyleField,
+  "widget-finish": WidgetFinishField,
   "card-surface": CardSurfaceField,
   "nav-layout": NavLayoutField,
   "nav-style": NavStyleField,

@@ -4,7 +4,7 @@ import { Check, Crown, Flag, Trophy } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { DEMO_STUDENT, LEADERBOARD, RANK_HISTORY } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { ACCENT, ACCENT_TEXT, Avatar, TYPE, useMore } from "./kit"
+import { ACCENT, ACCENT_TEXT, Avatar, Drop, GROW_ROWS, SPLIT, TYPE, useFitRows, useFrame, useMore } from "./kit"
 import { Axis, Chip, DotStrip, GREY, Label, Legend, Num, Rule, WCard, ink, useFigureFont, useChartStyle } from "./instrument"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 import { BleedArea, Compare, HeroCard, Rail, type RailItem } from "./layouts"
@@ -93,7 +93,8 @@ function StepMark({ done, next }: { done: boolean; next: boolean }) {
 function Checklist({ items, next, hints, times = true }: { items: Step[]; next?: Step; hints?: boolean; times?: boolean }) {
   const font = useFigureFont()
   return (
-    <div className="grid content-start">
+    // Whole rows only, and in a cell that sets the height the rows open up to share it.
+    <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS)}>
       {items.map((i) => (
         <div key={i.label} className={cn("flex min-w-0 items-center gap-2.5 border-b py-1.5 last:border-b-0", HAIRLINE)}>
           <StepMark done={i.done} next={i === next} />
@@ -120,6 +121,7 @@ function Checklist({ items, next, hints, times = true }: { items: Step[]; next?:
  */
 export function FirstWeek({ variant = "steps" }: WidgetProps) {
   const { coach } = useCoach()
+  const { fixed } = useFrame()
   const standard = useMore("standard")
   const detailed = useMore("detailed")
   const font = useFigureFont()
@@ -146,7 +148,7 @@ export function FirstWeek({ variant = "steps" }: WidgetProps) {
     return (
       <WCard icon={Flag} title="First week" meta={meta} chip={chip}>
         <div className="flex min-w-0 items-center gap-3">
-          <StepRing items={items} next={next} size={48}>
+          <StepRing items={items} next={next} size={40}>
             {count}
           </StepRing>
           <div className="grid min-w-0 gap-0.5">
@@ -165,7 +167,11 @@ export function FirstWeek({ variant = "steps" }: WidgetProps) {
       time: i.done ? "Sun" : k === at ? "Next" : `${k + 1}`,
       title: i.label,
       sub: standard && !i.done ? i.hint : undefined,
-      aside: <span className={i === next ? "" : "text-muted-foreground"} style={i === next ? { color: ink(ACCENT_TEXT) } : undefined}>{i.done ? "done" : i.time}</span>,
+      aside: (
+        <span className={i === next ? "" : "text-muted-foreground"} style={i === next ? { color: ink(ACCENT_TEXT) } : undefined}>
+          {i.done ? "done" : i.time}
+        </span>
+      ),
       state: i.done ? "past" : i === next ? "next" : "ahead",
     }))
     rail.splice(at < 0 ? rail.length : at, 0, { now: `Day ${FIRST_WEEK_DAY}` })
@@ -191,7 +197,7 @@ export function FirstWeek({ variant = "steps" }: WidgetProps) {
     <WCard icon={Flag} title="First week" meta={meta} chip={chip} bodyClassName="justify-center gap-1.5">
       <StepTrack items={items} next={next} />
       {standard && (
-        <div className="flex min-w-0 items-baseline gap-2 text-xs leading-4">
+        <div className="flex min-w-0 items-baseline gap-2 text-[0.6875rem] leading-4">
           <span className="shrink-0 text-muted-foreground">{next ? "Next" : "Done"}</span>
           <span className="min-w-0 flex-1 truncate font-medium">{next?.label ?? "Your first week"}</span>
           {next && (
@@ -206,6 +212,14 @@ export function FirstWeek({ variant = "steps" }: WidgetProps) {
           <Rule className="mt-1.5" />
           <Checklist items={items.filter((i) => i !== next)} next={next} />
         </>
+      )}
+      {/* Room under the track (a taller cell): every step as a row, instead of a blank card around one line. */}
+      {fixed && (
+        <Drop level={3}>
+          <div className="mt-2 flex min-h-0 flex-col">
+            <Checklist items={items} next={next} times={standard} />
+          </div>
+        </Drop>
       )}
     </WCard>
   )
@@ -242,7 +256,7 @@ const MEDIAN = SORTED[Math.floor(MEMBERS / 2)]
 function Change({ n }: { n: number }) {
   const font = useFigureFont()
   return (
-    <span className={cn("text-xs tabular-nums", !n ? "text-muted-foreground" : n > 0 ? "text-profit" : "text-loss")} style={{ fontFamily: font }}>
+    <span className={cn("text-[0.6875rem] tabular-nums", !n ? "text-muted-foreground" : n > 0 ? "text-profit" : "text-loss")} style={{ fontFamily: font }}>
       {!n ? "–" : `${n > 0 ? "▲" : "▼"} ${Math.abs(n)}`}
     </span>
   )
@@ -256,7 +270,7 @@ function RankRow({ p }: { p: Member }) {
       className={cn("-mx-1.5 flex min-w-0 items-center gap-2.5 rounded-[min(var(--radius),6px)] px-1.5 py-1", p.me && "bg-[color:color-mix(in_oklab,var(--foreground)_6%,transparent)]")}
       style={p.me ? { boxShadow: `inset 2px 0 0 ${ACCENT}` } : undefined}
     >
-      <span className="w-6 shrink-0 text-right text-xs tabular-nums" style={{ fontFamily: font, color: p.me ? "var(--foreground)" : "var(--muted-foreground)", fontWeight: p.me ? 500 : undefined }}>
+      <span className="w-6 shrink-0 text-right text-[0.6875rem] tabular-nums" style={{ fontFamily: font, color: p.me ? "var(--foreground)" : "var(--muted-foreground)", fontWeight: p.me ? 500 : undefined }}>
         {String(p.rank).padStart(2, "0")}
       </span>
       <span className="hidden @[14rem]:block">
@@ -297,6 +311,7 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
   const standard = useMore("standard")
   const detailed = useMore("detailed")
   const font = useFigureFont()
+  const listFit = useFitRows<HTMLDivElement>(28, { min: 2, item: "[data-row] > *" })
   if (empty) return <WidgetEmpty icon={Trophy} title="The ranking starts after week one" text="It's based on discipline, not profit, so everyone starts equal." />
   const me = LEADERBOARD.find((l) => l.me)!
   const others = LEADERBOARD.filter((l) => !l.me)
@@ -305,6 +320,7 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
   const delta = me.change ? `${me.change > 0 ? "▲" : "▼"} ${Math.abs(me.change)}` : undefined
   const deltaTone = me.change >= 0 ? "profit" : "loss"
   const head = <Num value={`#${me.rank}`} unit={`of ${MEMBERS}`} delta={delta} deltaTone={deltaTone} />
+  const [list, fit] = listFit
 
   if (variant === "compare") {
     /** What goes into the discipline score: the student against the average of the top 10% (sample). */
@@ -318,7 +334,7 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
     return (
       <WCard icon={Trophy} title={coach.wording.ranking} meta={`You vs the top 10% · ${MEMBERS} ${coach.wording.students.toLowerCase()}`} chip={<Chip>{`You #${me.rank}`}</Chip>}>
         <Compare a="You" b="Top 10% average" rows={standard ? rows : rows.slice(0, 3)} />
-        {detailed && <span className="shrink-0 truncate text-xs leading-4 text-muted-foreground">Biggest gap: journaling. Log every trade to close it.</span>}
+        {detailed && <span className="shrink-0 truncate text-[0.6875rem] leading-4 text-muted-foreground">Biggest gap: journaling. Log every trade to close it.</span>}
       </WCard>
     )
   }
@@ -351,7 +367,7 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
   if (variant === "podium") {
     const [first, second, third] = others
     const step = (p: Member, h: string) => (
-      <div className="flex min-w-0 flex-col items-center gap-1">
+      <div className="flex min-w-0 flex-col items-center justify-end gap-1 [@container_card_(min-height:0px)]:h-full">
         <span className="relative">
           <Avatar initials={p.initials} size={p.rank === 1 ? 30 : 26} />
           {p.rank === 1 && <Crown className="absolute -top-2.5 left-1/2 size-3.5 -translate-x-1/2" style={{ color: ACCENT }} />}
@@ -359,7 +375,12 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
         {standard && <span className={cn(TYPE.small, "max-w-full truncate", p.rank === 1 && "text-foreground")}>{p.name}</span>}
         <div
           className={cn("grid w-full content-start justify-items-center gap-0.5 pt-1", h)}
-          style={{ background: "color-mix(in oklab, var(--foreground) 5%, transparent)", borderTop: `2px solid ${p.rank === 1 ? ACCENT : GREY[2]}`, borderTopLeftRadius: "min(var(--radius), 4px)", borderTopRightRadius: "min(var(--radius), 4px)" }}
+          style={{
+            background: "color-mix(in oklab, var(--foreground) 5%, transparent)",
+            borderTop: `2px solid ${p.rank === 1 ? ACCENT : GREY[2]}`,
+            borderTopLeftRadius: "min(var(--radius), 4px)",
+            borderTopRightRadius: "min(var(--radius), 4px)",
+          }}
         >
           <span className="text-[0.8125rem] leading-5 tabular-nums" style={{ fontFamily: font }}>
             {p.score}
@@ -369,10 +390,11 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
     )
     return (
       <WCard icon={Trophy} title={coach.wording.ranking} meta={meta} chip={<Chip>{`You #${me.rank} · ${me.score}`}</Chip>}>
-        <div className="mt-auto grid grid-cols-3 items-end gap-2">
-          {step(second, "h-9")}
-          {step(first, "h-12")}
-          {step(third, "h-6")}
+        {/* In a cell that sets the height the steps rise with it (in proportion), instead of a short podium under a blank band. */}
+        <div className="mt-auto grid grid-cols-3 items-end gap-2 [@container_card_(min-height:0px)]:min-h-0 [@container_card_(min-height:0px)]:flex-1">
+          {step(second, "h-9 [@container_card_(min-height:0px)]:h-[clamp(2.25rem,40%,7rem)]")}
+          {step(first, "h-12 [@container_card_(min-height:0px)]:h-[clamp(3rem,55%,9.5rem)]")}
+          {step(third, "h-6 [@container_card_(min-height:0px)]:h-[clamp(1.5rem,28%,5rem)]")}
         </div>
         {detailed && (
           <>
@@ -390,32 +412,39 @@ export function MyRank({ variant = "trend" }: WidgetProps) {
   }
 
   if (variant === "leaderboard") {
-    const top = others.slice(0, detailed ? 5 : standard ? 4 : 3)
+    // As many of the top as the card holds (Detail's count until measured), the student's own row always last.
+    const top = others.slice(0, Math.max(1, fit !== undefined ? fit - 1 : detailed ? 5 : standard ? 4 : 3))
     const gap = me.rank - top[top.length - 1].rank - 1
     return (
       <WCard icon={Trophy} title={coach.wording.ranking} meta={meta} chip={<Chip>{`Top ${topPct}%`}</Chip>}>
         {head}
-        <div className="grid content-start">
+        <div ref={list} className="grid min-h-0 flex-1 content-start overflow-hidden [&>[data-row]]:contents">
           {top.map((p) => (
-            <RankRow key={p.rank} p={p} />
+            <div key={p.rank} data-row>
+              <RankRow p={p} />
+            </div>
           ))}
           {gap > 0 && (
             <span className="py-0.5 pl-1 text-[0.6875rem] leading-4 text-muted-foreground tabular-nums" style={{ fontFamily: font }}>
               ··· {gap} more
             </span>
           )}
-          <RankRow p={me} />
+          <div data-row>
+            <RankRow p={me} />
+          </div>
         </div>
         {detailed && <Field me={me.score} className="mt-auto hidden @[15rem]:grid" />}
       </WCard>
     )
   }
 
-  // trend
+  // trend: wide and short, the field on the left and the figures beside it; taller, the field sits in the middle.
   return (
-    <WCard icon={Trophy} title={coach.wording.ranking} meta={meta} chip={<Chip>{`Top ${topPct}%`}</Chip>}>
+    <WCard icon={Trophy} title={coach.wording.ranking} meta={meta} chip={<Chip>{`Top ${topPct}%`}</Chip>} bodyClassName={SPLIT}>
       {head}
-      <Field me={me.score} axis={standard} className="mt-auto" />
+      <div data-main className="flex min-h-min flex-1 flex-col justify-center">
+        <Field me={me.score} axis={standard} />
+      </div>
       {standard && (
         <div className="grid grid-cols-3 gap-3">
           {[

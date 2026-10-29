@@ -3,10 +3,10 @@
 import { createContext, useContext } from "react"
 import type { LucideIcon } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Card } from "@/components/ui/card"
 import { useStudentStart } from "@/lib/data/student-start"
 import type { WidgetPhase } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
+import { Drop, W } from "./kit"
 
 export type WidgetProps = { variant?: string; props: Record<string, string | boolean> }
 
@@ -48,7 +48,13 @@ export const usePageId = () => useContext(PageIdContext)
 export const PageTitleShownContext = createContext(true)
 export const usePageTitleShown = () => useContext(PageTitleShownContext)
 
-/** Shown instead of a widget's content when there is nothing to show yet. */
+/**
+ * Shown instead of a widget's content when there is nothing to show yet. It
+ * fills the cell it is given and sits in the middle of it, so a tall card
+ * never shows a strip of text over an empty block. Wide: icon, words and
+ * action in one row. Short: the sentence, then the icon, give way, so even a
+ * one-row cell keeps the title (and the action) whole.
+ */
 export function WidgetEmpty({
   icon: Icon,
   title,
@@ -63,16 +69,21 @@ export function WidgetEmpty({
   className?: string
 }) {
   return (
-    <Card className={cn("@container rounded-(--radius)", className)}>
-      <div className="flex flex-col items-start gap-3 px-(--card-spacing) @md:flex-row @md:items-center">
-        <Icon className="size-4 shrink-0 text-muted-foreground" />
-        <div className="grid flex-1 gap-0.5">
-          <span className="text-[0.8125rem] font-medium">{title}</span>
-          <span className="text-xs text-muted-foreground">{text}</span>
+    <W className={cn("justify-center", className)}>
+      {/* Narrow: centred in the cell, like any empty state. Wide: a left-aligned row. */}
+      <div className="flex min-w-0 flex-col items-center gap-3 text-center @md:flex-row @md:text-left">
+        <Drop level={3}>
+          <Icon className="size-4 shrink-0 text-muted-foreground" />
+        </Drop>
+        <div className="grid min-w-0 flex-1 gap-0.5">
+          <span className="text-[0.8125rem] leading-5 font-medium text-balance">{title}</span>
+          <Drop level={2}>
+            <span className="text-[0.6875rem] leading-4 text-pretty text-muted-foreground">{text}</span>
+          </Drop>
         </div>
-        {action}
+        {action && <span className="shrink-0">{action}</span>}
       </div>
-    </Card>
+    </W>
   )
 }
 
@@ -86,21 +97,21 @@ export function Cover({ color = "var(--primary)", label, className }: { color?: 
   return (
     <div
       className={cn("relative isolate overflow-hidden rounded-[min(var(--radius),8px)]", className)}
-      style={{ background: `var(--cover-bg, color-mix(in oklab, ${color} 10%, color-mix(in oklab, var(--foreground) 88%, var(--background))))` }}
+      style={{ background: `var(--cover-bg, color-mix(in oklab, ${color} 10%, var(--media-bg)))` }}
     >
       <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="absolute inset-0 size-full" aria-hidden>
         {candles.map((h, i) => {
           const x = 6 + i * 9
           const up = i % 3 !== 1
           return (
-            <g key={i} stroke="var(--cover-fg, var(--background))" fill={up ? "var(--cover-fg, var(--background))" : "none"} opacity={i === candles.length - 1 ? 0.9 : 0.28}>
+            <g key={i} stroke="var(--cover-fg, var(--media-fg))" fill={up ? "var(--cover-fg, var(--media-fg))" : "none"} opacity={i === candles.length - 1 ? 0.9 : 0.28}>
               <line x1={x + 1.5} x2={x + 1.5} y1={60 - h - 5} y2={60 - h + 17} strokeWidth="0.4" />
               <rect x={x} y={60 - h} width="3" height={up ? 11 : 8} strokeWidth="0.4" />
             </g>
           )
         })}
       </svg>
-      {label && <span className="absolute bottom-2.5 left-3 font-heading text-[0.9375rem] leading-tight text-[color:var(--cover-fg,var(--background))]">{label}</span>}
+      {label && <span className="absolute right-3 bottom-2.5 left-3 truncate font-heading text-[0.8125rem] leading-tight text-[color:var(--cover-fg,var(--media-fg))]">{label}</span>}
     </div>
   )
 }
@@ -132,11 +143,11 @@ export function Ring({ value, size = 56, stroke = 4, children, className }: { va
 
 export function AvatarStack({ initials, className }: { initials: string[]; className?: string }) {
   return (
-    <div className={cn("flex -space-x-2", className)}>
+    <div className={cn("flex -space-x-1", className)}>
       {initials.map((i, n) => (
         <span
           key={i}
-          className="r-dot grid size-6 place-items-center border-2 border-card bg-muted text-[0.625rem] font-medium text-muted-foreground"
+          className="r-dot grid size-6 place-items-center border-2 border-card bg-muted text-[0.6875rem] leading-none font-medium text-muted-foreground"
           data-n={n}
         >
           {i}

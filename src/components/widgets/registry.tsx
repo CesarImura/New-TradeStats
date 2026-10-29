@@ -36,8 +36,13 @@ export type WidgetDef = {
   module?: ModuleId
   /** A page's core widget: always on that page, never in the library, can't be removed or duplicated. */
   core?: ModuleId
-  /** Three or more designs per widget; the first is the default. Each needs its own height in rows. */
-  variants: { value: string; label: string; h: number; minH: number }[]
+  /**
+   * Three or more designs per widget; the first is the default. Each has its own height in rows and the box it
+   * looks right in: the shortest and narrowest before it gets squeezed, the tallest and widest before it only
+   * stretches. Measured on /lab/stress?range=axes (every width at its height, every height at its default
+   * width, sample and long content), then judged; the builder keeps it inside.
+   */
+  variants: { value: string; label: string; h: number; minH: number; maxH: number; minW: number; maxW: number; /** More rows when narrower than `below` columns (a layout that stacks there). */ narrow?: { below: number; minH: number }; /** Fewer rows from `from` columns up (a layout that lies flat there). */ wide?: { from: number; maxH: number } }[]
   settings?: Setting[]
   /** Width in columns when added, and the narrowest it can go before its content breaks. */
   defaultW: number
@@ -66,9 +71,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Page",
     icon: Type,
     variants: [
-      { value: "plain", label: "Plain", h: 1, minH: 1 },
-      { value: "centered", label: "Centred", h: 1, minH: 1 },
-      { value: "banner", label: "Banner", h: 1, minH: 1 },
+      { value: "plain", label: "Plain", h: 1, minH: 1, maxH: 2, minW: 4, maxW: 12 },
+      { value: "centered", label: "Centred", h: 1, minH: 1, maxH: 2, minW: 4, maxW: 12 },
+      { value: "banner", label: "Banner", h: 1, minH: 1, maxH: 3, minW: 4, maxW: 12 },
     ],
     settings: [
       { key: "title", label: "Title", type: "text", placeholder: "The page's name" },
@@ -87,10 +92,10 @@ export const WIDGETS: WidgetDef[] = [
     icon: PlayCircle,
     module: "courses",
     variants: [
-      { value: "progress", label: "Next lesson", h: 3, minH: 3 },
-      { value: "cover", label: "Cover", h: 3, minH: 3 },
-      { value: "card", label: "One line", h: 2, minH: 2 },
-      { value: "media", label: "Media", h: 4, minH: 3 },
+      { value: "progress", label: "Next lesson", h: 3, minH: 3, maxH: 4, minW: 4, maxW: 12 },
+      { value: "cover", label: "Cover", h: 3, minH: 3, maxH: 4, minW: 4, maxW: 12 },
+      { value: "card", label: "One line", h: 2, minH: 2, maxH: 2, minW: 4, maxW: 12 },
+      { value: "media", label: "Media", h: 4, minH: 3, maxH: 4, minW: 4, maxW: 12 },
     ],
     settings: [
       { key: "title", label: "Small label", type: "text", placeholder: "Start here" },
@@ -108,9 +113,9 @@ export const WIDGETS: WidgetDef[] = [
     icon: GraduationCap,
     module: "courses",
     variants: [
-      { value: "rings", label: "Rings", h: 3, minH: 3 },
-      { value: "bars", label: "List", h: 4, minH: 3 },
-      { value: "unlocks", label: "Next unlock", h: 4, minH: 3 },
+      { value: "rings", label: "Rings", h: 3, minH: 3, wide: { from: 8, maxH: 3 }, maxH: 4, minW: 4, maxW: 12 },
+      { value: "bars", label: "List", h: 4, minH: 3, maxH: 4, minW: 4, maxW: 12 },
+      { value: "unlocks", label: "Next unlock", h: 3, minH: 3, maxH: 3, minW: 4, maxW: 12 },
     ],
     defaultW: 8,
     minW: 4,
@@ -124,10 +129,10 @@ export const WIDGETS: WidgetDef[] = [
     icon: Radio,
     module: "calendar",
     variants: [
-      { value: "countdown", label: "Countdown", h: 5, minH: 3 },
-      { value: "timeline", label: "Today", h: 4, minH: 3 },
-      { value: "week", label: "Week", h: 4, minH: 3 },
-      { value: "split", label: "Split", h: 3, minH: 3 },
+      { value: "countdown", label: "Countdown", h: 5, minH: 3, maxH: 6, minW: 3, maxW: 12 },
+      { value: "timeline", label: "Today", h: 4, minH: 3, wide: { from: 6, maxH: 3 }, maxH: 4, minW: 3, maxW: 12 },
+      { value: "week", label: "Week", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
+      { value: "split", label: "Split", h: 3, minH: 3, maxH: 5, minW: 3, maxW: 12 },
     ],
     settings: [{ key: "news", label: "Include market news", type: "toggle", defaultOn: true }],
     defaultW: 4,
@@ -142,10 +147,10 @@ export const WIDGETS: WidgetDef[] = [
     icon: Newspaper,
     module: "calendar",
     variants: [
-      { value: "next", label: "Next big one", h: 4, minH: 3 },
-      { value: "week", label: "This week", h: 4, minH: 3 },
-      { value: "sessions", label: "Sessions", h: 4, minH: 3 },
-      { value: "timeline", label: "Timeline", h: 5, minH: 3 },
+      { value: "next", label: "Next big one", h: 3, minH: 3, maxH: 3, minW: 3, maxW: 12 },
+      { value: "week", label: "This week", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "sessions", label: "Sessions", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
+      { value: "timeline", label: "Timeline", h: 5, minH: 3, maxH: 7, minW: 3, maxW: 12 },
     ],
     defaultW: 4,
     minW: 3,
@@ -159,12 +164,12 @@ export const WIDGETS: WidgetDef[] = [
     icon: LineChart,
     module: "journal",
     variants: [
-      { value: "curve", label: "Equity curve", h: 5, minH: 3 },
-      { value: "bars", label: "Daily P&L", h: 4, minH: 3 },
-      { value: "heatmap", label: "Calendar", h: 4, minH: 3 },
-      { value: "hero", label: "Hero", h: 4, minH: 3 },
-      { value: "hours", label: "By hour", h: 4, minH: 3 },
-      { value: "compare", label: "Compare", h: 5, minH: 3 },
+      { value: "curve", label: "Equity curve", h: 5, minH: 3, maxH: 6, minW: 3, maxW: 12 },
+      { value: "bars", label: "Daily P&L", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "heatmap", label: "Calendar", h: 4, minH: 4, maxH: 6, minW: 3, maxW: 12 },
+      { value: "hero", label: "Hero", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
+      { value: "hours", label: "By hour", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "compare", label: "Compare", h: 5, minH: 3, maxH: 7, minW: 3, maxW: 12 },
     ],
     defaultW: 4,
     minW: 3,
@@ -178,12 +183,12 @@ export const WIDGETS: WidgetDef[] = [
     icon: Gauge,
     module: "journal",
     variants: [
-      { value: "radar", label: "Gauge", h: 5, minH: 3 },
-      { value: "streak", label: "Clean streak", h: 3, minH: 3 },
-      { value: "rules", label: "Rule by rule", h: 4, minH: 3 },
-      { value: "hero", label: "Hero", h: 4, minH: 3 },
-      { value: "grid", label: "Heatmap", h: 4, minH: 3 },
-      { value: "compare", label: "Compare", h: 5, minH: 3 },
+      { value: "radar", label: "Gauge", h: 5, minH: 3, maxH: 6, minW: 3, maxW: 8 },
+      { value: "streak", label: "Clean streak", h: 3, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "rules", label: "Rule by rule", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "hero", label: "Hero", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
+      { value: "grid", label: "Heatmap", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "compare", label: "Compare", h: 5, minH: 3, maxH: 7, minW: 3, maxW: 12 },
     ],
     defaultW: 4,
     minW: 3,
@@ -196,10 +201,10 @@ export const WIDGETS: WidgetDef[] = [
     group: "Progress",
     icon: CircleCheck,
     variants: [
-      { value: "steps", label: "Steps", h: 2, minH: 2 },
-      { value: "ring", label: "Ring", h: 2, minH: 2 },
-      { value: "checklist", label: "Checklist", h: 4, minH: 3 },
-      { value: "path", label: "Timeline", h: 5, minH: 3 },
+      { value: "steps", label: "Steps", h: 2, minH: 2, maxH: 3, minW: 3, maxW: 12 },
+      { value: "ring", label: "Ring", h: 2, minH: 2, maxH: 2, minW: 3, maxW: 12 },
+      { value: "checklist", label: "Checklist", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "path", label: "Timeline", h: 5, minH: 3, maxH: 6, minW: 3, maxW: 12 },
     ],
     defaultW: 4,
     minW: 3,
@@ -213,11 +218,11 @@ export const WIDGETS: WidgetDef[] = [
     icon: Trophy,
     module: "ranking",
     variants: [
-      { value: "trend", label: "Trend", h: 4, minH: 3 },
-      { value: "podium", label: "Podium", h: 3, minH: 3 },
-      { value: "leaderboard", label: "Top list", h: 5, minH: 4 },
-      { value: "hero", label: "Hero", h: 4, minH: 3 },
-      { value: "compare", label: "Compare", h: 5, minH: 3 },
+      { value: "trend", label: "Trend", h: 4, minH: 3, wide: { from: 8, maxH: 4 }, maxH: 5, minW: 3, maxW: 12 },
+      { value: "podium", label: "Podium", h: 3, minH: 3, maxH: 4, minW: 3, maxW: 12 },
+      { value: "leaderboard", label: "Top list", h: 5, minH: 4, maxH: 6, minW: 3, maxW: 12 },
+      { value: "hero", label: "Hero", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
+      { value: "compare", label: "Compare", h: 5, minH: 3, maxH: 6, minW: 3, maxW: 12 },
     ],
     defaultW: 4,
     minW: 3,
@@ -230,10 +235,10 @@ export const WIDGETS: WidgetDef[] = [
     group: "Community",
     icon: Megaphone,
     variants: [
-      { value: "plain", label: "Headline", h: 3, minH: 2 },
-      { value: "post", label: "Post", h: 4, minH: 3 },
-      { value: "line", label: "One line", h: 1, minH: 1 },
-      { value: "media", label: "Media", h: 4, minH: 3 },
+      { value: "plain", label: "Headline", h: 3, minH: 2, maxH: 5, minW: 3, maxW: 12 },
+      { value: "post", label: "Post", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "line", label: "One line", h: 1, minH: 1, maxH: 1, minW: 3, maxW: 12 },
+      { value: "media", label: "Media", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
     ],
     defaultW: 4,
     minW: 3,
@@ -247,8 +252,8 @@ export const WIDGETS: WidgetDef[] = [
     icon: MessagesSquare,
     module: "community",
     variants: [
-      { value: "list", label: "Recent posts", h: 4, minH: 3 },
-      { value: "line", label: "One row", h: 1, minH: 1 },
+      { value: "list", label: "Recent posts", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
+      { value: "line", label: "One row", h: 1, minH: 1, maxH: 1, minW: 3, maxW: 12 },
     ],
     defaultW: 4,
     minW: 3,
@@ -262,11 +267,11 @@ export const WIDGETS: WidgetDef[] = [
     icon: MessageSquareText,
     module: "community",
     variants: [
-      { value: "online", label: "Who's online", h: 3, minH: 3 },
-      { value: "card", label: "Channels", h: 4, minH: 3 },
-      { value: "banner", label: "One row", h: 2, minH: 1 },
-      { value: "heatmap", label: "Heatmap", h: 4, minH: 3 },
-      { value: "join", label: "Join card", h: 5, minH: 3 },
+      { value: "online", label: "Who's online", h: 3, minH: 3, maxH: 4, minW: 3, maxW: 12 },
+      { value: "card", label: "Channels", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "banner", label: "One row", h: 2, minH: 1, maxH: 2, minW: 3, maxW: 12 },
+      { value: "heatmap", label: "Heatmap", h: 4, minH: 4, maxH: 6, minW: 3, maxW: 12 },
+      { value: "join", label: "Join card", h: 5, minH: 3, maxH: 5, minW: 3, maxW: 12 },
     ],
     settings: [{ key: "text", label: "Text", type: "textarea" }],
     defaultW: 4,
@@ -280,9 +285,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Coach and brand",
     icon: Video,
     variants: [
-      { value: "side", label: "Side by side", h: 4, minH: 4 },
-      { value: "stacked", label: "Video on top", h: 5, minH: 4 },
-      { value: "minimal", label: "Quote", h: 3, minH: 3 },
+      { value: "side", label: "Side by side", h: 4, minH: 4, narrow: { below: 7, minH: 6 }, maxH: 7, minW: 4, maxW: 12 },
+      { value: "stacked", label: "Video on top", h: 5, minH: 5, narrow: { below: 7, minH: 6 }, maxH: 8, minW: 4, maxW: 12 },
+      { value: "minimal", label: "Quote", h: 3, minH: 3, maxH: 4, minW: 4, maxW: 12 },
     ],
     settings: [
       { key: "title", label: "Title", type: "text" },
@@ -299,9 +304,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Your content",
     icon: ImageIcon,
     variants: [
-      { value: "headline", label: "Headline", h: 2, minH: 2 },
-      { value: "picture", label: "With picture", h: 3, minH: 2 },
-      { value: "slim", label: "One line", h: 1, minH: 1 },
+      { value: "headline", label: "Headline", h: 3, minH: 2, maxH: 3, minW: 5, maxW: 12 },
+      { value: "picture", label: "With picture", h: 3, minH: 2, maxH: 4, minW: 5, maxW: 12 },
+      { value: "slim", label: "One line", h: 1, minH: 1, maxH: 1, minW: 6, maxW: 12 },
     ],
     settings: [
       { key: "eyebrow", label: "Small label", type: "text", placeholder: "Limited places" },
@@ -321,9 +326,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Your content",
     icon: Type,
     variants: [
-      { value: "plain", label: "Plain", h: 3, minH: 2 },
-      { value: "quote", label: "Quote", h: 3, minH: 2 },
-      { value: "steps", label: "Steps", h: 3, minH: 2 },
+      { value: "plain", label: "Plain", h: 3, minH: 2, maxH: 5, minW: 3, maxW: 12 },
+      { value: "quote", label: "Quote", h: 3, minH: 2, maxH: 4, minW: 3, maxW: 12 },
+      { value: "steps", label: "Steps", h: 3, minH: 3, wide: { from: 8, maxH: 3 }, maxH: 4, minW: 3, maxW: 12 },
     ],
     settings: [
       { key: "title", label: "Heading", type: "text" },
@@ -342,9 +347,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Your content",
     icon: ImageIcon,
     variants: [
-      { value: "cover", label: "Fill", h: 4, minH: 2 },
-      { value: "caption", label: "With caption", h: 5, minH: 3 },
-      { value: "side", label: "Beside text", h: 4, minH: 3 },
+      { value: "cover", label: "Fill", h: 4, minH: 2, maxH: 5, minW: 3, maxW: 12 },
+      { value: "caption", label: "With caption", h: 5, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "side", label: "Beside text", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
     ],
     settings: [
       { key: "image", label: "Picture", type: "image" },
@@ -362,9 +367,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Your content",
     icon: ArrowRight,
     variants: [
-      { value: "filled", label: "Filled", h: 2, minH: 1 },
-      { value: "outline", label: "Outline", h: 2, minH: 1 },
-      { value: "row", label: "One row", h: 1, minH: 1 },
+      { value: "filled", label: "Filled", h: 2, minH: 1, maxH: 2, minW: 3, maxW: 6 },
+      { value: "outline", label: "Outline", h: 2, minH: 1, maxH: 2, minW: 3, maxW: 6 },
+      { value: "row", label: "One row", h: 1, minH: 1, maxH: 1, minW: 2, maxW: 8 },
     ],
     settings: [
       { key: "title", label: "Label", type: "text", placeholder: "Book a call" },
@@ -383,9 +388,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Your content",
     icon: PlayCircle,
     variants: [
-      { value: "video", label: "Video", h: 5, minH: 3 },
-      { value: "page", label: "Page", h: 8, minH: 4 },
-      { value: "row", label: "One row", h: 1, minH: 1 },
+      { value: "video", label: "Video", h: 5, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "page", label: "Page", h: 8, minH: 4, maxH: 8, minW: 3, maxW: 12 },
+      { value: "row", label: "One row", h: 1, minH: 1, maxH: 1, minW: 3, maxW: 12 },
     ],
     settings: [
       { key: "url", label: "Address", type: "text", placeholder: "https://youtu.be/… or any page" },
@@ -402,9 +407,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Your content",
     icon: Megaphone,
     variants: [
-      { value: "image", label: "Picture", h: 6, minH: 4 },
-      { value: "video", label: "Video", h: 6, minH: 4 },
-      { value: "split", label: "Split", h: 5, minH: 4 },
+      { value: "image", label: "Picture", h: 6, minH: 4, maxH: 8, minW: 6, maxW: 12 },
+      { value: "video", label: "Video", h: 6, minH: 4, maxH: 8, minW: 6, maxW: 12 },
+      { value: "split", label: "Split", h: 5, minH: 4, maxH: 5, minW: 6, maxW: 12 },
     ],
     settings: [
       { key: "image", label: "Picture", type: "image" },
@@ -425,9 +430,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Your content",
     icon: CircleHelp,
     variants: [
-      { value: "list", label: "List", h: 5, minH: 3 },
-      { value: "two", label: "Two columns", h: 5, minH: 3 },
-      { value: "row", label: "One row", h: 1, minH: 1 },
+      { value: "list", label: "List", h: 4, minH: 3, wide: { from: 8, maxH: 4 }, maxH: 5, minW: 3, maxW: 12 },
+      { value: "two", label: "Two columns", h: 4, minH: 3, wide: { from: 8, maxH: 3 }, maxH: 5, minW: 3, maxW: 12 },
+      { value: "row", label: "One row", h: 1, minH: 1, maxH: 1, minW: 3, maxW: 12 },
     ],
     settings: [
       { key: "title", label: "Title", type: "text", placeholder: "Questions" },
@@ -444,9 +449,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Your content",
     icon: Link2,
     variants: [
-      { value: "list", label: "List", h: 4, minH: 2 },
-      { value: "tiles", label: "Tiles", h: 4, minH: 3 },
-      { value: "row", label: "One row", h: 1, minH: 1 },
+      { value: "list", label: "List", h: 4, minH: 2, maxH: 5, minW: 4, maxW: 12 },
+      { value: "tiles", label: "Tiles", h: 4, minH: 3, maxH: 6, minW: 4, maxW: 12 },
+      { value: "row", label: "One row", h: 1, minH: 1, maxH: 1, minW: 5, maxW: 12 },
     ],
     settings: [
       { key: "title", label: "Title", type: "text", placeholder: "Links" },
@@ -463,9 +468,9 @@ export const WIDGETS: WidgetDef[] = [
     group: "Your content",
     icon: CalendarClock,
     variants: [
-      { value: "big", label: "Big", h: 3, minH: 2 },
-      { value: "line", label: "One line", h: 1, minH: 1 },
-      { value: "card", label: "With text", h: 4, minH: 3 },
+      { value: "big", label: "Big", h: 3, minH: 2, maxH: 3, minW: 3, maxW: 6 },
+      { value: "line", label: "One line", h: 1, minH: 1, maxH: 1, minW: 2, maxW: 12 },
+      { value: "card", label: "With text", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 8 },
     ],
     settings: [
       { key: "title", label: "Title", type: "text", placeholder: "Next cohort starts" },
@@ -486,9 +491,9 @@ export const WIDGETS: WidgetDef[] = [
     icon: Handshake,
     module: "partners",
     variants: [
-      { value: "list", label: "List", h: 5, minH: 3 },
-      { value: "tiles", label: "Logo wall", h: 4, minH: 3 },
-      { value: "chips", label: "Chips", h: 1, minH: 1 },
+      { value: "list", label: "List", h: 6, minH: 3, maxH: 7, minW: 4, maxW: 12 },
+      { value: "tiles", label: "Logo wall", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "chips", label: "Chips", h: 1, minH: 1, maxH: 1, minW: 5, maxW: 12 },
     ],
     defaultW: 4,
     minW: 3,
@@ -502,9 +507,9 @@ export const WIDGETS: WidgetDef[] = [
     icon: Download,
     module: "downloads",
     variants: [
-      { value: "list", label: "List", h: 4, minH: 3 },
-      { value: "tiles", label: "Tiles", h: 4, minH: 3 },
-      { value: "row", label: "One line", h: 1, minH: 1 },
+      { value: "list", label: "List", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "tiles", label: "Tiles", h: 5, minH: 3, maxH: 6, minW: 3, maxW: 12 },
+      { value: "row", label: "One line", h: 1, minH: 1, maxH: 1, minW: 4, maxW: 12 },
     ],
     settings: [
       {
@@ -530,9 +535,9 @@ export const WIDGETS: WidgetDef[] = [
     icon: Sparkles,
     module: "ai",
     variants: [
-      { value: "search", label: "Question box", h: 3, minH: 2 },
-      { value: "chat", label: "Example chat", h: 5, minH: 4 },
-      { value: "insight", label: "Insight from trades", h: 4, minH: 3 },
+      { value: "search", label: "Question box", h: 3, minH: 2, maxH: 4, minW: 4, maxW: 12 },
+      { value: "chat", label: "Example chat", h: 5, minH: 4, maxH: 7, minW: 4, maxW: 12 },
+      { value: "insight", label: "Insight from trades", h: 4, minH: 3, maxH: 5, minW: 4, maxW: 12 },
     ],
     defaultW: 12,
     minW: 4,
@@ -546,10 +551,10 @@ export const WIDGETS: WidgetDef[] = [
     icon: CalendarClock,
     module: "calendar",
     variants: [
-      { value: "slots", label: "Time slots", h: 4, minH: 3 },
-      { value: "next", label: "Next free", h: 3, minH: 3 },
-      { value: "allowance", label: "Calls left", h: 2, minH: 2 },
-      { value: "split", label: "Split", h: 3, minH: 3 },
+      { value: "slots", label: "Time slots", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "next", label: "Next free", h: 3, minH: 3, maxH: 3, minW: 3, maxW: 12 },
+      { value: "allowance", label: "Calls left", h: 2, minH: 2, maxH: 2, minW: 3, maxW: 8 },
+      { value: "split", label: "Split", h: 3, minH: 3, maxH: 4, minW: 3, maxW: 12 },
     ],
     defaultW: 4,
     minW: 3,
@@ -563,10 +568,10 @@ export const WIDGETS: WidgetDef[] = [
     icon: ShieldAlert,
     module: "journal",
     variants: [
-      { value: "gauge", label: "Gauge", h: 4, minH: 3 },
-      { value: "bars", label: "Daily limit", h: 4, minH: 3 },
-      { value: "curve", label: "Balance and floor", h: 4, minH: 3 },
-      { value: "hero", label: "Hero", h: 4, minH: 3 },
+      { value: "gauge", label: "Gauge", h: 4, minH: 3, maxH: 6, minW: 3, maxW: 8 },
+      { value: "bars", label: "Daily limit", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
+      { value: "curve", label: "Balance and floor", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "hero", label: "Hero", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
     ],
     defaultW: 4,
     minW: 3,
@@ -580,10 +585,10 @@ export const WIDGETS: WidgetDef[] = [
     icon: MessageSquareReply,
     module: "journal",
     variants: [
-      { value: "queue", label: "Queue", h: 3, minH: 3 },
-      { value: "latest", label: "Latest reply", h: 3, minH: 3 },
-      { value: "stats", label: "Answered", h: 2, minH: 2 },
-      { value: "thread", label: "Timeline", h: 5, minH: 3 },
+      { value: "queue", label: "Queue", h: 3, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "latest", label: "Latest reply", h: 3, minH: 3, maxH: 3, minW: 3, maxW: 12 },
+      { value: "stats", label: "Answered", h: 2, minH: 2, maxH: 2, minW: 3, maxW: 8 },
+      { value: "thread", label: "Timeline", h: 5, minH: 3, maxH: 6, minW: 3, maxW: 12 },
     ],
     defaultW: 4,
     minW: 3,
@@ -596,10 +601,10 @@ export const WIDGETS: WidgetDef[] = [
     group: "Coach and brand",
     icon: Sparkles,
     variants: [
-      { value: "compare", label: "Compare", h: 5, minH: 4 },
-      { value: "banner", label: "Banner", h: 2, minH: 2 },
-      { value: "card", label: "Price", h: 4, minH: 3 },
-      { value: "split", label: "Split", h: 3, minH: 3 },
+      { value: "compare", label: "Compare", h: 5, minH: 4, maxH: 6, minW: 3, maxW: 12 },
+      { value: "banner", label: "Banner", h: 2, minH: 2, maxH: 2, minW: 6, maxW: 12 },
+      { value: "card", label: "Price", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "split", label: "Split", h: 3, minH: 3, maxH: 4, minW: 3, maxW: 12 },
     ],
     settings: [{ key: "button", label: "Button text", type: "text", placeholder: "Upgrade to …" }],
     defaultW: 6,
@@ -613,10 +618,10 @@ export const WIDGETS: WidgetDef[] = [
     group: "Coach and brand",
     icon: BadgeCheck,
     variants: [
-      { value: "card", label: "Card", h: 4, minH: 3 },
-      { value: "hero", label: "Large", h: 4, minH: 3 },
-      { value: "compact", label: "One row", h: 2, minH: 2 },
-      { value: "media", label: "Media", h: 4, minH: 3 },
+      { value: "card", label: "Card", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "hero", label: "Large", h: 4, minH: 3, maxH: 6, minW: 3, maxW: 12 },
+      { value: "compact", label: "One row", h: 2, minH: 2, maxH: 2, minW: 3, maxW: 12 },
+      { value: "media", label: "Media", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
     ],
     defaultW: 4,
     minW: 3,
@@ -710,7 +715,7 @@ for (const c of CORE) {
     group: "Page",
     icon: c.icon,
     core: c.page,
-    variants: [{ value: "page", label: "Full page", h: CORE_H, minH: 6 }],
+    variants: [{ value: "page", label: "Full page", h: CORE_H, minH: 6, maxH: CORE_H, minW: 6, maxW: COLS }],
     settings: CORE_SETTINGS[c.page],
     defaultW: COLS,
     minW: 6,

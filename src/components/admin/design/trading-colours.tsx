@@ -8,7 +8,8 @@ import { useDesign } from "./design-fields"
 const SUGGESTED = [
   { name: "TradingView", profit: "#089981", loss: "#F23645" },
   { name: "Classic", profit: "#16A34A", loss: "#DC2626" },
-  { name: "Blue and orange", profit: "#2962FF", loss: "#FF6D00" },
+  // Colour-blind safe: checked for protan, deutan and tritan separation on light and dark cards.
+  { name: "Blue and orange (colour-blind safe)", profit: "#2962FF", loss: "#E65100" },
 ] as const
 
 /**
@@ -36,7 +37,7 @@ export function TradingColoursField() {
         </div>
       </div>
       <div className="grid gap-1.5">
-        <span className="text-xs text-muted-foreground">Suggested</span>
+        <span className="text-xs text-muted-foreground">Suggested · the last pair is safe for colour-blind students</span>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Suggested trading colours">
           {SUGGESTED.map((s) => {
             const on = set && s.profit.toLowerCase() === profit.toLowerCase() && s.loss.toLowerCase() === loss.toLowerCase()

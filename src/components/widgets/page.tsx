@@ -64,14 +64,15 @@ export function PageHeader({ variant = "plain", props }: WidgetProps) {
   const words = short ? (
     <>
       {/* On the banner's one-row strip there's only room for the title. */}
-      {eyebrow && !banner && <span className="eyebrow block truncate leading-4">{eyebrow}</span>}
+      {eyebrow && !banner && <span className="eyebrow block max-w-full truncate leading-4">{eyebrow}</span>}
       <h1 className="max-w-full truncate text-2xl leading-8">{title}</h1>
     </>
   ) : (
     <>
       {eyebrow && <span className="eyebrow">{eyebrow}</span>}
-      <h1 className="text-3xl leading-tight text-balance md:text-4xl">{title}</h1>
-      {text && <p className="max-w-[60ch] text-pretty text-muted-foreground">{text}</p>}
+      <h1 className="line-clamp-2 text-3xl leading-tight text-balance md:text-4xl">{title}</h1>
+      {/* A long intro ends in "…" rather than running past the block's rows. */}
+      {text && <p className="line-clamp-3 max-w-[60ch] min-h-0 text-pretty text-muted-foreground">{text}</p>}
     </>
   )
   if (banner)
@@ -80,12 +81,12 @@ export function PageHeader({ variant = "plain", props }: WidgetProps) {
       <div
         ref={ref}
         className="relative flex h-full min-h-0 overflow-hidden rounded-(--radius)"
-        style={{ boxShadow: "var(--card-shadow)", background: "var(--cover-bg, color-mix(in oklab, var(--primary) 10%, color-mix(in oklab, var(--foreground) 88%, var(--background))))" }}
+        style={{ boxShadow: "var(--card-shadow)", background: "var(--cover-bg, color-mix(in oklab, var(--primary) 10%, var(--media-bg)))" }}
       >
         <Cover className="absolute inset-0 rounded-none" />
         <div
           className={cn(
-            "relative flex min-w-0 flex-col justify-end gap-1 text-[color:var(--background)] [--muted-foreground:color-mix(in_oklab,var(--background)_78%,transparent)]",
+            "relative flex min-w-0 flex-col justify-end gap-1 text-[color:var(--media-fg)] [--muted-foreground:color-mix(in_oklab,var(--media-fg)_78%,transparent)]",
             short ? "justify-center px-[calc(1.25rem*var(--density,1))] py-2" : "p-[calc(1.25rem*var(--density,1))]",
           )}
         >

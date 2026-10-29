@@ -4,12 +4,12 @@ import { useSyncExternalStore } from "react"
 import Link from "next/link"
 import { ArrowRight, ArrowUpRight, CalendarClock, CircleHelp, Globe, Link2, Play, PlayCircle } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/lab/animate/accordion"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { VideoThumb, ctaLink, webUrl } from "./brand"
-import { Chip, Label, WCard, useFigureFont } from "./instrument"
-import { TYPE, W, useMore } from "./kit"
+import { Chip, Label, Rolling, WCard, useFigureFont } from "./instrument"
+import { CTA, Drop, FitText, FX, TYPE, useMore, W, GROW_ROWS } from "./kit"
 import { Cover, type WidgetProps } from "./shared"
 
 // The coach's own content: pictures, buttons, embeds and a hero. These are the
@@ -49,11 +49,15 @@ export function ImageBlock({ variant = "cover", props }: WidgetProps) {
   if (variant === "caption") {
     const caption = title || text || SAMPLE_CAPTION
     return (
-      <W className="gap-2.5 p-[calc(0.625rem*var(--density,1))]">
-        <Picture src={props.image} alt={caption} className="flex-1" />
-        <div className="grid min-w-0 gap-0.5 px-1">
-          <span className={cn(title ? TYPE.title : TYPE.body, "line-clamp-1")}>{caption}</span>
-          {title && text && more && <span className={cn(TYPE.small, "line-clamp-1")}>{text}</span>}
+      <W className="p-[calc(0.625rem*var(--density,1))]">
+        {/* Wide and short: the caption beside the picture rather than a thin line under a letterbox. (The query sits on a child: a container can't ask about itself.) */}
+        <div className="flex min-h-0 flex-1 flex-col gap-2.5 [@container_card_(min-aspect-ratio:5/2)]:flex-row [@container_card_(min-aspect-ratio:5/2)]:items-center">
+          {/* min-h-0: in a short cell the picture gives up height so the caption stays whole. */}
+          <Picture src={props.image} alt={caption} className="aspect-video min-h-0 flex-1 [@container_card_(min-aspect-ratio:5/2)]:h-full [@container_card_(min-aspect-ratio:5/2)]:flex-none" />
+          <div className="grid min-w-0 shrink-0 gap-0.5 px-1 [@container_card_(min-aspect-ratio:5/2)]:flex-1">
+            <span className={cn(title ? TYPE.title : TYPE.body, "line-clamp-1")}>{caption}</span>
+            {title && text && more && <span className={cn(TYPE.small, "line-clamp-1")}>{text}</span>}
+          </div>
         </div>
       </W>
     )
@@ -65,7 +69,11 @@ export function ImageBlock({ variant = "cover", props }: WidgetProps) {
         <Picture src={props.image} alt={title || SAMPLE_CAPTION} className="w-[42%] shrink-0 @xl:w-[36%]" />
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 pr-1">
           <h3 className={cn(TYPE.value, "line-clamp-2 text-balance")}>{title || SAMPLE_CAPTION}</h3>
-          {more && <p className={cn(TYPE.body, "line-clamp-3 text-muted-foreground")}>{text || "Where the weekly reviews are recorded."}</p>}
+          {more && (
+            <FitText lines={3} className={cn(TYPE.body, "text-muted-foreground")}>
+              {text || "Where the weekly reviews are recorded."}
+            </FitText>
+          )}
         </div>
       </W>
     )
@@ -73,7 +81,7 @@ export function ImageBlock({ variant = "cover", props }: WidgetProps) {
 
   return (
     <W className="gap-0 p-0">
-      <Picture flush src={props.image} alt={title || text || SAMPLE_CAPTION} label={title || text || SAMPLE_CAPTION} className="flex-1" />
+      <Picture flush src={props.image} alt={title || text || SAMPLE_CAPTION} label={title || text || SAMPLE_CAPTION} className="aspect-video flex-1" />
     </W>
   )
 }
@@ -182,7 +190,7 @@ export function Embed({ variant = "video", props }: WidgetProps) {
   const caption = title || (e ? "" : "How I plan my week")
   return (
     <W className="gap-2 p-[calc(0.625rem*var(--density,1))]">
-      <div className="min-h-0 flex-1 [container-type:size]">
+      <div className="aspect-video min-h-0 flex-1 [container-type:size]">
         <div className="mx-auto grid h-full place-items-center">
           <div className={cn(CLIP, "relative aspect-video")} style={{ width: "min(100cqw, 100cqh * 16 / 9)" }}>
             {e?.kind === "video" ? <Frame src={e.src} title={title || e.host} /> : <VideoThumb className="absolute inset-0" />}
@@ -213,11 +221,11 @@ function HeroWords({ props, split }: { props: WidgetProps["props"]; split?: bool
       <div className="grid min-w-0 gap-1">
         {eyebrow && <Label className="truncate">{eyebrow}</Label>}
         <h3 className={cn(TYPE.value, "text-balance @3xl:text-[1.75rem] @3xl:leading-8", split ? "line-clamp-3" : "line-clamp-2")}>{title}</h3>
-        {more && <p className={cn(TYPE.body, "max-w-prose text-muted-foreground", split ? "line-clamp-4" : "line-clamp-2 hidden @md:block")}>{text}</p>}
+        <Drop level={2}>{more && <p className={cn(TYPE.body, "max-w-prose text-muted-foreground", split ? "line-clamp-4" : "line-clamp-2 hidden @md:block")}>{text}</p>}</Drop>
       </div>
       {props.button !== "" && (
-        <Button size="sm" className="w-fit shrink-0" {...ctaLink(base, props)}>
-          {String(props.button || "Start here")} <ArrowRight />
+        <Button size="sm" className={cn("w-fit", CTA)} title={String(props.button || "Start here")} {...ctaLink(base, props)}>
+          <span className="truncate">{String(props.button || "Start here")}</span> <ArrowRight />
         </Button>
       )}
     </>
@@ -241,7 +249,7 @@ export function Hero({ variant = "image", props }: WidgetProps) {
 
   return (
     <W className="gap-0 p-0">
-      {variant === "video" ? <VideoThumb className="flex-1 rounded-none" /> : <Picture flush src={props.image} alt={title} className="flex-1" />}
+      {variant === "video" ? <VideoThumb className="aspect-video flex-1 rounded-none" /> : <Picture flush src={props.image} alt={title} className="aspect-video flex-1" />}
       <div className="flex min-w-0 shrink-0 flex-col gap-3 bg-card p-[calc(1rem*var(--density,1))] @lg:flex-row @lg:items-end @lg:justify-between">
         <HeroWords props={props} />
       </div>
@@ -331,21 +339,14 @@ function parseLinks(raw: unknown, base: string): Item[] {
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean)
-  const sample = [
-    "TradingView | https://www.tradingview.com",
-    "Our Discord | https://discord.com/invite/trading",
-    "Position size calculator | https://docs.google.com/spreadsheets/d/position-size",
-    "Rules | p/rules",
-  ]
+  const sample = ["TradingView | https://www.tradingview.com", "Our Discord | https://discord.com/invite/trading", "Position size calculator | https://docs.google.com/spreadsheets/d/position-size", "Rules | p/rules"]
   return (lines.length ? lines : sample)
     .map((l) => {
       const i = l.indexOf("|")
       const target = (i < 0 ? l : l.slice(i + 1)).trim()
       const web = isWeb(target) ? webUrl(target) : undefined
       const name = (i < 0 ? web?.hostname.replace(/^www\./, "") : l.slice(0, i).trim()) || target
-      return web
-        ? { name, href: web.href, external: true, host: web.hostname.replace(/^www\./, "") }
-        : { name, href: `${base}/${target.replace(/^\/+/, "")}`, external: false, host: "On this site" }
+      return web ? { name, href: web.href, external: true, host: web.hostname.replace(/^www\./, "") } : { name, href: `${base}/${target.replace(/^\/+/, "")}`, external: false, host: "On this site" }
     })
     .filter((x) => x.name)
 }
@@ -376,7 +377,7 @@ export function Links({ variant = "list", props }: WidgetProps) {
       <WCard row icon={Link2} title={title} chip={count}>
         <div className="hidden min-w-0 flex-[2] justify-end gap-1.5 overflow-hidden [mask-image:linear-gradient(to_right,black_85%,transparent)] @[26rem]:flex">
           {items.map((x, i) => (
-            <A key={i} item={x} className="r-chip flex shrink-0 items-center gap-1 border px-2 py-1 text-xs hover:bg-muted">
+            <A key={i} item={x} className={cn("r-chip flex shrink-0 items-center gap-1 border px-2 py-1 text-[0.6875rem]", FX.chip, FX.focus)}>
               {x.name}
               {x.external && <ArrowUpRight className="size-3 text-muted-foreground" />}
             </A>
@@ -388,11 +389,12 @@ export function Links({ variant = "list", props }: WidgetProps) {
 
   if (variant === "tiles") {
     return (
-      <WCard icon={Link2} title={title} meta={`${items.length} links`} chip={count}>
-        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2 @lg:grid-cols-3 @3xl:grid-cols-4">
+      // Tiles never squash below a readable height: with many links the panel scrolls, like the list.
+      <WCard icon={Link2} title={title} meta={`${items.length} links`} chip={count} bodyClassName="overflow-y-auto">
+        <div className="grid flex-1 auto-rows-[minmax(3.25rem,1fr)] grid-cols-2 gap-2 @lg:grid-cols-3 @3xl:grid-cols-4">
           {items.map((x, i) => (
-            <A key={i} item={x} className="relative grid min-h-0 min-w-0 content-center justify-items-start gap-0.5 rounded-[min(var(--radius),8px)] border bg-card p-2.5 hover:bg-muted">
-              <span className="max-w-full truncate pr-4 font-heading text-[0.8125rem] leading-5 font-medium tracking-tight">{x.name}</span>
+            <A key={i} item={x} className={cn("relative grid min-h-0 min-w-0 content-center justify-items-start gap-0.5 rounded-[min(var(--radius),8px)] border bg-card p-2.5", FX.tile, FX.focus)}>
+              <span className="line-clamp-2 max-w-full pr-4 font-heading text-[0.8125rem] leading-5 font-medium tracking-tight">{x.name}</span>
               {more && <span className={cn(TYPE.small, "max-w-full truncate")}>{x.host}</span>}
               <ArrowUpRight className="absolute top-2 right-2 size-3.5 text-muted-foreground" />
             </A>
@@ -404,7 +406,8 @@ export function Links({ variant = "list", props }: WidgetProps) {
 
   return (
     <WCard icon={Link2} title={title} meta={`${items.length} links`} chip={count} bodyClassName="overflow-y-auto">
-      <div className="grid">
+      {/* In a cell taller than the links, the rows share the spare height instead of leaving it under the last one. */}
+      <div className={cn("flex flex-1 flex-col *:shrink-0", GROW_ROWS)}>
         {items.map((x, i) => (
           <A key={i} item={x} className="group flex min-w-0 items-center gap-2.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-2 last:border-b-0">
             <span className="grid min-w-0 flex-1">
@@ -453,17 +456,29 @@ function useCountdown(raw: unknown) {
 
 function Figures({ c, size }: { c: ReturnType<typeof useCountdown>; size: "lg" | "md" }) {
   const font = useFigureFont()
-  const cells: [string, number][] = [["days", c.parts.d], ["hours", c.parts.h], ["minutes", c.parts.m], ["seconds", c.parts.s]]
+  const cells: [string, number][] = [
+    ["days", c.parts.d],
+    ["hours", c.parts.h],
+    ["minutes", c.parts.m],
+    ["seconds", c.parts.s],
+  ]
   return (
-    <div className="grid grid-cols-4 gap-2">
+    // Numbers on tiles, their names in a row underneath: on a short card the names give way together.
+    <div className="grid grid-cols-4 gap-x-2 gap-y-1">
       {cells.map(([label, n]) => (
-        <div key={label} className="grid min-w-0 justify-items-center gap-0.5 rounded-[min(var(--radius),8px)] bg-muted/50 py-2">
+        <span key={label} className={cn("grid min-w-0 place-items-center rounded-[min(var(--radius),8px)] bg-muted/50", size === "lg" ? "py-2" : "py-1.5")}>
           <span className={cn(size === "lg" ? TYPE.valueLg : TYPE.value, "tracking-[-0.02em]")} style={{ fontFamily: font }}>
-            {c.ready ? c.pad(n) : "--"}
+            {c.ready ? <Rolling value={c.pad(n)} /> : "--"}
           </span>
-          <span className={cn(TYPE.small, "max-w-full truncate px-1")}>{label}</span>
-        </div>
+        </span>
       ))}
+      <Drop level={3}>
+        {cells.map(([label]) => (
+          <span key={label} className={cn(TYPE.small, "max-w-full truncate px-1 text-center")}>
+            {label}
+          </span>
+        ))}
+      </Drop>
     </div>
   )
 }
@@ -478,8 +493,8 @@ export function Countdown({ variant = "big", props }: WidgetProps) {
   const go = ctaLink(base, props, "calendar")
   const when = c.ready ? c.date.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : undefined
   const button = label && (
-    <Button size="sm" className="w-fit shrink-0" {...go}>
-      {label} <ArrowRight />
+    <Button size="sm" className={cn("w-fit", CTA)} title={label} {...go}>
+      <span className="truncate">{label}</span> <ArrowRight />
     </Button>
   )
 
@@ -496,9 +511,15 @@ export function Countdown({ variant = "big", props }: WidgetProps) {
     const text = String(props.text || "Doors open for the next group. Places are limited.")
     return (
       <WCard icon={CalendarClock} title={title} meta={when}>
-        {more && <p className={cn(TYPE.body, "line-clamp-3 text-muted-foreground")}>{text}</p>}
+        <Drop level={2}>
+          {more && (
+            <FitText lines={3} className={cn(TYPE.body, "text-muted-foreground")}>
+              {text}
+            </FitText>
+          )}
+        </Drop>
         {c.over ? <span className={TYPE.value}>Started</span> : <Figures c={c} size="md" />}
-        <div className="mt-auto flex">{button}</div>
+        <div className="mt-auto flex min-w-0">{button}</div>
       </WCard>
     )
   }
@@ -506,8 +527,8 @@ export function Countdown({ variant = "big", props }: WidgetProps) {
   return (
     <WCard icon={CalendarClock} title={title} meta={when}>
       {c.over ? (
-        <div className="flex flex-1 flex-wrap items-center gap-3">
-          <span className={TYPE.valueLg}>Started</span>
+        <div className="flex min-w-0 flex-1 flex-wrap content-center items-center gap-x-3 gap-y-1">
+          <span className={cn(TYPE.value, "@[14rem]:text-[1.75rem] @[14rem]:leading-8")}>Started</span>
           {button}
         </div>
       ) : (

@@ -3,6 +3,7 @@
 import { useCoach } from "@/components/coach/coach-provider"
 import type { Coach } from "@/lib/data/coaches"
 import { GAP, ROW_HEIGHT, readingOrder, wMd, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
+import { widgetFinishOf, widgetSetOf } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { WidgetFrame } from "./kit"
 import { getWidget } from "./registry"
@@ -29,7 +30,7 @@ export function PageRenderer({ layout, page = "home" }: { layout: PageLayout; pa
     <PageIdContext.Provider value={page}>
     <PageTitleShownContext.Provider value={!items.some((w) => w.type === "page-header")}>
     <div className="@container">
-      <div className="g-page" style={{ "--gap": `${GAP[theme.density]}px`, "--row-h": `${ROW_HEIGHT}px` } as React.CSSProperties}>
+      <div className="g-page" data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ "--gap": `${GAP[theme.density]}px`, "--row-h": `${ROW_HEIGHT}px` } as React.CSSProperties}>
         {items.map((w, i) => (
           <WidgetView key={w.id} w={w} order={i} />
         ))}
@@ -46,7 +47,7 @@ function WidgetView({ w, order }: { w: WidgetInstance; order: number }) {
   const C = def.Component
   const style = { "--x": w.x, "--y": w.y, "--w": w.w, "--h": w.h, "--w-md": wMd(w.w), "--order": order } as React.CSSProperties
   return (
-    <div className={cn("g-item", def.core && "g-core", w.hideOnPhone && "g-hide-phone")} style={style}>
+    <div className={cn("g-item", def.core && "g-core", (def.core || w.type === "page-header") && "g-plain", w.hideOnPhone && "g-hide-phone")} style={style}>
       <WidgetFrame emphasis={w.emphasis} detail={w.detail} header={w.header} note={w.note} core={Boolean(def.core)}>
         <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
       </WidgetFrame>

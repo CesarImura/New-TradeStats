@@ -1,14 +1,14 @@
 import { Suspense } from "react"
-import { ThemeLab } from "@/components/lab/theme-lab"
+import { WidgetBase } from "@/components/lab/widget-base"
 
-export const metadata = { title: "Theme lab · Prototype" }
+export const metadata = { title: "Library · Prototype" }
 
-/** Prototype only: every theme side by side with a readability check. */
+/** Prototype only: the library. Widgets, components, the themes' readability check and links to the other benches. */
 export default function LabPage() {
   // Widgets read the URL (preview tier, data mode), so the page needs a Suspense boundary to prerender.
   return (
     <Suspense>
-      <ThemeLab />
+      <WidgetBase />
     </Suspense>
   )
 }

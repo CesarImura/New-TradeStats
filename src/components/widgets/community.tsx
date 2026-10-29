@@ -11,7 +11,7 @@ import { ANNOUNCEMENT, DISCORD } from "@/lib/data/sample"
 import { ANNOUNCEMENTS } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Axis, Chip, GREY, HatchBar, Label, Legend, Num, Rule, TickBar, WCard, useFigureFont } from "./instrument"
-import { ACCENT, ACCENT_TEXT, Avatar, TYPE, Tip, useMore } from "./kit"
+import { ACCENT, ACCENT_TEXT, Avatar, Drop, FitText, FX, GROW_ROWS, SPLIT, Tip, TYPE, useMore } from "./kit"
 import { AvatarStack, WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 import { Artwork, HeatGrid, MEDIA_FG, MEDIA_FG2, MediaCard, heatShade } from "./layouts"
 
@@ -39,7 +39,7 @@ function Reactions({ read = true, className }: { read?: boolean; className?: str
     ...(read ? [{ icon: Eye, n: READ, label: "read" }] : []),
   ]
   return (
-    <div className={cn("flex min-w-0 items-center gap-3.5 text-xs leading-4 tabular-nums", className)} style={{ fontFamily: font }}>
+    <div className={cn("flex min-w-0 items-center gap-3.5 text-[0.6875rem] leading-4 tabular-nums", className)} style={{ fontFamily: font }}>
       {items.map(({ icon: Icon, n, label }, i) => (
         <span key={i} className="flex shrink-0 items-center gap-1">
           <Icon className="size-3.5 text-muted-foreground" />
@@ -52,7 +52,7 @@ function Reactions({ read = true, className }: { read?: boolean; className?: str
 }
 
 const ReadLink = () => (
-  <a href="#" className="shrink-0 text-xs font-medium hover:underline" style={{ color: ACCENT_TEXT }}>
+  <a href="#" className={cn("shrink-0 text-[0.8125rem] font-medium", FX.text, FX.focus)} style={{ color: ACCENT_TEXT }}>
     Read
   </a>
 )
@@ -91,7 +91,7 @@ export function Announcement({ variant = "plain" }: WidgetProps) {
         footer={
           <>
             {more && (
-              <span className="flex min-w-0 items-center gap-3 text-xs leading-4 tabular-nums" style={{ color: MEDIA_FG2, fontFamily: font }}>
+              <span className="flex min-w-0 items-center gap-3 text-[0.6875rem] leading-4 tabular-nums" style={{ color: MEDIA_FG2, fontFamily: font }}>
                 <span className="flex items-center gap-1">
                   <Heart className="size-3.5" /> {ANNOUNCEMENT.reactions}
                 </span>
@@ -105,7 +105,7 @@ export function Announcement({ variant = "plain" }: WidgetProps) {
                 )}
               </span>
             )}
-            <a href="#" className="ml-auto shrink-0 text-xs font-medium underline-offset-2 hover:underline" style={{ color: MEDIA_FG }}>
+            <a href="#" className={cn("ml-auto shrink-0 text-[0.8125rem] font-medium", FX.text, FX.focus)} style={{ color: MEDIA_FG }}>
               Read post
             </a>
           </>
@@ -127,16 +127,20 @@ export function Announcement({ variant = "plain" }: WidgetProps) {
         </div>
         <div className="grid min-w-0 gap-0.5">
           <span className={cn(TYPE.title, "line-clamp-2")}>{ANNOUNCEMENT.title}</span>
-          {more && <p className={cn(TYPE.body, "text-muted-foreground", detailed ? "line-clamp-4" : "line-clamp-2")}>{ANNOUNCEMENT.body}</p>}
+          <Drop level={2}>
+            {more && <FitText lines={detailed ? 4 : 2} className={cn(TYPE.body, "text-muted-foreground")}>{ANNOUNCEMENT.body}</FitText>}
+          </Drop>
         </div>
         <div className="mt-auto flex min-w-0 items-center gap-3">
           <Reactions read={false} />
-          {more && (
-            <span className="ml-auto hidden min-w-0 items-center gap-1.5 @[18rem]:flex">
-              <AvatarStack initials={READERS.slice(0, 3)} />
-              <span className={cn(TYPE.small, "truncate")}>+{READ - 3} read</span>
-            </span>
-          )}
+          <Drop level={3}>
+            {more && (
+              <span className="ml-auto hidden min-w-0 items-center gap-1.5 @[18rem]:flex">
+                <AvatarStack initials={READERS.slice(0, 3)} />
+                <span className={cn(TYPE.small, "truncate")}>+{READ - 3} read</span>
+              </span>
+            )}
+          </Drop>
           {!more && (
             <span className="ml-auto">
               <ReadLink />
@@ -150,7 +154,7 @@ export function Announcement({ variant = "plain" }: WidgetProps) {
   return (
     <WCard icon={Megaphone} title="Latest announcement" meta={meta} chip={chip}>
       <h3 className={cn(TYPE.value, "line-clamp-2 text-balance")}>{ANNOUNCEMENT.title}</h3>
-      {more && <p className={cn(TYPE.body, "text-muted-foreground", detailed ? "line-clamp-3" : "line-clamp-2")}>{ANNOUNCEMENT.body}</p>}
+      {more && <FitText lines={detailed ? 3 : 2} className={cn(TYPE.body, "text-muted-foreground")}>{ANNOUNCEMENT.body}</FitText>}
       {detailed && (
         <div className="grid gap-1.5">
           <div className="flex items-baseline justify-between gap-2">
@@ -203,7 +207,7 @@ export function CommunityFeed({ variant = "list" }: WidgetProps) {
 
   return (
     <WCard icon={MessagesSquare} title={coach.wording.community} meta={`${coach.coachName}'s posts · ${posts.length} this week`} chip={chip}>
-      <div className="flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full">
+      <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS)}>
         {posts.map((p, i) => {
           const st = POST_STATS[p.id] ?? { likes: 0, replies: 0 }
           return (
@@ -213,7 +217,7 @@ export function CommunityFeed({ variant = "list" }: WidgetProps) {
                 <span className={cn(TYPE.title, "min-w-0 flex-1 truncate", i >= fresh && "font-normal")}>{p.title}</span>
                 <span className="shrink-0 text-[0.6875rem] leading-4 text-muted-foreground">{p.when}</span>
               </div>
-              {more && i === 0 && <p className={cn(TYPE.small, "line-clamp-2")}>{p.body}</p>}
+              {more && i === 0 && <p className={cn(TYPE.body, "line-clamp-2 text-muted-foreground")}>{p.body}</p>}
               {detailed && (
                 <span className="flex items-center gap-3 text-[0.6875rem] leading-4 text-muted-foreground tabular-nums" style={{ fontFamily: font }}>
                   <span className="flex items-center gap-1">
@@ -327,19 +331,25 @@ export function Discord({ variant = "online", props }: WidgetProps) {
     // The current hour: Monday, the last hour of the sample day.
     const now: [number, number] = [0, HOURS.length - 1]
     return (
-      <WCard icon={MessageSquareText} title="Discord activity" meta={empty ? "Be the first one in" : `${coach.name} · last 7 days · your time zone`} chip={newChip}>
-        {more && <Num size="md" value={empty ? 0 : total.toLocaleString("en")} unit="messages" delta={empty ? undefined : `${DISCORD.online} online now`} deltaTone="muted" />}
-        <HeatGrid
-          rowLabels={WEEK_DAYS.map((d) => d.slice(0, 2))}
-          colLabels={HOURS.map((_, h) => (h % 6 === 0 ? String(h).padStart(2, "0") : undefined))}
-          rows={WEEK_ACTIVITY.map((r, d) =>
-            r.map((v, h) => ({
-              fill: empty ? undefined : d === now[0] && h === now[1] ? ACCENT : heatShade(v / max),
-              title: `${WEEK_DAYS[d]} ${String(h).padStart(2, "0")}:00 · ${empty ? 0 : v} messages`,
-            })),
-          )}
-        />
-        {detailed && !empty && <Legend className="shrink-0" items={[{ color: GREY[0], label: "Busiest", value: "weekdays 17:00–23:00" }, { color: ACCENT, label: "Now", value: `${HOURS[HOURS.length - 1]} msgs this hour` }]} />}
+      <WCard icon={MessageSquareText} title="Discord activity" meta={empty ? "Be the first one in" : `${coach.name} · last 7 days · your time zone`} chip={newChip} bodyClassName={SPLIT}>
+        <Drop level={2}>
+          {more && <Num size="md" value={empty ? 0 : total.toLocaleString("en")} unit="messages" delta={empty ? undefined : `${DISCORD.online} online now`} deltaTone="muted" />}
+        </Drop>
+        <div data-main className="flex min-h-min flex-1 flex-col">
+          <HeatGrid
+            rowLabels={WEEK_DAYS.map((d) => d.slice(0, 2))}
+            colLabels={HOURS.map((_, h) => (h % 6 === 0 ? String(h).padStart(2, "0") : undefined))}
+            rows={WEEK_ACTIVITY.map((r, d) =>
+              r.map((v, h) => ({
+                fill: empty ? undefined : d === now[0] && h === now[1] ? ACCENT : heatShade(v / max),
+                title: `${WEEK_DAYS[d]} ${String(h).padStart(2, "0")}:00 · ${empty ? 0 : v} messages`,
+              })),
+            )}
+          />
+        </div>
+        <Drop level={3}>
+          {detailed && !empty && <Legend className="shrink-0" items={[{ color: GREY[0], label: "Busiest", value: "weekdays 17:00–23:00" }, { color: ACCENT, label: "Now", value: `${HOURS[HOURS.length - 1]} msgs this hour` }]} />}
+        </Drop>
       </WCard>
     )
   }
@@ -350,8 +360,12 @@ export function Discord({ variant = "online", props }: WidgetProps) {
       <WCard icon={MessageSquareText} title="Discord" meta={empty ? `${coach.name} · ${members}` : `${rows.length} channels · since your last visit`} chip={newChip}>
         <Num size="md" value={empty ? 0 : UNREAD} unit="new messages" delta={!empty && more ? `${DISCORD.online} online` : undefined} deltaTone="muted" />
         <HatchBar parts={empty ? [] : CHANNELS.slice(0, 3).map((c, i) => ({ value: c.unread, color: i === 0 ? ACCENT : GREY[i + 1] }))} total={empty ? 1 : UNREAD} height={8} />
-        {more && <Legend items={channelLegend(rows, empty)} />}
-        {detailed && <p className={cn(TYPE.small, "line-clamp-2")}>{text}</p>}
+        <Drop level={2}>
+          {more && <Legend items={channelLegend(rows, empty)} />}
+        </Drop>
+        <Drop level={3}>
+          {detailed && <p className={cn(TYPE.body, "line-clamp-2 text-muted-foreground")}>{text}</p>}
+        </Drop>
         <Button size="sm" className="mt-auto w-fit">
           Open Discord <ArrowUpRight />
         </Button>
@@ -362,19 +376,23 @@ export function Discord({ variant = "online", props }: WidgetProps) {
   return (
     <WCard icon={MessageSquareText} title="Discord" meta={empty ? "Be the first one in" : `${coach.name} · ${members}`} chip={newChip} bodyClassName="gap-2">
       <div className="flex min-w-0 items-end justify-between gap-3">
-        <Num value={empty ? 0 : DISCORD.online} unit="online" delta={empty ? undefined : "+18 vs yesterday"} />
+        <Num value={empty ? 0 : DISCORD.online} unit="online" delta={empty ? undefined : "+18 vs yesterday"} deltaTone="muted" />
         {!empty && <AvatarStack initials={DISCORD.avatars.slice(0, 5)} className="hidden shrink-0 pb-1 @[17rem]:flex" />}
       </div>
       <div className="mt-auto grid gap-1">
-        <HourTicks values={empty ? HOURS.map(() => 0) : HOURS} height={more ? 28 : 22} />
-        {more && <Axis labels={["24 h ago", "12 h", "now"]} />}
+        <HourTicks values={empty ? HOURS.map(() => 0) : HOURS} height={more ? 24 : 20} />
+        <Drop level={2}>
+          {more && <Axis labels={["24 h ago", "12 h", "now"]} />}
+        </Drop>
       </div>
-      {detailed && (
-        <>
-          <Rule />
-          <Legend items={channelLegend(CHANNELS.slice(0, 3), empty)} />
-        </>
-      )}
+      <Drop level={3}>
+        {detailed && (
+          <>
+            <Rule />
+            <Legend items={channelLegend(CHANNELS.slice(0, 3), empty)} />
+          </>
+        )}
+      </Drop>
     </WCard>
   )
 }
@@ -401,12 +419,16 @@ function DiscordJoin() {
   }
   return (
     <WCard icon={MessageSquareText} title={`${coach.org} on Discord`} meta={`${DISCORD.online} online · ${members}`} chip={linked ? <Chip>{role}</Chip> : newChip}>
-      <AvatarStack initials={DISCORD.avatars.slice(0, more ? 6 : 4)} />
+      <Drop level={1}>
+        <AvatarStack initials={DISCORD.avatars.slice(0, more ? 6 : 4)} />
+      </Drop>
       {/* What's new per channel only once they're in; before that, just the channel names. */}
-      {more && <Legend items={channelLegend(CHANNELS.slice(0, detailed ? 5 : 3), empty).map((c) => (linked ? c : { ...c, value: undefined }))} />}
+      <Drop level={2}>
+        {more && <Legend items={channelLegend(CHANNELS.slice(0, detailed ? 5 : 3), empty).map((c) => (linked ? c : { ...c, value: undefined }))} />}
+      </Drop>
       {linked ? (
         <div className="mt-auto grid gap-2">
-          <span className="flex items-center gap-1.5 text-xs leading-4">
+          <span className="flex items-center gap-1.5 text-[0.6875rem] leading-4">
             <Check className="size-3.5" style={{ color: ACCENT_TEXT }} /> Linked. You have the {role} role.
           </span>
           <Button size="sm" variant="outline" className="w-fit">
@@ -418,7 +440,9 @@ function DiscordJoin() {
           <Button size="sm" className="w-fit" disabled={busy} onClick={join}>
             {busy ? "Opening Discord…" : "Join with Discord"}
           </Button>
-          {detailed && <span className={TYPE.small}>Real-time chat stays on Discord. Your role follows your membership.</span>}
+          <Drop level={3}>
+            {detailed && <span className={TYPE.small}>Real-time chat stays on Discord. Your role follows your membership.</span>}
+          </Drop>
         </div>
       )}
     </WCard>

@@ -90,6 +90,14 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
     // Profit and loss read as text: the same colour, moved to a readable shade when the coach picked their own.
     "--profit-text": p.profitText,
     "--loss-text": p.lossText,
+    // The widget surface ladder (derive.ts surfaces): inner panel, empty track, hairline.
+    "--w-panel": p.panel,
+    "--w-track": p.track,
+    "--w-hair": p.hair,
+    // The Inverted Star card: the text colour as the card, the brand only as one mark.
+    "--inv-bg": p.invBg,
+    "--inv-fg": p.invFg,
+    "--inv-accent": p.invAccent,
     "--coach-font-heading": FONT_LIBRARY[t.fonts.heading].css,
     "--coach-font-body": FONT_LIBRARY[t.fonts.body].css,
     "--coach-font-label": FONT_LIBRARY[t.fonts.label].css,

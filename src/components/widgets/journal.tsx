@@ -6,8 +6,8 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { JOURNAL_STATS, JOURNAL_WEEK, RULE_DAYS, R_STATS, SETUPS } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Chip, GREY, Label, Legend, Num, Rule, StepChart, TickBar, TickGauge, WCard, ink, useFigureFont } from "./instrument"
-import { ACCENT, ACCENT_TEXT, useMore } from "./kit"
+import { Chip, FitGauge, GREY, ink, Label, Legend, MiniStats, Num, Panel, Rule, Seg, StepChart, TickBar, useFigureFont, WCard } from "./instrument"
+import { ACCENT, ACCENT_TEXT, Drop, SPLIT, Tip, useMore } from "./kit"
 import { BleedArea, BleedBars, Compare, HeatGrid, HeroCard, heatPl, heatShade } from "./layouts"
 import { WidgetEmpty, signed, useEmpty, type WidgetProps } from "./shared"
 
@@ -15,7 +15,8 @@ const rr = (v: number, digits = 1) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFi
 const euro = (n: number) => `€${Math.round(n).toLocaleString("en")}`
 /** A result tint: profit or loss, softened. Mixed with transparent so it also works on a Star card. */
 const soft = (v: number, strength: number) => `color-mix(in oklab, ${v >= 0 ? "var(--profit)" : "var(--loss)"} ${strength}%, transparent)`
-const plColor = (v: number) => (v > 0 ? "var(--profit)" : v < 0 ? "var(--loss)" : "var(--muted-foreground)")
+/** Profit or loss as text: the readable shades, not the fill colours. */
+const plColor = (v: number) => (v > 0 ? "var(--profit-text)" : v < 0 ? "var(--loss-text)" : "var(--muted-foreground)")
 const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
 
 function ConnectBroker() {
@@ -36,24 +37,11 @@ function Fig({ label, value, color }: { label: string; value: React.ReactNode; c
   )
 }
 
-/**
- * A gauge that fits whatever height the card leaves it (size container):
- * as wide as the card allows, never taller than the space.
- */
-function FitGauge({ value, max = 100, children }: { value: number; max?: number; children?: React.ReactNode }) {
-  return (
-    <div className="flex min-h-20 flex-1 items-end justify-center [container-type:size]">
-      <TickGauge value={value} max={max} className="w-[min(100cqw,189cqh)] max-w-80">
-        {children}
-      </TickGauge>
-    </div>
-  )
-}
 
 // ---------- Performance
 
 /** The last 20 trading days, Monday to Friday, four weeks. The last week is the journal's week. */
-const DAYS: number[][] = [[120, -80, 0, 260, -90], [-210, 140, 310, -60, 0], [80, 0, -150, -20, 140], JOURNAL_WEEK.map((d) => d.pnl)]
+const DAYS: number[][] = [[118, -76, 0, 263, -95], [-212, 143, 306, -57, 0], [84, 0, -153, -17, 136], JOURNAL_WEEK.map((d) => d.pnl)]
 const DAILY = DAYS.flat()
 const EQUITY_20 = DAILY.reduce<number[]>((a, v) => [...a, (a[a.length - 1] ?? 0) + v], [])
 /** The coach's model account over the same 20 days (cumulative P&L). */
@@ -70,8 +58,12 @@ const HOUR_PL: number[][] = [
   [-30, 260, 180, 230, -60, 0, -130, -90, 0],
   [0, 90, 150, 40, -120, -70, 0, 0, -50],
 ]
-const AM = HOUR_PL.flat().filter((_, i) => HOURS[i % HOURS.length] < 12).reduce((a, b) => a + b, 0)
-const PM = HOUR_PL.flat().filter((_, i) => HOURS[i % HOURS.length] >= 12).reduce((a, b) => a + b, 0)
+const AM = HOUR_PL.flat()
+  .filter((_, i) => HOURS[i % HOURS.length] < 12)
+  .reduce((a, b) => a + b, 0)
+const PM = HOUR_PL.flat()
+  .filter((_, i) => HOURS[i % HOURS.length] >= 12)
+  .reduce((a, b) => a + b, 0)
 
 /** Daily P&L as soft diverging bars, grouped by week, the week's total under each group. */
 function DayBars() {
@@ -91,21 +83,15 @@ function DayBars() {
               const on = hover === i
               return (
                 <div key={d} className="relative flex min-w-0 flex-1 flex-col" onPointerEnter={() => setHover(i)}>
-                  <div className="flex items-end" style={{ flex: up }}>
-                    {v > 0 && <span className="r-bar w-full" style={{ height: `${(v / up) * 100}%`, background: soft(v, on || i === last ? 85 : 42) }} />}
+                  {/* Slim bars (never slabs on a wide card), centred in their day. */}
+                  <div className="flex items-end justify-center" style={{ flex: up }}>
+                    {v > 0 && <span className="r-bar w-full max-w-3.5 transition-[background-color] duration-150" style={{ height: `${(v / up) * 100}%`, background: soft(v, on || i === last ? 85 : 42) }} />}
                   </div>
-                  <div className="flex items-start" style={{ flex: down }}>
-                    {v < 0 && <span className="r-bar w-full" style={{ height: `${(-v / down) * 100}%`, background: soft(v, on || i === last ? 85 : 42) }} />}
+                  <div className="flex items-start justify-center" style={{ flex: down }}>
+                    {v < 0 && <span className="r-bar w-full max-w-3.5 transition-[background-color] duration-150" style={{ height: `${(-v / down) * 100}%`, background: soft(v, on || i === last ? 85 : 42) }} />}
                   </div>
                   {v === 0 && <span className="r-dot absolute left-1/2 size-1 -translate-1/2" style={{ top: `${(up / (up + down)) * 100}%`, background: GREY[2] }} />}
-                  {on && (
-                    <span
-                      className="pointer-events-none absolute bottom-full left-1/2 z-10 -translate-x-1/2 rounded-[min(var(--radius),4px)] bg-muted px-1.5 py-0.5 text-[0.6875rem] leading-4 whitespace-nowrap tabular-nums"
-                      style={{ fontFamily: font }}
-                    >
-                      Wk {w + 1} · {["Mon", "Tue", "Wed", "Thu", "Fri"][d]} · {v ? signed(v) : "no trades"}
-                    </span>
-                  )}
+                  {on && <Tip x={50} y={0} place="above" label={`Wk ${w + 1} · ${["Mon", "Tue", "Wed", "Thu", "Fri"][d]}`} value={v ? signed(v) : "No trades"} color={v ? (v > 0 ? "var(--profit)" : "var(--loss)") : undefined} />}
                 </div>
               )
             })}
@@ -148,16 +134,25 @@ function DayCalendar() {
             {week.map((v, d) => {
               const today = w === DAYS.length - 1 && d === week.length - 1
               return (
+                // A neutral cell: the result is the signed figure and a thin bar as long as the day was big, never a red or green block.
                 <span
                   key={d}
                   title={`Week ${w + 1} · ${["Mon", "Tue", "Wed", "Thu", "Fri"][d]} · ${v ? signed(v) : "no trades"}`}
-                  className="r-bar grid place-items-center overflow-hidden text-[0.6875rem] leading-none tabular-nums"
+                  className="r-bar relative grid place-items-center overflow-hidden pb-1 text-[0.6875rem] leading-none tabular-nums"
                   style={{
-                    background: v === 0 ? undefined : soft(v, 10 + Math.round((Math.abs(v) / max) * 32)),
+                    background: v === 0 ? undefined : `color-mix(in oklab, var(--foreground) 4%, transparent)`,
                     boxShadow: v === 0 ? `inset 0 0 0 1px ${TRACK}` : today ? `inset 0 0 0 1.5px ${ACCENT}` : undefined,
                   }}
                 >
-                  <span className={cn("hidden @[22rem]:inline", v === 0 ? "text-muted-foreground" : "text-foreground")}>{v === 0 ? "·" : `${v > 0 ? "+" : "−"}${Math.abs(v)}`}</span>
+                  <span className="hidden @[22rem]:inline" style={{ color: plColor(v) }}>
+                    {v === 0 ? "·" : `${v > 0 ? "+" : "−"}${Math.abs(v)}`}
+                  </span>
+                  {v !== 0 && (
+                    <i
+                      className="r-bar absolute bottom-0.5 left-1/2 h-0.5 -translate-x-1/2"
+                      style={{ width: `${Math.max(12, Math.round((Math.abs(v) / max) * 70))}%`, background: v > 0 ? "var(--profit)" : "var(--loss)" }}
+                    />
+                  )}
                 </span>
               )
             })}
@@ -198,8 +193,13 @@ function Edge() {
  * Performance: curve (equity against the coach's model account), bars (daily
  * P&L by week), heatmap (a four-week calendar). Detailed adds the edge.
  */
+/** The equity curve's periods: trading days shown. */
+const PERIODS = { "1w": 5, "2w": 10, "4w": 20 } as const
+type Period = keyof typeof PERIODS
+
 export function JournalPnl({ variant = "curve" }: WidgetProps) {
   const { coach } = useCoach()
+  const [period, setPeriod] = useState<Period>("4w")
   const empty = useEmpty()
   const standard = useMore("standard")
   const detailed = useMore("detailed")
@@ -212,7 +212,7 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
   const worst = Math.min(...DAILY)
   const headline = <Num value={signed(total)} delta={`${signed(JOURNAL_STATS.pnl)} this week`} deltaTone={JOURNAL_STATS.pnl >= 0 ? "profit" : "loss"} />
   const card = (children: React.ReactNode) => (
-    <WCard icon={LineChart} title="Performance" meta={`${coach.wording.journal} · last ${DAILY.length} days · ${JOURNAL_STATS.trades} trades`} chip={<Chip>{JOURNAL_STATS.winRate}% win</Chip>}>
+    <WCard icon={LineChart} title="Performance" meta={`${coach.wording.journal} · last ${DAILY.length} days · ${JOURNAL_STATS.trades} trades`} chip={<Chip>{JOURNAL_STATS.winRate}% win</Chip>} bodyClassName={SPLIT}>
       {children}
     </WCard>
   )
@@ -230,7 +230,7 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
         stats={
           detailed
             ? [
-                { label: "Expectancy", value: rr(R_STATS.expectancy, 2), tone: "accent" },
+                { label: "Expectancy", value: rr(R_STATS.expectancy, 2) },
                 { label: "Best day", value: signed(best), tone: "profit" },
                 { label: "Worst day", value: signed(worst), tone: "loss" },
               ]
@@ -254,7 +254,12 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
       { label: "Trades", a: JOURNAL_STATS.trades, b: MODEL.trades, aText: String(JOURNAL_STATS.trades), bText: String(MODEL.trades) },
     ]
     return (
-      <WCard icon={LineChart} title={`You vs ${coach.coachName}`} meta={`${coach.wording.journal} · last ${DAILY.length} days · ${coach.coachName}'s model account`} chip={<Chip tone={gap >= 0 ? "accent" : "neutral"}>{gap >= 0 ? `${signed(gap)} ahead` : `${signed(gap)} behind`}</Chip>}>
+      <WCard
+        icon={LineChart}
+        title={`You vs ${coach.coachName}`}
+        meta={`${coach.wording.journal} · last ${DAILY.length} days · ${coach.coachName}'s model account`}
+        chip={<Chip tone={gap >= 0 ? "accent" : "neutral"}>{gap >= 0 ? `${signed(gap)} ahead` : `${signed(gap)} behind`}</Chip>}
+      >
         <Compare a="You" b={`${coach.coachName}'s model`} rows={standard ? rows : rows.slice(0, 3)} />
       </WCard>
     )
@@ -264,28 +269,38 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
     const max = Math.max(...HOUR_PL.flat().map(Math.abs), 1)
     const best = HOUR_PL.flat().reduce((m, v, i) => (v > HOUR_PL.flat()[m] ? i : m), 0)
     return (
-      <WCard icon={LineChart} title="Performance by hour" meta={`${coach.wording.journal} · last ${DAILY.length} days · your time zone`} chip={<Chip>{`best ${String(HOURS[best % HOURS.length]).padStart(2, "0")}:00`}</Chip>}>
-        {standard && <Num size="md" value={signed(AM)} unit="before 12:00" delta={`${signed(PM)} after`} deltaTone={PM >= 0 ? "profit" : "loss"} />}
-        <HeatGrid
-          rowLabels={["Mon", "Tue", "Wed", "Thu", "Fri"]}
-          colLabels={HOURS.map((h, i) => (i % 2 === 0 ? String(h).padStart(2, "0") : undefined))}
-          rows={HOUR_PL.map((r, ri) =>
-            r.map((v, ci) => ({
-              fill: heatPl(v / max),
-              ring: ri * HOURS.length + ci === best ? ACCENT : undefined,
-              title: `${["Mon", "Tue", "Wed", "Thu", "Fri"][ri]} ${String(HOURS[ci]).padStart(2, "0")}:00 · ${v ? signed(v) : "no trades"}`,
-            })),
-          )}
-        />
-        {detailed && (
-          <Legend
-            className="shrink-0 @[20rem]:grid-cols-2 @[20rem]:gap-x-5"
-            items={[
-              { color: "var(--profit)", label: "Best hour", value: `${["Mon", "Tue", "Wed", "Thu", "Fri"][Math.floor(best / HOURS.length)]} ${String(HOURS[best % HOURS.length]).padStart(2, "0")}:00` },
-              { color: "var(--loss)", label: "After 12:00", value: signed(PM), valueTone: "loss" },
-            ]}
+      <WCard
+        icon={LineChart}
+        title="Performance by hour"
+        meta={`${coach.wording.journal} · last ${DAILY.length} days · your time zone`}
+        chip={<Chip>{`best ${String(HOURS[best % HOURS.length]).padStart(2, "0")}:00`}</Chip>}
+        bodyClassName={SPLIT}
+      >
+        <Drop level={2}>{standard && <Num size="md" value={signed(AM)} unit="before 12:00" delta={`${signed(PM)} after`} deltaTone={PM >= 0 ? "profit" : "loss"} />}</Drop>
+        <div data-main className="flex min-h-min flex-1 flex-col">
+          <HeatGrid
+            rowLabels={["Mon", "Tue", "Wed", "Thu", "Fri"]}
+            colLabels={HOURS.map((h, i) => (i % 2 === 0 ? String(h).padStart(2, "0") : undefined))}
+            rows={HOUR_PL.map((r, ri) =>
+              r.map((v, ci) => ({
+                ...heatPl(v / max),
+                ring: ri * HOURS.length + ci === best ? ACCENT : undefined,
+                title: `${["Mon", "Tue", "Wed", "Thu", "Fri"][ri]} ${String(HOURS[ci]).padStart(2, "0")}:00 · ${v ? signed(v) : "no trades"}`,
+              })),
+            )}
           />
-        )}
+        </div>
+        <Drop level={3}>
+          {detailed && (
+            <Legend
+              className="shrink-0 [grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-x-5"
+              items={[
+                { color: "var(--profit)", label: "Best hour", value: `${["Mon", "Tue", "Wed", "Thu", "Fri"][Math.floor(best / HOURS.length)]} ${String(HOURS[best % HOURS.length]).padStart(2, "0")}:00` },
+                { color: "var(--loss)", label: "After 12:00", value: signed(PM), valueTone: "loss" },
+              ]}
+            />
+          )}
+        </Drop>
       </WCard>
     )
   }
@@ -294,17 +309,21 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
     return card(
       <>
         {headline}
-        <DayBars />
-        {standard && (
-          <Legend
-            className="shrink-0 @[20rem]:grid-cols-2 @[20rem]:gap-x-5"
-            items={[
-              { color: "var(--profit)", label: "Green days", value: `${green} of ${green + red}` },
-              { color: "var(--loss)", label: "Red days", value: red },
-            ]}
-          />
-        )}
-        {detailed && <Edge />}
+        <div data-main className="flex min-h-min flex-1 flex-col">
+          <DayBars />
+        </div>
+        <Drop level={2}>
+          {standard && (
+            <Legend
+              className="shrink-0 [grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-x-5"
+              items={[
+                { color: "var(--profit)", label: "Green days", value: `${green} of ${green + red}` },
+                { color: "var(--loss)", label: "Red days", value: red },
+              ]}
+            />
+          )}
+        </Drop>
+        <Drop level={3}>{detailed && <Edge />}</Drop>
       </>,
     )
   }
@@ -313,46 +332,94 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
     return card(
       <>
         {headline}
-        <DayCalendar />
-        {standard && (
-          <Legend
-            className="shrink-0 @[20rem]:grid-cols-2 @[20rem]:gap-x-5"
-            items={[
-              { color: "var(--profit)", label: "Green days", value: `${green} of ${green + red}` },
-              { color: "var(--loss)", label: "Best · worst", value: `${signed(best)} · ${signed(worst)}` },
-            ]}
-          />
-        )}
-        {detailed && <Edge />}
+        <div data-main className="flex min-h-min flex-1 flex-col">
+          <DayCalendar />
+        </div>
+        <Drop level={2}>
+          {standard && (
+            <Legend
+              className="shrink-0 [grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-x-5"
+              items={[
+                { color: "var(--profit)", label: "Green days", value: `${green} of ${green + red}` },
+                { color: "var(--loss)", label: "Range", value: `${signed(worst)} to ${signed(best)}` },
+              ]}
+            />
+          )}
+        </Drop>
+        <Drop level={3}>{detailed && <Edge />}</Drop>
       </>,
     )
   }
 
-  // curve
-  return card(
-    <>
-      {headline}
-      <StepChart
-        className="min-h-14 flex-1"
-        height={0}
-        format={signed}
-        series={[
-          { values: EQUITY_20, label: "Your equity" },
-          { values: MODEL_20, label: `${coach.coachName}'s model account` },
-        ]}
-      />
-      {standard && (
-        <Legend
-          className="shrink-0"
-          items={[
-            { color: ACCENT, label: "Your equity", value: euro(BALANCE.you) },
-            { color: GREY[1], label: `${coach.coachName}'s model account`, value: euro(BALANCE.model) },
-            ...(detailed ? [] : [{ label: "Expectancy", value: rr(R_STATS.expectancy, 2), valueTone: "accent" as const }]),
+  // curve, on the base structure: name (with the period), the period's P&L against the coach's model, the step chart on
+  // a panel, three small stats, and the way into the journal.
+  const n = PERIODS[period]
+  const from = (vals: number[]) => vals.slice(-n).map((v) => v - (vals[vals.length - n - 1] ?? 0))
+  const mine = from(EQUITY_20)
+  const model = from(MODEL_20)
+  const gain = mine[mine.length - 1]
+  const gap = gain - model[model.length - 1]
+  const days = DAILY.slice(-n)
+  return (
+    <WCard
+      bands
+      icon={LineChart}
+      title="Performance"
+      section={coach.wording.journal}
+      meta={`${coach.wording.journal} · last ${n} days · ${JOURNAL_STATS.trades} trades`}
+      control={
+        <Seg
+          label="Period"
+          value={period}
+          onChange={setPeriod}
+          options={[
+            ["1w", "1W"],
+            ["2w", "2W"],
+            ["4w", "4W"],
           ]}
         />
-      )}
-      {detailed && <Edge />}
-    </>,
+      }
+      action={standard ? { label: `Open ${coach.wording.journal.toLowerCase()}`, href: "journal" } : undefined}
+      footnote={detailed ? `${days.filter((v) => v > 0).length} green days of ${days.filter((v) => v !== 0).length}` : undefined}
+      bodyClassName={SPLIT}
+    >
+      <Num value={signed(gain)} delta={signed(gap)} deltaTone={gap >= 0 ? "profit" : "loss"} caption={`vs ${coach.coachName}'s model`} />
+      <div data-main className="flex min-h-min flex-1 flex-col">
+        <Panel className="min-h-16 flex-1">
+          <StepChart
+            className="min-h-12 flex-1"
+            height={0}
+            format={signed}
+            series={[
+              { values: mine, label: "Your equity" },
+              { values: model, label: `${coach.coachName}'s model account` },
+            ]}
+          />
+        </Panel>
+      </div>
+      <Drop level={2}>
+        {standard && (
+          <MiniStats
+            items={[
+              { label: "Win rate", value: `${JOURNAL_STATS.winRate}%` },
+              { label: "Expectancy", value: rr(R_STATS.expectancy, 2) },
+              { label: "Best day", value: signed(Math.max(...days)), tone: "profit" },
+            ]}
+          />
+        )}
+      </Drop>
+      <Drop level={3}>
+        {detailed && (
+          <Legend
+            className="shrink-0"
+            items={[
+              { color: ACCENT, label: "Your equity", value: euro(BALANCE.you) },
+              { color: GREY[1], label: `${coach.coachName}'s model account`, value: euro(BALANCE.model) },
+            ]}
+          />
+        )}
+      </Drop>
+    </WCard>
   )
 }
 
@@ -368,9 +435,7 @@ const RULE_SET = [
 ]
 const KEPT = Math.round((RULE_SET.reduce((a, r) => a + r.kept, 0) / RULE_SET.reduce((a, r) => a + r.total, 0)) * 100)
 const ruleRow = (r: (typeof RULE_SET)[number]) =>
-  r.miss
-    ? { color: "var(--loss)", label: r.miss, value: `${r.total - r.kept}×`, valueTone: "loss" as const }
-    : { color: r.kept / r.total >= 0.85 ? GREY[0] : GREY[2], label: r.rule, value: `${r.kept}/${r.total}` }
+  r.miss ? { color: "var(--loss)", label: r.miss, value: `${r.total - r.kept}×`, valueTone: "loss" as const } : { color: r.kept / r.total >= 0.85 ? GREY[0] : GREY[2], label: r.rule, value: `${r.kept}/${r.total}` }
 
 /** The last 10 trading days as dots: the current clean run in the accent, broken days as a loss ring. */
 function DayDots({ days, run }: { days: boolean[]; run: number }) {
@@ -379,11 +444,7 @@ function DayDots({ days, run }: { days: boolean[]; run: number }) {
     <div className="grid shrink-0 gap-1.5" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0,1fr))` }}>
       {days.map((d, i) => (
         <div key={i} className="grid justify-items-center gap-1.5">
-          <span
-            className="r-dot size-3"
-            title={d ? "Clean" : "Broke a rule"}
-            style={d ? { background: i >= days.length - run ? ACCENT : GREY[1] } : { boxShadow: "inset 0 0 0 1.5px var(--loss)" }}
-          />
+          <span className="r-dot size-3" title={d ? "Clean" : "Broke a rule"} style={d ? { background: i >= days.length - run ? ACCENT : GREY[1] } : { boxShadow: "inset 0 0 0 1.5px var(--loss)" }} />
           <Label>{letters[i % 5]}</Label>
         </div>
       ))}
@@ -396,12 +457,13 @@ function RuleTracks({ rules, className }: { rules: typeof RULE_SET; className?: 
   const font = useFigureFont()
   const weakest = [...RULE_SET].sort((a, b) => a.kept / a.total - b.kept / b.total)[0]
   return (
-    <div className={cn("grid min-h-0 flex-1 content-evenly gap-2", className)}>
+    // Whole rows only: when the card is short, the last rules wrap out of sight instead of being cut in half.
+    <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start justify-evenly gap-2 overflow-hidden *:w-full", className)}>
       {rules.map((r) => {
         const weak = r === weakest
         return (
           <div key={r.rule} className="grid gap-1">
-            <div className="flex min-w-0 items-baseline gap-2 text-xs leading-5">
+            <div className="flex min-w-0 items-baseline gap-2 text-[0.8125rem] leading-5">
               <span className={cn("min-w-0 flex-1 truncate", weak ? "text-foreground" : "text-muted-foreground")}>{r.rule}</span>
               <span className="shrink-0 tabular-nums" style={{ fontFamily: font, color: weak ? ACCENT_TEXT : undefined }}>
                 {r.kept}/{r.total}
@@ -418,6 +480,8 @@ function RuleTracks({ rules, className }: { rules: typeof RULE_SET; className?: 
 /** Discipline: radar (drawn as a tick gauge), streak (clean days), rules (each of the coach's rules). */
 export function RulesFollowed({ variant = "radar" }: WidgetProps) {
   const { coach } = useCoach()
+  const [focus, setFocus] = useState<number>()
+  const font = useFigureFont()
   const empty = useEmpty()
   const standard = useMore("standard")
   const detailed = useMore("detailed")
@@ -489,7 +553,7 @@ export function RulesFollowed({ variant = "radar" }: WidgetProps) {
     const short = ["Risk", "Stop", "News", "Move", "Log"]
     return card(
       <>
-        {standard && <Num size="md" value={`${clean}/${days}`} unit="clean days" delta={`${run} in a row`} deltaTone="accent" />}
+        <Drop level={2}>{standard && <Num size="md" value={`${clean}/${days}`} unit="clean days" delta={`${run} in a row`} deltaTone="accent" />}</Drop>
         <HeatGrid
           rowLabels={short}
           colLabels={Array.from({ length: days }, (_, i) => (i === days - 1 ? "today" : i % 3 === 0 ? `−${days - 1 - i}d` : undefined))}
@@ -498,12 +562,12 @@ export function RulesFollowed({ variant = "radar" }: WidgetProps) {
               const miss = MISSES[r.rule]?.[d] ?? 0
               const today = d === days - 1
               return miss
-                ? { ring: "var(--loss)", text: <span style={{ color: ink("var(--loss)") }}>{miss}</span>, title: `${r.rule} · broken ${miss}×` }
+                ? { ring: "var(--loss)", text: <span style={{ color: ink("var(--loss-text)") }}>{miss}</span>, title: `${r.rule} · broken ${miss}×` }
                 : { fill: today ? ACCENT : heatShade(0.08), title: `${r.rule} · kept` }
             }),
           )}
         />
-        {detailed && <Legend className="shrink-0" items={RULE_SET.filter((r) => r.kept < r.total).map(ruleRow)} />}
+        <Drop level={3}>{detailed && <Legend className="shrink-0" items={RULE_SET.filter((r) => r.kept < r.total).map(ruleRow)} />}</Drop>
       </>,
     )
   }
@@ -515,21 +579,25 @@ export function RulesFollowed({ variant = "radar" }: WidgetProps) {
         <div className="flex min-h-0 flex-1 flex-col justify-center">
           <DayDots days={RULE_DAYS} run={run} />
         </div>
-        {standard && (
-          <Legend
-            className="shrink-0 grid-cols-2 gap-x-4"
-            items={[
-              { color: ACCENT, dot: true, label: "Clean", value: `${clean}/${RULE_DAYS.length}` },
-              { color: "var(--loss)", dot: true, label: "Broken", value: RULE_DAYS.length - clean, valueTone: "loss" },
-            ]}
-          />
-        )}
-        {detailed && (
-          <>
-            <Rule />
-            <Legend className="shrink-0" items={RULE_SET.map(ruleRow)} />
-          </>
-        )}
+        <Drop level={2}>
+          {standard && (
+            <Legend
+              className="shrink-0 [grid-template-columns:repeat(auto-fit,minmax(min(100%,7rem),1fr))] gap-x-4"
+              items={[
+                { color: ACCENT, dot: true, label: "Clean", value: `${clean}/${RULE_DAYS.length}` },
+                { color: "var(--loss)", dot: true, label: "Broken", value: RULE_DAYS.length - clean, valueTone: "loss" },
+              ]}
+            />
+          )}
+        </Drop>
+        <Drop level={3}>
+          {detailed && (
+            <>
+              <Rule />
+              <Legend className="shrink-0" items={RULE_SET.map(ruleRow)} />
+            </>
+          )}
+        </Drop>
       </>,
     )
   }
@@ -549,42 +617,76 @@ export function RulesFollowed({ variant = "radar" }: WidgetProps) {
     return card(
       <>
         <RuleTracks rules={shown} />
-        {detailed && (
-          <>
-            <Rule />
-            <Legend
-              className="shrink-0"
-              items={[
-                { color: ACCENT, dot: true, label: "Clean days", value: `${clean}/${RULE_DAYS.length}` },
-                { color: GREY[1], dot: true, label: "Clean streak", value: `${run} days` },
-              ]}
-            />
-          </>
-        )}
+        <Drop level={3}>
+          {detailed && (
+            <>
+              <Rule />
+              <Legend
+                className="shrink-0"
+                items={[
+                  { color: ACCENT, dot: true, label: "Clean days", value: `${clean}/${RULE_DAYS.length}` },
+                  { color: GREY[1], dot: true, label: "Clean streak", value: `${run} days` },
+                ]}
+              />
+            </>
+          )}
+        </Drop>
       </>,
     )
   }
 
-  // radar: a tick gauge of rules kept
-  return card(
-    <>
-      <FitGauge value={KEPT}>
-        <Num value={`${KEPT}%`} className="justify-center" />
-        <Label>of rules kept</Label>
-      </FitGauge>
-      {standard && <Legend className="shrink-0" items={RULE_SET.filter((r) => r.rule !== "Journal every trade" || detailed).map(ruleRow)} />}
-      {detailed && (
-        <>
-          <Rule />
-          <Legend
-            className="shrink-0 @[20rem]:grid-cols-2 @[20rem]:gap-x-5"
-            items={[
-              { label: "Clean days", value: `${clean}/${RULE_DAYS.length}` },
-              { label: "Clean streak", value: `${run} days` },
-            ]}
-          />
-        </>
+  // radar, on the base structure: the gauge of rules kept on a panel, a row per rule (pointing at a rule puts it on
+  // the gauge), the clean days, and the way into the journal.
+  const order = [...RULE_SET].sort((a, b) => a.kept / a.total - b.kept / b.total)
+  const rows = detailed ? RULE_SET : order.slice(0, 3)
+  const shown = focus === undefined ? undefined : rows[focus]
+  const pct = shown ? Math.round((shown.kept / shown.total) * 100) : KEPT
+  return (
+    <WCard
+      bands
+      icon={Shield}
+      title="Discipline"
+      section={coach.wording.journal}
+      meta={meta}
+      chip={<Chip>{`${run} clean in a row`}</Chip>}
+      action={standard ? { label: `Open ${coach.wording.journal.toLowerCase()}`, href: "journal" } : undefined}
+      footnote={standard ? `${clean} of ${RULE_DAYS.length} days clean` : undefined}
+      // Wide and short (twice as wide as tall, in a fixed cell): the gauge on the left, the rules beside it, instead of a stretched stack.
+      bodyClassName="[@container_card_(min-aspect-ratio:2/1)]:flex-row [@container_card_(min-aspect-ratio:2/1)]:items-center [@container_card_(min-aspect-ratio:2/1)]:justify-center [@container_card_(min-aspect-ratio:2/1)]:gap-[clamp(1.5rem,5cqw,4rem)]"
+    >
+      <Panel className="min-h-20 flex-1 justify-end p-2 [@container_card_(min-aspect-ratio:2/1)]:h-full [@container_card_(min-aspect-ratio:2/1)]:flex-none [@container_card_(min-aspect-ratio:2/1)]:w-[min(46%,26rem,max(calc((100cqh-6.5rem)*1.15),min(calc((100cqh-6.5rem)*1.8),17rem)))] [@container_card_(min-aspect-ratio:2/1)]:justify-center">
+        <FitGauge value={pct}>
+          {/* Scales with the gauge (cqw of the gauge). */}
+          <span className="text-[clamp(1.25rem,12cqw,3.5rem)] leading-none font-medium tracking-[-0.02em] tabular-nums" style={{ fontFamily: font }}>
+            {pct}%
+          </span>
+          <Label className="max-w-[70cqw] truncate text-[clamp(0.6875rem,3.6cqw,1rem)] leading-tight">{shown ? (shown.miss ?? shown.rule) : "of rules kept"}</Label>
+        </FitGauge>
+      </Panel>
+      {standard && (
+        <div className="grid shrink-0 [@container_card_(min-aspect-ratio:2/1)]:w-[min(36%,15rem)] [@container_card_(min-aspect-ratio:2/1)]:content-center [@container_card_(min-aspect-ratio:2/1)]:gap-1 [@container_card_(min-aspect-ratio:2/1)]:[&>button]:h-9 [@container_card_(min-aspect-ratio:2/1)]:[&>button]:text-sm" onPointerLeave={() => setFocus(undefined)}>
+          {rows.map((r, i) => {
+            const on = focus === i
+            const weak = r === order[0]
+            return (
+              <button
+                key={r.rule}
+                type="button"
+                onPointerEnter={() => setFocus(i)}
+                onFocus={() => setFocus(i)}
+                onBlur={() => setFocus(undefined)}
+                className={cn("flex h-7 min-w-0 items-center gap-2 rounded-sm text-left text-[0.8125rem] leading-5 outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-(--brand-mark)")}
+              >
+                <span className="size-2 shrink-0 rounded-[2px]" style={{ background: r.miss ? "var(--loss)" : on || (weak && focus === undefined) ? ACCENT : GREY[2] }} />
+                <span className={cn("min-w-0 flex-1 truncate", on ? "text-foreground underline decoration-1 underline-offset-4" : "text-muted-foreground")}>{r.miss ?? r.rule}</span>
+                <span className="shrink-0 tabular-nums" style={{ fontFamily: font, color: r.miss ? "var(--loss-text)" : undefined }}>
+                  {r.miss ? `${r.total - r.kept}×` : `${r.kept}/${r.total}`}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       )}
-    </>,
+    </WCard>
   )
 }

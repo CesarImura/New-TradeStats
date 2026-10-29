@@ -8,11 +8,14 @@ import { COACH_PROFILE, UPGRADE } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { CoachPhoto } from "./brand"
 import { Chip, GREY, HatchBar, Label, Legend, Num, Rule, WCard, useFigureFont } from "./instrument"
-import { ACCENT, ACCENT_TEXT, TYPE, W, useMore } from "./kit"
+import { ACCENT, ACCENT_TEXT, CTA, Drop, FitText, FX, SPREAD_ROWS, TYPE, useFrame, useMore, W } from "./kit"
 import type { WidgetProps } from "./shared"
 import { MEDIA_FG, MEDIA_FG2, MediaCard, Poster, SplitCard } from "./layouts"
 
-const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
+const link = (p: string) => ({
+  nativeButton: false as const,
+  render: <Link href={p} />,
+})
 
 /** "€390" -> 390; "€2,400" -> 2400. */
 const amount = (price: string) => Number(price.replace(/[^\d.]/g, "")) || 0
@@ -33,18 +36,38 @@ function useTiers() {
 function PlanColumn({ name, price, cadence, rows, next, delta }: { name: string; price: string; cadence: string; rows: { label: string; on: boolean; added?: boolean }[]; next?: boolean; delta?: string }) {
   const font = useFigureFont()
   return (
-    <div className={cn("grid min-w-0 content-start gap-2", next && "rounded-[min(var(--radius),8px)] bg-[color:color-mix(in_oklab,var(--foreground)_5%,transparent)] p-2.5")}>
+    <div
+      className={cn(
+        // Both columns get the same inset, so the names, prices and rows line up across; only the next tier is tinted.
+        "grid h-full min-h-0 min-w-0 grid-rows-[auto_auto_minmax(0,1fr)] content-start gap-2 p-2.5",
+        next && "rounded-[min(var(--radius),8px)] bg-[color:color-mix(in_oklab,var(--foreground)_5%,transparent)]",
+      )}
+    >
       <Label className="truncate">{next ? `Next · ${name}` : `You · ${name}`}</Label>
       <Num size="md" value={price} unit={`/ ${cadence === "month" ? "mo" : cadence}`} delta={delta} deltaTone="muted" />
-      <div className="grid gap-1">
+      {/* Whole rows only; both columns are as tall, so they lose the same rows. */}
+      <div className={cn("flex min-h-0 flex-col flex-wrap content-start gap-1 overflow-hidden *:w-full", SPREAD_ROWS)}>
         {rows.map((f) => (
-          <div key={f.label} className="flex min-w-0 items-center gap-2 text-xs leading-5" style={{ fontFamily: font }}>
+          // A compare table's cells: the small size, so two columns of features fit side by side.
+          <div key={f.label} className="flex min-w-0 items-center gap-2 text-[0.6875rem] leading-5" style={{ fontFamily: font }}>
             {f.on ? (
-              <Check className="size-3.5 shrink-0" style={{ color: f.added ? ACCENT_TEXT : "var(--muted-foreground)" }} />
+              <Check
+                className="size-3.5 shrink-0"
+                style={{
+                  color: f.added ? ACCENT_TEXT : "var(--muted-foreground)",
+                }}
+              />
             ) : (
               <Minus className="size-3.5 shrink-0 text-muted-foreground/50" />
             )}
-            <span className={cn("min-w-0 truncate", f.on ? (f.added ? "text-foreground" : "text-muted-foreground") : "text-muted-foreground line-through decoration-[color:color-mix(in_oklab,var(--foreground)_30%,transparent)]")}>{f.label}</span>
+            <span
+              className={cn(
+                "min-w-0 truncate leading-4",
+                f.on ? (f.added ? "text-foreground" : "text-muted-foreground") : "text-muted-foreground line-through decoration-[color:color-mix(in_oklab,var(--foreground)_30%,transparent)]",
+              )}
+            >
+              {f.label}
+            </span>
           </div>
         ))}
       </div>
@@ -60,6 +83,7 @@ export function Upgrade({ variant = "compare", props }: WidgetProps) {
   const { coach, base } = useCoach()
   const more = useMore("standard")
   const detailed = useMore("detailed")
+  const { fixed } = useFrame()
   const { current, next } = useTiers()
   const { features } = UPGRADE
   const extra = features.filter((f) => !f.current)
@@ -67,9 +91,10 @@ export function Upgrade({ variant = "compare", props }: WidgetProps) {
   const diff = amount(next.price) - amount(current.price)
   const plus = `+${currency(next.price)}${diff.toLocaleString("en")}`
   const students = coach.wording.students.toLowerCase()
+  const label = String(props.button || `Upgrade to ${next.name}`)
   const cta = (
-    <Button size="sm" className="w-fit shrink-0" {...link(`${base}/profile`)}>
-      {String(props.button || `Upgrade to ${next.name}`)} <ArrowRight />
+    <Button size="sm" className={cn("w-fit", CTA)} title={label} {...link(`${base}/profile`)}>
+      <span className="truncate">{label}</span> <ArrowRight />
     </Button>
   )
   const priceChip = (
@@ -97,17 +122,21 @@ export function Upgrade({ variant = "compare", props }: WidgetProps) {
       <SplitCard panel={<Poster kicker={`Next · ${next.name}`} title={`${next.price} / ${next.cadence}`} sub={`${next.members} ${students} on it`} />}>
         <div className="grid min-w-0 shrink-0 gap-0.5">
           <span className="truncate text-[0.8125rem] leading-5 font-medium">Move up to {next.name}</span>
-          {more && <span className="truncate text-xs leading-4 text-muted-foreground">You&rsquo;re on {current.name} · {plus} a {next.cadence}</span>}
+          {more && (
+            <span className="truncate text-[0.6875rem] leading-4 text-muted-foreground">
+              You&rsquo;re on {current.name} · {plus} a {next.cadence}
+            </span>
+          )}
         </div>
-        <div className="grid min-h-0 gap-1 overflow-hidden">
+        <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start gap-1 overflow-hidden *:w-full", SPREAD_ROWS)}>
           {(detailed ? extra : extra.slice(0, 2)).map((f) => (
-            <div key={f.label} className="flex min-w-0 items-center gap-2 text-xs leading-5">
+            <div key={f.label} className="flex min-w-0 items-center gap-2 text-[0.8125rem] leading-5">
               <Check className="size-3.5 shrink-0" style={{ color: ACCENT_TEXT }} />
-              <span className="truncate">{f.label}</span>
+              <span className="min-w-0 leading-4">{f.label}</span>
             </div>
           ))}
         </div>
-        <div className="mt-auto">{cta}</div>
+        <div className="mt-auto flex min-w-0">{cta}</div>
       </SplitCard>
     )
   }
@@ -127,21 +156,34 @@ export function Upgrade({ variant = "compare", props }: WidgetProps) {
               height={8}
             />
             <Legend
-              className="grid-cols-2 gap-x-3"
+              className="[grid-template-columns:repeat(auto-fit,minmax(min(100%,8rem),1fr))] gap-x-3"
               items={[
                 { color: GREY[1], label: "You have", value: have },
-                { color: ACCENT, label: "Adds", value: extra.length, valueTone: "accent" },
+                {
+                  color: ACCENT,
+                  label: "Adds",
+                  value: extra.length,
+                  valueTone: "accent",
+                },
               ]}
             />
           </div>
         )}
-        {detailed && (
-          <>
-            <Rule />
-            <Legend items={extra.map((f) => ({ color: ACCENT, label: f.label, value: <Check className="size-3.5" style={{ color: ACCENT_TEXT }} /> }))} />
-          </>
-        )}
-        <div className="mt-auto">{cta}</div>
+        <Drop level={3}>
+          {(detailed || fixed) && (
+            <>
+              <Rule />
+              <Legend
+                items={extra.map((f) => ({
+                  color: ACCENT,
+                  label: f.label,
+                  value: <Check className="size-3.5" style={{ color: ACCENT_TEXT }} />,
+                }))}
+              />
+            </>
+          )}
+        </Drop>
+        <div className="mt-auto flex min-w-0">{cta}</div>
       </WCard>
     )
   }
@@ -149,15 +191,29 @@ export function Upgrade({ variant = "compare", props }: WidgetProps) {
   const rows = more ? features : extra
   return (
     <WCard icon={Sparkles} title="Upgrade" meta={`You're on ${current.name} · ${next.members} ${students} on ${next.name}`} chip={priceChip}>
-      <div className="grid flex-1 grid-cols-1 gap-4 @[20rem]:grid-cols-2">
-        <div className="hidden @[20rem]:block">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 @[20rem]:grid-cols-2">
+        <div className="hidden min-h-0 @[20rem]:block">
           <PlanColumn name={current.name} price={current.price} cadence={current.cadence} rows={rows.map((f) => ({ label: f.label, on: f.current }))} />
         </div>
-        <PlanColumn next name={next.name} price={next.price} cadence={next.cadence} delta={plus} rows={rows.map((f) => ({ label: f.label, on: f.next, added: !f.current }))} />
+        <PlanColumn
+          next
+          name={next.name}
+          price={next.price}
+          cadence={next.cadence}
+          delta={plus}
+          rows={rows.map((f) => ({
+            label: f.label,
+            on: f.next,
+            added: !f.current,
+          }))}
+        />
       </div>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        {cta}
-        {detailed && <span className={TYPE.small}>Cancel anytime · switch back whenever</span>}
+      {/* The button spans both columns: it is the one thing to do here. */}
+      <div className="grid gap-1">
+        <Button size="sm" className={cn("w-full", CTA)} title={label} {...link(`${base}/profile`)}>
+          <span className="truncate">{label}</span> <ArrowRight />
+        </Button>
+        <Drop level={3}>{detailed && <span className={cn(TYPE.small, "text-center")}>Cancel anytime · switch back whenever</span>}</Drop>
       </div>
     </WCard>
   )
@@ -181,7 +237,7 @@ function Socials({ className }: { className?: string }) {
   return (
     <div className={cn("flex flex-wrap gap-1.5", className)}>
       {COACH_PROFILE.socials.map((s) => (
-        <a key={s} href="#" className="hover:opacity-80">
+        <a key={s} href="#" className={cn("rounded-sm [&_[data-slot=badge]]:transition-colors [&_[data-slot=badge]]:duration-150 [&:hover_[data-slot=badge]]:bg-muted", FX.focus)}>
           <Chip tone="neutral">
             {s} <ArrowUpRight className="ml-0.5 size-3" />
           </Chip>
@@ -200,6 +256,7 @@ export function CoachProfile({ variant = "card" }: WidgetProps) {
   const stats = useCoachStats()
   const more = useMore("standard")
   const detailed = useMore("detailed")
+  const { fixed } = useFrame()
   const verified = <BadgeCheck className="size-4 shrink-0" style={{ color: ACCENT }} />
   const name = (cls: string) => (
     <span className="flex min-w-0 items-center gap-1.5">
@@ -238,7 +295,7 @@ export function CoachProfile({ variant = "card" }: WidgetProps) {
         footer={
           <>
             {detailed && (
-              <span className="min-w-0 flex-1 truncate font-heading text-xs leading-4" style={{ color: MEDIA_FG2 }}>
+              <span className="min-w-0 flex-1 truncate font-heading text-[0.6875rem] leading-4" style={{ color: MEDIA_FG2 }}>
                 “{COACH_PROFILE.bio}”
               </span>
             )}
@@ -263,16 +320,31 @@ export function CoachProfile({ variant = "card" }: WidgetProps) {
               <span className={cn(TYPE.small, "truncate")}>{coach.tagline}</span>
             </div>
           </div>
-          {more && <p className={cn(TYPE.body, "line-clamp-3 font-heading text-muted-foreground")}>“{COACH_PROFILE.bio}”</p>}
-          <Legend className="mt-auto max-w-xs" items={stats.map((s, i) => ({ color: i === 0 ? ACCENT : GREY[i], label: s.label, value: s.value }))} />
-          {detailed && <Socials />}
+          <Drop level={2}>
+            {more && (
+              <FitText lines={3} className={cn(TYPE.body, "font-heading text-muted-foreground")}>
+                “{COACH_PROFILE.bio}”
+              </FitText>
+            )}
+          </Drop>
+          <Drop level={1}>
+            <Legend
+              className="mt-auto max-w-xs"
+              items={stats.map((s, i) => ({
+                color: i === 0 ? ACCENT : GREY[i],
+                label: s.label,
+                value: s.value,
+              }))}
+            />
+          </Drop>
+          <Drop level={3}>{detailed && <Socials />}</Drop>
         </div>
       </WCard>
     )
   }
 
   return (
-    <WCard icon={BadgeCheck} title="Your coach" meta={`${coach.name} · since 2012`} chip={<Chip>Verified</Chip>}>
+    <WCard icon={BadgeCheck} title="Your coach" meta={`${coach.name} · since 2012`} chip={<Chip tone="profit">Verified</Chip>}>
       <div className="flex min-w-0 items-center gap-3">
         <CoachPhoto className="size-12" />
         <div className="grid min-w-0">
@@ -280,18 +352,29 @@ export function CoachProfile({ variant = "card" }: WidgetProps) {
           <span className={cn(TYPE.small, "truncate")}>{COACH_PROFILE.title}</span>
         </div>
       </div>
-      {detailed && <p className={cn(TYPE.body, "line-clamp-3 text-muted-foreground")}>{COACH_PROFILE.bio}</p>}
-      {more && (
-        <div className="grid grid-cols-3 gap-3">
-          {stats.map((s) => (
-            <div key={s.label} className="grid min-w-0 gap-0.5">
-              <Label className="truncate">{s.label}</Label>
-              <Num size="md" value={s.value} />
-            </div>
-          ))}
-        </div>
-      )}
-      <Socials className="mt-auto" />
+      {/* The bio: on Detailed, and in any cell with room for it. */}
+      <Drop level={3}>
+        {(detailed || fixed) && (
+          <FitText lines={3} className={cn(TYPE.body, "text-muted-foreground")}>
+            {COACH_PROFILE.bio}
+          </FitText>
+        )}
+      </Drop>
+      <Drop level={2}>
+        {more && (
+          <div className="grid grid-cols-3 gap-3">
+            {stats.map((s) => (
+              <div key={s.label} className="grid min-w-0 gap-0.5">
+                <Label className="truncate">{s.label}</Label>
+                <Num size="md" value={s.value} />
+              </div>
+            ))}
+          </div>
+        )}
+      </Drop>
+      <Drop level={1}>
+        <Socials className="mt-auto" />
+      </Drop>
     </WCard>
   )
 }

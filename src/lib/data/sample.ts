@@ -111,11 +111,11 @@ export const EVENTS: CalEvent[] = [
 ]
 
 export const JOURNAL_WEEK = [
-  { day: "Mon", pnl: 320 },
-  { day: "Tue", pnl: -140 },
-  { day: "Wed", pnl: 210 },
-  { day: "Thu", pnl: 480 },
-  { day: "Fri", pnl: -90 },
+  { day: "Mon", pnl: 312 },
+  { day: "Tue", pnl: -137 },
+  { day: "Wed", pnl: 214 },
+  { day: "Thu", pnl: 476 },
+  { day: "Fri", pnl: -85 },
 ]
 
 export const JOURNAL_STATS = { pnl: 780, winRate: 58, trades: 19, rulesFollowed: 84 }
@@ -181,10 +181,10 @@ export const GETTING_STARTED = [
 
 /** Last four weeks, Monday to Friday, oldest first. 0 = no trades. */
 export const JOURNAL_DAYS = [
-  [120, -80, 0, 260, 90],
-  [-210, 140, 310, -60, 0],
-  [80, 0, -150, 420, 180],
-  [320, -140, 210, 480, -90],
+  [118, -76, 0, 263, 92],
+  [-212, 143, 306, -57, 0],
+  [84, 0, -153, 417, 182],
+  [312, -137, 214, 476, -85],
 ]
 
 export const RULES = [

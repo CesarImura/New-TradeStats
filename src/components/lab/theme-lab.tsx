@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import { useMemo, useState } from "react"
 import { ArrowRight, Check as CheckIcon, Shuffle, TriangleAlert } from "@/components/icons"
 import { CoachContext } from "@/components/coach/coach-provider"
@@ -22,92 +21,126 @@ import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import type { Mode, TemplateId } from "@/lib/theme/types"
 import { GAP, ROW_HEIGHT } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
+import { CONTROL_FOCUS, LabButton, LabSeg, LabSummary } from "./lab-controls"
 
-const mono = "font-[family-name:var(--ff-space-mono)] text-[0.68rem] uppercase tracking-[0.06em]"
-type SetId = "branded" | "matrix" | "random"
+export type ThemeSet = "branded" | "matrix" | "random"
+
+/** The three ways to pick themes to check, in the library's sidebar order. */
+export const THEME_SETS: { id: ThemeSet; label: string; blurb: string }[] = [
+  { id: "branded", label: "Own brands", blurb: "Coaches who arrive with their own brand, picked to push the theme engine where it is weakest." },
+  { id: "matrix", label: "Templates × colours", blurb: "Each starting template with each brand colour from the colour picker." },
+  { id: "random", label: "Random", blurb: "Every setting picked at random, the way a coach clicking around might end up." },
+]
 
 /**
- * Theme lab (prototype only). The same student screen in many themes side by
- * side, each with a readability check, to find where the theme engine breaks
- * before a coach does.
+ * The readability check's state (prototype only). Lives in the library page so
+ * its controls can sit in the sticky bar and its grid in the page.
  */
-export function ThemeLab() {
-  const [set, setSet] = useState<SetId>("branded")
+export function useThemeLab(set: ThemeSet, query = "") {
   const [templates, setTemplates] = useState<TemplateId[]>(TEMPLATE_IDS)
   const [mode, setMode] = useState<Mode | "both">("light")
   const [seed, setSeed] = useState(7)
   const [onlyIssues, setOnlyIssues] = useState(false)
   const [fixes, setFixes] = useState(true)
 
-  const themes = useMemo<LabTheme[]>(
-    () => (set === "branded" ? BRANDED : set === "matrix" ? matrixSet(templates, mode) : randomSet(seed)),
-    [set, templates, mode, seed],
-  )
+  const themes = useMemo<LabTheme[]>(() => (set === "branded" ? BRANDED : set === "matrix" ? matrixSet(templates, mode) : randomSet(seed)), [set, templates, mode, seed])
   const audits = useMemo(() => new Map(themes.map((t) => [t.id, auditTheme(t.theme, { fixes })])), [themes, fixes])
-  const shown = onlyIssues ? themes.filter((t) => audits.get(t.id)!.some((c) => !c.pass)) : themes
+  const q = query.trim().toLowerCase()
+  const shown = themes.filter((t) => (!onlyIssues || audits.get(t.id)!.some((c) => !c.pass)) && (!q || `${t.name} ${t.note ?? ""}`.toLowerCase().includes(q)))
+  return { set, templates, setTemplates, mode, setMode, seed, setSeed, onlyIssues, setOnlyIssues, fixes, setFixes, themes, audits, shown }
+}
+export type ThemeLabState = ReturnType<typeof useThemeLab>
 
+/** How many themes each set shows by default, for the sidebar counts. */
+export const themeSetSize = (set: ThemeSet) => (set === "branded" ? BRANDED.length : set === "matrix" ? matrixSet(TEMPLATE_IDS, "light").length : randomSet(7).length)
+
+/** The check's controls, for the library's sticky bar: engine, then what the set needs, then the filter. */
+export function ThemeLabControls({ lab }: { lab: ThemeLabState }) {
   return (
-    <div className="min-h-svh bg-[#040404] font-[family-name:var(--ff-archivo)] text-white">
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-[#040404]/95 backdrop-blur">
-        <div className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-x-6 gap-y-3 px-5 py-4">
-          <div className="grid gap-0.5">
-            <span className={cn(mono, "text-white/50")}>Prototype · Theme lab</span>
-            <h1 className="text-xl font-normal">Does every theme still look designed?</h1>
+    <>
+      <LabSeg
+        label="Engine"
+        value={lab.fixes ? "fixes" : "today"}
+        onChange={(v) => lab.setFixes(v === "fixes")}
+        options={[
+          ["today", "Today"],
+          ["fixes", "With fixes"],
+        ]}
+      />
+      {lab.set === "matrix" && (
+        <>
+          <div role="group" aria-label="Templates" className="flex h-9 shrink-0 items-center gap-0.5 rounded-lg border p-[3px]" style={{ borderColor: "var(--c-hair)", background: "var(--c-page)" }}>
+            <span aria-hidden className="flex h-full min-w-(--seg-label,0) shrink-0 items-center px-2.5 text-[0.8125rem] whitespace-nowrap text-(--c-t3)">
+              Templates
+            </span>
+            <span aria-hidden className="mr-0.5 h-4 w-px shrink-0" style={{ background: "var(--c-hair)" }} />
+            {TEMPLATE_IDS.map((id) => {
+              const on = lab.templates.includes(id)
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={on}
+                  // Keep at least one template, so the grid never goes empty by accident.
+                  onClick={() => lab.setTemplates(on ? (lab.templates.length > 1 ? lab.templates.filter((x) => x !== id) : lab.templates) : [...lab.templates, id])}
+                  className={cn(
+                    "flex h-full items-center gap-1.5 rounded-md px-3 text-sm whitespace-nowrap transition-colors duration-150",
+                    CONTROL_FOCUS,
+                    on ? "bg-(--c-bar) font-medium text-(--c-t1) shadow-[0_0_0_1px_var(--c-hair),0_1px_2px_0_rgb(0_0_0/0.1)]" : "text-(--c-t2) hover:text-(--c-t1)",
+                  )}
+                >
+                  {on && <CheckIcon className="size-3.5" />}
+                  {TEMPLATES[id].name}
+                </button>
+              )
+            })}
           </div>
-          <Link href="/lab/widgets" className={cn(mono, "flex items-center gap-1.5 rounded-[3px] border border-white/15 px-2.5 py-1.5 text-white/70 hover:border-white/40 hover:text-white")}>
-            Widget wall <ArrowRight className="size-3.5" />
-          </Link>
-          <Seg value={fixes ? "fixes" : "today"} onChange={(v) => setFixes(v === "fixes")} options={[["today", "Engine today"], ["fixes", "With fixes"]]} />
-          <Seg value={set} onChange={setSet} options={[["branded", "Own brands"], ["matrix", "Templates × colours"], ["random", "Random"]]} />
-          {set === "matrix" && (
-            <>
-              <div className="flex gap-1">
-                {TEMPLATE_IDS.map((id) => {
-                  const on = templates.includes(id)
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => setTemplates(on ? templates.filter((x) => x !== id) : [...templates, id])}
-                      className={cn("rounded-[3px] border px-2.5 py-1 text-sm", on ? "border-[#ff5500] text-white" : "border-white/15 text-white/45")}
-                    >
-                      {TEMPLATES[id].name}
-                    </button>
-                  )
-                })}
-              </div>
-              <Seg value={mode} onChange={setMode} options={[["light", "Light"], ["dark", "Dark"], ["both", "Both"]]} />
-            </>
-          )}
-          {set === "random" && (
-            <button onClick={() => setSeed(Math.floor(Math.random() * 1e6))} className="flex items-center gap-1.5 rounded-[3px] border border-white/15 px-2.5 py-1 text-sm hover:border-white/40">
-              <Shuffle className="size-3.5" /> Shuffle <span className="text-white/40 tabular-nums">#{seed}</span>
-            </button>
-          )}
-          <label className="ml-auto flex items-center gap-2 text-sm text-white/70">
-            <input type="checkbox" checked={onlyIssues} onChange={(e) => setOnlyIssues(e.target.checked)} className="accent-[#ff5500]" />
-            Only themes with issues
-          </label>
-        </div>
-        <Summary themes={themes} audits={audits} />
-      </header>
-
-      <main className="mx-auto grid max-w-[1800px] gap-px bg-white/10 p-px [grid-template-columns:repeat(auto-fill,minmax(400px,1fr))]">
-        {shown.map((t) => (
-          <Cell key={t.id} lab={t} checks={audits.get(t.id)!} fixes={fixes} />
-        ))}
-      </main>
-    </div>
+          <LabSeg
+            label="Themes in"
+            value={lab.mode}
+            onChange={lab.setMode}
+            options={[
+              ["light", "Light"],
+              ["dark", "Dark"],
+              ["both", "Both"],
+            ]}
+          />
+        </>
+      )}
+      {lab.set === "random" && (
+        <LabButton onClick={() => lab.setSeed(Math.floor(Math.random() * 1e6))} label={`Shuffle · #${lab.seed}`} hint="Pick a new random set">
+          <Shuffle className="size-4" />
+        </LabButton>
+      )}
+      <LabButton onClick={() => lab.setOnlyIssues(!lab.onlyIssues)} label="Only issues" hint="Show only themes with something unreadable" pressed={lab.onlyIssues}>
+        <TriangleAlert className="size-4" />
+      </LabButton>
+    </>
   )
 }
 
-function Seg<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: [T, string][] }) {
+/**
+ * The readability report: a summary of which checks fail, then one cell per
+ * theme with a slice of the student Home in it. Styled with the library's
+ * chrome (--c-*) so it reads as one page with the widgets.
+ */
+export function ThemeLabGrid({ lab }: { lab: ThemeLabState }) {
+  const { themes, audits, shown, fixes } = lab
   return (
-    <div className="flex rounded-[4px] border border-white/15 p-0.5">
-      {options.map(([v, label]) => (
-        <button key={v} onClick={() => onChange(v)} className={cn("rounded-[3px] px-2.5 py-1 text-sm", v === value ? "bg-white text-black" : "text-white/60 hover:text-white")}>
-          {label}
-        </button>
-      ))}
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 pb-16">
+      <Summary themes={themes} audits={audits} />
+      {shown.length === 0 ? (
+        <div className="grid justify-items-start gap-2 rounded-xl border border-dashed px-6 py-12" style={{ borderColor: "var(--c-hair)" }}>
+          <p className="text-sm font-medium">{lab.onlyIssues ? "Every theme here is readable" : "No theme matches the filter"}</p>
+          <p className="text-(--c-t2)">{lab.onlyIssues ? "Turn off “Only issues” to see them all." : "Try another name, like a template or a colour."}</p>
+        </div>
+      ) : (
+        <div className="grid gap-x-6 gap-y-8" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 380px), 1fr))" }}>
+          {shown.map((t) => (
+            <Cell key={t.id} lab={t} checks={audits.get(t.id)!} fixes={fixes} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -117,23 +150,8 @@ function Summary({ themes, audits }: { themes: LabTheme[]; audits: Map<string, C
   const first = audits.get(themes[0]?.id)
   if (!first) return null
   const clean = themes.filter((t) => audits.get(t.id)!.every((c) => c.pass)).length
-  return (
-    <div className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-white/10 px-5 py-2.5 text-sm">
-      <span className={cn(mono, "text-white/50")}>
-        {clean}/{themes.length} fully readable
-      </span>
-      {first.map((c) => {
-        const fails = themes.filter((t) => !audits.get(t.id)!.find((x) => x.id === c.id)!.pass).length
-        return (
-          <span key={c.id} className={cn("flex items-center gap-1.5", fails ? "text-white" : "text-white/35")}>
-            <span className={cn("size-1.5 rounded-full", fails ? "bg-[#ff5500]" : "bg-white/25")} />
-            {c.label}
-            <span className="tabular-nums text-white/50">{fails ? `fails ${fails}` : "ok"}</span>
-          </span>
-        )
-      })}
-    </div>
-  )
+  const chips = first.map((c) => ({ label: c.label, fails: themes.filter((t) => !audits.get(t.id)!.find((x) => x.id === c.id)!.pass).length }))
+  return <LabSummary value={clean} total={themes.length} text={clean === themes.length ? "themes fully readable" : "themes fully readable · the rest fail at least one check"} chips={chips} />
 }
 
 const coach = getDemoCoach("northline")!
@@ -152,14 +170,17 @@ function Cell({ lab, checks, fixes }: { lab: LabTheme; checks: Check[]; fixes: b
   const ctx = useMemo(() => ({ coach, theme: t, base: "/c/northline", scope: `.${cls}`, preview: false }), [t, cls])
 
   return (
-    <section className="flex flex-col bg-[#040404]">
-      <div className="flex items-start gap-3 px-4 py-3">
+    <section aria-label={lab.name} className="grid min-w-0 content-start gap-3">
+      <div className="flex items-start gap-3 px-1">
         <div className="grid min-w-0 gap-0.5">
-          <span className="truncate text-sm">{lab.name}</span>
-          {lab.note && <span className="truncate text-xs text-white/45">{lab.note}</span>}
+          <span className="truncate text-[0.8125rem] font-medium">{lab.name}</span>
+          {lab.note && <span className="truncate text-xs text-(--c-t2)">{lab.note}</span>}
         </div>
-        <span className={cn(mono, "ml-auto flex shrink-0 items-center gap-1", fails.length ? "text-[#ff5500]" : "text-white/40")}>
-          {fails.length ? <TriangleAlert className="size-3.5" /> : <CheckIcon className="size-3.5" />}
+        <span
+          className={cn("ml-auto flex h-6 shrink-0 items-center gap-1 rounded-full border px-2 text-xs", fails.length ? "text-(--c-t1)" : "text-(--c-t2)")}
+          style={{ borderColor: fails.length ? "color-mix(in oklab, var(--loss) 45%, var(--c-hair))" : "var(--c-hair)" }}
+        >
+          {fails.length ? <TriangleAlert className="size-3.5" style={{ color: "var(--loss)" }} /> : <CheckIcon className="size-3.5" />}
           {fails.length ? `${fails.length} unreadable` : "Readable"}
         </span>
       </div>
@@ -167,7 +188,7 @@ function Cell({ lab, checks, fixes }: { lab: LabTheme; checks: Check[]; fixes: b
       <CoachContext.Provider value={ctx}>
         <style dangerouslySetInnerHTML={{ __html: themeToCss(t, `.${cls}`, { fixes }) }} />
         <div
-          className={cn(cls, t.mode === "dark" ? "dark" : "light", "relative isolate flex-1 overflow-hidden bg-background text-foreground", !backdrop && texture[t.background])}
+          className={cn(cls, t.mode === "dark" ? "dark" : "light", "relative isolate overflow-hidden rounded-xl border border-(--c-hair) bg-background text-foreground", !backdrop && texture[t.background])}
           // Tailwind's font variables resolve at :root; re-point them here so each cell uses its own fonts.
           style={
             {
@@ -184,15 +205,15 @@ function Cell({ lab, checks, fixes }: { lab: LabTheme; checks: Check[]; fixes: b
       </CoachContext.Provider>
 
       {fails.length > 0 && (
-        <ul className="grid gap-1 px-4 py-3 text-xs">
+        <ul className="grid gap-1 px-1 text-xs">
           {fails.map((c) => (
             <li key={c.id} className="flex items-center gap-2">
               <span className="flex h-4 w-7 shrink-0 items-center justify-center rounded-[2px] text-[0.6rem] font-semibold" style={{ background: c.bg, color: c.fg }}>
                 Aa
               </span>
-              <span className="text-white/75">{c.label}</span>
-              <span className="ml-auto tabular-nums text-white/45">
-                {c.ratio.toFixed(2)} : 1 <span className="text-white/25">/ needs {c.min}</span>
+              <span className="text-(--c-t1)">{c.label}</span>
+              <span className="ml-auto tabular-nums text-(--c-t2)">
+                {c.ratio.toFixed(2)} : 1 <span className="text-(--c-t3)">/ needs {c.min}</span>
               </span>
             </li>
           ))}

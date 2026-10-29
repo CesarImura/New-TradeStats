@@ -1,8 +1,7 @@
 "use client"
 
-import Link from "next/link"
 import { Component, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { ArrowRight, Check as CheckIcon, TriangleAlert } from "@/components/icons"
+import { Check as CheckIcon, TriangleAlert } from "@/components/icons"
 import { CoachContext } from "@/components/coach/coach-provider"
 import { WidgetFrame } from "@/components/widgets/kit"
 import { DETAILED_EXTRA_ROWS, WIDGETS, type WidgetDef } from "@/components/widgets/registry"
@@ -11,13 +10,11 @@ import { getDemoCoach } from "@/lib/data/coaches"
 import { themeToCss } from "@/lib/theme/css"
 import { BRANDED, type LabTheme } from "@/lib/theme/lab"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
-import { TS_SYSTEM_CSS } from "@/lib/theme/ts-system"
 import type { Mode, WidgetStyle } from "@/lib/theme/types"
 import { LIMITS, RULES, checkWidget, type RuleId, type RuleResult } from "@/lib/widgets/checks"
 import { ROW_HEIGHT, type Detail, type Emphasis } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
-
-const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
+import { CONTROL_FOCUS, LabButton, LabSeg, LabSelect, LabSummary, LabToolbar } from "./lab-controls"
 
 /** The real grid: 12 columns of 80px on a 1136px page, 16px gaps, 56px rows. */
 const COL_PX = 80
@@ -51,7 +48,8 @@ const failsOf = (r: Result | undefined) => (r === "error" ? 1 : r ? r.filter((x)
 /**
  * Widget wall (prototype only). Every library widget, in every look, at three
  * widths, in one coach theme at a time, each measured after render against the
- * widget rules (type size, contrast, brand coverage, overflow).
+ * widget rules (type size, contrast, brand coverage, overflow). Lives in the
+ * library (Tools), under its heading and in its chrome.
  */
 export function WidgetWall() {
   const [themeId, setThemeId] = useState(THEMES[0].id)
@@ -103,117 +101,94 @@ export function WidgetWall() {
   const star = emphasis === "star"
 
   return (
-    <div className="ts-ui min-h-svh bg-[#0a0a0b] font-[family-name:var(--ff-geist)] text-[0.8125rem] text-[#f4f4f5]">
-      <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS }} />
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 pb-16">
       <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, `.${SCOPE}`) }} />
 
-      <header className="z-30 border-b border-[#2a2a2f] bg-[#0a0a0b]/95 backdrop-blur xl:sticky xl:top-0">
-        <div className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4">
-          <div className="grid gap-0.5">
-            <Link href="/lab" className={cn(mono, "text-white/50 hover:text-white")}>
-              Prototype · Theme lab ·
-            </Link>
-            <h1 className="text-xl font-normal">Widget wall</h1>
-          </div>
-          <Seg label="Emphasis" value={emphasis} onChange={setEmphasis} options={[["quiet", "Quiet"], ["accent", "Accent"], ["star", "Star"]]} />
-          <Seg label="Detail" value={detail} onChange={setDetail} options={[["compact", "Compact"], ["standard", "Standard"], ["detailed", "Detailed"]]} />
-          <Seg label="Widget style" value={wstyle} onChange={setWstyle} options={[["template", "Template’s"], ["instrument", "Instrument"], ["soft", "Soft"], ["editorial", "Editorial"]]} />
-          <Seg label="Data" value={data} onChange={setData} options={[["sample", "Sample"], ["empty", "Empty"]]} />
-          <label className="flex items-center gap-2">
-            <span className={cn(mono, "text-white/45")}>Widget</span>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="h-7 rounded-[4px] border border-[#4a4a52] bg-[#0e0e10] px-2 text-[0.8125rem] text-white outline-none focus:border-[#ff5500]"
-            >
-              <option value="all">All widgets ({LIBRARY.length})</option>
-              {LIBRARY.map((w) => (
-                <option key={w.type} value={w.type}>
-                  {w.name} · {w.group}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="ml-auto flex items-center gap-2 text-white/70">
-            <input type="checkbox" checked={onlyProblems} onChange={(e) => setOnlyProblems(e.target.checked)} className="accent-[#ff5500]" />
-            Only show problems
-          </label>
-        </div>
-
-        <div className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-1.5 border-t border-[#2a2a2f] px-5 py-2.5">
-          <span className={cn(mono, "mr-2 text-white/45")}>Theme</span>
-          {THEMES.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setThemeId(t.id)}
-              title={t.note}
-              className={cn(
-                "flex items-center gap-1.5 rounded-[4px] border px-2 py-1",
-                t.id === themeId ? "border-[#ff5500] bg-[#222226] text-white" : "border-[#2a2a2f] text-white/55 hover:text-white",
-              )}
-            >
-              <span className="size-2.5 rounded-full shadow-[0_0_0_1px_rgb(255_255_255/0.2)]" style={{ background: t.theme.primary }} />
-              <span className={cn("size-2.5 rounded-full shadow-[0_0_0_1px_rgb(255_255_255/0.2)]", t.theme.mode === "dark" ? "bg-black" : "bg-white")} />
-              {t.name}
-            </button>
+      <LabToolbar>
+        <LabSeg label="Emphasis" value={emphasis} onChange={setEmphasis} options={[["quiet", "Quiet"], ["accent", "Accent"], ["star", "Star"]]} />
+        <LabSeg label="Detail" value={detail} onChange={setDetail} options={[["compact", "Compact"], ["standard", "Standard"], ["detailed", "Detailed"]]} />
+        <LabSeg label="Style" value={wstyle} onChange={setWstyle} options={[["template", "Template’s"], ["instrument", "Instrument"], ["soft", "Soft"], ["editorial", "Editorial"]]} />
+        <LabSeg label="Data" value={data} onChange={setData} options={[["sample", "Sample"], ["empty", "Empty"]]} />
+        <LabSelect label="Widget" value={filter} onChange={setFilter}>
+          <option value="all">All widgets ({LIBRARY.length})</option>
+          {LIBRARY.map((w) => (
+            <option key={w.type} value={w.type}>
+              {w.name} · {w.group}
+            </option>
           ))}
-        </div>
+        </LabSelect>
+        <LabButton onClick={() => setOnlyProblems(!onlyProblems)} label="Only problems" hint="Hide widgets that pass every check" pressed={onlyProblems}>
+          <TriangleAlert className="size-4" />
+        </LabButton>
+      </LabToolbar>
 
-        <div className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-[#2a2a2f] px-5 py-2.5">
-          <span className={cn("flex items-center gap-1.5 font-medium", issues ? "text-[#ff5500]" : "text-[#42be65]")}>
-            {issues ? <TriangleAlert className="size-3.5" /> : <CheckIcon className="size-3.5" />}
-            {issues} {issues === 1 ? "issue" : "issues"}
-          </span>
-          <span className={cn(mono, "text-white/45")}>
-            {failing.length}/{measured.length} renders fail{measured.length < cells.length ? ` · measuring ${measured.length}/${cells.length}` : ""}
-          </span>
-          {RULES.map((r) => {
-            const n = byRule(r.id)
-            return (
-              <span key={r.id} className={cn("flex items-center gap-1.5", n ? "text-white" : "text-white/35")}>
-                <span className={cn("size-1.5 rounded-full", n ? "bg-[#ff5500]" : "bg-white/25")} />
-                {r.label}
-                <span className="tabular-nums text-white/50">{n ? `fails ${n}` : "ok"}</span>
-              </span>
-            )
-          })}
-          {crashed > 0 && <span className="text-[#fa4d56]">{crashed} crashed</span>}
-          <span className="ml-auto text-white/35">
-            Limits: type ≤ {LIMITS.maxFont}px ({LIMITS.maxFontStar}px on Star) · contrast {LIMITS.contrastSmall}:1, {LIMITS.contrastLarge}:1 from {LIMITS.largeTextPx}px · brand ≤{" "}
-            {LIMITS.maxBrandShare * 100}% (not on Star) · no overflow
-          </span>
-        </div>
-      </header>
+      {/* The coach theme every widget is drawn in: the templates in light and dark, then the brands that push the engine hardest. */}
+      <div role="radiogroup" aria-label="Theme" className="flex flex-wrap gap-1.5">
+        {THEMES.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="radio"
+            aria-checked={t.id === themeId}
+            onClick={() => setThemeId(t.id)}
+            title={t.note}
+            className={cn(
+              "flex h-8 items-center gap-1.5 rounded-full border px-3 text-[0.8125rem] transition-colors duration-150",
+              CONTROL_FOCUS,
+              t.id === themeId ? "bg-(--c-bar) font-medium text-(--c-t1) shadow-[0_1px_2px_0_rgb(0_0_0/0.1)]" : "text-(--c-t2) hover:bg-(--c-on) hover:text-(--c-t1)",
+            )}
+            style={{ borderColor: t.id === themeId ? "var(--c-t3)" : "var(--c-hair)" }}
+          >
+            <span className="size-2.5 rounded-full shadow-[0_0_0_1px_var(--c-hair)]" style={{ background: t.theme.primary }} />
+            <span className={cn("size-2.5 rounded-full shadow-[0_0_0_1px_var(--c-hair)]", t.theme.mode === "dark" ? "bg-black" : "bg-white")} />
+            {t.name}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid gap-2">
+        <LabSummary
+          value={measured.length - failing.length}
+          total={cells.length}
+          text={`renders pass every check · ${issues} ${issues === 1 ? "issue" : "issues"}${measured.length < cells.length ? ` · measuring ${measured.length}/${cells.length}` : ""}${crashed ? ` · ${crashed} crashed` : ""}`}
+          chips={RULES.map((r) => ({ label: r.label, fails: byRule(r.id) }))}
+        />
+        <p className="px-1 text-xs text-(--c-t3)">
+          Limits: type ≤ {LIMITS.maxFont}px ({LIMITS.maxFontStar}px on Star) · contrast {LIMITS.contrastSmall}:1, {LIMITS.contrastLarge}:1 from {LIMITS.largeTextPx}px · brand ≤ {LIMITS.maxBrandShare * 100}% (not on
+          Star) · no overflow
+        </p>
+      </div>
 
       <CoachContext.Provider value={ctx}>
         <DataModeProvider value={data}>
-          <main className="mx-auto flex max-w-[1800px] flex-col gap-8 px-5 py-6">
+          <div className="flex flex-col gap-10">
             {widgets.map((def) => {
               const rows = def.variants.filter((v) => SIZES.some((s) => !hidden(`${config}|${def.type}|${v.value}|${s.id}`)))
               if (!rows.length) return null
               return (
                 <section key={def.type} className="flex flex-col gap-4">
-                  <div className="flex items-baseline gap-3 border-b border-[#2a2a2f] pb-2">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b pb-2" style={{ borderColor: "var(--c-hair)" }}>
                     <h2 className="text-base font-medium">{def.name}</h2>
-                    <span className={cn(mono, "text-white/40")}>
+                    <span className="text-xs text-(--c-t3)">
                       {def.type} · {def.group} · default {def.defaultW} cols · min {def.minW}
                     </span>
                   </div>
                   {rows.map((v) => (
                     <div key={v.value} className="flex flex-col gap-2">
-                      <span className={cn(mono, "text-white/55")}>
-                        Look · {v.label} <span className="text-white/30">· {v.h + extra} rows</span>
+                      <span className="text-xs text-(--c-t2)">
+                        {v.label} <span className="text-(--c-t3)">· {v.h + extra} rows</span>
                       </span>
-                      <div className="flex flex-wrap items-start gap-4">
+                      {/* Three widths side by side; scrolls sideways on a narrow screen instead of squeezing the widgets. */}
+                      <div className="-mx-1 flex items-start gap-4 overflow-x-auto px-1 pb-2">
                         {SIZES.map((s) => {
                           const key = `${config}|${def.type}|${v.value}|${s.id}`
                           if (hidden(key)) return null
                           const cols = s.cols(def)
                           return (
-                            <div key={s.id} className="flex flex-col gap-1.5" style={{ width: px(cols) + 24 }}>
+                            <div key={s.id} className="flex shrink-0 flex-col gap-1.5" style={{ width: px(cols) + 24 }}>
                               <div
                                 data-coach-scope
-                                className={cn(SCOPE, theme.mode === "dark" ? "dark" : "light", "rounded-[4px] bg-background p-3 text-foreground shadow-[0_0_0_1px_#2a2a2f]")}
+                                className={cn(SCOPE, theme.mode === "dark" ? "dark" : "light", "rounded-xl border border-(--c-hair) bg-background p-3 text-foreground")}
                                 // Tailwind's font variables resolve at :root; re-point them so widgets use the coach's fonts.
                                 style={
                                   {
@@ -237,32 +212,14 @@ export function WidgetWall() {
               )
             })}
             {onlyProblems && measured.length === cells.length && failing.length === 0 && (
-              <p className="py-16 text-center text-white/50">No problems in this theme and setting.</p>
+              <div className="grid justify-items-start gap-2 rounded-xl border border-dashed px-6 py-12" style={{ borderColor: "var(--c-hair)" }}>
+                <p className="text-sm font-medium">No problems in this theme and setting</p>
+                <p className="text-(--c-t2)">Turn off “Only problems” to see every widget.</p>
+              </div>
             )}
-          </main>
+          </div>
         </DataModeProvider>
       </CoachContext.Provider>
-
-      <footer className="mx-auto flex max-w-[1800px] px-5 pb-10">
-        <Link href="/lab" className={cn(mono, "flex items-center gap-1.5 text-white/50 hover:text-white")}>
-          Back to the theme lab <ArrowRight className="size-3.5" />
-        </Link>
-      </footer>
-    </div>
-  )
-}
-
-function Seg<T extends string>({ label, value, onChange, options }: { label: string; value: T; onChange: (v: T) => void; options: [T, string][] }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className={cn(mono, "text-white/45")}>{label}</span>
-      <div className="flex rounded-[4px] border border-[#2a2a2f] bg-[#161618] p-0.5">
-        {options.map(([v, l]) => (
-          <button key={v} onClick={() => onChange(v)} className={cn("rounded-[3px] px-2.5 py-1", v === value ? "bg-[#f4f4f5] text-[#0a0a0b]" : "text-white/60 hover:text-white")}>
-            {l}
-          </button>
-        ))}
-      </div>
     </div>
   )
 }
@@ -382,13 +339,9 @@ function Badge({ size, result }: { size: string; result: Result | undefined }) {
   return (
     <div className="flex flex-col gap-1 text-xs">
       <div className="flex items-center gap-2">
-        <span className="text-white/45 tabular-nums">{size}</span>
+        <span className="text-(--c-t3) tabular-nums">{size}</span>
         <span
-          className={cn(
-            mono,
-            "ml-auto flex shrink-0 items-center gap-1",
-            !result ? "text-white/30" : result === "error" || fails.length ? "text-[#ff5500]" : "text-[#42be65]",
-          )}
+          className={cn("ml-auto flex shrink-0 items-center gap-1 font-medium", !result ? "text-(--c-t3)" : result === "error" || fails.length ? "text-(--loss-text,var(--loss))" : "text-(--c-t2)")}
           title={result && result !== "error" ? result.map((r) => `${r.label}: ${r.value}${r.detail ? ` (${r.detail})` : ""}`).join("\n") : undefined}
         >
           {!result ? (
@@ -409,10 +362,14 @@ function Badge({ size, result }: { size: string; result: Result | undefined }) {
         </span>
       </div>
       {fails.map((r) => (
-        <div key={r.id} className="flex items-baseline gap-2 rounded-[3px] bg-[#161618] px-2 py-1">
-          <span className="text-white/80">{r.label}</span>
-          <span className="tabular-nums text-[#ff5500]">{r.value}</span>
-          {r.detail && <span className="ml-auto truncate text-white/40" title={r.detail}>{r.detail}</span>}
+        <div key={r.id} className="flex items-baseline gap-2 rounded-md px-2 py-1" style={{ background: "var(--c-on)" }}>
+          <span className="text-(--c-t1)">{r.label}</span>
+          <span className="text-(--loss-text,var(--loss)) tabular-nums">{r.value}</span>
+          {r.detail && (
+            <span className="ml-auto truncate text-(--c-t3)" title={r.detail}>
+              {r.detail}
+            </span>
+          )}
         </div>
       ))}
     </div>

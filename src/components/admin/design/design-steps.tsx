@@ -80,16 +80,22 @@ export function LookStep({ theme, suggested }: { theme: CoachTheme; suggested?: 
         />
         <SliderField id="shadows" label="Depth" value={depthOf(theme)} min={0} max={2} format={(d) => DEPTH_NAMES[d]} onChange={(d) => change({ theme: fromDepth(d) }, "depth")} />
         <SliderField id="density" label="Spacing" value={spacingOf(theme)} min={0} max={2} format={(s) => SPACING_NAMES[s]} onChange={(s) => change({ theme: fromSpacing(s) }, "spacing")} />
-        <DesignField id="card-surface" />
         <DesignField id="widget-style" />
+        <DesignField id="widget-set" />
+        <DesignField id="card-surface" />
+        <DesignField id="header-form" />
+        <DesignField id="figure-style" />
         <DesignField id="chart-style" />
-        <DesignField id="widget-font" />
+        <DesignField id="panel-style" />
+        <DesignField id="star-style" />
+        <DesignField id="widget-finish" />
         <DesignField id="widget-header" />
       </Section>
       <Section>
         <More label="Advanced">
           <DesignField id="fonts" />
           <DesignField id="heading-weight" />
+          <DesignField id="widget-font" />
           <DesignField id="labels" />
           <DesignField id="buttons" />
           <DesignField id="effects" />

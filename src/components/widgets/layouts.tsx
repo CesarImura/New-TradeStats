@@ -1,10 +1,10 @@
 "use client"
 
-import { useId } from "react"
+import { useId, useState } from "react"
 import { cn } from "@/lib/utils"
 import { useCoach } from "@/components/coach/coach-provider"
 import { widgetHeaderOf } from "@/lib/theme/types"
-import { ACCENT, ACCENT_TEXT, TYPE, W, useFrame } from "./kit"
+import { ACCENT, ACCENT_TEXT, Drop, GROW_ROWS, SPREAD_ROWS, Tip, TYPE, useFrame, W } from "./kit"
 import { GREY, Label, Num, TRACK, ink, useFigureFont } from "./instrument"
 
 /**
@@ -85,7 +85,7 @@ export function HeroCard({
                   className="truncate text-[0.8125rem] leading-5 tabular-nums"
                   style={{
                     fontFamily: font,
-                    color: s.tone === "profit" ? ink("var(--profit)") : s.tone === "loss" ? ink("var(--loss)") : s.tone === "accent" ? ink(ACCENT_TEXT) : undefined,
+                    color: s.tone === "profit" ? "var(--profit-text)" : s.tone === "loss" ? "var(--loss-text)" : s.tone === "accent" ? ink(ACCENT_TEXT) : undefined,
                   }}
                 >
                   {s.value}
@@ -95,12 +95,13 @@ export function HeroCard({
           </div>
         )}
       </div>
-      {foot && <div className="relative h-[28%] max-h-20 min-h-9 shrink-0">{foot}</div>}
+      {/* The visual along the bottom; in a cell that sets the height it takes a larger share (and no cap), so a tall hero isn't a blank band over a strip. */}
+      {foot && <div className="relative h-[28%] max-h-20 min-h-9 shrink-0 [@container_card_(min-height:0px)]:h-[42%] [@container_card_(min-height:0px)]:max-h-none">{foot}</div>}
     </W>
   )
 }
 
-/** An area line that runs edge to edge: faint fill, a hairline, a dot on the latest value. `floor` draws a dashed loss line. */
+/** An area line that runs edge to edge: a barely-there tint, a hairline, a dot on the latest value. `floor` draws a dashed loss line. */
 export function BleedArea({ values, floor, invert }: { values: number[]; floor?: number; invert?: boolean }) {
   const id = useId()
   const pts = invert ? values.map((v) => -v) : values
@@ -121,7 +122,7 @@ export function BleedArea({ values, floor, invert }: { values: number[]; floor?:
           </clipPath>
         </defs>
         <g clipPath={`url(#c${id})`}>
-          <path d={`${line} L100 52 L0 52 Z`} fill={ACCENT} opacity={0.09} />
+          <path d={`${line} L100 52 L0 52 Z`} fill={ACCENT} opacity={0.05} />
           {fl !== undefined && <line x1={0} x2={100} y1={y(fl)} y2={y(fl)} stroke="var(--loss)" strokeWidth={1} strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />}
           <path d={line} fill="none" stroke={ACCENT} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
         </g>
@@ -168,9 +169,7 @@ export function BleedBars({ bars }: { bars: { h: number; color: string; ring?: b
 export function SplitCard({ panel, children, className }: { panel: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
     <W className={cn("gap-0 p-0 @[22rem]:flex-row", className)}>
-      <div className="relative h-10 shrink-0 overflow-hidden @[22rem]:h-auto @[22rem]:w-[40%] @[22rem]:max-w-72 [&_[data-split-narrow=hide]]:hidden @[22rem]:[&_[data-split-narrow=hide]]:flex">
-        {panel}
-      </div>
+      <div className="relative h-10 shrink-0 overflow-hidden @[22rem]:h-auto @[22rem]:w-[40%] @[22rem]:max-w-72 [&_[data-split-narrow=hide]]:hidden @[22rem]:[&_[data-split-narrow=hide]]:flex">{panel}</div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2.5 p-[calc(1rem*var(--density,1))]">{children}</div>
     </W>
   )
@@ -183,15 +182,17 @@ export function SplitCard({ panel, children, className }: { panel: React.ReactNo
 /** The coach's artwork until they upload their own: a dark panel with a fine candlestick line. Fills its parent. */
 export function Artwork({ className, children }: { className?: string; children?: React.ReactNode }) {
   const candles = [30, 44, 38, 52, 47, 60, 55, 68, 62, 74, 70, 80]
+  // The line sits in the top-right corner: the kicker is top-left and the title bottom-left, so no candle runs through the words.
+  const top = (h: number) => 34 - h * 0.34
   return (
     <div className={cn("absolute inset-0 overflow-hidden", className)} style={{ background: MEDIA_BG, color: MEDIA_FG }}>
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 size-full" aria-hidden>
         {candles.map((h, i) => {
-          const x = 4 + i * 8
+          const x = 58 + i * 3.4
           return (
-            <g key={i} stroke="currentColor" fill={i % 3 === 1 ? "none" : "currentColor"} opacity={i === candles.length - 1 ? 0.5 : 0.14}>
-              <line x1={x + 1.5} x2={x + 1.5} y1={100 - h - 6} y2={100 - h + 18} strokeWidth="0.4" />
-              <rect x={x} y={100 - h} width="3" height="11" strokeWidth="0.4" />
+            <g key={i} stroke="currentColor" fill={i % 3 === 1 ? "none" : "currentColor"} opacity={i === candles.length - 1 ? 0.36 : 0.16}>
+              <line x1={x + 0.9} x2={x + 0.9} y1={top(h) - 2.5} y2={top(h) + 7} strokeWidth="0.3" />
+              <rect x={x} y={top(h)} width="1.8" height="4.5" strokeWidth="0.3" />
             </g>
           )
         })}
@@ -208,9 +209,9 @@ export function Poster({ kicker, title, sub }: { kicker?: React.ReactNode; title
       <div data-split-narrow="hide" className="absolute inset-0 flex flex-col justify-between gap-2 p-3">
         {kicker ? <span className="text-[0.6875rem] leading-4 font-medium tracking-[0.04em] uppercase">{kicker}</span> : <span />}
         <div className="grid min-w-0 gap-0.5">
-          <span className="line-clamp-2 font-heading text-[0.9375rem] leading-5">{title}</span>
+          <span className="line-clamp-2 font-heading text-[0.8125rem] leading-5">{title}</span>
           {sub && (
-            <span className="truncate text-xs leading-4" style={{ color: MEDIA_FG2 }}>
+            <span className="truncate text-[0.6875rem] leading-4" style={{ color: MEDIA_FG2 }}>
               {sub}
             </span>
           )}
@@ -223,8 +224,8 @@ export function Poster({ kicker, title, sub }: { kicker?: React.ReactNode; title
 // ---------- Media
 
 /** Media colours: the dark artwork panel and the text on it (a Star card re-points both, see W). */
-export const MEDIA_BG = "var(--cover-bg, color-mix(in oklab, var(--foreground) 90%, var(--background)))"
-export const MEDIA_FG = "var(--cover-fg, var(--background))"
+export const MEDIA_BG = "var(--cover-bg, var(--media-bg))"
+export const MEDIA_FG = "var(--cover-fg, var(--media-fg))"
 /** Secondary text on media: the text colour pulled a little toward the panel, still well above AA. */
 export const MEDIA_FG2 = `color-mix(in oklab, ${MEDIA_FG} 78%, ${MEDIA_BG})`
 
@@ -287,7 +288,8 @@ export function MediaProgress({ value, className }: { value: number; className?:
 
 // ---------- Heatmap
 
-export type HeatCell = { fill?: string; ring?: string; title?: string; text?: React.ReactNode }
+/** `dot`: a small mark in the cell (profit or loss), so results never need a red or green block. */
+export type HeatCell = { fill?: string; ring?: string; title?: string; text?: React.ReactNode; dot?: string }
 
 /**
  * A labelled grid of cells: row labels on the left, sparse column labels
@@ -296,43 +298,60 @@ export type HeatCell = { fill?: string; ring?: string; title?: string; text?: Re
  */
 export function HeatGrid({ rows, rowLabels, colLabels, className }: { rows: HeatCell[][]; rowLabels: string[]; colLabels: (string | undefined)[]; className?: string }) {
   const font = useFigureFont()
+  const [hover, setHover] = useState<[number, number]>()
   const n = rows[0]?.length ?? 1
-  const grid = { gridTemplateColumns: `2rem repeat(${n}, minmax(0,1fr))` }
+  // Cells grow with the card up to a calm size (2.25rem wide, 2rem tall), then the grid stays centred: no grey slabs on a big card.
+  const grid = { gridTemplateColumns: `2rem repeat(${n}, minmax(0,2.25rem))` }
   return (
-    <div className={cn("flex min-h-16 flex-1 flex-col gap-[3px]", className)}>
+    <div className={cn("flex min-h-16 flex-1 flex-col justify-center gap-[3px]", className)} onPointerLeave={() => setHover(undefined)}>
       {rows.map((r, ri) => (
-        <div key={ri} className="grid min-h-2 flex-1 gap-[3px]" style={grid}>
-          <span className="self-center truncate text-[0.6875rem] leading-4 text-muted-foreground" style={{ fontFamily: font }}>
+        <div key={ri} className="grid min-h-2 max-h-8 flex-1 justify-center gap-[3px]" style={grid}>
+          <span className={cn("self-center truncate text-[0.6875rem] leading-4 transition-colors duration-150", hover?.[0] === ri ? "text-foreground" : "text-muted-foreground")} style={{ fontFamily: font }}>
             {rowLabels[ri]}
           </span>
-          {r.map((c, ci) => (
+          {r.map((c, ci) => {
+            const on = hover?.[0] === ri && hover?.[1] === ci
+            return (
+              <span
+                key={ci}
+                onPointerEnter={() => setHover([ri, ci])}
+                className={cn("r-bar relative grid min-w-0 place-items-center text-[0.6875rem] leading-none tabular-nums transition-opacity duration-150", hover && !on && "opacity-50")}
+                style={{
+                  background: c.fill ?? `color-mix(in oklab, var(--foreground) 6%, transparent)`,
+                  boxShadow: on ? "0 0 0 1.5px var(--card), 0 0 0 3px var(--foreground)" : c.ring ? `inset 0 0 0 1.5px ${c.ring}` : undefined,
+                  fontFamily: font,
+                }}
+              >
+                {c.text ?? (c.dot && <i className="r-dot size-[5px]" style={{ background: c.dot }} />)}
+                {on && c.title && <Tip x={50} y={ri < 2 ? 100 : 0} place={ri < 2 ? "below" : "above"} value={c.title} />}
+              </span>
+            )
+          })}
+        </div>
+      ))}
+      {/* The hour labels give way first on a very short card. */}
+      <Drop level={2}>
+        <div className="grid justify-center gap-[3px]" style={grid}>
+          <span />
+          {colLabels.map((l, i) => (
             <span
-              key={ci}
-              title={c.title}
-              className="r-bar grid min-w-0 place-items-center overflow-hidden text-[0.625rem] leading-none tabular-nums"
-              style={{ background: c.fill ?? `color-mix(in oklab, var(--foreground) 6%, transparent)`, boxShadow: c.ring ? `inset 0 0 0 1.5px ${c.ring}` : undefined, fontFamily: font }}
+              key={i}
+              className={cn("overflow-visible text-[0.6875rem] leading-4 whitespace-nowrap tabular-nums transition-colors duration-150", hover?.[1] === i ? "text-foreground" : "text-muted-foreground")}
+              style={{ fontFamily: font }}
             >
-              {c.text}
+              {l ?? ""}
             </span>
           ))}
         </div>
-      ))}
-      <div className="grid gap-[3px]" style={grid}>
-        <span />
-        {colLabels.map((l, i) => (
-          <span key={i} className="overflow-visible text-[0.6875rem] leading-4 whitespace-nowrap text-muted-foreground tabular-nums" style={{ fontFamily: font }}>
-            {l ?? ""}
-          </span>
-        ))}
-      </div>
+      </Drop>
     </div>
   )
 }
 
 /** A grey shade for activity-like values (0..1), faint to strong. Greys, not the accent: a full grid in the brand colour would swamp the card. */
 export const heatShade = (t: number) => (t <= 0 ? undefined : `color-mix(in oklab, var(--foreground) ${Math.round(10 + t * 52)}%, transparent)`)
-/** A profit or loss shade for results (−1..1 of the largest). */
-export const heatPl = (t: number) => (t === 0 ? undefined : `color-mix(in oklab, ${t > 0 ? "var(--profit)" : "var(--loss)"} ${Math.round(14 + Math.abs(t) * 56)}%, transparent)`)
+/** A result (−1..1 of the largest) as a cell: a neutral shade for its size, a profit or loss dot for its sign. */
+export const heatPl = (t: number): HeatCell => (t === 0 ? {} : { fill: `color-mix(in oklab, var(--foreground) ${Math.round(5 + Math.abs(t) * 20)}%, transparent)`, dot: t > 0 ? "var(--profit)" : "var(--loss)" })
 
 // ---------- Compare
 
@@ -355,7 +374,7 @@ export function Compare({ a, b, rows, className }: { a: string; b: string; rows:
   const font = useFigureFont()
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col gap-2.5", className)}>
-      <div className="flex min-w-0 items-center gap-3 text-xs leading-4">
+      <div className="flex min-w-0 items-center gap-3 text-[0.6875rem] leading-4">
         <span className="flex min-w-0 items-center gap-1.5">
           <i className="size-2 shrink-0 rounded-[2px]" style={{ background: ACCENT }} />
           <span className="truncate">{a}</span>
@@ -365,14 +384,14 @@ export function Compare({ a, b, rows, className }: { a: string; b: string; rows:
           <span className="truncate">{b}</span>
         </span>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col flex-wrap content-start gap-y-2.5 overflow-hidden *:w-full">
+      <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start gap-y-2.5 overflow-hidden *:w-full", SPREAD_ROWS)}>
         {rows.map((r) => {
           const max = Math.max(Math.abs(r.a), Math.abs(r.b), 1e-9)
           const aAhead = r.better ? (r.better === "higher" ? r.a > r.b : r.a < r.b) : false
           const bAhead = r.better ? (r.better === "higher" ? r.b > r.a : r.b < r.a) : false
           return (
             <div key={r.label} className="grid gap-1">
-              <div className="flex min-w-0 items-baseline gap-2 text-xs leading-4">
+              <div className="flex min-w-0 items-baseline gap-2 text-[0.6875rem] leading-4">
                 <span className="min-w-0 flex-1 truncate text-muted-foreground">{r.label}</span>
                 <span className="shrink-0 tabular-nums" style={{ fontFamily: font, color: aAhead ? ink(ACCENT_TEXT) : undefined, fontWeight: aAhead ? 500 : undefined }}>
                   {r.aText}
@@ -382,8 +401,9 @@ export function Compare({ a, b, rows, className }: { a: string; b: string; rows:
                 </span>
               </div>
               <div className="grid gap-[2px]">
-                <span className="r-bar h-[5px]" style={{ width: `${Math.max(2, (Math.abs(r.a) / max) * 100)}%`, background: ACCENT }} />
-                <span className="r-bar h-[5px]" style={{ width: `${Math.max(2, (Math.abs(r.b) / max) * 100)}%`, background: GREY[2] }} />
+                {/* In a tall cell the bars thicken a little with the card (cqh), so the chart keeps its weight. */}
+                <span className="r-bar h-[5px] [@container_card_(min-height:0px)]:h-[clamp(5px,1.1cqh,9px)]" style={{ width: `${Math.max(2, (Math.abs(r.a) / max) * 100)}%`, background: ACCENT }} />
+                <span className="r-bar h-[5px] [@container_card_(min-height:0px)]:h-[clamp(5px,1.1cqh,9px)]" style={{ width: `${Math.max(2, (Math.abs(r.b) / max) * 100)}%`, background: GREY[2] }} />
               </div>
             </div>
           )
@@ -435,7 +455,7 @@ export function Rail({ items, newestFirst, className }: { items: RailItem[]; new
     }
   })
   return (
-    <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", className)}>
+    <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS, className)}>
       {rows.map(({ it, head, i }, n) => {
         const past = nowAt >= 0 && (newestFirst ? i > nowAt : i < nowAt)
         const lineStyle = past
@@ -504,8 +524,8 @@ export function Rail({ items, newestFirst, className }: { items: RailItem[]; new
                 <span className="r-dot absolute top-1.5 left-1/2 size-2 -translate-x-1/2" style={dot} />
               </span>
               <span className="grid min-w-0">
-                <span className={cn("truncate text-xs leading-5", it.state === "next" && "font-medium", it.state === "past" && "text-muted-foreground")}>{it.title}</span>
-                {it.sub && <span className="line-clamp-2 text-xs leading-4 text-muted-foreground">{it.sub}</span>}
+                <span className={cn("truncate text-[0.8125rem] leading-5", it.state === "next" && "font-medium", it.state === "past" && "text-muted-foreground")}>{it.title}</span>
+                {it.sub && <span className="line-clamp-2 text-[0.6875rem] leading-4 text-muted-foreground">{it.sub}</span>}
               </span>
               {it.aside !== undefined ? (
                 <span className="flex shrink-0 items-start pt-0.5 text-[0.6875rem] leading-4 tabular-nums" style={{ fontFamily: font }}>

@@ -55,21 +55,66 @@
         "logo": "left"
       },
       "widgetStyle": "soft",
+      "widgetSet": "sheet",
+      "headerForm": "path",
       "cardSurface": "grey",
-      "chartStyle": "thin"
+      "chartStyle": "ticks",
+      "figureStyle": "mono",
+      "panelStyle": "outline",
+      "starStyle": "brand",
+      "widgetFinish": "corners"
     },
     "pages": {
       "home": {
         "items": [
           {
             "type": "course-progress",
+            "variant": "bars",
             "x": 0,
             "y": 0,
             "w": 4,
             "h": 5,
-            "variant": "bars",
-            "detail": "detailed",
-            "emphasis": "accent"
+            "detail": "detailed"
+          },
+          {
+            "type": "journal-pnl",
+            "variant": "curve",
+            "x": 0,
+            "y": 5,
+            "w": 4,
+            "h": 7
+          },
+          {
+            "type": "econ-news",
+            "variant": "timeline",
+            "x": 0,
+            "y": 12,
+            "w": 4,
+            "h": 6
+          },
+          {
+            "type": "next-live",
+            "variant": "countdown",
+            "x": 4,
+            "y": 0,
+            "w": 4,
+            "h": 4,
+            "emphasis": "star"
+          },
+          {
+            "type": "rules-followed",
+            "variant": "radar",
+            "x": 4,
+            "y": 4,
+            "w": 4,
+            "h": 4
+          },
+          {
+            "type": "drawdown",
+            "x": 4,
+            "y": 8,
+            "w": 4,
+            "h": 5
           },
           {
             "type": "continue-lesson",
@@ -77,113 +122,30 @@
             "x": 8,
             "y": 0,
             "w": 4,
-            "h": 3
-          },
-          {
-            "type": "next-live",
-            "x": 4,
-            "y": 0,
-            "w": 4,
-            "h": 3,
-            "variant": "countdown",
-            "emphasis": "accent"
-          },
-          {
-            "type": "continue-lesson",
-            "variant": "card",
-            "props": {
-              "course": "foundations"
-            },
-            "hideOnPhone": false,
-            "x": 0,
-            "y": 14,
-            "w": 8,
-            "h": 2
-          },
-          {
-            "type": "partner-links",
-            "x": 4,
-            "y": 10,
-            "w": 8,
             "h": 4
-          },
-          {
-            "type": "next-live",
-            "variant": "card",
-            "x": 0,
-            "y": 20,
-            "w": 4,
-            "h": 3
           },
           {
             "type": "ai-ask",
-            "x": 4,
-            "y": 20,
-            "w": 4,
-            "h": 3
-          },
-          {
-            "type": "journal-pnl",
-            "variant": "curve",
-            "x": 0,
-            "y": 8,
-            "w": 4,
-            "h": 6
-          },
-          {
-            "type": "econ-news",
+            "variant": "chat",
             "x": 8,
-            "y": 17,
+            "y": 4,
             "w": 4,
             "h": 6
-          },
-          {
-            "type": "course-progress",
-            "variant": "list",
-            "x": 0,
-            "y": 16,
-            "w": 8,
-            "h": 4
           },
           {
             "type": "announcement",
             "variant": "plain",
             "x": 8,
-            "y": 14,
+            "y": 10,
             "w": 4,
             "h": 3
           },
           {
-            "type": "journal-pnl",
-            "x": 0,
-            "y": 5,
-            "w": 4,
-            "h": 3,
-            "variant": "bars",
-            "detail": "compact"
-          },
-          {
-            "type": "rules-followed",
+            "type": "partner-links",
             "x": 4,
-            "y": 3,
-            "w": 4,
-            "h": 3,
-            "variant": "radar"
-          },
-          {
-            "type": "ai-ask",
-            "x": 8,
-            "y": 3,
-            "w": 4,
-            "h": 7,
-            "variant": "chat"
-          },
-          {
-            "type": "drawdown",
-            "x": 4,
-            "y": 6,
-            "w": 4,
-            "h": 4
+            "y": 13,
+            "w": 8,
+            "h": 5
           }
         ]
       },
@@ -331,8 +293,8 @@
       "density": "airy",
       "fonts": {
         "heading": "fraunces",
-        "body": "dm-sans",
-        "label": "dm-sans"
+        "body": "schibsted",
+        "label": "schibsted"
       },
       "labelStyle": "plain",
       "headingWeight": 500,
@@ -342,7 +304,13 @@
         "layout": "top",
         "style": "labels",
         "logo": "left"
-      }
+      },
+      "headerForm": "caption",
+      "figureStyle": "display",
+      "chartStyle": "thin",
+      "panelStyle": "none",
+      "starStyle": "inverted",
+      "widgetFinish": "none"
     },
     "pages": {
       "home": {
@@ -360,15 +328,7 @@
             "variant": "cover",
             "x": 0,
             "y": 4,
-            "w": 8,
-            "h": 4
-          },
-          {
-            "type": "first-week",
-            "variant": "checklist",
-            "x": 8,
-            "y": 4,
-            "w": 4,
+            "w": 6,
             "h": 4
           },
           {
@@ -380,6 +340,23 @@
             "h": 3
           },
           {
+            "type": "announcement",
+            "variant": "post",
+            "x": 0,
+            "y": 11,
+            "w": 6,
+            "h": 4,
+            "emphasis": "star"
+          },
+          {
+            "type": "first-week",
+            "variant": "checklist",
+            "x": 6,
+            "y": 4,
+            "w": 6,
+            "h": 4
+          },
+          {
             "type": "next-live",
             "variant": "week",
             "x": 6,
@@ -388,10 +365,10 @@
             "h": 4
           },
           {
-            "type": "announcement",
-            "variant": "post",
-            "x": 0,
-            "y": 11,
+            "type": "rules-followed",
+            "variant": "streak",
+            "x": 6,
+            "y": 12,
             "w": 6,
             "h": 3
           }
@@ -441,101 +418,100 @@
       "borders": false,
       "density": "comfortable",
       "fonts": {
-        "heading": "sora",
-        "body": "manrope",
-        "label": "sora"
+        "heading": "familjen",
+        "body": "schibsted",
+        "label": "familjen"
       },
       "labelStyle": "plain",
       "headingWeight": 700,
-      "background": "glow",
+      "background": "plain",
       "effects": "vivid",
       "nav": {
         "layout": "side",
         "style": "icons",
         "logo": "left"
-      }
+      },
+      "headerForm": "tag",
+      "figureStyle": "marked",
+      "chartStyle": "blocks",
+      "panelStyle": "filled",
+      "starStyle": "brand",
+      "widgetFinish": "none"
     },
     "pages": {
       "home": {
         "items": [
           {
-            "type": "journal-pnl",
-            "variant": "curve",
+            "type": "next-live",
+            "variant": "countdown",
             "x": 0,
             "y": 0,
-            "w": 4,
-            "h": 5
+            "w": 6,
+            "h": 6,
+            "emphasis": "star",
+            "detail": "detailed"
           },
           {
             "type": "rules-followed",
             "variant": "streak",
-            "x": 4,
+            "x": 6,
             "y": 0,
-            "w": 4,
+            "w": 3,
+            "h": 3
+          },
+          {
+            "type": "discord",
+            "variant": "online",
+            "x": 6,
+            "y": 3,
+            "w": 3,
             "h": 3
           },
           {
             "type": "my-rank",
             "variant": "leaderboard",
-            "x": 8,
+            "x": 9,
             "y": 0,
-            "w": 4,
+            "w": 3,
             "h": 6
           },
           {
-            "type": "next-live",
-            "variant": "countdown",
-            "emphasis": "star",
-            "x": 4,
-            "y": 3,
-            "w": 4,
-            "h": 5
+            "type": "journal-pnl",
+            "variant": "heatmap",
+            "x": 0,
+            "y": 6,
+            "w": 8,
+            "h": 4
           },
           {
-            "type": "discord",
-            "variant": "online",
-            "x": 0,
-            "y": 5,
+            "type": "econ-news",
+            "variant": "next",
+            "x": 8,
+            "y": 6,
             "w": 4,
+            "h": 4
+          },
+          {
+            "type": "continue-lesson",
+            "variant": "cover",
+            "x": 0,
+            "y": 10,
+            "w": 8,
             "h": 3
           },
           {
             "type": "course-progress",
             "variant": "rings",
             "x": 8,
-            "y": 6,
+            "y": 10,
             "w": 4,
             "h": 3
-          },
-          {
-            "type": "continue-lesson",
-            "variant": "cover",
-            "x": 0,
-            "y": 8,
-            "w": 8,
-            "h": 3
-          },
-          {
-            "type": "econ-news",
-            "variant": "next",
-            "x": 8,
-            "y": 9,
-            "w": 4,
-            "h": 4
-          },
-          {
-            "type": "journal-pnl",
-            "variant": "heatmap",
-            "x": 0,
-            "y": 11,
-            "w": 8,
-            "h": 4
           },
           {
             "type": "ai-ask",
             "variant": "chat",
             "x": 0,
-            "y": 15,
+            "y": 13,
             "w": 12,
             "h": 5
           }

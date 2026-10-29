@@ -1,7 +1,7 @@
 import { css, hexToOklch } from "./color"
 import { contrast, parseColor } from "./contrast"
 import { isDark } from "./css"
-import type { CoachTheme, Palette } from "./types"
+import { widgetSetOf, type CoachTheme, type Palette } from "./types"
 
 /**
  * The colours a theme actually uses, worked out from the coach's choices.
@@ -19,9 +19,17 @@ export type ResolvedColors = Palette & {
   brandText: string
   /** The brand colour as a mark on the page: focus rings, selected outlines (3:1). */
   brandMark: string
-  /** Profit and loss as text (4.5:1). Equal to profit / loss unless the coach set trading colours; `profit` and `loss` stay exact for fills. */
+  /** Profit and loss as text (4.5:1 and a little more). `profit` and `loss` stay exact for fills and marks. */
   profitText: string
   lossText: string
+  /** The widget surface ladder (see `surfaces`): inner panel, empty track, hairline. */
+  panel: string
+  track: string
+  hair: string
+  /** The Inverted Star card: its fill, its text, and the brand as a mark on it (3:1). */
+  invBg: string
+  invFg: string
+  invAccent: string
 }
 
 export type EngineOptions = { fixes?: boolean }
@@ -34,17 +42,106 @@ export function resolveColors(t: CoachTheme, { fixes = true }: EngineOptions = {
   // The coach's trading colours replace the palette's profit and loss in both modes.
   const own = tradingOf(t)
   if (own) p = { ...p, ...own }
-  if (!fixes) return { ...p, brandText: t.primary, brandMark: t.primary, profitText: p.profit, lossText: p.loss }
+  if (!fixes)
+    return { ...p, brandText: t.primary, brandMark: t.primary, profitText: p.profit, lossText: p.loss, panel: p.muted, track: p.border, hair: p.border, invBg: p.foreground, invFg: p.card, invAccent: t.primary }
   if (t.highlight) p = { ...p, highlightForeground: onColor(t.highlight) }
   p = tintNeutrals(p, t.primary, t.tint ?? "brand")
+  const ladder = surfaces(t, p)
+  p = ladder.palette
   return {
     ...p,
-    brandText: readableOn(t.primary, [p.card, p.background], 4.5),
+    ...ladder.extra,
+    brandText: readableOn(t.primary, [cardOf(t, p), p.background], 4.5),
     brandMark: readableOn(t.primary, [p.background], 3),
-    // A palette's own colours are already checked; only the coach's are moved to the nearest readable shade.
-    profitText: own ? readableOn(p.profit, [p.card, p.background], 4.5) : p.profit,
-    lossText: own ? readableOn(p.loss, [p.card, p.background], 4.5) : p.loss,
+    // Moved to the nearest readable shade on the card the widgets really use (a grey card is darker), with a
+    // little headroom (4.9) for inset panels and tints that sit a few percent darker still.
+    profitText: readableOn(p.profit, [cardOf(t, p), p.background], 4.9),
+    lossText: readableOn(p.loss, [cardOf(t, p), p.background], 4.9),
   }
+}
+
+/** Minimum contrast between neighbouring surfaces, light and dark pages. Dark pages need more: the eye separates dark greys less well. */
+const STEP = {
+  light: { card: 1.1, panel: 1.06, line: 1.25 },
+  dark: { card: 1.18, panel: 1.12, line: 1.35 },
+}
+
+/**
+ * The surface ladder every widget uses, worked out from the template's greys:
+ * page → card → inner panel, plus the empty track of bars and the hairline.
+ * Each step is the smallest move toward the text colour that clears STEP, so
+ * a template keeps its own greys when they already separate. Cards on a page
+ * (Widget set Cards) must stand off the page: on dark pages the card gets
+ * lighter, on light pages the page gets a touch darker. Secondary text is
+ * moved until it reads at 4.5:1 on the darkest surface it sits on (the panel).
+ * Dark pages cap the text colour a little under white: pure white glares.
+ */
+function surfaces(t: CoachTheme, p0: Palette) {
+  let p = { ...p0 }
+  const hex = (c: string) => c.startsWith("#")
+  if (![p.background, p.card, p.foreground].every(hex)) return { palette: p, extra: { panel: p.muted, track: p.border, hair: p.border, invBg: p.foreground, invFg: p.card, invAccent: t.primary } }
+  const dark = isDark(p.background)
+  const step = dark ? STEP.dark : STEP.light
+  if (dark && hexToOklch(p.foreground).l > 0.95) p.foreground = toHex({ ...hexToOklch(p.foreground), l: 0.95 })
+  const surface = t.cardSurface ?? "raised"
+  if (surface === "raised" && widgetSetOf(t) === "cards" && contrast(p.card, p.background) < step.card) {
+    if (dark) p.card = toward(p.card, p.foreground, (c) => contrast(c, p.background) >= step.card)
+    else {
+      const sameSide = p.sidebar.toLowerCase() === p.background.toLowerCase()
+      p.background = toward(p.background, p.foreground, (c) => contrast(p.card, c) >= step.card)
+      if (sameSide) p.sidebar = p.background
+    }
+  }
+  const card = cardOf(t, p)
+  const panel = toward(card, p.foreground, (c) => contrast(c, card) >= step.panel)
+  const hair = toward(card, p.foreground, (c) => contrast(c, card) >= step.line)
+  const track = toward(panel, p.foreground, (c) => contrast(c, panel) >= step.line)
+  const muted = flat(p.mutedForeground, card)
+  if (muted && [panel, card, p.background].some((s) => contrast(p.mutedForeground, s, card) < 4.5)) p.mutedForeground = readableOn(muted, [panel, card, p.background], 4.5)
+  const invBg = p.foreground
+  const invFg = card
+  return { palette: p, extra: { panel, track, hair, invBg, invFg, invAccent: readableOn(t.primary, [invBg], 3) } }
+}
+
+/** The colour moved in lightness toward `to` (keeping its own hue and tint) just far enough to pass `ok`. */
+function toward(from: string, to: string, ok: (c: string) => boolean) {
+  if (ok(from)) return from
+  const a = hexToOklch(from)
+  const b = hexToOklch(to)
+  let lo = 0
+  let hi = 1
+  let best = to
+  for (let i = 0; i < 18; i++) {
+    const k = (lo + hi) / 2
+    const cand = toHex({ l: a.l + (b.l - a.l) * k, c: a.c, h: a.h })
+    if (ok(cand)) {
+      best = cand
+      hi = k
+    } else lo = k
+  }
+  return best
+}
+
+/** A see-through colour (rgba) as the solid hex it shows on `over`; hex stays as it is. */
+function flat(c: string, over: string) {
+  if (c.startsWith("#")) return c
+  const f = parseColor(c)
+  const b = parseColor(over)
+  if (!f || !b) return undefined
+  const a = f[3] ?? 1
+  return "#" + [0, 1, 2].map((i) => Math.round(Math.min(1, Math.max(0, f[i] * a + b[i] * (1 - a))) * 255).toString(16).padStart(2, "0")).join("")
+}
+
+/**
+ * The card the text sits on: the palette's card, or with Card surface Grey the grey card css.ts draws
+ * (the text colour mixed into the page, 5% light / 7% dark), which is darker than the card on light pages.
+ */
+function cardOf(t: Pick<CoachTheme, "cardSurface">, p: Palette) {
+  if (t.cardSurface !== "grey" || !p.foreground.startsWith("#") || !p.background.startsWith("#")) return p.card
+  const fg = hexToOklch(p.foreground)
+  const bg = hexToOklch(p.background)
+  const k = isDark(p.background) ? 0.07 : 0.05
+  return toHex({ l: bg.l + (fg.l - bg.l) * k, c: bg.c, h: bg.h })
 }
 
 /** The coach's trading colours, if both are set. */

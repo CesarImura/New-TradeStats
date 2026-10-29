@@ -1,14 +1,15 @@
 "use client"
 
+import { useLayoutEffect, useRef } from "react"
 import Link from "next/link"
-import { ArrowRight, Handshake, Image as ImageIcon, Play, Quote, Search, Sparkles, Type, Video } from "@/components/icons"
+import { ArrowRight, ArrowUpRight, Handshake, Image as ImageIcon, Play, Quote, Search, Sparkles, Type, Video } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { AI_INSIGHT, AI_SAMPLE, COACH_PROFILE } from "@/lib/data/sample"
 import { KIND_LABEL, useOffers, type PartnerOffer } from "@/lib/data/partners"
 import { cn } from "@/lib/utils"
 import { Axis, Chip, GREY, HatchBar, Label, Legend, StepChart, TickBar, Timeline, WCard, useFigureFont } from "./instrument"
-import { ACCENT, ACCENT_TEXT, Avatar, TYPE, useMore } from "./kit"
+import { ACCENT, ACCENT_TEXT, Avatar, CTA, Drop, FitText, FX, GROW_ROWS, SPLIT, tileDrop, TYPE, useMore } from "./kit"
 import { Cover, WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 
 /** "Ask Kairo AI", but not "Ask Ask Marco" when the coach already named it that way. */
@@ -48,10 +49,10 @@ const initials = (name: string) => {
  */
 export function CoachPhoto({ className }: { className?: string }) {
   return (
-    <div className={cn("relative shrink-0 overflow-hidden rounded-[min(var(--radius),8px)]", className)} style={{ background: "var(--cover-bg, color-mix(in oklab, var(--foreground) 86%, var(--background)))" }} aria-hidden>
+    <div className={cn("relative shrink-0 overflow-hidden rounded-[min(var(--radius),8px)]", className)} style={{ background: "var(--cover-bg, var(--media-bg))" }} aria-hidden>
       <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" className="absolute inset-0 size-full">
-        <circle cx="50" cy="42" r="16" fill="var(--cover-fg, var(--background))" opacity="0.2" />
-        <path d="M16 104c0-21 15-36 34-36s34 15 34 36z" fill="var(--cover-fg, var(--background))" opacity="0.2" />
+        <circle cx="50" cy="42" r="16" fill="var(--cover-fg, var(--media-fg))" opacity="0.2" />
+        <path d="M16 104c0-21 15-36 34-36s34 15 34 36z" fill="var(--cover-fg, var(--media-fg))" opacity="0.2" />
       </svg>
     </div>
   )
@@ -66,6 +67,38 @@ export function VideoThumb({ length = "2:14", className }: { length?: string; cl
         <Play className="size-4 translate-x-px" />
       </span>
       <span className="r-chip absolute right-2 bottom-2 bg-background/85 px-1.5 py-0.5 text-[0.6875rem] leading-4 font-medium text-foreground tabular-nums">{length}</span>
+    </div>
+  )
+}
+
+/**
+ * The video across the card's full width at 16:9; its box is never taller
+ * than that, so it leaves no bands. Where the card can't give it that much
+ * height it shrinks, still 16:9 and centred, never a strip (the builder asks
+ * for more rows where the layout stacks, so that is rare).
+ */
+function VideoFit({ length, className }: { length: string; className?: string }) {
+  const box = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const el = box.current
+    if (!el) return
+    const ro = new ResizeObserver(() => {
+      const w = el.clientWidth
+      el.style.maxHeight = `${Math.round((w * 9) / 16)}px`
+      // In a column it starts at 16:9 and only gives up height when the card needs it; beside the words (a row) the width is the CSS's.
+      el.style.flexBasis = el.parentElement && getComputedStyle(el.parentElement).flexDirection === "column" ? el.style.maxHeight : ""
+      // Narrow (a phone-width card): the video keeps its full 16:9 and the words around it give way instead (Drop, FitText).
+      el.style.flexShrink = w < 420 ? "0" : ""
+      // Its stack (video and scrubber) holds its height then too, so the scrubber isn't pushed under the title.
+      const stack = el.parentElement?.closest<HTMLElement>("[data-video-stack]")
+      if (stack) stack.style.minHeight = w < 420 ? "auto" : ""
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return (
+    <div ref={box} className={cn("grid w-full min-w-0 place-items-center [container-type:size]", className)}>
+      <VideoThumb length={length} className="h-[min(100cqh,calc(100cqw*9/16))] w-[min(100cqw,calc(100cqh*16/9))]" />
     </div>
   )
 }
@@ -130,14 +163,23 @@ export function WelcomeVideo({ variant = "side", props }: WidgetProps) {
   if (variant === "stacked") {
     return (
       <WCard flush icon={Video} title="Welcome video" meta={meta} chip={chip}>
-        <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-2">
-          <VideoThumb length={LENGTH.label} className="h-full" />
+        <div data-video-stack className="flex min-h-0 flex-1 flex-col gap-2">
+          <VideoFit length={LENGTH.label} className="min-h-0 flex-1" />
           {more && <Scrubber />}
         </div>
         <div className="flex min-w-0 flex-col gap-3 @lg:flex-row @lg:items-end @lg:justify-between">
           <div className="grid min-w-0 gap-1">
-            <h3 className={cn(TYPE.value, "line-clamp-2 text-balance")}>{title}</h3>
-            {more && <p className={cn(TYPE.body, "line-clamp-1 text-muted-foreground")}>{text}</p>}
+            {/* On a short card the title keeps one line and the video keeps its width. */}
+            <FitText lines={2} className={cn(TYPE.value, "text-balance")}>
+              {title}
+            </FitText>
+            <Drop level={2}>
+              {more && (
+                <FitText lines={2} className={cn(TYPE.body, "text-muted-foreground")}>
+                  {text}
+                </FitText>
+              )}
+            </Drop>
           </div>
           {watch}
         </div>
@@ -148,9 +190,12 @@ export function WelcomeVideo({ variant = "side", props }: WidgetProps) {
 
   return (
     <WCard flush icon={Video} title="Welcome video" meta={meta} chip={chip} bodyClassName="@xl:flex-row @xl:gap-5">
-      <VideoThumb length={LENGTH.label} className="min-h-20 w-full flex-1 @xl:h-full @xl:max-w-[50%]" />
-      <div className="flex min-w-0 flex-col gap-2 @xl:flex-1">
-        <h3 className={cn(TYPE.value, "line-clamp-2 text-balance")}>{title}</h3>
+      {/* Wide: the box itself is 16:9 at the card's height, so the words start right beside the video, not after a gap. */}
+      <VideoFit length={LENGTH.label} className="min-h-0 flex-1 @xl:aspect-video @xl:h-full @xl:w-auto @xl:max-w-[50%] @xl:flex-none @xl:place-items-start" />
+      <div className="flex min-h-0 min-w-0 shrink-0 flex-col gap-2 @xl:flex-1 @xl:shrink">
+        <FitText lines={2} className={cn(TYPE.value, "text-balance")}>
+          {title}
+        </FitText>
         {more && <p className={cn(TYPE.body, "line-clamp-2 hidden text-muted-foreground @xl:block")}>{text}</p>}
         {more && <Chapters className={cn(!detailed && "hidden @xl:grid")} />}
         <div className="@xl:mt-auto">{watch}</div>
@@ -169,16 +214,28 @@ export function Banner({ variant = "headline", props }: WidgetProps) {
   const title = String(props.title || "Inner Circle opens on 1 November")
   const text = String(props.text || "Small group, weekly 1:1 reviews, and the full playbook.")
   const eyebrow = String(props.eyebrow || "Limited places")
+  const label = String(props.button || "Find out more")
   const cta = props.button !== "" && (
-    <Button size="sm" className="w-fit shrink-0" {...ctaLink(base, props)}>
-      {String(props.button || "Find out more")} <ArrowRight />
+    <Button size="sm" className={cn("w-fit", CTA)} title={label} {...ctaLink(base, props)}>
+      <span className="truncate">{label}</span> <ArrowRight />
     </Button>
   )
 
   if (variant === "slim") {
     if (detailed) {
       return (
-        <WCard row icon={ImageIcon} title={title} meta={text} chip={<Chip>{eyebrow}</Chip>}>
+        <WCard
+          row
+          icon={ImageIcon}
+          title={title}
+          meta={text}
+          chip={
+            // The coach writes this label: a long one ends in "…".
+            <Chip tone="warning" className="max-w-48 overflow-hidden">
+              <span className="min-w-0 truncate">{eyebrow}</span>
+            </Chip>
+          }
+        >
           {cta}
         </WCard>
       )
@@ -193,8 +250,14 @@ export function Banner({ variant = "headline", props }: WidgetProps) {
 
   const words = (
     <div className="grid min-w-0 gap-1">
-      <h3 className={cn(TYPE.value, "text-balance @3xl:text-[1.75rem] @3xl:leading-8", variant === "picture" ? "line-clamp-2" : "line-clamp-1")}>{title}</h3>
-      {more && <p className={cn(TYPE.body, "max-w-prose text-muted-foreground", detailed ? "line-clamp-3" : "line-clamp-1")}>{text}</p>}
+      <h3 className={cn(TYPE.value, "text-balance @3xl:text-[1.75rem] @3xl:leading-8", "line-clamp-2")}>{title}</h3>
+      <Drop level={2}>
+        {more && (
+          <FitText lines={detailed ? 3 : 2} className={cn(TYPE.body, "max-w-prose text-muted-foreground")}>
+            {text}
+          </FitText>
+        )}
+      </Drop>
     </div>
   )
 
@@ -202,7 +265,8 @@ export function Banner({ variant = "headline", props }: WidgetProps) {
     return (
       <WCard flush crumb={coach.org} title={eyebrow} chip={detailed ? <Chip tone="neutral">{coach.name}</Chip> : undefined} bodyClassName="flex-row items-stretch gap-4">
         <Cover className="hidden aspect-[4/3] h-full shrink-0 @lg:block" />
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-3">
+        {/* Wide: the words and the button side by side, so a short banner still fits both. */}
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 @3xl:flex-row @3xl:items-center @3xl:justify-between @3xl:gap-6">
           {words}
           {cta}
         </div>
@@ -211,7 +275,8 @@ export function Banner({ variant = "headline", props }: WidgetProps) {
   }
 
   return (
-    <WCard flush crumb={coach.org} title={eyebrow} bodyClassName="flex-row items-center justify-between gap-4 @lg:gap-6">
+    // Narrow: the button goes under the words instead of shrinking to "Find out m…"; from 32rem they sit side by side.
+    <WCard flush crumb={coach.org} title={eyebrow} bodyClassName="flex-col items-start justify-center gap-3 @lg:flex-row @lg:items-center @lg:justify-between @lg:gap-6">
       {words}
       {cta}
     </WCard>
@@ -230,15 +295,17 @@ export function TextBlock({ variant = "plain", props }: WidgetProps) {
   const text = String(props.text || "Watch one lesson a day.\nJoin Monday's live session.\nJournal every trade, and ask for a review whenever you're unsure.")
   // Text with a button: no button text, no button (unlike Banner).
   const cta = !!props.button && (
-    <Button size="sm" className="w-fit shrink-0" {...ctaLink(base, props)}>
-      {String(props.button)} <ArrowRight />
+    <Button size="sm" className={cn("w-fit", CTA)} title={String(props.button)} {...ctaLink(base, props)}>
+      <span className="truncate">{String(props.button)}</span> <ArrowRight />
     </Button>
   )
 
   if (variant === "quote") {
     return (
       <WCard flush icon={Quote} title={coach.coachName} meta={more ? COACH_PROFILE.title : undefined} bodyClassName="justify-center">
-        <blockquote className={cn(TYPE.value, "font-normal text-balance @2xl:text-[1.75rem] @2xl:leading-8", detailed ? "line-clamp-5" : "line-clamp-3")}>“{text.replace(/\n+/g, " ")}”</blockquote>
+        <FitText lines={detailed ? 6 : 4} className={cn(TYPE.value, "font-normal text-balance @2xl:text-[1.75rem] @2xl:leading-8")}>
+          “{text.replace(/\n+/g, " ")}”
+        </FitText>
       </WCard>
     )
   }
@@ -250,17 +317,18 @@ export function TextBlock({ variant = "plain", props }: WidgetProps) {
       .filter(Boolean)
     return (
       <WCard icon={Type} title={title} meta={more ? `From ${coach.coachName} · ${steps.length} steps` : undefined} chip={detailed ? <Chip tone="neutral">{steps.length} steps</Chip> : undefined}>
-        <ol className="grid content-start gap-x-6 gap-y-2 @2xl:grid-flow-col @2xl:auto-cols-fr">
+        {/* Whole steps only: on a short card the last ones wrap out of sight; wide, they sit side by side. */}
+        <ol className="flex min-h-0 flex-1 flex-col flex-wrap content-start gap-x-6 gap-y-2 overflow-hidden *:w-full [@container_card_(min-height:0px)]:justify-evenly @2xl:grid @2xl:flex-none @2xl:grid-flow-col @2xl:auto-cols-fr @2xl:*:w-auto">
           {steps.map((s, i) => (
             <li key={i} className="flex min-w-0 gap-3 @2xl:flex-col @2xl:gap-1.5">
-              <span className="w-5 shrink-0 text-xs leading-5 tabular-nums" style={{ fontFamily: font, color: i === 0 ? ACCENT_TEXT : "var(--muted-foreground)" }}>
+              <span className="w-5 shrink-0 text-[0.8125rem] leading-5 tabular-nums" style={{ fontFamily: font, color: i === 0 ? ACCENT_TEXT : "var(--muted-foreground)" }}>
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <span className={cn(TYPE.body, "min-w-0")}>{s}</span>
+              <span className={cn(TYPE.body, "line-clamp-2 min-w-0 @2xl:line-clamp-3")}>{s}</span>
             </li>
           ))}
         </ol>
-        {cta && <div className="mt-auto">{cta}</div>}
+        {cta && <div className="mt-auto flex min-w-0">{cta}</div>}
       </WCard>
     )
   }
@@ -268,8 +336,10 @@ export function TextBlock({ variant = "plain", props }: WidgetProps) {
   return (
     <WCard flush icon={Type} title={`From ${coach.coachName}`} meta={more ? coach.name : undefined} bodyClassName="gap-1.5">
       <h3 className={cn(TYPE.value, "line-clamp-2 text-balance")}>{title}</h3>
-      <p className={cn(TYPE.body, "max-w-prose whitespace-pre-line text-muted-foreground", detailed ? "" : more ? "line-clamp-3" : "line-clamp-1")}>{text}</p>
-      {cta && <div className="mt-auto pt-1">{cta}</div>}
+      <FitText lines={detailed ? 12 : more ? 5 : 3} className={cn(TYPE.body, "max-w-prose whitespace-pre-line text-muted-foreground")}>
+        {text}
+      </FitText>
+      {cta && <div className="mt-auto flex min-w-0 pt-1">{cta}</div>}
     </WCard>
   )
 }
@@ -309,7 +379,7 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
       <WCard row icon={Handshake} title="Partner links" meta={more ? meta : undefined} chip={<Chip tone="neutral">{offers.length} links</Chip>}>
         <div className="hidden min-w-0 flex-[2] justify-end gap-1.5 overflow-hidden [mask-image:linear-gradient(to_right,black_85%,transparent)] @[26rem]:flex">
           {offers.map((o) => (
-            <a key={o.id} href={href(o)} {...ext} className="r-chip flex shrink-0 items-center gap-1.5 border py-1 pr-2 pl-1 text-xs hover:bg-muted">
+            <a key={o.id} href={href(o)} {...ext} className={cn("r-chip flex shrink-0 items-center gap-1.5 border py-1 pr-2 pl-1 text-[0.6875rem]", FX.chip, FX.focus)}>
               <Mark name={o.name} size={18} />
               {o.name}
               {detailed && <span className="text-muted-foreground">{o.offer}</span>}
@@ -325,23 +395,36 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
       <WCard icon={Handshake} title="Partner links" meta={meta} chip={<Chip tone="neutral">{offers.length} links</Chip>}>
         <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2 @xl:grid-cols-4">
           {offers.slice(0, detailed ? 8 : 4).map((o, i) => (
-            <a key={o.id} href={href(o)} {...ext} className="relative grid min-h-0 content-center justify-items-start gap-1 rounded-[min(var(--radius),8px)] border bg-card p-2.5 hover:bg-muted">
-              <span className="truncate font-heading text-[0.8125rem] leading-5 font-medium tracking-tight">{o.name}</span>
-              {more && <span className={cn(TYPE.small, "line-clamp-1")}>{KIND_LABEL[o.kind]}</span>}
-              <Chip tone={i === 0 ? "accent" : "neutral"}>{o.offer}</Chip>
-            </a>
+            <Drop key={o.id} level={tileDrop(i)}>
+              <a href={href(o)} {...ext} className={cn("group relative grid min-h-0 content-center justify-items-start gap-1 rounded-[min(var(--radius),8px)] border bg-card p-2.5", FX.tile, FX.focus)}>
+                <span className="max-w-full truncate pr-5 font-heading text-[0.8125rem] leading-5 font-medium tracking-tight">{o.name}</span>
+                {/* Opens the partner's site: the arrow says so, and wakes up on hover. */}
+                <ArrowUpRight aria-hidden className="absolute top-2.5 right-2.5 size-3.5 text-muted-foreground transition-[color,translate] duration-150 group-hover:translate-x-px group-hover:-translate-y-px group-hover:text-foreground" />
+                {more && <span className={cn(TYPE.small, "line-clamp-1")}>{KIND_LABEL[o.kind]}</span>}
+                {/* A long offer ends in "…" inside its tile (mono figures run wider). */}
+                <Chip tone={i === 0 ? "accent" : "neutral"} className="max-w-full overflow-hidden">
+                  <span className="min-w-0 truncate">{o.offer}</span>
+                </Chip>
+              </a>
+            </Drop>
           ))}
         </div>
-        {disclosure}
+        <Drop level={3}>{disclosure}</Drop>
       </WCard>
     )
   }
 
   return (
     <WCard icon={Handshake} title="Partner links" meta={meta} chip={<Chip tone="neutral">{offers.length} links</Chip>}>
-      <div className="grid">
+      {/* Whole rows only: a short card shows the first offers, a tall one all of them. */}
+      <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS)}>
         {offers.map((o, i) => (
-          <a key={o.id} href={href(o)} {...ext} className="group flex min-w-0 items-center gap-2.5 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5 last:border-b-0">
+          <a
+            key={o.id}
+            href={href(o)}
+            {...ext}
+            className={cn("group flex min-w-0 items-center gap-2.5 border-b focus-visible:rounded-sm border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5 last:border-b-0", FX.focus)}
+          >
             <Mark name={o.name} size={more ? 28 : 22} />
             <span className="grid min-w-0 flex-1">
               <span className="truncate font-heading text-[0.8125rem] leading-5 font-medium tracking-tight group-hover:underline">{o.name}</span>
@@ -354,8 +437,10 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
           </a>
         ))}
       </div>
-      <Link href={`${base}/partners`} className={cn(TYPE.small, "mt-auto w-fit hover:underline")}>All offers</Link>
-      {disclosure}
+      <Link href={`${base}/partners`} className={cn(TYPE.small, "w-fit shrink-0", FX.text, FX.focus)}>
+        All offers
+      </Link>
+      <Drop level={3}>{disclosure}</Drop>
     </WCard>
   )
 }
@@ -373,6 +458,20 @@ function AskBox({ placeholder = "Ask about a lesson or your trades…" }: { plac
       <Search className="size-3.5 shrink-0 text-muted-foreground" />
       <span className={cn(TYPE.body, "min-w-0 flex-1 truncate text-left text-muted-foreground")}>{placeholder}</span>
       <Button size="sm">Ask</Button>
+    </div>
+  )
+}
+
+/** Questions to start from: as many whole rows as fit the space the widget leaves, so a tall card is never empty. */
+function Suggested({ above }: { above?: boolean }) {
+  return (
+    <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start gap-1.5 overflow-hidden *:w-full", above && "justify-end")}>
+      {SUGGESTIONS.map((s) => (
+        <span key={s} className={cn(TYPE.body, "flex min-w-0 items-center gap-2 text-muted-foreground")}>
+          <ArrowRight className="size-3.5 shrink-0" />
+          <span className="truncate">{s}</span>
+        </span>
+      ))}
     </div>
   )
 }
@@ -426,10 +525,11 @@ export function AiAsk({ variant = "search" }: WidgetProps) {
     const pm = AI_INSIGHT.r.slice(4)
     const avg = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length
     return (
-      <WCard icon={Sparkles} title={coach.wording.ai} meta="From your journal · last 20 days · 19 trades" chip={<Chip tone="loss">{r(avg(pm))} after 12:00</Chip>}>
+      <WCard icon={Sparkles} title={coach.wording.ai} meta="From your journal · last 20 days · 19 trades" chip={<Chip tone="loss">{r(avg(pm))} after 12:00</Chip>} bodyClassName={SPLIT}>
         <span className={cn(TYPE.title, "line-clamp-1")}>{AI_INSIGHT.title}</span>
-        <div className="grid min-h-0 flex-1 gap-1">
-          <StepChart series={[{ values: AI_INSIGHT.r, label: "Avg R" }]} format={r} height={more ? 64 : 48} className="min-h-0" />
+        {/* The chart takes the height the card gives it; its hours stay right under it. */}
+        <div data-main className="flex min-h-min flex-1 flex-col gap-1">
+          <StepChart series={[{ values: AI_INSIGHT.r, label: "Avg R" }]} format={r} height={0} className={cn("flex-1", more ? "min-h-16" : "min-h-12")} />
           {more && <Axis labels={AI_INSIGHT.hours.map((h) => `${h}:00`)} className="[&>span:nth-child(even)]:hidden @[22rem]:[&>span:nth-child(even)]:inline" />}
         </div>
         {detailed && (
@@ -440,7 +540,7 @@ export function AiAsk({ variant = "search" }: WidgetProps) {
                 { color: ACCENT, label: "After 12:00, avg", value: r(avg(pm)), valueTone: "loss" },
               ]}
             />
-            <Link href={`${base}/courses`} className="flex w-fit items-center gap-1 text-xs font-medium hover:underline">
+            <Link href={`${base}/courses`} className={cn("flex w-fit items-center gap-1 text-[0.8125rem] font-medium", FX.text, FX.focus)}>
               Watch “{AI_INSIGHT.lesson}” <ArrowRight className="size-3.5" />
             </Link>
           </>
@@ -471,9 +571,8 @@ export function AiAsk({ variant = "search" }: WidgetProps) {
               )}
             </div>
           </div>
-          <div className="mt-auto">
-            <AskBox placeholder="Ask a follow-up…" />
-          </div>
+          {more ? <Suggested above /> : <div className="flex-1" />}
+          <AskBox placeholder="Ask a follow-up…" />
         </div>
       </WCard>
     )
@@ -482,20 +581,8 @@ export function AiAsk({ variant = "search" }: WidgetProps) {
   return (
     <WCard icon={Sparkles} title={`${askAi(coach.wording.ai)} anything`} meta={lessonsMeta} chip={left}>
       <AskBox />
-      {detailed && (
-        <div className="flex flex-wrap gap-1.5 overflow-hidden">
-          {SUGGESTIONS.map((s) => (
-            <span key={s} className="r-chip border px-2 py-0.5 text-xs text-muted-foreground">
-              {s}
-            </span>
-          ))}
-        </div>
-      )}
-      {more && (
-        <div className="mt-auto">
-          <Quota />
-        </div>
-      )}
+      {more ? <Suggested /> : <div className="flex-1" />}
+      {more && <Quota />}
     </WCard>
   )
 }

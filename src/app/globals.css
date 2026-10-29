@@ -282,6 +282,23 @@
   background: var(--primary);
   box-shadow: 0 0 0 2px var(--background);
 }
+/* Lab builder: neighbours slide out of the way on the same strong ease-out as the widgets, handles fade in. */
+.lab-canvas .react-grid-item.cssTransforms {
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+.lab-canvas .react-grid-item > .react-resizable-handle {
+  transition: opacity 150ms ease;
+}
+.lab-canvas .react-grid-item.react-grid-placeholder {
+  transition-duration: 120ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lab-canvas .react-grid-item.cssTransforms,
+  .lab-canvas .react-grid-item.react-grid-placeholder {
+    transition: none;
+  }
+}
 /* Edge handles: a short bar centred on each side. Corner handles: a dot. */
 .hb-canvas .react-grid-item > .react-resizable-handle { width: 20px; height: 20px; margin: 0; transform: none; }
 .hb-canvas .react-grid-item > .react-resizable-handle::after { right: auto; bottom: auto; top: 50%; left: 50%; transform: translate(-50%, -50%); }
@@ -301,3 +318,75 @@
 .hb-canvas .react-grid-item > .react-resizable-handle-ne::after,
 .hb-canvas .react-grid-item > .react-resizable-handle-sw::after,
 .hb-canvas .react-grid-item > .react-resizable-handle-se::after { width: 9px; height: 9px; }
+
+/* Widget set (Design → Look → Widgets sit as). Sheet: the widgets form one surface split by hairlines; the card
+   colour spreads into the half-gap around each widget, so neighbours join, and each widget's outline sits in the
+   middle of the gap, so neighbours share one line. Open: no box, a hairline above each widget. The page title
+   and the page's own tool (g-plain) keep their usual look. The Star widget keeps its brand fill in both. */
+.g-page[data-set="sheet"],
+.g-page[data-set="open"],
+.hb-set[data-set="sheet"],
+.hb-set[data-set="open"] {
+  --set-hair: var(--w-hair, color-mix(in oklab, var(--foreground) 12%, transparent));
+}
+.g-page[data-set="sheet"] > .g-item:not(.g-plain),
+.hb-set[data-set="sheet"] .react-grid-item:not(.g-plain, .react-grid-placeholder) {
+  background: var(--card);
+  box-shadow: 0 0 0 calc(var(--gap) / 2) var(--card);
+  outline: 1px solid var(--set-hair);
+  outline-offset: calc(var(--gap) / 2 - 0.5px);
+}
+.g-page:is([data-set="sheet"], [data-set="open"]) > .g-item:not(.g-plain) [data-slot="widget"],
+.hb-set:is([data-set="sheet"], [data-set="open"]) .react-grid-item:not(.g-plain) [data-slot="widget"] {
+  --card-shadow: none;
+  --card-edge: transparent;
+}
+.g-page:is([data-set="sheet"], [data-set="open"]) > .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
+.hb-set:is([data-set="sheet"], [data-set="open"]) .react-grid-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]) {
+  background: transparent;
+  border-radius: 0;
+}
+.g-page[data-set="sheet"] > .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
+.hb-set[data-set="sheet"] .react-grid-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]) {
+  padding: calc(0.5rem * var(--density, 1));
+}
+.g-page[data-set="open"] > .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
+.hb-set[data-set="open"] .react-grid-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]) {
+  padding: calc(0.875rem * var(--density, 1)) 0 0;
+  border-top: 1px solid var(--set-hair);
+}
+
+/* Widget finish Grid (Design → Look → Widgets): a field of small crosses on the page behind the widgets, in the hairline colour.
+   Not with Open widgets: they have no surface of their own, so the crosses would run behind their text. */
+.g-page[data-finish="grid"]:not([data-set="open"]),
+.hb-set[data-finish="grid"]:not([data-set="open"]) {
+  position: relative;
+  isolation: isolate;
+}
+.g-page[data-finish="grid"]:not([data-set="open"])::before,
+.hb-set[data-finish="grid"]:not([data-set="open"])::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--gap) * -1);
+  z-index: -1;
+  pointer-events: none;
+  background: var(--w-hair, color-mix(in oklab, var(--foreground) 14%, transparent));
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cpath d='M32 27v11M27 32.5h11' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E") 0 0 / 64px 64px repeat;
+}
+
+/* Geometry that follows the theme's corner style (set by themeToCss). These went missing on 12 Oct (f4e8dae);
+   without them bars, chips and dots were square in every theme. */
+@layer components {
+  .r-bar {
+    border-radius: var(--r-bar, 4px);
+  }
+  .r-chip {
+    border-radius: var(--r-chip, 6px);
+  }
+  .r-dot {
+    border-radius: var(--r-dot, 9999px);
+  }
+  .r-inner {
+    border-radius: var(--r-inner, 8px);
+  }
+}

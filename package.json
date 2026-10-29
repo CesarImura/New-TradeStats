@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@animate-ui/react": "^2.4.1",
     "@base-ui/react": "^1.9.0",
     "@carbon/icons-react": "^11.90.0",
     "class-variance-authority": "^0.7.1",
@@ -17,6 +18,7 @@
     "cn": "^0.4.0",
     "date-fns": "^4.4.0",
     "lucide-react": "^1.55.0",
+    "motion": "^14.7.1",
     "next": "16.4.0",
     "next-themes": "^0.4.6",
     "react": "19.3.0",

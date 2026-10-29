@@ -7,7 +7,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { CALL_ALLOWANCE, CALL_SLOTS, FEEDBACK } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { ACCENT, ACCENT_TEXT, Avatar, useFrame, useMore } from "./kit"
+import { ACCENT, ACCENT_TEXT, Avatar, Drop, FX, GROW_ROWS, useFrame, useMore } from "./kit"
 import { Chip, GREY, HatchBar, Label, Legend, Num, Rule, WCard, useFigureFont } from "./instrument"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 import { CoachPhoto } from "./brand"
@@ -19,14 +19,14 @@ const HATCH = `repeating-linear-gradient(135deg, ${TRACK} 0 2px, transparent 2px
 
 /** A list that shows as many whole rows as fit the widget's height and hides the rest. */
 function Fit({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", className)}>{children}</div>
+  return <div className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS, className)}>{children}</div>
 }
 
 /** A one-line legend: square swatches with label and figure, side by side. Hatched swatch for "left". */
 function InlineKey({ items }: { items: { color?: string; hatch?: boolean; label: string; value: React.ReactNode }[] }) {
   const font = useFigureFont()
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-xs leading-5">
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-[0.8125rem] leading-5">
       {items.map((it) => (
         <span key={it.label} className="flex items-center gap-1.5 whitespace-nowrap">
           <i className="size-2 shrink-0 rounded-[2px]" style={it.hatch ? { background: HATCH, boxShadow: `inset 0 0 0 1px ${TRACK}` } : { background: it.color }} />
@@ -68,7 +68,7 @@ function TradeName({ trade }: { trade: string }) {
 function QueueRow({ trade, status, when }: { trade: string; status: "waiting" | "answered"; when: string }) {
   const waiting = status === "waiting"
   return (
-    <div className="flex min-w-0 items-center gap-2 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1 text-xs leading-5 last:border-b-0">
+    <div className="flex min-w-0 items-center gap-2 border-b border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1 text-[0.8125rem] leading-5 last:border-b-0">
       <StatusDot waiting={waiting} />
       <span className="flex min-w-0 flex-1">
         <TradeName trade={trade} />
@@ -91,6 +91,7 @@ const LAST_MONTH_HOURS = 12
  */
 export function CoachFeedback({ variant = "queue" }: WidgetProps) {
   const { coach } = useCoach()
+  const { fixed } = useFrame()
   const empty = useEmpty()
   const more = useMore("standard")
   const detailed = useMore("detailed")
@@ -116,7 +117,7 @@ export function CoachFeedback({ variant = "queue" }: WidgetProps) {
       <blockquote className={cn("border-l-2 pl-3 text-[0.8125rem] leading-5", clamp)} style={{ borderLeftColor: ACCENT }}>
         {latest.reply}
       </blockquote>
-      <figcaption className="flex min-w-0 items-center gap-1.5 pl-3 text-xs leading-4 text-muted-foreground">
+      <figcaption className="flex min-w-0 items-center gap-1.5 pl-3 text-[0.6875rem] leading-4 text-muted-foreground">
         <span className="truncate">{coach.coachName}</span>
         <span>·</span>
         <TradeName trade={latest.trade} />
@@ -135,27 +136,28 @@ export function CoachFeedback({ variant = "queue" }: WidgetProps) {
           <div className="min-w-0 flex-1">{quote(more ? "line-clamp-2" : "line-clamp-3")}</div>
         </div>
         {more && (
-          <div className="mt-auto grid shrink-0 gap-1.5">
+          <div className={cn("grid shrink-0 gap-1.5", !(detailed || fixed) && "mt-auto")}>
             {bar}
             {key}
           </div>
         )}
-        {detailed && (
-          <>
+        {/* The earlier replies: on Detailed, and in any cell with room for them (they give way first when there isn't). */}
+        {(detailed || fixed) && (
+          <Drop level={3}>
             <Rule />
             <Label>Earlier</Label>
             <Fit className="-mt-2">
               {answered.slice(1).map((i) => (
                 <div key={i.trade} className="grid min-w-0 gap-0.5 py-1">
-                  <span className="flex min-w-0 text-xs leading-4">
+                  <span className="flex min-w-0 text-[0.6875rem] leading-4">
                     <TradeName trade={i.trade} />
                     <span className="ml-auto shrink-0 pl-2 text-muted-foreground">{i.when}</span>
                   </span>
-                  <span className="truncate text-xs leading-4 text-muted-foreground">{i.reply}</span>
+                  <span className="truncate text-[0.6875rem] leading-4 text-muted-foreground">{i.reply}</span>
                 </div>
               ))}
             </Fit>
-          </>
+          </Drop>
         )}
       </WCard>
     )
@@ -192,7 +194,7 @@ export function CoachFeedback({ variant = "queue" }: WidgetProps) {
         {detailed && <Num value={`${FEEDBACK.avgReplyHours}h`} unit="avg reply" delta={`−${LAST_MONTH_HOURS - FEEDBACK.avgReplyHours}h vs Sep`} deltaTone="profit" />}
         <div className="flex min-w-0 shrink-0 items-center gap-3">
           <div className="min-w-0 flex-1">{bar}</div>
-          <span className="shrink-0 text-xs leading-4 tabular-nums" style={{ fontFamily: font }}>
+          <span className="shrink-0 text-[0.6875rem] leading-4 tabular-nums" style={{ fontFamily: font }}>
             {FEEDBACK.answered}/{FEEDBACK.requested} <span className="text-muted-foreground">answered</span>
           </span>
         </div>
@@ -292,7 +294,8 @@ export function BookCall({ variant = "slots" }: WidgetProps) {
         onClick={() => book(label)}
         disabled={!on && left === 0}
         className={cn(
-          "r-chip flex h-6 shrink-0 items-center justify-center border px-1.5 text-[0.6875rem] leading-none whitespace-nowrap tabular-nums transition-colors hover:border-foreground/40 hover:bg-muted disabled:pointer-events-none disabled:opacity-40",
+          "r-chip flex h-6 shrink-0 items-center justify-center border px-1.5 text-[0.6875rem] leading-none whitespace-nowrap tabular-nums transition-[background-color,border-color,scale] duration-150 ease-out hover:border-foreground/40 hover:bg-muted active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40",
+          FX.focus,
           wide && "w-full",
         )}
         style={{
@@ -320,7 +323,7 @@ export function BookCall({ variant = "slots" }: WidgetProps) {
       >
         <div className="grid min-w-0 shrink-0 gap-0.5">
           <span className="truncate text-[0.8125rem] leading-5 font-medium">1:1 with {coach.coachName}</span>
-          {more && <span className="truncate text-xs leading-4 text-muted-foreground @max-[22rem]:hidden">Your trades, your questions · {left} of {CALL_ALLOWANCE.included} left this month</span>}
+          {more && <span className="line-clamp-2 text-[0.6875rem] leading-4 text-muted-foreground @max-[22rem]:hidden">Your trades, your questions · {left} of {CALL_ALLOWANCE.included} left this month</span>}
         </div>
         <div className="grid shrink-0 gap-0.5">
           <Label>Next free</Label>
@@ -339,7 +342,7 @@ export function BookCall({ variant = "slots" }: WidgetProps) {
       <WCard icon={CalendarClock} title="1:1 calls" meta={`${meta} · October`} chip={leftChip}>
         <div className="flex min-w-0 shrink-0 items-center gap-3">
           <div className="min-w-0 flex-1">{allowanceBar}</div>
-          <span className="shrink-0 text-xs leading-4 tabular-nums" style={{ fontFamily: font }}>
+          <span className="shrink-0 text-[0.6875rem] leading-4 tabular-nums" style={{ fontFamily: font }}>
             {left} <span className="text-muted-foreground">left · next {next.day} {next.time}</span>
           </span>
         </div>
@@ -371,7 +374,7 @@ export function BookCall({ variant = "slots" }: WidgetProps) {
         {more && (
           <div className="flex min-w-0 shrink-0 items-center gap-3">
             <div className="min-w-0 flex-1">{allowanceBar}</div>
-            <span className="shrink-0 text-xs leading-4 text-muted-foreground tabular-nums" style={{ fontFamily: font }}>
+            <span className="shrink-0 text-[0.6875rem] leading-4 text-muted-foreground tabular-nums" style={{ fontFamily: font }}>
               {left} of {CALL_ALLOWANCE.included} left
             </span>
           </div>
@@ -402,7 +405,8 @@ export function BookCall({ variant = "slots" }: WidgetProps) {
                 {d.date.split(" ")[0]}
               </span>
             </div>
-            <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden">
+            {/* Whole times only: the later ones wrap out of sight on a short card. */}
+            <div className="flex min-h-0 flex-1 flex-col flex-wrap content-start gap-1 overflow-hidden *:w-full">
               {d.times.length === 0 ? (
                 <span
                   className="r-chip flex h-6 shrink-0 items-center justify-center text-[0.6875rem] leading-none text-muted-foreground"
@@ -417,17 +421,21 @@ export function BookCall({ variant = "slots" }: WidgetProps) {
           </div>
         ))}
       </div>
-      {more && (
-        <div className="grid shrink-0 gap-1.5">
-          {allowanceBar}
-          {allowanceKey}
-        </div>
-      )}
-      {detailed && (
-        <span className="truncate text-xs leading-4 text-muted-foreground">
-          Next free: <span className="text-foreground tabular-nums">{next.day} {next.date} · {next.time}</span> · invites go to your calendar
-        </span>
-      )}
+      <Drop level={2}>
+        {more && (
+          <div className="grid shrink-0 gap-1.5">
+            {allowanceBar}
+            {allowanceKey}
+          </div>
+        )}
+      </Drop>
+      <Drop level={3}>
+        {detailed && (
+          <span className="truncate text-[0.6875rem] leading-4 text-muted-foreground">
+            Next free: <span className="text-foreground tabular-nums">{next.day} {next.date} · {next.time}</span> · invites go to your calendar
+          </span>
+        )}
+      </Drop>
     </WCard>
   )
 }
