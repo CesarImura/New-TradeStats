@@ -23,7 +23,12 @@ function TradingViewEmbed({ widget, config, className }: { widget: string; confi
   useEffect(() => {
     const el = box.current
     if (!el) return
-    el.innerHTML = ""
+    // Each run gets its own wrapper. TradingView's script looks up its parent when
+    // it runs, which can be after this effect was cleaned up (symbol change, leaving
+    // the page): the wrapper is detached as a whole, so that parent still exists.
+    const run = document.createElement("div")
+    run.style.height = "100%"
+    run.style.width = "100%"
     const inner = document.createElement("div")
     inner.className = "tradingview-widget-container__widget"
     inner.style.height = "100%"
@@ -36,10 +41,13 @@ function TradingViewEmbed({ widget, config, className }: { widget: string; confi
     script.onerror = () => setFailed(true)
     // Wait a tick: TradingView's script reads its own parent node when it runs,
     // so it must not be removed again right away (React's dev double-mount).
-    const t = setTimeout(() => el.append(inner, script), 0)
+    const t = setTimeout(() => {
+      run.append(inner, script)
+      el.replaceChildren(run)
+    }, 0)
     return () => {
       clearTimeout(t)
-      el.innerHTML = ""
+      run.remove()
     }
   }, [widget, json])
 

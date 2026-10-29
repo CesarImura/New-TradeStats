@@ -178,7 +178,8 @@ export function Segmented<T extends string | number>({
           aria-checked={o.value === value}
           onClick={() => onChange(o.value)}
           className={cn(
-            "flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[3px] px-2 text-xs font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:outline-1 focus-visible:outline-[color:var(--ring)]",
+            // after: the click area reaches 24px tall inside the box's padding; the look doesn't change.
+            "relative flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[3px] px-2 text-xs after:absolute after:inset-x-0 after:-inset-y-px after:content-[''] font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:outline-1 focus-visible:outline-[color:var(--ring)]",
             o.value === value && "bg-[color:var(--ctl-on,color-mix(in_oklab,var(--foreground)_12%,transparent))] text-foreground shadow-[var(--ctl-on-shadow,inset_0_1px_0_rgb(255_255_255/0.06))]",
           )}
         >
@@ -471,11 +472,11 @@ export function ColorField({ value, onChange, label }: { value: string; onChange
         <button
           type="button"
           title="Pick any colour"
-          className="size-5 shrink-0 cursor-pointer rounded-[3px] ring-1 ring-[color:color-mix(in_oklab,var(--foreground)_16%,transparent)] ring-inset outline-none focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[color:var(--ring)]"
+          className="relative size-5 shrink-0 cursor-pointer rounded-[3px] ring-1 after:absolute after:-inset-0.5 after:content-[''] ring-[color:color-mix(in_oklab,var(--foreground)_16%,transparent)] ring-inset outline-none focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[color:var(--ring)]"
           style={{ background: value }}
         />
       </ColorPicker>
-      <HexInput value={value} onChange={onChange} label={`${label} hex code`} className="w-0 min-w-0 flex-1" />
+      <HexInput value={value} onChange={onChange} label={`${label} hex code`} className="w-0 min-w-0 flex-1 self-stretch" />
     </div>
   )
 }
@@ -506,7 +507,7 @@ export function Swatches({
               aria-label={c}
               onClick={() => onChange(c)}
               className={cn(
-                "size-5 rounded-full ring-1 ring-[color:color-mix(in_oklab,var(--foreground)_14%,transparent)] ring-inset transition-transform outline-none hover:scale-110 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
+                "relative size-5 rounded-full ring-1 ring-[color:color-mix(in_oklab,var(--foreground)_14%,transparent)] ring-inset transition-transform outline-none after:absolute after:-inset-0.5 after:content-[''] hover:scale-110 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
                 on && "scale-110 outline-2 outline-offset-2 outline-foreground hover:scale-110",
               )}
               style={{ background: c }}

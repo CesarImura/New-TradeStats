@@ -37,7 +37,8 @@ export const TS = {
   field: "#0e0e10",
   text: "#f4f4f5",
   textSecondary: "#a8a8b1",
-  textHelper: "#71717a",
+  /** Hints and descriptions: the quietest text that still reads at 4.5:1 on every panel. */
+  textHelper: "#8b8b94",
   /** Main action: yellow button, near-black text. */
   cta: "#f8ff9e",
   ctaHover: "#ecf38a",
@@ -45,6 +46,8 @@ export const TS = {
   interactive: "#ff5500",
   profit: "#42be65",
   loss: "#fa4d56",
+  /** Loss as text on a loss tint (badges, counts): Carbon red 40, ≥ 5:1 on every panel. */
+  lossText: "#ff8389",
 } as const
 
 export const TS_SYSTEM_CSS = `
@@ -61,7 +64,7 @@ ${R} {
   --ring: ${TS.interactive}; --radius: 4px;
   --chart-1: ${TS.interactive}; --chart-2: ${TS.cta}; --chart-3: ${TS.profit}; --chart-4: ${TS.loss}; --chart-5: ${TS.layer3};
   --highlight: ${TS.cta}; --highlight-foreground: ${TS.bg};
-  --profit: ${TS.profit}; --loss: ${TS.loss};
+  --profit: ${TS.profit}; --loss: ${TS.loss}; --ts-loss-text: ${TS.lossText};
   --sidebar: #0e0e10; --sidebar-foreground: ${TS.textSecondary};
   --sidebar-primary: ${TS.cta}; --sidebar-primary-foreground: ${TS.bg};
   --sidebar-accent: ${TS.layer1}; --sidebar-accent-foreground: ${TS.text};
@@ -365,11 +368,13 @@ ${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-
 ${adm("[data-slot=tooltip-content]")} { border-radius: 6px; font-size: 0.75rem; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 4px 12px rgb(0 0 0 / 0.5); }
 
 /* Side menu: on the ground, no edge. Sentence-case group names, 34px rows, a soft white pill on the open page. */
+/* Red badges read on their tint (the coach's platform has its own rule, from the coach's loss colour). */
+${adm("[data-slot=badge].text-destructive")} { color: var(--ts-loss-text); }
 ${adm("[data-slot=sidebar-container]")} { border: 0; }
 ${adm("[data-slot=sidebar-group]")} { padding-block: 0.375rem; }
 ${adm("[data-slot=sidebar-menu]")} { gap: 1px; }
 ${adm("[data-slot=sidebar-group-label]")} {
-  height: 2rem; font-family: var(--ff-geist), system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0; text-transform: none; color: #5f5f68;
+  height: 2rem; font-family: var(--ff-geist), system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0; text-transform: none; color: #80808a;
 }
 ${adm("[data-slot=sidebar-menu-button]")} { border-radius: 8px; color: ${ADMIN.idle}; font-size: 0.875rem; gap: 0.75rem; }
 ${adm("[data-slot=sidebar-menu-button]:not([data-size=lg])")} { height: 2.125rem; }

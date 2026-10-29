@@ -15,6 +15,20 @@ export function isDark(hex: string) {
 }
 
 /**
+ * The theme's text goes into a <style> tag as is. In the prototype it comes from the
+ * coach's own browser; once it comes from the server and is sent to every student,
+ * a value must not be able to close a rule or the tag. No colour, font id or length
+ * needs these characters, so they are dropped (the background picture isn't written
+ * here: see backdropStyle).
+ */
+function cssSafe<T>(value: T): T {
+  if (typeof value === "string") return value.replace(/[<>{};\\]/g, "") as T
+  if (Array.isArray(value)) return value.map(cssSafe) as T
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, k === "bgImage" ? v : cssSafe(v)])) as T
+  return value
+}
+
+/**
  * Turns a coach theme into CSS. It writes shadcn's own variables, so every
  * shadcn component takes the coach's look without being touched, plus a few
  * rules for the settings shadcn has no variable for (button shape, shadow,
@@ -22,7 +36,8 @@ export function isDark(hex: string) {
  *
  * `scope` is `:root` for the student platform and a class for live previews.
  */
-export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOptions) {
+export function themeToCss(theme: CoachTheme, scope = ":root", engine?: EngineOptions) {
+  const t = cssSafe(theme)
   const p = resolveColors(t, engine)
   const sidebarDark = isDark(p.sidebar)
   const sidebarFg = sidebarDark ? "#f5f6fb" : p.foreground
@@ -158,6 +173,7 @@ ${scope}{${body}color-scheme:${t.mode};}
 ${within(".text-primary")}{color:var(--brand-text);}
 ${within(".text-profit")}{color:var(--profit-text);}
 ${within(".text-loss")}{color:var(--loss-text);}
+${within("[data-slot=badge].text-destructive")}{color:color-mix(in oklab,var(--loss-text) 80%,var(--foreground));}
 ${within(".border-primary")}{border-color:var(--brand-mark);}
 ${within("[data-slot=button]")}{border-radius:var(--button-radius)!important;}
 ${within(':is([data-slot=card],[style*="var(--card-shadow)"])')}{outline:1px solid var(--card-edge);outline-offset:-1px;}

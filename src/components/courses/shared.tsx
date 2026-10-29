@@ -47,8 +47,9 @@ export function PreviewNotice() {
 /** "AI" mark on everything AI-made. */
 export function AiMark({ className }: { className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.65rem] font-medium text-primary", className)}>
-      <Sparkles className="size-3" /> AI
+    // The word in the text colour: brand-text isn't checked against the brand tint behind it. The sparkle keeps the brand.
+    <span className={cn("inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.65rem] font-medium text-foreground", className)}>
+      <Sparkles className="size-3 text-primary" /> AI
     </span>
   )
 }

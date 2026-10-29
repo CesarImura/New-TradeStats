@@ -26,6 +26,8 @@ import { aiTradeAnswer } from "@/lib/data/ai"
 import { addFeedback, allTrades, useFeedback } from "@/lib/data/feedback"
 import { AI_INSIGHT, DEMO_STUDENT, EQUITY, JOURNAL_DAYS, RULES, SETUPS } from "@/lib/data/sample"
 import { ACCOUNTS, BROKERS, STRATEGIES, fmtPnl, fmtR } from "@/lib/data/trades"
+import { resolveColors } from "@/lib/theme/derive"
+import { heatCell } from "@/lib/theme/heat"
 import { cn } from "@/lib/utils"
 import { OwnTitle } from "@/components/student/own-title"
 
@@ -134,7 +136,9 @@ function Stat({ label, value, tone, sub }: { label: string; value: string; tone?
 }
 
 function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => void }) {
-  const { coach, base } = useCoach()
+  const { coach, base, theme } = useCoach()
+  // The heat map picks each number's colour from the theme's real colours.
+  const colors = resolveColors(theme)
   const pnl = trades.reduce((n, t) => n + t.pnl, 0)
   const wins = trades.filter((t) => t.r > 0).length
   const exp = trades.reduce((n, t) => n + t.r, 0) / trades.length
@@ -161,7 +165,7 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
                 </linearGradient>
               </defs>
               <CartesianGrid vertical={false} />
-              <XAxis dataKey="d" tickLine={false} axisLine={false} tickFormatter={(d) => (d % 5 === 0 ? `Day ${d}` : "")} />
+              <XAxis dataKey="d" tickLine={false} axisLine={false} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickFormatter={(d) => (d % 5 === 0 ? `Day ${d}` : "")} />
               <YAxis hide domain={["dataMin - 100", "dataMax + 100"]} />
               <ChartTooltip content={<ChartTooltipContent hideLabel formatter={(v) => <span className="font-mono tabular-nums">{fmtPnl(Number(v))}</span>} />} />
               <Area dataKey="v" type="monotone" stroke="var(--color-v)" strokeWidth={2} fill="url(#eq)" />
@@ -185,7 +189,7 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
                     key={j}
                     title={v ? fmtPnl(v) : "No trades"}
                     className="grid aspect-square place-items-center rounded-(--r-bar) text-[0.6rem] tabular-nums"
-                    style={{ background: v === 0 ? "var(--muted)" : `color-mix(in oklab, ${v > 0 ? "var(--profit)" : "var(--loss)"} ${Math.min(90, 25 + Math.abs(v) / 6)}%, transparent)` }}
+                    style={v === 0 ? { background: "var(--muted)" } : heatCell(colors, v, Math.min(90, 25 + Math.abs(v) / 6) / 100)}
                   >
                     {v ? (v > 0 ? "+" : "−") + Math.abs(Math.round(v / 10)) * 10 : ""}
                   </span>

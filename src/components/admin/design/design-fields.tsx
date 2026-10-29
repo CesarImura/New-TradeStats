@@ -11,6 +11,7 @@ import { FONT_LIBRARY, type FontId } from "@/lib/fonts"
 import type { Overrides } from "@/lib/prototype-store"
 import { themeToCss } from "@/lib/theme/css"
 import { onColor } from "@/lib/theme/derive"
+import { pictureFrom } from "@/lib/images"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import { chartStyleOf, figureStyleOf, headerFormOf, panelStyleOf, starStyleOf, widgetFinishOf, widgetFontOf, widgetHeaderOf, widgetSetOf, widgetStyleOf, type CoachTheme, type TemplateId } from "@/lib/theme/types"
@@ -105,7 +106,7 @@ function NameField() {
   const { coach, change } = useDesign()
   return (
     <Field id="name" label="Platform name">
-      <Input value={coach.name} onChange={(e) => change({ content: { name: e.target.value } }, "name")} />
+      <Input aria-label="Platform name" value={coach.name} onChange={(e) => change({ content: { name: e.target.value } }, "name")} />
     </Field>
   )
 }
@@ -118,12 +119,13 @@ function LogoField() {
   const pickColor = (c: string) => change({ theme: { primary: c, primaryForeground: onColor(c) } }, "primary")
 
   const onFile = async (file: File) => {
-    const url = await new Promise<string>((res) => {
-      const r = new FileReader()
-      r.onload = () => res(r.result as string)
-      r.readAsDataURL(file)
-    })
-    const small = await shrink(url, 256)
+    let small: string
+    try {
+      small = await pictureFrom(file, { max: 256, type: "image/png", keep: ["svg"] })
+    } catch (err) {
+      toast.error((err as Error).message)
+      return
+    }
     onLogo(small)
     setSuggested(await colorsFromLogo(small))
   }
@@ -898,17 +900,4 @@ export function move<T>(list: T[], i: number, by: number) {
   const [item] = next.splice(i, 1)
   next.splice(i + by, 0, item)
   return next
-}
-
-async function shrink(dataUrl: string, max: number) {
-  if (dataUrl.startsWith("data:image/svg")) return dataUrl
-  const img = new Image()
-  img.src = dataUrl
-  await img.decode()
-  const s = Math.min(1, max / Math.max(img.width, img.height))
-  const c = document.createElement("canvas")
-  c.width = Math.round(img.width * s)
-  c.height = Math.round(img.height * s)
-  c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height)
-  return c.toDataURL("image/png")
 }

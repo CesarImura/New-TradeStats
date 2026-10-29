@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
+import { toast } from "sonner"
 import { Copy, EyeOff, GripVertical, ImagePlus, Lock, Maximize2, MousePointerClick, Plus, Search, Trash2, X } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +12,7 @@ import { WidgetFrame } from "@/components/widgets/kit"
 import { DataModeProvider } from "@/components/widgets/shared"
 import { useGroups } from "@/lib/data/access"
 import type { Coach } from "@/lib/data/coaches"
+import { pictureFrom } from "@/lib/images"
 import { ROW_HEIGHT, type Detail, type Emphasis, type PageId, type WidgetInstance, type WidgetNote, type WidgetPhase } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { Field, Segmented } from "./controls"
@@ -46,25 +48,6 @@ function noteTargets() {
   return [...pages, { value: "url", label: "A web address" }]
 }
 
-/** A picture as a data URL, scaled down so saved pages stay small. */
-async function pictureOf(file: File, max = 960) {
-  const url = await new Promise<string>((res) => {
-    const r = new FileReader()
-    r.onload = () => res(r.result as string)
-    r.readAsDataURL(file)
-  })
-  if (url.startsWith("data:image/svg") || url.startsWith("data:image/gif")) return url
-  const img = new Image()
-  img.src = url
-  await img.decode()
-  const s = Math.min(1, max / Math.max(img.width, img.height))
-  const c = document.createElement("canvas")
-  c.width = Math.round(img.width * s)
-  c.height = Math.round(img.height * s)
-  c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height)
-  return c.toDataURL("image/jpeg", 0.85)
-}
-
 /** Upload a picture: a thumbnail, Upload or Replace, and Remove. An empty value means the widget's sample picture. */
 function PictureUpload({ value, onChange, label = "picture" }: { value?: string; onChange: (dataUrl: string) => void; label?: string }) {
   const input = useRef<HTMLInputElement>(null)
@@ -96,7 +79,13 @@ function PictureUpload({ value, onChange, label = "picture" }: { value?: string;
         onChange={async (e) => {
           const f = e.target.files?.[0]
           e.target.value = ""
-          if (f) onChange(await pictureOf(f))
+          if (!f) return
+          try {
+            // Scaled down so saved pages stay small.
+            onChange(await pictureFrom(f, { max: 960 }))
+          } catch (err) {
+            toast.error((err as Error).message)
+          }
         }}
       />
     </div>

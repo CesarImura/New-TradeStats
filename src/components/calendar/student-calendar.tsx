@@ -121,7 +121,7 @@ export function StudentCalendar({ props = {} }: { props?: Record<string, string 
             </span>
             <span className="flex-1 font-heading text-lg leading-tight">
               {liveNow.title}{" "}
-              <span className="text-sm opacity-80">
+              <span className="text-sm">
                 · with {liveNow.event?.host}, until {hhmm(liveNow.end)}
               </span>
             </span>

@@ -66,13 +66,28 @@ export function Masonry({ items, render, wrap, className }: { items: WidgetInsta
         {render(w)}
       </Measured>
     )
-    return wrap ? <Fragment key={w.id}>{wrap(w, node)}</Fragment> : node
+    // With a wrapper (the builder's drag handle) the wrapper is the grid's child, so it takes the band's span.
+    if (!wrap) return node
+    return style ? (
+      <div key={w.id} className="min-w-0" style={style}>
+        {wrap(w, node)}
+      </div>
+    ) : (
+      <Fragment key={w.id}>{wrap(w, node)}</Fragment>
+    )
   }
   return (
     <div ref={box} className={cn("@container", className)}>
       <div className="g-page" data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ "--gap": `${gap}px`, "--row-h": `${ROW_HEIGHT}px`, display: "grid", gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: "var(--gap)", alignItems: "start" } as React.CSSProperties}>
         {segments.map((seg, si) =>
-          seg.band ? (
+          seg.band && seg.side ? (
+            [
+              item(seg.band, { gridColumn: "span 2" }),
+              <div key={`${si}-side`} className="flex min-w-0 flex-col" style={{ gap: "var(--gap)" }}>
+                {seg.side.map((w) => item(w))}
+              </div>,
+            ]
+          ) : seg.band ? (
             item(seg.band, { gridColumn: "1 / -1" })
           ) : (
             seg.columns.map((col, ci) => (
@@ -112,9 +127,9 @@ function Measured({ w, onHeight, style, children }: { w: WidgetInstance; onHeigh
 
 /**
  * A card that spans the page: the page title, a page's own tool, and a card
- * the coach made full width. Anything narrower is one column wide, so the
- * columns stay unbroken (a band closes the columns above it, whose ends can
- * differ).
+ * the coach made full width. A band closes the columns above it, whose ends
+ * can differ. (A card two columns wide gets a band with cards beside it, see
+ * masonry; anything narrower is one column wide.)
  */
 export const isBand = (w: WidgetInstance, cols: number) => cols > 1 && (w.type === "page-header" || !!getWidget(w.type)?.core || w.w >= 12)
 
@@ -122,11 +137,12 @@ export const isBand = (w: WidgetInstance, cols: number) => cols > 1 && (w.type =
  * Masonry: in the coach's order, each card goes to the shortest column, at
  * exactly its own height, so no card has empty space inside and no column has
  * a hole; only the columns' ends can differ. A full-width card (see isBand)
- * closes the columns above it; the columns start again under it. One column
- * on a phone, two on a tablet, three on desktop.
+ * closes the columns above it; the columns start again under it. A card two
+ * columns wide does the same, with the next cards stacked beside it. One
+ * column on a phone, two on a tablet, three on desktop.
  */
 function masonry(items: WidgetInstance[], cols: number, heights: Record<string, number>, gap: number) {
-  type Seg = { band: WidgetInstance; columns?: undefined } | { band?: undefined; columns: WidgetInstance[][] }
+  type Seg = { band: WidgetInstance; columns?: undefined; side?: WidgetInstance[] } | { band?: undefined; columns: WidgetInstance[][] }
   const out: Seg[] = []
   let columns: WidgetInstance[][] = []
   let tops: number[] = []
@@ -138,18 +154,34 @@ function masonry(items: WidgetInstance[], cols: number, heights: Record<string, 
     if (columns.some((c) => c.length)) out.push({ columns })
     open()
   }
+  const est = (w: WidgetInstance) => {
+    const def = getWidget(w.type)
+    return heights[w.id] ?? (def ? heightFor(def, w.variant, w.detail) * (ROW_HEIGHT + gap) - gap : 200)
+  }
   open()
-  for (const w of items) {
+  for (let k = 0; k < items.length; k++) {
+    const w = items[k]
     if (isBand(w, cols)) {
       flush()
       out.push({ band: w })
       continue
     }
-    const def = getWidget(w.type)
-    const est = heights[w.id] ?? (def ? heightFor(def, w.variant, w.detail) * (ROW_HEIGHT + gap) - gap : 200)
+    // Two columns wide (on three): a band of its own, the next cards stacked in the third column beside it while they fit
+    // its height, so the band has no hole either.
+    if (cols === 3 && w.w >= 8) {
+      flush()
+      const side: WidgetInstance[] = []
+      let used = 0
+      while (k + 1 < items.length && !isBand(items[k + 1], cols) && items[k + 1].w < 8 && used + est(items[k + 1]) / 2 <= est(w)) {
+        side.push(items[++k])
+        used += est(items[k]) + gap
+      }
+      out.push({ band: w, side })
+      continue
+    }
     const c = tops.indexOf(Math.min(...tops))
     columns[c].push(w)
-    tops[c] += est + gap
+    tops[c] += est(w) + gap
   }
   flush()
   return out

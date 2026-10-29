@@ -1,6 +1,7 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
+import { toast } from "sonner"
 import type { CustomPage, MenuId, ModuleId, Wording } from "@/lib/data/coaches"
 import type { HomeLayouts, PageLayouts } from "@/lib/widgets/layout"
 import type { CoachTheme, Mode, Palette } from "@/lib/theme/types"
@@ -11,7 +12,9 @@ import type { CoachTheme, Mode, Palette } from "@/lib/theme/types"
  * - draft: unpublished edits from the design editor (null = none)
  * - history: earlier published versions, newest first
  * Everything lives in localStorage, so the editor and its preview frame
- * (a separate document) stay in sync through storage events.
+ * (a separate document) stay in sync through storage events. localStorage holds
+ * about 5 MB per site: a write that doesn't fit is reported (toast + `false`)
+ * instead of looking saved, and history keeps each picture once (see `pack`).
  */
 
 export type ThemeDraft = Partial<Omit<CoachTheme, "nav" | "fonts" | "palettes">> & {
@@ -46,6 +49,7 @@ const k = {
   pub: (s: string) => `proto:pub:${s}`,
   draft: (s: string) => `proto:draft:${s}`,
   history: (s: string) => `proto:history:${s}`,
+  images: (s: string) => `proto:images:${s}`,
 }
 
 const listeners = new Set<() => void>()
@@ -63,18 +67,52 @@ function read<T>(key: string, fallback: T): T {
   if (hit && hit.raw === raw) return hit.value as T
   let value: T = fallback
   try {
-    value = JSON.parse(raw)
+    value = sane(key, JSON.parse(raw), fallback)
   } catch {}
   cache.set(key, { raw, value })
   return value
 }
 
-function write(key: string, value: unknown) {
+const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v)
+
+/**
+ * Data saved by an older prototype (or edited by hand) can have another shape.
+ * Keep what still fits and fall back where it doesn't, so a page gets data of
+ * the type it expects instead of breaking.
+ */
+function sane<T>(key: string, value: unknown, fallback: T): T {
+  if (key.startsWith("proto:pub:") || key.startsWith("proto:draft:")) {
+    if (!isObject(value)) return fallback
+    return { ...value, theme: isObject(value.theme) ? value.theme : {}, content: isObject(value.content) ? value.content : {} } as T
+  }
+  if (key.startsWith("proto:history:")) return (Array.isArray(value) ? value.filter((v) => isObject(v) && isObject(v.snapshot)) : fallback) as T
+  if (Array.isArray(fallback) && !Array.isArray(value)) return fallback
+  if (isObject(fallback) && !isObject(value)) return fallback
+  return value as T
+}
+
+let warnedAt = 0
+function warnFull() {
+  if (Date.now() - warnedAt < 4000) return
+  warnedAt = Date.now()
+  toast.error("Couldn't save: the browser's storage is full", {
+    description: "Your last change wasn't kept. Remove a large picture, or reset this community from the prototype menu, then try again.",
+  })
+}
+
+/** Saves `value` (null removes it). Returns false, and tells the coach, when the browser refuses it. */
+function write(key: string, value: unknown, { quiet = false } = {}) {
+  let ok = true
   try {
     if (value === null || value === undefined) localStorage.removeItem(key)
     else localStorage.setItem(key, JSON.stringify(value))
-  } catch {}
+  } catch {
+    ok = false
+    if (!quiet) warnFull()
+  }
+  // Listeners re-read storage, so after a failed write the screen shows what is really saved.
   listeners.forEach((l) => l())
+  return ok
 }
 
 function subscribe(cb: () => void) {
@@ -108,8 +146,55 @@ export function useOverrides(slug: string, source: "published" | "draft") {
   return source === "draft" ? (draft ?? pub) : pub
 }
 
+const NO_IMAGES: Record<string, string> = {}
+const unpacked = new WeakMap<Version[], { images: Record<string, string>; value: Version[] }>()
+
+/** Earlier published versions, newest first, with their pictures put back. */
 export function useHistory(slug: string) {
-  return useKey<Version[]>(k.history(slug), [])
+  const stored = useKey<Version[]>(k.history(slug), [])
+  const images = useKey(k.images(slug), NO_IMAGES)
+  const hit = unpacked.get(stored)
+  if (hit && hit.images === images) return hit.value
+  const value = stored.map((v) => ({ ...v, snapshot: unpack(v.snapshot, images) }))
+  unpacked.set(stored, { images, value })
+  return value
+}
+
+// ---------- pictures in history
+
+/**
+ * Each version in history is a whole design, and designs carry pictures as data
+ * URLs (logo, background, content widgets). Copying them into every version would
+ * fill localStorage after a few publishes, so history stores each picture once,
+ * under `proto:images:<slug>`, and versions point to it by a short id.
+ */
+const REF = "proto-img:"
+
+function idOf(text: string) {
+  // FNV-1a over the whole string, plus its length: plenty to tell a coach's pictures apart.
+  let h = 0x811c9dc5
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193)
+  return `${(h >>> 0).toString(36)}${text.length.toString(36)}`
+}
+
+function mapStrings<T>(value: T, fn: (s: string) => string): T {
+  if (typeof value === "string") return fn(value) as T
+  if (Array.isArray(value)) return value.map((v) => mapStrings(v, fn)) as T
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, v]) => [key, mapStrings(v, fn)])) as T
+  return value
+}
+
+function pack(snapshot: Overrides, images: Record<string, string>) {
+  return mapStrings(snapshot, (s) => {
+    if (!s.startsWith("data:") || s.length < 512) return s
+    const id = idOf(s)
+    images[id] = s
+    return REF + id
+  })
+}
+
+function unpack(snapshot: Overrides, images: Record<string, string>) {
+  return mapStrings(snapshot, (s) => (s.startsWith(REF) ? (images[s.slice(REF.length)] ?? "") : s))
 }
 
 // ---------- writes
@@ -138,20 +223,44 @@ export function setDraft(slug: string, next: Overrides | null) {
   write(k.draft(slug), next)
 }
 
+/**
+ * Makes the draft live and keeps the design it replaces in history (up to 12).
+ * Returns false when nothing could be published: the draft is then left as it was.
+ * If history doesn't fit, its oldest versions are dropped first.
+ */
 export function publish(slug: string, label = "Published") {
   const draft = read<Overrides | null>(k.draft(slug), null)
-  if (!draft) return
+  if (!draft) return false
   const pub = read<Overrides>(k.pub(slug), EMPTY)
-  const history = read<Version[]>(k.history(slug), [])
-  write(k.history(slug), [{ at: new Date().toISOString(), label, snapshot: pub }, ...history].slice(0, 12))
-  write(k.pub(slug), draft)
+  const oldImages = read<Record<string, string>>(k.images(slug), NO_IMAGES)
+  const old = read<Version[]>(k.history(slug), []).map((v) => ({ ...v, snapshot: unpack(v.snapshot, oldImages) }))
+  const versions = [{ at: new Date().toISOString(), label, snapshot: pub }, ...old].slice(0, 12)
+
+  // What students see comes first. If it doesn't fit, make room by dropping history.
+  if (!write(k.pub(slug), draft, { quiet: true })) {
+    write(k.history(slug), null, { quiet: true })
+    write(k.images(slug), null, { quiet: true })
+    if (!write(k.pub(slug), draft)) return false
+    versions.length = 1
+  }
+  // Keep as many versions as fit, newest first, with only the pictures they use.
+  for (let n = versions.length; n > 0; n--) {
+    const images: Record<string, string> = {}
+    const packed = versions.slice(0, n).map((v) => ({ ...v, snapshot: pack(v.snapshot, images) }))
+    if (write(k.images(slug), images, { quiet: true }) && write(k.history(slug), packed, { quiet: true })) break
+    if (n === 1) {
+      write(k.history(slug), null, { quiet: true })
+      write(k.images(slug), null, { quiet: true })
+    }
+  }
   write(k.draft(slug), null)
+  return true
 }
 
 /** Prototype bar: change the live design directly, or reset a coach (null). */
 export function patchPublishedTheme(slug: string, patch: ThemeDraft | null) {
   if (patch === null) {
-    ;[k.pub(slug), k.draft(slug), k.history(slug)].forEach((key) => write(key, null))
+    ;[k.pub(slug), k.draft(slug), k.history(slug), k.images(slug)].forEach((key) => write(key, null))
     return
   }
   const pub = read<Overrides>(k.pub(slug), EMPTY)

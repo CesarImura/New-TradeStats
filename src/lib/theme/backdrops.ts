@@ -51,6 +51,11 @@ export const BACKDROPS: { id: string; name: string; css: string; size: string }[
 const RETIRED: Record<string, string> = { "preset:aurora": "preset:topo" }
 
 /** The CSS for the backdrop layer behind the platform, or null when the background is plain or a texture. */
+/** An uploaded picture (a data URL) or a web address, as a CSS url(); anything else is left out. */
+function safeImage(src: string) {
+  return /^(data:image\/[\w.+-]+;base64,[\w+/=]+|https:\/\/[^"'()\s\\]+)$/.test(src) ? `url("${src}")` : "none"
+}
+
 export function backdropStyle(t: CoachTheme): CSSProperties | null {
   if (t.background === "gradient") {
     const a = t.bgAngle ?? 160
@@ -62,7 +67,7 @@ export function backdropStyle(t: CoachTheme): CSSProperties | null {
     const id = RETIRED[t.bgImage] ?? t.bgImage
     const preset = id.startsWith("preset:") ? BACKDROPS.find((b) => `preset:${b.id}` === id) : null
     return {
-      backgroundImage: preset ? preset.css : `url("${t.bgImage}")`,
+      backgroundImage: preset ? preset.css : safeImage(t.bgImage),
       backgroundSize: preset ? preset.size : "cover",
       backgroundPosition: "center",
       filter: t.bgBlur ? `blur(${t.bgBlur}px)` : undefined,

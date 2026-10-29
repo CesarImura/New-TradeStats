@@ -288,7 +288,6 @@ export function WCard({
   // Label, Caption and Path headers carry no icon: the name is type, not a badge. Top and Tag show the bare glyph.
   const showIcon = !!Icon && h.icon && (form === "top" || form === "tag")
   const detailed = useMore("detailed")
-  const panel = usePanelStyle()
   // Less on the card: the context line shows on Detailed (and in a one-row card, where it is the content); otherwise it is the name's tooltip.
   const showMeta = !!meta && h.description && (row || detailed)
   const metaTip = typeof meta === "string" ? meta : undefined
@@ -418,15 +417,15 @@ export function WCard({
     )
   }
   if (row) return <W row className={cn("justify-center", className)}>{head}</W>
-  // Band 5: the way out of the widget. The action is a full-width row on the card's own panel surface (label left,
+  // Band 5: the way out of the widget. The action is a full-width row (label left,
   // the note and an arrow right), inset 8px so it reads as part of the card rather than a link left in a corner.
-  // A theme without panel fills gets the panel outline instead, so the row always reads as a button. Without an action, the note is a plain line.
+  // Its look is fixed (a soft fill a step off the card), whatever Design → Chart background says: it is a button, not a chart panel.
+  // Without an action, the note is a plain line.
   const actionHref = action?.href && (action.href.startsWith("/") || /^https?:/.test(action.href) ? action.href : `${base}/${action.href}`)
   const note = footnote && detailed ? <span className="min-w-0 shrink-[999] truncate text-[0.6875rem] leading-4 text-muted-foreground">{footnote}</span> : null
   const rowCls =
     "group flex h-8 w-full min-w-0 items-center gap-3 rounded-(--r-inner) px-2 text-left text-[0.8125rem] leading-5 outline-none transition-[box-shadow,scale] hover:shadow-[inset_0_0_0_100vmax_color-mix(in_oklab,var(--foreground)_5%,transparent)] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-(--brand-mark)"
-  const rowStyle: React.CSSProperties =
-    panel === "filled" ? { background: star ? "var(--brand-shade)" : "var(--w-panel, var(--muted))" } : { border: `1px solid ${star ? "var(--border)" : HAIR}` }
+  const rowStyle: React.CSSProperties = { background: star ? "var(--brand-shade)" : RAISED }
   const rowInner = action && (
     <>
       <span className="min-w-0 truncate [font-weight:var(--w-title-weight,500)]">{action.label}</span>
@@ -660,7 +659,8 @@ export function Seg<T extends string>({ value, options, onChange, label }: { val
       aria-checked={v === value}
       onClick={onClick}
       className={cn(
-        "relative z-[1] h-5 rounded-[5px] px-1.5 text-[0.6875rem] leading-none font-medium tabular-nums transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-(--brand-mark)",
+        // 20px to see, 24px to hit: the pseudo-element takes the clicks 2px above and below (the track's padding).
+        "relative z-[1] h-5 rounded-[5px] px-1.5 text-[0.6875rem] leading-none font-medium tabular-nums transition-colors duration-150 outline-none before:absolute before:inset-x-0 before:-inset-y-0.5 before:content-[''] focus-visible:ring-2 focus-visible:ring-(--brand-mark)",
         v === value ? "text-foreground" : "text-muted-foreground hover:text-foreground",
         !live && v === value && raised,
       )}
@@ -835,55 +835,102 @@ export function FitGauge({ value, max = 100, children, className }: { value: num
 }
 
 /**
- * A ring of rounded segments on a faint track, the figure in its middle:
- * the shape that replaces the tick gauge. `parts` are drawn clockwise from
- * the top with a small gap between them; a `hatch` part is striped (what is
- * left, a projection). The ring is square and as large as its box allows;
- * the middle's type scales with it (cqw of the ring).
+ * A ring on a track, the figure in its middle: the shape that replaces the
+ * half-circle gauge. `parts` run clockwise from the top. It follows Design →
+ * Bars and gauges like every gauge and bar: Solid is a band on a hatched
+ * track, Thin a fine line with a dot at its end, Ticks a ring of radial
+ * ticks, Blocks a ring of short segments, Dots a ring of dots. The ring is
+ * square and as large as its box allows; the middle's type scales with it.
  */
 export function Donut({ parts, total, children, className, label }: { parts: { value: number; color: string; hatch?: boolean }[]; total: number; children?: React.ReactNode; className?: string; /** For screen readers: what the ring shows. */ label?: string }) {
+  const style = useChartStyle()
   const still = useShouldReduceMotion()
   const draw = useTempoTransition({ duration: MOTION.draw + 0.2, ease: MOTION.ease })
   const id = useId().replace(/[^a-z0-9]/gi, "")
-  const w = 9 // stroke width, in a 100-unit box
-  const r = 50 - w / 2 - 0.5
-  const c = 2 * Math.PI * r
-  const gap = parts.length > 1 ? 2.2 : 0 // % of the ring between parts
   const shares = parts.map((p) => Math.max(0, Math.min(1, p.value / (total || 1))))
-  const starts = shares.map((_, i) => shares.slice(0, i).reduce((a, b) => a + b, 0) * c)
-  return (
-    <div role="img" aria-label={label} className={cn("relative aspect-square [container-type:inline-size]", className)}>
-      <svg viewBox="0 0 100 100" className="absolute inset-0 size-full -rotate-90" aria-hidden>
+  const ends = shares.map((_, i) => shares.slice(0, i + 1).reduce((a, b) => a + b, 0))
+  // The part a point of the ring (0 to 1, from the top) belongs to, or undefined on the track.
+  const partAt = (t: number) => {
+    const i = ends.findIndex((e) => t < e - 1e-6)
+    return i >= 0 ? parts[i] : undefined
+  }
+  const pt = (t: number, rad: number) => [r2(50 + Math.sin(t * 2 * Math.PI) * rad), r2(50 - Math.cos(t * 2 * Math.PI) * rad)]
+  let ring: React.ReactNode
+  if (style === "ticks" || style === "dots" || style === "blocks") {
+    // Discrete marks: each one in its part's colour, or the track's.
+    const n = style === "ticks" ? 60 : style === "dots" ? 36 : 20
+    ring = (
+      <motion.g initial={still ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={draw}>
+        {Array.from({ length: n }, (_, k) => {
+          const t = (k + 0.5) / n
+          const color = partAt(t)?.color ?? TRACK
+          if (style === "dots") {
+            const [x, y] = pt(t, 44)
+            return <circle key={k} cx={x} cy={y} r={2.6} fill={color} />
+          }
+          if (style === "ticks") {
+            const [x1, y1] = pt(t, 47)
+            const [x2, y2] = pt(t, 38)
+            return <line key={k} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={1.6} strokeLinecap="round" />
+          }
+          // Blocks: short arcs with a gap between them.
+          const a = k / n + 0.006
+          const b = (k + 1) / n - 0.006
+          const [x1, y1] = pt(a, 44)
+          const [x2, y2] = pt(b, 44)
+          return <path key={k} d={`M${x1} ${y1} A44 44 0 0 1 ${x2} ${y2}`} fill="none" stroke={color} strokeWidth={8} />
+        })}
+      </motion.g>
+    )
+  } else {
+    const thin = style === "thin"
+    const w = thin ? 3 : 9 // stroke width, in a 100-unit box
+    const rad = 50 - (thin ? 6 : w / 2 + 0.5)
+    const c = 2 * Math.PI * rad
+    const gap = parts.length > 1 ? 2.2 : 0 // % of the ring between parts
+    const last = parts.length - 1
+    const tip = pt(ends[last] ?? 0, rad)
+    ring = (
+      <>
         <defs>
           <pattern id={`h${id}`} width="3.7" height="3.7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)" style={{ color: TRACK }}>
             <rect width="1.5" height="3.7" style={{ fill: "currentColor" }} />
           </pattern>
         </defs>
-        {/* The rest of the ring is hatched, like the empty part of a bar (see HatchBar). */}
-        <circle cx="50" cy="50" r={r} fill="none" stroke={`url(#h${id})`} strokeWidth={w} />
-        {parts.map((p, i) => {
-          const share = shares[i]
-          // Each part gives up the gap at its end, so parts keep their share and stay apart.
-          const len = Math.max(0.01, share * c - (gap / 100) * c)
-          if (share <= 0) return null
-          return (
-            <motion.circle
-              key={i}
-              cx="50"
-              cy="50"
-              r={r}
-              fill="none"
-              stroke={p.hatch ? `url(#h${id})` : p.color}
-              style={p.hatch ? { color: p.color } : undefined}
-              strokeWidth={w}
-              strokeLinecap="butt"
-              strokeDashoffset={-starts[i]}
-              initial={still ? false : { strokeDasharray: `0 ${c}` }}
-              animate={{ strokeDasharray: `${len} ${c}` }}
-              transition={{ ...draw, delay: still ? 0 : i * 0.06 }}
-            />
-          )
-        })}
+        {/* The rest of the ring: hatched like the empty part of a bar (Solid), or a plain fine line (Thin). */}
+        <circle cx="50" cy="50" r={rad} fill="none" stroke={thin ? TRACK : `url(#h${id})`} strokeWidth={w} />
+        <g transform="rotate(-90 50 50)">
+          {parts.map((p, i) => {
+            const share = shares[i]
+            // Each part gives up the gap at its end, so parts keep their share and stay apart.
+            const len = Math.max(0.01, share * c - (gap / 100) * c)
+            if (share <= 0) return null
+            return (
+              <motion.circle
+                key={i}
+                cx="50"
+                cy="50"
+                r={rad}
+                fill="none"
+                stroke={p.hatch ? `url(#h${id})` : p.color}
+                strokeWidth={w}
+                strokeLinecap={thin ? "round" : "butt"}
+                strokeDashoffset={-(ends[i] - share) * c}
+                initial={still ? false : { strokeDasharray: `0 ${c}` }}
+                animate={{ strokeDasharray: `${len} ${c}` }}
+                transition={{ ...draw, delay: still ? 0 : i * 0.06 }}
+              />
+            )
+          })}
+        </g>
+        {thin && shares[last] > 0 && <circle cx={tip[0]} cy={tip[1]} r={3.4} fill={parts[last].color} />}
+      </>
+    )
+  }
+  return (
+    <div role="img" aria-label={label} className={cn("relative aspect-square [container-type:inline-size]", className)}>
+      <svg viewBox="0 0 100 100" className="absolute inset-0 size-full overflow-visible" aria-hidden>
+        {ring}
       </svg>
       <div className="absolute inset-[14%] grid place-content-center justify-items-center gap-0.5 text-center">{children}</div>
     </div>
@@ -905,12 +952,11 @@ export function DonutFigure({ value, caption }: { value: React.ReactNode; captio
 
 /**
  * Rows that explain a ring or a total: the name, its figure, and a thin bar
- * of its share under them. Space between rows, no lines. One row can carry
+ * of its share under them (a TickBar, so it follows Bars and gauges). Space between rows, no lines. One row can carry
  * the accent (`on`); the rest are grey, a loss in the loss colour.
  */
 export function ShareRows({ rows, className, onFocus }: { rows: { label: React.ReactNode; value: React.ReactNode; share: number; tone?: "accent" | "loss" | "muted"; on?: boolean }[]; className?: string; /** Pointing at a row (undefined when the pointer leaves). */ onFocus?: (i: number | undefined) => void }) {
   const font = useFigureFont()
-  const fill = useFillIn()
   return (
     <div className={cn("grid min-w-0 content-center gap-3", className)} onPointerLeave={() => onFocus?.(undefined)}>
       {rows.map((r, i) => {
@@ -923,9 +969,8 @@ export function ShareRows({ rows, className, onFocus }: { rows: { label: React.R
                 {r.value}
               </span>
             </div>
-            <span className="r-bar relative block h-1 overflow-hidden" style={{ background: TRACK }} aria-hidden>
-              <motion.span {...fill} className="r-bar absolute inset-y-0 left-0" style={{ width: `${Math.max(0, Math.min(1, r.share)) * 100}%`, background: color }} />
-            </span>
+            {/* The share as a bar in Design → Bars and gauges' style, like every other bar. */}
+            <TickBar value={Math.max(0, Math.min(1, r.share)) * 100} segments={30} color={color} height={4} />
           </div>
         )
       })}

@@ -77,9 +77,11 @@ export function useDraftEditor(slug: string) {
       toast("Changes discarded. Your platform is back to the live version.")
     },
     publish: () => {
-      publish(slug, `Published ${new Date().toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`)
+      // A failed publish keeps the draft; the store has already said why.
+      if (!publish(slug, `Published ${new Date().toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`)) return false
       setUndo([])
       toast.success("Published. Students see the changes now.")
+      return true
     },
   }
 }

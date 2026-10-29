@@ -201,7 +201,7 @@ export function StudentsPage() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden text-muted-foreground xl:table-cell">
-                    {s.broker ? `${s.trades30} trades · ${s.rules}% rules` : <span className="text-muted-foreground/60">No broker</span>}
+                    {s.broker ? `${s.trades30} trades · ${s.rules}% rules` : <span className="text-muted-foreground">No broker</span>}
                   </TableCell>
                   <TableCell>
                     <span className="flex items-center gap-2">

@@ -86,6 +86,8 @@ export function StageCanvas({ def, variant, extra, mode, theme, emphasis, detail
       setSpare(next)
     }, 400)
     return () => clearTimeout(t)
+    // minHAt is rebuilt every render from the variant (variant.value) and minH, which are listed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, live, content, detail, variant.value, emphasis, minH])
   // The click that ends a drag or a resize lands on the canvas; it must not clear the selection.
   const moved = useRef(false)

@@ -66,7 +66,7 @@ export function SalesAdmin() {
             <TabsTrigger value="page">Sales page</TabsTrigger>
             <TabsTrigger value="coupons">Coupons</TabsTrigger>
             <TabsTrigger value="transactions">
-              Payments {problems > 0 && <span className="rounded-full bg-[var(--loss)]/20 px-1.5 text-[0.7rem] text-[var(--loss)] tabular-nums">{problems}</span>}
+              Payments {problems > 0 && <span className="rounded-full bg-[var(--loss)]/20 px-1.5 text-[0.7rem] text-[var(--ts-loss-text)] tabular-nums">{problems}</span>}
             </TabsTrigger>
             <TabsTrigger value="payouts">Payouts</TabsTrigger>
             <TabsTrigger value="affiliates">Affiliates</TabsTrigger>

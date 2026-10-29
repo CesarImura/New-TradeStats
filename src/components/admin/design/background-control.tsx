@@ -1,7 +1,9 @@
 "use client"
 
 import { useRef } from "react"
+import { toast } from "sonner"
 import { ImagePlus } from "@/components/icons"
+import { pictureFrom } from "@/lib/images"
 import { BACKDROPS, MIN_DIM } from "@/lib/theme/backdrops"
 import type { BackgroundStyle, CoachTheme } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
@@ -90,7 +92,13 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
             onChange={async (e) => {
               const f = e.target.files?.[0]
               e.target.value = ""
-              if (f) onChange({ bgImage: await compress(f) }, "bg-image")
+              if (!f) return
+              try {
+                // At most 1600px wide, as a JPEG, so pages load fast.
+                onChange({ bgImage: await pictureFrom(f, { max: 1600, side: "width", quality: 0.8, keep: [] }) }, "bg-image")
+              } catch (err) {
+                toast.error((err as Error).message)
+              }
             }}
           />
           <SliderField
@@ -123,22 +131,4 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
       {kind === "image" && <p className="text-xs text-muted-foreground">Cards and menus stay solid, so text and charts are always readable. Large images are made smaller for fast loading.</p>}
     </div>
   )
-}
-
-/** Shrinks an uploaded image to at most 1600px wide, as a JPEG, so pages load fast. */
-async function compress(file: File) {
-  const url = await new Promise<string>((res) => {
-    const r = new FileReader()
-    r.onload = () => res(r.result as string)
-    r.readAsDataURL(file)
-  })
-  const img = new Image()
-  img.src = url
-  await img.decode()
-  const s = Math.min(1, 1600 / img.width)
-  const c = document.createElement("canvas")
-  c.width = Math.round(img.width * s)
-  c.height = Math.round(img.height * s)
-  c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height)
-  return c.toDataURL("image/jpeg", 0.8)
 }

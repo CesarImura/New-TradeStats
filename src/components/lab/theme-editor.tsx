@@ -59,7 +59,7 @@ export const labUiCss = (c: Record<string, string>, scope: string) => {
  * ThemeStudio) show it as you change it, and it saves on every change. Undo and redo (⌘Z, ⇧⌘Z) step
  * through this session's changes; each group resets on its own.
  */
-export function ThemeEditor({ entry, lab, mode, onClose, onCompare, onLayouts }: { entry: LabThemeEntry; lab: LabThemes; mode: Mode; onClose: () => void; onCompare: () => void; onLayouts: () => void }) {
+export function ThemeEditor({ entry, mode, onClose, onCompare, onLayouts }: { entry: LabThemeEntry; lab: LabThemes; mode: Mode; onClose: () => void; onCompare: () => void; onLayouts: () => void }) {
   const [tab, setTab] = useState("brand")
   // This session's history, oldest first; `at` is the step shown.
   const [hist, setHist] = useState<{ steps: ThemeDraft[]; at: number; key: string | null; time: number }>({ steps: [entry.draft], at: 0, key: null, time: 0 })

@@ -98,7 +98,7 @@ function General() {
       <Section title="General" text="Name and logo are in Design, so you see them while you change them.">
         <div className="divide-y rounded-lg border bg-card px-3">
           <SettingRow label="Language" text="For menus, e-mails and the AI">
-            <NativeSelect defaultValue="en">
+            <NativeSelect defaultValue="en" aria-label="Language">
               <option value="en">English</option>
               <option value="de">Deutsch</option>
               <option value="fr">Français</option>
@@ -107,7 +107,7 @@ function General() {
             </NativeSelect>
           </SettingRow>
           <SettingRow label="Time zone" text="Students see events in their own time zone">
-            <NativeSelect defaultValue="zurich">
+            <NativeSelect defaultValue="zurich" aria-label="Time zone">
               <option value="zurich">Zürich (CET)</option>
               <option value="london">London (GMT)</option>
               <option value="ny">New York (EST)</option>
@@ -115,7 +115,7 @@ function General() {
             </NativeSelect>
           </SettingRow>
           <SettingRow label="Currency" text="For your prices">
-            <NativeSelect defaultValue="eur">
+            <NativeSelect defaultValue="eur" aria-label="Currency">
               <option value="eur">Euro (€)</option>
               <option value="chf">Swiss franc (CHF)</option>
               <option value="usd">US dollar ($)</option>
@@ -123,7 +123,7 @@ function General() {
             </NativeSelect>
           </SettingRow>
           <SettingRow label="Support e-mail" text="Where students' replies go">
-            <Input defaultValue={`hello@${coach.slug}.com`} className="h-8 w-56" />
+            <Input aria-label="Support e-mail" defaultValue={`hello@${coach.slug}.com`} className="h-8 w-56" />
           </SettingRow>
         </div>
       </Section>
@@ -392,7 +392,7 @@ function StudentOnboarding() {
             <Switch checked={s.tour} onCheckedChange={(v) => set({ tour: v })} />
           </SettingRow>
           <SettingRow label="How students log in">
-            <NativeSelect value={s.login} onChange={(e) => set({ login: e.target.value as OnboardingSettings["login"] })}>
+            <NativeSelect aria-label="How students log in" value={s.login} onChange={(e) => set({ login: e.target.value as OnboardingSettings["login"] })}>
               <option value="code">E-mail code</option>
               <option value="password">Password</option>
               <option value="both">Both, and Discord</option>
@@ -497,6 +497,7 @@ function Team() {
                       <Badge variant="secondary">Owner</Badge>
                     ) : (
                       <NativeSelect
+                        aria-label={`Role of ${m.name}`}
                         value={ROLES.find((r) => r.name === m.role)?.id}
                         onChange={(e) => setTeam((t) => t.map((x) => (x.email === m.email ? { ...x, role: ROLES.find((r) => r.id === e.target.value)!.name } : x)))}
                       >
@@ -537,7 +538,7 @@ function Team() {
               <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jana@yourname.com" />
             </Field>
             <Field label="Role">
-              <NativeSelect value={role} onChange={(e) => setRole(e.target.value)}>
+              <NativeSelect aria-label="Role" value={role} onChange={(e) => setRole(e.target.value)}>
                 {ROLES.filter((r) => r.id !== "owner").map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.name} · {r.text}

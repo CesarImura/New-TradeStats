@@ -51,12 +51,13 @@ export function TradingColoursField() {
                 title={s.name}
                 onClick={() => write(s.profit, s.loss)}
                 className={cn(
-                  "flex overflow-hidden rounded-full ring-1 ring-[color:color-mix(in_oklab,var(--foreground)_14%,transparent)] ring-inset transition-transform outline-none hover:scale-110 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
+                  // No overflow-hidden (the halves are rounded instead), so the 24px click area (after) isn't clipped.
+                  "relative flex rounded-full ring-1 ring-[color:color-mix(in_oklab,var(--foreground)_14%,transparent)] ring-inset transition-transform outline-none hover:scale-110 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)] after:absolute after:inset-x-0 after:-inset-y-0.5 after:content-['']",
                   on && "outline-2 outline-offset-2 outline-foreground",
                 )}
               >
-                <span className="h-5 w-4" style={{ background: s.profit }} />
-                <span className="h-5 w-4" style={{ background: s.loss }} />
+                <span className="h-5 w-4 rounded-l-full" style={{ background: s.profit }} />
+                <span className="h-5 w-4 rounded-r-full" style={{ background: s.loss }} />
               </button>
             )
           })}

@@ -104,11 +104,44 @@ function LiveDot() {
 
 export type EventStyle = "tinted" | "solid" | "outline"
 
-/** Colours of an event block in each style. Solid uses white text, so it reads on the coach's colour and the type shades. */
+/**
+ * An event's time: secondary text, a step closer to the main text colour. The theme's
+ * secondary text reads at 4.5:1 on the card, but a tinted event is a little darker
+ * (or lighter) than the card, which took it just under.
+ */
+const TIME_TEXT = "text-[color-mix(in_oklab,var(--muted-foreground)_70%,var(--foreground))]"
+
+/**
+ * Colours of an event block in each style. Solid picks black or white text, whichever
+ * the fill needs: below oklch L 0.565 white reads at 4.5:1, above it black does. That
+ * uses CSS relative colours (`oklch(from …)`: Chrome 119, Safari 18, Firefox 128);
+ * older browsers drop the value, and `solidTextFallback` picks the colour instead.
+ */
 export function blockStyle(color: string, style: EventStyle): React.CSSProperties {
-  if (style === "solid") return { background: color, borderColor: color, color: "#fff" }
+  if (style === "solid") return { background: color, borderColor: color, color: `oklch(from ${color} clamp(0, calc((0.565 - l) * 1000), 1) 0 0)` }
   if (style === "outline") return { background: "var(--card)", borderColor: color, boxShadow: `inset 0 0 0 1px ${color}` }
   return { background: `color-mix(in oklab, ${color} 14%, var(--card))`, borderColor: color }
+}
+
+const RELATIVE_COLOURS = typeof CSS !== "undefined" && CSS.supports("color", "oklch(from red l c h)")
+
+/**
+ * For browsers without relative colours (Next.js supports Safari 16.4 and Firefox 111):
+ * reads the solid block's real fill and sets black or white text, by the same 4.5:1 rule.
+ * Used as the block's ref, so it runs again whenever the block renders.
+ */
+function solidTextFallback(el: HTMLElement | null) {
+  if (!el || RELATIVE_COLOURS) return
+  const ctx = document.createElement("canvas").getContext("2d", { willReadFrequently: true })
+  if (!ctx) return
+  ctx.fillStyle = getComputedStyle(el).backgroundColor
+  ctx.fillRect(0, 0, 1, 1)
+  const [r, g, b] = [...ctx.getImageData(0, 0, 1, 1).data].map((v) => {
+    const c = v / 255
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  })
+  // At luminance 0.175 black and white text both read at about 4.5:1 or more.
+  el.style.color = 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.175 ? "#000" : "#fff"
 }
 
 function Chip({ item, color, onSelect, eventStyle = "tinted" }: { item: Item; color: string; onSelect: (i: Item, el?: HTMLElement) => void; eventStyle?: EventStyle }) {
@@ -116,13 +149,14 @@ function Chip({ item, color, onSelect, eventStyle = "tinted" }: { item: Item; co
   const tinted = eventStyle === "tinted"
   return (
     <button
+      ref={eventStyle === "solid" ? (el) => solidTextFallback(el) : undefined}
       onClick={(e) => (e.stopPropagation(), onSelect(item, e.currentTarget))}
       className={cn("flex w-full min-w-0 items-center gap-1.5 rounded-[var(--r-chip,6px)] px-1.5 py-0.5 text-left text-xs", tinted ? "hover:bg-muted" : "border hover:opacity-90")}
       style={tinted ? undefined : blockStyle(color, eventStyle)}
       title={`${hhmm(item.start)} ${item.title}`}
     >
       {live ? <LiveDot /> : tinted && <span className="size-1.5 shrink-0 rounded-full" style={{ background: color }} />}
-      <span className={cn("shrink-0 tabular-nums", eventStyle === "solid" ? "opacity-85" : "text-muted-foreground")}>{hhmm(item.start)}</span>
+      <span className={cn("shrink-0 tabular-nums", eventStyle !== "solid" && TIME_TEXT)}>{hhmm(item.start)}</span>
       <span className={cn("truncate", item.news?.noTrade && "font-medium")}>{item.title}</span>
     </button>
   )
@@ -285,6 +319,7 @@ function Week({
                     return (
                       <button
                         key={i.key}
+                        ref={eventStyle === "solid" ? (el) => solidTextFallback(el) : undefined}
                         onClick={(e) => (e.stopPropagation(), onSelect(i, e.currentTarget))}
                         className="absolute overflow-hidden rounded-[var(--r-chip,6px)] border-l-[3px] px-1.5 py-0.5 text-left text-[0.7rem] leading-tight shadow-xs transition-shadow hover:z-10 hover:shadow-md"
                         style={{
@@ -299,7 +334,7 @@ function Week({
                           {live && <LiveDot />}
                           <span className="truncate">{i.title}</span>
                         </span>
-                        {h > 30 && <span className={cn("block tabular-nums", eventStyle === "solid" ? "opacity-85" : "text-muted-foreground")}>{hhmm(i.start)}</span>}
+                        {h > 30 && <span className={cn("block tabular-nums", eventStyle !== "solid" && TIME_TEXT)}>{hhmm(i.start)}</span>}
                       </button>
                     )
                   })}

@@ -78,7 +78,7 @@ export function StudentProfile() {
         <TabsContent value="profile">
           <Card className="gap-0 divide-y px-5 py-1">
             <Row label="Nickname" text="Shown in the ranking and community instead of your name">
-              <Input value={nick} onChange={(e) => setNick(e.target.value)} className="w-48" />
+              <Input aria-label="Nickname" value={nick} onChange={(e) => setNick(e.target.value)} className="w-48" />
             </Row>
             <Row label="Picture">
               <Button variant="outline" size="sm" onClick={() => toast("Upload a picture")}>

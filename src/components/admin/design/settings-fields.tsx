@@ -3,6 +3,8 @@
 import { Check, ImagePlus } from "lucide-react"
 import { useRef, useState } from "react"
 import type { ThemeDraft } from "@/lib/prototype-store"
+import { toast } from "sonner"
+import { readAsDataUrl } from "@/lib/images"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { chartStyleOf, figureStyleOf, headerFormOf, panelStyleOf, starStyleOf, widgetFinishOf, widgetFontOf, widgetHeaderOf, widgetSetOf, widgetStyleOf, type CoachTheme, type FigureStyle, type PanelStyle, type WidgetHeader, type WidgetStyle } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
@@ -153,12 +155,9 @@ export function LogoColoursField() {
   const onFile = async (file: File) => {
     setBusy(true)
     try {
-      const url = await new Promise<string>((res) => {
-        const r = new FileReader()
-        r.onload = () => res(r.result as string)
-        r.readAsDataURL(file)
-      })
-      setColours(await colorsFromLogo(url, 5))
+      setColours(await colorsFromLogo(await readAsDataUrl(file), 5))
+    } catch {
+      toast.error("Couldn't read that image", { description: "Try a PNG, JPG or SVG." })
     } finally {
       setBusy(false)
     }
@@ -311,13 +310,20 @@ const PANELS: { value: PanelStyle; label: string; hint: string }[] = [
   { value: "filled", label: "Filled", hint: "Charts sit on a soft inner panel" },
   { value: "outline", label: "Outline", hint: "Charts sit in a fine-line box" },
 ]
+/** A widget with a small area chart in it: a title, a figure, then the chart in the box `value` draws around it. */
 function PanelPicture({ value }: { value: PanelStyle }) {
   return (
     <span aria-hidden className="grid aspect-[4/3] w-full rounded-md bg-muted p-1.5">
-      <span className="grid size-full rounded-[3px] bg-background p-1">
-        <span className={cn("grid items-end rounded-[2px] p-0.5", value === "filled" && "bg-foreground/10", value === "outline" && "border border-foreground/25")}>
-          <svg viewBox="0 0 40 16" className="h-3 w-full text-foreground/60" preserveAspectRatio="none">
-            <polyline points="0,14 8,10 16,12 24,5 32,7 40,2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <span className="grid size-full grid-rows-[auto_auto_minmax(0,1fr)] gap-1 rounded-[3px] bg-background p-1.5">
+        <span className="block h-1 w-1/2 rounded-full bg-foreground/30" />
+        <span className="block h-1.5 w-1/3 rounded-full bg-foreground/60" />
+        <span className={cn("relative min-h-0 overflow-hidden rounded-[2px]", value === "filled" && "bg-foreground/10", value === "outline" && "border border-foreground/30")}>
+          <svg viewBox="0 0 60 30" preserveAspectRatio="none" className="absolute inset-0 size-full text-foreground">
+            {[8, 16, 24].map((y) => (
+              <line key={y} x1="0" x2="60" y1={y} y2={y} stroke="currentColor" strokeOpacity="0.15" strokeWidth="0.6" strokeDasharray="1.5 1.5" vectorEffect="non-scaling-stroke" />
+            ))}
+            <path d="M0,24 L8,20 L16,22 L24,14 L32,16 L40,9 L48,11 L60,4 L60,30 L0,30 Z" fill="var(--primary, currentColor)" fillOpacity="0.18" />
+            <polyline points="0,24 8,20 16,22 24,14 32,16 40,9 48,11 60,4" fill="none" stroke="var(--primary, currentColor)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
           </svg>
         </span>
       </span>

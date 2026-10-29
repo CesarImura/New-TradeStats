@@ -78,7 +78,7 @@ const STEP = {
  * Dark pages cap the text colour a little under white: pure white glares.
  */
 function surfaces(t: CoachTheme, p0: Palette) {
-  let p = { ...p0 }
+  const p = { ...p0 }
   const hex = (c: string) => c.startsWith("#")
   if (![p.background, p.card, p.foreground].every(hex)) return { palette: p, extra: { panel: p.muted, track: p.border, hair: p.border, invBg: p.foreground, invFg: p.card, invAccent: t.primary } }
   const dark = isDark(p.background)

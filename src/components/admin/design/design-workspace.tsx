@@ -6,6 +6,8 @@ import { useSearchParams } from "next/navigation"
 import {
   ArrowLeft,
   ArrowRight,
+  Check,
+  ChevronDown,
   ExternalLink,
   FileDown,
   History,
@@ -148,12 +150,7 @@ export function DesignWorkspace() {
     </div>
   ) : (
     <PagesStep
-      pages={pages}
       page={page}
-      onPage={(id) => {
-        setPage(id)
-        setWidget(null)
-      }}
       tier={tier}
       onTier={(t) => {
         setTier(t)
@@ -254,9 +251,8 @@ export function DesignWorkspace() {
                 size="sm"
                 disabled={!editor.dirty}
                 onClick={() => {
-                  editor.publish()
                   // Publishing changes this community only; say so, since templates are designed here too.
-                  if (CAN_SAVE_TEMPLATE)
+                  if (editor.publish() && CAN_SAVE_TEMPLATE)
                     toast(`Published to ${coach.name} only`, {
                       description: `The ${TEMPLATES[theme.template].name} template didn't change.`,
                       action: { label: "Save as template", onClick: () => setMenu("template") },
@@ -295,13 +291,37 @@ export function DesignWorkspace() {
 
             {/* The platform. On Pages it's the widget grid; elsewhere, click a part to change it. */}
             <section className="grid min-h-[70svh] min-w-0 grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-[color:color-mix(in_oklab,var(--background)_70%,black)] lg:min-h-0">
-              <p className="truncate px-4 py-2 text-xs text-muted-foreground">
-                {step === "pages"
-                  ? arrange.inherits
-                    ? `${arrange.tierName} uses the everyone layout. Changing it gives ${arrange.tierName} its own.`
-                    : `${pageInfo.label}: drag to reorder, right-click for more`
-                  : "Click any part of your platform to change it"}
-              </p>
+              {/* The page being edited, always in view above it: on Pages a picker to switch, elsewhere how to use the preview. */}
+              {step === "pages" ? (
+                <div className="flex min-w-0 items-center gap-2.5 px-4 py-2">
+                  <span className="shrink-0 text-xs text-muted-foreground">Editing</span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="shrink-0 gap-2" aria-label={`Page: ${pageInfo.label}. Change page`} />}>
+                      <span className="font-medium">{pageInfo.label}</span>
+                      <ChevronDown className="size-3.5 text-muted-foreground" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-52">
+                      {pages.map((p) => (
+                        <DropdownMenuItem
+                          key={p.id}
+                          onClick={() => {
+                            setPage(p.id)
+                            setWidget(null)
+                          }}
+                        >
+                          <span className="flex-1">{p.label}</span>
+                          {p.id === page && <Check className="size-3.5" />}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <span className="min-w-0 truncate text-xs text-muted-foreground">
+                    {arrange.inherits ? `${arrange.tierName} uses the everyone layout. Changing it gives ${arrange.tierName} its own.` : "Drag to reorder, right-click for more"}
+                  </span>
+                </div>
+              ) : (
+                <p className="truncate px-4 py-2 text-xs text-muted-foreground">Click any part of your platform to change it</p>
+              )}
               <div className="min-h-0 min-w-0 overflow-hidden">
                 {step === "pages" ? (
                   <ArrangeCanvas arrange={arrange} coach={coach} theme={theme} device={device} data={data} incoming={incoming} onDropped={() => setIncoming(null)} />
@@ -328,9 +348,7 @@ function LookTab() {
 }
 
 function PagesStep({
-  pages,
   page,
-  onPage,
   tier,
   onTier,
   data,
@@ -338,9 +356,7 @@ function PagesStep({
   arrange,
   library,
 }: {
-  pages: ReturnType<typeof studentNav>
   page: PageId
-  onPage: (id: string) => void
   tier: string
   onTier: (t: string) => void
   data: DataMode
@@ -352,16 +368,6 @@ function PagesStep({
   return (
     <>
       <Section>
-        <label className="grid gap-1.5 text-xs font-medium text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)]">
-          Page
-          <select value={page} onChange={(e) => onPage(e.target.value)} className="h-7 rounded-[4px] border bg-background px-2 text-xs text-foreground">
-            {pages.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </label>
         <More label="Per tier and preview data">
           <label className="grid gap-1.5 text-xs font-medium text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)]">
             Layout for

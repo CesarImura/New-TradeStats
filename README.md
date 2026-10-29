@@ -17,6 +17,8 @@ npm run dev
 | `/setup` | Setup wizard (7 steps: Brand · Look · Menu · Pages · Membership · Videos · Get paid, the first four identical to Design): every Design option is reachable here too, folded under “More” |
 | `/c/[coach]/p/[page]` | A page the coach added in Design → Menu (name, icon, built from widgets like every other page) |
 | `/site/[coach]` | Public pages in the coach's brand: sales page, checkout, account code, thank you, student onboarding, login, free join, invite, waiting list, legal (PUB-01 to PUB-12, STO-01 to STO-03) |
+| `/lab` | Library (internal tool): every widget in every look, components, themes (own brands, templates × colours, a readability check of random themes) and tools (widget wall, across templates, stress bench, base proof, Quality checks). Direct links: `/lab#themes/matrix`, `/lab#tools/wall` |
+| `/lab/stress` | Stress bench for one widget at many sizes: `?type=<widget>&content=sample\|empty\|short\|long&detail=…` |
 
 The **Admin | Student** switch (bottom right) flips between views; the flask icon next to it changes community, template, navigation and light/dark.
 
@@ -66,22 +68,29 @@ Data: `src/lib/data/sales-page.ts` (blocks, the purchase handed from page to pag
 
 Coach data (wording, modules, menu, home widgets, tiers) is in `src/lib/data/coaches.ts`; sample content in `src/lib/data/sample.ts`.
 
-## Home page builder
+## Page builder
 
-`/admin/[coach]/design/home` (Design → Home page). The students' Home is **one grid**: 12 columns and rows of 56px. Every widget covers a rectangle of cells (x, y, w, h) and **snaps to the grid in both directions**, so a tall card can sit beside two stacked ones. There are no preset sizes: drag a widget's right edge, bottom edge or corner. Each widget has a minimum width, and each of its looks a minimum height, so content never breaks.
+Design → Pages (`/admin/[coach]/design?step=pages`; the old `/design/home` and `/design/pages` links land there). Every student page, Home included, is a **masonry** of widgets (`Masonry` in `src/components/widgets/page-renderer.tsx`): each card is as tall as its content and goes into the shortest column, in the order the coach set. 3 columns from 960px of page width, 2 from 640px, 1 below. The page header, the page's core widget and full-width widgets span every column. So there are no holes between cards; only the column ends differ.
 
-Built on react-grid-layout v2: while dragging or resizing, the grid cells show and a highlighted placeholder marks exactly where the widget will land. Widgets are dropped straight from the library onto the grid.
+The canvas in Design uses the same masonry: dragging a widget only reorders it (the order is saved as `y` = position, `x` = 0), and its menu sets how wide it is (columns or full width), its look (Compact, Standard, Detailed) and the rest of its settings.
 
-Responsive by the width of the page area (`.g-page` / `.g-item` in `globals.css`): ≥ 60rem the grid exactly as arranged; ≥ 40rem in reading order, half or full rows, heights kept; phones one column in reading order.
-
-- `src/lib/widgets/layout.ts` – layout data, responsive rules and each template's default Home.
-- `src/components/widgets/registry.tsx` – every widget: group, module, three looks (each with a height and minimum height), settings, default and minimum width.
-- `src/components/widgets/{learning,calendar,journal,progress,community,brand,content}.tsx` – the widgets, each with its empty state. `content.tsx` is the "Your content" group: Text, Image, Button, Banner, Embed, Hero, filled by the coach.
+- `src/lib/widgets/layout.ts` – layout data and each template's default pages.
+- `src/components/widgets/registry.tsx` – every widget: group, module, layouts (each with `h`, `minH`, `maxH`, `minW`, `maxW`, used to estimate a card before it is measured and by the Library), settings.
+- `src/components/widgets/` – the widgets, each with its empty state, and the only copy of them: the Library, the admin and the student side all import from here. `content.tsx` is the "Your content" group: Text, Image, Button, Banner, Embed, Hero, filled by the coach.
 - Every widget can carry the coach's own text, button and picture (`note` on the instance, shown under the header) and a visibility rule (`show`: a phase such as first week, inactive or finished a course, or a group). The builder shows rules as an orange tag; `?data=empty|inactive|finished` previews a phase.
-- `src/components/admin/design/home-builder.tsx` – the grid editor, per-tier layouts, desktop/tablet/phone, sample or empty data.
-
-Note: react-grid-layout 2.2.4's `createScaledStrategy` measures drags from the page edge; the builder uses the standard strategy with `scale` instead, and corrects drop offsets for the scaled canvas.
+- `src/components/admin/design/page-builder.tsx` – the canvas, per-tier layouts, desktop/tablet/phone, sample or empty data. On screens under 900px the editor says it needs a larger screen and offers the preview.
 
 Only admins change the layout; students see it. No embeds or custom code. `?data=empty` on a student page shows what a brand-new student sees.
+
+## Checks
+
+```bash
+npm run typecheck
+npm run lint
+```
+
+There are no automated tests. The widget quality rules (contrast, how much brand colour, font sizes, overflow) are checked in the Library (`/lab` → Tools → Quality, `src/lib/widgets/checks.ts`). Code style: no semicolons, long lines (`.prettierrc.json`); don't reformat whole files.
+
+**Saving in the prototype:** localStorage holds about 5 MB per site. A change that doesn't fit shows "Couldn't save" and isn't kept; Publish keeps the draft if the published design doesn't fit, and drops the oldest versions first. Versions store each picture once (`proto:images:<coach>`).
 
 Screen IDs (STU-01, ADM-01, …) refer to the platform map.

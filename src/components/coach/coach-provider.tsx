@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useLayoutEffect, useMemo, useState, useSyncExternalStore } from "react"
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { getDemoCoach, type Coach } from "@/lib/data/coaches"
 import { useCustomCommunities } from "@/lib/data/use-communities"
@@ -112,6 +112,9 @@ function ThemedProvider({
 }
 
 function UnknownCommunity({ slug }: { slug: string }) {
+  useEffect(() => {
+    document.title = "Community not found"
+  }, [])
   return (
     <div className="grid min-h-svh place-items-center p-6 text-center">
       <div className="grid max-w-sm gap-3">

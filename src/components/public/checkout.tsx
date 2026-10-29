@@ -133,8 +133,9 @@ export function Checkout() {
                     onClick={() => setGroupId(g.id)}
                     className={cn("r-chip border px-3 py-1.5 text-sm", groupId === g.id ? "border-foreground bg-foreground text-background" : "bg-card text-muted-foreground hover:text-foreground")}
                   >
-                    {g.name}
-                    {g.id && <span className="opacity-70"> · {g.start <= "2026-10-12" ? "running" : `starts ${fmtDate(g.start, false)}`}, {g.seats - g.members} left</span>}
+                    {/* Name first, details after it: told apart by weight, both in a colour that reads at 4.5:1. */}
+                    <span className="font-medium">{g.name}</span>
+                    {g.id && <span> · {g.start <= "2026-10-12" ? "running" : `starts ${fmtDate(g.start, false)}`}, {g.seats - g.members} left</span>}
                   </button>
                 ))}
               </div>
@@ -284,6 +285,8 @@ export function Checkout() {
             {busy && <Loader2 className="animate-spin" />}
             {trial > 0 ? `Start free trial` : `Pay ${money(today)}`}
           </Button>
+          {/* Say why the button is dimmed, before anything was typed too. */}
+          {!emailOk && email.length <= 3 && <span className="-mt-2 text-center text-xs text-muted-foreground">Enter your e-mail above to continue.</span>}
           {!emailOk && email.length > 3 && <span className="-mt-2 text-center text-xs text-destructive">Check the e-mail address.</span>}
           <p className="text-center text-xs text-muted-foreground">
             By joining you accept the{" "}

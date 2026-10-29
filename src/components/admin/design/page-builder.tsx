@@ -206,6 +206,46 @@ export function ArrangeCanvas({
   // The card being dragged, and where it would land (before or after a card).
   const [dragging, setDragging] = useState<string | null>(null)
   const [target, setTarget] = useState<{ id: string; after: boolean } | null>(null)
+  // Resizing from a card's corner: sideways sets the width in columns (4, 8, 12), up and down steps the Detail.
+  const [resizing, setResizing] = useState<{ id: string; w: number; detail: Detail } | null>(null)
+  const startResize = (e: React.PointerEvent, w: WidgetInstance) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const card = (e.currentTarget as HTMLElement).parentElement?.querySelector<HTMLElement>("[data-widget-id]") ?? null
+    if (!card) return
+    // The card's wrapper is draggable (for reordering): switch that off at once, or the browser starts a drag and eats the pointer.
+    const handle = e.currentTarget as HTMLElement
+    const wrapper = handle.closest<HTMLElement>("[draggable]")
+    wrapper?.setAttribute("draggable", "false")
+    handle.setPointerCapture(e.pointerId)
+    const k = card.getBoundingClientRect().width / (card.offsetWidth || 1) // the canvas scale
+    const colPx = (DEVICE_WIDTH.desktop - PAD.desktop * 2 - gap * 2) / 3
+    const startW = card.offsetWidth
+    const levels: Detail[] = ["compact", "standard", "detailed"]
+    const startLevel = Math.max(0, levels.indexOf(w.detail ?? "standard"))
+    const x0 = e.clientX
+    const y0 = e.clientY
+    let next = { id: w.id, w: w.w, detail: (w.detail ?? "standard") as Detail }
+    setResizing(next)
+    setSelected(w.id)
+    const move = (ev: PointerEvent) => {
+      const cols = Math.max(1, Math.min(3, Math.round((startW + (ev.clientX - x0) / k + gap) / (colPx + gap))))
+      const level = Math.max(0, Math.min(2, startLevel + Math.round((ev.clientY - y0) / k / 80)))
+      next = { id: w.id, w: cols * 4, detail: levels[level] }
+      setResizing(next)
+    }
+    const up = () => {
+      window.removeEventListener("pointermove", move)
+      window.removeEventListener("pointerup", up)
+      window.removeEventListener("pointercancel", up)
+      wrapper?.setAttribute("draggable", "true")
+      setResizing(null)
+      if (next.w !== w.w || next.detail !== (w.detail ?? "standard")) updateItem(w.id, { w: next.w, ...(next.detail !== (w.detail ?? "standard") ? { detail: next.detail } : {}) }, `${w.id}-resize`)
+    }
+    window.addEventListener("pointermove", move)
+    window.addEventListener("pointerup", up)
+    window.addEventListener("pointercancel", up)
+  }
   /** Saves the page in a new order: a card moved to `at`, or a widget from the library inserted there. */
   const drop = (e: React.DragEvent, at: number) => {
     e.preventDefault()
@@ -326,7 +366,7 @@ export function ArrangeCanvas({
                         onLook={(variant, minH) => updateItem(w.id, { variant, h: Math.max(w.h, minH) }, `${w.id}-variant`)}
                         onEmphasis={(emphasis) => updateItem(w.id, { emphasis }, `${w.id}-emphasis`)}
                         onDetail={(detail) => updateItem(w.id, { detail }, `${w.id}-detail`)}
-                        onWidth={(wide) => updateItem(w.id, { w: wide ? COLS : 4 }, `${w.id}-width`)}
+                        onWidth={(cols) => updateItem(w.id, { w: cols }, `${w.id}-width`)}
                         onDuplicate={() => duplicateWidget(w.id)}
                         onMove={(where) => moveTo(w.id, where)}
                         onPhone={(hideOnPhone) => updateItem(w.id, { hideOnPhone }, `${w.id}-phone`)}
@@ -337,8 +377,8 @@ export function ArrangeCanvas({
                     )}
                     wrap={(w, item) => (
                       <div
-                        draggable
-                        className={cn("relative", dragging === w.id && "opacity-40")}
+                        draggable={!resizing}
+                        className={cn("group/wrap relative", dragging === w.id && "opacity-40")}
                         onClick={(e) => {
                           e.stopPropagation()
                           setSelected(w.id)
@@ -370,6 +410,27 @@ export function ArrangeCanvas({
                           <span aria-hidden className={cn("pointer-events-none absolute inset-x-0 z-30 h-1 rounded-full bg-primary", target.after ? "-bottom-[calc(var(--gap)/2+2px)]" : "-top-[calc(var(--gap)/2+2px)]")} />
                         )}
                         {item}
+                        {/* Resize: sideways picks the width (one, two or three columns), up and down the Detail (how much it shows). */}
+                        {!getWidget(w.type)?.core && w.type !== "page-header" && (
+                          <span
+                            role="presentation"
+                            draggable={false}
+                            title="Drag sideways for width, up or down for detail"
+                            className="no-drag absolute right-1 bottom-1 z-30 grid size-5 cursor-nwse-resize place-items-center rounded-md border bg-background text-muted-foreground opacity-0 shadow-sm transition-opacity group-hover/wrap:opacity-100 data-[on=true]:opacity-100"
+                            data-on={selected === w.id || resizing?.id === w.id}
+                            onDragStart={(e) => e.preventDefault()}
+                            onPointerDown={(e) => startResize(e, w)}
+                          >
+                            <svg viewBox="0 0 10 10" className="size-2.5" aria-hidden>
+                              <path d="M9 3 3 9M9 6.5 6.5 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                            </svg>
+                          </span>
+                        )}
+                        {resizing?.id === w.id && (
+                          <span className="pointer-events-none absolute top-2 left-1/2 z-40 -translate-x-1/2 rounded-md bg-foreground px-2 py-1 font-[family-name:var(--ff-geist)] text-xs whitespace-nowrap text-background shadow">
+                            {resizing.w >= COLS ? "Full width" : resizing.w >= 8 ? "Two columns" : "One column"} · {DETAIL.find((d) => d.value === resizing.detail)?.label ?? resizing.detail}
+                          </span>
+                        )}
                       </div>
                     )}
                   />
@@ -410,8 +471,8 @@ function WidgetMenu({
   onLook: (variant: string, minH: number) => void
   onEmphasis: (emphasis: Emphasis) => void
   onDetail: (detail: Detail) => void
-  /** One column or the page's full width. */
-  onWidth: (wide: boolean) => void
+  /** Columns: 4 (one), 8 (two) or 12 (the page's full width). */
+  onWidth: (cols: number) => void
   onDuplicate: () => void
   onMove: (where: "top" | "bottom") => void
   onPhone: (hide: boolean) => void
@@ -471,8 +532,9 @@ function WidgetMenu({
             <ContextMenuSub>
               <ContextMenuSubTrigger>Width</ContextMenuSubTrigger>
               <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
-                <ContextMenuRadioGroup value={w.w >= COLS ? "full" : "column"} onValueChange={(v) => onWidth(v === "full")}>
+                <ContextMenuRadioGroup value={w.w >= COLS ? "full" : w.w >= 8 ? "two" : "column"} onValueChange={(v) => onWidth(v === "full" ? COLS : v === "two" ? 8 : 4)}>
                   <ContextMenuRadioItem value="column">One column</ContextMenuRadioItem>
+                  <ContextMenuRadioItem value="two">Two columns</ContextMenuRadioItem>
                   <ContextMenuRadioItem value="full">Full width</ContextMenuRadioItem>
                 </ContextMenuRadioGroup>
               </ContextMenuSubContent>
@@ -533,7 +595,7 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
       >
         {def.core && <Lock className="mr-1 inline size-2.5 align-[-1px]" />}
         {def.core ? `${def.name} · main part of the page` : def.name}
-        {w.emphasis === "star" && " · Star"} · {w.w >= COLS ? "full width" : "one column"}
+        {w.emphasis === "star" && " · Star"} · {w.w >= COLS ? "full width" : w.w >= 8 ? "two columns" : "one column"}
       </span>
       {rule && (
         <span className="pointer-events-none absolute top-2 right-2 z-10 max-w-[60%] truncate rounded-[3px] bg-[#ff5500] px-1.5 py-0.5 font-mono text-[10px] leading-none font-medium tracking-[0.04em] text-black uppercase">
