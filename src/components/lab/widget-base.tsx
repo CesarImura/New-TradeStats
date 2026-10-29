@@ -1,6 +1,7 @@
 "use client"
 
-import { ChevronRight, Command, Eye, Menu, Moon, Search, SlidersHorizontal, Sun, X } from "lucide-react"
+import { ArrowLeft, ChevronRight, Command, Eye, Menu, Moon, Search, SlidersHorizontal, Sun, X } from "lucide-react"
+import Link from "next/link"
 import { Component, useEffect, useMemo, useState, useSyncExternalStore } from "react"
 import { CoachContext } from "@/components/coach/coach-provider"
 import { WidgetFrame } from "@/components/lab/reui-widgets/kit"
@@ -305,7 +306,10 @@ export function WidgetBase() {
 
       {/* Narrow screens: a top bar, the sidebar opens over the page. */}
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b px-4 lg:hidden" style={{ ...hair, background: "var(--c-bar)" }}>
-        <Wordmark />
+        <div className="flex items-center gap-3">
+          <BackHome compact />
+          <Wordmark />
+        </div>
         <button type="button" onClick={() => setMenu(!menu)} aria-label={menu ? "Close menu" : "Open menu"} aria-expanded={menu} className={cn("grid size-8 place-items-center rounded-lg border", FOCUS)} style={hair}>
           {menu ? <X className="size-4" /> : <Menu className="size-4" />}
         </button>
@@ -316,7 +320,8 @@ export function WidgetBase() {
         style={{ ...hair, background: "var(--c-side)" }}
       >
         <div className="grid gap-3 px-4 pb-6">
-          <div className="hidden h-14 items-center px-1 lg:flex">
+          <div className="hidden h-14 items-center gap-3 lg:flex">
+            <BackHome />
             <Wordmark />
           </div>
           <label className="mt-4 flex h-9 items-center gap-2 rounded-lg border px-3 focus-within:ring-2 focus-within:ring-(--brand-mark) lg:mt-0" style={{ ...hair, background: "var(--c-bar)" }}>
@@ -717,6 +722,22 @@ function Cell({ def, variant, extra, scale, mode, theme, emphasis, detail, name,
       </div>
       <CellCaption name={name} note={note} tags={tags} isNew={isNew} />
     </div>
+  )
+}
+
+/** Back to the prototype's start screen. `compact`: the arrow alone, for the phone's top bar. */
+function BackHome({ compact }: { compact?: boolean }) {
+  return (
+    <Link
+      href="/"
+      aria-label="Back to the start screen"
+      title="Back to the start screen"
+      className={cn("flex h-8 shrink-0 items-center gap-1.5 rounded-lg border text-[0.8125rem] transition-colors duration-150 hover:bg-(--c-on)", compact ? "w-8 justify-center" : "px-2.5", t2, "hover:text-(--c-t1)", FOCUS)}
+      style={hair}
+    >
+      <ArrowLeft className="size-4" />
+      {!compact && "Home"}
+    </Link>
   )
 }
 
