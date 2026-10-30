@@ -210,6 +210,7 @@ export function DesignWorkspace() {
           onDuplicate={() => arrange.duplicateWidget(sel.id)}
           onRemove={() => arrange.removeWidget(sel.id)}
           onAllWidgets={() => setScope("all")}
+          onDrag={(o) => setIncoming(o ? { type: sel.type, opts: o } : null)}
           // The widget as the page starts (the template's page, before any edit): what its settings are compared with and Reset goes back to.
           start={pageLayout({ ...coach, pages: undefined }, page, theme.template, undefined, heightOf).items.find((x) => x.id === sel.id)}
         />

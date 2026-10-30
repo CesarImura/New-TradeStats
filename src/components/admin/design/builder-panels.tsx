@@ -867,6 +867,7 @@ export function WidgetSettings({
   onAllWidgets,
   start,
   head,
+  onDrag,
 }: {
   w: WidgetInstance
   /** The page's core widget: it can't be removed, duplicated or hidden. */
@@ -883,6 +884,8 @@ export function WidgetSettings({
   head?: React.ReactNode
   /** This widget as the page starts (the template's page), if it was there; else the widget's own defaults. */
   start?: WidgetInstance
+  /** A layout dragged onto the page adds another widget of this type in that layout (starts with what it adds, ends with null). */
+  onDrag?: (opts: AddOptions | null) => void
 }) {
   const def = getWidget(w.type)!
   const props = w.props ?? {}
@@ -967,6 +970,20 @@ export function WidgetSettings({
                 // A div, not a button: the thumbnail contains the widget's own buttons.
                 <ThumbCard
                   key={v.value}
+                  // Not the page's core widget, which is on the page once: drag a layout to add another one beside this one.
+                  {...(onDrag && !pinned
+                    ? {
+                        draggable: true,
+                        dragHint: true,
+                        onDragStart: (e: React.DragEvent) => {
+                          e.dataTransfer.setData("text/plain", def.type)
+                          e.dataTransfer.effectAllowed = "copy"
+                          dragGhost(e, `${def.name} · ${v.label}`)
+                          onDrag({ variant: v.value, w: fitWidth(def, v.value, w.w), detail, props: {} })
+                        },
+                        onDragEnd: () => onDrag(null),
+                      }
+                    : {})}
                   role="radio"
                   tabIndex={0}
                   aria-checked={look.value === v.value}

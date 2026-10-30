@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { verticalCompactor } from "react-grid-layout/core"
-import { ArrowDownToLine, ArrowUpToLine, Copy, EyeOff, Info, LayoutGrid, Lock, Pencil, Trash2 } from "@/components/icons"
+import { ArrowDownToLine, ArrowUpToLine, Copy, EyeOff, Info, LayoutGrid, Lock, Pencil, Trash2, Wand2 } from "@/components/icons"
 import { toast as notify, type ExternalToast } from "sonner"
 import { CoachContext, useCoach } from "@/components/coach/coach-provider"
 import { studentNav } from "@/components/coach/nav"
@@ -24,7 +24,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import { PageRenderer, WidgetGrid, isAvailable, placeItems, widthOf, type Placement } from "@/components/widgets/page-renderer"
+import { PageRenderer, WidgetGrid, isAvailable, placeItems, spanOf, widthOf, type Placement } from "@/components/widgets/page-renderer"
 import { WidgetFrame } from "@/components/widgets/kit"
 import { WidgetStyleScope } from "@/components/widgets/widget-scope"
 import { fitWidth, getWidget, heightFor, heightOf, lookOf, widthsFor } from "@/components/widgets/registry"
@@ -259,6 +259,42 @@ export function ArrangeCanvas({
     save({ items: order.map((w, i) => ({ ...w, x: at.spots.get(w.id)!.col * 4, y: i })), free: true }, key)
   }
   /**
+   * Arrange automatically: packs the page so it has as few holes as it can. The page title stays first. Then, one card at
+   * a time, the card (and its columns) that leaves the least room unused above it goes next, starting as high as it can;
+   * on a tie the card that came first in reading order. So a full-width card waits until the columns are about level,
+   * and short cards fill the gaps beside the tall ones.
+   */
+  const tidy = () => {
+    const p = placed.current
+    const heightOf = (w: WidgetInstance) => p?.heights[w.id] ?? 200
+    const tops = [0, 0, 0]
+    const out: WidgetInstance[] = []
+    const put = (w: WidgetInstance, col: number) => {
+      const span = spanOf(w, 3)
+      const top = Math.max(...tops.slice(col, col + span))
+      for (let c = col; c < col + span; c++) tops[c] = top + heightOf(w) + gap
+      out.push({ ...w, x: col * 4 })
+    }
+    const order = readingOrder(layout.items)
+    const left = order.filter((w) => w.type !== "page-header")
+    order.filter((w) => w.type === "page-header").forEach((w) => put(w, 0))
+    while (left.length) {
+      let best: { i: number; col: number; waste: number; top: number } | null = null
+      left.forEach((w, i) => {
+        const span = spanOf(w, 3)
+        for (let c = 0; c + span <= 3; c++) {
+          const top = Math.max(...tops.slice(c, c + span))
+          const waste = tops.slice(c, c + span).reduce((n, t) => n + top - t, 0)
+          if (!best || waste < best.waste - 1 || (Math.abs(waste - best.waste) <= 1 && top < best.top - 1)) best = { i, col: c, waste, top }
+        }
+      })
+      const { i, col } = best!
+      put(left.splice(i, 1)[0], col)
+    }
+    saveArranged(out, `tidy-${uid()}`)
+    toast("Page arranged", { description: "Undo puts it back the way it was." })
+  }
+  /**
    * Where a card `span` columns wide lands with its top left corner at (left, top) on the grid: the column nearest
    * to it, and its place in the order: before the first card in those columns whose middle is below the pointer.
    */
@@ -467,6 +503,21 @@ export function ArrangeCanvas({
           <div className="mx-auto mb-3 flex max-w-xl items-center gap-2 rounded-[6px] border bg-card px-3 py-2 text-xs text-muted-foreground">
             <Info className="size-4 shrink-0" />
             This is how the page reflows on {device === "tablet" ? "tablets" : "phones"}. Arrange widgets on desktop; the order here follows it, top to bottom and left to right.
+          </div>
+        )}
+        {device === "desktop" && layout.items.length > 1 && (
+          <div className="mx-auto mb-2 flex justify-end" style={{ width: logicalWidth * scale }}>
+            <Button
+              size="sm"
+              variant="outline"
+              title="Moves the widgets so the page has no gaps. Undo puts them back."
+              onClick={(e) => {
+                e.stopPropagation()
+                tidy()
+              }}
+            >
+              <Wand2 /> Arrange automatically
+            </Button>
           </div>
         )}
         <div className="mx-auto" style={{ width: logicalWidth * scale, height: canvasHeight * scale }}>
