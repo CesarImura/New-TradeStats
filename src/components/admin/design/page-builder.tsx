@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { verticalCompactor } from "react-grid-layout/core"
 import { ArrowDownToLine, ArrowUpToLine, Copy, EyeOff, Info, LayoutGrid, Lock, Pencil, Trash2 } from "@/components/icons"
 import { toast as notify, type ExternalToast } from "sonner"
@@ -24,7 +24,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import { Masonry, PageRenderer, isAvailable } from "@/components/widgets/page-renderer"
+import { PageRenderer, WidgetGrid, isAvailable, placeItems, type Placement } from "@/components/widgets/page-renderer"
 import { WidgetFrame } from "@/components/widgets/kit"
 import { WidgetStyleScope } from "@/components/widgets/widget-scope"
 import { fitWidth, getWidget, heightFor, heightOf, lookOf, pageWidth, widthsFor } from "@/components/widgets/registry"
@@ -52,6 +52,13 @@ const DEVICE_WIDTH: Record<Device, number> = { desktop: 1180, tablet: 820, phone
 const PAD = { desktop: 32, tablet: 24, phone: 16 }
 
 export type Device = "desktop" | "tablet" | "phone"
+
+/** The grid as laid out: each card's spot and height, and the column width. */
+type GridPlaced = Placement & { cols: number; colWidth: number; heights: Record<string, number> }
+/** Where a moving or arriving card would land: its first column, its width in columns, its place in the order. */
+type Slot = { col: number; span: number; index: number }
+/** The id of the spot drawn where a card would land. */
+const SLOT = "__slot"
 
 /**
  * ADM-37 / ADM-39: the layout of one student page, per tier, and every edit
@@ -99,7 +106,9 @@ export function useArrange({
     const demoted = next.items.filter((w, i) => w.emphasis === "star" && items[i].emphasis !== "star")
     // Keep "title removed on purpose", and set it when this save drops the Page title.
     const titleRemoved = page !== "home" && !items.some((w) => w.type === "page-header") ? true : undefined
-    savePages({ ...layouts, [tier]: { ...next, items, titleRemoved } }, `${tier}-${key}`)
+    // An edit that doesn't touch the arrangement keeps it free (each widget in the column it was put in).
+    const free = next.free ?? layout.free
+    savePages({ ...layouts, [tier]: { ...next, items, titleRemoved, free } }, `${tier}-${key}`)
     if (demoted.length) {
       const names = demoted.map((w) => getWidget(w.type)?.name ?? "A widget").join(", ")
       toast(`${names} gave up ${demoted.length > 1 ? "their" : "its"} star.`, { description: "Only one Star per page; it is Accent now." })
@@ -219,82 +228,193 @@ export function ArrangeCanvas({
   allWidgets?: boolean
 }) {
   const ctx = useCoach()
-  const { page, layout, selected, setSelected, save, updateItem, removeWidget, duplicateWidget, moveTo, expanded, setExpanded } = arrange
+  const { page, layout, selected, setSelected, save, updateItem, removeWidget, duplicateWidget, moveTo } = arrange
   const gap = GAP[theme.density]
-  // The card being dragged, and where it would land (before or after a card).
-  const [dragging, setDragging] = useState<string | null>(null)
-  const [target, setTarget] = useState<{ id: string; after: boolean } | null>(null)
-  // Resizing from a card's corner: sideways sets the width, one column at a time, within what the widget's layout allows.
-  const [resizing, setResizing] = useState<{ id: string; w: number } | null>(null)
-  const startResize = (e: React.PointerEvent, w: WidgetInstance) => {
+  // The grid as last laid out (where each card is, its height, the column width), for dragging and resizing.
+  const placed = useRef<GridPlaced | null>(null)
+  const onPlaced = useCallback((p: GridPlaced) => {
+    placed.current = p
+  }, [])
+  const grid = useRef<HTMLDivElement>(null)
+  // A card being moved (it follows the pointer; its spot shows where it lands), a widget coming in from the library
+  // (its spot shows where it lands), or a card being resized sideways (the page reflows round its new width).
+  // Each keeps the page as it was when it started (`base`, every widget with its column), so the page drawn meanwhile never reads the grid back.
+  const [moving, setMoving] = useState<{ id: string; x: number; y: number; dx: number; dy: number; width: number; h: number; slot: Slot; base: WidgetInstance[] } | null>(null)
+  const [arriving, setArriving] = useState<(Slot & { base: WidgetInstance[] }) | null>(null)
+  const [resizing, setResizing] = useState<{ id: string; w: number; col: number; base: WidgetInstance[] } | null>(null)
+
+  /** The page in reading order with every widget's column (pages arranged before the free grid get the columns they show). */
+  const frozen = () => {
+    const order = readingOrder(layout.items)
+    const p = placed.current
+    if (layout.free || !p) return order
+    return order.map((w) => ({ ...w, x: (p.spots.get(w.id)?.col ?? 0) * 4 }))
+  }
+  /** Saves an arrangement: positions in the order they read on the page (top to bottom, then left to right). */
+  const saveArranged = (items: WidgetInstance[], key: string) => {
+    const p = placed.current
+    const gapPx = GAP[theme.density]
+    const at = placeItems(items, 3, p?.heights ?? {}, gapPx, true)
+    const order = [...items].sort((a, b) => at.spots.get(a.id)!.top - at.spots.get(b.id)!.top || at.spots.get(a.id)!.col - at.spots.get(b.id)!.col)
+    save({ items: order.map((w, i) => ({ ...w, x: at.spots.get(w.id)!.col * 4, y: i })), free: true }, key)
+  }
+  /**
+   * Where a card `span` columns wide lands with its top left corner at (left, top) on the grid: the column nearest
+   * to it, and its place in the order: before the first card in those columns whose middle is below the pointer.
+   */
+  const slotAt = (items: WidgetInstance[], span: number, left: number, pointerY: number): Slot => {
+    const p = placed.current
+    const colW = p?.colWidth ?? 300
+    const col = Math.max(0, Math.min(3 - span, Math.round(left / (colW + gap))))
+    const at = placeItems(items, 3, p?.heights ?? {}, gap, true)
+    const index = items.findIndex((w) => {
+      const s = at.spots.get(w.id)!
+      const h = p?.heights[w.id] ?? 0
+      return s.col < col + span && col < s.col + s.span && s.top + h / 2 > pointerY
+    })
+    return { col, span, index: index < 0 ? items.length : index }
+  }
+  /** Grid coordinates (the canvas is scaled) of a pointer. */
+  const local = (clientX: number, clientY: number) => {
+    const r = grid.current!.getBoundingClientRect()
+    const k = r.width / (grid.current!.offsetWidth || 1)
+    return { x: (clientX - r.left) / k, y: (clientY - r.top) / k, k }
+  }
+  /** The page with a spot (`__slot`) where the moving or arriving card would land. */
+  const withSlot = (items: WidgetInstance[], slot: Slot, like: Partial<WidgetInstance>): WidgetInstance[] => {
+    const next = [...items]
+    next.splice(slot.index, 0, { ...like, id: SLOT, type: like.type ?? "text", x: slot.col * 4, y: 0, w: slot.span === 3 ? COLS : slot.span * 4, h: like.h ?? 4 } as WidgetInstance)
+    return next
+  }
+
+  // Moving a card: press and drag; it follows the pointer and the page makes room where it would land.
+  const startMove = (e: React.PointerEvent, w: WidgetInstance) => {
+    if (e.button !== 0 || (e.target as Element).closest(".no-drag") || getWidget(w.type)?.core === undefined && !getWidget(w.type)) return
+    const card = e.currentTarget as HTMLElement
+    const start = { x: e.clientX, y: e.clientY }
+    let live: typeof moving = null
+    const base = frozen().filter((o) => o.id !== w.id)
+    const move = (ev: PointerEvent) => {
+      if (!live && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 5) return
+      const p = local(ev.clientX, ev.clientY)
+      if (!live) {
+        const r = card.getBoundingClientRect()
+        live = { id: w.id, x: 0, y: 0, dx: (start.x - r.left) / p.k, dy: (start.y - r.top) / p.k, width: card.offsetWidth, h: placed.current?.heights[w.id] ?? 160, slot: { col: 0, span: 1, index: 0 }, base }
+        setSelected(w.id)
+        document.body.style.cursor = "grabbing"
+      }
+      const span = placed.current?.spots.get(w.id)?.span ?? 1
+      live = { ...live, x: p.x - live.dx, y: p.y - live.dy, slot: slotAt(base, span, p.x - live.dx, p.y) }
+      setMoving(live)
+    }
+    const up = () => {
+      window.removeEventListener("pointermove", move)
+      window.removeEventListener("pointerup", up)
+      window.removeEventListener("pointercancel", up)
+      document.body.style.cursor = ""
+      setMoving(null)
+      if (!live) return
+      const next = [...base]
+      next.splice(live.slot.index, 0, { ...w, x: live.slot.col * 4 })
+      saveArranged(next, `move-${w.id}-${uid()}`)
+    }
+    window.addEventListener("pointermove", move)
+    window.addEventListener("pointerup", up)
+    window.addEventListener("pointercancel", up)
+  }
+
+  // Resizing from a card's side: sideways sets the width (one, two or three columns, as its layout allows); the page reflows as it goes.
+  const startResize = (e: React.PointerEvent, w: WidgetInstance, side: "left" | "right") => {
     e.preventDefault()
     e.stopPropagation()
-    const card = (e.currentTarget as HTMLElement).parentElement?.querySelector<HTMLElement>("[data-widget-id]") ?? null
     const def = getWidget(w.type)
-    if (!card || !def) return
-    // The card's wrapper is draggable (for reordering): switch that off at once, or the browser starts a drag and eats the pointer.
+    const p0 = placed.current
+    const spot = p0?.spots.get(w.id)
+    if (!def || !p0 || !spot) return
     const handle = e.currentTarget as HTMLElement
-    const wrapper = handle.closest<HTMLElement>("[draggable]")
-    wrapper?.setAttribute("draggable", "false")
     handle.setPointerCapture(e.pointerId)
-    const k = card.getBoundingClientRect().width / (card.offsetWidth || 1) // the canvas scale
-    const colPx = (DEVICE_WIDTH.desktop - PAD.desktop * 2 - gap * 2) / 3
-    const startW = card.offsetWidth
+    const k = local(e.clientX, e.clientY).k
     const x0 = e.clientX
-    let next = { id: w.id, w: pageWidth(w.w) }
+    const startW = spot.span * p0.colWidth + (spot.span - 1) * gap
+    const base = frozen()
+    let next = { id: w.id, w: pageWidth(w.w), col: spot.col, base }
     setResizing(next)
     setSelected(w.id)
     const move = (ev: PointerEvent) => {
-      const cols = Math.max(1, Math.min(3, Math.round((startW + (ev.clientX - x0) / k + gap) / (colPx + gap))))
-      next = { id: w.id, w: fitWidth(def, w.variant, cols * 4) }
+      const d = ((ev.clientX - x0) / k) * (side === "left" ? -1 : 1)
+      const cols = Math.max(1, Math.min(3, Math.round((startW + d + gap) / (p0.colWidth + gap))))
+      const width = fitWidth(def, w.variant, cols * 4)
+      const span = width >= COLS ? 3 : width >= 8 ? 2 : 1
+      // From the left side the card grows to the left: its right edge stays.
+      const col = side === "left" ? Math.max(0, spot.col + spot.span - span) : Math.min(spot.col, 3 - span)
+      next = { id: w.id, w: width, col, base }
       setResizing(next)
     }
     const up = () => {
       window.removeEventListener("pointermove", move)
       window.removeEventListener("pointerup", up)
       window.removeEventListener("pointercancel", up)
-      wrapper?.setAttribute("draggable", "true")
       setResizing(null)
-      if (next.w !== pageWidth(w.w)) updateItem(w.id, { w: next.w }, `${w.id}-resize`)
+      if (next.w === pageWidth(w.w) && next.col === spot.col) return
+      saveArranged(base.map((o) => (o.id === w.id ? { ...o, w: next.w, x: next.col * 4 } : o)), `${w.id}-resize`)
     }
     window.addEventListener("pointermove", move)
     window.addEventListener("pointerup", up)
     window.addEventListener("pointercancel", up)
   }
-  /** Saves the page in a new order: a card moved to `at`, or a widget from the library inserted there. */
-  const drop = (e: React.DragEvent, at: number) => {
+
+  // A widget from the library: its spot follows the pointer over the page; dropping adds it there.
+  const incomingSpan = () => {
+    const def = incoming && getWidget(incoming.type)
+    if (!def) return 1
+    const w = incoming.opts?.w ?? fitWidth(def, def.variants[0].value, def.defaultW)
+    return w >= COLS ? 3 : w >= 8 ? 2 : 1
+  }
+  const overGrid = (e: React.DragEvent) => {
+    if (!incoming) return
     e.preventDefault()
-    e.stopPropagation()
-    const order = readingOrder(layout.items)
-    const moved = e.dataTransfer.getData("text/x-widget")
+    e.dataTransfer.dropEffect = "copy"
+    const p = local(e.clientX, e.clientY)
+    const span = incomingSpan()
+    const colW = placed.current?.colWidth ?? 300
+    const base = arriving?.base ?? frozen()
+    const slot = slotAt(base, span, p.x - (span * colW) / 2, p.y)
+    if (!arriving || slot.col !== arriving.col || slot.index !== arriving.index || slot.span !== arriving.span) setArriving({ ...slot, base })
+  }
+  const dropOnGrid = (e: React.DragEvent) => {
+    e.preventDefault()
+    const slot = arriving
+    setArriving(null)
     const type = incoming?.type
     const o = incoming?.opts
-    setDragging(null)
-    setTarget(null)
-    let next = order
-    let key = `order-${uid()}`
-    if (moved) {
-      const from = order.findIndex((o) => o.id === moved)
-      if (from < 0) return
-      next = [...order]
-      const [m] = next.splice(from, 1)
-      next.splice(at > from ? at - 1 : at, 0, m)
-    } else if (type) {
-      onDropped()
-      const def = getWidget(type)
-      if (!def) return
-      // From its details: the size, layout, detail and options chosen there; from the gallery: its defaults.
-      const w: WidgetInstance = o
-        ? { id: uid(), type, x: 0, y: 0, w: o.w, h: heightFor(def, o.variant, o.detail), variant: o.variant, detail: o.detail === "standard" ? undefined : o.detail, props: Object.keys(o.props).length ? o.props : undefined }
-        : { id: uid(), type, x: 0, y: 0, w: fitWidth(def, def.variants[0].value, def.defaultW), h: def.variants[0].h }
-      next = [...order]
-      next.splice(at, 0, w)
-      key = `drop-${w.id}`
-      setSelected(w.id)
-    } else return
-    // Order is the layout now: one row per card, top to bottom (the masonry places them).
-    save({ items: next.map((w, i) => ({ ...w, x: 0, y: i })) }, key)
+    if (!type) return
+    onDropped()
+    const def = getWidget(type)
+    if (!def) return
+    // From its details: the size, layout, detail and options chosen there; from the gallery: its defaults.
+    const w: WidgetInstance = o
+      ? { id: uid(), type, x: 0, y: 0, w: o.w, h: heightFor(def, o.variant, o.detail), variant: o.variant, detail: o.detail === "standard" ? undefined : o.detail, props: Object.keys(o.props).length ? o.props : undefined }
+      : { id: uid(), type, x: 0, y: 0, w: fitWidth(def, def.variants[0].value, def.defaultW), h: def.variants[0].h }
+    const next = frozen()
+    const at = slot ?? { col: 0, span: 1, index: next.length }
+    next.splice(at.index, 0, { ...w, x: at.col * 4 })
+    saveArranged(next, `drop-${w.id}`)
+    setSelected(w.id)
   }
+  // What the grid draws right now: the page, with the spot of a card being moved or added, or a card at its new width.
+  const shown = (() => {
+    if (moving) return withSlot(moving.base, moving.slot, { type: layout.items.find((o) => o.id === moving.id)?.type })
+    if (arriving && incoming) {
+      const def = getWidget(incoming.type)
+      const h = def ? heightFor(def, incoming.opts?.variant ?? def.variants[0].value, incoming.opts?.detail) : 4
+      return withSlot(arriving.base, arriving, { type: incoming.type, h })
+    }
+    if (resizing) return resizing.base.map((o) => (o.id === resizing.id ? { ...o, w: resizing.w, x: resizing.col * 4 } : o))
+    return readingOrder(layout.items)
+  })()
+  const free = layout.free || !!moving || !!(arriving && incoming) || !!resizing
+  // The spot is as tall as the card it stands for: the moving card's own height, or the new widget's estimate.
+  const slotHeight = (w: WidgetInstance) => (moving ? moving.h : (w.h * (ROW_HEIGHT + gap) - gap))
 
   // Delete / Backspace removes the selected widget, Escape deselects.
   useEffect(() => {
@@ -365,130 +485,125 @@ export function ArrangeCanvas({
               )}
 
               {device === "desktop" ? (
-                <div className="hb-set relative" data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ minHeight: 6 * (ROW_HEIGHT + gap), "--gap": `${gap}px` } as React.CSSProperties}>
-                  {layout.items.length === 0 && (
-                    <div
-                      className="grid min-h-48 place-items-center rounded-(--radius) border-2 border-dashed text-sm text-muted-foreground"
-                      onDragOver={(e) => incoming && e.preventDefault()}
-                      onDrop={(e) => drop(e, layout.items.length)}
-                    >
-                      <span className="pointer-events-none flex items-center gap-2">
-                        <LayoutGrid className="size-4" /> Drag widgets from Add widget onto the page
+                <div
+                  ref={grid}
+                  className="hb-set relative"
+                  data-set={widgetSetOf(theme)}
+                  data-finish={widgetFinishOf(theme)}
+                  style={{ minHeight: 6 * (ROW_HEIGHT + gap), "--gap": `${gap}px` } as React.CSSProperties}
+                  onDragOver={overGrid}
+                  onDragLeave={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node)) setArriving(null)
+                  }}
+                  onDrop={dropOnGrid}
+                >
+                  {layout.items.length === 0 && !arriving && (
+                    <div className="pointer-events-none grid min-h-48 place-items-center rounded-(--radius) border-2 border-dashed text-sm text-muted-foreground">
+                      <span className="flex items-center gap-2">
+                        <LayoutGrid className="size-4" /> Drag widgets from the gallery onto the page
                       </span>
                     </div>
                   )}
-                  {/* The page as students see it (a masonry: every card at its own height); dragging a card only changes the order. */}
-                  <Masonry
-                    items={readingOrder(layout.items)}
-                    onExpanded={setExpanded}
-                    emptySide={(band) => (
-                      // Nothing beside this two-column card: a place to drop a widget (students see the column empty).
-                      <div
-                        className="grid h-full min-h-24 place-items-center rounded-(--radius) border-2 border-dashed border-foreground/15 p-4 text-center font-[family-name:var(--ff-geist)] text-xs text-muted-foreground"
-                        onDragOver={(e) => (incoming || dragging) && e.preventDefault()}
-                        onDrop={(e) => drop(e, readingOrder(layout.items).findIndex((o) => o.id === band.id) + 1)}
-                      >
-                        <span className="pointer-events-none flex flex-col items-center gap-1.5">
-                          <LayoutGrid className="size-4" />
-                          Drop a one-column widget here
-                        </span>
-                      </div>
-                    )}
-                    render={(w) => (
-                      <WidgetMenu
-                        w={w}
-                        onOpen={() => setSelected(w.id)}
-                        onLook={(variant, minH) => updateItem(w.id, { variant, h: Math.max(w.h, minH) }, `${w.id}-variant`)}
-                        onEmphasis={(emphasis) => updateItem(w.id, { emphasis }, `${w.id}-emphasis`)}
-                        onDetail={(detail) => updateItem(w.id, { detail }, `${w.id}-detail`)}
-                        onWidth={(cols) => updateItem(w.id, { w: cols }, `${w.id}-width`)}
-                        onDuplicate={() => duplicateWidget(w.id)}
-                        onMove={(where) => moveTo(w.id, where)}
-                        onPhone={(hideOnPhone) => updateItem(w.id, { hideOnPhone }, `${w.id}-phone`)}
-                        onRemove={() => removeWidget(w.id)}
-                      >
-                        <GridWidget w={w} selected={selected === w.id} expanded={expanded.includes(w.id)} available={isAvailable(w, coach)} onRemove={() => removeWidget(w.id)} onDuplicate={() => duplicateWidget(w.id)} />
-                      </WidgetMenu>
-                    )}
-                    wrap={(w, item) => (
-                      <div
-                        draggable={!resizing}
-                        className={cn("group/wrap relative", dragging === w.id && "opacity-40")}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelected(w.id)
-                        }}
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData("text/x-widget", w.id)
-                          e.dataTransfer.effectAllowed = "move"
-                          setDragging(w.id)
-                          setSelected(w.id)
-                        }}
-                        onDragEnd={() => {
-                          setDragging(null)
-                          setTarget(null)
-                        }}
-                        onDragOver={(e) => {
-                          if (!dragging && !incoming) return
-                          e.preventDefault()
-                          const r = e.currentTarget.getBoundingClientRect()
-                          const after = e.clientY > r.top + r.height / 2
-                          setTarget({ id: w.id, after })
-                        }}
-                        onDrop={(e) => {
-                          const order = readingOrder(layout.items)
-                          const at = order.findIndex((o) => o.id === w.id) + (target?.id === w.id && target.after ? 1 : 0)
-                          drop(e, at)
-                        }}
-                      >
-                        {target?.id === w.id && (
-                          <span aria-hidden className={cn("pointer-events-none absolute inset-x-0 z-30 h-1 rounded-full bg-primary", target.after ? "-bottom-[calc(var(--gap)/2+2px)]" : "-top-[calc(var(--gap)/2+2px)]")} />
-                        )}
-                        {item}
-                        {allWidgets && (
-                          <span aria-hidden className="pointer-events-none absolute -inset-[4px] z-20 rounded-[calc(var(--radius)+4px)] border-[1.5px] border-dashed border-[#ff5500]/75" />
-                        )}
-                        {/* The selected widget's bar, under it: how to move it, and its width in one click. */}
-                        {selected === w.id && !dragging && !resizing && (
-                          <div
-                            draggable={false}
-                            onDragStart={(e) => e.preventDefault()}
-                            onClick={(e) => e.stopPropagation()}
-                            className="no-drag absolute top-full left-0 z-40 mt-2 flex items-center gap-3 rounded-lg border border-white/10 bg-[#18181b] py-1 pr-1 pl-3 font-[family-name:var(--ff-geist)] text-xs whitespace-nowrap text-white shadow-[0_8px_24px_-8px_rgb(0_0_0/0.6)]"
-                          >
-                            <span>Drag to set position.</span>
-                            {!getWidget(w.type)?.core && w.type !== "page-header" && widthsFor(getWidget(w.type)!, w.variant).length > 1 && (
-                              <span className="flex items-center gap-1.5 border-l border-white/15 pl-3 text-white/70">
-                                Size
-                                <SizeIcons value={pageWidth(w.w)} allowed={widthsFor(getWidget(w.type)!, w.variant)} onChange={(cols) => updateItem(w.id, { w: cols }, `${w.id}-width`)} />
+                  {/* The page as students see it: each card in the column it was put in, as high as the cards above it allow. */}
+                  <WidgetGrid
+                    items={shown}
+                    free={free}
+                    onPlaced={onPlaced}
+                    render={(w) =>
+                      w.id === SLOT ? (
+                        // Where the card lands: the page has already made room for it.
+                        <div
+                          className="rounded-(--radius) border-2 border-dashed border-[#ff5500]/70 bg-[#ff5500]/[0.06]"
+                          style={{ height: slotHeight(w), transition: "height 200ms" }}
+                        />
+                      ) : (
+                        <WidgetMenu
+                          w={w}
+                          onOpen={() => setSelected(w.id)}
+                          onLook={(variant, minH) => updateItem(w.id, { variant, h: Math.max(w.h, minH) }, `${w.id}-variant`)}
+                          onEmphasis={(emphasis) => updateItem(w.id, { emphasis }, `${w.id}-emphasis`)}
+                          onDetail={(detail) => updateItem(w.id, { detail }, `${w.id}-detail`)}
+                          onWidth={(cols) => updateItem(w.id, { w: cols }, `${w.id}-width`)}
+                          onDuplicate={() => duplicateWidget(w.id)}
+                          onMove={(where) => moveTo(w.id, where)}
+                          onPhone={(hideOnPhone) => updateItem(w.id, { hideOnPhone }, `${w.id}-phone`)}
+                          onRemove={() => removeWidget(w.id)}
+                        >
+                          <GridWidget w={w} selected={selected === w.id} available={isAvailable(w, coach)} onRemove={() => removeWidget(w.id)} onDuplicate={() => duplicateWidget(w.id)} />
+                        </WidgetMenu>
+                      )
+                    }
+                    wrap={(w, item) =>
+                      w.id === SLOT ? (
+                        item
+                      ) : (
+                        <div
+                          className="group/wrap relative touch-none"
+                          onPointerDown={(e) => startMove(e, w)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelected(w.id)
+                          }}
+                        >
+                          {item}
+                          {allWidgets && (
+                            <span aria-hidden className="pointer-events-none absolute -inset-[4px] z-20 rounded-[calc(var(--radius)+4px)] border-[1.5px] border-dashed border-[#ff5500]/75" />
+                          )}
+                          {/* The selected widget's bar, under it: how to move it, and its width in one click. */}
+                          {selected === w.id && !moving && !resizing && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="no-drag absolute top-full left-0 z-40 mt-2 flex items-center gap-3 rounded-lg border border-white/10 bg-[#18181b] py-1 pr-1 pl-3 font-[family-name:var(--ff-geist)] text-xs whitespace-nowrap text-white shadow-[0_8px_24px_-8px_rgb(0_0_0/0.6)]"
+                            >
+                              <span>Drag to move. Pull a side to resize.</span>
+                              {!getWidget(w.type)?.core && w.type !== "page-header" && widthsFor(getWidget(w.type)!, w.variant).length > 1 && (
+                                <span className="flex items-center gap-1.5 border-l border-white/15 pl-3 text-white/70">
+                                  Size
+                                  <SizeIcons value={pageWidth(w.w)} allowed={widthsFor(getWidget(w.type)!, w.variant)} onChange={(cols) => updateItem(w.id, { w: cols }, `${w.id}-width`)} />
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {/* Resize: pull either side to set the width (one, two or three columns). Only for widgets with more than one width. */}
+                          {!getWidget(w.type)?.core &&
+                            w.type !== "page-header" &&
+                            widthsFor(getWidget(w.type)!, w.variant).length > 1 &&
+                            (["left", "right"] as const).map((side) => (
+                              <span
+                                key={side}
+                                role="presentation"
+                                title="Drag sideways to change the width"
+                                className={cn(
+                                  "no-drag absolute top-1/2 z-30 flex h-16 max-h-[60%] w-3 -translate-y-1/2 cursor-ew-resize items-center justify-center opacity-0 transition-opacity group-hover/wrap:opacity-100 data-[on=true]:opacity-100",
+                                  side === "left" ? "-left-1.5" : "-right-1.5",
+                                )}
+                                data-on={selected === w.id || resizing?.id === w.id}
+                                onPointerDown={(e) => startResize(e, w, side)}
+                              >
+                                <span className="h-full w-1.5 rounded-full border border-black/20 bg-white shadow-sm" />
                               </span>
-                            )}
+                            ))}
+                          {resizing?.id === w.id && (
+                            <span className="pointer-events-none absolute top-2 left-1/2 z-40 -translate-x-1/2 rounded-md bg-foreground px-2 py-1 font-[family-name:var(--ff-geist)] text-xs whitespace-nowrap text-background shadow">
+                              {WIDTH.find((o) => o.value === resizing.w)?.label}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    }
+                  >
+                    {/* The card being moved, under the pointer, a little lifted. */}
+                    {moving &&
+                      (() => {
+                        const w = layout.items.find((o) => o.id === moving.id)
+                        if (!w) return null
+                        return (
+                          <div className="pointer-events-none absolute z-50 rotate-[0.6deg] opacity-95 drop-shadow-[0_18px_30px_rgb(0_0_0/0.35)]" style={{ left: moving.x, top: moving.y, width: moving.width }}>
+                            <GridWidget w={w} selected available={isAvailable(w, coach)} onRemove={() => {}} onDuplicate={() => {}} />
                           </div>
-                        )}
-                        {/* Resize: sideways picks the width (one, two or three columns). Only for widgets with more than one width. */}
-                        {!getWidget(w.type)?.core && w.type !== "page-header" && widthsFor(getWidget(w.type)!, w.variant).length > 1 && (
-                          <span
-                            role="presentation"
-                            draggable={false}
-                            title="Drag sideways to change the width"
-                            className="no-drag absolute right-1 bottom-1 z-30 grid size-5 cursor-ew-resize place-items-center rounded-md border bg-background text-muted-foreground opacity-0 shadow-sm transition-opacity group-hover/wrap:opacity-100 data-[on=true]:opacity-100"
-                            data-on={selected === w.id || resizing?.id === w.id}
-                            onDragStart={(e) => e.preventDefault()}
-                            onPointerDown={(e) => startResize(e, w)}
-                          >
-                            <svg viewBox="0 0 10 10" className="size-2.5" aria-hidden>
-                              <path d="M9 3 3 9M9 6.5 6.5 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                            </svg>
-                          </span>
-                        )}
-                        {resizing?.id === w.id && (
-                          <span className="pointer-events-none absolute top-2 left-1/2 z-40 -translate-x-1/2 rounded-md bg-foreground px-2 py-1 font-[family-name:var(--ff-geist)] text-xs whitespace-nowrap text-background shadow">
-                            {WIDTH.find((o) => o.value === resizing.w)?.label}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  />
+                        )
+                      })()}
+                  </WidgetGrid>
                 </div>
               ) : (
                 <div className="pointer-events-none">
@@ -631,7 +746,7 @@ function WidgetMenu({
   )
 }
 
-function GridWidget({ w, selected, expanded, available, onRemove, onDuplicate }: { w: WidgetInstance; selected: boolean; expanded: boolean; available: boolean; onRemove: () => void; onDuplicate: () => void }) {
+function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: WidgetInstance; selected: boolean; available: boolean; onRemove: () => void; onDuplicate: () => void }) {
   const def = getWidget(w.type)
   const { coach } = useCoach()
   const groups = useGroups(coach)
@@ -659,7 +774,7 @@ function GridWidget({ w, selected, expanded, available, onRemove, onDuplicate }:
           {def.core ? `${def.name} · main part of the page` : def.name}
           {w.header && Object.keys(w.header).length > 0 && " · own header"}
           {w.style && Object.values(w.style).some((v) => v !== undefined) && " · own style"}
-          {w.emphasis === "star" && " · Star"} · {expanded ? "full width: nothing fits beside it" : WIDTH.find((o) => o.value === pageWidth(w.w))?.label.toLowerCase()}
+          {w.emphasis === "star" && " · Star"} · {WIDTH.find((o) => o.value === pageWidth(w.w))?.label.toLowerCase()}
         </span>
         <span className="ml-auto" />
         {rule && <span className="max-w-[45%] shrink-0 truncate rounded-[3px] bg-[#ff5500] px-1.5 py-0.5 font-mono text-[10px] leading-none font-medium tracking-[0.04em] text-black uppercase">{rule}</span>}

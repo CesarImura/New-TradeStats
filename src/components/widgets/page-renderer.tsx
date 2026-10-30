@@ -5,7 +5,7 @@ import type { Coach } from "@/lib/data/coaches"
 import { GAP, ROW_HEIGHT, readingOrder, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { widgetFinishOf, widgetSetOf } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
-import { Fragment, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { WidgetFrame } from "./kit"
 import { getWidget, heightFor } from "./registry"
 import { WidgetStyleScope } from "./widget-scope"
@@ -31,35 +31,82 @@ export function PageRenderer({ layout, page = "home", live }: { layout: PageLayo
   return (
     <PageIdContext.Provider value={page}>
     <PageTitleShownContext.Provider value={!items.some((w) => w.type === "page-header")}>
-      <Masonry items={items} render={(w) => <WidgetView w={w} live={live} />} />
+      <WidgetGrid items={items} free={layout.free} render={(w) => <WidgetView w={w} live={live} />} />
     </PageTitleShownContext.Provider>
     </PageIdContext.Provider>
   )
 }
 
+/** Where a card sits: its first column, how many columns it spans, and its top (px). */
+export type Spot = { col: number; span: number; top: number }
+export type Placement = { spots: Map<string, Spot>; height: number }
+
+/** Columns a card spans on a page of `cols`: the page title, a page's own tool and full-width cards span them all. */
+export const spanOf = (w: WidgetInstance, cols: number) => Math.min(cols, isBand(w, 3) ? 3 : w.w >= 8 ? 2 : 1)
+
+/** The height a card is drawn at before it is measured: an estimate from its layout. */
+const estimate = (w: WidgetInstance, gap: number) => {
+  const def = getWidget(w.type)
+  return def ? heightFor(def, w.variant, w.detail) * (ROW_HEIGHT + gap) - gap : 200
+}
+
 /**
- * A page's cards as a masonry (see `masonry`): `.g-page` with the theme's
- * widget set and gap, the columns inside it, each card in a `.g-item` at
- * exactly its own height (measured on screen, so the shortest column is
- * known). `render` draws a card; `wrap` may wrap its `.g-item` (the builder
- * adds dragging there).
+ * Places a page's cards on its columns, in order: each card goes to its own column (`free`, desktop: the coach put it
+ * there) or to the column where it starts highest (tablets, phones and pages arranged before the free grid), and as
+ * high as the cards above it in those columns allow. So cards fall up into any room left above them, and a card that
+ * doesn't fit beside the others goes under them: the page reflows round every move and resize, like a board.
  */
-export function Masonry({
+export function placeItems(items: WidgetInstance[], cols: number, heights: Record<string, number>, gap: number, free: boolean): Placement {
+  const tops = Array.from({ length: cols }, () => 0)
+  const spots = new Map<string, Spot>()
+  for (const w of items) {
+    const span = spanOf(w, cols)
+    let col = 0
+    if (free && cols === 3) col = Math.max(0, Math.min(cols - span, Math.round(w.x / 4)))
+    else {
+      let best = Infinity
+      for (let c = 0; c + span <= cols; c++) {
+        const top = Math.max(...tops.slice(c, c + span))
+        if (top < best - 0.5) {
+          best = top
+          col = c
+        }
+      }
+    }
+    const top = Math.max(...tops.slice(col, col + span))
+    spots.set(w.id, { col, span, top })
+    const bottom = top + (heights[w.id] ?? estimate(w, gap)) + gap
+    for (let c = col; c < col + span; c++) tops[c] = bottom
+  }
+  return { spots, height: Math.max(0, ...tops.map((t) => t - gap)) }
+}
+
+/** Columns for a page this wide: three on desktop, two on a tablet, one on a phone. */
+export const colsFor = (width: number) => (width >= 960 ? 3 : width >= 640 ? 2 : 1)
+
+/**
+ * A page's cards on a grid of columns (see placeItems): `.g-page` with the theme's widget set and gap, each card in a
+ * `.g-item` at its spot and at exactly its own height (measured, so the cards under it know where to start). Cards
+ * glide to a new spot when the page reflows. `render` draws a card; `wrap` may wrap its `.g-item` (the builder adds
+ * dragging there); `onPlaced` reports where every card went and its height, for the builder's drag and drop.
+ */
+export function WidgetGrid({
   items,
+  free,
   render,
   wrap,
   className,
-  onExpanded,
-  emptySide,
+  onPlaced,
+  children,
 }: {
   items: WidgetInstance[]
+  free?: boolean
   render: (w: WidgetInstance) => React.ReactNode
   wrap?: (w: WidgetInstance, item: React.ReactNode) => React.ReactNode
   className?: string
-  /** What fills the column beside a two-column card with nothing next to it (the builder: a place to drop a widget). */
-  emptySide?: (band: WidgetInstance) => React.ReactNode
-  /** The two-column cards drawn at the whole width just now (nothing fits beside them), for the builder to say so. */
-  onExpanded?: (ids: string[]) => void
+  onPlaced?: (p: Placement & { cols: number; colWidth: number; heights: Record<string, number> }) => void
+  /** Drawn over the grid, in its coordinates (the builder's drop marker). */
+  children?: React.ReactNode
 }) {
   const { theme } = useCoach()
   const box = useRef<HTMLDivElement>(null)
@@ -71,204 +118,73 @@ export function Masonry({
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
-  // Each card's own height, measured on screen; until then an estimate from its layout.
   const [heights, setHeights] = useState<Record<string, number>>({})
   const onHeight = useCallback((id: string, h: number) => setHeights((m) => (Math.abs((m[id] ?? -1) - h) < 1 ? m : { ...m, [id]: h })), [])
   const gap = GAP[theme.density]
-  const cols = width >= 960 ? 3 : width >= 640 ? 2 : 1
-  const segments = useMemo(() => masonry(items, cols, heights, gap), [items, cols, heights, gap])
-  const expanded = segments.flatMap((seg) => (seg.band && !seg.side && !isBand(seg.band, cols) ? [seg.band.id] : [])).join(" ")
-  useLayoutEffect(() => onExpanded?.(expanded ? expanded.split(" ") : []), [expanded, onExpanded])
-  // `as` names the height a card reports: a two-column card drawn at the whole width (nothing beside it) reports under
-  // its own key, so the masonry keeps deciding with its two-column height and never flips between the two layouts.
-  const item = (w: WidgetInstance, style?: React.CSSProperties, as = w.id) => {
-    const node = (
-      <Measured key={w.id} w={w} as={as} onHeight={onHeight} style={style}>
-        {render(w)}
-      </Measured>
-    )
-    // With a wrapper (the builder's drag handle) the wrapper is the grid's child, so it takes the band's span.
-    if (!wrap) return node
-    return style ? (
-      <div key={w.id} className="min-w-0" style={style}>
-        {wrap(w, node)}
-      </div>
-    ) : (
-      <Fragment key={w.id}>{wrap(w, node)}</Fragment>
-    )
-  }
+  const cols = colsFor(width)
+  // Hidden on phones: left out of the phone's columns, so it leaves no hole.
+  const shown = useMemo(() => (cols === 1 ? items.filter((w) => !w.hideOnPhone) : items), [items, cols])
+  const placed = useMemo(() => placeItems(shown, cols, heights, gap, !!free), [shown, cols, heights, gap, free])
+  const colWidth = cols ? (width - gap * (cols - 1)) / cols : 0
+  useLayoutEffect(() => onPlaced?.({ ...placed, cols, colWidth, heights }), [placed, cols, colWidth, heights, onPlaced])
+  // Cards glide to a new spot only once the page has been laid out, never on its first paint.
+  const [settled, setSettled] = useState(false)
+  useEffect(() => {
+    if (!width) return
+    const id = requestAnimationFrame(() => setSettled(true))
+    return () => cancelAnimationFrame(id)
+  }, [width])
   return (
     <div ref={box} className={cn("@container", className)}>
-      <div className="g-page" data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ "--gap": `${gap}px`, display: "grid", gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: "var(--gap)", alignItems: "start" } as React.CSSProperties}>
-        {segments.map((seg, si) =>
-          seg.pair ? (
-            // Two columns already under way, then the two-column card under them; the tallest column goes on beside both.
-            (() => {
-              const pair = (
-                <div key={`${si}-pair`} className="grid min-w-0 grid-cols-2 items-start" style={{ gridColumn: "span 2", gap: "var(--gap)" }}>
-                  {seg.pair.map((col, ci) => (
-                    <div key={ci} className="flex min-w-0 flex-col" style={{ gap: "var(--gap)" }}>
-                      {col.map((w) => item(w))}
-                    </div>
-                  ))}
-                  {item(seg.band, { gridColumn: "1 / -1" })}
-                </div>
-              )
-              const side = (
-                <div key={`${si}-side`} className="flex min-w-0 flex-col" style={{ gap: "var(--gap)" }}>
-                  {seg.side.map((w) => item(w))}
-                </div>
-              )
-              return seg.sideFirst ? [side, pair] : [pair, side]
-            })()
-          ) : seg.under ? (
-            // A two-column card, the cards after it under it and beside it (the masonry carries on round it).
-            [
-              <div key={`${si}-lead`} className="grid min-w-0 grid-cols-2 items-start" style={{ gridColumn: "span 2", gap: "var(--gap)" }}>
-                {item(seg.band, { gridColumn: "1 / -1" })}
-                {seg.under.some((col) => col.length) &&
-                  seg.under.map((col, ci) => (
-                    <div key={ci} className="flex min-w-0 flex-col" style={{ gap: "var(--gap)" }}>
-                      {col.map((w) => item(w))}
-                    </div>
-                  ))}
-              </div>,
-              <div key={`${si}-side`} className="flex min-w-0 flex-col" style={{ gap: "var(--gap)", alignSelf: seg.side.length ? undefined : "stretch" }}>
-                {seg.side.length ? seg.side.map((w) => item(w)) : emptySide?.(seg.band)}
-              </div>,
-            ]
-          ) : seg.band ? (
-            item(seg.band, { gridColumn: "1 / -1" }, isBand(seg.band, cols) ? seg.band.id : `${seg.band.id}@full`)
+      <div className="g-page relative" data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ "--gap": `${gap}px`, height: placed.height } as React.CSSProperties}>
+        {shown.map((w) => {
+          const s = placed.spots.get(w.id)!
+          const style: React.CSSProperties = {
+            position: "absolute",
+            left: s.col * (colWidth + gap),
+            top: s.top,
+            width: s.span * colWidth + (s.span - 1) * gap,
+            transition: settled ? "left 240ms cubic-bezier(.2,.8,.2,1), top 240ms cubic-bezier(.2,.8,.2,1), width 240ms cubic-bezier(.2,.8,.2,1)" : undefined,
+          }
+          const node = (
+            <Measured key={w.id} w={w} onHeight={onHeight} style={wrap ? undefined : style}>
+              {render(w)}
+            </Measured>
+          )
+          return wrap ? (
+            <div key={w.id} className="min-w-0" style={style}>
+              {wrap(w, node)}
+            </div>
           ) : (
-            seg.columns.map((col, ci) => (
-              <div key={`${si}-${ci}`} className="flex min-w-0 flex-col" style={{ gap: "var(--gap)" }}>
-                {col.map((w) => item(w))}
-              </div>
-            ))
-          ),
-        )}
+            node
+          )
+        })}
+        {children}
       </div>
     </div>
   )
 }
 
-/** A card's `.g-item`, as tall as its content (measured, so the masonry knows each column's height). */
-function Measured({ w, as, onHeight, style, children }: { w: WidgetInstance; as: string; onHeight: (id: string, h: number) => void; style?: React.CSSProperties; children: React.ReactNode }) {
+/** A card's `.g-item`, as tall as its content (measured, so the cards under it know where to start). */
+function Measured({ w, onHeight, style, children }: { w: WidgetInstance; onHeight: (id: string, h: number) => void; style?: React.CSSProperties; children: React.ReactNode }) {
   const def = getWidget(w.type)
   const ref = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
-    const ro = new ResizeObserver(() => onHeight(as, el.offsetHeight))
+    const ro = new ResizeObserver(() => onHeight(w.id, el.offsetHeight))
     ro.observe(el)
     return () => ro.disconnect()
-  }, [as, onHeight])
+  }, [w.id, onHeight])
   return (
-    <div
-      ref={ref}
-      data-widget-id={w.id}
-      className={cn("g-item", def?.core && "g-core", (def?.core || w.type === "page-header") && "g-plain", w.hideOnPhone && "g-hide-phone")}
-      style={style}
-    >
+    <div ref={ref} data-widget-id={w.id} className={cn("g-item", def?.core && "g-core", (def?.core || w.type === "page-header") && "g-plain")} style={style}>
       {children}
     </div>
   )
 }
 
-/**
- * A card that spans the page: the page title, a page's own tool, and a card
- * the coach made full width. A band closes the columns above it, whose ends
- * can differ. (A card two columns wide gets a band with cards beside it, see
- * masonry; anything narrower is one column wide.)
- */
+/** A card that spans the page: the page title, a page's own tool, and a card the coach made full width. */
 export const isBand = (w: WidgetInstance, cols: number) => cols > 1 && (w.type === "page-header" || !!getWidget(w.type)?.core || w.w >= 12)
-
-/**
- * Masonry: in the coach's order, each card goes to the shortest column, at
- * exactly its own height, so no card has empty space inside and no column has
- * a hole; only the columns' ends can differ. A full-width card (see isBand)
- * closes the columns above it; the columns start again under it. A card two
- * columns wide closes them too, and the next cards go beside it and under it,
- * each to the shortest column, unless the columns above end far apart: then it
- * goes under the two shorter ones and the tallest carries on beside it. It is
- * never drawn wider: with nothing to go beside it, that column stays empty. One
- * column on a phone, two on a tablet, three on desktop.
- */
-function masonry(items: WidgetInstance[], cols: number, heights: Record<string, number>, gap: number) {
-  type Seg =
-    | { band: WidgetInstance; columns?: undefined; pair?: undefined; under?: undefined; side?: undefined }
-    | { band: WidgetInstance; columns?: undefined; pair?: undefined; under: WidgetInstance[][]; side: WidgetInstance[] }
-    | { band?: undefined; columns: WidgetInstance[][]; pair?: undefined; under?: undefined }
-    | { band: WidgetInstance; columns?: undefined; pair: WidgetInstance[][]; under?: undefined; side: WidgetInstance[]; sideFirst: boolean }
-  const out: Seg[] = []
-  let columns: WidgetInstance[][] = []
-  let tops: number[] = []
-  const open = () => {
-    columns = Array.from({ length: cols }, () => [])
-    tops = Array.from({ length: cols }, () => 0)
-  }
-  const flush = () => {
-    if (columns.some((c) => c.length)) out.push({ columns })
-    open()
-  }
-  const est = (w: WidgetInstance) => {
-    const def = getWidget(w.type)
-    return heights[w.id] ?? (def ? heightFor(def, w.variant, w.detail) * (ROW_HEIGHT + gap) - gap : 200)
-  }
-  open()
-  for (let k = 0; k < items.length; k++) {
-    const w = items[k]
-    if (isBand(w, cols)) {
-      flush()
-      out.push({ band: w })
-      continue
-    }
-    // Two columns wide (on three): a band of its own, the next cards stacked in the third column beside it while they fit
-    // its height, so the band has no hole either. With nothing to stand beside it (the page's last card, or a full-width
-    // card next) it takes the whole width rather than leave the third column empty, if its layout can be that wide.
-    if (cols === 3 && w.w >= 8) {
-      // Columns under way that end far apart (more than three rows): rather than close them (the short ones would end in a hole), the card goes
-      // under the two shorter columns and the tallest one carries on beside it, taking the next cards while they fit.
-      const order = [0, 1, 2].sort((a, b) => tops[b] - tops[a])
-      const [tall, ...rest] = order
-      if (columns[tall].length && tops[tall] - tops[rest[0]] > 3 * ROW_HEIGHT) {
-        const two = rest.sort((a, b) => a - b)
-        const pair = two.map((c) => columns[c])
-        const height = Math.max(...two.map((c) => tops[c])) + est(w)
-        const side = [...columns[tall]]
-        let used = tops[tall]
-        while (k + 1 < items.length && !isBand(items[k + 1], cols) && items[k + 1].w < 8 && used + est(items[k + 1]) / 2 <= height) {
-          side.push(items[++k])
-          used += est(items[k]) + gap
-        }
-        // The tallest column keeps its side of the page: left if it was the first column, otherwise right.
-        out.push({ band: w, pair, side, sideFirst: tall === 0 })
-        open()
-        continue
-      }
-      // Otherwise it stays two columns wide, always (the coach chose it): the next one-column cards go to the shortest of
-      // the column beside it and the two under it, until a wide card comes. With none (the page's last card, or a
-      // full-width card next) the column beside it stays empty.
-      flush()
-      const under: WidgetInstance[][] = [[], []]
-      const side: WidgetInstance[] = []
-      const ends = [est(w) + gap, est(w) + gap, 0]
-      while (k + 1 < items.length && !isBand(items[k + 1], cols) && items[k + 1].w < 8) {
-        const n = items[++k]
-        const c = ends.indexOf(Math.min(...ends))
-        ;(c === 2 ? side : under[c]).push(n)
-        ends[c] += est(n) + gap
-      }
-      out.push({ band: w, under, side })
-      continue
-    }
-    const c = tops.indexOf(Math.min(...tops))
-    columns[c].push(w)
-    tops[c] += est(w) + gap
-  }
-  flush()
-  return out
-}
 
 /** A card on the live page, at its content's height. */
 function WidgetView({ w, live }: { w: WidgetInstance; live?: boolean }) {

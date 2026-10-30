@@ -79,6 +79,8 @@ export type PageLayout = {
   items: WidgetInstance[]
   /** The coach removed the Page title on purpose; don't add it back. */
   titleRemoved?: boolean
+  /** Arranged on the free grid: each widget keeps the column it was put in (x), in order (y). Before, columns were automatic. */
+  free?: boolean
 }
 
 /** One page's layouts: "default" plus optional per-tier versions. */
@@ -161,7 +163,7 @@ export function oneStar(items: WidgetInstance[], keep?: string): WidgetInstance[
 }
 
 export function normalizeLayout(l: PageLayout | { sections: LegacySection[] }, heightOf: (w: LegacyWidget) => number = () => 4): PageLayout {
-  if ("items" in l) return { items: oneStar(l.items.map(upgradeItem)) }
+  if ("items" in l) return { ...l, items: oneStar(l.items.map(upgradeItem)) }
   const items: WidgetInstance[] = []
   let x = 0
   let y = 0
