@@ -16,10 +16,8 @@ import { EMPTY, mergeOverrides, setDraft } from "@/lib/prototype-store"
 import { uid } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { OnbFrame, mono } from "./frame"
-import { BrandStep, ModulesStep, PayoutsStep, TierStep } from "./steps"
+import { BrandLookStep, TierStep } from "./steps"
 import { suggestedModules, suggestedTemplate } from "./suggest"
-import { HomeStep, LookPanel } from "./look-steps"
-import { VideosStep } from "./videos-step"
 import { WizardDesign } from "./wizard-design"
 
 export type StepProps = {
@@ -32,17 +30,15 @@ export type StepProps = {
 type Preview = { path: (slug: string) => string; label: string }
 const home: Preview = { path: (slug) => `/c/${slug}`, label: "Home" }
 
-/** The first four steps are the Design editor's (Brand, Look, Menu, Pages); the last three are setup only. */
+/**
+ * Setup is only what a coach needs to open their platform: brand and look, then a first membership.
+ * Menu, Pages, videos and payouts wait on the admin Overview's checklist (admin/setup-checklist.tsx).
+ */
 type Guide = { title: string; text: string; minutes: number }
 
 const STEPS: { id: string; label: string; title: string; text: string; skip?: string; guide: Guide; preview: Preview; Step: React.ComponentType<StepProps> }[] = [
-  { id: "brand", label: "Brand", title: "Your brand", text: "Logo, name and colour. We'll suggest colours from your logo.", guide: { title: "Your brand in one minute", text: "Your logo and colour in one minute: upload a logo, we suggest the colours.", minutes: 1 }, preview: home, Step: BrandStep },
-  { id: "look", label: "Look", title: "Pick a look", text: "Each one is a complete design. Fine-tune it if you like; your colours and logo stay.", skip: "Keep this look", guide: { title: "Picking a look", text: "Pick a look, then fine-tune roundness, depth and spacing.", minutes: 1 }, preview: home, Step: LookPanel },
-  { id: "menu", label: "Menu", title: "Your menu", text: "What's on your platform and what you call it. Hidden sections stay ready for later.", guide: { title: "Setting up your menu", text: "Switch sections on, rename them, add your own pages.", minutes: 1 }, preview: home, Step: ModulesStep },
-  { id: "pages", label: "Pages", title: "Your Home page", text: "What students see first. Arrange every page widget by widget in Design → Pages, any time.", skip: "Keep this Home", guide: { title: "Your Home page", text: "Pick a Home and how much each widget shows; arrange later in Design.", minutes: 1 }, preview: home, Step: HomeStep },
-  { id: "tier", label: "Membership", title: "Create your first membership", text: "What students join. Add more tiers and bundles later.", guide: { title: "Your first membership", text: "Free or paid, the price, a trial and a second tier.", minutes: 1 }, preview: { path: (slug) => `/site/${slug}#tiers`, label: "Sales page · prices" }, Step: TierStep },
-  { id: "videos", label: "Videos", title: "Bring your first videos", text: "Drop a folder. We'll suggest modules and lessons from the file names.", skip: "Add videos later", guide: { title: "Bringing your videos", text: "Drop a folder; we suggest modules and lessons from the file names.", minutes: 1 }, preview: { path: (slug) => `/c/${slug}/courses`, label: "Courses" }, Step: VideosStep },
-  { id: "payouts", label: "Get paid", title: "Get paid", text: "Connect where your money goes. Free tiers work without it.", skip: "Do this later", guide: { title: "Getting paid", text: "Connect payouts in five minutes; free tiers work without it.", minutes: 1 }, preview: { path: (slug) => `/site/${slug}/checkout`, label: "Checkout" }, Step: PayoutsStep },
+  { id: "brand", label: "Brand and look", title: "Your brand and look", text: "Logo, name and colour, then a ready-made look. Fine-tune it later in Design.", guide: { title: "Your brand and look", text: "Upload a logo (we suggest the colours), name your platform and pick a look. Fonts, roundness and widgets wait in Design.", minutes: 1 }, preview: home, Step: BrandLookStep },
+  { id: "tier", label: "Membership", title: "Create your first membership", text: "What students join. Add more tiers, payouts and bundles later.", guide: { title: "Your first membership", text: "Free or paid, the price, a trial and a second tier.", minutes: 1 }, preview: { path: (slug) => `/site/${slug}#tiers`, label: "Sales page · prices" }, Step: TierStep },
 ]
 
 /** The preview address with ?preview=draft before any #hash. */
@@ -104,11 +100,11 @@ export function SetupWizard() {
   const S = STEPS[step]
   const go = (n: number) => {
     setReady(true)
+    if (S.id === "tier" && n > step) update({ setup: { ...community.setup, membership: true } })
     if (n >= STEPS.length) return router.push("/setup/publish")
     setAccount({ step: Math.max(0, n) })
   }
   const update = (patch: Partial<CustomCommunity>) => updateCommunity(community.slug, patch)
-  const stepDone = (S.id === "videos" && !!community.setup?.courses?.length) || (S.id === "payouts" && community.setup?.payouts === "connected")
 
   return (
     <OnbFrame
@@ -174,14 +170,8 @@ export function SetupWizard() {
               </Button>
             )}
             <div className="ml-auto flex items-center gap-2">
-              {S.skip && !stepDone && (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    if (S.id === "payouts") update({ setup: { ...community.setup, payouts: community.setup?.payouts ?? "later" } })
-                    go(step + 1)
-                  }}
-                >
+              {S.skip && (
+                <Button variant="ghost" onClick={() => go(step + 1)}>
                   {S.skip}
                 </Button>
               )}

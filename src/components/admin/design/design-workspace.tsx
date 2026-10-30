@@ -12,8 +12,10 @@ import {
   FileDown,
   History,
   LayoutGrid,
+  Pencil,
   MoreHorizontal,
   PlayCircle,
+  Redo2,
   Trash2,
   Undo2,
   Wand2,
@@ -26,16 +28,18 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { DataMode } from "@/components/widgets/shared"
 import { getDemoCoach } from "@/lib/data/coaches"
+import { keepVersion } from "@/lib/prototype-store"
 import { useCustomCommunities } from "@/lib/data/use-communities"
 import { describe, targetsForField, type PickMessage, type PickTarget } from "@/lib/design-pick"
 import { auditTheme } from "@/lib/theme/contrast"
-import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
+import { pageLayout, resolveCoach, resolveTheme } from "@/lib/theme/resolve"
+import { getWidget, heightFor, heightOf } from "@/components/widgets/registry"
 import { TEMPLATES } from "@/lib/theme/templates"
-import type { PageId } from "@/lib/widgets/layout"
+import { readingOrder, uid, type PageId, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
-import { WidgetLibrary, WidgetSettings } from "./builder-panels"
+import { WidgetLibrary, WidgetSettings, type AddOptions } from "./builder-panels"
 import { More, RevealContext, Segmented } from "./controls"
-import { designTabs, DeviceSwitch, Readability, ResetButton, SettingsPanel, THEME_GROUPS, without } from "./settings-panel"
+import { designTabs, DeviceSwitch, Readability, ResetButton, SettingsPanel, THEME_GROUPS, WidgetStyleGroups, without } from "./settings-panel"
 import { DesignProvider, useDesign } from "./design-fields"
 import { GuideDialog, VersionsSheet, useDraftEditor } from "./editor-shell"
 import { ArrangeCanvas, useArrange, type Device } from "./page-builder"
@@ -52,11 +56,11 @@ const STEP_OF: Record<string, Step> = {
   logo: "brand",
   highlight: "brand",
   nav: "menu",
-  buttons: "shape",
+  buttons: "widgets",
   headings: "type",
   labels: "type",
   cards: "widgets",
-  "brand-surface": "shape",
+  "brand-surface": "brand",
   background: "page",
 }
 /** The settings to flash after a click. */
@@ -64,20 +68,28 @@ const FLASH: Partial<Record<PickTarget, string[]>> = {
   buttons: ["corners", "buttons"],
   headings: ["fonts", "heading-weight"],
   labels: ["labels"],
-  cards: ["widget-style", "widget-set"],
-  "brand-surface": ["effects"],
+  cards: ["widget-set"],
+  "brand-surface": ["primary"],
   background: ["background"],
   highlight: ["highlight"],
   logo: ["logo", "name"],
   nav: ["nav-layout"],
 }
 
+/** What the widget panel's style changes reach: the selected widget, or every widget. Place, size and content are always one widget's. */
+type Scope = "one" | "all"
+
+/** Sections that now live in Pages, as All widgets (every widget's style, Shape's settings included): old links and clicks open it there. */
+const IN_PAGES = (s: string) => s === "widgets" || s === "shape"
+
 const StepCtx = createContext<{ go: (s: Step) => void }>({ go: () => {} })
 
 /**
  * ADM-37 to ADM-44: Design, in the same editor as the library's themes: an
- * icon rail of sections (Brand, Look, Type, Shape, Widgets, Page, Menu,
- * Pages), each in small groups that reset on their own, and one search.
+ * icon rail of sections (Brand, Look, Type, Background, Menu, Pages),
+ * each in small groups that reset on their own, and one search. Widgets are
+ * edited in one place, Pages: select one to move, size, fill and style it,
+ * with a switch for whether its style changes reach this widget or all of them.
  * Menu comes before Pages: a module switched off there hides its widgets, so
  * the coach decides that first. One panel on the left, the coach's real platform on the right. Clicking a part
  * of the platform opens the step and setting that changes it. On Pages the
@@ -100,77 +112,158 @@ export function DesignWorkspace() {
   // Where to start, from the link that opened Design (setup, all pages, old Pages links).
   const params = useSearchParams()
   const asked = params.get("step") ?? (params.get("mode") === "arrange" || params.get("panel") === "pages" ? "pages" : params.get("panel") === "menu" ? "menu" : "brand")
-  const [step, setStep] = useState<Step>(STEP_IDS.includes(asked as Step) ? (asked as Step) : "brand")
+  // Widgets' style lives in Pages, as All widgets: old links to Widgets open it there.
+  const [step, setStep] = useState<Step>(IN_PAGES(asked) ? "pages" : STEP_IDS.includes(asked as Step) ? (asked as Step) : "brand")
+  const [scope, setScope] = useState<Scope>(IN_PAGES(asked) || params.get("scope") === "all" ? "all" : "one")
   const pages = studentNav(coach, `/c/${slug}`)
   const [pageAsked, setPage] = useState(params.get("page") ?? "home")
   const page = (pages.some((p) => p.id === pageAsked) ? pageAsked : "home") as PageId
   const [tier, setTier] = useState(params.get("tier") ?? "default")
   const [data, setData] = useState<DataMode>("sample")
   const [device, setDevice] = useState<Device>("desktop")
-  const [widget, setWidget] = useState<string | null>(null)
-  const [incoming, setIncoming] = useState<string | null>(null)
+  const [widget, setWidget] = useState<string | null>(params.get("w"))
+  // The widget being dragged in from the gallery, with what was chosen in its details (if it came from there).
+  const [incoming, setIncoming] = useState<{ type: string; opts?: AddOptions } | null>(null)
   const [menu, setMenu] = useState<"versions" | "guide" | "template" | null>(null)
 
-  const arrange = useArrange({ coach, theme, editor, page, tier, selected: widget, setSelected: setWidget })
+  // Selecting another widget always starts on This widget: changing every widget is a choice made each time.
+  const select = (id: string | null) => {
+    if (id !== widget) {
+      setScope("one")
+      // Another widget's panel starts at its top: its name and This widget / All widgets.
+      panel.current?.scrollTo({ top: 0 })
+    }
+    setWidget(id)
+  }
+  const arrange = useArrange({ coach, theme, editor, page, tier, selected: widget, setSelected: select })
+  // Where the coach is (section, page, selected widget) stays in the address, so a reload or a shared link opens the same place.
+  useEffect(() => {
+    const u = new URL(window.location.href)
+    u.searchParams.set("step", step)
+    for (const [k, v] of [["page", page !== "home" ? page : null], ["w", widget], ["scope", step === "pages" && scope === "all" ? "all" : null]] as const) {
+      if (v) u.searchParams.set(k, v)
+      else u.searchParams.delete(k)
+    }
+    u.searchParams.delete("mode")
+    u.searchParams.delete("panel")
+    if (u.href !== window.location.href) window.history.replaceState(window.history.state, "", u)
+  }, [step, page, widget, scope])
   const panel = useRef<HTMLDivElement>(null)
+  // The selected widget stays selected across sections, so going to Widgets and back to Pages keeps it.
   const go = (s: Step) => {
-    setStep(s)
-    setWidget(null)
+    // Widgets (Type's link to the numbers, search): every widget's style, in Pages.
+    if (IN_PAGES(s)) setScope("all")
+    setStep(IN_PAGES(s) ? "pages" : s)
     panel.current?.scrollTo({ top: 0 })
   }
-  const pick = usePreviewPick(step !== "pages", (target) => {
-    const to = target.startsWith("menu:") ? "menu" : (STEP_OF[target] ?? "brand")
-    setStep(to)
-    return target.startsWith("menu:") ? describe(target).fields : (FLASH[target] ?? describe(target).fields)
-  })
+  const pick = usePreviewPick(
+    step !== "pages",
+    (target) => {
+      const to = target.startsWith("menu:") ? "menu" : (STEP_OF[target] ?? "brand")
+      if (IN_PAGES(to)) setScope("all")
+      setStep(IN_PAGES(to) ? "pages" : to)
+      return target.startsWith("menu:") ? describe(target).fields : (FLASH[target] ?? describe(target).fields)
+    },
+    // A widget clicked in the preview: Pages, on that page (everyone's layout, which the preview shows), with it selected.
+    ({ id, path }) => {
+      const p = pages.find((x) => x.href === path)
+      setStep("pages")
+      if (p) setPage(p.id)
+      setTier("default")
+      setWidget(id)
+      setScope("one")
+      panel.current?.scrollTo({ top: 0 })
+    },
+  )
   useFlash(panel, pick.reveal)
 
 
   const fromSetup = params.get("from") === "setup"
   const pageInfo = arrange.pageInfo
-  const src = `${step === "pages" ? pageInfo.href : `/c/${slug}`}?preview=draft${step === "pages" && tier !== "default" ? `&tier=${tier}` : ""}${step === "pages" && data !== "sample" ? `&data=${data}` : ""}`
+  // The style sections preview the Everyone layout, so a widget clicked there is the one "Edit only this widget" opens in Pages.
+  const src = `${step === "pages" ? pageInfo.href : `/c/${slug}`}?preview=draft${step === "pages" ? "" : "&layout=everyone"}${step === "pages" && tier !== "default" ? `&tier=${tier}` : ""}${step === "pages" && data !== "sample" ? `&data=${data}` : ""}`
   const canvasClass = cn("hb-canvas", theme.mode === "dark" ? "dark" : "light")
   const checks = auditTheme(theme, { fixes: true })
-  const pagesContent = arrange.selWidget ? (
-    <div>
-      <div className="border-b px-3 py-1.5">
-        <Button variant="ghost" size="sm" onClick={() => setWidget(null)}>
-          <ArrowLeft /> All widgets
-        </Button>
-      </div>
-      <WidgetSettings
-        key={arrange.selWidget.id}
-        w={arrange.selWidget}
-        pinned={arrange.pinned(arrange.selWidget.id)}
-        canvasClass={canvasClass}
-        onChange={(patch, key) => arrange.updateItem(arrange.selWidget!.id, patch, key)}
-        onDuplicate={() => arrange.duplicateWidget(arrange.selWidget!.id)}
-        onRemove={() => arrange.removeWidget(arrange.selWidget!.id)}
-      />
+  const tierLabel = tier === "default" ? "Everyone" : (arrange.tierName ?? tier)
+  const sel = arrange.selWidget
+  const resetTheme = (keys: (keyof typeof working.theme)[]) => commit({ ...working, theme: without(working.theme, keys) }, "reset")
+  const head = sel && <WidgetHead w={sel} where={`${pageInfo.label} · ${tierLabel}`} scope={scope} onScope={setScope} />
+  const back = (
+    <div className="border-b px-4 py-2">
+      <Button variant="ghost" size="sm" onClick={() => (sel ? select(null) : setScope("one"))}>
+        <ArrowLeft /> {pageInfo.label}
+      </Button>
     </div>
-  ) : (
-    <PagesStep
-      page={page}
-      tier={tier}
-      onTier={(t) => {
-        setTier(t)
-        setWidget(null)
-      }}
-      data={data}
-      onData={setData}
-      arrange={arrange}
-      library={<WidgetLibrary key={page} page={page} coach={coach} canvasClass={canvasClass} onAdd={arrange.addWidget} onDragType={setIncoming} />}
-    />
   )
+  const pagesContent =
+    sel && scope === "one" ? (
+      <div>
+        {back}
+        <WidgetSettings
+          key={sel.id}
+          w={sel}
+          head={head}
+          pinned={arrange.pinned(sel.id)}
+          expanded={arrange.expanded.includes(sel.id)}
+          canvasClass={canvasClass}
+          onChange={(patch, key) => arrange.updateItem(sel.id, patch, key)}
+          onDuplicate={() => arrange.duplicateWidget(sel.id)}
+          onRemove={() => arrange.removeWidget(sel.id)}
+          onAllWidgets={() => setScope("all")}
+          // The widget as the page starts (the template's page, before any edit): what its settings are compared with and Reset goes back to.
+          start={pageLayout({ ...coach, pages: undefined }, page, theme.template, undefined, heightOf).items.find((x) => x.id === sel.id)}
+        />
+      </div>
+    ) : scope === "all" ? (
+      // Every widget's style: the same groups as the library's and the wizard's Widgets section.
+      <div>
+        {back}
+        <div className="grid gap-3 border-b px-5 py-5">
+          {head ?? <h3 className="text-sm font-semibold">All widgets</h3>}
+          {!head && <p className="text-xs text-muted-foreground">Style changes apply to every widget, on every page. Position, size and content are always set per widget: select one on the page.</p>}
+        </div>
+        <WidgetStyleGroups draft={working.theme} onReset={resetTheme} />
+      </div>
+    ) : (
+      <PagesStep
+        tier={tier}
+        data={data}
+        onData={setData}
+        arrange={arrange}
+        onAllWidgets={() => setScope("all")}
+        gallery={
+          <WidgetLibrary
+            key={page}
+            page={page}
+            pageLabel={pageInfo.label}
+            coach={coach}
+            canvasClass={canvasClass}
+            onPage={readingOrder(arrange.layout.items)}
+            onAdd={(type, o) => {
+              // Added with what was chosen in its details, at the bottom, and selected: the rest is in its panel.
+              const def = getWidget(type)!
+              const bottom = arrange.layout.items.reduce((m, x) => Math.max(m, x.y + x.h), 0)
+              const w: WidgetInstance = { id: uid(), type, x: 0, y: bottom, w: o.w, h: heightFor(def, o.variant, o.detail), variant: o.variant, detail: o.detail === "standard" ? undefined : o.detail, props: Object.keys(o.props).length ? o.props : undefined }
+              arrange.save({ ...arrange.layout, items: [...arrange.layout.items, w] }, `add-${w.id}`)
+              select(w.id)
+              toast(`${def.name} added at the bottom of ${pageInfo.label}.`, { description: "Drag it where you want it. ⌘Z undoes it." })
+            }}
+            onSelect={select}
+            onDragType={(type, opts) => setIncoming(type ? { type, opts } : null)}
+          />
+        }
+      />
+    )
   const tabs = designTabs({
     brand: { groups: [{ title: "Your platform", fields: ["logo", "name", "mode"], keys: ["mode"], words: "logo name platform light dark mode" }, ...THEME_GROUPS.colour] },
     look: { content: <LookTab /> },
     menu: { content: <MenuStep /> },
-    pages: { blurb: "What's on each page. Drag widgets on the right.", content: pagesContent },
-  })
+    pages: { blurb: "Select a widget to move, size, fill and style it. Drag widgets on the right.", content: pagesContent },
+    // Every widget's style is in Pages (All widgets); off the rail, still found by search.
+  }).map((t) => (t.id === "widgets" ? { ...t, hidden: true, label: "All widgets" } : t))
 
   return (
-    <DesignProvider value={{ coach, theme, working, change, commit }}>
+    <DesignProvider value={{ coach, theme, working, change, commit, keepVersion: (label) => keepVersion(slug, label, working) }}>
       <StepCtx.Provider value={{ go }}>
         {/* A screen of its own, over the admin: one menu (the editor's sections) instead of two side by side. */}
         <div role="dialog" aria-modal aria-label="Design" className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-y-auto bg-background lg:overflow-hidden">
@@ -202,6 +295,9 @@ export function DesignWorkspace() {
               </div>
               <Button variant="ghost" size="icon-sm" onClick={editor.undo} disabled={!editor.canUndo} aria-label="Undo" title="Undo (⌘Z)">
                 <Undo2 />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={editor.redo} disabled={!editor.canRedo} aria-label="Redo" title="Redo (⇧⌘Z)">
+                <Redo2 />
               </Button>
               <ResetButton
                 title="Back to the original design?"
@@ -267,13 +363,13 @@ export function DesignWorkspace() {
             {menu === "template" && <SaveTemplateDialog coach={coach} theme={theme} open onOpenChange={(o) => setMenu(o ? "template" : null)} />}
             <GuideDialog
               title="Designing your platform"
-              text="Your brand and a look first; then type, shape, widgets and background to fine-tune; then your menu and pages. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."
+              text="Your brand and a look first; then type and background to fine-tune; then your menu and pages. In Pages, select a widget to move, size, fill and style it, for that widget or all of them. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."
               open={menu === "guide"}
               onOpenChange={(o) => setMenu(o ? "guide" : null)}
             />
           </div>
 
-          <div className="grid min-h-0 grid-cols-1 lg:grid-cols-[400px_minmax(0,1fr)]">
+          <div className="grid min-h-0 grid-cols-1 lg:grid-cols-[440px_minmax(0,1fr)]">
             {/* The one panel: the same editor as the library's themes, with Design's own sections (brand, look, menu, pages) around the theme's. */}
             <aside className="flex min-h-[70svh] flex-col border-b lg:min-h-0 lg:border-r lg:border-b-0">
               <RevealContext.Provider value={pick.reveal}>
@@ -282,7 +378,7 @@ export function DesignWorkspace() {
                   tab={step}
                   onTab={(id) => go(id as Step)}
                   draft={working.theme}
-                  onReset={(keys) => commit({ ...working, theme: without(working.theme, keys) }, "reset")}
+                  onReset={resetTheme}
                   bodyRef={panel}
                   bodyProps={{ onPointerOver: pick.onPanelHover, onPointerLeave: pick.onPanelLeave }}
                 />
@@ -293,38 +389,77 @@ export function DesignWorkspace() {
             <section className="grid min-h-[70svh] min-w-0 grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-[color:color-mix(in_oklab,var(--background)_70%,black)] lg:min-h-0">
               {/* The page being edited, always in view above it: on Pages a picker to switch, elsewhere how to use the preview. */}
               {step === "pages" ? (
-                <div className="flex min-w-0 items-center gap-2.5 px-4 py-2">
-                  <span className="shrink-0 text-xs text-muted-foreground">Editing</span>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="shrink-0 gap-2" aria-label={`Page: ${pageInfo.label}. Change page`} />}>
-                      <span className="font-medium">{pageInfo.label}</span>
-                      <ChevronDown className="size-3.5 text-muted-foreground" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-52">
+                <div className="min-w-0 border-b">
+                  <div className="flex min-w-0 items-end gap-3 px-3">
+                    {/* Every page as a tab: the one being edited is always named, large, above it. */}
+                    <nav aria-label="Pages" className="flex min-w-0 flex-1 items-end overflow-x-auto [scrollbar-width:none]">
                       {pages.map((p) => (
-                        <DropdownMenuItem
+                        <button
                           key={p.id}
+                          type="button"
+                          aria-current={p.id === page ? "page" : undefined}
                           onClick={() => {
                             setPage(p.id)
-                            setWidget(null)
+                            select(null)
                           }}
+                          className={cn(
+                            "relative shrink-0 px-2.5 pt-3 pb-2.5 text-[0.9375rem] whitespace-nowrap transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            p.id === page ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground",
+                          )}
                         >
-                          <span className="flex-1">{p.label}</span>
-                          {p.id === page && <Check className="size-3.5" />}
-                        </DropdownMenuItem>
+                          {p.label}
+                          {p.id === page && <span aria-hidden className="absolute inset-x-2.5 bottom-0 h-0.5 rounded-full bg-foreground" />}
+                        </button>
                       ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <span className="min-w-0 truncate text-xs text-muted-foreground">
-                    {arrange.inherits ? `${arrange.tierName} uses the everyone layout. Changing it gives ${arrange.tierName} its own.` : "Drag to reorder, right-click for more"}
-                  </span>
+                    </nav>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="mb-2 shrink-0 gap-1.5" aria-label={`Layout for ${tierLabel}. Change tier`} />}>
+                        <span className="text-muted-foreground">Layout for</span>
+                        <span className="font-medium">{tierLabel}</span>
+                        {tier !== "default" && <span className="text-muted-foreground">· {arrange.inherits ? "uses Everyone" : "own layout"}</span>}
+                        <ChevronDown className="size-3.5 text-muted-foreground" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-60">
+                        {[{ id: "default", name: "Everyone" }, ...coach.tiers].map((t) => (
+                          <DropdownMenuItem
+                            key={t.id}
+                            onClick={() => {
+                              setTier(t.id)
+                              select(null)
+                            }}
+                          >
+                            <span className="flex-1">
+                              {t.name}
+                              {t.id !== "default" && (coach.pages?.[page] ?? {})[t.id] ? <span className="text-muted-foreground"> · own layout</span> : null}
+                            </span>
+                            {t.id === tier && <Check className="size-3.5" />}
+                          </DropdownMenuItem>
+                        ))}
+                        {tier !== "default" && !arrange.inherits && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={arrange.useDefault}>Use the Everyone layout for {tierLabel}</DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  {(scope === "all" || arrange.inherits) && (
+                    <p className="truncate px-4 pb-2 text-xs text-muted-foreground">
+                      {scope === "all"
+                        ? "All widgets: style changes apply to every widget, on every page. Position, size and content stay per widget."
+                        : `${tierLabel} uses the Everyone layout. Changing it gives ${tierLabel} its own.`}
+                    </p>
+                  )}
                 </div>
               ) : (
-                <p className="truncate px-4 py-2 text-xs text-muted-foreground">Click any part of your platform to change it</p>
+                <div className="flex h-8 min-w-0 items-center gap-2 px-4">
+                  <p className="min-w-0 truncate text-xs text-muted-foreground">Preview: Everyone · Click any part of your platform to change it. Click a widget to edit it in Pages.</p>
+                </div>
               )}
               <div className="min-h-0 min-w-0 overflow-hidden">
                 {step === "pages" ? (
-                  <ArrangeCanvas arrange={arrange} coach={coach} theme={theme} device={device} data={data} incoming={incoming} onDropped={() => setIncoming(null)} />
+                  <ArrangeCanvas arrange={arrange} coach={coach} theme={theme} device={device} data={data} incoming={incoming} onDropped={() => setIncoming(null)} allWidgets={scope === "all"} />
                 ) : (
                   <PreviewFrame src={src} device={device} frameRef={pick.frameRef} />
                 )}
@@ -347,45 +482,66 @@ function LookTab() {
   )
 }
 
+/** The selected widget's name and where it is, and the switch for what its style changes reach: this widget, or every widget. */
+function WidgetHead({ w, where, scope, onScope }: { w: WidgetInstance; where: string; scope: Scope; onScope: (s: Scope) => void }) {
+  const def = getWidget(w.type)
+  return (
+    <div className="grid gap-3">
+      <div className="flex items-start gap-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-md bg-muted">{def && <def.icon className="size-4" />}</span>
+        <div className="grid min-w-0">
+          <span className="text-xs text-muted-foreground">{where}</span>
+          <span className="text-sm font-semibold">{def?.name ?? w.type}</span>
+        </div>
+      </div>
+      <Segmented
+        label="Changes apply to"
+        value={scope}
+        onChange={onScope}
+        options={[
+          { value: "one", label: "This widget" },
+          { value: "all", label: "All widgets" },
+        ]}
+      />
+      <p className="text-xs text-muted-foreground">
+        {scope === "one" ? "Everything here changes this widget only." : "Style changes apply to every widget, on every page. Position, size and content are always set per widget."}
+      </p>
+    </div>
+  )
+}
+
+/**
+ * Pages with nothing selected: the page being edited, the way to every widget's style, and the widget gallery
+ * (what is on the page, and what can be added, each with its options a click away).
+ */
 function PagesStep({
-  page,
   tier,
-  onTier,
   data,
   onData,
   arrange,
-  library,
+  onAllWidgets,
+  gallery,
 }: {
-  page: PageId
   tier: string
-  onTier: (t: string) => void
   data: DataMode
   onData: (d: DataMode) => void
   arrange: ReturnType<typeof useArrange>
-  library: React.ReactNode
+  onAllWidgets: () => void
+  gallery: React.ReactNode
 }) {
   const { coach } = useDesign()
+  const tierName = tier === "default" ? "Everyone" : (coach.tiers.find((t) => t.id === tier)?.name ?? tier)
   return (
     <>
+      {/* The page and its layout are named above the page; here, the one way to the style every widget shares. */}
+      <div className="border-b px-5 py-4">
+        <Button className="w-full" onClick={onAllWidgets} title={`The style every widget shares, on every page. Layout for ${tierName}${tier !== "default" ? (arrange.inherits ? " uses Everyone" : ": own layout") : ""}.`}>
+          <Pencil /> Edit all widgets
+        </Button>
+      </div>
+      {gallery}
       <Section>
-        <More label="Per tier and preview data">
-          <label className="grid gap-1.5 text-xs font-medium text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)]">
-            Layout for
-            <select value={tier} onChange={(e) => onTier(e.target.value)} className="h-7 rounded-[4px] border bg-background px-2 text-xs text-foreground">
-              <option value="default">Everyone</option>
-              {coach.tiers.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                  {(coach.pages?.[page] ?? {})[t.id] ? " · own layout" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          {tier !== "default" && !arrange.inherits && (
-            <Button variant="ghost" size="sm" className="w-fit" onClick={arrange.useDefault}>
-              Use the everyone layout instead
-            </Button>
-          )}
+        <More label="Preview data">
           <div className="grid gap-1.5">
             <span className="text-xs font-medium text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)]">Show it with</span>
             <Segmented
@@ -405,8 +561,6 @@ function PagesStep({
           </div>
         </More>
       </Section>
-      <div className="border-b px-4 pt-3 text-[0.6875rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">Add a widget</div>
-      {library}
     </>
   )
 }
@@ -438,13 +592,15 @@ function DesignHelp() {
  * opens the step and returns the settings to show. Hovering a setting outlines
  * what it changes in the preview.
  */
-function usePreviewPick(on: boolean, onPick: (target: PickTarget) => string[]) {
+function usePreviewPick(on: boolean, onPick: (target: PickTarget) => string[], onEditWidget: (m: { id: string; path: string }) => void) {
   const frame = useRef<HTMLIFrameElement>(null)
   const [reveal, setReveal] = useState<{ fields: string[]; n: number }>({ fields: [], n: 0 })
   const shown = useRef("")
   const pickRef = useRef(onPick)
+  const editRef = useRef(onEditWidget)
   useEffect(() => {
     pickRef.current = onPick
+    editRef.current = onEditWidget
   })
 
   useEffect(() => {
@@ -454,6 +610,7 @@ function usePreviewPick(on: boolean, onPick: (target: PickTarget) => string[]) {
       if (e.origin !== window.location.origin || e.source !== frame.current?.contentWindow) return
       const m = e.data
       if (m?.type === "design-pick-ready") send({ type: "design-pick-mode", on })
+      if (m?.type === "design-edit-widget") editRef.current({ id: m.id, path: m.path })
       if (m?.type === "design-pick") {
         const fields = pickRef.current(m.target)
         setReveal((r) => ({ fields, n: r.n + 1 }))

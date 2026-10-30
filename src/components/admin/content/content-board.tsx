@@ -37,8 +37,9 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { STATUS_LABEL, allLessons, saveCatalog, uid, useCatalog, type Catalog, type Course, type Status } from "@/lib/data/learning"
+import { STATUS_LABEL, allLessons, isSampleCourse, saveCatalog, uid, useCatalog, type Catalog, type Course, type Status } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
+import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 
 export const STATUS_DOT: Record<Status, string> = {
   published: "bg-emerald-500",
@@ -66,6 +67,9 @@ type Filter = "all" | Status
 export function ContentBoard() {
   const { coach, base } = useCoach()
   const catalog = useCatalog(coach)
+  // A community made in setup starts on the sample courses; they carry a "Sample" label until replaced.
+  const wizard = useWizardCommunity(coach.slug)
+  const sample = (id: string) => !!wizard && isSampleCourse(coach, id)
   const router = useRouter()
   const [filter, setFilter] = useState<Filter>("all")
   const [creating, setCreating] = useState<string | null>(null)
@@ -117,6 +121,10 @@ export function ContentBoard() {
           </Button>
         </div>
       </div>
+      <SetupTip task="course" />
+      <SampleNotice show={catalog.courses.some((c) => sample(c.id))}>
+        Courses marked Sample are examples, so you can see how your courses look. Replace or delete them before you invite students.
+      </SampleNotice>
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
         <TabsList>
@@ -179,6 +187,7 @@ export function ContentBoard() {
                         </div>
                         <div className="flex flex-wrap items-center gap-1.5">
                           <StatusBadge status={c.status} when={c.scheduledFor} />
+                          {sample(c.id) && <Badge variant="outline">Sample</Badge>}
                           <span className="truncate text-xs text-muted-foreground">{tiers}</span>
                         </div>
                       </div>

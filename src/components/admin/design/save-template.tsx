@@ -14,6 +14,7 @@ import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import type { CoachTheme, TemplateId } from "@/lib/theme/types"
 import type { PageId, PageLayout } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
+import { card } from "./states"
 
 /** Prototype builds only: the menu item and the route behind it are off in production. */
 export const CAN_SAVE_TEMPLATE = process.env.NODE_ENV !== "production"
@@ -80,7 +81,7 @@ export function SaveTemplateDialog({ coach, theme, open, onOpenChange }: { coach
                   role="radio"
                   aria-checked={id === t}
                   onClick={() => choose(t)}
-                  className={cn("rounded-lg border px-3 py-2 text-left text-sm hover:border-foreground/40", id === t && "border-foreground ring-1 ring-foreground")}
+                  className={cn("px-3 py-2 text-left text-sm", card(id === t))}
                 >
                   <span className="block font-medium">{TEMPLATES[t].name}</span>
                   <span className="block text-xs text-muted-foreground">{t === theme.template ? "This design's base" : "Replace"}</span>

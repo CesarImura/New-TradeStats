@@ -23,11 +23,14 @@ import {
   at,
   freeSlots,
   hhmm,
+  isSampleBooking,
+  isSampleEvent,
   itemsBetween,
   saveSchedule,
   stamp,
   toMin,
   useSchedule,
+  type Booking,
   type CalEvent,
   type EventKind,
   type Impact,
@@ -37,6 +40,7 @@ import {
   type Window,
 } from "@/lib/data/schedule"
 import { cn } from "@/lib/utils"
+import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 
 const COLORS: Record<ItemKind, string> = { live: "#f97316", call: "#0ea5e9", workshop: "#8b5cf6", "one-on-one": "#10b981", news: "#e11d48" }
 const RANGE = { from: addDays(NOW, -45), to: addDays(NOW, 75) }
@@ -52,7 +56,11 @@ export function AdminCalendar() {
   const [isNew, setIsNew] = useState(false)
   const [open, setOpen] = useState<Item | null>(null)
 
-  const items = itemsBetween(schedule, RANGE.from, RANGE.to, { bookings: "all" })
+  // A community made in setup starts on the sample events; they read "Sample ·" until replaced.
+  const wizard = useWizardCommunity(coach.slug)
+  const sample = (e?: CalEvent) => !!wizard && !!e && isSampleEvent(coach, e.id)
+  const sampleBooking = (b?: Booking) => !!wizard && !!b && isSampleBooking(coach, b.id)
+  const items = itemsBetween(schedule, RANGE.from, RANGE.to, { bookings: "all" }).map((i) => (sample(i.event) || sampleBooking(i.booking) ? { ...i, title: `Sample · ${i.title}` } : i))
   const week = items.filter((i) => i.start >= NOW && i.start < addDays(NOW, 7))
   const stats = [
     { label: "Lives this week", value: week.filter((i) => i.kind === "live").length },
@@ -77,6 +85,10 @@ export function AdminCalendar() {
           <Plus /> New event
         </Button>
       </div>
+      <SetupTip task="live" />
+      <SampleNotice show={schedule.events.some((e) => sample(e))}>
+        Events and 1:1 bookings marked Sample are examples, so you can see how your calendar looks. Replace or delete them before you invite students.
+      </SampleNotice>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((s) => (

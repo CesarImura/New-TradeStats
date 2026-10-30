@@ -290,7 +290,8 @@ export function MediaCard({
           {(kicker || aside) && (
             <div className="flex min-w-0 items-center gap-2">
               {kicker && (
-                <Chip tone="neutral" className="max-w-full min-w-0">
+                // The tag gives way to the length beside it (Chip is shrink-0 by default).
+                <Chip tone="neutral" className="max-w-full min-w-0 shrink">
                   <span className="min-w-0 truncate">{kicker}</span>
                 </Chip>
               )}

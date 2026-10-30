@@ -6,6 +6,7 @@ import { ChevronDown } from "@/components/icons"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
+import { SWATCH_ON } from "./states"
 
 /**
  * Click-to-edit: the setting fields picked in the preview. Folded parts of the
@@ -39,7 +40,7 @@ const BOX =
 /** A labelled row in the editor panel. `id` lets a click in the preview find it. */
 export function Field({ id, label, hint, children }: { id?: string; label: string; hint?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="grid gap-1.5" data-field={id}>
+    <div className="grid gap-2" data-field={id}>
       <div className="flex min-w-0 items-center justify-between gap-3">
         <Label className={LABEL}>{label}</Label>
         {hint && <span className={cn(VALUE, "truncate text-right")}>{hint}</span>}
@@ -508,7 +509,7 @@ export function Swatches({
               onClick={() => onChange(c)}
               className={cn(
                 "relative size-5 rounded-full ring-1 ring-[color:color-mix(in_oklab,var(--foreground)_14%,transparent)] ring-inset transition-transform outline-none after:absolute after:-inset-0.5 after:content-[''] hover:scale-110 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
-                on && "scale-110 outline-2 outline-offset-2 outline-foreground hover:scale-110",
+                on && cn("scale-110 hover:scale-110", SWATCH_ON),
               )}
               style={{ background: c }}
             />

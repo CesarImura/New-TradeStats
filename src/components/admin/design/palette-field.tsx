@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, TriangleAlert } from "@/components/icons"
+import { Check, RotateCcw, TriangleAlert } from "@/components/icons"
 import { auditTheme } from "@/lib/theme/contrast"
 import { TEMPLATES } from "@/lib/theme/templates"
 import type { Mode, Palette } from "@/lib/theme/types"
@@ -99,25 +99,30 @@ export function PaletteField() {
             Saved with the template.
           </p>
         </div>
-        <div className="grid gap-2">
+        <div className="grid gap-1.5">
           {KEYS.map(({ key, label, hint }) => {
             const changed = key in edited
             return (
-              <div key={key} className="grid grid-cols-[minmax(0,6.5rem)_minmax(0,1fr)_auto] items-center gap-2">
-                <span className="grid min-w-0">
+              // The label beside a field that runs to the panel's edge; a changed colour's reset sits inside its field.
+              <div key={key} className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] items-center gap-3">
+                <span className="grid min-w-0 gap-0.5">
                   <span className={cn("truncate text-xs", changed && "font-medium")}>{label}</span>
-                  {hint && <span className="truncate text-[0.6875rem] text-muted-foreground">{hint}</span>}
+                  {hint && <span className="text-[0.6875rem] leading-tight text-muted-foreground">{hint}</span>}
                 </span>
-                <ColorField label={`${label} (${mode})`} value={toHex(palette[key], palette.background)} onChange={(c) => set(key, c)} />
-                <button
-                  type="button"
-                  onClick={() => set(key, undefined)}
-                  disabled={!changed}
-                  title={`Back to the template's ${base[key]}`}
-                  className="text-[0.6875rem] text-muted-foreground hover:text-foreground disabled:invisible"
-                >
-                  Reset
-                </button>
+                <div className="relative min-w-0">
+                  <ColorField label={`${label} (${mode})`} value={toHex(palette[key], palette.background)} onChange={(c) => set(key, c)} />
+                  {changed && (
+                    <button
+                      type="button"
+                      onClick={() => set(key, undefined)}
+                      aria-label={`Reset ${label} to the template's colour`}
+                      title={`Back to the template's ${base[key]}`}
+                      className="absolute top-1/2 right-1 grid size-6 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    >
+                      <RotateCcw className="size-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             )
           })}

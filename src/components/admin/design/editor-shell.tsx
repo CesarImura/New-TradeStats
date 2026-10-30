@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { ArrowLeft, History, Play, PlayCircle, Undo2 } from "@/components/icons"
+import { ArrowLeft, History, Play, PlayCircle, Redo2, Undo2 } from "@/components/icons"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -22,8 +22,13 @@ import {
 
 /**
  * Draft editing shared by the design editor and the page builder: the
- * working copy, undo (one step per change; rapid changes to the same setting
- * count as one), discard and publish.
+ * working copy, undo and redo (one step per change; rapid changes to the same
+ * setting count as one), discard and publish.
+ *
+ * Undo and redo hold whole snapshots of the draft, so a step always brings
+ * back a state that existed. A new change (a reset and a discard included)
+ * clears redo, and is itself undoable. Publishing clears both: what came
+ * before is now in Earlier versions, not a step away. Both are per community.
  */
 export function useDraftEditor(slug: string) {
   const pub = usePublished(slug)
@@ -31,38 +36,71 @@ export function useDraftEditor(slug: string) {
   const working = draft ?? pub
   const dirty = draft !== null && JSON.stringify(draft) !== JSON.stringify(pub)
 
-  const [undo, setUndo] = useState<Overrides[]>([])
+  const [steps, setSteps] = useState<{ slug: string; undo: Overrides[]; redo: Overrides[] }>({ slug, undo: [], redo: [] })
+  // Another community starts with no steps (adjusting state while rendering, as React recommends).
+  if (steps.slug !== slug) setSteps({ slug, undo: [], redo: [] })
+  const { undo, redo } = steps
   const last = useRef({ key: "", at: 0 })
+  // What this editor last wrote. A draft that differs came from elsewhere (Earlier versions, another tab): redo is dropped,
+  // so it can't bring back a state from before that change.
+  const wrote = useRef<string | null>(null)
+  const write = useCallback(
+    (next: Overrides | null) => {
+      wrote.current = JSON.stringify(next)
+      setDraft(slug, next)
+    },
+    [slug],
+  )
+  useEffect(() => {
+    if (wrote.current !== null && JSON.stringify(draft) !== wrote.current) {
+      wrote.current = null
+      setSteps((s) => (s.redo.length ? { ...s, redo: [] } : s))
+    }
+  }, [draft])
 
   const commit = useCallback(
     (next: Overrides, key: string) => {
       const now = Date.now()
-      if (last.current.key !== key || now - last.current.at > 800) setUndo((u) => [...u.slice(-49), working])
+      const step = last.current.key !== key || now - last.current.at > 800
+      setSteps((s) => ({ ...s, undo: step ? [...s.undo.slice(-49), working] : s.undo, redo: [] }))
       last.current = { key, at: now }
-      setDraft(slug, next)
+      write(next)
     },
-    [slug, working],
+    [write, working],
   )
   const change = (patch: Partial<Overrides>, key: string) => commit(mergeOverrides(working, patch), key)
 
   const doUndo = useCallback(() => {
     if (!undo.length) return
-    setDraft(slug, undo[undo.length - 1])
+    write(undo[undo.length - 1])
     last.current = { key: "", at: 0 }
-    setUndo(undo.slice(0, -1))
-  }, [slug, undo])
+    setSteps((s) => ({ ...s, undo: s.undo.slice(0, -1), redo: [...s.redo, working] }))
+  }, [write, undo, working])
+
+  const doRedo = useCallback(() => {
+    if (!redo.length) return
+    write(redo[redo.length - 1])
+    last.current = { key: "", at: 0 }
+    setSteps((s) => ({ ...s, undo: [...s.undo, working], redo: s.redo.slice(0, -1) }))
+  }, [write, redo, working])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement
-      if ((e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey && !typing) {
+      if (!(e.metaKey || e.ctrlKey) || typing) return
+      const k = e.key.toLowerCase()
+      // ⌘Z undoes; ⇧⌘Z (and Ctrl+Y on Windows) redoes.
+      if (k === "z" && !e.shiftKey) {
         e.preventDefault()
         doUndo()
+      } else if ((k === "z" && e.shiftKey) || (k === "y" && e.ctrlKey && !e.metaKey)) {
+        e.preventDefault()
+        doRedo()
       }
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [doUndo])
+  }, [doUndo, doRedo])
 
   return {
     working,
@@ -71,15 +109,18 @@ export function useDraftEditor(slug: string) {
     change,
     undo: doUndo,
     canUndo: undo.length > 0,
+    redo: doRedo,
+    canRedo: redo.length > 0,
     discard: () => {
-      setUndo((u) => [...u, working])
-      setDraft(slug, null)
+      setSteps((s) => ({ ...s, undo: [...s.undo, working], redo: [] }))
+      last.current = { key: "", at: 0 }
+      write(null)
       toast("Changes discarded. Your platform is back to the live version.")
     },
     publish: () => {
       // A failed publish keeps the draft; the store has already said why.
       if (!publish(slug, `Published ${new Date().toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`)) return false
-      setUndo([])
+      setSteps((s) => ({ ...s, undo: [], redo: [] }))
       toast.success("Published. Students see the changes now.")
       return true
     },
@@ -136,6 +177,9 @@ export function EditorBar({
       <GuideButton {...guide} />
       <Button variant="ghost" size="sm" onClick={editor.undo} disabled={!editor.canUndo} title="Undo (⌘Z)">
         <Undo2 /> Undo
+      </Button>
+      <Button variant="ghost" size="icon-sm" onClick={editor.redo} disabled={!editor.canRedo} aria-label="Redo" title="Redo (⇧⌘Z)">
+        <Redo2 />
       </Button>
       <Versions slug={slug} />
       {editor.dirty && (
@@ -219,14 +263,15 @@ export function VersionsSheet({ slug, open, onOpenChange }: { slug: string; open
           <SheetDescription>Restoring a version opens it as a draft. Publish to make it live again.</SheetDescription>
         </SheetHeader>
         <div className="grid gap-2 px-4">
-          {history.length === 0 && <p className="text-sm text-muted-foreground">Nothing yet. Each time you publish, the version before it is kept here.</p>}
+          {history.length === 0 && <p className="text-sm text-muted-foreground">Nothing yet. Each time you publish, or switch to another look, the version before it is kept here.</p>}
           {history.map((v, i) => (
             <div key={v.at + i} className="flex items-center justify-between gap-3 rounded-lg border p-3">
               <div className="grid">
                 <span className="text-sm">
-                  {JSON.stringify(v.snapshot) === JSON.stringify(EMPTY) ? "Original design" : `Before: ${v.label.replace("Published ", "")}`}
+                  {JSON.stringify(v.snapshot) === JSON.stringify(EMPTY) ? "Original design" : v.label.startsWith("Before ") ? v.label : `Before: ${v.label.replace("Published ", "")}`}
                 </span>
                 <span className="text-xs text-muted-foreground">
+                  {v.label.startsWith("Before ") && JSON.stringify(v.snapshot) === JSON.stringify(EMPTY) && `${v.label} · `}
                   {new Date(v.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                 </span>
               </div>

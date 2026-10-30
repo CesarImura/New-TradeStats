@@ -33,31 +33,17 @@ export function css({ l, c, h }: Oklch, alpha?: number) {
   return alpha === undefined ? `oklch(${base})` : `oklch(${base} / ${alpha})`
 }
 
-export type Effects = "flat" | "soft" | "vivid"
-
 /**
- * The brand's visual vocabulary for one mode and effect level. Restrained on
- * purpose: gradients stay within the same hue family and shift only a little
- * in lightness, so they read as depth, not as decoration.
- * - a, b, c: tonal ramp (a little lighter → brand → a little deeper)
- * - series: five harmonious colours for multi-series charts, brand first
+ * The brand colour and five harmonious colours for multi-series charts, brand first, for one mode.
+ * (Brand depth used to add a lighter and a deeper tone for gradients; brand surfaces are flat brand colour now.)
  */
-export function brandVisuals(primary: string, mode: "light" | "dark", effects: Effects) {
+export function brandVisuals(primary: string, mode: "light" | "dark") {
   const p = hexToOklch(primary)
   const chroma = Math.max(p.c, 0.04)
-  const dark = mode === "dark"
-  // Like real light: the bright end leans slightly toward yellow, the deep end away from it.
-  const toYellow = ((((100 - p.h) % 360) + 540) % 360) - 180
-  const dir = toYellow >= 0 ? 1 : -1
-  const k = { flat: 0, soft: 1, vivid: 1.8 }[effects]
-  const a = { l: p.l + 0.035 * k, c: chroma, h: p.h + 5 * k * dir }
   const b = { l: p.l, c: chroma, h: p.h }
-  const c = { l: p.l - 0.035 * k, c: chroma, h: p.h - 6 * k * dir }
-
   // Series: brand, then neighbours either side, then a softened complement and a split.
-  const sl = dark ? 0.72 : 0.62
+  const sl = mode === "dark" ? 0.72 : 0.62
   const sc = clamp(chroma * 0.8, 0.07, 0.13)
   const series = [p.h, p.h + 50, p.h - 50, p.h + 180, p.h + 105].map((h, i) => (i === 0 ? css(b) : css({ l: sl, c: i === 3 ? sc * 0.7 : sc, h })))
-
-  return { a: css(a), b: css(b), c: css(c), series }
+  return { b: css(b), series }
 }

@@ -9,7 +9,7 @@ import { AI_INSIGHT, AI_SAMPLE, COACH_PROFILE } from "@/lib/data/sample"
 import { KIND_LABEL, useOffers, type PartnerOffer } from "@/lib/data/partners"
 import { cn } from "@/lib/utils"
 import { Axis, Chip, GREY, HatchBar, Label, Legend, StepChart, TickBar, Timeline, WCard, useFigureFont } from "./instrument"
-import { ACCENT, ACCENT_TEXT, Avatar, CTA, Drop, FitText, FX, GROW_ROWS, SPLIT, tileDrop, TYPE, useMore } from "./kit"
+import { ACCENT, ACCENT_TEXT, Avatar, ChipMore, CTA, Drop, FitChips, FitText, FX, GROW_ROWS, SPLIT, tileDrop, TYPE, useFrame, useMore } from "./kit"
 import { Cover, WidgetEmpty, useEmpty, type WidgetProps } from "./shared"
 
 /** "Ask Kairo AI", but not "Ask Ask Marco" when the coach already named it that way. */
@@ -132,6 +132,7 @@ export function WelcomeVideo({ variant = "side", props }: WidgetProps) {
   const { coach } = useCoach()
   const more = useMore("standard")
   const detailed = useMore("detailed")
+  const { fixed } = useFrame()
   const title = String(props.title || "Welcome in. Here's how to get the most out of it.")
   const text = String(props.text || "Two minutes on how the program works, what to do first, and how to reach me.")
   const pct = Math.round((WATCHED / LENGTH.s) * 100)
@@ -190,8 +191,12 @@ export function WelcomeVideo({ variant = "side", props }: WidgetProps) {
 
   return (
     <WCard flush icon={Video} title="Welcome video" meta={meta} chip={chip} bodyClassName="@xl:flex-row @xl:gap-5">
-      {/* Wide: the box itself is 16:9 at the card's height, so the words start right beside the video, not after a gap. */}
-      <VideoFit length={LENGTH.label} className="min-h-0 flex-1 @xl:aspect-video @xl:h-full @xl:w-auto @xl:max-w-[50%] @xl:flex-none @xl:place-items-start" />
+      {/* Wide: the box itself is 16:9 at the card's height, so the words start right beside the video, not after a gap. A card
+          as tall as its content (the live page) has no height to start from, so there the video takes a share of the width. */}
+      <VideoFit
+        length={LENGTH.label}
+        className={cn("min-h-0 flex-1 @xl:aspect-video @xl:flex-none @xl:place-items-start", fixed ? "@xl:h-full @xl:w-auto @xl:max-w-[50%]" : "@xl:w-2/5 @xl:self-start")}
+      />
       <div className="flex min-h-0 min-w-0 shrink-0 flex-col gap-2 @xl:flex-1 @xl:shrink">
         <FitText lines={2} className={cn(TYPE.value, "text-balance")}>
           {title}
@@ -377,15 +382,27 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
   if (variant === "chips") {
     return (
       <WCard row icon={Handshake} title="Partner links" meta={more ? meta : undefined} chip={<Chip tone="neutral">{offers.length} links</Chip>}>
-        <div className="hidden min-w-0 flex-[2] justify-end gap-1.5 overflow-hidden [mask-image:linear-gradient(to_right,black_85%,transparent)] @[26rem]:flex">
-          {offers.map((o) => (
-            <a key={o.id} href={href(o)} {...ext} className={cn("r-chip flex shrink-0 items-center gap-1.5 border py-1 pr-2 pl-1 text-[0.6875rem]", FX.chip, FX.focus)}>
+        {/* Whole chips only; the rest are a "+N" away. */}
+        <FitChips
+          chips={offers.map((o) => (
+            <a key={o.id} href={href(o)} {...ext} className={cn("r-chip flex max-w-60 shrink-0 items-center gap-1.5 border py-1 pr-2 pl-1 text-[0.6875rem]", FX.chip, FX.focus)}>
               <Mark name={o.name} size={18} />
-              {o.name}
-              {detailed && <span className="text-muted-foreground">{o.offer}</span>}
+              <span className="truncate">{o.name}</span>
+              {detailed && <span className="truncate text-muted-foreground">{o.offer}</span>}
             </a>
           ))}
-        </div>
+          more={(from) => (
+            <ChipMore count={offers.length - from} label="partners">
+              {offers.slice(from).map((o) => (
+                <a key={o.id} href={href(o)} {...ext} className={cn("flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-sm", FX.chip, FX.focus)}>
+                  <Mark name={o.name} size={18} />
+                  <span className="min-w-0 flex-1 truncate">{o.name}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{o.offer}</span>
+                </a>
+              ))}
+            </ChipMore>
+          )}
+        />
       </WCard>
     )
   }

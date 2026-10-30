@@ -772,6 +772,27 @@ export function lookOf(def: WidgetDef, variant?: string) {
   return def.variants.find((v) => v.value === variant) ?? def.variants[0]
 }
 
+/** The widths a page offers, in grid columns: one column, two of three, the whole page. */
+export const PAGE_WIDTHS = [4, 8, COLS]
+
+/** The page width a saved `w` draws at: 4 to 7 is one column, 8 to 11 two of three, 12 the whole page. */
+export const pageWidth = (w: number) => (w >= COLS ? COLS : w >= 8 ? 8 : 4)
+
+const nearest = (list: number[], to: number) => list.reduce((a, b) => (Math.abs(b - to) < Math.abs(a - to) ? b : a))
+
+/** The page widths a widget's layout allows (its minW to maxW), or the nearest one when none falls inside. */
+export function widthsFor(def: WidgetDef, variant?: string) {
+  const { minW, maxW } = lookOf(def, variant)
+  const ok = PAGE_WIDTHS.filter((w) => w >= minW && w <= maxW)
+  return ok.length ? ok : [nearest(PAGE_WIDTHS, minW)]
+}
+
+/** The page width closest to `w` that the layout allows. Adding, dropping, resizing and changing layout all go through it. */
+export const fitWidth = (def: WidgetDef, variant: string | undefined, w: number) => {
+  const ok = widthsFor(def, variant)
+  return ok.includes(pageWidth(w)) ? pageWidth(w) : nearest(ok, pageWidth(w))
+}
+
 /** Standard height for a widget's look, used when converting older layouts. */
 export function heightOf(w: { type: string; variant?: string }) {
   const def = getWidget(w.type)

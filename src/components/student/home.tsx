@@ -12,10 +12,12 @@ import { pageLayout } from "@/lib/theme/resolve"
 
 /** STU-01. Laid out by the coach in Design → Home page, per tier. */
 export function StudentHome() {
-  const { coach, theme } = useCoach()
+  const { coach, theme, preview } = useCoach()
   const params = useSearchParams()
   // The demo student is in the first tier; the builder's preview can ask for another tier or for empty data.
   const tier = useViewerTier(coach)
+  // Design's style sections preview the Everyone layout (layout=everyone): a widget clicked there is the one Pages opens.
+  const layoutTier = preview && params.get("layout") === "everyone" ? undefined : tier
   return (
     <DataModeProvider value={dataModeOf(params.get("data"))}>
       <div className="flex flex-col page-gap">
@@ -24,7 +26,7 @@ export function StudentHome() {
           <h1 className="text-3xl leading-tight md:text-4xl">Good morning, {DEMO_STUDENT.first}</h1>
         </div>
         <StartHere />
-        <PageRenderer layout={pageLayout(coach, "home", theme.template, tier, heightOf)} />
+        <PageRenderer layout={pageLayout(coach, "home", theme.template, layoutTier, heightOf)} live={!preview} />
       </div>
     </DataModeProvider>
   )

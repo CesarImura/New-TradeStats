@@ -3,14 +3,10 @@ import { TEMPLATES } from "@/lib/theme/templates"
 import type { Density, TemplateId, WidgetHeader } from "@/lib/theme/types"
 
 /**
- * The Home is one grid: 12 columns, rows of a fixed height. Every widget
- * covers a rectangle of cells (x, y, w, h) and snaps to the grid in both
- * directions, so a tall card can sit next to two stacked ones.
- *
- * Responsive rules (by width of the page area, not the screen):
- * - wide (≥ 60rem): the grid exactly as arranged
- * - medium (≥ 40rem): widgets keep their order and height; narrow ones take half a row, wide ones the full row
- * - narrow (phones): one column, in reading order, each widget as tall as its content
+ * A page's layout is saved on a grid of 12 columns and rows (x, y, w, h). The page itself is a masonry
+ * (widgets/page-renderer.tsx): the saved order (y, then x) and width (one column, two thirds or the whole page,
+ * registry PAGE_WIDTHS) decide where a widget goes, and every widget is as tall as its content; h only steers
+ * estimates before a card is measured, and the library's builder (lab) still uses the grid as it is.
  */
 export const COLS = 12
 export const ROW_HEIGHT = 56
@@ -80,9 +76,6 @@ export const uid = () => Math.random().toString(36).slice(2, 10)
 
 /** Reading order: top to bottom, then left to right. */
 export const readingOrder = (items: WidgetInstance[]) => [...items].sort((a, b) => a.y - b.y || a.x - b.x)
-
-/** Width on medium screens: half a row or the full row. */
-export const wMd = (w: number) => (w <= 6 ? 6 : 12)
 
 type LegacyWidget = { id: string; type: string; variant?: string; span?: number; props?: Record<string, string | boolean>; hideOnPhone?: boolean }
 type LegacySection = { widgets?: LegacyWidget[]; slots?: LegacyWidget[][]; columns?: string }

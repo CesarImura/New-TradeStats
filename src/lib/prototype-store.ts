@@ -243,7 +243,20 @@ export function publish(slug: string, label = "Published") {
     if (!write(k.pub(slug), draft)) return false
     versions.length = 1
   }
-  // Keep as many versions as fit, newest first, with only the pictures they use.
+  writeHistory(slug, versions)
+  write(k.draft(slug), null)
+  return true
+}
+
+/** Keeps a design in Earlier versions without publishing it (before switching looks, say). */
+export function keepVersion(slug: string, label: string, snapshot: Overrides) {
+  const oldImages = read<Record<string, string>>(k.images(slug), NO_IMAGES)
+  const old = read<Version[]>(k.history(slug), []).map((v) => ({ ...v, snapshot: unpack(v.snapshot, oldImages) }))
+  writeHistory(slug, [{ at: new Date().toISOString(), label, snapshot }, ...old].slice(0, 12))
+}
+
+/** Keeps as many versions as fit, newest first, with only the pictures they use. */
+function writeHistory(slug: string, versions: Version[]) {
   for (let n = versions.length; n > 0; n--) {
     const images: Record<string, string> = {}
     const packed = versions.slice(0, n).map((v) => ({ ...v, snapshot: pack(v.snapshot, images) }))
@@ -253,8 +266,6 @@ export function publish(slug: string, label = "Published") {
       write(k.images(slug), null, { quiet: true })
     }
   }
-  write(k.draft(slug), null)
-  return true
 }
 
 /** Prototype bar: change the live design directly, or reset a coach (null). */

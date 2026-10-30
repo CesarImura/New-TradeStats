@@ -70,7 +70,8 @@ export function PageHeader({ variant = "plain", props }: WidgetProps) {
   ) : (
     <>
       {eyebrow && <span className="eyebrow">{eyebrow}</span>}
-      <h1 className="line-clamp-2 text-3xl leading-tight text-balance md:text-4xl">{title}</h1>
+      {/* A word longer than the line breaks where it must (never cut at the edge); past two lines it ends in "…". */}
+      <h1 className="line-clamp-2 text-3xl leading-tight text-balance [overflow-wrap:anywhere] md:text-4xl">{title}</h1>
       {/* A long intro ends in "…" rather than running past the block's rows. */}
       {text && <p className="line-clamp-3 max-w-[60ch] min-h-0 text-pretty text-muted-foreground">{text}</p>}
     </>

@@ -276,6 +276,9 @@ const seedFor = (coach: Coach): Catalog => {
   return SEEDS.get(coach.slug)!
 }
 
+/** Whether a course is one of the prototype's sample courses rather than one the coach made or uploaded. */
+export const isSampleCourse = (coach: Coach, id: string) => draftsOf(coach).length === 0 && seedFor(coach).courses.some((c) => c.id === id)
+
 const START_PROGRESS: Progress = { done: ["l1", "l2", "l3", "l4"], notes: {}, quiz: {}, last: "l5" }
 
 // ---------- reads

@@ -9,10 +9,12 @@ import { PAGE_ICONS, isPageId, pageIdOf, type CustomPage, type MenuId, type Page
 import { uid } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { move, useDesign } from "./design-fields"
+import { HIDDEN_INPUT, menuRow, SortHandle, SWITCH_OFF, useSort } from "./menu-sort"
 
 /** A page the coach added: name, icon, order, on/off and remove. */
 export function PageRow({ id }: { id: `page:${string}` }) {
   const { coach, change } = useDesign()
+  const sort = useSort()
   const pageId = pageIdOf(id)
   const pages = coach.customPages ?? []
   const page = pages.find((p) => p.id === pageId)
@@ -28,7 +30,8 @@ export function PageRow({ id }: { id: `page:${string}` }) {
   }
   const Icon = PAGE_ICONS[page.icon]
   return (
-    <div data-field={`menu-${id}`} className={cn("flex items-center gap-1 rounded-[6px] border p-1 pl-1", !on && "bg-muted/50")}>
+    <div data-field={`menu-${id}`} className={cn(menuRow(!on), "gap-1")}>
+      <SortHandle />
       <Popover>
         <PopoverTrigger render={<Button variant="ghost" size="icon-xs" aria-label={`Icon for ${page.name}`} />}>
           <Icon />
@@ -47,23 +50,28 @@ export function PageRow({ id }: { id: `page:${string}` }) {
         </PopoverContent>
       </Popover>
       <Input
-        className="h-6"
+        className={cn("h-7", HIDDEN_INPUT)}
         value={page.name}
         disabled={!on}
         onChange={(e) => edit({ name: e.target.value }, `cp-name-${pageId}`)}
         aria-label="Page name"
       />
       <div className="flex shrink-0 items-center">
-        <Button variant="ghost" size="icon-xs" disabled={i === 0} aria-label={`Move ${page.name} up`} onClick={() => change({ content: { menu: move(coach.menu, i, -1) } }, `menu-${Date.now()}`)}>
-          <ArrowUp />
-        </Button>
-        <Button variant="ghost" size="icon-xs" disabled={i === coach.menu.length - 1} aria-label={`Move ${page.name} down`} onClick={() => change({ content: { menu: move(coach.menu, i, 1) } }, `menu-${Date.now()}`)}>
-          <ArrowDown />
-        </Button>
+        {/* In Design's sortable list the handle moves it; the setup's list keeps the arrows. */}
+        {!sort && (
+          <>
+            <Button variant="ghost" size="icon-xs" disabled={i === 0} aria-label={`Move ${page.name} up`} onClick={() => change({ content: { menu: move(coach.menu, i, -1) } }, `menu-${Date.now()}`)}>
+              <ArrowUp />
+            </Button>
+            <Button variant="ghost" size="icon-xs" disabled={i === coach.menu.length - 1} aria-label={`Move ${page.name} down`} onClick={() => change({ content: { menu: move(coach.menu, i, 1) } }, `menu-${Date.now()}`)}>
+              <ArrowDown />
+            </Button>
+          </>
+        )}
         <Button variant="ghost" size="icon-xs" aria-label={`Remove ${page.name}`} onClick={remove}>
           <Trash2 />
         </Button>
-        <Switch size="sm" className="ml-1" checked={on} aria-label={`Show ${page.name}`} onCheckedChange={(v) => edit({ on: v }, `cp-on-${pageId}`)} />
+        <Switch size="sm" className={cn("ml-1.5", SWITCH_OFF)} checked={on} aria-label={`Show ${page.name}`} onCheckedChange={(v) => edit({ on: v }, `cp-on-${pageId}`)} />
       </div>
     </div>
   )

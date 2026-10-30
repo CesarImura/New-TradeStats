@@ -14,6 +14,8 @@ import { DesignField, useDesign } from "./design-fields"
 import { LOOKS, currentLook, type Look } from "./looks"
 import { PaletteField } from "./palette-field"
 import { CAN_SAVE_TEMPLATE } from "./save-template"
+import { card } from "./states"
+import { useConfirmSwitch } from "./switch-look"
 
 /**
  * Design's own panels (brand, looks, menu), shared by the Design workspace
@@ -21,7 +23,7 @@ import { CAN_SAVE_TEMPLATE } from "./save-template"
  */
 export function Section({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <section className="grid gap-4 border-b px-4 pt-3.5 pb-5 last:border-b-0">
+    <section className="grid gap-5 border-b px-5 pt-5 pb-6 last:border-b-0">
       {title && <h3 className="text-[0.6875rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{title}</h3>}
       {children}
     </section>
@@ -53,6 +55,7 @@ export function BrandFields() {
 export function LookCards({ suggested, templates = true }: { suggested?: TemplateId; templates?: boolean }) {
   const { theme, coach, change } = useDesign()
   const active = currentLook(theme)
+  const [ask, dialog] = useConfirmSwitch()
   return (
     <Section>
       <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Look">
@@ -63,14 +66,18 @@ export function LookCards({ suggested, templates = true }: { suggested?: Templat
             theme={theme}
             selected={active?.id === l.id}
             fits={!!suggested && l.id === LOOKS.find((x) => x.template === suggested)?.id}
-            onSelect={() => {
-              change({ theme: { template: l.template, ...l.set } }, "look")
-              toast(`${l.name} look applied. Your colours and logo stay.`)
-            }}
+            onSelect={() =>
+              active?.id !== l.id &&
+              ask(l.name, () => {
+                change({ theme: { template: l.template, ...l.set } }, "look")
+                toast(`${l.name} look applied. Your colours and logo stay.`)
+              })
+            }
           />
         ))}
       </div>
       {!active && <p className="text-xs text-muted-foreground">Your own mix. Pick a look to start again from it.</p>}
+      {dialog}
       {templates && CAN_SAVE_TEMPLATE && <PaletteField />}
       {templates && (
         <p className="text-xs text-muted-foreground">
@@ -118,8 +125,8 @@ export function LookCard({ look, theme, selected, fits, onSelect }: { look: Look
       aria-checked={selected}
       onClick={onSelect}
       className={cn(
-        "grid gap-1.5 rounded-[6px] border p-1.5 text-left outline-none hover:border-[#3a3a40] focus-visible:border-[var(--ts-interactive)]",
-        selected && "border-[var(--ts-interactive)] hover:border-[var(--ts-interactive)]",
+        "grid gap-1.5 p-1.5 text-left",
+        card(selected),
       )}
     >
       <style dangerouslySetInnerHTML={{ __html: themeToCss(t, `.${cls}`) }} />

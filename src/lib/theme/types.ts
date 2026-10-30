@@ -31,7 +31,7 @@ export type ChartStyle = "ticks" | "solid" | "thin" | "blocks" | "dots"
 export type WidgetFont = "mono" | "heading" | "body"
 /** Which parts of a widget's header show: the icon, the title, the grey description line under it, and the value chip on the right. */
 export type WidgetHeader = { icon: boolean; title: boolean; description: boolean; value: boolean }
-/** How widgets sit on the page: Cards (one card each), Sheet (one surface split by hairlines), Open (no box, a hairline above each). */
+/** How widgets sit on the page: Cards (one card each) or Open (no box and no line). "sheet" is retired and draws as Cards (widgetSetOf). */
 export type WidgetSet = "cards" | "sheet" | "open"
 /**
  * Where the widget's name sits and how it reads: Top (icon, title, chip), Label (a small label line, no icon tile),
@@ -81,7 +81,7 @@ export type CoachTheme = {
   /** Where the image or gradient shows. */
   bgWhere?: "all" | "home" | "login"
   bgAngle?: number
-  /** How much depth widgets get from the brand colour: gradients, glow, texture. */
+  /** Retired (Brand depth): brand cards are flat brand colour, so no setting reads it. Kept so saved designs still load. */
   effects: "flat" | "soft" | "vivid"
   /** frame: classic (the menu and the page are one surface) or floating (the page sits on a rounded canvas on the menu's ground, like the admin). */
   nav: { layout: NavLayout; style: NavStyle; logo: "left" | "center"; frame?: "classic" | "floating" }
@@ -122,11 +122,17 @@ export const chartStyleOf = (t: Pick<CoachTheme, "template" | "widgetStyle" | "c
 const WIDGET_FONT_DEFAULT: Record<WidgetStyle, WidgetFont> = { instrument: "mono", soft: "heading", editorial: "heading" }
 export const widgetFontOf = (t: Pick<CoachTheme, "template" | "widgetStyle" | "widgetFont">): WidgetFont => t.widgetFont ?? WIDGET_FONT_DEFAULT[widgetStyleOf(t)]
 
-const WIDGET_SET_DEFAULT: Record<WidgetStyle, WidgetSet> = { instrument: "sheet", soft: "cards", editorial: "open" }
-/** Open widgets have no surface of their own, so on an image or gradient background they sit on a sheet: text never sits on a picture. */
+const WIDGET_SET_DEFAULT: Record<WidgetStyle, WidgetSet> = { instrument: "cards", soft: "cards", editorial: "cards" }
+/** Open widgets have no surface of their own: on an image or gradient background they are cards, so text never sits on a picture. */
+export const openOnPicture = (t: Pick<CoachTheme, "background">) => t.background === "image" || t.background === "gradient"
+/**
+ * The widget set a page draws. Sheet is retired for the first version: a design saved with it keeps the value and
+ * shows Cards in its own card surface, so it can come back without touching saved designs.
+ */
 export const widgetSetOf = (t: Pick<CoachTheme, "template" | "widgetStyle" | "widgetSet" | "background">): WidgetSet => {
   const set = t.widgetSet ?? WIDGET_SET_DEFAULT[widgetStyleOf(t)]
-  return set === "open" && (t.background === "image" || t.background === "gradient") ? "sheet" : set
+  // Open (no box) was taken out of the editor on 30/10: it read as no change at all. Saved designs with it get cards.
+  return set === "sheet" || set === "open" ? "cards" : set
 }
 
 const HEADER_FORM_DEFAULT: Record<WidgetStyle, HeaderForm> = { instrument: "path", soft: "tag", editorial: "caption" }

@@ -179,8 +179,6 @@
     --border: color-mix(in oklab, var(--on) 22%, transparent);
     --primary: var(--on);
     --primary-foreground: var(--brand-b, black);
-    --brand-a: var(--on);
-    --brand-c: var(--on);
     --highlight: var(--on);
     --highlight-foreground: var(--brand-b, black);
     --card: transparent;
@@ -205,20 +203,15 @@
 }
 
 /*
- * Widget grid (Home). One 12-column grid with fixed-height rows; each widget
- * sets --x --y --w --h (cells), --w-md (half or full row) and --order.
- * The rules follow the width of the page area, so the same page reflows in a
- * sidebar layout, a preview or on a phone.
+ * A page of widgets (.g-page) and each widget's cell (.g-item). The page lays
+ * itself out (the masonry in widgets/page-renderer.tsx, or the library's own
+ * rows); a cell is a width container for the widget's own layout, and the
+ * widget fills it. Hiding on phones follows the width of the page area, so it
+ * holds in a sidebar layout, a preview or on a phone.
  */
 @layer components {
-  .g-page {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap);
-  }
   .g-item {
     container-type: inline-size;
-    order: var(--order);
     display: flex;
     flex-direction: column;
     min-width: 0;
@@ -228,31 +221,6 @@
     flex: 1;
     min-height: 0;
   }
-  @container (min-width: 40rem) {
-    .g-page {
-      display: grid;
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      /* Rows keep their height; only a page's core widget can make its rows taller, to fit the page's content. */
-      grid-auto-rows: minmax(var(--row-h), auto);
-      grid-auto-flow: row dense;
-    }
-    .g-item {
-      grid-column: span var(--w-md) / span var(--w-md);
-      grid-row: span var(--h) / span var(--h);
-      overflow: hidden;
-      contain: size;
-    }
-    .g-item.g-core {
-      overflow: visible;
-      contain: none;
-    }
-  }
-  @container (min-width: 60rem) {
-    .g-item {
-      grid-column: calc(var(--x) + 1) / span var(--w);
-      grid-row: calc(var(--y) + 1) / span var(--h);
-    }
-  }
   @container (max-width: 39.99rem) {
     .g-hide-phone {
       display: none;
@@ -260,140 +228,24 @@
   }
 }
 
-/* Home builder grid: where a widget will land, and its resize handles. */
-.hb-canvas .react-grid-item.react-grid-placeholder {
-  background: color-mix(in oklab, var(--primary) 16%, transparent);
-  border: 2px dashed var(--primary);
-  border-radius: var(--radius);
-  opacity: 1;
-}
-.hb-canvas .react-grid-item > .react-resizable-handle {
-  z-index: 20;
-  background: none;
-  opacity: 0;
-}
-.hb-canvas .react-grid-item:hover > .react-resizable-handle,
-.hb-canvas .react-grid-item.resizing > .react-resizable-handle {
-  opacity: 1;
-}
-.hb-canvas .react-grid-item > .react-resizable-handle::after {
-  border: 0;
-  border-radius: 9999px;
-  background: var(--primary);
-  box-shadow: 0 0 0 2px var(--background);
-}
-/* Lab builder: neighbours slide out of the way on the same strong ease-out as the widgets, handles fade in. */
-.lab-canvas .react-grid-item.cssTransforms {
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
-}
-.lab-canvas .react-grid-item > .react-resizable-handle {
-  transition: opacity 150ms ease;
-}
-.lab-canvas .react-grid-item.react-grid-placeholder {
-  transition-duration: 120ms;
-}
-@media (prefers-reduced-motion: reduce) {
-  .lab-canvas .react-grid-item.cssTransforms,
-  .lab-canvas .react-grid-item.react-grid-placeholder {
-    transition: none;
-  }
-}
-/* Edge handles: a short bar centred on each side. Corner handles: a dot. */
-.hb-canvas .react-grid-item > .react-resizable-handle { width: 20px; height: 20px; margin: 0; transform: none; }
-.hb-canvas .react-grid-item > .react-resizable-handle::after { right: auto; bottom: auto; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.hb-canvas .react-grid-item > .react-resizable-handle-n { top: -10px; left: calc(50% - 10px); cursor: ns-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-s { bottom: -10px; top: auto; left: calc(50% - 10px); cursor: ns-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-e { right: -10px; left: auto; top: calc(50% - 10px); cursor: ew-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-w { left: -10px; top: calc(50% - 10px); cursor: ew-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-n::after,
-.hb-canvas .react-grid-item > .react-resizable-handle-s::after { width: 18px; height: 4px; }
-.hb-canvas .react-grid-item > .react-resizable-handle-e::after,
-.hb-canvas .react-grid-item > .react-resizable-handle-w::after { width: 4px; height: 18px; }
-.hb-canvas .react-grid-item > .react-resizable-handle-nw { top: -10px; left: -10px; cursor: nwse-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-ne { top: -10px; right: -10px; left: auto; cursor: nesw-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-sw { bottom: -10px; top: auto; left: -10px; cursor: nesw-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-se { bottom: -10px; right: -10px; top: auto; left: auto; cursor: nwse-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-nw::after,
-.hb-canvas .react-grid-item > .react-resizable-handle-ne::after,
-.hb-canvas .react-grid-item > .react-resizable-handle-sw::after,
-.hb-canvas .react-grid-item > .react-resizable-handle-se::after { width: 9px; height: 9px; }
-
-/* Widget set (Design → Widgets → Card). Sheet: the widgets form one surface split by hairlines. On a page (a masonry
-   of columns and bands, page-renderer.tsx) there are no gaps at all: columns and bands touch, each the card colour
-   with a 1px line centred on its edge, so neighbours share one hairline (opaque, the hairline mixed onto the card, so
-   shared edges never double up), and the whole is rounded by Corners. Columns stretch to their row, so a short column
-   ends in surface, not in page; an empty column (beside a band) stays page. Where widgets sit side by side with no
-   columns (the library's own grid) the card colour spreads into the half-gap around each one instead. Open: no fill,
-   a fine outline around each widget. The page title and the page's own tool (g-plain) keep their usual look. The
-   Star widget keeps its brand fill in both. */
-.g-page[data-set="sheet"],
-.g-page[data-set="open"],
-.hb-set[data-set="sheet"],
-.hb-set[data-set="open"] {
-  --set-hair: var(--w-hair, color-mix(in oklab, var(--foreground) 12%, transparent));
-}
-.g-page[data-set="sheet"]:has(> :not(.g-item)) {
-  --gap: 0px !important;
-  --sheet-line: color-mix(in oklab, var(--set-hair), var(--card));
-  border-radius: var(--radius);
-  overflow: clip;
-}
-.g-page[data-set="sheet"]:has(> :not(.g-item)) > * {
-  align-self: stretch;
-}
-.g-page[data-set="sheet"]:has(> :not(.g-item)) > :not(.g-plain, :empty, :has(> .g-plain)) {
-  background: var(--card);
-  outline: 1px solid var(--sheet-line);
-  outline-offset: -0.5px;
-}
-.g-page[data-set="sheet"]:has(> :not(.g-item)) > :not(.g-item) > * + * {
-  border-top: 1px solid var(--sheet-line);
-}
-/* The page title and the page's own tool keep the page around them. */
-.g-page[data-set="sheet"]:has(> :not(.g-item)) > :is(.g-plain, :has(> .g-plain)):not(:first-child) {
-  margin-top: var(--page-gap, 1.5rem);
-}
-.g-page[data-set="sheet"]:has(> :not(.g-item)) > :is(.g-plain, :has(> .g-plain)):not(:last-child) {
-  margin-bottom: var(--page-gap, 1.5rem);
-}
-.g-page[data-set="sheet"]:not(:has(> :not(.g-item))) > .g-item:not(.g-plain) {
-  background: var(--card);
-  box-shadow: 0 0 0 calc(var(--gap) / 2) var(--card);
-  outline: 1px solid var(--set-hair);
-  outline-offset: calc(var(--gap) / 2 - 0.5px);
-  border-radius: var(--radius);
-}
-.g-page:is([data-set="sheet"], [data-set="open"]) .g-item:not(.g-plain) [data-slot="widget"],
-.hb-set:is([data-set="sheet"], [data-set="open"]) .react-grid-item:not(.g-plain) [data-slot="widget"] {
+/* Widget set (Design → Widgets → Card). Cards need nothing here (lib/theme/css.ts). Open: no box at all, no fill and no
+   line, so the page shows through and widgets are set apart by the gap alone (Outline is the one with a fine line).
+   The page title and the page's own tool (g-plain) are untouched, and the Star widget keeps its brand fill. (Sheet is
+   retired for now: widgetSetOf draws a design saved with it as Cards.) */
+.g-page[data-set="open"] .g-item:not(.g-plain) [data-slot="widget"],
+.hb-set[data-set="open"] .react-grid-item:not(.g-plain) [data-slot="widget"] {
   --card-shadow: none;
   --card-edge: transparent;
 }
-.g-page:is([data-set="sheet"], [data-set="open"]) .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
-.hb-set:is([data-set="sheet"], [data-set="open"]) .react-grid-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]) {
-  background: transparent;
-  border-radius: 0;
-}
-.g-page[data-set="sheet"] .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
-.hb-set[data-set="sheet"] .react-grid-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]) {
-  padding: calc(0.5rem * var(--density, 1));
-}
-/* Open: no fill, the page shows through, but every widget keeps a fine outline at its own corners, so it never
-   loses its edge against the page. */
 .g-page[data-set="open"] .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
 .hb-set[data-set="open"] .react-grid-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]) {
-  --card-edge: var(--set-hair);
+  background: transparent;
   border-radius: var(--radius);
 }
 
 /* Widget finish Corners: only on square cards (lib/theme/css.ts sets --w-corners from Corners). */
 [data-corner] {
   display: var(--w-corners, block);
-}
-/* In a Sheet the lines run in the gaps between widgets, not at their edges, so brackets there would float: none. */
-.g-page[data-set="sheet"] .g-item [data-corner],
-.hb-set[data-set="sheet"] .react-grid-item [data-corner] {
-  display: none;
 }
 
 /* Widget finish Grid (Design → Look → Widgets): a field of small crosses on the page behind the widgets, in the hairline colour.

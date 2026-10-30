@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Empty, Field, HealthDot, NativeSelect, Page, PageHeader } from "../kit"
+import { SetupTip } from "../setup-checklist"
 import { ImportDialog } from "./import-dialog"
 import { StudentProfile } from "./student-profile"
 
@@ -74,6 +75,7 @@ export function StudentsPage() {
           </>
         }
       />
+      <SetupTip task="invite" />
 
       <div className="flex flex-wrap items-center gap-2">
         <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>

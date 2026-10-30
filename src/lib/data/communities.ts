@@ -30,6 +30,8 @@ export type CustomCommunity = Coach & {
     markets?: Market[]
     /** Free trial days and a second tier, from the first-tier step. */
     trial?: number
+    /** The coach went past the first-membership step (the tier it starts with is only a suggestion until then). */
+    membership?: boolean
   }
 }
 

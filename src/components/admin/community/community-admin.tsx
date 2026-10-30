@@ -15,6 +15,7 @@ import { ANNOUNCEMENTS, DISCORD_ROLES } from "@/lib/data/people"
 import { DISCORD } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { Field, Mono, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { SetupTip, useWizardCommunity } from "../setup-checklist"
 
 export type Announcement = (typeof ANNOUNCEMENTS)[number] & { tiers?: string[]; scheduled?: string }
 type DiscordSetup = { connected: boolean; roles: Record<string, string>; posts: Record<string, boolean>; removeOnCancel: boolean }
@@ -24,6 +25,8 @@ const DEFAULT_DISCORD: DiscordSetup = {
   posts: { lesson: true, live: true, announcement: true, chart: false },
   removeOnCancel: true,
 }
+/** A community made in setup starts without Discord (the demo ones have it connected). */
+const NO_DISCORD: DiscordSetup = { ...DEFAULT_DISCORD, connected: false }
 const SERVER_ROLES = ["@Core", "@Trading Desk", "@VIP", "@Members", "@Funded", "No role"]
 const CHANNELS = [
   { id: "platform", label: "On the platform" },
@@ -35,7 +38,7 @@ const CHANNELS = [
 export function CommunityAdmin() {
   const { coach } = useCoach()
   const [list, setList] = useCommunityData<Announcement[]>(coach.slug, "announcements", ANNOUNCEMENTS)
-  const [d, setD] = useCommunityData(coach.slug, "discord", DEFAULT_DISCORD)
+  const [d, setD] = useCommunityData(coach.slug, "discord", useWizardCommunity(coach.slug) ? NO_DISCORD : DEFAULT_DISCORD)
 
   return (
     <Page>
@@ -44,6 +47,7 @@ export function CommunityAdmin() {
         text={`Your Discord, connected to your tiers, and announcements to your ${coach.wording.students.toLowerCase()}. Students see it as “${coach.wording.community}”.`}
         guide="Connecting Discord · 2 min"
       />
+      <SetupTip task="discord" />
       <Tabs defaultValue="announcements" className="gap-5">
         <TabsList>
           <TabsTrigger value="announcements">Announcements</TabsTrigger>

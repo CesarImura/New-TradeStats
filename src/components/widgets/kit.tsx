@@ -8,6 +8,7 @@ import { starStyleOf, widgetFinishOf, type WidgetHeader } from "@/lib/theme/type
 import { CoachContext } from "@/components/coach/coach-provider"
 import type { WidgetNote } from "@/lib/widgets/layout"
 import type { LucideIcon } from "@/components/icons"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
 /**
@@ -46,6 +47,7 @@ export function WidgetFrame({
   note,
   core,
   fixed,
+  live,
   children,
 }: {
   emphasis?: Emphasis
@@ -58,14 +60,16 @@ export function WidgetFrame({
    * Only then can the card be a size container: its shape (wide, tall) and its height can steer the layout.
    */
   fixed?: boolean
+  /** On the student's own pages links navigate and forms submit; everywhere else (library, thumbnails, the editor) they stay inert. */
+  live?: boolean
   children: React.ReactNode
 }) {
   const box = useRef<HTMLDivElement>(null)
   const shown = useFitDetail(detail, box)
   return (
     <FrameCtx.Provider value={{ emphasis, detail: shown, header, note, core, fixed }}>
-      {/* The library shows interactions only: links and buttons keep hover, focus and press, but never leave the page. */}
-      <div ref={box} className="contents [&_:is(button,a[href],[role=button],summary):not(:disabled)]:cursor-pointer" onClickCapture={stayOnPage} onSubmitCapture={(e) => e.preventDefault()}>
+      {/* Outside the live page widgets show interactions only: links and buttons keep hover, focus and press, but never leave the page. */}
+      <div ref={box} className="contents [&_:is(button,a[href],[role=button],summary):not(:disabled)]:cursor-pointer" onClickCapture={live ? undefined : stayOnPage} onSubmitCapture={live ? undefined : (e) => e.preventDefault()}>
         {children}
       </div>
     </FrameCtx.Provider>
@@ -290,8 +294,8 @@ export function W({ children, className, style, brand, row }: { children: React.
   const { emphasis, fixed } = useFrame()
   const theme = useContext(CoachContext)?.theme
   const starred = brand || emphasis === "star"
-  // Spotlight Star (the default, Design → Look → Widgets): a plain card, the figure at Star size, the brand on its marks and
-  // edge. Only Brand and Inverted fill the card.
+  // Spotlight Star (the default, Design → Look → Widgets): a plain card, the figure at Star size, the brand on its marks,
+  // the usual card edge. Only Brand and Inverted fill the card.
   const spotlight = starred && !brand && (!theme || starStyleOf(theme) === "spotlight")
   const star = starred && !spotlight
   // Inverted Star: the text colour as the card, the brand only as the one mark.
@@ -310,6 +314,7 @@ export function W({ children, className, style, brand, row }: { children: React.
       transition={enter}
       data-slot="widget"
       data-emphasis={starred ? "star" : emphasis}
+      data-spotlight={spotlight || undefined}
       className={cn(
         // The card is the container its contents ask about, named "card": by width always, by shape and height when its cell sets the height.
         fixed ? "[container:card/size]" : "@container/card",
@@ -357,11 +362,9 @@ export function W({ children, className, style, brand, row }: { children: React.
                 "--media-bg": "light-dark(color-mix(in oklab, var(--foreground) 90%, var(--background)), color-mix(in oklab, var(--foreground) 10%, var(--background)))",
                 "--media-fg": "light-dark(var(--background), var(--foreground))",
                 ...(emphasis === "quiet" ? { "--w-accent": "var(--foreground)", "--w-accent-text": "var(--foreground)" } : {}),
-                // Spotlight: parts that sit on a brand shade on a filled Star (chips, the icon tile, panels) take the card's own shades,
-                // and a brand edge (an inset hairline, over the theme's own outline) says this is the page's one Star.
-                ...(spotlight
-                  ? { "--brand-shade": "var(--muted)", "--brand-deep": "var(--muted)", boxShadow: "var(--card-shadow), inset 0 0 0 1px color-mix(in oklab, var(--brand, var(--primary)) 55%, transparent)" }
-                  : {}),
+                // Spotlight: parts that sit on a brand shade on a filled Star (chips, the icon tile, panels) take the card's own shades.
+                // Its edge is every card's (Outline on cards): the Star size of its figure and its brand marks say it is the one Star.
+                ...(spotlight ? { "--brand-shade": "var(--muted)", "--brand-deep": "var(--muted)" } : {}),
               }),
           ...style,
         } as React.CSSProperties
@@ -434,7 +437,7 @@ export function unusedHeight(card: HTMLElement) {
   const box = card.querySelector<HTMLElement>("[data-slot=frame-panel]") ?? card
   const b = box.getBoundingClientRect()
   const o = getComputedStyle(box)
-  const inner = b.height - parseFloat(o.paddingTop) - parseFloat(o.paddingBottom)
+  const inner = b.height - scaleOf(box) * (parseFloat(o.paddingTop) + parseFloat(o.paddingBottom))
   let top = Infinity
   let bottom = -Infinity
   for (const el of box.querySelectorAll<HTMLElement>("*")) {
@@ -449,6 +452,9 @@ export function unusedHeight(card: HTMLElement) {
   if (bottom < top) return 0
   return Math.max(0, inner - (bottom - top))
 }
+
+/** On-screen px per CSS px for an element (below 1 inside a scaled preview such as the Design canvas). */
+const scaleOf = (el: HTMLElement) => (el.offsetHeight ? el.getBoundingClientRect().height / el.offsetHeight : 1) || 1
 
 /** Drop parts are ours alone (no React style on them), so they are hidden inline. */
 const hide = (d: HTMLElement) => {
@@ -466,6 +472,8 @@ const show = (d: HTMLElement) => {
  * and rows a Fit list wraps out of sight to the side, don't count.
  */
 function cut(card: HTMLElement) {
+  // Boxes are measured on screen, paddings in CSS px: in a scaled view (the Design canvas) CSS px are scaled by k.
+  const k = scaleOf(card)
   for (const el of card.querySelectorAll<HTMLElement>("*")) {
     const tag = el.tagName
     const leaf = tag === "svg" || tag === "BUTTON" || tag === "IMG" || tag === "INPUT" || [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent?.trim())
@@ -486,12 +494,12 @@ function cut(card: HTMLElement) {
       if (o.overflowY === "visible" && o.overflowX === "visible") continue
       const b = box.getBoundingClientRect()
       // The card may lend half its bottom padding; an inner panel keeps its padding (2px slack, as the overflow rule allows).
-      limit = Math.min(limit, b.bottom - (box === card ? parseFloat(o.paddingBottom) / 2 : parseFloat(o.paddingBottom) + parseFloat(o.borderBottomWidth) - 2))
+      limit = Math.min(limit, b.bottom - k * (box === card ? parseFloat(o.paddingBottom) / 2 : parseFloat(o.paddingBottom) + parseFloat(o.borderBottomWidth) - 2))
       right = Math.min(right, b.right)
     }
     // Rows a Fit list wraps out of sight sit to the right of its box.
-    if (scrolls || r.left >= right - 1) continue
-    if (r.bottom > limit + 1) return true
+    if (scrolls || r.left >= right - k) continue
+    if (r.bottom > limit + k) return true
   }
   return false
 }
@@ -714,11 +722,97 @@ export function Row({
   )
 }
 
+/**
+ * True once a picture failed to load (a corrupt upload, an address that went away), so the widget can show what it
+ * shows with no picture instead of the browser's broken-image icon and alt text. A new address tries again. Give the
+ * <img> both `onError` and `ref`: a picture that failed before the page hydrated fires no event React sees.
+ */
+export function useBrokenImage(src?: string) {
+  const [broken, setBroken] = useState<string>()
+  // Remembered for the page, not just this mount: a card the masonry moves is mounted again, and finding out once more
+  // would change its height back and forth.
+  const failed = () => {
+    if (src) BROKEN.add(src)
+    setBroken(src)
+  }
+  const ref = (img: HTMLImageElement | null) => {
+    if (img?.complete && !img.naturalWidth) failed()
+  }
+  return [!!src && (broken === src || BROKEN.has(src)), failed, ref] as const
+}
+const BROKEN = new Set<string>()
+
+/**
+ * A one-row strip of chips (Links "One row", Partner links "Chips") that shows only whole chips: the ones that fit,
+ * then a "+N" control (`more`, given the index of the first chip left out) that opens the rest. It measures with
+ * every chip laid out in wrapping rows, keeps the first row, and does it again when the strip changes width.
+ */
+export function FitChips({ chips, more, className }: { chips: React.ReactNode[]; more: (from: number) => React.ReactNode; className?: string }) {
+  const outer = useRef<HTMLDivElement>(null)
+  const row = useRef<HTMLDivElement>(null)
+  const total = chips.length
+  const [n, setN] = useState(total)
+  const [width, setWidth] = useState(0)
+  useLayoutEffect(() => {
+    const el = outer.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setWidth(el.clientWidth))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  // A new width (or new chips) measures again from every chip.
+  const [measured, setMeasured] = useState({ width, total })
+  if (measured.width !== width || measured.total !== total) {
+    setMeasured({ width, total })
+    setN(total)
+  }
+  useLayoutEffect(() => {
+    const el = row.current
+    if (!el || n !== total || !width) return
+    const kids = [...el.children] as HTMLElement[]
+    if (!kids.length) return
+    const gap = parseFloat(getComputedStyle(el).columnGap) || 0
+    const room = width
+    const widths = kids.map((k) => k.offsetWidth)
+    if (widths.reduce((a, b) => a + b, 0) + gap * (widths.length - 1) <= room) return
+    // As many whole chips as fit beside the "+N" control (about 2.5rem wide).
+    let used = 40 + gap
+    let fit = 0
+    while (fit < widths.length && used + widths[fit] <= room) used += widths[fit++] + gap
+    setN(fit)
+  }, [n, total, width])
+  return (
+    <div ref={outer} className={cn("hidden min-w-0 flex-[2] items-center justify-end gap-1.5 @[26rem]:flex", className)}>
+      <div ref={row} className="flex min-w-0 flex-wrap justify-end gap-1.5">
+        {chips.slice(0, n)}
+      </div>
+      {n < total && more(n)}
+    </div>
+  )
+}
+
+/** The "+N" chip at the end of a FitChips strip: opens the chips left out, as a list (`children`). */
+export function ChipMore({ count, label, children }: { count: number; label: string; children: React.ReactNode }) {
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={<button type="button" className={cn("r-chip flex shrink-0 items-center border px-2 py-1 text-[0.6875rem] tabular-nums", FX.chip, FX.focus)} aria-label={`${count} more ${label}`} />}
+      >
+        +{count}
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64 gap-0 p-1">
+        {children}
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 /** Initials in a neutral circle (no rainbow avatars). */
 export function Avatar({ initials, src, size = 24 }: { initials: string; src?: string; size?: number }) {
-  return src ? (
+  const [broken, onError, ref] = useBrokenImage(src)
+  return src && !broken ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt="" className="r-dot shrink-0 object-cover" style={{ width: size, height: size }} />
+    <img ref={ref} src={src} alt="" onError={onError} className="r-dot shrink-0 object-cover" style={{ width: size, height: size }} />
   ) : (
     <span className="r-dot grid shrink-0 place-items-center bg-muted text-[0.6875rem] leading-none font-medium text-muted-foreground" style={{ width: size, height: size }}>
       {initials}

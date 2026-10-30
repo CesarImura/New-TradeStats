@@ -16,7 +16,9 @@ import { useAccount } from "@/lib/data/use-communities"
 import { MARKETS, type Market } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { Choice, mono } from "./frame"
+import { LookCards } from "@/components/admin/design/design-steps"
 import { FullEditorLink } from "./look-steps"
+import { suggestedTemplate } from "./suggest"
 import type { StepProps } from "./wizard"
 
 function Row({ label, hint, htmlFor, children }: { label: string; hint?: React.ReactNode; htmlFor?: string; children: React.ReactNode }) {
@@ -119,7 +121,29 @@ export function BrandStep({ community, update, setReady }: StepProps) {
       <More label="Profit and loss colours">
         <DesignField id="trading" />
       </More>
-      <FullEditorLink slug={community.slug} />
+    </div>
+  )
+}
+
+/**
+ * The first setup step: the brand, then the ready-made looks (the one that fits the sign-up answers
+ * marked). No fine-tuning here: fonts, shape, widgets and page wait in Design.
+ */
+export function BrandLookStep(props: StepProps) {
+  const acc = useAccount()
+  return (
+    <div className="grid gap-7">
+      <BrandStep {...props} />
+      <section className="grid gap-1.5 border-t pt-5" aria-labelledby="look-title">
+        <h2 id="look-title" className="text-sm font-medium">
+          Pick a look
+        </h2>
+        <p className="text-xs text-muted-foreground">Each one is a complete design; your logo and colours stay. Fine-tune fonts, roundness and widgets later in Design.</p>
+        <div className="-mx-4 md:-mx-5">
+          <LookCards suggested={suggestedTemplate(acc?.answers)} templates={false} />
+        </div>
+      </section>
+      <FullEditorLink slug={props.community.slug} />
     </div>
   )
 }

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { VideoThumb, ctaLink, webUrl } from "./brand"
 import { Chip, Label, Rolling, WCard, useFigureFont } from "./instrument"
-import { CTA, Drop, FitText, FX, TYPE, useMore, W, GROW_ROWS } from "./kit"
+import { ChipMore, CTA, Drop, FitChips, FitText, FX, TYPE, useBrokenImage, useFrame, useMore, W, GROW_ROWS } from "./kit"
 import { MediaCard } from "./layouts"
 import { Cover, type WidgetProps } from "./shared"
 
@@ -22,16 +22,17 @@ const CLIP = "overflow-hidden rounded-[min(var(--radius),8px)]"
 
 /**
  * The coach's picture (a data URL from an upload) filling its box, or the
- * course artwork until they upload one. `flush` drops the rounding for a
+ * course artwork until they upload one (or when theirs fails to load). `flush` drops the rounding for a
  * picture that touches the card's edges.
  */
 export function Picture({ src, alt, label, flush, className }: { src?: unknown; alt: string; label?: string; flush?: boolean; className?: string }) {
   const url = typeof src === "string" && src ? src : undefined
+  const [broken, onError, ref] = useBrokenImage(url)
   return (
     <div className={cn("relative min-h-0 min-w-0", !flush && CLIP, className)}>
-      {url ? (
+      {url && !broken ? (
         // eslint-disable-next-line @next/next/no-img-element -- an uploaded data URL, not something next/image can optimise
-        <img src={url} alt={alt} className="absolute inset-0 size-full object-cover" />
+        <img ref={ref} src={url} alt={alt} onError={onError} className="absolute inset-0 size-full object-cover" />
       ) : (
         <Cover label={label} className="absolute inset-0 rounded-none" />
       )}
@@ -123,7 +124,8 @@ type Embedded = { kind: "video" | "page"; src: string; href: string; host: strin
 /** A YouTube or Vimeo link becomes its player address; any other web address stays a page. Not a web address: undefined. */
 export function parseEmbed(raw: unknown): Embedded | undefined {
   const u = webUrl(raw)
-  if (!u) return undefined
+  // A real host: letters, digits, dots and dashes with at least one dot ("not a url" would otherwise frame nothing).
+  if (!u || !/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(u.hostname)) return undefined
   const host = u.hostname.replace(/^www\./, "")
   const seg = u.pathname.split("/").filter(Boolean)
   let yt: string | undefined
@@ -144,8 +146,17 @@ function Frame({ src, title, className }: { src: string; title: string; classNam
 /** Embed: video (a 16:9 frame), page (the page fills the card), row (the title and a play button). */
 export function Embed({ variant = "video", props }: WidgetProps) {
   const more = useMore("standard")
+  const { fixed } = useFrame()
   const e = parseEmbed(props.url)
+  // An address was typed but can't be shown: say so, rather than a blank card or a sample that won't play.
+  const bad = !e && String(props.url ?? "").trim() !== ""
   const title = String(props.title || "")
+  const notice = (
+    <div className={cn(CLIP, "grid min-h-32 flex-1 place-items-center content-center gap-1.5 bg-muted p-4 text-center")}>
+      <Globe className="size-4 text-muted-foreground" />
+      <span className={cn(TYPE.body, "text-balance text-muted-foreground")}>{bad ? "This address can’t be shown here" : "Paste an address in the widget\u2019s settings"}</span>
+    </div>
+  )
 
   if (variant === "row") {
     return (
@@ -155,41 +166,42 @@ export function Embed({ variant = "video", props }: WidgetProps) {
         </span>
         <span className="grid min-w-0 flex-1">
           <span className={cn(TYPE.title, "truncate")}>{title || e?.host || "Watch the video"}</span>
-          {more && <span className={cn(TYPE.small, "truncate")}>{e ? e.host : "2:14"}</span>}
+          {(more || bad) && <span className={cn(TYPE.small, "truncate")}>{bad ? "This address can’t be shown" : e ? e.host : "2:14"}</span>}
         </span>
-        <Button size="sm" className="w-fit shrink-0" nativeButton={false} render={<a href={e?.href ?? "#"} target="_blank" rel="noreferrer" />}>
-          <Play /> Watch
-        </Button>
+        {!bad && (
+          <Button size="sm" className="w-fit shrink-0" nativeButton={false} render={<a href={e?.href ?? "#"} target="_blank" rel="noreferrer" />}>
+            <Play /> Watch
+          </Button>
+        )}
       </W>
     )
   }
 
   if (variant === "page") {
-    if (!e) {
-      return (
-        <W className="p-[calc(0.625rem*var(--density,1))]">
-          <div className={cn(CLIP, "grid flex-1 place-items-center content-center gap-1.5 bg-muted p-4 text-center")}>
-            <Globe className="size-4 text-muted-foreground" />
-            <span className={cn(TYPE.body, "text-balance text-muted-foreground")}>Paste an address in the widget&apos;s settings</span>
-          </div>
-        </W>
-      )
-    }
+    if (!e) return <W className="p-[calc(0.625rem*var(--density,1))]">{notice}</W>
+    // The page fills the card. A card as tall as its content (the live page) gives it a 4:3 area; a line under it says
+    // where it comes from and opens it, for a site that refuses to be shown inside another page.
     return (
       <W className="relative gap-0 p-0">
-        <Frame src={e.src} title={title || e.host} />
+        <div className={cn("relative min-h-0 flex-1", !fixed && "aspect-[4/3]")}>
+          <Frame src={e.src} title={title || e.host} />
+        </div>
+        <a href={e.href} target="_blank" rel="noreferrer" className={cn("flex min-w-0 shrink-0 items-center gap-1.5 border-t px-3 py-2", TYPE.small, FX.focus)}>
+          <span className="min-w-0 flex-1 truncate">{title || e.host}</span>
+          <ArrowUpRight className="size-3.5 shrink-0" />
+        </a>
       </W>
     )
   }
 
   // video: a 16:9 frame as large as the card allows, centred.
-  const caption = title || (e ? "" : "How I plan my week")
+  const caption = title || (e || bad ? "" : "How I plan my week")
   return (
     <W className="gap-2 p-[calc(0.625rem*var(--density,1))]">
       <div className="aspect-video min-h-0 flex-1 [container-type:size]">
         <div className="mx-auto grid h-full place-items-center">
           <div className={cn(CLIP, "relative aspect-video")} style={{ width: "min(100cqw, 100cqh * 16 / 9)" }}>
-            {e?.kind === "video" ? <Frame src={e.src} title={title || e.host} /> : <VideoThumb className="absolute inset-0" />}
+            {e?.kind === "video" ? <Frame src={e.src} title={title || e.host} /> : bad ? <div className="absolute inset-0 flex">{notice}</div> : <VideoThumb className="absolute inset-0" />}
           </div>
         </div>
       </div>
@@ -371,14 +383,25 @@ export function Links({ variant = "list", props }: WidgetProps) {
   if (variant === "row") {
     return (
       <WCard row icon={Link2} title={title} chip={count}>
-        <div className="hidden min-w-0 flex-[2] justify-end gap-1.5 overflow-hidden [mask-image:linear-gradient(to_right,black_85%,transparent)] @[26rem]:flex">
-          {items.map((x, i) => (
-            <A key={i} item={x} className={cn("r-chip flex shrink-0 items-center gap-1 border px-2 py-1 text-[0.6875rem]", FX.chip, FX.focus)}>
-              {x.name}
-              {x.external && <ArrowUpRight className="size-3 text-muted-foreground" />}
+        {/* Whole chips only; the rest are a "+N" away. */}
+        <FitChips
+          chips={items.map((x, i) => (
+            <A key={i} item={x} className={cn("r-chip flex max-w-48 shrink-0 items-center gap-1 border px-2 py-1 text-[0.6875rem]", FX.chip, FX.focus)}>
+              <span className="truncate">{x.name}</span>
+              {x.external && <ArrowUpRight className="size-3 shrink-0 text-muted-foreground" />}
             </A>
           ))}
-        </div>
+          more={(from) => (
+            <ChipMore count={items.length - from} label="links">
+              {items.slice(from).map((x, i) => (
+                <A key={i} item={x} className={cn("flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-sm", FX.chip, FX.focus)}>
+                  <span className="min-w-0 flex-1 truncate">{x.name}</span>
+                  {x.external && <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground" />}
+                </A>
+              ))}
+            </ChipMore>
+          )}
+        />
       </WCard>
     )
   }
@@ -423,13 +446,17 @@ export function Links({ variant = "list", props }: WidgetProps) {
 /** The prototype's today is 12 Oct 2026: the sample counts down to 22 Oct 2026, 09:00. */
 const SAMPLE_DATE = new Date(2026, 9, 22, 9, 0, 0)
 
-function parseDate(raw: unknown): Date {
+/** The coach's date; none typed yet is the sample, and one no browser can read is null (never a made-up "Started"). */
+function parseDate(raw: unknown): Date | null {
   const v = String(raw ?? "").trim()
   if (!v) return SAMPLE_DATE
   // "2026-11-01 09:00" is not a format every browser reads: make it ISO (local time).
   const d = new Date(/^\d{4}-\d{2}-\d{2} \d/.test(v) ? v.replace(" ", "T") : v)
-  return Number.isNaN(d.getTime()) ? SAMPLE_DATE : d
+  return Number.isNaN(d.getTime()) ? null : d
 }
+
+/** What a countdown says when its date can't be read: no figures, no "Started". */
+const UNSET = "Date to be announced"
 
 const tick = (cb: () => void) => {
   const t = setInterval(cb, 1000)
@@ -440,14 +467,16 @@ const nowSecond = () => Math.floor(Date.now() / 1000) * 1000
 /** Ticks once a second. Before the page is on the client, 0 (so server and client render the same). */
 function useCountdown(raw: unknown) {
   const now = useSyncExternalStore(tick, nowSecond, () => 0)
-  const date = parseDate(raw)
-  const ready = now > 0
+  const parsed = parseDate(raw)
+  const unset = parsed === null
+  const date = parsed ?? SAMPLE_DATE
+  const ready = now > 0 && !unset
   const left = ready ? Math.max(0, date.getTime() - now) : 0
   const s = Math.floor(left / 1000)
   const parts = { d: Math.floor(s / 86400), h: Math.floor((s % 86400) / 3600), m: Math.floor((s % 3600) / 60), s: s % 60 }
   const pad = (n: number) => String(n).padStart(2, "0")
   const short = parts.d > 0 ? `${parts.d}d ${pad(parts.h)}h` : parts.h > 0 ? `${parts.h}h ${pad(parts.m)}m` : `${parts.m}m ${pad(parts.s)}s`
-  return { date, ready, over: ready && left === 0, parts, short, pad }
+  return { date, ready, unset, over: ready && left === 0, parts, short, pad }
 }
 
 function Figures({ c, size }: { c: ReturnType<typeof useCountdown>; size: "lg" | "md" }) {
@@ -497,7 +526,7 @@ export function Countdown({ variant = "big", props }: WidgetProps) {
   if (variant === "line") {
     return (
       <WCard row icon={CalendarClock} title={title} meta={more ? when : undefined}>
-        <span className={cn(TYPE.title, "ml-auto hidden shrink-0 tabular-nums @[16rem]:inline")}>{c.over ? "Started" : c.ready ? `Starts in ${c.short}` : "Starts in …"}</span>
+        <span className={cn(TYPE.title, "ml-auto hidden shrink-0 tabular-nums @[16rem]:inline")}>{c.unset ? UNSET : c.over ? "Started" : c.ready ? `Starts in ${c.short}` : "Starts in …"}</span>
         {button}
       </WCard>
     )
@@ -514,7 +543,7 @@ export function Countdown({ variant = "big", props }: WidgetProps) {
             </FitText>
           )}
         </Drop>
-        {c.over ? <span className={TYPE.value}>Started</span> : <Figures c={c} size="md" />}
+        {c.unset ? <span className={cn(TYPE.value, "text-muted-foreground")}>{UNSET}</span> : c.over ? <span className={TYPE.value}>Started</span> : <Figures c={c} size="md" />}
         <div className="mt-auto flex min-w-0">{button}</div>
       </WCard>
     )
@@ -522,9 +551,9 @@ export function Countdown({ variant = "big", props }: WidgetProps) {
 
   return (
     <WCard icon={CalendarClock} title={title} meta={when}>
-      {c.over ? (
+      {c.over || c.unset ? (
         <div className="flex min-w-0 flex-1 flex-wrap content-center items-center gap-x-3 gap-y-1">
-          <span className={cn(TYPE.value, "@[14rem]:text-[1.75rem] @[14rem]:leading-8")}>Started</span>
+          <span className={cn(TYPE.value, "@[14rem]:text-[1.75rem] @[14rem]:leading-8", c.unset && "text-muted-foreground")}>{c.unset ? UNSET : "Started"}</span>
           {button}
         </div>
       ) : (

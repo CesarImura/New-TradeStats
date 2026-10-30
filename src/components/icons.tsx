@@ -107,6 +107,7 @@ import {
   TouchInteraction as CTouchInteraction,
   TrashCan as CTrashCan,
   Trophy as CTrophy,
+  Redo as CRedo,
   Undo as CUndo,
   Unlink as CUnlink,
   Upload as CUpload,
@@ -273,6 +274,7 @@ export const Tag = i(CTag, "Tag")
 export const Trash2 = i(CTrashCan, "Trash2")
 export const Trophy = i(CTrophy, "Trophy")
 export const Undo2 = i(CUndo, "Undo2")
+export const Redo2 = i(CRedo, "Redo2")
 export const Unplug = i(CUnlink, "Unplug")
 export const Upload = i(CUpload, "Upload")
 export const User = i(CUser, "User")

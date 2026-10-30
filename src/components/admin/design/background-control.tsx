@@ -8,6 +8,7 @@ import { BACKDROPS, MIN_DIM } from "@/lib/theme/backdrops"
 import type { BackgroundStyle, CoachTheme } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { Field, Segmented, SliderField } from "./controls"
+import { card } from "./states"
 
 type Patch = Partial<Pick<CoachTheme, "background" | "bgImage" | "bgDim" | "bgBlur" | "bgWhere" | "bgAngle">>
 const KIND = (b: BackgroundStyle) => (b === "grid" || b === "glow" || b === "dots" ? "texture" : b)
@@ -61,13 +62,13 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
 
       {kind === "image" && (
         <>
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-3 gap-2">
             {BACKDROPS.map((b) => (
               <button
                 key={b.id}
                 onClick={() => onChange({ bgImage: `preset:${b.id}` }, "bg-image")}
                 aria-pressed={theme.bgImage === `preset:${b.id}`}
-                className={cn("grid gap-1 rounded-md p-0.5 text-left text-[0.7rem]", theme.bgImage === `preset:${b.id}` && "ring-2 ring-foreground")}
+                className={cn("grid gap-1 p-1 text-left text-[0.7rem]", card(theme.bgImage === `preset:${b.id}`))}
               >
                 <span className="aspect-[4/3] rounded-[4px] bg-[#0b0c10] ring-1 ring-white/10" style={{ backgroundImage: b.css, backgroundSize: "cover", backgroundPosition: "center" }} />
                 <span className="truncate px-0.5 text-muted-foreground">{b.name}</span>
@@ -76,7 +77,7 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
             <button
               onClick={() => file.current?.click()}
               aria-pressed={!!uploaded}
-              className={cn("grid gap-1 rounded-md p-0.5 text-left text-[0.7rem]", uploaded && "ring-2 ring-foreground")}
+              className={cn("grid gap-1 p-1 text-left text-[0.7rem]", card(!!uploaded))}
             >
               <span className="grid aspect-[4/3] place-items-center rounded-[4px] border border-dashed bg-cover bg-center" style={uploaded ? { backgroundImage: `url("${uploaded}")` } : undefined}>
                 {!uploaded && <ImagePlus className="size-4 text-muted-foreground" />}

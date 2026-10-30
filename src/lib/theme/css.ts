@@ -41,24 +41,32 @@ export function themeToCss(theme: CoachTheme, scope = ":root", engine?: EngineOp
   const p = resolveColors(t, engine)
   const sidebarDark = isDark(p.sidebar)
   const sidebarFg = sidebarDark ? "#f5f6fb" : p.foreground
+  // On a dark page a 5% shadow can't be seen, so dark themes get deeper ones: Soft and Strong must look different there too.
+  const darkPage = isDark(p.background)
   const shadow =
     t.shadow === "none"
       ? "none"
       : t.shadow === "soft"
-        ? "0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05)"
-        : `0 2px 4px rgb(0 0 0 / 0.06), 0 14px 36px color-mix(in oklab, ${t.primary} 16%, transparent)`
+        ? darkPage
+          ? "0 1px 2px rgb(0 0 0 / 0.35), 0 6px 18px rgb(0 0 0 / 0.4)"
+          : "0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05)"
+        : darkPage
+          ? `0 2px 4px rgb(0 0 0 / 0.45), 0 16px 40px color-mix(in oklab, ${t.primary} 22%, rgb(0 0 0 / 0.55))`
+          : `0 2px 4px rgb(0 0 0 / 0.06), 0 14px 36px color-mix(in oklab, ${t.primary} 16%, transparent)`
   // Card surface: raised (the palette's card), grey (a flat grey card on the page) or outline (no fill, a hairline).
   const surface = t.cardSurface ?? "raised"
   const card = surface === "grey" ? `color-mix(in oklab, ${p.foreground} ${isDark(p.background) ? 7 : 5}%, ${p.background})` : surface === "outline" ? p.background : p.card
   // The hairline is an inset outline, not a 1px shadow ring: a ring sits outside the card and on rounded
   // corners the page shows through between the two, so the corners read as a different colour.
-  // Every card keeps a soft hairline (the widgets' stroke); Borders on, or an outline card, makes it the full border colour.
-  const cardEdge = t.borders || surface === "outline" ? p.border : `color-mix(in oklab, ${p.border}, ${p.foreground} 6%)`
+  // Outline on cards draws the widgets' hairline round every card (derive.ts makes it read on the card's own fill, grey included);
+  // off, raised and grey cards stand on their fill (derive.ts keeps a raised card apart from the page). An outline card always
+  // has it. Open widgets draw their own line (globals.css).
+  const cardEdge = t.borders || surface === "outline" ? p.hair : "transparent"
   const cardShadow = shadow === "none" || surface !== "raised" ? "none" : shadow
   const buttonRadius =
     t.buttonShape === "pill" ? "9999px" : t.buttonShape === "square" ? `${Math.min(t.radius, 3)}px` : `${Math.max(6, t.radius * 0.7)}px`
 
-  const fx = brandVisuals(t.primary, t.mode, t.effects ?? "soft")
+  const fx = brandVisuals(t.primary, t.mode)
   const geometric = t.radius <= 3
   // Is the brand's own text colour light (white-ish) or dark?
   const onLight = !isDark(t.primaryForeground) || /^#f/i.test(t.primaryForeground)
@@ -141,12 +149,7 @@ export function themeToCss(theme: CoachTheme, scope = ":root", engine?: EngineOp
     // for chips, avatars and pictures on a brand card: they keep or gain contrast instead of losing it.
     "--brand-shade": `color-mix(in oklab, ${t.primary} 84%, ${onLight ? "black" : "white"})`,
     "--brand-deep": `color-mix(in oklab, ${t.primary} 62%, ${onLight ? "black" : "white"})`,
-    "--brand-a": fx.a,
     "--brand-b": fx.b,
-    "--brand-c": fx.c,
-    "--brand-grad": `linear-gradient(135deg, ${fx.a}, ${fx.b} 55%, ${fx.c})`,
-    "--brand-grad-h": `linear-gradient(90deg, ${fx.a}, ${fx.b} 60%, ${fx.c})`,
-    "--brand-grad-v": `linear-gradient(to top, ${fx.c}, ${fx.b} 55%, ${fx.a})`,
     "--s1": fx.series[0],
     "--s2": fx.series[1],
     "--s3": fx.series[2],

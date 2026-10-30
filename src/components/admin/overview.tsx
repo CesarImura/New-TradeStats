@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { Area, AreaChart, CartesianGrid, YAxis } from "recharts"
-import { ArrowRight, ArrowUpRight, Check, ChevronDown, CircleDashed, Download, PlayCircle, Radio } from "@/components/icons"
+import { ArrowRight, ArrowUpRight, ChevronDown, Download, Radio } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -20,9 +20,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ADMIN_STUDENTS, COURSES, EVENTS, FEEDBACK_REQUESTS, GETTING_STARTED, courseProgress } from "@/lib/data/sample"
+import { ADMIN_STUDENTS, COURSES, EVENTS, FEEDBACK_REQUESTS, courseProgress } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { DEMO_ADMIN } from "@/lib/data/account"
+import { SampleNotice, SetupChecklist } from "./setup-checklist"
 
 /** "Today" in the prototype's sample data. */
 const TODAY = new Date(2026, 9, 12)
@@ -133,7 +134,6 @@ function FilterChip<T extends string>({ name, value, options, onChange }: { name
 export function AdminOverview() {
   const { coach, base } = useCoach()
   const needsHelp = ADMIN_STUDENTS.filter((s) => s.health !== "green")
-  const done = GETTING_STARTED.filter((g) => g.done).length
   const members = coach.tiers.reduce((n, t) => n + t.members, 0)
 
   const [view, setView] = useState(VIEWS[0].id)
@@ -177,7 +177,11 @@ export function AdminOverview() {
         <h1 className="text-[2rem] leading-10 font-semibold tracking-[-0.025em]">Good morning, {DEMO_ADMIN.name.split(" ")[0]}</h1>
       </div>
 
+      {/* First, so a coach fresh from setup sees what's left; once it's all done it folds to one line. */}
+      <SetupChecklist />
+
       <div className="flex flex-col gap-4">
+        <SampleNotice>The numbers and lists on this page are examples, so you can see how the Overview works. They become yours as students join.</SampleNotice>
         <Tabs value={view} onValueChange={(v) => setView(v as string)}>
           <TabsList className="w-full justify-start">
             {VIEWS.map((v) => (
@@ -263,33 +267,6 @@ export function AdminOverview() {
           </div>
         </div>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Getting started</CardTitle>
-          <CardDescription>
-            {done} of {GETTING_STARTED.length} done. Each step has a 2-minute video if you need it.
-          </CardDescription>
-          <CardAction className="w-40">
-            <Progress value={(done / GETTING_STARTED.length) * 100} />
-          </CardAction>
-        </CardHeader>
-        <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {GETTING_STARTED.map((g) => (
-            <button
-              key={g.id}
-              className={cn(
-                "flex items-center gap-2.5 rounded-lg border p-3 text-left text-sm transition-colors hover:bg-muted",
-                g.done && "text-muted-foreground",
-              )}
-            >
-              {g.done ? <Check className="size-4 text-primary" /> : <CircleDashed className="size-4" />}
-              <span className={cn("flex-1", g.done && "line-through")}>{g.label}</span>
-              {!g.done && <PlayCircle className="size-4 text-muted-foreground" />}
-            </button>
-          ))}
-        </CardContent>
-      </Card>
 
       <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <Card>

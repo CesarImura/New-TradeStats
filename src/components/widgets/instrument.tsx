@@ -12,7 +12,7 @@ import { chartStyleOf, figureStyleOf, headerFormOf, panelStyleOf, widgetFontOf, 
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ACCENT, ACCENT_TEXT, AreaFill, MOTION, TYPE, W, link, useFrame, useMore } from "./kit"
+import { ACCENT, ACCENT_TEXT, AreaFill, CTA, MOTION, TYPE, W, link, useBrokenImage, useFrame, useMore } from "./kit"
 
 /**
  * The widget anatomy and signature visuals (Instrument, Soft, Editorial).
@@ -175,8 +175,9 @@ function NoteButton({ className }: { className?: string }) {
   const { note } = useFrame()
   if (!href) return null
   return (
-    <Button variant="outline" size="sm" className={cn("w-fit shrink-0", className)} {...link(href)}>
-      {note?.button}
+    // The coach's label: it gives way with the card and ends in "…" (full label in the tooltip), never past the card.
+    <Button variant="outline" size="sm" className={cn("w-fit", CTA, className)} title={note?.button} {...link(href)}>
+      <span className="truncate">{note?.button}</span>
     </Button>
   )
 }
@@ -186,12 +187,15 @@ function Note({ inset }: { inset?: boolean }) {
   const { note } = useFrame()
   const href = useNoteHref()
   const text = note?.text?.trim()
-  if (!note || (!note.image && !text && !href)) return null
+  // A picture that fails to load is left out, as if there were none.
+  const [broken, onError, ref] = useBrokenImage(note?.image)
+  const image = note?.image && !broken
+  if (!note || (!image && !text && !href)) return null
   return (
     <div className={cn("flex shrink-0 flex-col gap-2", inset && "px-4 pt-4")}>
-      {note.image && (
+      {image && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={note.image} alt="" className="aspect-video max-h-40 w-full rounded-(--radius) object-cover" />
+        <img ref={ref} src={note.image} alt="" onError={onError} className="aspect-video max-h-40 w-full rounded-(--radius) object-cover" />
       )}
       {(text || href) && (
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">

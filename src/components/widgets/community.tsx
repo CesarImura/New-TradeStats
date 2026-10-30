@@ -51,8 +51,9 @@ function Reactions({ read = true, className }: { read?: boolean; className?: str
   )
 }
 
+// A 24px target or more from an invisible ::after around the word: the word and the layout stay as they were.
 const ReadLink = () => (
-  <a href="#" className={cn("shrink-0 text-[0.8125rem] font-medium", FX.text, FX.focus)} style={{ color: ACCENT_TEXT }}>
+  <a href="#" className={cn("relative shrink-0 text-[0.8125rem] font-medium after:absolute after:-inset-x-1.5 after:-inset-y-1 after:content-['']", FX.text, FX.focus)} style={{ color: ACCENT_TEXT }}>
     Read
   </a>
 )

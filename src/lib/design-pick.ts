@@ -29,8 +29,8 @@ const RULES: Rule[] = [
   { target: "headings", selector: "h1, h2, h3, .font-heading", label: "Headings", fields: ["fonts", "heading-weight"] },
   { target: "labels", selector: ".eyebrow", label: "Small labels", fields: ["labels", "fonts"] },
   { target: "highlight", selector: '[data-slot="badge"], .bg-highlight', label: "Highlight colour", fields: ["highlight"] },
-  { target: "brand-surface", selector: ".fx-hero", label: "Brand card", fields: ["primary", "effects"] },
-  { target: "cards", selector: '[data-slot="card"], [data-slot="widget"]', label: "Cards and widgets", fields: ["widget-set", "card-surface", "widget-style", "header-form", "chart-style", "widget-font", "corners", "shadows", "borders", "density"] },
+  { target: "brand-surface", selector: ".fx-hero", label: "Brand card", fields: ["primary"] },
+  { target: "cards", selector: '[data-slot="card"], [data-slot="widget"]', label: "Widgets", fields: ["widget-set", "widget-style", "header-form", "chart-style", "corners", "shadows", "borders", "density"] },
 ]
 
 const MARKED: Record<string, { label: string; fields: string[] }> = {
@@ -52,8 +52,14 @@ function own(el: Element): PickTarget | null {
   return null
 }
 
-/** The setting for whatever is under the pointer: the closest matching element, else the page background. */
+/**
+ * The setting for whatever is under the pointer: the closest matching element, else the page background.
+ * Anything inside a widget (its figures, buttons, badges) is that widget: one click never sends the coach to
+ * Type, Shape or Brand from inside a widget; it opens the widget in Pages (preview-picker).
+ */
 export function resolve(start: Element | null): { target: PickTarget; el: Element } | null {
+  const widget = start?.closest('[data-slot="widget"]')
+  if (widget) return { target: "cards", el: widget }
   for (let el = start; el && el !== document.documentElement; el = el.parentElement) {
     const t = own(el)
     if (t) return { target: t, el }
@@ -87,6 +93,8 @@ export function targetsForField(field: string): PickTarget[] {
 
 /** Messages between the editor and the preview frame (same origin). */
 export type PickMessage =
+  /** A widget clicked in the preview: open it in Pages, selected. `path`: the preview page's path, `id`: the widget instance. */
+  | { type: "design-edit-widget"; id: string; path: string }
   | { type: "design-pick-ready" }
   | { type: "design-pick-mode"; on: boolean }
   /** `count`: how many parts of the page this setting changes. */

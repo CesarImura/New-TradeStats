@@ -120,6 +120,9 @@ const seedFor = (coach: Coach) => {
   if (!SEEDS.has(coach.slug)) SEEDS.set(coach.slug, seed(coach))
   return SEEDS.get(coach.slug)!
 }
+/** Whether an event is one of the prototype's sample events rather than one the coach made. */
+export const isSampleEvent = (coach: Coach, id: string) => seedFor(coach).events.some((e) => e.id === id)
+export const isSampleBooking = (coach: Coach, id: string) => seedFor(coach).bookings.some((b) => b.id === id)
 const START_STUDENT: StudentCal = { signups: ["ws1@2026-10-15"] }
 
 const scheduleKey = (slug: string) => `schedule:${slug}`

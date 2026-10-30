@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react"
 import { verticalCompactor } from "react-grid-layout/core"
 import { ArrowDownToLine, ArrowUpToLine, Copy, EyeOff, Info, LayoutGrid, Lock, Pencil, Trash2 } from "@/components/icons"
-import { toast } from "sonner"
+import { toast as notify, type ExternalToast } from "sonner"
 import { CoachContext, useCoach } from "@/components/coach/coach-provider"
 import { studentNav } from "@/components/coach/nav"
 import { Button } from "@/components/ui/button"
+import { Toaster } from "@/components/ui/sonner"
 import {
   ContextMenu,
   ContextMenuCheckboxItem,
@@ -25,7 +26,7 @@ import {
 } from "@/components/ui/context-menu"
 import { Masonry, PageRenderer, isAvailable } from "@/components/widgets/page-renderer"
 import { WidgetFrame } from "@/components/widgets/kit"
-import { getWidget, heightFor, heightOf, lookOf } from "@/components/widgets/registry"
+import { fitWidth, getWidget, heightFor, heightOf, lookOf, pageWidth, widthsFor } from "@/components/widgets/registry"
 import { DataModeProvider, PageIdContext, PageTitleShownContext, type DataMode } from "@/components/widgets/shared"
 import type { Coach } from "@/lib/data/coaches"
 import { useGroups } from "@/lib/data/access"
@@ -36,8 +37,15 @@ import { widgetFinishOf, widgetSetOf, type CoachTheme } from "@/lib/theme/types"
 import { isPageId } from "@/lib/data/coaches"
 import { COLS, GAP, ROW_HEIGHT, normalizeLayout, readingOrder, oneStar, uid, withCore, type Detail, type Emphasis, type PageId, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
-import { DETAIL, EMPHASIS, PHASE_LABEL } from "./builder-panels"
+import { DETAIL, EMPHASIS, PHASE_LABEL, SizeIcons, WIDTH, type AddOptions } from "./builder-panels"
 import type { useDraftEditor } from "./editor-shell"
+
+/**
+ * The canvas's notices ("added at the bottom", "removed"…) have their own toaster, top right under the editor's bar,
+ * so while they show they never sit over the cards' resize handles or quick actions at the bottom of the canvas.
+ */
+const CANVAS_TOASTS = "canvas"
+const toast = (message: string, data?: ExternalToast) => notify(message, { ...data, toasterId: CANVAS_TOASTS })
 
 const DEVICE_WIDTH: Record<Device, number> = { desktop: 1180, tablet: 820, phone: 390 }
 const PAD = { desktop: 32, tablet: 24, phone: 16 }
@@ -67,6 +75,8 @@ export function useArrange({
   setSelected: (id: string | null) => void
 }) {
   const { working, commit } = editor
+  // Two-column widgets the canvas draws at the whole width right now (nothing fits beside them), reported by its masonry.
+  const [expanded, setExpanded] = useState<string[]>([])
   const pages = studentNav(coach, `/c/${coach.slug}`)
   const pageInfo = pages.find((p) => p.id === page) ?? pages[0]
   const layouts = coach.pages?.[page] ?? {}
@@ -99,6 +109,8 @@ export function useArrange({
   const updateItem = (id: string, patch: Partial<WidgetInstance>, key: string) => {
     const cur = layout.items.find((w) => w.id === id)
     const def = cur && getWidget(cur.type)
+    // A new layout keeps the width only if the layout allows it (its minW to maxW), else the nearest it allows.
+    if (cur && def && patch.variant) patch = { ...patch, w: fitWidth(def, patch.variant, patch.w ?? cur.w) }
     // Detailed shows more, so it gets more rows (and back); widgets below move down to make room.
     if (cur && def && patch.detail && patch.detail !== (cur.detail ?? "standard")) {
       const grow = heightFor(def, cur.variant, patch.detail) - heightFor(def, cur.variant, cur.detail)
@@ -113,7 +125,7 @@ export function useArrange({
     const def = getWidget(type)!
     const look = def.variants[0]
     const bottom = layout.items.reduce((m, w) => Math.max(m, w.y + w.h), 0)
-    const w: WidgetInstance = { id: uid(), type, x: 0, y: bottom, w: def.defaultW, h: look.h }
+    const w: WidgetInstance = { id: uid(), type, x: 0, y: bottom, w: fitWidth(def, look.value, def.defaultW), h: look.h }
     save({ items: [...layout.items, w] }, `add-${w.id}`)
     setSelected(w.id)
     toast(`${def.name} added at the bottom. Drag it where you want it.`)
@@ -163,6 +175,8 @@ export function useArrange({
     selected,
     setSelected,
     selWidget: layout.items.find((w) => w.id === selected) ?? null,
+    expanded,
+    setExpanded,
     pinned,
     save,
     updateItem,
@@ -190,6 +204,7 @@ export function ArrangeCanvas({
   data,
   incoming,
   onDropped,
+  allWidgets,
 }: {
   arrange: Arrange
   coach: Coach
@@ -197,22 +212,25 @@ export function ArrangeCanvas({
   device: Device
   data: DataMode
   /** Widget type being dragged in from the library. */
-  incoming: string | null
+  incoming: { type: string; opts?: AddOptions } | null
   onDropped: () => void
+  /** The panel edits every widget's style: every widget gets the group outline, so the scope shows on the page too. */
+  allWidgets?: boolean
 }) {
   const ctx = useCoach()
-  const { page, layout, selected, setSelected, save, updateItem, removeWidget, duplicateWidget, moveTo } = arrange
+  const { page, layout, selected, setSelected, save, updateItem, removeWidget, duplicateWidget, moveTo, expanded, setExpanded } = arrange
   const gap = GAP[theme.density]
   // The card being dragged, and where it would land (before or after a card).
   const [dragging, setDragging] = useState<string | null>(null)
   const [target, setTarget] = useState<{ id: string; after: boolean } | null>(null)
-  // Resizing from a card's corner: sideways sets the width in columns (4, 8, 12), up and down steps the Detail.
-  const [resizing, setResizing] = useState<{ id: string; w: number; detail: Detail } | null>(null)
+  // Resizing from a card's corner: sideways sets the width, one column at a time, within what the widget's layout allows.
+  const [resizing, setResizing] = useState<{ id: string; w: number } | null>(null)
   const startResize = (e: React.PointerEvent, w: WidgetInstance) => {
     e.preventDefault()
     e.stopPropagation()
     const card = (e.currentTarget as HTMLElement).parentElement?.querySelector<HTMLElement>("[data-widget-id]") ?? null
-    if (!card) return
+    const def = getWidget(w.type)
+    if (!card || !def) return
     // The card's wrapper is draggable (for reordering): switch that off at once, or the browser starts a drag and eats the pointer.
     const handle = e.currentTarget as HTMLElement
     const wrapper = handle.closest<HTMLElement>("[draggable]")
@@ -221,17 +239,13 @@ export function ArrangeCanvas({
     const k = card.getBoundingClientRect().width / (card.offsetWidth || 1) // the canvas scale
     const colPx = (DEVICE_WIDTH.desktop - PAD.desktop * 2 - gap * 2) / 3
     const startW = card.offsetWidth
-    const levels: Detail[] = ["compact", "standard", "detailed"]
-    const startLevel = Math.max(0, levels.indexOf(w.detail ?? "standard"))
     const x0 = e.clientX
-    const y0 = e.clientY
-    let next = { id: w.id, w: w.w, detail: (w.detail ?? "standard") as Detail }
+    let next = { id: w.id, w: pageWidth(w.w) }
     setResizing(next)
     setSelected(w.id)
     const move = (ev: PointerEvent) => {
       const cols = Math.max(1, Math.min(3, Math.round((startW + (ev.clientX - x0) / k + gap) / (colPx + gap))))
-      const level = Math.max(0, Math.min(2, startLevel + Math.round((ev.clientY - y0) / k / 80)))
-      next = { id: w.id, w: cols * 4, detail: levels[level] }
+      next = { id: w.id, w: fitWidth(def, w.variant, cols * 4) }
       setResizing(next)
     }
     const up = () => {
@@ -240,7 +254,7 @@ export function ArrangeCanvas({
       window.removeEventListener("pointercancel", up)
       wrapper?.setAttribute("draggable", "true")
       setResizing(null)
-      if (next.w !== w.w || next.detail !== (w.detail ?? "standard")) updateItem(w.id, { w: next.w, ...(next.detail !== (w.detail ?? "standard") ? { detail: next.detail } : {}) }, `${w.id}-resize`)
+      if (next.w !== pageWidth(w.w)) updateItem(w.id, { w: next.w }, `${w.id}-resize`)
     }
     window.addEventListener("pointermove", move)
     window.addEventListener("pointerup", up)
@@ -252,7 +266,8 @@ export function ArrangeCanvas({
     e.stopPropagation()
     const order = readingOrder(layout.items)
     const moved = e.dataTransfer.getData("text/x-widget")
-    const type = incoming
+    const type = incoming?.type
+    const o = incoming?.opts
     setDragging(null)
     setTarget(null)
     let next = order
@@ -267,7 +282,10 @@ export function ArrangeCanvas({
       onDropped()
       const def = getWidget(type)
       if (!def) return
-      const w: WidgetInstance = { id: uid(), type, x: 0, y: 0, w: def.defaultW >= COLS ? COLS : 4, h: def.variants[0].h }
+      // From its details: the size, layout, detail and options chosen there; from the gallery: its defaults.
+      const w: WidgetInstance = o
+        ? { id: uid(), type, x: 0, y: 0, w: o.w, h: heightFor(def, o.variant, o.detail), variant: o.variant, detail: o.detail === "standard" ? undefined : o.detail, props: Object.keys(o.props).length ? o.props : undefined }
+        : { id: uid(), type, x: 0, y: 0, w: fitWidth(def, def.variants[0].value, def.defaultW), h: def.variants[0].h }
       next = [...order]
       next.splice(at, 0, w)
       key = `drop-${w.id}`
@@ -321,7 +339,9 @@ export function ArrangeCanvas({
     <PageTitleShownContext.Provider value={!layout.items.some((w) => w.type === "page-header")}>
     <CoachContext.Provider value={canvasCtx}>
       <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, scope) }} />
-      <div ref={area} className="h-full min-h-[60svh] min-w-0 overflow-x-hidden overflow-y-auto p-4 lg:min-h-0" onClick={() => setSelected(null)}>
+      <Toaster id={CANVAS_TOASTS} position="top-right" offset={{ top: 60, right: 16 }} />
+      {/* Stacked (narrow screens) the prototype bar sits over the bottom right: room at the foot lets the last cards scroll clear of it. */}
+      <div ref={area} className="h-full min-h-[60svh] min-w-0 overflow-x-hidden overflow-y-auto p-4 pb-32 md:pb-20 lg:min-h-0 lg:pb-4" onClick={() => setSelected(null)}>
         {device !== "desktop" && (
           <div className="mx-auto mb-3 flex max-w-xl items-center gap-2 rounded-[6px] border bg-card px-3 py-2 text-xs text-muted-foreground">
             <Info className="size-4 shrink-0" />
@@ -359,6 +379,20 @@ export function ArrangeCanvas({
                   {/* The page as students see it (a masonry: every card at its own height); dragging a card only changes the order. */}
                   <Masonry
                     items={readingOrder(layout.items)}
+                    onExpanded={setExpanded}
+                    emptySide={(band) => (
+                      // Nothing beside this two-column card: a place to drop a widget (students see the column empty).
+                      <div
+                        className="grid h-full min-h-24 place-items-center rounded-(--radius) border-2 border-dashed border-foreground/15 p-4 text-center font-[family-name:var(--ff-geist)] text-xs text-muted-foreground"
+                        onDragOver={(e) => (incoming || dragging) && e.preventDefault()}
+                        onDrop={(e) => drop(e, readingOrder(layout.items).findIndex((o) => o.id === band.id) + 1)}
+                      >
+                        <span className="pointer-events-none flex flex-col items-center gap-1.5">
+                          <LayoutGrid className="size-4" />
+                          Drop a one-column widget here
+                        </span>
+                      </div>
+                    )}
                     render={(w) => (
                       <WidgetMenu
                         w={w}
@@ -372,7 +406,7 @@ export function ArrangeCanvas({
                         onPhone={(hideOnPhone) => updateItem(w.id, { hideOnPhone }, `${w.id}-phone`)}
                         onRemove={() => removeWidget(w.id)}
                       >
-                        <GridWidget w={w} selected={selected === w.id} available={isAvailable(w, coach)} onRemove={() => removeWidget(w.id)} onDuplicate={() => duplicateWidget(w.id)} />
+                        <GridWidget w={w} selected={selected === w.id} expanded={expanded.includes(w.id)} available={isAvailable(w, coach)} onRemove={() => removeWidget(w.id)} onDuplicate={() => duplicateWidget(w.id)} />
                       </WidgetMenu>
                     )}
                     wrap={(w, item) => (
@@ -410,13 +444,33 @@ export function ArrangeCanvas({
                           <span aria-hidden className={cn("pointer-events-none absolute inset-x-0 z-30 h-1 rounded-full bg-primary", target.after ? "-bottom-[calc(var(--gap)/2+2px)]" : "-top-[calc(var(--gap)/2+2px)]")} />
                         )}
                         {item}
-                        {/* Resize: sideways picks the width (one, two or three columns), up and down the Detail (how much it shows). */}
-                        {!getWidget(w.type)?.core && w.type !== "page-header" && (
+                        {allWidgets && (
+                          <span aria-hidden className="pointer-events-none absolute -inset-[4px] z-20 rounded-[calc(var(--radius)+4px)] border-[1.5px] border-dashed border-[#ff5500]/75" />
+                        )}
+                        {/* The selected widget's bar, under it: how to move it, and its width in one click. */}
+                        {selected === w.id && !dragging && !resizing && (
+                          <div
+                            draggable={false}
+                            onDragStart={(e) => e.preventDefault()}
+                            onClick={(e) => e.stopPropagation()}
+                            className="no-drag absolute top-full left-0 z-40 mt-2 flex items-center gap-3 rounded-lg border border-white/10 bg-[#18181b] py-1 pr-1 pl-3 font-[family-name:var(--ff-geist)] text-xs whitespace-nowrap text-white shadow-[0_8px_24px_-8px_rgb(0_0_0/0.6)]"
+                          >
+                            <span>Drag to set position.</span>
+                            {!getWidget(w.type)?.core && w.type !== "page-header" && widthsFor(getWidget(w.type)!, w.variant).length > 1 && (
+                              <span className="flex items-center gap-1.5 border-l border-white/15 pl-3 text-white/70">
+                                Size
+                                <SizeIcons value={pageWidth(w.w)} allowed={widthsFor(getWidget(w.type)!, w.variant)} onChange={(cols) => updateItem(w.id, { w: cols }, `${w.id}-width`)} />
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {/* Resize: sideways picks the width (one, two or three columns). Only for widgets with more than one width. */}
+                        {!getWidget(w.type)?.core && w.type !== "page-header" && widthsFor(getWidget(w.type)!, w.variant).length > 1 && (
                           <span
                             role="presentation"
                             draggable={false}
-                            title="Drag sideways for width, up or down for detail"
-                            className="no-drag absolute right-1 bottom-1 z-30 grid size-5 cursor-nwse-resize place-items-center rounded-md border bg-background text-muted-foreground opacity-0 shadow-sm transition-opacity group-hover/wrap:opacity-100 data-[on=true]:opacity-100"
+                            title="Drag sideways to change the width"
+                            className="no-drag absolute right-1 bottom-1 z-30 grid size-5 cursor-ew-resize place-items-center rounded-md border bg-background text-muted-foreground opacity-0 shadow-sm transition-opacity group-hover/wrap:opacity-100 data-[on=true]:opacity-100"
                             data-on={selected === w.id || resizing?.id === w.id}
                             onDragStart={(e) => e.preventDefault()}
                             onPointerDown={(e) => startResize(e, w)}
@@ -428,7 +482,7 @@ export function ArrangeCanvas({
                         )}
                         {resizing?.id === w.id && (
                           <span className="pointer-events-none absolute top-2 left-1/2 z-40 -translate-x-1/2 rounded-md bg-foreground px-2 py-1 font-[family-name:var(--ff-geist)] text-xs whitespace-nowrap text-background shadow">
-                            {resizing.w >= COLS ? "Full width" : resizing.w >= 8 ? "Two columns" : "One column"} · {DETAIL.find((d) => d.value === resizing.detail)?.label ?? resizing.detail}
+                            {WIDTH.find((o) => o.value === resizing.w)?.label}
                           </span>
                         )}
                       </div>
@@ -471,7 +525,7 @@ function WidgetMenu({
   onLook: (variant: string, minH: number) => void
   onEmphasis: (emphasis: Emphasis) => void
   onDetail: (detail: Detail) => void
-  /** Columns: 4 (one), 8 (two) or 12 (the page's full width). */
+  /** Columns: 4 (one), 8 (two) or 12 (the page's full width), as the layout allows (widthsFor). */
   onWidth: (cols: number) => void
   onDuplicate: () => void
   onMove: (where: "top" | "bottom") => void
@@ -528,14 +582,16 @@ function WidgetMenu({
               </ContextMenuRadioGroup>
             </ContextMenuSubContent>
           </ContextMenuSub>
-          {!def.core && w.type !== "page-header" && (
+          {!def.core && w.type !== "page-header" && widthsFor(def, w.variant).length > 1 && (
             <ContextMenuSub>
               <ContextMenuSubTrigger>Width</ContextMenuSubTrigger>
               <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
-                <ContextMenuRadioGroup value={w.w >= COLS ? "full" : w.w >= 8 ? "two" : "column"} onValueChange={(v) => onWidth(v === "full" ? COLS : v === "two" ? 8 : 4)}>
-                  <ContextMenuRadioItem value="column">One column</ContextMenuRadioItem>
-                  <ContextMenuRadioItem value="two">Two columns</ContextMenuRadioItem>
-                  <ContextMenuRadioItem value="full">Full width</ContextMenuRadioItem>
+                <ContextMenuRadioGroup value={pageWidth(w.w)} onValueChange={(v) => onWidth(Number(v))}>
+                  {WIDTH.map((o) => (
+                    <ContextMenuRadioItem key={o.value} value={o.value} disabled={!widthsFor(def, w.variant).includes(o.value)}>
+                      {o.label}
+                    </ContextMenuRadioItem>
+                  ))}
                 </ContextMenuRadioGroup>
               </ContextMenuSubContent>
             </ContextMenuSub>
@@ -574,7 +630,7 @@ function WidgetMenu({
   )
 }
 
-function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: WidgetInstance; selected: boolean; available: boolean; onRemove: () => void; onDuplicate: () => void }) {
+function GridWidget({ w, selected, expanded, available, onRemove, onDuplicate }: { w: WidgetInstance; selected: boolean; expanded: boolean; available: boolean; onRemove: () => void; onDuplicate: () => void }) {
   const def = getWidget(w.type)
   const { coach } = useCoach()
   const groups = useGroups(coach)
@@ -585,47 +641,50 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
   return (
     <div
       className={cn(
-        "group/w relative flex cursor-grab flex-col rounded-[calc(var(--radius)+2px)] outline-2 outline-offset-2 outline-transparent hover:outline-primary/40 active:cursor-grabbing",
-        selected && "outline-primary",
+        // The admin's own orange, never the coach's colour: a selected widget always reads as the editor's selection.
+        "group/w relative flex cursor-grab flex-col rounded-[calc(var(--radius)+2px)] outline-2 outline-offset-2 outline-transparent hover:outline-[#ff5500]/40 active:cursor-grabbing",
+        selected && "outline-[#ff5500]",
       )}
     >
-      <span
-        className="absolute top-2 left-2 z-10 rounded-md bg-foreground px-1.5 py-0.5 font-[family-name:var(--ff-geist)] text-[0.65rem] text-background opacity-0 group-hover/w:opacity-100 data-[on=true]:opacity-100"
-        data-on={selected}
-      >
-        {def.core && <Lock className="mr-1 inline size-2.5 align-[-1px]" />}
-        {def.core ? `${def.name} · main part of the page` : def.name}
-        {w.emphasis === "star" && " · Star"} · {w.w >= COLS ? "full width" : w.w >= 8 ? "two columns" : "one column"}
-      </span>
-      {rule && (
-        <span className="pointer-events-none absolute top-2 right-2 z-10 max-w-[60%] truncate rounded-[3px] bg-[#ff5500] px-1.5 py-0.5 font-mono text-[10px] leading-none font-medium tracking-[0.04em] text-black uppercase">
-          {rule}
+      {/* Name, rule and quick actions sit on the card's top edge, half above it, so they never cover its header. .no-drag keeps
+          clicks on the actions from starting a drag; the actions also show while one of them has keyboard focus. */}
+      <div className="pointer-events-none absolute inset-x-2 top-0 z-20 flex -translate-y-[60%] items-center gap-1 font-[family-name:var(--ff-geist)]">
+        <span
+          className="min-w-0 truncate rounded-md bg-foreground px-1.5 py-0.5 text-[0.65rem] text-background opacity-0 group-hover/w:opacity-100 data-[on=true]:opacity-100"
+          data-on={selected}
+          title={def.name}
+        >
+          {def.core && <Lock className="mr-1 inline size-2.5 align-[-1px]" />}
+          {def.core ? `${def.name} · main part of the page` : def.name}
+          {w.header && Object.keys(w.header).length > 0 && " · own header"}
+          {w.emphasis === "star" && " · Star"} · {expanded ? "full width: nothing fits beside it" : WIDTH.find((o) => o.value === pageWidth(w.w))?.label.toLowerCase()}
         </span>
-      )}
-      {/* Quick actions; .no-drag keeps clicks here from starting a drag */}
-      <div
-        className="no-drag absolute top-2 right-2 z-20 flex items-center gap-0.5 rounded-lg border bg-background p-0.5 font-[family-name:var(--ff-geist)] text-foreground opacity-0 shadow-sm transition-opacity group-hover/w:opacity-100 data-[on=true]:opacity-100"
-        data-on={selected}
-      >
-        {w.hideOnPhone && (
-          <span className="flex items-center gap-1 px-1.5 text-[0.65rem] text-muted-foreground" title="Hidden on phones">
-            <EyeOff className="size-3" />
-          </span>
-        )}
-        {def.core ? (
-          <span className="flex items-center gap-1 px-1.5 py-0.5 text-[0.65rem] text-muted-foreground">
-            <Lock className="size-3" /> Always on this page
-          </span>
-        ) : (
-          <>
-            <Button variant="ghost" size="icon-xs" aria-label={`Duplicate ${def.name}`} onClick={(e) => { e.stopPropagation(); onDuplicate() }}>
-              <Copy />
-            </Button>
-            <Button variant="ghost" size="icon-xs" aria-label={`Remove ${def.name}`} className="hover:text-destructive" onClick={(e) => { e.stopPropagation(); onRemove() }}>
-              <Trash2 />
-            </Button>
-          </>
-        )}
+        <span className="ml-auto" />
+        {rule && <span className="max-w-[45%] shrink-0 truncate rounded-[3px] bg-[#ff5500] px-1.5 py-0.5 font-mono text-[10px] leading-none font-medium tracking-[0.04em] text-black uppercase">{rule}</span>}
+        <div
+          className="no-drag pointer-events-auto flex shrink-0 items-center gap-0.5 rounded-lg border bg-background p-0.5 text-foreground opacity-0 shadow-sm transition-opacity group-hover/w:opacity-100 focus-within:opacity-100 data-[on=true]:opacity-100"
+          data-on={selected}
+        >
+          {w.hideOnPhone && (
+            <span className="flex items-center gap-1 px-1.5 text-[0.65rem] text-muted-foreground" title="Hidden on phones">
+              <EyeOff className="size-3" />
+            </span>
+          )}
+          {def.core ? (
+            <span className="flex items-center gap-1 px-1.5 py-0.5 text-[0.65rem] text-muted-foreground">
+              <Lock className="size-3" /> Always on this page
+            </span>
+          ) : (
+            <>
+              <Button variant="ghost" size="icon-xs" aria-label={`Duplicate ${def.name}`} onClick={(e) => { e.stopPropagation(); onDuplicate() }}>
+                <Copy />
+              </Button>
+              <Button variant="ghost" size="icon-xs" aria-label={`Remove ${def.name}`} className="hover:text-destructive" onClick={(e) => { e.stopPropagation(); onRemove() }}>
+                <Trash2 />
+              </Button>
+            </>
+          )}
+        </div>
       </div>
       <div className="pointer-events-none flex flex-col select-none">
         {available ? (
