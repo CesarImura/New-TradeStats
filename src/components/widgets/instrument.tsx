@@ -987,8 +987,9 @@ export function ShareRows({ rows, className, onFocus }: { rows: { label: React.R
  * tall, stacked (ring on top) in a tall narrow one. The ring sizes to the
  * height in a fixed cell. Put on WCard's bodyClassName; the ring gets RING.
  */
-export const RING_BODY = "flex-row items-center gap-[clamp(1rem,5cqw,2rem)] [@container_card_(max-aspect-ratio:4/5)]:flex-col [@container_card_(max-aspect-ratio:4/5)]:items-stretch"
-export const RING = "w-[min(42%,11.5rem)] shrink-0 self-center [@container_card_(min-height:0px)]:max-w-[calc(100cqh-7.5rem)] [@container_card_(max-aspect-ratio:4/5)]:w-[min(66%,12rem)]"
+// Wide (two or three columns): the ring and its rows stay together in the middle, the rows no longer than they read well.
+export const RING_BODY = "flex-row items-center gap-[clamp(1rem,5cqw,2rem)] [@container_card_(max-aspect-ratio:4/5)]:flex-col [@container_card_(max-aspect-ratio:4/5)]:items-stretch [@container_card_(min-width:40rem)]:justify-center [@container_card_(min-width:40rem)]:gap-12 [@container_card_(min-width:40rem)]:*:max-w-[26rem]"
+export const RING = "w-[min(42%,11.5rem)] [@container_card_(min-width:40rem)]:w-[13rem] shrink-0 self-center [@container_card_(min-height:0px)]:max-w-[calc(100cqh-7.5rem)] [@container_card_(max-aspect-ratio:4/5)]:w-[min(66%,12rem)]"
 
 /** A segmented bar: segments up to the value in the accent (or a tone), the rest faint. `now` marks one segment taller. */
 /** A bar that fills in once, left to right (a clip, so segments and rounded ends keep their shape); still with reduced motion. */

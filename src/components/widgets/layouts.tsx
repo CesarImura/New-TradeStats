@@ -268,13 +268,13 @@ export function MediaCard({
       <div className={cn("flex min-h-0 flex-1 flex-col gap-3 p-4", "[@container_card_(min-aspect-ratio:3/2)]:flex-row @[34rem]:flex-row [@container_card_(min-aspect-ratio:3/2)]:gap-4 @[34rem]:gap-4")}>
         {/* The picture goes before any words when the card runs short (Drop 2.5: after Detailed-only parts, before the rest). */}
         <Drop level={2.5}>
-          {/* A 2:1 tile where the card is as tall as its words, the free height in a fixed cell, the left part when wide. */}
+          {/* A 16:10 tile where the card is as tall as its words, the free height in a fixed cell; wide, the left part at 4:3 (16:11 on a full-width card), so the picture keeps its shape and the words grow with it. */}
           <div
             data-main
             className={cn(
-              "relative aspect-[2/1] shrink-0 overflow-hidden rounded-[max(2px,calc(var(--radius)-7px))] border",
+              "relative aspect-[16/10] shrink-0 overflow-hidden rounded-[max(2px,calc(var(--radius)-7px))] border",
               "[@container_card_(min-height:0px)]:aspect-auto [@container_card_(min-height:0px)]:min-h-20 [@container_card_(min-height:0px)]:flex-1 [@container_card_(max-height:15rem)]:hidden",
-              "[@container_card_(min-aspect-ratio:3/2)]:block @[34rem]:block [@container_card_(min-aspect-ratio:3/2)]:w-[46%] @[34rem]:w-[46%] [@container_card_(min-aspect-ratio:3/2)]:flex-none @[34rem]:flex-none [@container_card_(min-aspect-ratio:3/2)]:aspect-auto @[34rem]:aspect-auto",
+              "[@container_card_(min-aspect-ratio:3/2)]:block @[34rem]:block [@container_card_(min-aspect-ratio:3/2)]:w-[46%] @[34rem]:w-[46%] [@container_card_(min-aspect-ratio:3/2)]:flex-none @[34rem]:flex-none [@container_card_(min-aspect-ratio:3/2)]:aspect-auto @[34rem]:aspect-[4/3] @[56rem]:w-[42%] @[56rem]:aspect-[16/11]",
             )}
             // A hairline edge: the placeholder artwork is near the card's own colour in dark mode.
             style={{ background: MEDIA_BG, borderColor: LINE }}
@@ -299,7 +299,7 @@ export function MediaCard({
             </div>
           )}
           <div className="grid min-w-0 gap-1">
-            <span className={cn("line-clamp-2 font-heading text-xl leading-7 [font-weight:var(--w-title-weight,500)] tracking-tight text-balance", "[@container_card_(min-aspect-ratio:3/2)]:line-clamp-3 @[34rem]:line-clamp-3")}>{title}</span>
+            <span className={cn("line-clamp-2 font-heading text-xl leading-7 [font-weight:var(--w-title-weight,500)] tracking-tight text-balance", "[@container_card_(min-aspect-ratio:3/2)]:line-clamp-3 @[34rem]:line-clamp-3 @[34rem]:text-2xl @[34rem]:leading-8 @[56rem]:text-[2rem] @[56rem]:leading-[2.375rem]")}>{title}</span>
             {sub && (
               <Drop level={2}>
                 <span className={cn(TYPE.body, "line-clamp-2 text-muted-foreground", "[@container_card_(min-aspect-ratio:3/2)]:line-clamp-3 @[34rem]:line-clamp-3")}>{sub}</span>
@@ -340,12 +340,12 @@ export function HeatGrid({ rows, rowLabels, colLabels, className }: { rows: Heat
   const font = useFigureFont()
   const [hover, setHover] = useState<[number, number]>()
   const n = rows[0]?.length ?? 1
-  // Cells grow with the card up to a calm size (2.25rem wide, 2rem tall), then the grid stays centred: no grey slabs on a big card.
-  const grid = { gridTemplateColumns: `2rem repeat(${n}, minmax(0,2.25rem))` }
+  // Cells grow with the card up to a calm size (2.25rem wide, 2rem tall; on a wide card 3.25rem by 2.5rem, on a full-width one 4.5rem by 3rem), then the grid stays centred: no grey slabs.
+  const grid = { gridTemplateColumns: `2rem repeat(${n}, minmax(0,var(--cell-w,2.25rem)))` }
   return (
-    <div className={cn("flex min-h-16 flex-1 flex-col justify-center gap-[3px]", className)} onPointerLeave={() => setHover(undefined)}>
+    <div className={cn("flex min-h-16 flex-1 flex-col justify-center gap-[3px] [@container_card_(min-width:40rem)]:[--cell-w:3.25rem] [@container_card_(min-width:56rem)]:[--cell-w:4.5rem]", className)} onPointerLeave={() => setHover(undefined)}>
       {rows.map((r, ri) => (
-        <div key={ri} className="grid min-h-2 max-h-8 flex-1 justify-center gap-[3px]" style={grid}>
+        <div key={ri} className="grid min-h-2 max-h-8 flex-1 justify-center gap-[3px] [@container_card_(min-width:40rem)]:min-h-8 [@container_card_(min-width:40rem)]:max-h-10 [@container_card_(min-width:56rem)]:min-h-10 [@container_card_(min-width:56rem)]:max-h-12" style={grid}>
           {/* A tight line: the label must not make a row taller than its cells need, or a short card's grid spills. */}
           <span className={cn("self-center truncate text-[0.6875rem] leading-[0.875rem] transition-colors duration-150", hover?.[0] === ri ? "text-foreground" : "text-muted-foreground")} style={{ fontFamily: font }}>
             {rowLabels[ri]}
