@@ -28,15 +28,8 @@ function cssSafe<T>(value: T): T {
   return value
 }
 
-/**
- * Turns a coach theme into CSS. It writes shadcn's own variables, so every
- * shadcn component takes the coach's look without being touched, plus a few
- * rules for the settings shadcn has no variable for (button shape, shadow,
- * density, label style).
- *
- * `scope` is `:root` for the student platform and a class for live previews.
- */
-export function themeToCss(theme: CoachTheme, scope = ":root", engine?: EngineOptions) {
+/** The theme's CSS variables by name: themeToCss writes them, and one widget's own style re-sets a few (widgets/widget-scope.tsx). */
+export function themeVars(theme: CoachTheme, engine?: EngineOptions) {
   const t = cssSafe(theme)
   const p = resolveColors(t, engine)
   const sidebarDark = isDark(p.sidebar)
@@ -167,8 +160,20 @@ export function themeToCss(theme: CoachTheme, scope = ":root", engine?: EngineOp
     "--r-menu": `${Math.max(6, Math.min(Math.round(t.radius * 0.8), 12))}px`,
     "--r-panel": `${Math.max(10, Math.min(t.radius + 4, 18))}px`,
   }
+  return vars
+}
 
-  const body = Object.entries(vars).map(([k, v]) => `${k}:${v};`).join("")
+/**
+ * Turns a coach theme into CSS. It writes shadcn's own variables, so every
+ * shadcn component takes the coach's look without being touched, plus a few
+ * rules for the settings shadcn has no variable for (button shape, shadow,
+ * density, label style).
+ *
+ * `scope` is `:root` for the student platform and a class for live previews.
+ */
+export function themeToCss(theme: CoachTheme, scope = ":root", engine?: EngineOptions) {
+  const t = cssSafe(theme)
+  const body = Object.entries(themeVars(theme, engine)).map(([k, v]) => `${k}:${v};`).join("")
   const within = (sel: string) =>
     scope === ":root" ? sel : scope.split(",").map((p) => `${p.trim()} ${sel}`).join(", ")
   return `

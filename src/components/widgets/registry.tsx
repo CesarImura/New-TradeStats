@@ -812,3 +812,14 @@ export function heightFor(def: WidgetDef, variant?: string, detail?: "compact" |
 
 /** Rows a layout gains (or loses) at a Detail, against its Standard height. */
 export const extraRows = (def: WidgetDef, variant: string | undefined, detail?: "compact" | "standard" | "detailed") => heightFor(def, variant, detail) - lookOf(def, variant).h
+
+/**
+ * Which parts of a widget's own style apply to it (Design → This widget → Style). A picture behind the card only on
+ * content widgets: on charts, tables and figures it would fight the data, so data widgets take a tone only. Image,
+ * Embed and Welcome video are a picture or a player already. Charts and Numbers show only where the widget draws a
+ * bar or gauge, or a headline figure.
+ */
+const IMAGE_OK = new Set(["page-header", "banner", "hero", "text", "button", "countdown", "faq", "links", "announcement", "continue-lesson", "course-progress", "latest-downloads", "partner-links", "coach-profile", "upgrade", "discord"])
+const HAS_CHART = new Set(["continue-lesson", "course-progress", "next-live", "econ-news", "rules-followed", "first-week", "announcement", "discord", "welcome-video", "ai-ask", "book-call", "drawdown", "coach-feedback", "upgrade"])
+const HAS_FIGURE = new Set(["course-progress", "next-live", "econ-news", "journal-pnl", "rules-followed", "my-rank", "discord", "book-call", "drawdown", "coach-feedback", "upgrade", "coach-profile"])
+export const styleParts = (type: string) => ({ image: IMAGE_OK.has(type), chart: HAS_CHART.has(type), figure: HAS_FIGURE.has(type) })

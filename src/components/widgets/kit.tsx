@@ -37,6 +37,10 @@ import { cn } from "@/lib/utils"
 
 export type Emphasis = "quiet" | "accent" | "star"
 export type Detail = "compact" | "standard" | "detailed"
+/** The picture behind one widget's card and how much the card colour covers it (widget-scope.tsx sets it, W draws it). */
+export type WidgetPicture = { style: React.CSSProperties; dim: number }
+export const WidgetPictureContext = createContext<WidgetPicture | null>(null)
+
 const FrameCtx = createContext<{ emphasis: Emphasis; detail: Detail; header?: Partial<WidgetHeader>; note?: WidgetNote; core?: boolean; fixed?: boolean }>({ emphasis: "accent", detail: "standard" })
 
 /** Wraps one placed widget with its Emphasis, Detail, own header parts and own content (note). `core`: the page's own tool, which takes no note. */
@@ -301,6 +305,9 @@ export function W({ children, className, style, brand, row }: { children: React.
   // Inverted Star: the text colour as the card, the brand only as the one mark.
   const inverted = star && !brand && !!theme && starStyleOf(theme) === "inverted"
   const corners = !!theme && widgetFinishOf(theme) === "corners" && !row
+  // This widget's own picture (widget-scope.tsx): under the card colour, never on a Star.
+  const picture = useContext(WidgetPictureContext)
+  const pic = !starred ? picture : null
   const ref = useRef<HTMLDivElement>(null)
   useDropToFit(ref)
   // The card settles in once when it appears (a short rise and fade); with reduced motion it only fades.
@@ -321,6 +328,7 @@ export function W({ children, className, style, brand, row }: { children: React.
         "relative flex h-full min-h-0 flex-col gap-3 overflow-hidden rounded-(--radius) p-[calc(1rem*var(--density,1))]",
         row && "py-2",
         star ? "fx-hero" : "bg-card text-card-foreground",
+        pic && "isolate",
         className,
       )}
       style={
@@ -365,11 +373,19 @@ export function W({ children, className, style, brand, row }: { children: React.
                 // Spotlight: parts that sit on a brand shade on a filled Star (chips, the icon tile, panels) take the card's own shades.
                 // Its edge is every card's (Outline on cards): the Star size of its figure and its brand marks say it is the one Star.
                 ...(spotlight ? { "--brand-shade": "var(--muted)", "--brand-deep": "var(--muted)" } : {}),
+                // On a picture, secondary text moves toward the text colour: the picture under the card colour can shift the ground.
+                ...(pic ? { "--muted-foreground": "color-mix(in oklab, var(--card-foreground) 80%, var(--card))" } : {}),
               }),
           ...style,
         } as React.CSSProperties
       }
     >
+      {pic && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+          <span className="absolute inset-0" style={pic.style} />
+          <span className="absolute inset-0 bg-card" style={{ opacity: pic.dim / 100 }} />
+        </span>
+      )}
       {children}
       {corners && <Corners />}
     </motion.div>

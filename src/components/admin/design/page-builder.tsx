@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/context-menu"
 import { Masonry, PageRenderer, isAvailable } from "@/components/widgets/page-renderer"
 import { WidgetFrame } from "@/components/widgets/kit"
+import { WidgetStyleScope } from "@/components/widgets/widget-scope"
 import { fitWidth, getWidget, heightFor, heightOf, lookOf, pageWidth, widthsFor } from "@/components/widgets/registry"
 import { DataModeProvider, PageIdContext, PageTitleShownContext, type DataMode } from "@/components/widgets/shared"
 import type { Coach } from "@/lib/data/coaches"
@@ -657,6 +658,7 @@ function GridWidget({ w, selected, expanded, available, onRemove, onDuplicate }:
           {def.core && <Lock className="mr-1 inline size-2.5 align-[-1px]" />}
           {def.core ? `${def.name} · main part of the page` : def.name}
           {w.header && Object.keys(w.header).length > 0 && " · own header"}
+          {w.style && Object.values(w.style).some((v) => v !== undefined) && " · own style"}
           {w.emphasis === "star" && " · Star"} · {expanded ? "full width: nothing fits beside it" : WIDTH.find((o) => o.value === pageWidth(w.w))?.label.toLowerCase()}
         </span>
         <span className="ml-auto" />
@@ -688,9 +690,11 @@ function GridWidget({ w, selected, expanded, available, onRemove, onDuplicate }:
       </div>
       <div className="pointer-events-none flex flex-col select-none">
         {available ? (
-          <WidgetFrame emphasis={w.emphasis} detail={w.detail} header={w.header} note={w.note} core={Boolean(def.core)} fixed={false}>
-            <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
-          </WidgetFrame>
+          <WidgetStyleScope type={w.type} style={w.style} emphasis={w.emphasis}>
+            <WidgetFrame emphasis={w.emphasis} detail={w.detail} header={w.header} note={w.note} core={Boolean(def.core)} fixed={false}>
+              <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
+            </WidgetFrame>
+          </WidgetStyleScope>
         ) : (
           <div className="grid place-items-center rounded-(--radius) border border-dashed p-4 text-center text-xs text-muted-foreground">
             {def.name} is hidden: its page is switched off in the Menu step.

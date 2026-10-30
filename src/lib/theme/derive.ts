@@ -46,6 +46,8 @@ export function resolveColors(t: CoachTheme, { fixes = true }: EngineOptions = {
     return { ...p, brandText: t.primary, brandMark: t.primary, profitText: p.profit, lossText: p.loss, panel: p.muted, track: p.border, hair: p.border, invBg: p.foreground, invFg: p.card, invAccent: t.primary }
   if (t.highlight) p = { ...p, highlightForeground: onColor(t.highlight) }
   p = tintNeutrals(p, t.primary, t.tint ?? "brand")
+  // One widget's own tone (widget-scope.tsx): its card, and the ladder, text and marks worked out on it.
+  if (t.cardTone?.startsWith("#")) p = { ...p, card: t.cardTone }
   const ladder = surfaces(t, p)
   p = ladder.palette
   return {
@@ -204,6 +206,16 @@ export function readableOn(color: string, surfaces: string[], min: number) {
     else hi = l
   }
   return best
+}
+
+/** `a` moved `k` (0–1) of the way to `b` in OKLCH, as hex. */
+export function mixHex(a: string, b: string, k: number) {
+  const x = hexToOklch(a)
+  const y = hexToOklch(b)
+  const dh = ((y.h - x.h + 540) % 360) - 180
+  // A grey has no hue of its own: the mix takes the colour's.
+  const h = x.c < 0.02 ? y.h : x.h + dh * k
+  return toHex({ l: x.l + (y.l - x.l) * k, c: x.c + (y.c - x.c) * k, h })
 }
 
 /** OKLCH to hex, pulling chroma in until the colour fits in sRGB. */

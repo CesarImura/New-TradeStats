@@ -111,6 +111,8 @@ export type CoachTheme = {
    * Empty strings mean "not set" (that is how the editor resets them, so the reset survives a save).
    */
   trading?: { profit: string; loss: string }
+  /** Never saved: one widget's own card colour (hex), set while that widget draws (widgets/widget-scope.tsx). */
+  cardTone?: string
 }
 
 const WIDGET_STYLE_DEFAULT: Record<TemplateId, WidgetStyle> = { terminal: "instrument", atelier: "editorial", pulse: "soft" }

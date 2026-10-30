@@ -79,3 +79,14 @@ export function backdropStyle(t: CoachTheme): CSSProperties | null {
 
 /** How much page colour sits over the image, never below the readability minimum. */
 export const dimOf = (t: CoachTheme) => Math.max(MIN_DIM, t.bgDim ?? 70)
+
+/** A picture (upload, web address or a library one) as the CSS for a layer: one widget's own background (widget-scope.tsx). */
+export function pictureOf(src: string): CSSProperties {
+  const id = RETIRED[src] ?? src
+  const preset = id.startsWith("preset:") ? BACKDROPS.find((b) => `preset:${b.id}` === id) : null
+  return { backgroundImage: preset ? preset.css : safeImage(src), backgroundSize: preset ? preset.size : "cover", backgroundPosition: "center" }
+}
+
+/** A widget's picture sits under the card colour at least this much: its text is smaller than the page's, so it needs more cover. */
+export const MIN_WIDGET_DIM = 70
+export const widgetDimOf = (dim?: number) => Math.max(MIN_WIDGET_DIM, dim ?? 80)

@@ -1,6 +1,6 @@
 import type { Coach, ModuleId } from "@/lib/data/coaches"
 import { TEMPLATES } from "@/lib/theme/templates"
-import type { Density, TemplateId, WidgetHeader } from "@/lib/theme/types"
+import type { CardSurface, ChartStyle, Density, FigureStyle, HeaderForm, TemplateId, WidgetHeader } from "@/lib/theme/types"
 
 /**
  * A page's layout is saved on a grid of 12 columns and rows (x, y, w, h). The page itself is a masonry
@@ -33,6 +33,26 @@ export type WidgetNote = {
 export type WidgetPhase = "first-week" | "inactive" | "finished"
 export type WidgetShow = { phase?: WidgetPhase; group?: string }
 
+/** A tone of the theme a widget's card can take instead of the card colour: a touch of the brand or of the highlight. */
+export type WidgetTone = "brand" | "highlight"
+
+/**
+ * This widget's own style (Design → Pages → This widget → Style). Unset parts follow All widgets. A tone or a
+ * picture fills the card; a picture only on content widgets (registry canHaveImage) and always under the card
+ * colour (dim, never below MIN_WIDGET_DIM), so text stays readable. The Star widget keeps its own surface.
+ */
+export type WidgetOwnStyle = {
+  surface?: CardSurface
+  headerForm?: HeaderForm
+  chartStyle?: ChartStyle
+  figureStyle?: FigureStyle
+  tone?: WidgetTone
+  /** A data URL or a library picture ("preset:<id>"). */
+  image?: string
+  /** How much the card colour covers the picture, 0–100. */
+  dim?: number
+}
+
 export type WidgetInstance = {
   id: string
   type: string
@@ -45,6 +65,8 @@ export type WidgetInstance = {
   note?: WidgetNote
   /** Show it only to a phase of the student's life, or to one group. */
   show?: WidgetShow
+  /** This widget's own style; unset parts follow All widgets. */
+  style?: WidgetOwnStyle
   x: number
   y: number
   w: number

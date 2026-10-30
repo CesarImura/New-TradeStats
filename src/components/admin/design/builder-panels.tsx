@@ -7,18 +7,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { fitWidth, getWidget, heightFor, librarySections, lookOf, pageWidth, widthsFor, type WidgetDef } from "@/components/widgets/registry"
+import { fitWidth, getWidget, heightFor, librarySections, lookOf, pageWidth, styleParts, widthsFor, type WidgetDef } from "@/components/widgets/registry"
 import { WidgetFrame } from "@/components/widgets/kit"
 import { DataModeProvider } from "@/components/widgets/shared"
 import { useGroups } from "@/lib/data/access"
 import type { Coach } from "@/lib/data/coaches"
 import { pictureFrom } from "@/lib/images"
-import { COLS, ROW_HEIGHT, type Detail, type Emphasis, type PageId, type WidgetInstance, type WidgetNote, type WidgetPhase } from "@/lib/widgets/layout"
+import { COLS, ROW_HEIGHT, type Detail, type Emphasis, type PageId, type WidgetInstance, type WidgetNote, type WidgetOwnStyle, type WidgetPhase } from "@/lib/widgets/layout"
+import { BACKDROPS, MIN_WIDGET_DIM, widgetDimOf } from "@/lib/theme/backdrops"
 import { cn } from "@/lib/utils"
-import { Field, Segmented } from "./controls"
+import { Field, Segmented, SliderField } from "./controls"
 import { useDesign } from "./design-fields"
 import { HeaderParts } from "./header-parts"
-import { chartStyleOf, figureStyleOf, headerFormOf, widgetFontOf, widgetHeaderOf, widgetSetOf } from "@/lib/theme/types"
+import { chartStyleOf, figureStyleOf, headerFormOf, widgetFontOf, widgetHeaderOf, widgetSetOf, type CardSurface, type ChartStyle, type FigureStyle, type HeaderForm } from "@/lib/theme/types"
 import { CARD, CARD_IDLE, CARD_ON, EASE, card, chip as chipState } from "./states"
 
 /** Per-widget Emphasis and Detail (see the rules in widgets/kit.tsx). Shared with the grid's right-click menu. */
@@ -651,6 +652,142 @@ function Scope({ own, from = "Default", onReset }: { own: boolean; from?: string
   )
 }
 
+const SURFACES: { value: CardSurface; label: string; hint: string }[] = [
+  { value: "raised", label: "Raised", hint: "The card colour, standing on the page" },
+  { value: "grey", label: "Grey", hint: "A flat grey card on the page colour" },
+  { value: "outline", label: "Outline", hint: "No fill, a fine line around it" },
+]
+const HEADER_FORMS: { value: HeaderForm; label: string }[] = (Object.keys(HEADER_NAME) as HeaderForm[]).map((value) => ({ value, label: HEADER_NAME[value] }))
+const CHARTS: { value: ChartStyle; label: string }[] = (Object.keys(CHART_NAME) as ChartStyle[]).map((value) => ({ value, label: CHART_NAME[value] }))
+const FIGURES: { value: FigureStyle; label: string }[] = (["plain", "marked", "display", "mono"] as const).map((value) => ({ value, label: NUMBER_NAME[value] }))
+type Fill = "card" | "brand" | "highlight" | "image"
+const FILL_HINT: Record<Fill, string> = {
+  card: "The card colour, as every widget has it",
+  brand: "A touch of your brand colour in the card",
+  highlight: "A touch of your highlight colour in the card",
+  image: "A picture under the card colour, so the text stays readable",
+}
+
+/**
+ * This widget's own style: Card, Names, Charts and Numbers instead of All widgets (each with the way back), and its
+ * background: a tone of the theme, or on content widgets a picture under the card colour. Charts and Numbers show
+ * only on widgets that draw them; a Star keeps its own surface, so its background can't change.
+ */
+function OwnStyleFields({ w, pinned, onChange }: { w: WidgetInstance; pinned?: boolean; onChange: (patch: Partial<WidgetInstance>, key: string) => void }) {
+  const { theme } = useDesign()
+  const file = useRef<HTMLInputElement>(null)
+  const own = w.style ?? {}
+  const parts = styleParts(w.type)
+  const set = (patch: Partial<WidgetOwnStyle>, key: string) => {
+    const next = Object.fromEntries(Object.entries({ ...own, ...patch }).filter(([, v]) => v !== undefined && v !== "")) as WidgetOwnStyle
+    onChange({ style: Object.keys(next).length ? next : undefined }, `${w.id}-style-${key}`)
+  }
+  const star = w.emphasis === "star"
+  const fill: Fill = own.image && parts.image ? "image" : (own.tone ?? "card")
+  const fills: { value: Fill; label: string }[] = [
+    { value: "card", label: "Card" },
+    { value: "brand", label: "Brand" },
+    { value: "highlight", label: "Highlight" },
+    ...(parts.image ? [{ value: "image" as const, label: "Image" }] : []),
+  ]
+  const surface = own.surface ?? theme.cardSurface ?? "raised"
+  const figure = own.figureStyle ?? (widgetFontOf(theme) === "mono" ? "mono" : figureStyleOf(theme))
+  const uploaded = own.image && !own.image.startsWith("preset:") ? own.image : undefined
+  return (
+    <>
+      <Scoped label="Card" scope={<Scope own={!!own.surface} from="From all widgets" onReset={() => set({ surface: undefined }, "surface")} />}>
+        <Segmented label="Card" value={surface} options={SURFACES} onChange={(v) => set({ surface: v }, "surface")} />
+        <p className="text-xs text-muted-foreground">{SURFACES.find((o) => o.value === surface)?.hint}</p>
+      </Scoped>
+      {!pinned && (
+        <Scoped label="Name" scope={<Scope own={!!own.headerForm} from="From all widgets" onReset={() => set({ headerForm: undefined }, "header-form")} />}>
+          <Segmented label="Name" value={own.headerForm ?? headerFormOf(theme)} options={HEADER_FORMS} onChange={(v) => set({ headerForm: v }, "header-form")} />
+        </Scoped>
+      )}
+      {parts.chart && (
+        <Scoped label="Bars and gauges" scope={<Scope own={!!own.chartStyle} from="From all widgets" onReset={() => set({ chartStyle: undefined }, "chart")} />}>
+          <Segmented label="Bars and gauges" value={own.chartStyle ?? chartStyleOf(theme)} options={CHARTS} onChange={(v) => set({ chartStyle: v }, "chart")} />
+        </Scoped>
+      )}
+      {parts.figure && (
+        <Scoped label="Headline number" scope={<Scope own={!!own.figureStyle} from="From all widgets" onReset={() => set({ figureStyle: undefined }, "figure")} />}>
+          <Segmented label="Headline number" value={figure} options={FIGURES} onChange={(v) => set({ figureStyle: v }, "figure")} />
+        </Scoped>
+      )}
+      <Scoped label="Background" scope={<Scope own={fill !== "card"} onReset={() => set({ tone: undefined, image: undefined, dim: undefined }, "fill")} />}>
+        {star ? (
+          <p className="rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">The Star widget keeps its own surface. Set Emphasis to Accent or Quiet to give it a background.</p>
+        ) : (
+          <>
+            <Segmented
+              label="Background"
+              value={fill}
+              options={fills}
+              onChange={(v) =>
+                v === "image"
+                  ? set({ tone: undefined, image: own.image ?? `preset:${BACKDROPS[0].id}` }, "fill")
+                  : set({ tone: v === "card" ? undefined : v, image: undefined, dim: undefined }, "fill")
+              }
+            />
+            <p className="text-xs text-muted-foreground">{FILL_HINT[fill]}</p>
+            {!parts.image && <p className="text-xs text-muted-foreground">Pictures go on content widgets only: behind charts and figures they would get in the way of the data.</p>}
+            {fill === "image" && (
+              <>
+                <div className="grid grid-cols-4 gap-2">
+                  {BACKDROPS.map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => set({ image: `preset:${b.id}` }, "image")}
+                      aria-pressed={own.image === `preset:${b.id}`}
+                      className={cn("grid gap-1 p-1 text-left text-[0.7rem]", card(own.image === `preset:${b.id}`))}
+                    >
+                      <span className="aspect-[4/3] rounded-[4px] bg-[#0b0c10] ring-1 ring-white/10" style={{ backgroundImage: b.css, backgroundSize: "cover", backgroundPosition: "center" }} />
+                      <span className="truncate px-0.5 text-muted-foreground">{b.name}</span>
+                    </button>
+                  ))}
+                  <button type="button" onClick={() => file.current?.click()} aria-pressed={!!uploaded} className={cn("grid gap-1 p-1 text-left text-[0.7rem]", card(!!uploaded))}>
+                    <span className="grid aspect-[4/3] place-items-center rounded-[4px] border border-dashed bg-cover bg-center" style={uploaded ? { backgroundImage: `url("${uploaded}")` } : undefined}>
+                      {!uploaded && <ImagePlus className="size-4 text-muted-foreground" />}
+                    </span>
+                    <span className="truncate px-0.5 text-muted-foreground">{uploaded ? "Yours" : "Upload"}</span>
+                  </button>
+                </div>
+                <input
+                  ref={file}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0]
+                    e.target.value = ""
+                    if (!f) return
+                    try {
+                      // A card is small: 1200px wide is plenty, as a JPEG.
+                      set({ image: await pictureFrom(f, { max: 1200, side: "width", quality: 0.8, keep: [] }) }, "image")
+                    } catch (err) {
+                      toast.error((err as Error).message)
+                    }
+                  }}
+                />
+                <SliderField
+                  label="Readability"
+                  value={widgetDimOf(own.dim)}
+                  min={MIN_WIDGET_DIM}
+                  max={95}
+                  unit="%"
+                  format={(v) => `${v}% card colour on top`}
+                  onChange={(dim) => set({ dim }, "dim")}
+                />
+              </>
+            )}
+          </>
+        )}
+      </Scoped>
+    </>
+  )
+}
+
 /** A block of the widget's panel: Content, Size and place, Style, Who sees it. */
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -732,14 +869,20 @@ export function WidgetSettings({
   const defaultW = fitWidth(def, first, start?.w ?? def.defaultW)
   const ownLayout = look.value !== first
   const ownWidth = width !== pageWidth(fitWidth(def, w.variant, start?.w ?? def.defaultW))
-  const changed = ownLayout || detail !== baseDetail || emphasis !== baseEmphasis || ownHeader || ownWidth
+  const own = w.style ?? {}
+  const ownStyle = Object.values(own).some((v) => v !== undefined)
+  const changed = ownLayout || detail !== baseDetail || emphasis !== baseEmphasis || ownHeader || ownWidth || ownStyle
   const set = widgetSetOf(theme)
+  // What this widget still takes from All widgets: the parts it set itself show above, with their own scope.
+  const parts = styleParts(w.type)
   const shared = [
-    SURFACE_NAME[set === "open" ? "open" : (theme.cardSurface ?? "raised")],
-    `${HEADER_NAME[headerFormOf(theme)]} names`,
-    `${CHART_NAME[chartStyleOf(theme)]} bars`,
-    `${NUMBER_NAME[widgetFontOf(theme) === "mono" ? "mono" : figureStyleOf(theme)]} numbers`,
-  ].join(" · ")
+    !own.surface && SURFACE_NAME[set === "open" ? "open" : (theme.cardSurface ?? "raised")],
+    !own.headerForm && `${HEADER_NAME[headerFormOf(theme)]} names`,
+    parts.chart && !own.chartStyle && `${CHART_NAME[chartStyleOf(theme)]} bars`,
+    parts.figure && !own.figureStyle && `${NUMBER_NAME[widgetFontOf(theme) === "mono" ? "mono" : figureStyleOf(theme)]} numbers`,
+  ]
+    .filter(Boolean)
+    .join(" · ")
   return (
     <div className="grid gap-6 p-5">
       {head ?? (
@@ -881,12 +1024,13 @@ export function WidgetSettings({
             </p>
           </Scoped>
         )}
+        <OwnStyleFields w={w} pinned={pinned} onChange={onChange} />
         <div className="grid gap-1.5 rounded-lg bg-muted/60 p-3">
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span aria-hidden className="size-1.5 rounded-full border border-muted-foreground" />
             From all widgets, the same for every widget
           </span>
-          <span className="text-[0.8rem]">{shared}</span>
+          {shared && <span className="text-[0.8rem]">{shared}</span>}
           <Button variant="ghost" size="sm" className="-ml-2 w-fit" onClick={onAllWidgets}>
             Change for all widgets <ArrowRight />
           </Button>
@@ -936,10 +1080,10 @@ export function WidgetSettings({
           size="sm"
           className="ml-auto"
           disabled={!changed}
-          title="Layout, width, detail, emphasis and header back to the default. Its content stays."
+          title="Layout, width, detail, emphasis, header and style back to the default. Its content stays."
           onClick={() => {
             // One change, so one undo brings it all back. Content, visibility and phones stay.
-            onChange({ variant: first, w: pinned ? w.w : defaultW, h: heightFor(def, first, start?.detail), detail: start?.detail, emphasis: start?.emphasis, header: start?.header }, `${w.id}-reset-widget`)
+            onChange({ variant: first, w: pinned ? w.w : defaultW, h: heightFor(def, first, start?.detail), detail: start?.detail, emphasis: start?.emphasis, header: start?.header, style: start?.style }, `${w.id}-reset-widget`)
             toast("This widget is back to its default look.", { description: "Its content stays. Press ⌘Z to undo." })
           }}
         >

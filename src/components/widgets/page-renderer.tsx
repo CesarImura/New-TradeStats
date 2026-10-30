@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { Fragment, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { WidgetFrame } from "./kit"
 import { getWidget, heightFor } from "./registry"
+import { WidgetStyleScope } from "./widget-scope"
 import { PageIdContext, PageTitleShownContext, usePhase } from "./shared"
 import { useViewerGroup } from "@/lib/data/access"
 
@@ -275,8 +276,10 @@ function WidgetView({ w, live }: { w: WidgetInstance; live?: boolean }) {
   if (!def) return null
   const C = def.Component
   return (
-    <WidgetFrame emphasis={w.emphasis} detail={w.detail} header={w.header} note={w.note} core={Boolean(def.core)} fixed={false} live={live}>
-      <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
-    </WidgetFrame>
+    <WidgetStyleScope type={w.type} style={w.style} emphasis={w.emphasis}>
+      <WidgetFrame emphasis={w.emphasis} detail={w.detail} header={w.header} note={w.note} core={Boolean(def.core)} fixed={false} live={live}>
+        <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
+      </WidgetFrame>
+    </WidgetStyleScope>
   )
 }
