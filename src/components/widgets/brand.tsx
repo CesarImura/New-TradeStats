@@ -94,6 +94,9 @@ function VideoFit({ length, className }: { length: string; className?: string })
       if (stack) stack.style.minHeight = w < 420 ? "auto" : ""
     })
     ro.observe(el)
+    // The card can turn the words from under the video to beside it (a row): watch it too, or a box sized while it was a
+    // column keeps that column's basis in the row and stays 0 wide.
+    if (el.parentElement) ro.observe(el.parentElement)
     return () => ro.disconnect()
   }, [])
   return (

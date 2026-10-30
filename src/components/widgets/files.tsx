@@ -53,7 +53,7 @@ export function LatestDownloads({ variant = "list", props }: WidgetProps) {
   if (variant === "tiles") {
     return (
       <WCard icon={Download} title={title} meta={`${items.length} files`}>
-        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2 @xl:grid-cols-4">
+        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2 @xl:grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]">
           {shown.map((d, i) => (
             <Drop key={d.id} level={tileDrop(i)}>
               <Link href={href} className={cn("relative flex min-h-0 flex-col gap-1.5 rounded-[min(var(--radius),8px)] border bg-card p-2", FX.tile, FX.focus)}>

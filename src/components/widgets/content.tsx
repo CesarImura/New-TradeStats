@@ -42,6 +42,12 @@ export function Picture({ src, alt, label, flush, className }: { src?: unknown; 
 
 // ---------- Image
 
+/**
+ * A picture on a card as tall as its content gets flatter as the card gets wider (16:9, then 2:1 from two columns, 5:2 at
+ * full width), so a full-width picture is a band, not a wall. Players stay 16:9.
+ */
+const WIDE_PICTURE = "[@container_card_(min-width:40rem)]:aspect-[2/1] [@container_card_(min-width:56rem)]:aspect-[5/2]"
+
 /** Image: cover (the picture is the card), caption (picture and a line under it), side (picture left, words right). */
 export function ImageBlock({ variant = "cover", props }: WidgetProps) {
   const more = useMore("standard")
@@ -55,7 +61,7 @@ export function ImageBlock({ variant = "cover", props }: WidgetProps) {
         {/* Wide and short: the caption beside the picture rather than a thin line under a letterbox. (The query sits on a child: a container can't ask about itself.) */}
         <div className="flex min-h-0 flex-1 flex-col gap-2.5 [@container_card_(min-aspect-ratio:5/2)]:flex-row [@container_card_(min-aspect-ratio:5/2)]:items-center">
           {/* min-h-0: in a short cell the picture gives up height so the caption stays whole. */}
-          <Picture src={props.image} alt={caption} className="aspect-video min-h-0 flex-1 [@container_card_(min-aspect-ratio:5/2)]:h-full [@container_card_(min-aspect-ratio:5/2)]:flex-none" />
+          <Picture src={props.image} alt={caption} className={cn("aspect-video min-h-0 flex-1 [@container_card_(min-aspect-ratio:5/2)]:h-full [@container_card_(min-aspect-ratio:5/2)]:flex-none", WIDE_PICTURE)} />
           <div className="grid min-w-0 shrink-0 gap-0.5 px-1 [@container_card_(min-aspect-ratio:5/2)]:flex-1">
             <span className={cn(title ? TYPE.title : TYPE.body, "line-clamp-1")}>{caption}</span>
             {title && text && more && <span className={cn(TYPE.small, "line-clamp-1")}>{text}</span>}
@@ -78,7 +84,7 @@ export function ImageBlock({ variant = "cover", props }: WidgetProps) {
 
   return (
     <W className="gap-0 p-0">
-      <Picture flush src={props.image} alt={title || text || SAMPLE_CAPTION} label={title || text || SAMPLE_CAPTION} className="aspect-video flex-1" />
+      <Picture flush src={props.image} alt={title || text || SAMPLE_CAPTION} label={title || text || SAMPLE_CAPTION} className={cn("aspect-video flex-1", WIDE_PICTURE)} />
     </W>
   )
 }
@@ -257,7 +263,7 @@ export function Hero({ variant = "image", props }: WidgetProps) {
 
   return (
     <W className="gap-0 p-0">
-      {variant === "video" ? <VideoThumb className="aspect-video flex-1 rounded-none" /> : <Picture flush src={props.image} alt={title} className="aspect-video flex-1" />}
+      {variant === "video" ? <VideoThumb className={cn("aspect-video flex-1 rounded-none", WIDE_PICTURE)} /> : <Picture flush src={props.image} alt={title} className={cn("aspect-video flex-1", WIDE_PICTURE)} />}
       <div className="flex min-w-0 shrink-0 flex-col gap-3 bg-card p-[calc(1rem*var(--density,1))] @lg:flex-row @lg:items-end @lg:justify-between">
         <HeroWords props={props} />
       </div>
