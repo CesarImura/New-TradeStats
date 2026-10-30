@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, Download, ChartCandlestick, MessagesSquare, NotebookPen, CalendarDays, CircleCheck, Gauge, GraduationCap, Handshake, Image as ImageIcon, LineChart, Megaphone, MessageSquareText, Newspaper, PlayCircle, Radio, Sparkles, Trophy, Type, Video, BadgeCheck, CalendarClock, MessageSquareReply, ShieldAlert, CircleHelp, Link2, type LucideIcon } from "@/components/icons"
+import { ArrowRight, BookOpen, Download, GalleryHorizontal, ChartCandlestick, MessagesSquare, NotebookPen, CalendarDays, CircleCheck, Gauge, GraduationCap, Handshake, Image as ImageIcon, LineChart, Megaphone, MessageSquareText, Newspaper, PlayCircle, Radio, Sparkles, Trophy, Type, Video, BadgeCheck, CalendarClock, MessageSquareReply, ShieldAlert, CircleHelp, Link2, type LucideIcon } from "@/components/icons"
 import { isPageId, type ModuleId } from "@/lib/data/coaches"
 import { CORE_H, COLS, coreType, type PageId } from "@/lib/widgets/layout"
 import { corePage } from "./core"
@@ -16,6 +16,7 @@ import { CoachProfile, Upgrade } from "./offer"
 import type { WidgetProps } from "./shared"
 import { Drawdown } from "./trading"
 import { NEW_WIDGETS } from "./more/registry"
+import { Shelf } from "./media"
 
 export type WidgetGroup = "Learning" | "Calendar" | "Journal" | "Coaching" | "Progress" | "Community" | "Your content" | "Coach and brand" | "AI" | "Page"
 
@@ -105,6 +106,65 @@ export const WIDGETS: WidgetDef[] = [
     defaultW: 8,
     minW: 4,
     Component: ContinueLesson,
+  },
+  {
+    type: "shelf",
+    name: "Shelf",
+    description: "Posters of your courses, lessons or files, in a row, a carousel or a grid",
+    group: "Learning",
+    icon: GalleryHorizontal,
+    variants: [
+      { value: "row", label: "Row", h: 6, minH: 4, maxH: 8, minW: 4, maxW: 12 },
+      { value: "carousel", label: "Carousel", h: 7, minH: 5, maxH: 9, minW: 8, maxW: 12 },
+      { value: "grid", label: "Grid", h: 8, minH: 4, maxH: 12, minW: 4, maxW: 12 },
+    ],
+    settings: [
+      { key: "title", label: "Title", type: "text", placeholder: "Courses" },
+      {
+        key: "source",
+        label: "Show",
+        type: "select",
+        options: [
+          { value: "courses", label: "Courses" },
+          { value: "lessons", label: "Continue watching" },
+          { value: "downloads", label: "Downloads" },
+        ],
+      },
+      {
+        key: "shape",
+        label: "Poster shape",
+        type: "select",
+        options: [
+          { value: "", label: "Best for what it shows" },
+          { value: "portrait", label: "Portrait" },
+          { value: "landscape", label: "Landscape" },
+          { value: "square", label: "Square" },
+        ],
+      },
+      {
+        key: "words",
+        label: "Words",
+        type: "select",
+        options: [
+          { value: "over", label: "On the picture" },
+          { value: "below", label: "Under the picture" },
+        ],
+      },
+      {
+        key: "nav",
+        label: "Carousel shows",
+        type: "select",
+        options: [
+          { value: "dots", label: "Dots" },
+          { value: "counter", label: "Counter (3 / 8)" },
+          { value: "none", label: "Arrows only" },
+        ],
+      },
+      { key: "autoplay", label: "Carousel moves on its own", type: "toggle" },
+    ],
+    defaultW: 12,
+    minW: 4,
+    Component: Shelf,
   },
   {
     type: "course-progress",
@@ -411,6 +471,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "image", label: "Picture", h: 6, minH: 4, maxH: 8, minW: 6, maxW: 12 },
       { value: "video", label: "Video", h: 6, minH: 4, maxH: 8, minW: 6, maxW: 12 },
       { value: "split", label: "Split", h: 5, minH: 4, maxH: 5, minW: 6, maxW: 12 },
+      { value: "featured", label: "Featured", h: 8, minH: 6, maxH: 10, minW: 8, maxW: 12 },
     ],
     settings: [
       { key: "image", label: "Picture", type: "image" },
@@ -729,7 +790,7 @@ for (const c of CORE) {
 
 /** Widgets offered first on each module page; Home offers every widget. */
 export const PAGE_WIDGETS: Record<ModuleId, string[]> = {
-  courses: ["continue-lesson", "course-progress"],
+  courses: ["continue-lesson", "course-progress", "shelf"],
   calendar: ["next-live", "econ-news", "watchlist", "book-call"],
   charts: ["econ-news", "journal-pnl", "watchlist", "open-positions"],
   journal: ["journal-pnl", "rules-followed", "drawdown", "recent-trades", "open-positions", "r-distribution", "pnl-by-instrument", "pnl-by-weekday", "win-rate-trend", "check-in", "goals", "trading-streak", "coach-feedback", "ai-ask"],
@@ -740,7 +801,7 @@ export const PAGE_WIDGETS: Record<ModuleId, string[]> = {
   partners: ["partner-links"],
 }
 /** Widgets that make sense on any page. */
-export const ANYWHERE = ["page-header", "text", "image", "button", "banner", "embed", "hero", "faq", "links", "countdown", "welcome-video", "announcement", "upgrade", "partner-links", "latest-downloads", "coach-profile", "book-call"]
+export const ANYWHERE = ["page-header", "text", "image", "button", "banner", "embed", "hero", "faq", "links", "countdown", "welcome-video", "announcement", "upgrade", "partner-links", "latest-downloads", "coach-profile", "book-call", "shelf"]
 
 /** The library for a page, in sections. Home: by group, as before. */
 export function librarySections(page: PageId): { title: string; types: string[] }[] {

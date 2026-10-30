@@ -94,6 +94,8 @@ import {
   Security as CSecurity,
   Send as CSend,
   Settings as CSettings,
+  Share as CShare,
+  CarouselHorizontal as CCarouselHorizontal,
   ShieldAlert as CShieldAlert,
   Shuffle as CShuffle,
   SidePanelOpen as CSidePanelOpen,
@@ -261,6 +263,8 @@ export const Search = i(CSearch, "Search")
 export const SearchIcon = Search
 export const Send = i(CSend, "Send")
 export const Settings = i(CSettings, "Settings")
+export const Share = i(CShare, "Share")
+export const GalleryHorizontal = i(CCarouselHorizontal, "GalleryHorizontal")
 export const Shield = i(CSecurity, "Shield")
 export const ShieldAlert = i(CShieldAlert, "ShieldAlert")
 export const Shuffle = i(CShuffle, "Shuffle")

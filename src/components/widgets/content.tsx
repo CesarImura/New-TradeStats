@@ -11,6 +11,7 @@ import { VideoThumb, ctaLink, webUrl } from "./brand"
 import { Chip, Label, Rolling, WCard, useFigureFont } from "./instrument"
 import { ChipMore, CTA, Drop, FitChips, FitText, FX, TYPE, useBrokenImage, useFrame, useMore, W, GROW_ROWS } from "./kit"
 import { MediaCard } from "./layouts"
+import { Featured } from "./media"
 import { Cover, type WidgetProps } from "./shared"
 
 // The coach's own content: pictures, buttons, embeds and a hero. These are the
@@ -246,9 +247,11 @@ function HeroWords({ props, split }: { props: WidgetProps["props"]; split?: bool
   )
 }
 
-/** Hero: image and video (the picture fills the card, the words on a solid strip under it), split (picture beside the words, stacked when narrow). */
+/** Hero: image and video (the picture fills the card, the words on a solid strip under it), split (picture beside the words, stacked when narrow), featured (full-width slides, media.tsx). */
 export function Hero({ variant = "image", props }: WidgetProps) {
   const title = String(props.title || "Trade with a plan")
+
+  if (variant === "featured") return <Featured props={props} />
 
   if (variant === "split") {
     return (
