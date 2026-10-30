@@ -219,6 +219,7 @@ export function Banner({ variant = "headline", props }: WidgetProps) {
   const { coach, base } = useCoach()
   const more = useMore("standard")
   const detailed = useMore("detailed")
+  const { fixed } = useFrame()
   const title = String(props.title || "Inner Circle opens on 1 November")
   const text = String(props.text || "Small group, weekly 1:1 reviews, and the full playbook.")
   const eyebrow = String(props.eyebrow || "Limited places")
@@ -271,10 +272,11 @@ export function Banner({ variant = "headline", props }: WidgetProps) {
 
   if (variant === "picture") {
     return (
-      <WCard flush crumb={coach.org} title={eyebrow} chip={detailed ? <Chip tone="neutral">{coach.name}</Chip> : undefined} bodyClassName="flex-row items-stretch gap-4">
-        <Cover className="hidden aspect-[4/3] h-full shrink-0 @lg:block" />
+      <WCard flush crumb={coach.org} title={eyebrow} chip={detailed ? <Chip tone="neutral">{coach.name}</Chip> : undefined} bodyClassName="flex-col gap-3 @lg:flex-row @lg:items-stretch @lg:gap-4">
+        {/* Narrow: the picture becomes a strip over the words (a card as tall as its content has room for it; a fixed cell doesn't). */}
+        <Cover className={cn("aspect-[5/2] w-full shrink-0", fixed ? "hidden @lg:block @lg:aspect-[4/3] @lg:h-full @lg:w-auto" : "block @lg:aspect-auto @lg:min-h-24 @lg:w-[28%] @lg:max-w-56")} />
         {/* Wide: the words and the button side by side, so a short banner still fits both. */}
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 @3xl:flex-row @3xl:items-center @3xl:justify-between @3xl:gap-6">
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 @4xl:flex-row @4xl:items-center @4xl:justify-between @4xl:gap-6">
           {words}
           {cta}
         </div>
