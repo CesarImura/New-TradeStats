@@ -533,8 +533,9 @@ function WidgetDetails({
   const [detail, setDetail] = useState<Detail>("standard")
   const [props, setProps] = useState<Record<string, string | boolean>>({})
   const widths = widthsFor(def, variant)
-  const choices = def.settings?.filter((s) => s.type === "toggle" || s.type === "select") ?? []
-  const more = (def.settings?.length ?? 0) > choices.length
+  const settings = settingsFor(def, variant)
+  const choices = settings.filter((s) => s.type === "toggle" || s.type === "select")
+  const more = settings.length > choices.length
   const top = useRef<HTMLDivElement>(null)
   // The preview and each layout drag onto the page as chosen here (a layout with its own width, if the size does not fit it).
   const drag = (v: string) => ({

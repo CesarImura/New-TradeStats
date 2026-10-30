@@ -142,10 +142,11 @@ export function WidgetGrid({
   }, [width])
   return (
     <div ref={box} className={cn("@container", className)}>
-      <div className="g-page relative" data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ "--gap": `${gap}px`, height: placed.height } as React.CSSProperties}>
+      <div className={cn("g-page relative", !width && "flex flex-col gap-(--gap)")} data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ "--gap": `${gap}px`, height: width ? placed.height : undefined } as React.CSSProperties}>
         {shown.map((w) => {
           const s = placed.spots.get(w.id)!
-          const style: React.CSSProperties = {
+          // Until the page has been measured (server HTML, first paint) cards stack in the flow at full width, not at width 0.
+          const style: React.CSSProperties | undefined = !width ? undefined : {
             position: "absolute",
             left: s.col * (colWidth + gap),
             top: s.top,

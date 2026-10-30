@@ -109,7 +109,7 @@ export function MediaCardsEditor({
           {label} <span className="text-muted-foreground tabular-nums">{list.filter((e) => !e.hidden).length}</span>
         </span>
         {saved && (
-          <Button variant="ghost" size="sm" className="-mr-2 h-7 text-muted-foreground" onClick={() => onProps({ cards: "" }, "cards-reset")} title={kind === "hero" ? "Back to your courses" : "Back to the source as it is"}>
+          <Button variant="ghost" size="sm" className="-mr-2 h-7 text-muted-foreground" onClick={() => onProps({ cards: "", ...Object.fromEntries(list.map((e) => [imgKey(e.id), ""])) }, "cards-reset")} title={kind === "hero" ? "Back to your courses" : "Back to the source as it is"}>
             <RotateCcw className="size-3.5" /> Reset
           </Button>
         )}
@@ -124,7 +124,8 @@ export function MediaCardsEditor({
           return (
             <li
               key={e.id}
-              draggable
+              // Not while open: a press and drag in its fields selects text instead of moving the card (the arrows still move it).
+              draggable={!expanded}
               onDragStart={(ev) => {
                 setDrag(i)
                 ev.dataTransfer.effectAllowed = "move"

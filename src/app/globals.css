@@ -230,14 +230,15 @@
 
 /* Widget set (Design → Widgets → Card). Cards need nothing here (lib/theme/css.ts). Open: no box at all, no fill and no
    line, so the page shows through and widgets are set apart by the gap alone (Outline is the one with a fine line).
-   The page title and the page's own tool (g-plain) are untouched, and the Star widget keeps its brand fill. (Sheet is
+   The page title and the page's own tool (g-plain) are untouched, the Star widget keeps its brand fill, and a widget
+   that chose its own card (This widget → surface, tone or picture: data-own-card) keeps it. (Sheet is
    retired for now: widgetSetOf draws a design saved with it as Cards.) */
-.g-page[data-set="open"] .g-item:not(.g-plain) [data-slot="widget"],
+.g-page[data-set="open"] .g-item:not(.g-plain):not(:has([data-own-card])) [data-slot="widget"],
 .hb-set[data-set="open"] .react-grid-item:not(.g-plain) [data-slot="widget"] {
   --card-shadow: none;
   --card-edge: transparent;
 }
-.g-page[data-set="open"] .g-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]),
+.g-page[data-set="open"] .g-item:not(.g-plain):not(:has([data-own-card])) [data-slot="widget"]:not([data-emphasis="star"]),
 .hb-set[data-set="open"] .react-grid-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]) {
   background: transparent;
   border-radius: var(--radius);

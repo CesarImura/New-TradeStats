@@ -77,7 +77,8 @@ export function WidgetStyleScope({ type, style, emphasis, children }: { type: st
   return (
     <CoachContext.Provider value={{ ...ctx, theme: own }}>
       <WidgetPictureContext.Provider value={picture}>
-        <div className="contents" style={vars}>
+        {/* data-own-card: the widget chose its own card (surface, tone or picture), so an Open page still draws it (globals.css). */}
+        <div className="contents" style={vars} data-own-card={style?.surface || own.cardTone || picture ? "" : undefined}>
           {children}
         </div>
       </WidgetPictureContext.Provider>

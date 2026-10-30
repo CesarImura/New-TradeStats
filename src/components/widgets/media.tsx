@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import useEmblaCarousel from "embla-carousel-react"
 import type { EmblaCarouselType } from "embla-carousel"
@@ -15,6 +15,7 @@ import { categoryLabel, isRecent, useDownloads } from "@/lib/data/downloads"
 import { cn } from "@/lib/utils"
 import { ACCENT, CTA, MOTION, TYPE, W, series, useFrame, useMore } from "./kit"
 import { WCard } from "./instrument"
+import { webUrl } from "./brand"
 import { WidgetEmpty, inWords, useEmpty, type WidgetProps } from "./shared"
 
 // Media widgets: posters in a row, a carousel or a grid (Shelf), and a full-width Featured hero (content.tsx Hero).
@@ -117,7 +118,7 @@ const words = (s?: string) =>
     .filter(Boolean)
 
 /** Where a card or button goes: one of the coach's pages, or a web address. */
-export const hrefOf = (base: string, target?: string, url?: string) => (target === "url" ? url || "#" : `${base}/${target || "courses"}`)
+export const hrefOf = (base: string, target?: string, url?: string) => (target === "url" ? (webUrl(url)?.href ?? "#") : `${base}/${target || "courses"}`)
 
 /**
  * The cards in the coach's order: each saved entry over the item it points at, the coach's own cards as they are,
@@ -206,11 +207,22 @@ function Art({ item, shape = "portrait", typeset, className }: { item: MediaItem
 }
 
 /** A row of posters agrees on one title size (each reports what fits it; all use the smallest). */
-const TitleSizeContext = createContext<{ size: number; report: (id: string, px: number) => void } | null>(null)
+const TitleSizeContext = createContext<{ size: number; report: (id: string, px: number | null) => void } | null>(null)
 
 function SameTitleSize({ children }: { children: React.ReactNode }) {
   const [sizes, setSizes] = useState<Record<string, number>>({})
-  const report = useCallback((id: string, px: number) => setSizes((m) => (m[id] === px ? m : { ...m, [id]: px })), [])
+  // `null` takes a poster out (it unmounted or its title changed), so an old size never holds the row down.
+  const report = useCallback(
+    (id: string, px: number | null) =>
+      setSizes((m) => {
+        if (px !== null) return m[id] === px ? m : { ...m, [id]: px }
+        if (!(id in m)) return m
+        const rest = { ...m }
+        delete rest[id]
+        return rest
+      }),
+    [],
+  )
   const size = Math.min(99, ...Object.values(sizes))
   const value = useMemo(() => ({ size, report }), [size, report])
   return <TitleSizeContext.Provider value={value}>{children}</TitleSizeContext.Provider>
@@ -227,7 +239,11 @@ function PosterTitle({ text, sizes, lines }: { text: string; sizes: number[]; li
   const ref = useRef<HTMLSpanElement>(null)
   const [own, setSize] = useState(sizes[0])
   const shared = useContext(TitleSizeContext)
-  useEffect(() => shared?.report(text, own), [shared, text, own])
+  const id = useId()
+  useEffect(() => {
+    shared?.report(id, own)
+    return () => shared?.report(id, null)
+  }, [shared, id, own])
   // Posters side by side share one size: the smallest any of them needs.
   const size = shared && shared.size < own && sizes.includes(shared.size) ? shared.size : own
   useEffect(() => {
@@ -715,10 +731,9 @@ function Grid({ items, shape }: { items: MediaItem[]; shape: Shape }) {
 
 /** The card's width, for the one layout that changes its parts with it (the carousel turns into a row when narrow). */
 function useWidth<T extends HTMLElement>() {
-  const ref = useRef<T>(null)
   const [w, setW] = useState(0)
-  useEffect(() => {
-    const el = ref.current
+  // A callback ref, so it starts measuring whenever the element appears (a Shelf can mount empty and get cards later).
+  const ref = useCallback((el: T | null) => {
     if (!el) return
     const ro = new ResizeObserver(([e]) => setW(e.contentRect.width))
     ro.observe(el)
@@ -928,7 +943,7 @@ export function useDefaultSlides(props: WidgetProps["props"]) {
   const { items } = useMediaItems("courses")
   const legacy: MediaItem[] =
     props.title || props.image
-      ? [{ id: "own", title: String(props.title || "Trade with a plan"), kicker: String(props.eyebrow || ""), sub: String(props.text || ""), tags: [], tone: 0, picture: str(props.image), href: hrefOf(base, String(props.target || "courses")), button: String(props.button || "Start here") }]
+      ? [{ id: "own", title: String(props.title || "Trade with a plan"), kicker: String(props.eyebrow || ""), sub: String(props.text || ""), tags: [], tone: 0, picture: str(props.image), href: hrefOf(base, String(props.target || "courses"), str(props.url)), button: String(props.button || "Start here") }]
       : []
   const courses = items.slice(0, legacy.length ? 3 : 4).map((c) => ({ ...c, kicker: c.locked ? `Needs ${c.locked}` : c.fresh ? "New" : coach.wording.courses, tags: c.tags.slice(0, 1), button: c.locked ? "See what it includes" : c.pct ? "Continue" : "Start" }))
   return [...legacy, ...courses]

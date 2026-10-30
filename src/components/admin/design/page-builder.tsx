@@ -325,8 +325,10 @@ export function ArrangeCanvas({
 
   // Moving a card: press and drag; it follows the pointer and the page makes room where it would land.
   const startMove = (e: React.PointerEvent, w: WidgetInstance) => {
-    if (e.button !== 0 || (e.target as Element).closest(".no-drag") || getWidget(w.type)?.core === undefined && !getWidget(w.type)) return
+    if (e.button !== 0 || (e.target as Element).closest(".no-drag") || !getWidget(w.type)) return
     const card = e.currentTarget as HTMLElement
+    // Read once: after the first move the card is out of the grid (its slot stands in), so placed.current no longer has it.
+    const span = spanOf(w, 3)
     const start = { x: e.clientX, y: e.clientY }
     let live: typeof moving = null
     const base = frozen().filter((o) => o.id !== w.id)
@@ -339,7 +341,6 @@ export function ArrangeCanvas({
         setSelected(w.id)
         document.body.style.cursor = "grabbing"
       }
-      const span = placed.current?.spots.get(w.id)?.span ?? 1
       live = { ...live, x: p.x - live.dx, y: p.y - live.dy, slot: slotAt(base, span, p.x - live.dx, p.y) }
       setMoving(live)
     }
