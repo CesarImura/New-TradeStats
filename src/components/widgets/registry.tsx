@@ -16,17 +16,26 @@ import { CoachProfile, Upgrade } from "./offer"
 import type { WidgetProps } from "./shared"
 import { Drawdown } from "./trading"
 import { NEW_WIDGETS } from "./more/registry"
-import { Shelf } from "./media"
+import { MAX_CARDS, MAX_SLIDES, Shelf } from "./media"
 
 export type WidgetGroup = "Learning" | "Calendar" | "Journal" | "Coaching" | "Progress" | "Community" | "Your content" | "Coach and brand" | "AI" | "Page"
 
-export type Setting =
+export type Setting = (
   | { key: string; label: string; type: "text"; placeholder?: string }
   | { key: string; label: string; type: "textarea"; placeholder?: string }
   | { key: string; label: string; type: "select"; options: { value: string; label: string }[] }
   | { key: string; label: string; type: "toggle"; defaultOn?: boolean }
   /** An uploaded picture: `props[key]` is a data URL, or empty for the sample picture. */
   | { key: string; label: string; type: "image" }
+  /** A list of cards or slides the coach adds, edits, hides and orders (media.tsx MediaEntry, as JSON in `props[key]`). */
+  | { key: string; label: string; type: "cards"; kind: "shelf" | "hero"; max: number }
+) & {
+  /** Only offered for these layouts. */
+  variants?: string[]
+}
+
+/** The settings a layout offers. */
+export const settingsFor = (def: WidgetDef, variant?: string) => (def.settings ?? []).filter((s) => !s.variants || s.variants.includes(variant ?? def.variants[0].value))
 
 export type WidgetDef = {
   type: string
@@ -55,6 +64,19 @@ export type WidgetDef = {
 const COURSE_OPTIONS = [
   { value: "foundations", label: "Foundations" },
   { value: "playbook", label: "Price action playbook" },
+]
+
+/** Seconds a Shelf or Featured hero waits before moving on. */
+const EVERY = [
+  { value: "5", label: "5 seconds" },
+  { value: "4", label: "4 seconds" },
+  { value: "7", label: "7 seconds" },
+  { value: "10", label: "10 seconds" },
+]
+const EVERY_HERO = [
+  { value: "7", label: "7 seconds" },
+  { value: "5", label: "5 seconds" },
+  { value: "10", label: "10 seconds" },
 ]
 
 /** The student pages a coach's button can open. */
@@ -128,17 +150,21 @@ export const WIDGETS: WidgetDef[] = [
           { value: "courses", label: "Courses" },
           { value: "lessons", label: "Continue watching" },
           { value: "downloads", label: "Downloads" },
+          { value: "own", label: "Only my own cards" },
         ],
       },
+      { key: "cards", label: "Cards", type: "cards", kind: "shelf", max: MAX_CARDS },
       {
         key: "shape",
-        label: "Poster shape",
+        label: "Picture shape",
         type: "select",
         options: [
           { value: "", label: "Best for what it shows" },
-          { value: "portrait", label: "Portrait" },
-          { value: "landscape", label: "Landscape" },
-          { value: "square", label: "Square" },
+          { value: "portrait", label: "Poster (2:3)" },
+          { value: "photo", label: "Photo (3:2)" },
+          { value: "classic", label: "Classic (4:3)" },
+          { value: "landscape", label: "Wide (16:9)" },
+          { value: "square", label: "Square (1:1)" },
         ],
       },
       {
@@ -149,18 +175,30 @@ export const WIDGETS: WidgetDef[] = [
           { value: "over", label: "On the picture" },
           { value: "below", label: "Under the picture" },
         ],
+        variants: ["row", "carousel"],
       },
       {
+        key: "play",
+        label: "Cards move",
+        type: "select",
+        options: [
+          { value: "manual", label: "With the buttons" },
+          { value: "auto", label: "On their own" },
+        ],
+        variants: ["row", "carousel"],
+      },
+      { key: "every", label: "Time on each step", type: "select", options: EVERY, variants: ["row", "carousel"] },
+      {
         key: "nav",
-        label: "Carousel shows",
+        label: "Under the carousel",
         type: "select",
         options: [
           { value: "dots", label: "Dots" },
           { value: "counter", label: "Counter (3 / 8)" },
           { value: "none", label: "Arrows only" },
         ],
+        variants: ["carousel"],
       },
-      { key: "autoplay", label: "Carousel moves on its own", type: "toggle" },
     ],
     defaultW: 12,
     minW: 4,
@@ -474,12 +512,37 @@ export const WIDGETS: WidgetDef[] = [
       { value: "featured", label: "Featured", h: 8, minH: 6, maxH: 10, minW: 8, maxW: 12 },
     ],
     settings: [
-      { key: "image", label: "Picture", type: "image" },
-      { key: "eyebrow", label: "Small label", type: "text" },
-      { key: "title", label: "Headline", type: "text", placeholder: "Trade with a plan" },
-      { key: "text", label: "Text", type: "textarea" },
-      { key: "button", label: "Button text", type: "text", placeholder: "Start here" },
-      { key: "target", label: "Button opens", type: "select", options: PAGE_TARGETS },
+      { key: "image", label: "Picture", type: "image", variants: ["image", "video", "split"] },
+      { key: "eyebrow", label: "Small label", type: "text", variants: ["image", "video", "split"] },
+      { key: "title", label: "Headline", type: "text", placeholder: "Trade with a plan", variants: ["image", "video", "split"] },
+      { key: "text", label: "Text", type: "textarea", variants: ["image", "video", "split"] },
+      { key: "button", label: "Button text", type: "text", placeholder: "Start here", variants: ["image", "video", "split"] },
+      { key: "target", label: "Button opens", type: "select", options: PAGE_TARGETS, variants: ["image", "video", "split"] },
+      { key: "cards", label: "Slides", type: "cards", kind: "hero", max: MAX_SLIDES, variants: ["featured"] },
+      {
+        key: "play",
+        label: "Slides change",
+        type: "select",
+        options: [
+          { value: "auto", label: "On their own" },
+          { value: "manual", label: "With the buttons" },
+        ],
+        variants: ["featured"],
+      },
+      { key: "every", label: "Time on each slide", type: "select", options: EVERY_HERO, variants: ["featured"] },
+      {
+        key: "transition",
+        label: "Transition",
+        type: "select",
+        options: [
+          { value: "fade", label: "Fade" },
+          { value: "slide-left", label: "Slide in from the right" },
+          { value: "slide-right", label: "Slide in from the left" },
+          { value: "blur", label: "Blur" },
+          { value: "zoom", label: "Zoom" },
+        ],
+        variants: ["featured"],
+      },
     ],
     defaultW: 12,
     minW: 6,

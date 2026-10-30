@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { fitWidth, getWidget, heightFor, librarySections, lookOf, pageWidth, styleParts, widthsFor, type WidgetDef } from "@/components/widgets/registry"
+import { fitWidth, getWidget, heightFor, librarySections, lookOf, pageWidth, settingsFor, styleParts, widthsFor, type WidgetDef } from "@/components/widgets/registry"
 import { WidgetFrame } from "@/components/widgets/kit"
 import { DataModeProvider } from "@/components/widgets/shared"
 import { useGroups } from "@/lib/data/access"
@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils"
 import { Field, Segmented, SliderField } from "./controls"
 import { useDesign } from "./design-fields"
 import { HeaderParts } from "./header-parts"
+import { MediaCardsEditor } from "./media-cards-editor"
 import { chartStyleOf, figureStyleOf, headerFormOf, widgetFontOf, widgetHeaderOf, widgetSetOf, type CardSurface, type ChartStyle, type FigureStyle, type HeaderForm } from "@/lib/theme/types"
 import { CARD, CARD_IDLE, CARD_ON, EASE, card, chip as chipState } from "./states"
 
@@ -1010,9 +1011,11 @@ export function WidgetSettings({
         </Scoped>
       </div>
 
-      {(!!def.settings?.length || (!pinned && def.type !== "page-header")) && (
+      {(settingsFor(def, w.variant).length > 0 || (!pinned && def.type !== "page-header")) && (
         <Block title="Content">
-          {def.settings?.map((s) => {
+          {settingsFor(def, w.variant).map((s) => {
+            if (s.type === "cards")
+              return <MediaCardsEditor key={s.key} kind={s.kind} max={s.max} label={s.label} props={props} onProps={(patch, key) => onChange({ props: { ...props, ...patch } }, `${w.id}-${key}`)} picture={(value, onPick) => <PictureUpload value={value} onChange={onPick} />} />
             if (s.type === "toggle")
               return (
                 <label key={s.key} className="flex items-center justify-between gap-3 text-[0.8rem] font-medium">
