@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
-import { ArrowLeft, ArrowRight, Check, ChevronRight, Copy, EyeOff, ImagePlus, Lock, Plus, RotateCcw, Search, Trash2, X } from "@/components/icons"
+import { ArrowLeft, ArrowRight, Check, ChevronRight, Copy, EyeOff, GripVertical, ImagePlus, Lock, Plus, RotateCcw, Search, Trash2, X } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -190,6 +190,28 @@ const SHORT: Record<string, string> = {
 export const shortOf = (d: WidgetDef) => SHORT[d.type] ?? d.description.split(/,|:| e\.g\./)[0]
 
 /** The one card for a widget's thumbnail (gallery, layouts): the thumbnail inset in the card, its name, and a short line. */
+/**
+ * The picture that follows the pointer while a widget is dragged onto the page: its preview, lifted (a shadow, a slight
+ * tilt) with its name, instead of the browser's faded copy of the whole card. The browser takes a snapshot of it at
+ * once, so it is removed on the next frame.
+ */
+function dragGhost(e: React.DragEvent, name: string) {
+  const src = (e.currentTarget as HTMLElement).querySelector<HTMLElement>("[data-thumb]") ?? (e.currentTarget as HTMLElement)
+  const r = src.getBoundingClientRect()
+  const ghost = document.createElement("div")
+  ghost.style.cssText = `position:fixed;top:-1000px;left:-1000px;width:${Math.round(r.width)}px;padding:6px;border-radius:14px;background:#18181b;box-shadow:0 18px 40px -8px rgb(0 0 0/.55);transform:rotate(-2deg);font:500 12px/1.4 var(--ff-geist,system-ui);color:#fff;pointer-events:none`
+  const pic = src.cloneNode(true) as HTMLElement
+  pic.style.borderRadius = "9px"
+  pic.style.overflow = "hidden"
+  const label = document.createElement("div")
+  label.textContent = `${name} · drop on the page`
+  label.style.cssText = "padding:6px 4px 2px"
+  ghost.append(pic, label)
+  document.body.append(ghost)
+  e.dataTransfer.setDragImage(ghost, Math.min(r.width / 2, e.clientX - r.left), 24)
+  requestAnimationFrame(() => ghost.remove())
+}
+
 function ThumbCard({
   thumb,
   title,
@@ -199,8 +221,9 @@ function ThumbCard({
   selected,
   off,
   className,
+  dragHint,
   ...rest
-}: React.HTMLAttributes<HTMLDivElement> & { thumb: React.ReactNode; title: string; meta?: React.ReactNode; sub?: string; chevron?: boolean; selected?: boolean; off?: boolean }) {
+}: React.HTMLAttributes<HTMLDivElement> & { thumb: React.ReactNode; title: string; meta?: React.ReactNode; sub?: string; chevron?: boolean; selected?: boolean; off?: boolean; /** It can be dragged onto the page: a grip and "Drag to page" show on hover. */ dragHint?: boolean }) {
   return (
     <div
       {...rest}
@@ -212,7 +235,17 @@ function ThumbCard({
         className,
       )}
     >
-      <div className="overflow-hidden rounded-lg">{thumb}</div>
+      <div data-thumb className="relative overflow-hidden rounded-lg">
+        {thumb}
+        {dragHint && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute top-1.5 right-1.5 flex items-center gap-1 rounded-md bg-black/75 py-0.5 pr-2 pl-1 text-[0.7rem] font-medium text-white opacity-0 shadow-sm backdrop-blur-sm transition-opacity duration-150 group-hover/card:opacity-100 group-focus-visible/card:opacity-100"
+          >
+            <GripVertical className="size-3.5" /> Drag to page
+          </span>
+        )}
+      </div>
       <div className="grid gap-0.5 px-1.5 pb-1">
         <span className="flex min-w-0 items-center gap-2">
           <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-medium">{title}</span>
@@ -428,6 +461,7 @@ export function WidgetLibrary({
                         onDragStart={(e) => {
                           e.dataTransfer.setData("text/plain", w.type)
                           e.dataTransfer.effectAllowed = "copy"
+                          dragGhost(e, w.name)
                           onDragType(w.type)
                         }}
                         onDragEnd={() => onDragType(null)}
@@ -438,7 +472,8 @@ export function WidgetLibrary({
                             setPicked(w.type)
                           }
                         }}
-                        className={off ? undefined : "active:cursor-grabbing"}
+                        className={off ? undefined : "cursor-grab active:cursor-grabbing"}
+                        dragHint={!off}
                         aria-label={off ? `${w.name}. Switch on ${MODULE_LABEL[w.module!]} to use it.` : `${w.name}: see its options`}
                         off={off}
                         thumb={<WidgetThumb def={w} canvasClass={canvasClass} box={{ w: 280, h: 140 }} fill />}
@@ -506,6 +541,7 @@ function WidgetDetails({
     onDragStart: (e: React.DragEvent) => {
       e.dataTransfer.setData("text/plain", def.type)
       e.dataTransfer.effectAllowed = "copy"
+      dragGhost(e, def.name)
       onDrag({ variant: v, w: fitWidth(def, v, w), detail, props })
     },
     onDragEnd: () => onDrag(null),
@@ -523,8 +559,11 @@ function WidgetDetails({
       </div>
       <div className="grid flex-1 content-start gap-6 p-5">
         <div className="grid gap-3">
-          <div {...drag(variant)} title="Drag onto the page" className="cursor-grab overflow-hidden rounded-xl border p-1.5 active:cursor-grabbing">
-            <div className="pointer-events-none overflow-hidden rounded-lg">
+          <div {...drag(variant)} title="Drag onto the page" className="group/card relative cursor-grab overflow-hidden rounded-xl border p-1.5 active:cursor-grabbing">
+            <span aria-hidden className="pointer-events-none absolute top-3 right-3 z-10 flex items-center gap-1 rounded-md bg-black/75 py-0.5 pr-2 pl-1 text-[0.7rem] font-medium text-white shadow-sm backdrop-blur-sm">
+              <GripVertical className="size-3.5" /> Drag to page
+            </span>
+            <div data-thumb className="pointer-events-none overflow-hidden rounded-lg">
               <WidgetThumb def={def} variant={variant} canvasClass={canvasClass} box={{ w: 360, h: 220 }} fill />
             </div>
           </div>

@@ -497,6 +497,10 @@ export function ArrangeCanvas({
                   }}
                   onDrop={dropOnGrid}
                 >
+                  {/* A widget is on its way from the gallery: the whole page takes it. */}
+                  {incoming && (
+                    <span aria-hidden className="pointer-events-none absolute -inset-3 z-0 rounded-[calc(var(--radius)+12px)] border-2 border-dashed border-[#ff5500]/35 transition-opacity" />
+                  )}
                   {layout.items.length === 0 && !arriving && (
                     <div className="pointer-events-none grid min-h-48 place-items-center rounded-(--radius) border-2 border-dashed text-sm text-muted-foreground">
                       <span className="flex items-center gap-2">
@@ -513,9 +517,11 @@ export function ArrangeCanvas({
                       w.id === SLOT ? (
                         // Where the card lands: the page has already made room for it.
                         <div
-                          className="rounded-(--radius) border-2 border-dashed border-[#ff5500]/70 bg-[#ff5500]/[0.06]"
-                          style={{ height: slotHeight(w), transition: "height 200ms" }}
-                        />
+                          className="grid place-items-center rounded-(--radius) border-2 border-dashed border-[#ff5500]/70 bg-[#ff5500]/[0.06] font-[family-name:var(--ff-geist)] text-xs font-medium text-[#ff5500]"
+                          style={{ minHeight: slotHeight(w), flex: "none", transition: "min-height 200ms" }}
+                        >
+                          {!moving && `Drop here · ${WIDTH.find((o) => o.value === pageWidth(w.w))?.label}`}
+                        </div>
                       ) : (
                         <WidgetMenu
                           w={w}
