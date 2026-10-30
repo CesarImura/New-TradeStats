@@ -17,8 +17,6 @@ npm run dev
 | `/setup` | Setup wizard (7 steps: Brand · Look · Menu · Pages · Membership · Videos · Get paid, the first four identical to Design): every Design option is reachable here too, folded under “More” |
 | `/c/[coach]/p/[page]` | A page the coach added in Design → Menu (name, icon, built from widgets like every other page) |
 | `/site/[coach]` | Public pages in the coach's brand: sales page, checkout, account code, thank you, student onboarding, login, free join, invite, waiting list, legal (PUB-01 to PUB-12, STO-01 to STO-03) |
-| `/lab` | Library (internal tool): every widget in every look, components, themes (own brands, templates × colours, a readability check of random themes) and tools (widget wall, across templates, stress bench, base proof, Quality checks). Direct links: `/lab#themes/matrix`, `/lab#tools/wall` |
-| `/lab/stress` | Stress bench for one widget at many sizes: `?type=<widget>&content=sample\|empty\|short\|long&detail=…` |
 
 The **Admin | Student** switch (bottom right) flips between views; the flask icon next to it changes community, template, navigation and light/dark.
 
@@ -89,7 +87,7 @@ npm run typecheck
 npm run lint
 ```
 
-There are no automated tests. The widget quality rules (contrast, how much brand colour, font sizes, overflow) are checked in the Library (`/lab` → Tools → Quality, `src/lib/widgets/checks.ts`). Code style: no semicolons, long lines (`.prettierrc.json`); don't reformat whole files.
+There are no automated tests. Code style: no semicolons, long lines (`.prettierrc.json`); don't reformat whole files.
 
 **Saving in the prototype:** localStorage holds about 5 MB per site. A change that doesn't fit shows "Couldn't save" and isn't kept; Publish keeps the draft if the published design doesn't fit, and drops the oldest versions first. Versions store each picture once (`proto:images:<coach>`).
 

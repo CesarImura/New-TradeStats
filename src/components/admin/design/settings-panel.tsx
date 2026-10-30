@@ -9,13 +9,11 @@ import { DesignField, useDesign } from "./design-fields"
 import { ChartPanelField, FOCUS, HeaderPartsField, LogoColoursField, NumbersField, StylePresetField, SurfaceField } from "./settings-fields"
 
 /**
- * The theme editor's panel, one for the admin's Design and the library's
- * theme editor, so both work the same way: an icon rail of sections on the
+ * The theme editor's panel in the admin's Design: an icon rail of sections on the
  * left, each section's settings in small groups on the right. A group knows
  * which theme settings it holds, so it shows "changed" and resets just
  * itself; one search finds any setting in every section. Drawn in shadcn
- * tokens, so it takes the host's look (the admin's dark, the library's
- * chrome through `.lab-ui`).
+ * tokens, so it takes the host's look (the admin's dark).
  */
 
 /** `folded`: closed until the coach opens it (Advanced). */

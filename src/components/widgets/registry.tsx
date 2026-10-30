@@ -50,7 +50,7 @@ export type WidgetDef = {
   /**
    * Three or more designs per widget; the first is the default. Each has its own height in rows and the box it
    * looks right in: the shortest and narrowest before it gets squeezed, the tallest and widest before it only
-   * stretches. Measured on /lab/stress?range=axes (every width at its height, every height at its default
+   * stretches. Measured on the old stress bench (every width at its height, every height at its default
    * width, sample and long content), then judged; the builder keeps it inside.
    */
   variants: { value: string; label: string; h: number; minH: number; maxH: number; minW: number; maxW: number; /** More rows when narrower than `below` columns (a layout that stacks there). */ narrow?: { below: number; minH: number }; /** Fewer rows from `from` columns up (a layout that lies flat there). */ wide?: { from: number; maxH: number }; /** Rows at Compact and Detailed when they differ from `h` and `h + DETAILED_EXTRA_ROWS`: measured so the card is as tall as what it shows. */ hd?: { compact?: number; detailed?: number } }[]

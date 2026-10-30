@@ -5,12 +5,11 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   devIndicators: false,
   partialPrefetching: true,
-  // The lab's benches moved into the library (Tools); old links land on the right one.
+  // The library (/lab) was removed; old links land on the launcher.
   async redirects() {
     return [
-      { source: "/lab/widgets", destination: "/lab#tools/wall", permanent: false },
-      { source: "/lab/anatomy", destination: "/lab#tools/anatomy", permanent: false },
-      { source: "/lab/proof", destination: "/lab#tools/proof", permanent: false },
+      { source: "/lab", destination: "/", permanent: false },
+      { source: "/lab/:path*", destination: "/", permanent: false },
     ];
   },
   turbopack: {

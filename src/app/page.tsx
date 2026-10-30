@@ -1,5 +1,3 @@
-import Link from "next/link"
-import { ArrowRight } from "@/components/icons"
 import { LauncherCards } from "@/components/onboarding/launcher-cards"
 import { LauncherOnboarding } from "@/components/onboarding/launcher-section"
 
@@ -25,9 +23,6 @@ export default function Launcher() {
             settings decide everything you see. Open a student platform or its admin area, then use the Prototype
             button to switch template, navigation and mode.
           </p>
-          <Link href="/lab" className={`${mono} flex w-fit items-center gap-1.5 text-white/60 hover:text-white`}>
-            Library: every widget and component, and every theme&apos;s readability check <ArrowRight className="size-3.5" />
-          </Link>
         </header>
 
         <LauncherOnboarding />

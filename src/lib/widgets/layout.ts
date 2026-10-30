@@ -6,7 +6,7 @@ import type { CardSurface, ChartStyle, Density, FigureStyle, HeaderForm, Templat
  * A page's layout is saved on a grid of 12 columns and rows (x, y, w, h). The page itself is a masonry
  * (widgets/page-renderer.tsx): the saved order (y, then x) and width (one column, two thirds or the whole page,
  * registry PAGE_WIDTHS) decide where a widget goes, and every widget is as tall as its content; h only steers
- * estimates before a card is measured, and the library's builder (lab) still uses the grid as it is.
+ * estimates before a card is measured.
  */
 export const COLS = 12
 export const ROW_HEIGHT = 56

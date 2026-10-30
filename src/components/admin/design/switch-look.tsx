@@ -9,8 +9,8 @@ import { useDesign } from "./design-fields"
 /**
  * Switching to another look or template replaces the coach's style, so in the
  * Design editor it asks first and keeps the design as it was in Earlier
- * versions (⌘Z still undoes it too). Where nothing is kept (the setup wizard,
- * the lab) the switch happens at once, as before.
+ * versions (⌘Z still undoes it too). Where nothing is kept (the setup wizard)
+ * the switch happens at once, as before.
  * Returns `ask(name, apply)` and the dialog to render.
  */
 export function useConfirmSwitch() {
