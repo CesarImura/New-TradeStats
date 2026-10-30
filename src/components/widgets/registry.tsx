@@ -114,7 +114,7 @@ export const WIDGETS: WidgetDef[] = [
     icon: GraduationCap,
     module: "courses",
     variants: [
-      { value: "rings", label: "Rings", h: 3, minH: 3, wide: { from: 8, maxH: 3 }, maxH: 4, minW: 4, maxW: 12 },
+      { value: "rings", label: "Rings", h: 3, minH: 3, wide: { from: 8, maxH: 3 }, maxH: 4, minW: 4, maxW: 8 },
       { value: "bars", label: "List", h: 4, minH: 3, maxH: 4, minW: 4, maxW: 12 },
       { value: "unlocks", label: "Next unlock", h: 3, minH: 3, maxH: 3, minW: 4, maxW: 12, hd: { detailed: 3 } },
     ],
@@ -130,10 +130,10 @@ export const WIDGETS: WidgetDef[] = [
     icon: Radio,
     module: "calendar",
     variants: [
-      { value: "countdown", label: "Countdown", h: 5, minH: 3, maxH: 6, minW: 3, maxW: 12, hd: { compact: 3 } },
-      { value: "timeline", label: "Today", h: 4, minH: 3, wide: { from: 6, maxH: 3 }, maxH: 4, minW: 3, maxW: 12, hd: { compact: 3 } },
+      { value: "countdown", label: "Countdown", h: 5, minH: 3, maxH: 6, minW: 3, maxW: 8, hd: { compact: 3 } },
+      { value: "timeline", label: "Today", h: 4, minH: 3, wide: { from: 6, maxH: 3 }, maxH: 4, minW: 3, maxW: 8, hd: { compact: 3 } },
       { value: "week", label: "Week", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
-      { value: "split", label: "Split", h: 3, minH: 3, maxH: 5, minW: 3, maxW: 12 },
+      { value: "split", label: "Split", h: 3, minH: 3, maxH: 5, minW: 3, maxW: 8 },
     ],
     settings: [{ key: "news", label: "Include market news", type: "toggle", defaultOn: true }],
     defaultW: 4,
@@ -184,7 +184,7 @@ export const WIDGETS: WidgetDef[] = [
     icon: Gauge,
     module: "journal",
     variants: [
-      { value: "radar", label: "Gauge", h: 4, minH: 3, maxH: 6, minW: 3, maxW: 8, hd: { detailed: 5 } },
+      { value: "radar", label: "Gauge", h: 4, minH: 3, maxH: 6, minW: 3, maxW: 7, hd: { detailed: 5 } },
       { value: "streak", label: "Clean streak", h: 3, minH: 3, maxH: 5, minW: 3, maxW: 12 },
       { value: "rules", label: "Rule by rule", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12, hd: { compact: 3, detailed: 5 } },
       { value: "hero", label: "Hero", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
@@ -219,8 +219,8 @@ export const WIDGETS: WidgetDef[] = [
     icon: Trophy,
     module: "ranking",
     variants: [
-      { value: "trend", label: "Trend", h: 4, minH: 3, wide: { from: 8, maxH: 4 }, maxH: 5, minW: 3, maxW: 12, hd: { compact: 3 } },
-      { value: "podium", label: "Podium", h: 3, minH: 3, maxH: 4, minW: 3, maxW: 12 },
+      { value: "trend", label: "Trend", h: 4, minH: 3, wide: { from: 8, maxH: 4 }, maxH: 5, minW: 3, maxW: 8, hd: { compact: 3 } },
+      { value: "podium", label: "Podium", h: 3, minH: 3, maxH: 4, minW: 3, maxW: 8 },
       { value: "leaderboard", label: "Top list", h: 5, minH: 4, maxH: 6, minW: 3, maxW: 12 },
       { value: "hero", label: "Hero", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
       { value: "compare", label: "Compare", h: 5, minH: 3, maxH: 6, minW: 3, maxW: 12, hd: { compact: 4, detailed: 5 } },
@@ -537,7 +537,7 @@ export const WIDGETS: WidgetDef[] = [
     module: "ai",
     variants: [
       { value: "search", label: "Question box", h: 3, minH: 2, maxH: 4, minW: 4, maxW: 12, hd: { detailed: 4 } },
-      { value: "chat", label: "Example chat", h: 5, minH: 4, maxH: 7, minW: 4, maxW: 12, hd: { compact: 4, detailed: 6 } },
+      { value: "chat", label: "Example chat", h: 5, minH: 4, maxH: 7, minW: 4, maxW: 8, hd: { compact: 4, detailed: 6 } },
       { value: "insight", label: "Insight from trades", h: 4, minH: 3, maxH: 5, minW: 4, maxW: 12 },
     ],
     defaultW: 12,
@@ -569,7 +569,7 @@ export const WIDGETS: WidgetDef[] = [
     icon: ShieldAlert,
     module: "journal",
     variants: [
-      { value: "gauge", label: "Gauge", h: 4, minH: 3, maxH: 6, minW: 3, maxW: 8, hd: { detailed: 4 } },
+      { value: "gauge", label: "Gauge", h: 4, minH: 3, maxH: 6, minW: 3, maxW: 7, hd: { detailed: 4 } },
       { value: "bars", label: "Daily limit", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12, hd: { compact: 3, detailed: 5 } },
       { value: "curve", label: "Balance and floor", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
       { value: "hero", label: "Hero", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
@@ -619,8 +619,8 @@ export const WIDGETS: WidgetDef[] = [
     group: "Coach and brand",
     icon: BadgeCheck,
     variants: [
-      { value: "card", label: "Card", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12 },
-      { value: "hero", label: "Large", h: 4, minH: 3, maxH: 6, minW: 3, maxW: 12 },
+      { value: "card", label: "Card", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 8 },
+      { value: "hero", label: "Large", h: 4, minH: 3, maxH: 6, minW: 3, maxW: 8 },
       { value: "compact", label: "One row", h: 2, minH: 2, maxH: 2, minW: 3, maxW: 12 },
       { value: "media", label: "Media", h: 4, minH: 3, maxH: 4, minW: 3, maxW: 12 },
     ],

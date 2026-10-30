@@ -46,7 +46,7 @@ export const NEW_WIDGETS: WidgetDef[] = [
     group: "Journal",
     icon: BarChart3,
     variants: [
-      { value: "histogram", label: "Histogram", h: 4, minH: 3, maxH: 5, minW: 4, maxW: 12 },
+      { value: "histogram", label: "Histogram", h: 4, minH: 3, maxH: 5, minW: 4, maxW: 8 },
       { value: "summary", label: "Summary", h: 3, minH: 3, maxH: 3, minW: 4, maxW: 8, hd: { detailed: 3 } },
     ],
     defaultW: 4,
@@ -74,7 +74,7 @@ export const NEW_WIDGETS: WidgetDef[] = [
     group: "Journal",
     icon: Sigma,
     variants: [
-      { value: "bars", label: "Bars", h: 4, minH: 3, maxH: 5, minW: 4, maxW: 12, hd: { compact: 3, detailed: 4 } },
+      { value: "bars", label: "Bars", h: 4, minH: 3, maxH: 5, minW: 4, maxW: 8, hd: { compact: 3, detailed: 4 } },
       { value: "heatmap", label: "Heatmap", h: 4, minH: 3, maxH: 5, minW: 4, maxW: 6 },
     ],
     defaultW: 4,
@@ -117,7 +117,7 @@ export const NEW_WIDGETS: WidgetDef[] = [
     icon: Flag,
     variants: [
       { value: "list", label: "List", h: 4, minH: 3, maxH: 5, minW: 4, maxW: 12 },
-      { value: "rings", label: "Rings", h: 3, minH: 3, maxH: 4, minW: 4, maxW: 12, hd: { detailed: 3 } },
+      { value: "rings", label: "Rings", h: 3, minH: 3, maxH: 4, minW: 4, maxW: 8, hd: { detailed: 3 } },
     ],
     defaultW: 4,
     minW: 4,
@@ -144,8 +144,8 @@ export const NEW_WIDGETS: WidgetDef[] = [
     group: "Journal",
     icon: NotebookPen,
     variants: [
-      { value: "mood", label: "Mood", h: 4, minH: 3, maxH: 5, minW: 4, maxW: 12, hd: { compact: 3, detailed: 4 } },
-      { value: "notes", label: "With a plan", h: 6, minH: 5, maxH: 6, minW: 4, maxW: 12, hd: { detailed: 6 } },
+      { value: "mood", label: "Mood", h: 4, minH: 3, maxH: 5, minW: 4, maxW: 8, hd: { compact: 3, detailed: 4 } },
+      { value: "notes", label: "With a plan", h: 6, minH: 5, maxH: 6, minW: 4, maxW: 8, hd: { detailed: 6 } },
     ],
     defaultW: 4,
     minW: 4,

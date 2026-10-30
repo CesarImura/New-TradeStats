@@ -7,7 +7,7 @@ import { widgetFinishOf, widgetSetOf } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { WidgetFrame } from "./kit"
-import { getWidget, heightFor } from "./registry"
+import { fitWidth, getWidget, heightFor } from "./registry"
 import { WidgetStyleScope } from "./widget-scope"
 import { PageIdContext, PageTitleShownContext, usePhase } from "./shared"
 import { useViewerGroup } from "@/lib/data/access"
@@ -42,7 +42,13 @@ export type Spot = { col: number; span: number; top: number }
 export type Placement = { spots: Map<string, Spot>; height: number }
 
 /** Columns a card spans on a page of `cols`: the page title, a page's own tool and full-width cards span them all. */
-export const spanOf = (w: WidgetInstance, cols: number) => Math.min(cols, isBand(w, 3) ? 3 : w.w >= 8 ? 2 : 1)
+/** The width a card draws at: its saved width, kept to the sizes its layout allows (a layout can lose a size it once had). */
+export const widthOf = (w: WidgetInstance) => {
+  const def = getWidget(w.type)
+  return def ? fitWidth(def, w.variant, w.w) : w.w
+}
+
+export const spanOf = (w: WidgetInstance, cols: number) => Math.min(cols, isBand(w, 3) ? 3 : widthOf(w) >= 8 ? 2 : 1)
 
 /** The height a card is drawn at before it is measured: an estimate from its layout. */
 const estimate = (w: WidgetInstance, gap: number) => {
@@ -184,7 +190,7 @@ function Measured({ w, onHeight, style, children }: { w: WidgetInstance; onHeigh
 }
 
 /** A card that spans the page: the page title, a page's own tool, and a card the coach made full width. */
-export const isBand = (w: WidgetInstance, cols: number) => cols > 1 && (w.type === "page-header" || !!getWidget(w.type)?.core || w.w >= 12)
+export const isBand = (w: WidgetInstance, cols: number) => cols > 1 && (w.type === "page-header" || !!getWidget(w.type)?.core || widthOf(w) >= 12)
 
 /** A card on the live page, at its content's height. */
 function WidgetView({ w, live }: { w: WidgetInstance; live?: boolean }) {

@@ -475,7 +475,8 @@ function DayDots({ days, run }: { days: boolean[]; run: number }) {
     <div className="grid shrink-0 gap-1.5" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0,1fr))` }}>
       {days.map((d, i) => (
         <div key={i} className="grid justify-items-center gap-1.5">
-          <span className="r-dot size-3" title={d ? "Clean" : "Broke a rule"} style={d ? { background: i >= days.length - run ? ACCENT : GREY[1] } : { boxShadow: "inset 0 0 0 1.5px var(--loss)" }} />
+          {/* Wide: each day grows into a tile across its column, so a full-width card isn't a row of specks. */}
+          <span className="r-dot size-3 [@container_card_(min-width:34rem)]:h-7 [@container_card_(min-width:34rem)]:w-full [@container_card_(min-width:56rem)]:h-10" title={d ? "Clean" : "Broke a rule"} style={d ? { background: i >= days.length - run ? ACCENT : GREY[1] } : { boxShadow: "inset 0 0 0 1.5px var(--loss)" }} />
           <Label>{letters[i % 5]}</Label>
         </div>
       ))}

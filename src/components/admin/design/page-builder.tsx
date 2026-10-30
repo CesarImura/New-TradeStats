@@ -24,10 +24,10 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import { PageRenderer, WidgetGrid, isAvailable, placeItems, type Placement } from "@/components/widgets/page-renderer"
+import { PageRenderer, WidgetGrid, isAvailable, placeItems, widthOf, type Placement } from "@/components/widgets/page-renderer"
 import { WidgetFrame } from "@/components/widgets/kit"
 import { WidgetStyleScope } from "@/components/widgets/widget-scope"
-import { fitWidth, getWidget, heightFor, heightOf, lookOf, pageWidth, widthsFor } from "@/components/widgets/registry"
+import { fitWidth, getWidget, heightFor, heightOf, lookOf, widthsFor } from "@/components/widgets/registry"
 import { DataModeProvider, PageIdContext, PageTitleShownContext, type DataMode } from "@/components/widgets/shared"
 import type { Coach } from "@/lib/data/coaches"
 import { useGroups } from "@/lib/data/access"
@@ -337,7 +337,7 @@ export function ArrangeCanvas({
     const x0 = e.clientX
     const startW = spot.span * p0.colWidth + (spot.span - 1) * gap
     const base = frozen()
-    let next = { id: w.id, w: pageWidth(w.w), col: spot.col, base }
+    let next = { id: w.id, w: widthOf(w), col: spot.col, base }
     setResizing(next)
     setSelected(w.id)
     const move = (ev: PointerEvent) => {
@@ -355,7 +355,7 @@ export function ArrangeCanvas({
       window.removeEventListener("pointerup", up)
       window.removeEventListener("pointercancel", up)
       setResizing(null)
-      if (next.w === pageWidth(w.w) && next.col === spot.col) return
+      if (next.w === widthOf(w) && next.col === spot.col) return
       saveArranged(base.map((o) => (o.id === w.id ? { ...o, w: next.w, x: next.col * 4 } : o)), `${w.id}-resize`)
     }
     window.addEventListener("pointermove", move)
@@ -520,7 +520,7 @@ export function ArrangeCanvas({
                           className="grid place-items-center rounded-(--radius) border-2 border-dashed border-[#ff5500]/70 bg-[#ff5500]/[0.06] font-[family-name:var(--ff-geist)] text-xs font-medium text-[#ff5500]"
                           style={{ minHeight: slotHeight(w), flex: "none", transition: "min-height 200ms" }}
                         >
-                          {!moving && `Drop here · ${WIDTH.find((o) => o.value === pageWidth(w.w))?.label}`}
+                          {!moving && `Drop here · ${WIDTH.find((o) => o.value === widthOf(w))?.label}`}
                         </div>
                       ) : (
                         <WidgetMenu
@@ -565,7 +565,7 @@ export function ArrangeCanvas({
                               {!getWidget(w.type)?.core && w.type !== "page-header" && widthsFor(getWidget(w.type)!, w.variant).length > 1 && (
                                 <span className="flex items-center gap-1.5 border-l border-white/15 pl-3 text-white/70">
                                   Size
-                                  <SizeIcons value={pageWidth(w.w)} allowed={widthsFor(getWidget(w.type)!, w.variant)} onChange={(cols) => updateItem(w.id, { w: cols }, `${w.id}-width`)} />
+                                  <SizeIcons value={widthOf(w)} allowed={widthsFor(getWidget(w.type)!, w.variant)} onChange={(cols) => updateItem(w.id, { w: cols }, `${w.id}-width`)} />
                                 </span>
                               )}
                             </div>
@@ -708,7 +708,7 @@ function WidgetMenu({
             <ContextMenuSub>
               <ContextMenuSubTrigger>Width</ContextMenuSubTrigger>
               <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
-                <ContextMenuRadioGroup value={pageWidth(w.w)} onValueChange={(v) => onWidth(Number(v))}>
+                <ContextMenuRadioGroup value={widthOf(w)} onValueChange={(v) => onWidth(Number(v))}>
                   {WIDTH.map((o) => (
                     <ContextMenuRadioItem key={o.value} value={o.value} disabled={!widthsFor(def, w.variant).includes(o.value)}>
                       {o.label}
@@ -780,7 +780,7 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
           {def.core ? `${def.name} · main part of the page` : def.name}
           {w.header && Object.keys(w.header).length > 0 && " · own header"}
           {w.style && Object.values(w.style).some((v) => v !== undefined) && " · own style"}
-          {w.emphasis === "star" && " · Star"} · {WIDTH.find((o) => o.value === pageWidth(w.w))?.label.toLowerCase()}
+          {w.emphasis === "star" && " · Star"} · {WIDTH.find((o) => o.value === widthOf(w))?.label.toLowerCase()}
         </span>
         <span className="ml-auto" />
         {rule && <span className="max-w-[45%] shrink-0 truncate rounded-[3px] bg-[#ff5500] px-1.5 py-0.5 font-mono text-[10px] leading-none font-medium tracking-[0.04em] text-black uppercase">{rule}</span>}
