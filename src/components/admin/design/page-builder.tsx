@@ -83,8 +83,6 @@ export function useArrange({
   setSelected: (id: string | null) => void
 }) {
   const { working, commit } = editor
-  // Two-column widgets the canvas draws at the whole width right now (nothing fits beside them), reported by its masonry.
-  const [expanded, setExpanded] = useState<string[]>([])
   const pages = studentNav(coach, `/c/${coach.slug}`)
   const pageInfo = pages.find((p) => p.id === page) ?? pages[0]
   const layouts = coach.pages?.[page] ?? {}
@@ -185,8 +183,6 @@ export function useArrange({
     selected,
     setSelected,
     selWidget: layout.items.find((w) => w.id === selected) ?? null,
-    expanded,
-    setExpanded,
     pinned,
     save,
     updateItem,

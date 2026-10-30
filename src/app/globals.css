@@ -5,6 +5,13 @@
 /* `.light` marks a light coach preview inside the dark admin. */
 @custom-variant dark (&:is(.dark *):not(:is(.light, .light *)));
 
+/* Motion: one ease-out for the whole app (the widgets' MOTION.ease in widgets/kit.tsx), so `ease-out` and every
+   plain `transition-*` share it: quick start, soft landing. 150ms stays the default duration. */
+@theme {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -204,10 +211,8 @@
 
 /*
  * A page of widgets (.g-page) and each widget's cell (.g-item). The page lays
- * itself out (the masonry in widgets/page-renderer.tsx, or the library's own
- * rows); a cell is a width container for the widget's own layout, and the
- * widget fills it. Hiding on phones follows the width of the page area, so it
- * holds in a sidebar layout, a preview or on a phone.
+ * itself out (the columns in widgets/page-renderer.tsx); a cell is a width container for the widget's own layout, and the
+ * widget fills it.
  */
 @layer components {
   .g-item {
@@ -221,11 +226,6 @@
     flex: 1;
     min-height: 0;
   }
-  @container (max-width: 39.99rem) {
-    .g-hide-phone {
-      display: none;
-    }
-  }
 }
 
 /* Widget set (Design → Widgets → Card). Cards need nothing here (lib/theme/css.ts). Open: no box at all, no fill and no
@@ -233,13 +233,11 @@
    The page title and the page's own tool (g-plain) are untouched, the Star widget keeps its brand fill, and a widget
    that chose its own card (This widget → surface, tone or picture: data-own-card) keeps it. (Sheet is
    retired for now: widgetSetOf draws a design saved with it as Cards.) */
-.g-page[data-set="open"] .g-item:not(.g-plain):not(:has([data-own-card])) [data-slot="widget"],
-.hb-set[data-set="open"] .react-grid-item:not(.g-plain) [data-slot="widget"] {
+.g-page[data-set="open"] .g-item:not(.g-plain):not(:has([data-own-card])) [data-slot="widget"] {
   --card-shadow: none;
   --card-edge: transparent;
 }
-.g-page[data-set="open"] .g-item:not(.g-plain):not(:has([data-own-card])) [data-slot="widget"]:not([data-emphasis="star"]),
-.hb-set[data-set="open"] .react-grid-item:not(.g-plain) [data-slot="widget"]:not([data-emphasis="star"]) {
+.g-page[data-set="open"] .g-item:not(.g-plain):not(:has([data-own-card])) [data-slot="widget"]:not([data-emphasis="star"]) {
   background: transparent;
   border-radius: var(--radius);
 }
@@ -281,5 +279,18 @@
   }
   .r-inner {
     border-radius: var(--r-inner, 8px);
+  }
+}
+
+/* Less motion when asked: transitions and CSS animations finish at once (Motion's own animations read the same
+   setting through useShouldReduceMotion). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

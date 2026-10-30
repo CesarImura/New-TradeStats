@@ -249,7 +249,7 @@ export function SessionCheckIn({ variant = "mood" }: WidgetProps) {
                   setSaved(false)
                 }}
                 className={cn(
-                  "h-8 rounded-full border px-3 text-xs transition-[color,background-color,border-color,scale] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] outline-none active:scale-[0.96] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-(--brand-mark)",
+                  "h-8 rounded-full border px-3 text-xs transition-[color,background-color,border-color,scale] duration-150 ease-out outline-none active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-(--brand-mark)",
                   mood === m ? "border-transparent bg-[var(--w-accent,var(--primary))] text-[var(--primary-foreground)]" : "hover:bg-muted",
                 )}
                 style={mood === m ? undefined : { borderColor: "var(--w-hair, var(--border))" }}

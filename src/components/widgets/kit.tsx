@@ -150,8 +150,8 @@ export const FX = {
   focus: "outline-none focus-visible:ring-2 focus-visible:ring-(--brand-mark) focus-visible:ring-offset-1 focus-visible:ring-offset-(--card)",
   text: "rounded-sm underline-offset-[3px] decoration-1 transition-colors duration-150 ease-out hover:underline",
   // Press shrinks a touch and comes back fast; the hover tint is a colour change only.
-  chip: "transition-[background-color,border-color,scale] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-muted active:scale-[0.97] motion-reduce:active:scale-100",
-  tile: "transition-[background-color,border-color,scale] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-muted active:scale-[0.98] motion-reduce:active:scale-100",
+  chip: "transition-[background-color,border-color,scale] duration-150 ease-out hover:bg-muted active:scale-[0.97] motion-reduce:active:scale-100",
+  tile: "transition-[background-color,border-color,scale] duration-150 ease-out hover:bg-muted active:scale-[0.98] motion-reduce:active:scale-100",
 } as const
 
 /**
@@ -443,32 +443,6 @@ function useDropToFit(ref: React.RefObject<HTMLDivElement | null>) {
   }, [ref])
 }
 
-/**
- * How much of the card's height its content leaves unused, in px: the blank
- * above and below what is drawn (content that is centred leaves both), so
- * the builder can stop a widget growing, and snap it back, where its content
- * ends. Text, icons, charts and controls count.
- */
-export function unusedHeight(card: HTMLElement) {
-  const box = card.querySelector<HTMLElement>("[data-slot=frame-panel]") ?? card
-  const b = box.getBoundingClientRect()
-  const o = getComputedStyle(box)
-  const inner = b.height - scaleOf(box) * (parseFloat(o.paddingTop) + parseFloat(o.paddingBottom))
-  let top = Infinity
-  let bottom = -Infinity
-  for (const el of box.querySelectorAll<HTMLElement>("*")) {
-    const tag = el.tagName
-    const leaf = tag === "svg" || tag === "BUTTON" || tag === "IMG" || tag === "INPUT" || tag === "TEXTAREA" || tag === "VIDEO" || [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent?.trim())
-    if (!leaf || el.closest("[data-rolling] [aria-hidden]")) continue
-    const r = el.getBoundingClientRect()
-    if (r.width < 1 || r.height < 1 || r.top >= b.bottom || r.bottom <= b.top) continue
-    top = Math.min(top, r.top)
-    bottom = Math.max(bottom, Math.min(r.bottom, b.bottom))
-  }
-  if (bottom < top) return 0
-  return Math.max(0, inner - (bottom - top))
-}
-
 /** On-screen px per CSS px for an element (below 1 inside a scaled preview such as the Design canvas). */
 const scaleOf = (el: HTMLElement) => (el.offsetHeight ? el.getBoundingClientRect().height / el.offsetHeight : 1) || 1
 
@@ -686,16 +660,6 @@ export function Big({ value, unit, sub, tone = "fg", size = "md", fx }: { value:
   )
 }
 
-/** A small change figure: ▲ 4.2% in profit colour, ▼ in loss colour, as text only. */
-export function Delta({ value, suffix = "%", className }: { value: number; suffix?: string; className?: string }) {
-  return (
-    <span className={cn("text-[0.6875rem] font-medium tabular-nums", value >= 0 ? "text-profit" : "text-loss", className)}>
-      {value >= 0 ? "▲" : "▼"} {Math.abs(value).toLocaleString("en")}
-      {suffix}
-    </span>
-  )
-}
-
 /** A label over a value, for rows of two or three small stats. */
 export function Stat({ label, value, sub, tone = "fg" }: { label: string; value: React.ReactNode; sub?: React.ReactNode; tone?: Tone }) {
   return (
@@ -847,18 +811,6 @@ export function Countdown({ parts, className }: { parts: { value: string | numbe
           {p.unit && <span className="text-[0.6875rem] text-muted-foreground">{p.unit}</span>}
         </span>
       ))}
-    </div>
-  )
-}
-
-/** Target against actual: a thin track, the actual in the accent, a tick at the target. */
-export function Bullet({ value, target, max, tone = "primary", className }: { value: number; target?: number; max: number; tone?: Tone; className?: string }) {
-  const pct = (v: number) => `${Math.max(0, Math.min(100, (v / max) * 100))}%`
-  return (
-    <div className={cn("relative h-1.5", className)}>
-      <span className="r-bar absolute inset-0 bg-muted" />
-      <span className="r-bar absolute inset-y-0 left-0" style={{ width: pct(value), background: TONE[tone] }} />
-      {target !== undefined && <span className="absolute -inset-y-1 w-px bg-foreground" style={{ left: pct(target) }} />}
     </div>
   )
 }
@@ -1280,84 +1232,6 @@ export function Ring({ value, size = 56, stroke = 4, tone = "primary", fluid, ch
   )
 }
 
-/** Spider chart, 0–100 per axis. Labels hide when the widget is small. */
-export function Radar({ axes, className }: { axes: { label: string; v: number }[]; className?: string }) {
-  const [hover, setHover] = useState<number>()
-  const n = axes.length
-  const pt = (i: number, r: number) => {
-    const a = (Math.PI * 2 * i) / n - Math.PI / 2
-    return [Math.round((50 + Math.cos(a) * r) * 100) / 100, Math.round((50 + Math.sin(a) * r) * 100) / 100] as const
-  }
-  const poly = (r: (i: number) => number) => axes.map((_, i) => pt(i, r(i)).join(",")).join(" ")
-  return (
-    <svg viewBox="-14 -8 128 116" className={cn("size-full min-h-24", className)} aria-label="Discipline by area" onPointerLeave={() => setHover(undefined)}>
-      {[0.5, 1].map((k) => (
-        <polygon key={k} points={poly(() => 40 * k)} fill="none" stroke="var(--border)" strokeWidth={0.6} />
-      ))}
-      {axes.map((_, i) => {
-        const [x, y] = pt(i, 40)
-        return <line key={i} x1={50} y1={50} x2={x} y2={y} stroke={hover === i ? "var(--muted-foreground)" : "var(--border)"} strokeWidth={hover === i ? 0.8 : 0.6} />
-      })}
-      <polygon points={poly((i) => (40 * axes[i].v) / 100)} fill={ACCENT} fillOpacity={0.08} stroke={ACCENT} strokeWidth={1} strokeLinejoin="round" />
-      {axes.map((a, i) => {
-        const [x, y] = pt(i, (40 * a.v) / 100)
-        const [lx, ly] = pt(i, 50)
-        const on = hover === i
-        // A wedge around each axis catches the pointer, so the whole chart is hoverable.
-        const [ax, ay] = pt(i - 0.5, 56)
-        const [bx, by] = pt(i + 0.5, 56)
-        const [cx, cy] = pt(i, 56)
-        return (
-          <g key={a.label} onPointerEnter={() => setHover(i)}>
-            <polygon points={`50,50 ${ax},${ay} ${cx},${cy} ${bx},${by}`} fill="transparent" />
-            <circle cx={x} cy={y} r={on ? 2.6 : 1.4} fill={ACCENT} stroke={on ? "var(--card)" : "none"} strokeWidth={1.2} className="transition-[r] duration-150" />
-            <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize={7} fill={on ? "var(--foreground)" : "var(--muted-foreground)"} fontWeight={on ? 600 : 500}>
-              {on ? `${a.label} ${a.v}%` : a.label}
-            </text>
-          </g>
-        )
-      })}
-    </svg>
-  )
-}
-
-/** A day timeline with event blocks and a "now" line. Hours as decimals. */
-export function DayTimeline({ from, to, now, events }: { from: number; to: number; now: number; events: { title: string; start: number; end: number; color: string }[] }) {
-  const pos = (h: number) => `${((h - from) / (to - from)) * 100}%`
-  const ticks = Array.from({ length: Math.floor(to - from) + 1 }, (_, i) => from + i)
-  return (
-    <div className="relative flex min-h-20 flex-1 flex-col">
-      <div className="relative flex-1">
-        {ticks.map((t) => (
-          <span key={t} className="absolute top-0 bottom-0 w-px bg-[color:color-mix(in_oklab,var(--foreground)_6%,transparent)]" style={{ left: pos(t) }} />
-        ))}
-        {events.map((e, i) => (
-          <span
-            key={e.title}
-            className="r-chip absolute truncate border-l-2 bg-muted px-1.5 py-1 text-[0.6875rem] leading-tight font-medium text-foreground"
-            style={{ left: pos(e.start), width: `calc(${pos(e.end)} - ${pos(e.start)})`, top: `${8 + (i % 3) * 30}%`, borderLeftColor: e.color }}
-            title={e.title}
-          >
-            {e.title}
-          </span>
-        ))}
-        <span className="absolute top-0 bottom-0 w-px bg-foreground" style={{ left: pos(now) }}>
-          <span className="r-dot absolute -top-1 -left-[3px] size-[7px]" style={{ background: ACCENT }} />
-        </span>
-      </div>
-      <div className="relative mt-1.5 h-3">
-        {ticks
-          .filter((t) => (t - from) % 2 === 0)
-          .map((t) => (
-            <span key={t} className="absolute -translate-x-1/2" style={{ left: pos(t) }}>
-              <Caps>{String(t).padStart(2, "0")}</Caps>
-            </span>
-          ))}
-      </div>
-    </div>
-  )
-}
-
 /** Legend dot + label. */
 export function Key({ color, children }: { color: string; children: React.ReactNode }) {
   return (
@@ -1367,5 +1241,3 @@ export function Key({ color, children }: { color: string; children: React.ReactN
   )
 }
 
-/** Kept for widgets that fill horizontal bars. */
-export const gradientFill = (tone: Tone | string) => fill(tone, "90deg")

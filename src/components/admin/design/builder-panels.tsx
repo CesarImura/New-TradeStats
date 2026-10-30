@@ -260,7 +260,7 @@ function ThumbCard({
 }
 
 /** Width as pictures: the page's three columns, with the ones the widget takes filled. Widths the layout can't take are off. */
-export function SizePicker({ value, allowed, onChange, expanded }: { value: number; allowed: number[]; onChange: (w: number) => void; expanded?: boolean }) {
+export function SizePicker({ value, allowed, onChange }: { value: number; allowed: number[]; onChange: (w: number) => void }) {
   return (
     <div role="radiogroup" aria-label="Width" className="grid grid-cols-3 gap-2">
       {WIDTH.map((o) => {
@@ -286,7 +286,7 @@ export function SizePicker({ value, allowed, onChange, expanded }: { value: numb
                 <span key={i} className={cn("rounded-[3px] transition-colors duration-150", i < span ? (on ? "bg-[var(--ts-interactive)]" : "bg-muted-foreground/60") : "border border-dashed border-muted-foreground/40")} />
               ))}
             </span>
-            <span className="text-[0.6875rem] leading-tight font-medium">{o.value === 8 && expanded ? "Two cols (full)" : o.label}</span>
+            <span className="text-[0.6875rem] leading-tight font-medium">{o.label}</span>
           </button>
         )
       })}
@@ -313,7 +313,7 @@ export function SizeIcons({ value, allowed, onChange }: { value: number; allowed
               onChange(o.value)
             }}
             className={cn(
-              "grid h-7 w-10 grid-cols-3 gap-[2px] rounded-md border p-1 outline-none active:scale-[0.94]",
+              "grid h-7 w-10 grid-cols-3 gap-[2px] rounded-md border p-1 outline-none active:scale-[0.97]",
               EASE,
               on ? "border-[var(--ts-interactive)] bg-[rgb(255_85_0/0.14)]" : "border-white/15 hover:border-white/45 hover:bg-white/[0.08]",
             )}
@@ -861,7 +861,6 @@ function Scoped({ label, scope, children }: { label: string; scope: React.ReactN
 export function WidgetSettings({
   w,
   pinned,
-  expanded,
   canvasClass,
   onChange,
   onDuplicate,
@@ -874,8 +873,6 @@ export function WidgetSettings({
   w: WidgetInstance
   /** The page's core widget: it can't be removed, duplicated or hidden. */
   pinned?: boolean
-  /** Two columns wide, but drawn at the whole width on desktop right now: nothing after it fits beside it (page-renderer masonry). */
-  expanded?: boolean
   canvasClass: string
   onChange: (patch: Partial<WidgetInstance>, key: string) => void
   onDuplicate: () => void
@@ -954,15 +951,8 @@ export function WidgetSettings({
       <div className="grid gap-6">
         {!pinned && def.type !== "page-header" && widths.length > 1 && (
           <Scoped label="Size" scope={<Scope own={ownWidth} onReset={() => onChange({ w: fitWidth(def, w.variant, start?.w ?? def.defaultW) }, `${w.id}-width`)} />}>
-            {/* Drawn at the whole width right now: the choice says so, not just the note under it. */}
-            <SizePicker value={width} allowed={widths} expanded={expanded} onChange={(v) => onChange({ w: v }, `${w.id}-width`)} />
-            {expanded && width === 8 ? (
-              <p className="text-xs text-foreground">
-                Full width on desktop now: no widget after it fits beside it. It takes two columns again when one does. Tablet: like One column. Phone: the full width.
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground">{WIDTH.find((o) => o.value === width)?.hint}</p>
-            )}
+            <SizePicker value={width} allowed={widths} onChange={(v) => onChange({ w: v }, `${w.id}-width`)} />
+            <p className="text-xs text-muted-foreground">{WIDTH.find((o) => o.value === width)?.hint}</p>
           </Scoped>
         )}
         {def.variants.length > 1 && (

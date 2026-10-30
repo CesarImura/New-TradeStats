@@ -183,7 +183,7 @@ export function DesignWorkspace() {
   // The style sections preview the Everyone layout, so a widget clicked there is the one "Edit only this widget" opens in Pages.
   const src = `${step === "pages" ? pageInfo.href : `/c/${slug}`}?preview=draft${step === "pages" ? "" : "&layout=everyone"}${step === "pages" && tier !== "default" ? `&tier=${tier}` : ""}${step === "pages" && data !== "sample" ? `&data=${data}` : ""}`
   const canvasClass = cn("hb-canvas", theme.mode === "dark" ? "dark" : "light")
-  const checks = auditTheme(theme, { fixes: true })
+  const checks = auditTheme(theme)
   const tierLabel = tier === "default" ? "Everyone" : (arrange.tierName ?? tier)
   const sel = arrange.selWidget
   const resetTheme = (keys: (keyof typeof working.theme)[]) => commit({ ...working, theme: without(working.theme, keys) }, "reset")
@@ -204,7 +204,6 @@ export function DesignWorkspace() {
           w={sel}
           head={head}
           pinned={arrange.pinned(sel.id)}
-          expanded={arrange.expanded.includes(sel.id)}
           canvasClass={canvasClass}
           onChange={(patch, key) => arrange.updateItem(sel.id, patch, key)}
           onDuplicate={() => arrange.duplicateWidget(sel.id)}

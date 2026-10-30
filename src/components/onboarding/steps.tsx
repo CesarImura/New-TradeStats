@@ -1,21 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { BookOpen, Bot, CalendarDays, ChartCandlestick, Check, CircleAlert, Download, Handshake, Landmark, Loader2, MessagesSquare, NotebookPen, Trophy } from "@/components/icons"
-import { Badge } from "@/components/ui/badge"
+import { Check, CircleAlert } from "@/components/icons"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { More } from "@/components/admin/design/controls"
-import { DesignField, useDesign } from "@/components/admin/design/design-fields"
+import { DesignField } from "@/components/admin/design/design-fields"
 import { LogoColoursField } from "@/components/admin/design/settings-fields"
-import { PagesField } from "@/components/admin/design/pages-field"
-import { COACHES, type ModuleId } from "@/lib/data/coaches"
+import { COACHES } from "@/lib/data/coaches"
 import { customCommunities, slugify } from "@/lib/data/communities"
 import { useAccount } from "@/lib/data/use-communities"
-import { MARKETS, type Market } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
-import { Choice, mono } from "./frame"
+import { Choice } from "./frame"
 import { LookCards } from "@/components/admin/design/design-steps"
 import { FullEditorLink } from "./look-steps"
 import { suggestedTemplate } from "./suggest"
@@ -148,95 +144,6 @@ export function BrandLookStep(props: StepProps) {
   )
 }
 
-// ---------- ONB-11 · Menu (sections, names and the same folds as Design → Menu)
-
-const MODULES: { id: ModuleId; name: string; text: string; icon: React.ComponentType<{ className?: string }>; later?: boolean }[] = [
-  { id: "courses", name: "Courses", text: "Video lessons in modules, with progress", icon: BookOpen },
-  { id: "calendar", name: "Calendar", text: "Live sessions, replays and 1:1 bookings", icon: CalendarDays },
-  { id: "charts", name: "Charts", text: "Full TradingView charts, watchlist and your marked-up levels", icon: ChartCandlestick },
-  { id: "journal", name: "Journal", text: "Students log trades and ask you for reviews", icon: NotebookPen },
-  { id: "community", name: "Community", text: "Posts and chat, or a link to your Discord", icon: MessagesSquare },
-  { id: "ai", name: "AI assistant", text: "Answers questions from your own lessons", icon: Bot },
-  { id: "ranking", name: "Ranking", text: "Leaderboard by consistency and progress", icon: Trophy, later: true },
-  { id: "downloads", name: "Downloads", text: "Indicators, templates and files for your students", icon: Download },
-  { id: "partners", name: "Partners", text: "Broker and prop firm offers, with your affiliate links", icon: Handshake },
-]
-
-export function ModulesStep({ community, update }: StepProps) {
-  const { coach, change } = useDesign()
-  const acc = useAccount()
-  const markets = community.setup?.markets ?? ["futures", "forex"]
-  return (
-    <div className="grid gap-4">
-      {acc?.answers && <p className={cn(mono, "text-[0.62rem] text-[var(--ts-cta)]")}>Switched on from your answers</p>}
-      <div className="grid divide-y rounded-[var(--radius)] border bg-card">
-        {MODULES.map((m) => {
-          const on = coach.modules[m.id]
-          return (
-            <label key={m.id} className="flex cursor-pointer items-center gap-3.5 px-4 py-3.5">
-              <m.icon className={cn("size-5 shrink-0", on ? "text-[var(--ts-interactive)]" : "text-muted-foreground")} />
-              <span className="grid min-w-0 flex-1 gap-0.5">
-                <span className="flex items-center gap-2 text-sm">
-                  {m.name}
-                  {m.later && (
-                    <Badge variant="outline" className="h-4.5 px-1.5 text-[0.6rem] text-muted-foreground">
-                      Coming soon
-                    </Badge>
-                  )}
-                </span>
-                {on && !m.later ? (
-                  <input
-                    value={coach.wording[m.id]}
-                    onChange={(e) => change({ content: { wording: { [m.id]: e.target.value } } }, `w-${m.id}`)}
-                    onClick={(e) => e.preventDefault()}
-                    aria-label={`What students see instead of ${m.name}`}
-                    className="mt-1 h-7 w-full max-w-56 rounded-[var(--radius)] border border-white/10 bg-transparent px-2 text-xs outline-none focus:border-[var(--ts-interactive)]"
-                  />
-                ) : (
-                  <span className="text-xs text-muted-foreground">{m.text}</span>
-                )}
-              </span>
-              <Switch checked={on} disabled={m.later} onCheckedChange={(v) => change({ content: { modules: { [m.id]: v } } }, `mod-${m.id}`)} />
-            </label>
-          )
-        })}
-      </div>
-      <p className="text-xs text-muted-foreground">Type a new name to rename a section for your students, e.g. Courses → Playbook.</p>
-      {coach.modules.charts && (
-        <Row label="Markets you trade" hint="Fills your chart watchlist">
-          <div className="flex flex-wrap gap-1.5">
-            {MARKETS.map((mk) => {
-              const on = markets.includes(mk.id)
-              return (
-                <button
-                  key={mk.id}
-                  onClick={() => update({ setup: { ...community.setup, markets: on ? markets.filter((x) => x !== mk.id) : [...markets, mk.id as Market] } })}
-                  aria-pressed={on}
-                  className={cn("rounded-[var(--radius)] border px-2.5 py-1 text-xs", on ? "border-[var(--ts-interactive)] text-foreground" : "text-muted-foreground")}
-                >
-                  {mk.label}
-                </button>
-              )
-            })}
-          </div>
-        </Row>
-      )}
-      <More label="Menu layout">
-        <DesignField id="nav-layout" />
-        <DesignField id="nav-frame" />
-        <DesignField id="nav-style" />
-        <DesignField id="nav-logo" />
-      </More>
-      <More label="What you call things">
-        <DesignField id="wording" />
-      </More>
-      <More label="Your own pages">
-        <p className="text-xs text-muted-foreground">Pages built from widgets, like Rules or Resources. Arrange them in Design → Pages.</p>
-        <PagesField />
-      </More>
-    </div>
-  )
-}
 
 // ---------- ONB-12 · First tier
 
@@ -339,60 +246,3 @@ export function TierStep({ community, update, setReady }: StepProps) {
 
 // ---------- ONB-14 · Get paid
 
-export function PayoutsStep({ community, update }: StepProps) {
-  const [busy, setBusy] = useState(false)
-  const connected = community.setup?.payouts === "connected"
-  const paid = community.tiers.some((t) => t.price !== "Free")
-
-  return (
-    <div className="grid gap-5">
-      <div className="grid gap-4 rounded-[var(--radius)] border bg-card p-5">
-        <div className="flex items-start gap-3.5">
-          <span className={cn("grid size-10 shrink-0 place-items-center bg-white/5", connected && "bg-[var(--ts-cta)] text-[#040404]")}>
-            {connected ? <Check className="size-5" strokeWidth={2.5} /> : <Landmark className="size-5" />}
-          </span>
-          <div className="grid gap-1">
-            <span className="text-base">{connected ? "Payouts connected" : "Connect your payouts"}</span>
-            <span className="text-sm text-muted-foreground">
-              {connected
-                ? "Money from your students arrives in your bank account every week."
-                : "A short form with our payment partner: who you are and where the money goes. About 5 minutes."}
-            </span>
-          </div>
-        </div>
-        {!connected && (
-          <button
-            disabled={busy}
-            onClick={() => {
-              setBusy(true)
-              setTimeout(() => update({ setup: { ...community.setup, payouts: "connected" } }), 1200)
-            }}
-            className="flex h-7 items-center justify-center gap-1.5 rounded-[4px] bg-[var(--ts-cta)] text-[0.78125rem] font-medium text-[#040404] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),0_0_0_1px_rgb(0_0_0/0.5)] hover:bg-[#ecf38a] disabled:opacity-70"
-          >
-            {busy ? (
-              <>
-                <Loader2 className="size-4 animate-spin" /> Opening secure form…
-              </>
-            ) : (
-              "Start payout setup"
-            )}
-          </button>
-        )}
-      </div>
-      <ul className="grid gap-2 text-sm text-muted-foreground">
-        <li>· Card, Apple Pay, Google Pay and SEPA for your students</li>
-        <li>· VAT and invoices handled for you</li>
-        <li>· Weekly payouts, no minimum</li>
-      </ul>
-      {!connected && paid && (
-        <p className="text-xs text-[var(--ts-interactive)]">
-          Your tier is paid, so students can&apos;t join until payouts are connected. You can still publish and invite them.
-        </p>
-      )}
-      <p className="rounded-[var(--radius)] border border-dashed border-white/15 px-3 py-2 text-xs text-muted-foreground">
-        <span className={cn(mono, "mr-1.5 text-[var(--ts-cta)]")}>Prototype</span>
-        The real form is the payment provider&apos;s own (open question: Whop or Stripe Connect). Here it just simulates a success.
-      </p>
-    </div>
-  )
-}

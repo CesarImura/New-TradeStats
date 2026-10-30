@@ -168,28 +168,3 @@ NEW_WIDGETS.push({
   Component: Leaderboard,
 })
 
-export const NEW_TYPES = new Set(NEW_WIDGETS.map((w) => w.type))
-
-/** A few words per widget for the grid and the search. */
-export const WIDGET_TAGS: Record<string, string[]> = {
-  "recent-trades": ["table", "interactive"],
-  "open-positions": ["table", "live"],
-  "r-distribution": ["chart"],
-  "pnl-by-instrument": ["chart", "table"],
-  "pnl-by-weekday": ["chart"],
-  "win-rate-trend": ["chart", "interactive"],
-  watchlist: ["table", "chart"],
-  goals: ["progress"],
-  "trading-streak": ["calendar"],
-  "check-in": ["form", "interactive"],
-  leaderboard: ["table", "interactive"],
-  "journal-pnl": ["chart", "interactive"],
-  "rules-followed": ["chart", "interactive"],
-  "next-live": ["calendar", "interactive"],
-  "econ-news": ["calendar"],
-  "my-rank": ["chart", "table"],
-  drawdown: ["chart"],
-  faq: ["interactive"],
-  "book-call": ["interactive"],
-  countdown: ["live"],
-}

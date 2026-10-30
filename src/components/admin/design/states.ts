@@ -5,7 +5,7 @@
  * inside, with a faint orange wash; pressed shrinks a hair. 150ms ease-out on colour, edge and scale only, and none
  * for people who ask for less motion.
  */
-export const EASE = "transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-150 ease-out motion-reduce:transition-none"
+export const EASE = "transition-[background-color,border-color,box-shadow,color,opacity,transform,scale] duration-150 ease-out motion-reduce:transition-none"
 
 /** A card to pick (a layout, a font pair, a look, a width): a 1px edge at rest. */
 export const CARD = `${EASE} rounded-lg border border-[color-mix(in_oklab,var(--foreground)_13%,transparent)] outline-none active:scale-[0.985] motion-reduce:active:scale-100`

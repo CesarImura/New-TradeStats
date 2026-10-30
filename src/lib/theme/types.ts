@@ -125,8 +125,6 @@ const WIDGET_FONT_DEFAULT: Record<WidgetStyle, WidgetFont> = { instrument: "mono
 export const widgetFontOf = (t: Pick<CoachTheme, "template" | "widgetStyle" | "widgetFont">): WidgetFont => t.widgetFont ?? WIDGET_FONT_DEFAULT[widgetStyleOf(t)]
 
 const WIDGET_SET_DEFAULT: Record<WidgetStyle, WidgetSet> = { instrument: "cards", soft: "cards", editorial: "cards" }
-/** Open widgets have no surface of their own: on an image or gradient background they are cards, so text never sits on a picture. */
-export const openOnPicture = (t: Pick<CoachTheme, "background">) => t.background === "image" || t.background === "gradient"
 /**
  * The widget set a page draws. Sheet is retired for the first version: a design saved with it keeps the value and
  * shows Cards in its own card surface, so it can come back without touching saved designs.

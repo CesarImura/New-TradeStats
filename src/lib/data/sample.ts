@@ -76,11 +76,6 @@ export function courseProgress(c: Course) {
   return Math.round((all.filter((l) => l.done).length / all.length) * 100)
 }
 
-export function nextLesson(c: Course) {
-  for (const m of c.modules) for (const l of m.lessons) if (!l.done) return { module: m, lesson: l }
-  return null
-}
-
 export type EventKind = "live" | "call" | "workshop" | "one-on-one" | "news"
 export type CalEvent = {
   id: string
@@ -169,16 +164,6 @@ export const REVENUE_MONTHS = [
   { month: "Oct", revenue: 17940 },
 ]
 
-export const GETTING_STARTED = [
-  { id: "design", label: "Design and logo", done: true },
-  { id: "tier", label: "Create your first tier", done: true },
-  { id: "course", label: "Add a course", done: true },
-  { id: "payments", label: "Set up payments", done: true },
-  { id: "live", label: "Create the first live session", done: false },
-  { id: "discord", label: "Connect Discord", done: false },
-  { id: "invite", label: "Invite students", done: false },
-]
-
 /** Last four weeks, Monday to Friday, oldest first. 0 = no trades. */
 export const JOURNAL_DAYS = [
   [118, -76, 0, 263, 92],
@@ -205,13 +190,6 @@ export const LEADERBOARD = [
 
 export const DISCORD = { members: 2140, online: 128, avatars: ["JP", "SK", "MS", "TB", "ER", "LI"], channels: ["#trade-ideas", "#daily-recap", "#questions"] }
 
-export const PARTNERS = [
-  { name: "IC Markets", note: "Broker · our partner", tag: "Partner", color: "#1e3a8a" },
-  { name: "FTMO", note: "Prop firm challenges", color: "#0f766e" },
-  { name: "TradingView", note: "Charts we use on the lives", color: "#131722" },
-  { name: "YouTube", note: "Free weekly breakdowns", color: "#dc2626" },
-]
-
 export const AI_SAMPLE = {
   question: "Why do I keep getting stopped out right before the move?",
   answer:
@@ -229,23 +207,11 @@ export const TODAY = [
 ]
 export const NOW_HOUR = 9
 
-/** Discipline score per area, 0–100, for the radar view. */
-export const DISCIPLINE = [
-  { label: "Risk", v: 100 },
-  { label: "News", v: 89 },
-  { label: "Stops", v: 68 },
-  { label: "Trades/day", v: 95 },
-  { label: "Journal", v: 80 },
-]
-
 /** Last 10 trading days: did the student keep every rule? */
 export const RULE_DAYS = [true, true, false, true, true, true, false, true, true, true]
 
 /** Weekly rank over the last 8 weeks (lower is better). */
 export const RANK_HISTORY = [31, 27, 25, 22, 20, 18, 16, 12]
-
-/** Messages per hour in the Discord over the last 12 hours. */
-export const DISCORD_ACTIVITY = [4, 2, 1, 0, 1, 3, 9, 14, 22, 18, 26, 31]
 
 /** Equity over the last 20 trading days, in euros. */
 export const EQUITY = [0, 120, 40, 40, 300, 390, 180, 320, 630, 570, 570, 650, 650, 500, 920, 1100, 1240, 1100, 1310, 1220]
@@ -257,11 +223,6 @@ export const MARKET_SESSIONS = [
   { name: "Tokyo", open: 2, close: 11 },
   { name: "London", open: 9, close: 18 },
   { name: "New York", open: 14, close: 23 },
-]
-export const SESSION_PNL = [
-  { name: "Tokyo", pnl: -70 },
-  { name: "London", pnl: 540 },
-  { name: "New York", pnl: 310 },
 ]
 
 /** A funded / prop-firm style account with limits. */
@@ -283,17 +244,6 @@ export const SETUPS = [
   { name: "News fade", short: "News", trades: 5, win: 20, r: -0.6 },
 ]
 
-/** How many trades ended at each R-multiple, from −3R to +4R. */
-export const R_BINS = [
-  { r: -3, n: 1 },
-  { r: -2, n: 3 },
-  { r: -1, n: 11 },
-  { r: 0, n: 4 },
-  { r: 1, n: 7 },
-  { r: 2, n: 5 },
-  { r: 3, n: 2 },
-  { r: 4, n: 1 },
-]
 export const R_STATS = { expectancy: 0.42, avgWin: 1.8, avgLoss: -0.9, winRate: 44 }
 
 export const FEEDBACK = {
@@ -323,12 +273,6 @@ export const CALL_SLOTS = [
   { day: "Fri", date: "16 Oct", times: ["13:00"] },
 ]
 export const CALL_ALLOWANCE = { used: 1, included: 2, length: 30 }
-
-export const UNLOCKS = [
-  { title: "Module 4 · Building a playbook", lessons: 6, inHours: 74, date: "Thu 15 Oct" },
-  { title: "Module 5 · Scaling up", lessons: 4, inHours: 242, date: "Thu 22 Oct" },
-  { title: "Bonus · Live trade breakdowns", lessons: 8, inHours: 410, date: "Thu 29 Oct" },
-]
 
 export const UPGRADE = {
   current: { name: "Core", price: "€149" },

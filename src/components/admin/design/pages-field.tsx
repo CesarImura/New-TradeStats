@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Switch } from "@/components/ui/switch"
-import { PAGE_ICONS, isPageId, pageIdOf, type CustomPage, type MenuId, type PageIcon } from "@/lib/data/coaches"
+import { PAGE_ICONS, pageIdOf, type CustomPage, type MenuId, type PageIcon } from "@/lib/data/coaches"
 import { uid } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { move, useDesign } from "./design-fields"
@@ -95,15 +95,3 @@ export function AddPageButton() {
   )
 }
 
-/** The pages the coach added, in menu order, and the button to add one. */
-export function PagesField() {
-  const { coach } = useDesign()
-  return (
-    <div className="grid gap-1.5">
-      {coach.menu.filter(isPageId).map((m) => (
-        <PageRow key={m} id={m} />
-      ))}
-      <AddPageButton />
-    </div>
-  )
-}

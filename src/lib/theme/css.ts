@@ -1,6 +1,6 @@
 import { FONT_LIBRARY } from "@/lib/fonts"
 import { brandVisuals } from "./color"
-import { resolveColors, type EngineOptions } from "./derive"
+import { resolveColors } from "./derive"
 import type { CoachTheme } from "./types"
 
 const DENSITY = { compact: 0.85, comfortable: 1, airy: 1.3 } as const
@@ -29,9 +29,9 @@ function cssSafe<T>(value: T): T {
 }
 
 /** The theme's CSS variables by name: themeToCss writes them, and one widget's own style re-sets a few (widgets/widget-scope.tsx). */
-export function themeVars(theme: CoachTheme, engine?: EngineOptions) {
+export function themeVars(theme: CoachTheme) {
   const t = cssSafe(theme)
-  const p = resolveColors(t, engine)
+  const p = resolveColors(t)
   const sidebarDark = isDark(p.sidebar)
   const sidebarFg = sidebarDark ? "#f5f6fb" : p.foreground
   // On a dark page a 5% shadow can't be seen, so dark themes get deeper ones: Soft and Strong must look different there too.
@@ -171,9 +171,9 @@ export function themeVars(theme: CoachTheme, engine?: EngineOptions) {
  *
  * `scope` is `:root` for the student platform and a class for live previews.
  */
-export function themeToCss(theme: CoachTheme, scope = ":root", engine?: EngineOptions) {
+export function themeToCss(theme: CoachTheme, scope = ":root") {
   const t = cssSafe(theme)
-  const body = Object.entries(themeVars(theme, engine)).map(([k, v]) => `${k}:${v};`).join("")
+  const body = Object.entries(themeVars(theme)).map(([k, v]) => `${k}:${v};`).join("")
   const within = (sel: string) =>
     scope === ":root" ? sel : scope.split(",").map((p) => `${p.trim()} ${sel}`).join(", ")
   return `

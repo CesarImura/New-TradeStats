@@ -151,7 +151,7 @@ export function WidgetGrid({
             left: s.col * (colWidth + gap),
             top: s.top,
             width: s.span * colWidth + (s.span - 1) * gap,
-            transition: settled ? "left 240ms cubic-bezier(.2,.8,.2,1), top 240ms cubic-bezier(.2,.8,.2,1), width 240ms cubic-bezier(.2,.8,.2,1)" : undefined,
+            transition: settled ? "left 240ms var(--ease-out), top 240ms var(--ease-out), width 240ms var(--ease-out)" : undefined,
           }
           const node = (
             <Measured key={w.id} w={w} onHeight={onHeight} style={wrap ? undefined : style}>

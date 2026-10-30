@@ -236,7 +236,7 @@ export function PagesCanvas() {
         <div
           className={cn(
             "absolute top-0 left-0 origin-top-left",
-            animate && "transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            animate && "transition-transform duration-500 ease-out",
             !ready && "opacity-0",
           )}
           style={{

@@ -64,12 +64,8 @@ export function backdropStyle(t: CoachTheme): CSSProperties | null {
     }
   }
   if (t.background === "image" && t.bgImage) {
-    const id = RETIRED[t.bgImage] ?? t.bgImage
-    const preset = id.startsWith("preset:") ? BACKDROPS.find((b) => `preset:${b.id}` === id) : null
     return {
-      backgroundImage: preset ? preset.css : safeImage(t.bgImage),
-      backgroundSize: preset ? preset.size : "cover",
-      backgroundPosition: "center",
+      ...pictureOf(t.bgImage),
       filter: t.bgBlur ? `blur(${t.bgBlur}px)` : undefined,
       inset: t.bgBlur ? -t.bgBlur * 2 : 0,
     }

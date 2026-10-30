@@ -2,7 +2,7 @@
 
 import type { Coach } from "./coaches"
 import type { CourseDraft } from "./communities"
-import { readStored, setStored, useStored } from "@/lib/prototype-store"
+import { setStored, useStored } from "@/lib/prototype-store"
 
 /**
  * Courses: what the coach builds in Content (ADM-08 to ADM-13) and what
@@ -300,17 +300,8 @@ export function saveCatalog(coach: Coach, update: (c: Catalog) => Catalog) {
   setStored<Catalog>(catalogKey(coach.slug), (c) => update(c), seedFor(coach))
 }
 
-export function resetCatalog(slug: string) {
-  setStored(catalogKey(slug), null)
-  setStored(progressKey(slug), null)
-}
-
 export function updateProgress(slug: string, update: (p: Progress) => Progress) {
   setStored<Progress>(progressKey(slug), (p) => update(p), START_PROGRESS)
-}
-
-export function readCatalog(coach: Coach) {
-  return readStored<Catalog>(catalogKey(coach.slug), seedFor(coach))
 }
 
 // ---------- helpers

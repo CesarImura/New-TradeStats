@@ -10,7 +10,6 @@ import { themeToCss } from "@/lib/theme/css"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import type { CoachTheme } from "@/lib/theme/types"
 
-export type CoachCtx = Ctx
 type Ctx = {
   coach: Coach
   theme: CoachTheme

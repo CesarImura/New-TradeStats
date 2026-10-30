@@ -30,22 +30,6 @@ export function Section({ title, children }: { title?: string; children: React.R
   )
 }
 
-/** Logo, name, colour and mode: the Brand step's settings. */
-export function BrandFields() {
-  return (
-    <Section>
-      <DesignField id="logo" />
-      <DesignField id="name" />
-      <DesignField id="primary" />
-      <DesignField id="mode" />
-      <More label="Second colour and trading colours">
-        <DesignField id="highlight" />
-        <DesignField id="trading" />
-      </More>
-    </Section>
-  )
-}
-
 /**
  * The ready-made looks as cards; picking one keeps the coach's colours and
  * logo. Fine-tuning is in the editor's Type, Shape, Widgets and Page sections.

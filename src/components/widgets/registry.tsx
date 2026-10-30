@@ -934,9 +934,6 @@ export function heightFor(def: WidgetDef, variant?: string, detail?: "compact" |
   return v.h
 }
 
-/** Rows a layout gains (or loses) at a Detail, against its Standard height. */
-export const extraRows = (def: WidgetDef, variant: string | undefined, detail?: "compact" | "standard" | "detailed") => heightFor(def, variant, detail) - lookOf(def, variant).h
-
 /**
  * Which parts of a widget's own style apply to it (Design → This widget → Style). A picture behind the card only on
  * content widgets: on charts, tables and figures it would fight the data, so data widgets take a tone only. Image,

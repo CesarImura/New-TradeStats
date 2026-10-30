@@ -1,4 +1,4 @@
-import { resolveColors, type EngineOptions } from "./derive"
+import { resolveColors } from "./derive"
 import type { CoachTheme } from "./types"
 
 /**
@@ -78,8 +78,8 @@ export type Check = {
 }
 
 /** The colour pairs every student screen depends on. */
-export function auditTheme(t: CoachTheme, engine?: EngineOptions): Check[] {
-  const base = resolveColors(t, engine)
+export function auditTheme(t: CoachTheme): Check[] {
+  const base = resolveColors(t)
   const page = base.background
   const pairs: Omit<Check, "ratio" | "pass">[] = [
     { id: "text", label: "Text on page", fg: base.foreground, bg: page, min: 4.5 },

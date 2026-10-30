@@ -11,8 +11,6 @@ import { widgetSetOf, type CoachTheme, type Palette } from "./types"
  * selected outlines — the platform uses the nearest version of the same
  * colour that is readable on that surface. The template's greys are tinted
  * towards the brand colour, so they match any brand.
- *
- * `fixes: false` gives the engine as it was before both, for comparison in the theme lab.
  */
 export type ResolvedColors = Palette & {
   /** The brand colour as text on cards and the page (4.5:1). */
@@ -32,9 +30,7 @@ export type ResolvedColors = Palette & {
   invAccent: string
 }
 
-export type EngineOptions = { fixes?: boolean }
-
-export function resolveColors(t: CoachTheme, { fixes = true }: EngineOptions = {}): ResolvedColors {
+export function resolveColors(t: CoachTheme): ResolvedColors {
   const base = t.palettes[t.mode]
   let p: Palette = t.highlight
     ? { ...base, highlight: t.highlight, highlightForeground: isDark(t.highlight) ? "#ffffff" : "#0a0a0a" }
@@ -42,8 +38,6 @@ export function resolveColors(t: CoachTheme, { fixes = true }: EngineOptions = {
   // The coach's trading colours replace the palette's profit and loss in both modes.
   const own = tradingOf(t)
   if (own) p = { ...p, ...own }
-  if (!fixes)
-    return { ...p, brandText: t.primary, brandMark: t.primary, profitText: p.profit, lossText: p.loss, panel: p.muted, track: p.border, hair: p.border, invBg: p.foreground, invFg: p.card, invAccent: t.primary }
   if (t.highlight) p = { ...p, highlightForeground: onColor(t.highlight) }
   p = tintNeutrals(p, t.primary, t.tint ?? "brand")
   // One widget's own tone (widget-scope.tsx): its card, and the ladder, text and marks worked out on it.

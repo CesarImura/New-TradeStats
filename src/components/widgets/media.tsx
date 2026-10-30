@@ -336,12 +336,12 @@ export function Tile({ item, shape, over, className }: { item: MediaItem; shape:
       <div
         className={cn(
           "@container/tile relative isolate overflow-hidden rounded-[min(var(--radius),10px)] bg-(--media-bg) ring-1 ring-[color-mix(in_oklab,var(--card-foreground)_10%,transparent)] ring-inset",
-          "transition-[box-shadow,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-active/tile:scale-[0.985] motion-reduce:group-active/tile:scale-100",
+          "transition-[box-shadow,transform,scale] duration-200 ease-out group-active/tile:scale-[0.985] motion-reduce:group-active/tile:scale-100",
           "[@media(hover:hover)]:group-hover/tile:ring-[color-mix(in_oklab,var(--card-foreground)_24%,transparent)]",
           RATIO[shape],
         )}
       >
-        <div className="absolute inset-0 transition-transform duration-[700ms] ease-[cubic-bezier(0.23,1,0.32,1)] will-change-transform motion-reduce:transition-none [@media(hover:hover)]:group-hover/tile:scale-[1.06] motion-reduce:[@media(hover:hover)]:group-hover/tile:scale-100">
+        <div className="absolute inset-0 transition-transform duration-[700ms] ease-out will-change-transform motion-reduce:transition-none [@media(hover:hover)]:group-hover/tile:scale-[1.06] motion-reduce:[@media(hover:hover)]:group-hover/tile:scale-100">
           <Art item={item} shape={shape} typeset />
         </div>
         {/* New and locked go on top of a picture; on a typeset poster the title owns the top, so they join the tags below. */}
@@ -378,7 +378,7 @@ export function Tile({ item, shape, over, className }: { item: MediaItem; shape:
               )}
               {/* The hover line: closed rows open to their height, so nothing jumps. Always open on touch. */}
               {shows(item, "button") && (
-                <div className="grid grid-rows-[1fr] transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)]:grid-rows-[0fr] [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/tile:grid-rows-[1fr] [@media(hover:hover)]:group-hover/tile:opacity-100 [@media(hover:hover)]:group-focus-visible/tile:grid-rows-[1fr] [@media(hover:hover)]:group-focus-visible/tile:opacity-100">
+                <div className="grid grid-rows-[1fr] transition-[grid-template-rows,opacity] duration-300 ease-out [@media(hover:hover)]:grid-rows-[0fr] [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/tile:grid-rows-[1fr] [@media(hover:hover)]:group-hover/tile:opacity-100 [@media(hover:hover)]:group-focus-visible/tile:grid-rows-[1fr] [@media(hover:hover)]:group-focus-visible/tile:opacity-100">
                   <span className="flex min-h-0 items-center gap-1 overflow-hidden text-[0.6875rem] leading-4 font-medium text-card-foreground">
                     {item.locked ? <Lock className="size-3" /> : <Play className="size-3" />}
                     <span className="truncate">{ctaOf(item)}</span>
@@ -536,7 +536,7 @@ function Arrow({ dir, onClick, disabled, className }: { dir: "prev" | "next"; on
       aria-label={dir === "prev" ? "Previous" : "Next"}
       className={cn(
         "grid size-8 shrink-0 place-items-center rounded-full border bg-card text-card-foreground shadow-[var(--card-shadow)] outline-none",
-        "transition-[opacity,transform,background-color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-muted active:scale-95 disabled:pointer-events-none disabled:opacity-0",
+        "transition-[opacity,transform,scale,background-color] duration-150 ease-out hover:bg-muted active:scale-[0.97] disabled:pointer-events-none disabled:opacity-0",
         "focus-visible:ring-2 focus-visible:ring-ring",
         className,
       )}
@@ -633,12 +633,12 @@ function GridCard({ item, shape }: { item: MediaItem; shape: Shape }) {
         FADE_TO,
         "group/card grid min-w-0 content-start overflow-hidden rounded-[min(var(--radius),12px)] outline-none",
         "bg-[color-mix(in_oklab,var(--card-foreground)_3%,var(--card))] ring-1 ring-[color-mix(in_oklab,var(--card-foreground)_9%,transparent)] ring-inset",
-        "transition-[box-shadow,transform] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.99] motion-reduce:active:scale-100",
+        "transition-[box-shadow,transform,scale] duration-300 ease-out active:scale-[0.99] motion-reduce:active:scale-100",
         "[@media(hover:hover)]:hover:ring-[color-mix(in_oklab,var(--card-foreground)_20%,transparent)] focus-visible:ring-2 focus-visible:ring-ring",
       )}
     >
       <div className={cn("@container/tile relative overflow-hidden", RATIO[shape])}>
-        <div className="absolute inset-0 transition-transform duration-[700ms] ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none [@media(hover:hover)]:group-hover/card:scale-[1.05] motion-reduce:[@media(hover:hover)]:group-hover/card:scale-100">
+        <div className="absolute inset-0 transition-transform duration-[700ms] ease-out motion-reduce:transition-none [@media(hover:hover)]:group-hover/card:scale-[1.05] motion-reduce:[@media(hover:hover)]:group-hover/card:scale-100">
           <Art item={item} shape={shape} />
         </div>
         {(item.fresh || item.locked) && (
@@ -711,7 +711,7 @@ function Grid({ items, shape }: { items: MediaItem[]; shape: Shape }) {
           <li key={it.id}>
             <Link href={it.href} className="group/line flex min-w-0 items-center gap-3 rounded-[min(var(--radius),8px)] outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <span className="relative aspect-[4/3] w-20 shrink-0 overflow-hidden rounded-[min(var(--radius),6px)]">
-                <span className="absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)]:group-hover/line:scale-[1.08]">
+                <span className="absolute inset-0 transition-transform duration-500 ease-out [@media(hover:hover)]:group-hover/line:scale-[1.08]">
                   <Art item={it} shape="classic" />
                 </span>
               </span>
@@ -851,7 +851,7 @@ function Carousel({ items: posters, shape, over, nav, auto, every }: { items: Me
             {posters.map((it, i) => (
               <button key={it.id} type="button" role="tab" aria-selected={i === index % n} aria-label={`Go to ${i + 1}: ${it.title}`} onClick={() => go(index - (index % n) + i)} className="group/dot grid h-6 place-items-center outline-none">
                 <span
-                  className="block h-1.5 rounded-full transition-[width,background-color] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] group-focus-visible/dot:ring-2 group-focus-visible/dot:ring-ring"
+                  className="block h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out group-focus-visible/dot:ring-2 group-focus-visible/dot:ring-ring"
                   style={{ width: i === index % n ? "1.25rem" : "0.375rem", background: i === index % n ? "var(--card-foreground)" : "color-mix(in oklab, var(--card-foreground) 24%, transparent)" }}
                 />
               </button>

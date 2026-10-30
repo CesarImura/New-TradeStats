@@ -1,5 +1,5 @@
 import type { ThemeDraft } from "@/lib/prototype-store"
-import type { CoachTheme, Density, TemplateId } from "@/lib/theme/types"
+import type { CoachTheme, TemplateId } from "@/lib/theme/types"
 
 /**
  * Ready-made looks: one choice that sets the template, fonts, shape, depth and
@@ -76,16 +76,3 @@ export function currentLook(t: CoachTheme): Look | undefined {
   )
 }
 
-/** Fine-tune: three plain sliders over the detailed settings. */
-export const roundnessOf = (t: CoachTheme) => t.radius
-export const fromRoundness = (r: number): ThemeDraft => ({ radius: r, buttonShape: r <= 3 ? "square" : r >= 16 ? "pill" : "rounded" })
-
-const DEPTHS = [{ shadow: "none" }, { shadow: "soft" }, { shadow: "strong" }] as const
-export const depthOf = (t: CoachTheme) => (t.shadow === "strong" ? 2 : t.shadow === "soft" ? 1 : 0)
-export const fromDepth = (d: number): ThemeDraft => ({ ...DEPTHS[Math.round(d)] })
-export const DEPTH_NAMES = ["Flat", "Soft", "Deep"]
-
-const DENSITIES: Density[] = ["compact", "comfortable", "airy"]
-export const spacingOf = (t: CoachTheme) => DENSITIES.indexOf(t.density)
-export const fromSpacing = (s: number): ThemeDraft => ({ density: DENSITIES[Math.round(s)] })
-export const SPACING_NAMES = ["Compact", "Comfortable", "Airy"]

@@ -10,7 +10,6 @@ import { chartStyleOf, figureStyleOf, headerFormOf, panelStyleOf, starStyleOf, w
 import { cn } from "@/lib/utils"
 import { Field, Segmented } from "./controls"
 import { useDesign } from "./design-fields"
-import { FONT_PAIRS } from "./options"
 import { card, chip } from "./states"
 
 /**
@@ -207,28 +206,6 @@ export function LogoColoursField() {
       )}
     </div>
   )
-}
-
-/* ---------- Shuffle ---------- */
-
-const pick = <T,>(xs: readonly T[]) => xs[Math.floor(Math.random() * xs.length)]
-/** A random personality on top of the theme: fonts, shape, depth, spacing and the widget look. Brand colours stay. */
-export function shuffled(t: CoachTheme): ThemeDraft {
-  const pair = pick(FONT_PAIRS)
-  const style = pick(["instrument", "soft", "editorial"] as const)
-  const radius = pick([0, 2, 6, 10, 14, 20])
-  return {
-    ...presetOf(t, style),
-    fonts: { heading: pair.heading, body: pair.body, label: pair.label },
-    radius,
-    buttonShape: radius <= 3 ? "square" : radius >= 16 ? pick(["pill", "rounded"] as const) : pick(["rounded", "pill", "square"] as const),
-    shadow: pick(["none", "soft", "strong"] as const),
-    borders: Math.random() < 0.6,
-    density: pick(["compact", "comfortable", "airy"] as const),
-    headingWeight: pick([400, 500, 600, 700] as const),
-    labelStyle: Math.random() < 0.35 ? "caps" : "plain",
-    chartStyle: pick(["ticks", "solid", "thin", "blocks", "dots"] as const),
-  }
 }
 
 /* ---------- Card: how each widget sits on the page, as pictures ---------- */

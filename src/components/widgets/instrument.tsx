@@ -5,7 +5,7 @@ import { CountingNumber } from "@animate-ui/react/primitives/texts/counting-numb
 import { SlidingNumber } from "@animate-ui/react/primitives/texts/sliding-number"
 import { useShouldReduceMotion, useTempoTransition } from "@animate-ui/react/utils/motion"
 import { motion, useReducedMotion } from "motion/react"
-import { createContext, useContext, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react"
+import { createContext, useContext, useId, useState, useSyncExternalStore } from "react"
 import { ArrowRight, type LucideIcon } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { chartStyleOf, figureStyleOf, headerFormOf, panelStyleOf, widgetFontOf, widgetHeaderOf, widgetStyleOf, type ChartStyle, type FigureStyle, type PanelStyle, type WidgetFont, type WidgetStyle } from "@/lib/theme/types"
@@ -428,7 +428,7 @@ export function WCard({
   const actionHref = action?.href && (action.href.startsWith("/") || /^https?:/.test(action.href) ? action.href : `${base}/${action.href}`)
   const note = footnote && detailed ? <span className="min-w-0 shrink-[999] truncate text-[0.6875rem] leading-4 text-muted-foreground">{footnote}</span> : null
   const rowCls =
-    "group flex h-8 w-full min-w-0 items-center gap-3 rounded-(--r-inner) px-2 text-left text-[0.8125rem] leading-5 outline-none transition-[box-shadow,scale] hover:shadow-[inset_0_0_0_100vmax_color-mix(in_oklab,var(--foreground)_5%,transparent)] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-(--brand-mark)"
+    "group flex h-8 w-full min-w-0 items-center gap-3 rounded-(--r-inner) px-2 text-left text-[0.8125rem] leading-5 outline-none transition-[box-shadow,scale] hover:shadow-[inset_0_0_0_100vmax_color-mix(in_oklab,var(--foreground)_5%,transparent)] duration-150 ease-out active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-(--brand-mark)"
   const rowStyle: React.CSSProperties = { background: star ? "var(--brand-shade)" : RAISED }
   const rowInner = action && (
     <>
@@ -579,7 +579,7 @@ export function Rolling({ value }: { value: string | number }) {
 function Counting({ value }: { value: React.ReactNode }) {
   // Follows Animate UI's motion settings, so the review modal's Slow ×4 and Off apply to the count too.
   const still = useShouldReduceMotion()
-  const transition = useTempoTransition({ type: "tween", duration: 0.25, ease: "easeOut" } as const)
+  const transition = useTempoTransition({ type: "tween", duration: 0.25, ease: MOTION.ease } as const)
   const m = typeof value === "number" ? ["", "", String(value), ""] : typeof value === "string" ? /^([^\d:/]*?)(\d[\d,]*(?:\.\d+)?)([^\d:/]*)$/.exec(value) : null
   if (!m || still) return <>{value}</>
   const [, pre, num, post] = m
@@ -676,7 +676,7 @@ export function Seg<T extends string>({ value, options, onChange, label }: { val
   return (
     <span role="radiogroup" aria-label={label} className="inline-flex h-6 shrink-0 items-center gap-0.5 rounded-md p-0.5" style={{ background: "var(--muted)" }}>
       {live ? (
-        <Highlight controlledItems value={value} click={false} className={raised} transition={still ? { duration: 0 } : { type: "tween", duration: 0.2, ease: "easeOut" }}>
+        <Highlight controlledItems value={value} click={false} className={raised} transition={still ? { duration: 0 } : { type: "tween", duration: 0.2, ease: MOTION.ease }}>
           {options.map(([v, l]) => (
             // The item owns the click: Highlight replaces the child's own handler.
             <HighlightItem key={v} value={v} onClick={() => onChange(v)}>
@@ -808,32 +808,6 @@ export function TickGauge({ value, max = 100, ticks = 40, ring, children, classN
       </svg>
       {/* The figure: in a ring, at its centre; in a half circle, on the baseline, where the open space is. */}
       {children && <div className={cn("absolute inset-x-0 grid justify-items-center gap-[clamp(0.125rem,1cqw,0.5rem)] text-center", ring ? "top-[56%] -translate-y-1/2" : "bottom-0")}>{children}</div>}
-    </div>
-  )
-}
-
-/**
- * A gauge that fits whatever room the card leaves it, on both axes. Where
- * that room is wide and short it is a half circle with the figure on its
- * baseline; where it is roughly square (a tall card, or beside a legend) it
- * becomes a 270° ring with the figure in its middle, so a big gauge is a full
- * shape instead of an arc over a blank band.
- */
-export function FitGauge({ value, max = 100, children, className }: { value: number; max?: number; children?: React.ReactNode; className?: string }) {
-  const box = useRef<HTMLDivElement>(null)
-  const [ring, setRing] = useState(false)
-  useLayoutEffect(() => {
-    const el = box.current
-    if (!el) return
-    const ro = new ResizeObserver(() => setRing(el.clientHeight >= 150 && el.clientWidth / el.clientHeight < 1.6))
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-  return (
-    <div ref={box} className={cn("flex aspect-[3/1] min-h-20 flex-1 items-center justify-center [container-type:size]", className)}>
-      <TickGauge ring={ring} value={value} max={max} className={ring ? "w-[min(100cqw,110cqh)] max-w-[26rem]" : "w-[min(100cqw,165cqh)] max-w-[26rem]"}>
-        {children}
-      </TickGauge>
     </div>
   )
 }

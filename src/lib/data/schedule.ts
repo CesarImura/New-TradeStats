@@ -1,6 +1,6 @@
 "use client"
 
-import { addDays, addMinutes, addWeeks, differenceInCalendarDays, isBefore, isSameDay, startOfDay } from "date-fns"
+import { addDays, addMinutes, addWeeks, differenceInCalendarDays, isBefore, startOfDay } from "date-fns"
 import type { Coach } from "./coaches"
 import { DEMO_STUDENT } from "./sample"
 import { setStored, useStored } from "@/lib/prototype-store"
@@ -221,8 +221,6 @@ export function freeSlots(s: Schedule, days = 14) {
   }
   return out
 }
-
-export const sameDay = isSameDay
 
 export const KIND_LABEL: Record<ItemKind, string> = { live: "Live", call: "Call", workshop: "Workshop", news: "News", "one-on-one": "1:1" }
 

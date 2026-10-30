@@ -297,10 +297,6 @@ export function useStored<T>(key: string, fallback: T): T {
   return useKey<T>(`proto:${key}`, fallback)
 }
 
-export function readStored<T>(key: string, fallback: T): T {
-  return read<T>(`proto:${key}`, fallback)
-}
-
 /** Save under `proto:<key>`; pass a function to update from the current value. */
 export function setStored<T>(key: string, value: T | ((current: T) => T), fallback?: T) {
   const next = typeof value === "function" ? (value as (c: T) => T)(read<T>(`proto:${key}`, fallback as T)) : value

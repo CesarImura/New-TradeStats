@@ -33,7 +33,7 @@ function AccordionTrigger({ className, children, ...props }: React.ComponentProp
 
 function AccordionContent({ className, children, ...props }: React.ComponentProps<typeof AccordionPrimitive.Panel>) {
   return (
-    <AccordionPrimitive.Panel data-slot="accordion-content" className="overflow-hidden text-sm" transition={{ type: "tween", duration: 0.22, ease: "easeOut" }} {...props}>
+    <AccordionPrimitive.Panel data-slot="accordion-content" className="overflow-hidden text-sm" transition={{ type: "tween", duration: 0.22, ease: [0.23, 1, 0.32, 1] }} {...props}>
       <div className={cn("pt-0 pb-2.5", className)}>{children}</div>
     </AccordionPrimitive.Panel>
   )

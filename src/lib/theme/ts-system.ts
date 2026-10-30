@@ -95,7 +95,7 @@ ${ui(":is(h1, h2, h3)")} { letter-spacing: -0.005em; }
  */
 ${ui("[data-slot=button]")} {
   border-radius: 4px; font-weight: 500; font-size: 0.78125rem; letter-spacing: 0.005em;
-  transition: background-color .12s, border-color .12s, color .12s;
+  transition: background-color .12s, border-color .12s, color .12s, translate .12s; transition-timing-function: var(--ease-out);
 }
 ${ui("[data-slot=button]:is(.h-8, .h-9)")} { height: 1.75rem; }
 ${ui("[data-slot=button]:is(.size-8, .size-9)")} { width: 1.75rem; height: 1.75rem; }

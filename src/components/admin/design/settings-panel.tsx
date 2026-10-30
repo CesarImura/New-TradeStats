@@ -103,8 +103,6 @@ const SECTIONS: { id: SectionId; label: string; icon: React.ReactNode; blurb?: s
 ]
 /** The theme sections' settings unless a host gives its own. */
 const DEFAULT_GROUPS: Partial<Record<SectionId, SettingsGroup[]>> = { brand: THEME_GROUPS.colour, type: THEME_GROUPS.type, widgets: THEME_GROUPS.widgets, page: THEME_GROUPS.page }
-/** The menu's look: the part of Menu that belongs to the theme. */
-export const MENU_LOOK: SettingsGroup = { title: "Menu layout", fields: ["nav-layout", "nav-frame", "nav-style", "nav-logo"], keys: ["nav"], words: "menu navigation sidebar top bar logo frame floating" }
 
 /**
  * The tabs for an editor: every section in the standard order; `only` keeps
@@ -223,7 +221,7 @@ export function SettingsPanel({
               title={t.label}
               onClick={() => (onTab(t.id), setQ(""), setSearching(false))}
               className={cn(
-                "group relative grid justify-items-center gap-1.5 rounded-lg px-0.5 pt-2.5 pb-2 text-[0.6875rem] leading-3.5 transition-[background-color,color,box-shadow,transform] duration-150 ease-out outline-none active:scale-[0.96]",
+                "group relative grid justify-items-center gap-1.5 rounded-lg px-0.5 pt-2.5 pb-2 text-[0.6875rem] leading-3.5 transition-[background-color,color,box-shadow,transform,scale] duration-150 ease-out outline-none active:scale-[0.97]",
                 "focus-visible:shadow-[0_0_0_2px_var(--rail-ring)]",
                 on
                   ? "bg-[linear-gradient(180deg,var(--rail-wash),transparent)] font-medium text-foreground shadow-[inset_0_0_0_1px_var(--rail-edge)] focus-visible:shadow-[inset_0_0_0_1px_var(--rail-edge),0_0_0_2px_var(--rail-ring)]"

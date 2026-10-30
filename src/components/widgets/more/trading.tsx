@@ -164,7 +164,7 @@ export function RecentTrades({ variant = "table" }: WidgetProps) {
               type="button"
               onClick={() => setPage(i)}
               aria-current={i === at ? "page" : undefined}
-              className={cn("grid size-6 place-items-center rounded-md text-xs tabular-nums transition-[color,background-color,scale] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] outline-none active:scale-[0.94] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-(--brand-mark)", i === at ? "bg-muted font-medium" : "text-muted-foreground hover:text-foreground")}
+              className={cn("grid size-6 place-items-center rounded-md text-xs tabular-nums transition-[color,background-color,scale] duration-150 ease-out outline-none active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-(--brand-mark)", i === at ? "bg-muted font-medium" : "text-muted-foreground hover:text-foreground")}
             >
               {i + 1}
             </button>
@@ -232,7 +232,7 @@ export function OpenPositions({ variant = "table" }: WidgetProps) {
                       <span className="text-foreground">{Math.max(0, Math.abs(p.entry - p.stop) + p.ticks * 0.25).toFixed(1)} pts</span>
                     </span>
                     <span className="r-bar relative h-1.5 shrink-0 overflow-hidden" style={{ background: "var(--muted)" }}>
-                      <i className="r-bar absolute inset-y-0 left-0 w-full origin-left transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]" style={{ transform: `scaleX(${Math.min(100, (Math.max(0, Math.abs(p.entry - p.stop) + p.ticks * 0.25) / (Math.abs(p.entry - p.stop) * 2)) * 100) / 100})`, background: "var(--w-accent, var(--primary))" }} />
+                      <i className="r-bar absolute inset-y-0 left-0 w-full origin-left transition-transform duration-300 ease-out" style={{ transform: `scaleX(${Math.min(100, (Math.max(0, Math.abs(p.entry - p.stop) + p.ticks * 0.25) / (Math.abs(p.entry - p.stop) * 2)) * 100) / 100})`, background: "var(--w-accent, var(--primary))" }} />
                     </span>
                   </span>
                 </Drop>
@@ -293,7 +293,7 @@ export function OpenPositions({ variant = "table" }: WidgetProps) {
                   <div key={p.sym} className="grid grid-cols-[2.5rem_minmax(0,1fr)_4.5rem] items-center gap-3 text-xs tabular-nums">
                     <span className="font-medium">{p.sym}</span>
                     <span className="r-bar relative h-1.5 overflow-hidden" style={{ background: "var(--muted)" }}>
-                      <i className="r-bar absolute inset-y-0 left-0 w-full origin-left transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]" style={{ transform: `scaleX(${Math.min(100, (room / (risk * 2)) * 100) / 100})`, background: room < risk / 2 ? "var(--loss)" : "var(--w-accent, var(--primary))" }} />
+                      <i className="r-bar absolute inset-y-0 left-0 w-full origin-left transition-transform duration-300 ease-out" style={{ transform: `scaleX(${Math.min(100, (room / (risk * 2)) * 100) / 100})`, background: room < risk / 2 ? "var(--loss)" : "var(--w-accent, var(--primary))" }} />
                     </span>
                     <span className="text-right text-muted-foreground">{room.toFixed(1)} pts</span>
                   </div>
