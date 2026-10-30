@@ -602,7 +602,7 @@ export const WIDGETS: WidgetDef[] = [
     group: "Coach and brand",
     icon: Sparkles,
     variants: [
-      { value: "compare", label: "Compare", h: 5, minH: 4, maxH: 6, minW: 3, maxW: 12 },
+      { value: "compare", label: "Compare", h: 5, minH: 4, maxH: 6, minW: 3, maxW: 8 },
       { value: "banner", label: "Banner", h: 2, minH: 2, maxH: 2, minW: 4, maxW: 12 },
       { value: "card", label: "Price", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12, hd: { detailed: 5 } },
       { value: "split", label: "Split", h: 3, minH: 3, maxH: 4, minW: 3, maxW: 12 },

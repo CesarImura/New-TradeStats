@@ -398,7 +398,8 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
     return (
       <WCard icon={BookOpen} title={coach.wording.courses} meta={meta} chip={<Chip>{overall}%</Chip>}>
         <Num value={`${done}/${total}`} unit={`${word}s`} delta={`+${DONE_THIS_WEEK} this week`} />
-        <div className="grid flex-1 content-start gap-2.5">
+        {/* Wide: the courses sit side by side (a column each) instead of stretching into long thin rows. */}
+        <div className="grid flex-1 content-start gap-2.5 [@container_card_(min-width:34rem)]:grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] [@container_card_(min-width:34rem)]:gap-x-6">
           {shown.map((c) => {
             const st = courseStats(c, progress)
             const d = st.done
@@ -421,7 +422,7 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
                       </>
                     ) : (
                       <>
-                        <span className="hidden text-muted-foreground @[18rem]:inline">{p}%</span>
+                        <span className={cn("hidden text-muted-foreground @[18rem]:inline", !fixed && "[@container_card_(min-width:34rem)]:hidden")}>{p}%</span>
                         <span>
                           {d}/{st.lessons}
                         </span>
@@ -429,6 +430,12 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
                     )}
                   </span>
                 </div>
+                {/* Wide (a column per course): its share done as a figure of its own, so the column isn't just a line and a bar. */}
+                {!fixed && (
+                  <span className={cn("hidden text-[1.75rem] leading-8 tabular-nums [@container_card_(min-width:34rem)]:block", locked || p === 0 ? "text-muted-foreground" : "text-foreground")} style={{ fontFamily: font }}>
+                    {locked ? "—" : `${p}%`}
+                  </span>
+                )}
                 <HatchBar height={6} total={st.lessons} parts={locked ? [] : [{ value: d, color: here ? ACCENT : GREY[1] }, ...(here ? [{ value: inProgress, color: GREY[2] }] : [])]} />
               </div>
             )
@@ -465,7 +472,11 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
             // Wide (twice as wide as tall, 40rem up) or stacked: each course's name sits beside its ring instead of under it.
             <div
               key={c.id}
-              className="flex min-w-0 flex-col items-center gap-0.5 text-center [@container_card_(max-aspect-ratio:6/5)]:flex-row [@container_card_(max-aspect-ratio:6/5)]:gap-3 [@container_card_(max-aspect-ratio:6/5)]:text-left [@container_card_(min-aspect-ratio:2/1)_and_(min-width:40rem)]:flex-row [@container_card_(min-aspect-ratio:2/1)_and_(min-width:40rem)]:gap-3 [@container_card_(min-aspect-ratio:2/1)_and_(min-width:40rem)]:text-left"
+              className={cn(
+                "flex min-w-0 flex-col items-center gap-0.5 text-center [@container_card_(max-aspect-ratio:6/5)]:flex-row [@container_card_(max-aspect-ratio:6/5)]:gap-3 [@container_card_(max-aspect-ratio:6/5)]:text-left [@container_card_(min-aspect-ratio:2/1)_and_(min-width:40rem)]:flex-row [@container_card_(min-aspect-ratio:2/1)_and_(min-width:40rem)]:gap-3 [@container_card_(min-aspect-ratio:2/1)_and_(min-width:40rem)]:text-left",
+                // A card as tall as its content (two columns up): a bigger ring with its name beside it, centred in its third.
+                !fixed && "[@container_card_(min-width:34rem)]:flex-row [@container_card_(min-width:34rem)]:justify-center [@container_card_(min-width:34rem)]:gap-3.5 [@container_card_(min-width:34rem)]:text-left",
+              )}
             >
               {/* In a fixed cell the ring follows the card's height too (cqh), so a taller card gets bigger rings, not empty bands. */}
               <LessonRing
@@ -473,7 +484,7 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
                 progress={progress}
                 locked={locked}
                 accent={here}
-                className={fixed ? "size-[clamp(3.25rem,min(28cqh,16cqw),7.5rem)] [@container_card_(max-aspect-ratio:6/5)]:size-[clamp(2.75rem,min(18cqh,22cqw),5.5rem)]" : "size-[3.25rem] @[22rem]:size-15"}
+                className={fixed ? "size-[clamp(3.25rem,min(28cqh,16cqw),7.5rem)] [@container_card_(max-aspect-ratio:6/5)]:size-[clamp(2.75rem,min(18cqh,22cqw),5.5rem)]" : "size-[3.25rem] @[22rem]:size-15 [@container_card_(min-width:34rem)]:size-20"}
               >
                 {locked ? (
                   <Lock className="size-3.5 text-muted-foreground" />
@@ -484,7 +495,7 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
                 )}
               </LessonRing>
               <div className="grid max-w-full">
-                <span className={cn("line-clamp-2 text-[0.6875rem] leading-4 text-balance", here ? "font-medium text-foreground" : "text-muted-foreground")} title={c.title}>
+                <span className={cn("line-clamp-2 text-[0.6875rem] leading-4 text-balance", !fixed && "[@container_card_(min-width:34rem)]:text-[0.875rem] [@container_card_(min-width:34rem)]:leading-5", here ? "font-medium text-foreground" : "text-muted-foreground")} title={c.title}>
                   {c.title}
                 </span>
                 {standard && (

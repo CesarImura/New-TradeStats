@@ -1012,10 +1012,10 @@ export function Bars({
             <div key={i} className="relative flex flex-1 justify-center" onPointerEnter={() => setHover(i)}>
               {hover === i && <span aria-hidden className="absolute inset-y-0 inset-x-[8%] rounded-[min(var(--radius),6px)] bg-[color-mix(in_oklab,var(--foreground)_5%,transparent)]" />}
               {/* A ghost track to the top: the bar reads against its full height, with no baseline or grid. */}
-              {!diverging && <span aria-hidden className="r-bar absolute inset-y-0 w-[min(62%,1.125rem)]" style={{ background: "color-mix(in oklab, var(--foreground) 5%, transparent)" }} />}
+              {!diverging && <span aria-hidden className="r-bar absolute inset-y-0 w-[min(62%,1.125rem)] [@container_card_(min-width:34rem)]:w-[min(62%,2rem)] [@container_card_(min-width:56rem)]:w-[min(62%,2.75rem)]" style={{ background: "color-mix(in oklab, var(--foreground) 5%, transparent)" }} />}
               <motion.span
                 aria-hidden
-                className="r-bar absolute w-[min(62%,1.125rem)] transition-[background-color] duration-150"
+                className="r-bar absolute w-[min(62%,1.125rem)] [@container_card_(min-width:34rem)]:w-[min(62%,2rem)] [@container_card_(min-width:56rem)]:w-[min(62%,2.75rem)] transition-[background-color] duration-150"
                 style={{
                   background: colorOf(v, i),
                   height: `${h}%`,

@@ -332,7 +332,7 @@ export function RDistribution({ variant = "histogram" }: WidgetProps) {
   return (
     <WCard icon={BarChart3} title="R distribution" meta={`Last ${total} trades · in R multiples`} chip={<Chip>avg +0.42R</Chip>} bodyClassName={SPLIT}>
       <div data-main className="flex min-h-min flex-1 flex-col">
-        <Bars values={COUNTS} labels={BUCKETS} active={mostIdx} className="min-h-24 flex-1" format={(v) => `${v} trades`} />
+        <Bars values={COUNTS} labels={BUCKETS} active={mostIdx} className="min-h-24 flex-1 [@container_card_(min-width:34rem)]:min-h-36" format={(v) => `${v} trades`} />
       </div>
       {standard && (
         <Legend
