@@ -340,12 +340,14 @@ export function HeatGrid({ rows, rowLabels, colLabels, className }: { rows: Heat
   const font = useFigureFont()
   const [hover, setHover] = useState<[number, number]>()
   const n = rows[0]?.length ?? 1
-  // Cells grow with the card up to a calm size (2.25rem wide, 2rem tall; on a wide card 3.25rem by 2.5rem, on a full-width one 4.5rem by 3rem), then the grid stays centred: no grey slabs.
-  const grid = { gridTemplateColumns: `2rem repeat(${n}, minmax(0,var(--cell-w,2.25rem)))` }
+  // Cells share the card's whole width; where the card is as tall as its content they keep a 3:2 shape, so the grid
+  // grows taller with the card instead of floating in the middle of it. A cell that sets the height fills it.
+  const fixed = useFrame().fixed
+  const grid = { gridTemplateColumns: `2rem repeat(${n}, minmax(0,1fr))` }
   return (
-    <div className={cn("flex min-h-16 flex-1 flex-col justify-center gap-[3px] [@container_card_(min-width:40rem)]:[--cell-w:3.25rem] [@container_card_(min-width:56rem)]:[--cell-w:4.5rem]", className)} onPointerLeave={() => setHover(undefined)}>
+    <div className={cn("flex min-h-16 flex-1 flex-col justify-center gap-[3px]", className)} onPointerLeave={() => setHover(undefined)}>
       {rows.map((r, ri) => (
-        <div key={ri} className="grid min-h-2 max-h-8 flex-1 justify-center gap-[3px] [@container_card_(min-width:40rem)]:min-h-8 [@container_card_(min-width:40rem)]:max-h-10 [@container_card_(min-width:56rem)]:min-h-10 [@container_card_(min-width:56rem)]:max-h-12" style={grid}>
+        <div key={ri} className={cn("grid gap-[3px]", fixed && "min-h-2 max-h-8 flex-1")} style={grid}>
           {/* A tight line: the label must not make a row taller than its cells need, or a short card's grid spills. */}
           <span className={cn("self-center truncate text-[0.6875rem] leading-[0.875rem] transition-colors duration-150", hover?.[0] === ri ? "text-foreground" : "text-muted-foreground")} style={{ fontFamily: font }}>
             {rowLabels[ri]}
@@ -356,7 +358,7 @@ export function HeatGrid({ rows, rowLabels, colLabels, className }: { rows: Heat
               <span
                 key={ci}
                 onPointerEnter={() => setHover([ri, ci])}
-                className={cn("r-bar relative grid min-w-0 place-items-center text-[0.6875rem] leading-none tabular-nums transition-opacity duration-150", hover && !on && "opacity-50")}
+                className={cn("r-bar relative grid min-w-0 place-items-center", !fixed && "aspect-[3/2]", "text-[0.6875rem] leading-none tabular-nums transition-opacity duration-150", hover && !on && "opacity-50")}
                 style={{
                   background: c.fill ?? `color-mix(in oklab, var(--foreground) 6%, transparent)`,
                   boxShadow: on ? "0 0 0 1.5px var(--card), 0 0 0 3px var(--foreground)" : c.ring ? `inset 0 0 0 1.5px ${c.ring}` : undefined,
@@ -372,7 +374,7 @@ export function HeatGrid({ rows, rowLabels, colLabels, className }: { rows: Heat
       ))}
       {/* The hour labels give way first on a very short card. */}
       <Drop level={2}>
-        <div className="grid justify-center gap-[3px]" style={grid}>
+        <div className="grid gap-[3px]" style={grid}>
           <span />
           {colLabels.map((l, i) => (
             <span

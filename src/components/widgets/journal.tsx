@@ -289,11 +289,10 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
         title="Performance by hour"
         meta={`${coach.wording.journal} · last ${DAILY.length} days · your time zone`}
         chip={<Chip>{`best ${String(HOURS[best % HOURS.length]).padStart(2, "0")}:00`}</Chip>}
-        // Wide (two or three columns): the figure beside the grid, so the grid isn't left alone in the middle.
-        bodyClassName={cn(SPLIT, "@[34rem]:flex-row @[34rem]:flex-wrap @[34rem]:items-center @[34rem]:gap-x-8")}
+        bodyClassName={SPLIT}
       >
-        <Drop level={2}>{standard && <Num size="md" value={signed(AM)} unit="before 12:00" delta={`${signed(PM)} after`} deltaTone={PM >= 0 ? "profit" : "loss"} className="@[34rem]:w-[min(32%,13rem)] @[34rem]:shrink-0" />}</Drop>
-        <div data-main className="flex min-h-min flex-1 flex-col @[34rem]:min-w-0">
+        <Drop level={2}>{standard && <Num size="md" value={signed(AM)} unit="before 12:00" delta={`${signed(PM)} after`} deltaTone={PM >= 0 ? "profit" : "loss"} />}</Drop>
+        <div data-main className="flex min-h-min flex-1 flex-col">
           <HeatGrid
             rowLabels={["Mon", "Tue", "Wed", "Thu", "Fri"]}
             colLabels={HOURS.map((h, i) => (i % 2 === 0 ? String(h).padStart(2, "0") : undefined))}
@@ -309,7 +308,7 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
         <Drop level={3}>
           {detailed && (
             <Legend
-              className="shrink-0 [grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-x-5 @[34rem]:basis-full"
+              className="shrink-0 [grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-x-5"
               items={[
                 { color: "var(--profit)", label: "Best hour", value: `${["Mon", "Tue", "Wed", "Thu", "Fri"][Math.floor(best / HOURS.length)]} ${String(HOURS[best % HOURS.length]).padStart(2, "0")}:00` },
                 { color: "var(--loss)", label: "After 12:00", value: signed(PM), valueTone: "loss" },
