@@ -1,9 +1,11 @@
 "use client"
 
+import { useId } from "react"
 import { PlayCircle } from "@/components/icons"
 import { toast } from "sonner"
 import { setStored, useStored } from "@/lib/prototype-store"
 import { SelectOptions } from "@/components/kit/select-field"
+import { ControlLabel } from "@/components/kit/control-label"
 import { cn } from "@/lib/utils"
 
 /** Title row of an admin page: title, one plain sentence, the page's actions, and its video guide. */
@@ -39,15 +41,20 @@ export function NativeSelect({ className, ...props }: React.ComponentProps<typeo
   return <SelectOptions {...props} className={cn("h-7 rounded-[4px]", className)} />
 }
 
-/** One setting: label and help text on the left, the control on the right. */
+/** One setting: label and help text on the left, the control on the right (a switch or checkbox there is named by the label). */
 export function SettingRow({ label, text, children, className }: { label: React.ReactNode; text?: React.ReactNode; children: React.ReactNode; className?: string }) {
+  const id = useId()
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5 py-2.5", className)}>
       <div className="grid min-w-0 flex-1 basis-64 gap-0.5">
-        <span className="text-sm font-medium">{label}</span>
+        <span id={id} className="text-sm font-medium">
+          {label}
+        </span>
         {text && <span className="text-xs text-muted-foreground">{text}</span>}
       </div>
-      <div className="flex shrink-0 items-center gap-2">{children}</div>
+      <ControlLabel value={id}>
+        <div className="flex shrink-0 items-center gap-2">{children}</div>
+      </ControlLabel>
     </div>
   )
 }

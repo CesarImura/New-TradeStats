@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useId, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Check, CreditCard, Download, Link2 } from "@/components/icons"
 import { toast } from "sonner"
@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { ControlLabel } from "@/components/kit/control-label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useViewerGroup } from "@/lib/data/access"
 import { DEMO_STUDENT } from "@/lib/data/sample"
@@ -24,13 +25,18 @@ import { ACCOUNTS } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 
 function Row({ label, text, children }: { label: string; text?: string; children: React.ReactNode }) {
+  const id = useId()
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3.5">
       <div className="grid min-w-0 flex-1 basis-56 gap-0.5">
-        <span className="text-sm font-medium">{label}</span>
+        <span id={id} className="text-sm font-medium">
+          {label}
+        </span>
         {text && <span className="text-xs text-muted-foreground">{text}</span>}
       </div>
-      <div className="flex shrink-0 items-center gap-2">{children}</div>
+      <ControlLabel value={id}>
+        <div className="flex shrink-0 items-center gap-2">{children}</div>
+      </ControlLabel>
     </div>
   )
 }

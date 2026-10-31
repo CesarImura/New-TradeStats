@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Textarea } from "@/components/ui/textarea"
-import { DEFAULT_AI, SUGGESTED, aiAnswer, aiTradeAnswer, type AiReply } from "@/lib/data/ai"
+import { DEFAULT_AI, SUGGESTED, aiAnswer, aiTradeAnswer, askAi, type AiReply } from "@/lib/data/ai"
 import { TRADES, fmtR } from "@/lib/data/trades"
 import { useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
@@ -151,8 +151,9 @@ export function StudentAi() {
                   e.currentTarget.form?.requestSubmit()
                 }
               }}
-              placeholder={left > 0 ? `Ask ${coach.wording.ai}…` : "No questions left today. Back tomorrow."}
+              placeholder={left > 0 ? `${askAi(coach.wording.ai)}…` : "No questions left today. Back tomorrow."}
               disabled={left <= 0}
+              aria-label="Your question"
               className="max-h-32 min-h-9 resize-none"
             />
             <Button type="submit" size="icon" disabled={!q.trim() || left <= 0} aria-label="Send">

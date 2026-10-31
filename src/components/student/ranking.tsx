@@ -96,7 +96,7 @@ export function StudentRanking() {
                 Show me on the leaderboard
                 <span className="text-xs text-muted-foreground">{r.nicknames ? "Others see your nickname, never amounts" : "Others see your name, never amounts"}</span>
               </span>
-              <Switch checked={!hidden} onCheckedChange={(v) => setHidden(!v)} />
+              <Switch checked={!hidden} onCheckedChange={(v) => setHidden(!v)} aria-label="Show me on the leaderboard" />
             </label>
           )}
         </Card>

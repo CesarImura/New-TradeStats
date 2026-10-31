@@ -25,6 +25,9 @@ export const DEFAULT_AI: AiSetup = {
   corrections: [],
 }
 
+/** "Ask <name>" for buttons and prompts, without doubling it when the coach already named the assistant "Ask Marco". */
+export const askAi = (name: string) => (/^ask\b/i.test(name) ? name : `Ask ${name}`)
+
 export type AiReply = { text: string; source?: string; trade?: string }
 
 const ANSWERS: { match: RegExp; reply: AiReply }[] = [
