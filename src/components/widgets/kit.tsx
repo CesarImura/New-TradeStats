@@ -305,9 +305,9 @@ export function W({ children, className, style, brand, row }: { children: React.
   // Inverted Star: the text colour as the card, the brand only as the one mark.
   const inverted = star && !brand && !!theme && starStyleOf(theme) === "inverted"
   const corners = !!theme && widgetFinishOf(theme) === "corners" && !row
-  // This widget's own picture (widget-scope.tsx): under the card colour, never on a Star.
+  // This widget's own picture (widget-scope.tsx): under the card colour, never on a filled Star (a Spotlight Star is a plain card).
   const picture = useContext(WidgetPictureContext)
-  const pic = !starred ? picture : null
+  const pic = !star && !brand ? picture : null
   const ref = useRef<HTMLDivElement>(null)
   useDropToFit(ref)
   // The card settles in once when it appears (a short rise and fade); with reduced motion it only fades.
