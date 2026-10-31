@@ -125,7 +125,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
         <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur sm:px-6 lg:px-8">
           <SidebarTrigger className="max-md:hidden" />
-          <div className="min-w-0 md:hidden" data-edit="logo">
+          <div className="flex min-w-0 md:hidden" data-edit="logo">
             <CommunitySwitcher placement="bar" />
           </div>
           <div className="ml-auto flex items-center gap-1">
@@ -177,7 +177,7 @@ function TopNav({ items, floating }: { items: NavItem[]; floating?: boolean }) {
   return (
     <header className={cn("sticky top-0 z-20", floating ? "bg-[var(--ground)]" : "border-b bg-background/85 backdrop-blur")} data-edit="nav">
       <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-6 px-4 sm:px-6 lg:px-8">
-        <div className={cn("min-w-0", centered && "md:absolute md:left-1/2 md:-translate-x-1/2")} data-edit="logo">
+        <div className={cn("flex min-w-0", centered && "md:absolute md:left-1/2 md:-translate-x-1/2")} data-edit="logo">
           <CommunitySwitcher placement="bar" />
         </div>
         <nav className={cn("hidden items-center gap-1 md:flex", centered && "order-first")}>
@@ -268,7 +268,7 @@ function MobileBar({ items }: { items: NavItem[] }) {
   const overflow = items.length > 5
   const shown = overflow ? items.slice(0, 4) : items
   const hidden = overflow ? items.slice(4) : []
-  const itemClass = "flex w-full flex-col items-center gap-1 py-2.5 text-[0.7rem] text-muted-foreground data-[active=true]:text-primary"
+  const itemClass = "flex w-full flex-col items-center gap-1 py-2.5 text-[0.7rem] text-muted-foreground data-[active=true]:text-brand-text"
   return (
     <nav data-edit="nav" className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
       <ul className="grid grid-cols-5">
@@ -303,7 +303,7 @@ function MobileBar({ items }: { items: NavItem[] }) {
                     data-active={isActive(item)}
                     data-tour={item.id}
                     onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 rounded-[var(--r-menu)] px-3 py-3 text-sm text-muted-foreground hover:bg-muted data-[active=true]:bg-muted data-[active=true]:text-primary"
+                    className="flex items-center gap-3 rounded-[var(--r-menu)] px-3 py-3 text-sm text-muted-foreground hover:bg-muted data-[active=true]:bg-muted data-[active=true]:text-brand-text"
                   >
                     <item.icon className="size-5" />
                     <span className="truncate">{item.label}</span>

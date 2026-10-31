@@ -38,7 +38,7 @@ export function CommunitySwitcher({ placement }: { placement: "sidebar" | "bar" 
     return placement === "sidebar" ? (
       <Link href={base} className="px-1">{logo}</Link>
     ) : (
-      <Link href={base} title={coach.name} className="flex max-w-full min-w-0">
+      <Link href={base} title={coach.name} className="flex min-w-0">
         {logo}
       </Link>
     )
@@ -72,8 +72,9 @@ export function CommunitySwitcher({ placement }: { placement: "sidebar" | "bar" 
         <PopoverTrigger
           render={
             <button
-              // A button sizes to its content: max-w-full keeps a long name inside the bar, where it truncates (full name on hover).
-              className="-mx-1.5 flex max-w-full min-w-0 items-center gap-2 rounded-[var(--r-menu)] px-1.5 py-1 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-muted"
+              // Sizes to its content and shrinks (min-w-0) inside its flex wrapper, where a long name truncates (full name on hover).
+              // No max-w-full: a percentage of a wrapper that sizes to this button is cyclic and cut short names ("Kair…") with room to spare.
+              className="-mx-1.5 flex min-w-0 items-center gap-2 rounded-[var(--r-menu)] px-1.5 py-1 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-muted"
               aria-label={`${coach.name}. Switch community`}
               title={coach.name}
             />

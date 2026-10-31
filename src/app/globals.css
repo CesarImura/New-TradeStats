@@ -48,6 +48,9 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  /* The brand colour as text, adjusted to pass AA (lib/theme/css.ts). Use text-brand-text with variants (data-[active=true]:, hover:):
+     the theme only swaps the plain .text-primary class, so a variant text-primary keeps the raw brand colour. */
+  --color-brand-text: var(--brand-text, var(--primary));
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);

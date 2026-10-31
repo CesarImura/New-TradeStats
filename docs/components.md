@@ -66,6 +66,14 @@ ou `widgets/parts/`, estender em vez de duplicar.
   `break-ui` (nomes longos, e-mail sem espaço, lista vazia, números enormes).
 - **Claro e escuro:** conferir os dois. Nada de cor que só funciona no escuro (ex.: `bg-white/10` no tema claro some).
 - **Degradê:** proibido, exceto o fade dos widgets de mídia, que é sempre a cor do card (`--fade-to`).
+- **Cor de marca como texto (review de 31/10):** `text-primary` puro é trocado pelo tema pela versão legível (`--brand-text`, AA).
+  Com variante (`data-[active=true]:`, `hover:`, `group-*:`) a troca não acontece: usar `text-brand-text`. A aba ativa da barra do
+  celular da Sophia escura ficou com 2,3:1 por isso.
+- **Texto secundário sobre cor de marca:** sempre sólido, sem `opacity-*` nem `text-muted-foreground` com transparência. Em marca de
+  tom médio o texto apagado reprova AA (banner do Ranking, Closing do site). `.fx-hero` já faz `--muted-foreground: var(--on)`.
+- **Superfície de marca num shadcn Card:** `.fx-hero` em `<Card>` funciona (regra fora de layer em `globals.css`), mas não pôr
+  `bg-*` própria em outra superfície `.fx-hero` esperando que o tema vença.
+- **Capas e fotos fora de widget:** `--media-bg`/`--media-fg` existem em todo tema; não redefinir por página.
 
 ## 5. Motion
 
@@ -98,6 +106,12 @@ ou `widgets/parts/`, estender em vez de duplicar.
 - **Listeners:** todo `addEventListener` em `useEffect` tem o `removeEventListener` no retorno.
 - **Listas reordenáveis:** `key` estável (`id`), nunca o índice.
 - **Store do protótipo:** `write()` pode falhar por cota; tratar o `false` (o toast já aparece).
+- **Largura em % dentro de quem se ajusta ao conteúdo:** `max-w-full` num botão cujo pai tem a largura do próprio botão é cíclico e
+  corta texto curto (o nome "Kairo FX" virou "Kair…" com espaço sobrando). Pai `flex min-w-0` e filho `min-w-0`, sem `max-w-full`.
+- **Switch e Checkbox sem nome:** são `span role=...` do Base UI. Dentro de `SettingRow` (admin) ou `Row` (perfil) o rótulo da linha
+  dá o nome (`kit/control-label.ts`). Fora delas, `aria-label`. Linha com vários checkboxes de rótulo próprio: não usar `SettingRow`.
+- **Texto que repete o nome do coach:** montar com o helper (`askAi` em `lib/data/ai.ts`), nunca `Ask ${nome}`: o coach pode já ter
+  chamado o assistente de "Ask Marco".
 
 ## 8. Performance
 
