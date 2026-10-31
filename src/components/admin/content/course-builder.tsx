@@ -44,8 +44,8 @@ import {
   type Quiz,
   type Status,
 } from "@/lib/data/learning"
-import { dropLine } from "@/components/ui/drop-line"
-import { SelectOptions } from "@/components/ui/select"
+import { dropLine } from "@/components/kit/drop-line"
+import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { STATUS_DOT, StatusBadge } from "./content-board"
 

@@ -19,7 +19,7 @@ import {
 } from "@/lib/data/access"
 import { saveCatalog, useCatalog, type Course } from "@/lib/data/learning"
 import { STUDENTS, tierFor } from "@/lib/data/people"
-import { SelectOptions } from "@/components/ui/select"
+import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { Mono } from "../kit"
 

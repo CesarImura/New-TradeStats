@@ -28,7 +28,7 @@ import { AI_INSIGHT, DEMO_STUDENT, EQUITY, JOURNAL_DAYS, RULES, SETUPS } from "@
 import { ACCOUNTS, BROKERS, STRATEGIES, fmtPnl, fmtR } from "@/lib/data/trades"
 import { resolveColors } from "@/lib/theme/derive"
 import { heatCell } from "@/lib/theme/heat"
-import { SelectOptions } from "@/components/ui/select"
+import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { OwnTitle } from "@/components/student/own-title"
 

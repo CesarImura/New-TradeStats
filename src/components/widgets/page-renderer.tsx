@@ -6,10 +6,10 @@ import { GAP, ROW_HEIGHT, readingOrder, type PageLayout, type WidgetInstance } f
 import { widgetFinishOf, widgetSetOf } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { WidgetFrame } from "./kit"
+import { WidgetFrame } from "./parts/kit"
 import { fitWidth, getWidget, heightFor } from "./registry"
-import { WidgetStyleScope } from "./widget-scope"
-import { PageIdContext, PageTitleShownContext, usePhase } from "./shared"
+import { WidgetStyleScope } from "./parts/widget-scope"
+import { PageIdContext, PageTitleShownContext, usePhase } from "./parts/shared"
 import { useViewerGroup } from "@/lib/data/access"
 
 export function isAvailable(w: WidgetInstance, coach: Coach) {

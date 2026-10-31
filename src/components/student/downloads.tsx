@@ -9,9 +9,9 @@ import { UnlockDialog } from "@/components/student/unlock-dialog"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Chip } from "@/components/widgets/instrument"
-import { series } from "@/components/widgets/kit"
-import { Cover } from "@/components/widgets/shared"
+import { Chip } from "@/components/widgets/catalog/instrument"
+import { series } from "@/components/widgets/parts/kit"
+import { Cover } from "@/components/widgets/parts/shared"
 import { useAccess, useViewerTier } from "@/lib/data/access"
 import {
   DOWNLOAD_CATEGORIES,

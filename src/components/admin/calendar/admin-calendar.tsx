@@ -39,7 +39,7 @@ import {
   type NewsItem,
   type Window,
 } from "@/lib/data/schedule"
-import { SelectOptions } from "@/components/ui/select"
+import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 

@@ -3,7 +3,7 @@
 import { PlayCircle } from "@/components/icons"
 import { toast } from "sonner"
 import { setStored, useStored } from "@/lib/prototype-store"
-import { SelectOptions } from "@/components/ui/select"
+import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 
 /** Title row of an admin page: title, one plain sentence, the page's actions, and its video guide. */

@@ -25,8 +25,8 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { series } from "@/components/widgets/kit"
-import { Cover } from "@/components/widgets/shared"
+import { series } from "@/components/widgets/parts/kit"
+import { Cover } from "@/components/widgets/parts/shared"
 import {
   asPreview,
   canAccess,

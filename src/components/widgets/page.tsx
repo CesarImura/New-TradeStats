@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef, useState } from "react"
 import { useCoach } from "@/components/coach/coach-provider"
 import { isPageId, pageIdOf, type ModuleId } from "@/lib/data/coaches"
 import { cn } from "@/lib/utils"
-import { Cover, usePageId, type WidgetProps } from "./shared"
+import { Cover, usePageId, type WidgetProps } from "./parts/shared"
 
 /** What a page's title block says before the coach writes their own. */
 function defaults(page: string, coach: ReturnType<typeof useCoach>["coach"]) {

@@ -1,8 +1,8 @@
 "use client"
 
 import { useMemo } from "react"
-import { DesignProvider } from "@/components/admin/design/design-fields"
-import { useDraftEditor } from "@/components/admin/design/editor-shell"
+import { DesignProvider } from "@/components/admin/design/fields/design-fields"
+import { useDraftEditor } from "@/components/admin/design/editor/editor-shell"
 import type { CustomCommunity } from "@/lib/data/communities"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 

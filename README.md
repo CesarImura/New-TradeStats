@@ -74,9 +74,9 @@ The canvas in Design uses the same masonry: dragging a widget only reorders it (
 
 - `src/lib/widgets/layout.ts` – layout data and each template's default pages.
 - `src/components/widgets/registry.tsx` – every widget: group, module, layouts (each with `h`, `minH`, `maxH`, `minW`, `maxW`, used to estimate a card before it is measured and by the Library), settings.
-- `src/components/widgets/` – the widgets, each with its empty state, and the only copy of them: the Library, the admin and the student side all import from here. `content.tsx` is the "Your content" group: Text, Image, Button, Banner, Embed, Hero, filled by the coach.
+- `src/components/widgets/` – the widgets (`catalog/`, one file per group) and their kit (`parts/`), each with its empty state, and the only copy of them: the Library, the admin and the student side all import from here. `content.tsx` is the "Your content" group: Text, Image, Button, Banner, Embed, Hero, filled by the coach.
 - Every widget can carry the coach's own text, button and picture (`note` on the instance, shown under the header) and a visibility rule (`show`: a phase such as first week, inactive or finished a course, or a group). The builder shows rules as an orange tag; `?data=empty|inactive|finished` previews a phase.
-- `src/components/admin/design/page-builder.tsx` – the canvas, per-tier layouts, desktop/tablet/phone, sample or empty data. On screens under 900px the editor says it needs a larger screen and offers the preview.
+- `src/components/admin/design/editor/page-builder.tsx` – the canvas, per-tier layouts, desktop/tablet/phone, sample or empty data. On screens under 900px the editor says it needs a larger screen and offers the preview.
 
 Only admins change the layout; students see it. No embeds or custom code. `?data=empty` on a student page shows what a brand-new student sees.
 

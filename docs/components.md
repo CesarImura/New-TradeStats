@@ -11,14 +11,16 @@ Fontes usadas: skills `shadcn`, `migrate-radix-to-base`, `emil-design-eng`, `web
 
 | Pasta | O que vai ali | Regra |
 | --- | --- | --- |
-| `src/components/ui/` | Primitivos do shadcn (base-nova, em Base UI) e peças genéricas sem regra de negócio (`select.tsx`, `drop-line.ts`) | Todo mundo importa daqui. Mudança aqui vale para admin, aluno e editor ao mesmo tempo. |
+| `src/components/ui/` | Só os primitivos do shadcn (base-nova, em Base UI) | Gerenciada pelo CLI. Mudança aqui vale para admin, aluno e editor ao mesmo tempo. |
+| `src/components/kit/` | Nossas peças genéricas montadas sobre `ui/`: `select-field.tsx` (`SelectField`, `SelectOptions`), `drop-line.ts` | Peça nova reutilizável e sem regra de negócio entra aqui, não em `ui/`. |
 | `src/components/admin/kit.tsx` | Peças do admin: `PageHeader`, `Page`, `NativeSelect`, `SettingRow`, `Field` | Tela nova do admin começa por elas. |
-| `src/components/widgets/` | Widgets e o kit deles (`kit.tsx`: `W`, `WidgetFrame`, `Drop`, `MOTION`, `useFitRows`) | Usar a skill `traderhub-widget-design` antes de mexer. |
+| `src/components/widgets/` | Raiz: `registry.tsx` (catálogo e settings), `page.tsx`, `page-renderer.tsx` (masonry). `parts/`: o kit dos widgets (`kit.tsx`: `W`, `WidgetFrame`, `Drop`, `MOTION`, `useFitRows`; `shared.tsx`, `widget-scope.tsx`, `layouts.tsx`). `catalog/`: um arquivo por grupo de widgets (`catalog/more/` para os extras) | Usar a skill `traderhub-widget-design` antes de mexer. Widget novo vai em `catalog/` e entra no `registry.tsx`. |
+| `src/components/admin/design/` | Editor de Design. `editor/`: casca, canvas, prévia (`page-builder.tsx`, `editor-shell.tsx`…). `panels/`: painéis laterais (`builder-panels.tsx`, `settings-panel.tsx`, `media-cards-editor.tsx`). `fields/`: campos e controles (`controls.tsx`, `design-fields.tsx`, `menu-sort.tsx`…). Raiz: dados (`looks.ts`, `options.ts`, `states.ts`) | Campo novo em `fields/`, painel novo em `panels/`. |
 | `src/components/icons.tsx` | Todos os ícones (Carbon embrulhado com nomes do lucide) | Nunca importar `lucide-react` ou `@carbon/icons-react` direto. Ícone que falta: adicionar aqui. |
 | `src/lib/theme/` | Tokens, `themeToCss`, contraste | Cor nova vira token, não hex solto no componente. |
 
-Antes de criar um componente: `rg` pelo nome e pelo comportamento. Se já existe algo parecido em `ui/`, `admin/kit.tsx`
-ou `widgets/kit.tsx`, estender em vez de duplicar.
+Antes de criar um componente: `rg` pelo nome e pelo comportamento. Se já existe algo parecido em `ui/`, `kit/`, `admin/kit.tsx`
+ou `widgets/parts/kit.tsx`, estender em vez de duplicar.
 
 ## 2. shadcn e Base UI
 
@@ -37,13 +39,13 @@ ou `widgets/kit.tsx`, estender em vez de duplicar.
 ## 3. Controles padrão (use estes, não reinvente)
 
 - **Dropdown:** nunca `<select>` nativo. Use `SelectField` (lista `{ value, label }`) ou `SelectOptions` (mesma API do `<select>`,
-  com `<option>`s) de `@/components/ui/select`. No admin, `NativeSelect` de `admin/kit.tsx` já é o mesmo componente no tamanho
+  com `<option>`s) de `@/components/kit/select-field`. No admin, `NativeSelect` de `admin/kit.tsx` já é o mesmo componente no tamanho
   do admin. O chevron fica a 8px da borda em todos os tamanhos; não colocar `ChevronDown` extra nem `appearance-none`.
-- **Lista ordenada por arrastar:** indicador de onde o item cai é `dropLine("before" | "after")` de `@/components/ui/drop-line`.
+- **Lista ordenada por arrastar:** indicador de onde o item cai é `dropLine("before" | "after")` de `@/components/kit/drop-line`.
   Nunca borda, `ring` ou sombra no próprio item (em card arredondado parece card quebrado). Alvo que é uma área inteira (coluna
   do kanban, módulo que recebe aula, dropzone de arquivo) usa fundo `bg-primary/10`.
   - Ordenação com animação: `Reorder` do `motion/react` com alça (`dragListener={false}` + `useDragControls`), como em
-    `admin/design/menu-sort.tsx`. Sempre com ↑ ↓ pelo teclado e um `aria-live` dizendo para onde o item foi.
+    `admin/design/fields/menu-sort.tsx`. Sempre com ↑ ↓ pelo teclado e um `aria-live` dizendo para onde o item foi.
 - **Botão só com ícone:** `Button size="icon-*"` com `aria-label` (e `title` quando o ícone não é óbvio). Área clicável de 24px
   no mínimo (`size-7` ou pseudo-elemento maior).
 - **Switch, Checkbox, Tabs, Dialog, Sheet, Tooltip:** os de `ui/`. Grupo de opções com cara de botão: `role="radiogroup"` no pai e
@@ -78,13 +80,13 @@ ou `widgets/kit.tsx`, estender em vez de duplicar.
 
 ## 6. Bibliotecas específicas
 
-- **Embla (`embla-carousel-react`):** só em `widgets/media.tsx`. Loop precisa de 8 slides ou mais (repetir os reais e contar os dots
+- **Embla (`embla-carousel-react`):** só em `widgets/catalog/media.tsx`. Loop precisa de 8 slides ou mais (repetir os reais e contar os dots
   só dos reais). `reInit` quando a lista muda. Abaixo de 480px a Shelf vira Row.
 - **Recharts:** sempre por `ui/chart.tsx` (`ChartContainer`, cores por `--chart-*`). Altura explícita no container, senão o gráfico
   fica com 0px. Para gráfico de preço use `components/charts/trade-chart.tsx`.
 - **react-grid-layout:** está no `package.json` mas **não é usado** (as páginas usam masonry própria em `page-builder.tsx`). Não
   reintroduzir; candidato a remover a dependência.
-- **Sonner:** `toast` de `sonner`, já montado em `app/layout.tsx`. O editor tem um segundo, com `id` próprio (`CANVAS_TOASTS` em `page-builder.tsx`); fora isso, não montar outro `<Toaster />`.
+- **Sonner:** `toast` de `sonner`, já montado em `app/layout.tsx`. O editor tem um segundo, com `id` próprio (`CANVAS_TOASTS` em `editor/page-builder.tsx`); fora isso, não montar outro `<Toaster />`.
 
 ## 7. Comportamento (bugs que já aconteceram)
 
