@@ -5,6 +5,7 @@ import { Slider as SliderPrimitive } from "@base-ui/react/slider"
 import { ChevronDown } from "@/components/icons"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { SelectOptions } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { SWATCH_ON } from "./states"
 
@@ -357,7 +358,7 @@ function ColorPickerPanel({ value, onChange }: { value: string; onChange: (c: st
         </div>
 
         <div className="flex items-center gap-1.5">
-          <select
+          <SelectOptions
             value={mode}
             onChange={(e) => setMode(e.target.value as typeof mode)}
             aria-label="Colour format"
@@ -366,7 +367,7 @@ function ColorPickerPanel({ value, onChange }: { value: string; onChange: (c: st
             <option value="hex">Hex</option>
             <option value="rgb">RGB</option>
             <option value="hsl">HSL</option>
-          </select>
+          </SelectOptions>
           {mode === "hex" ? (
             <HexInput value={value} onChange={(hex) => set(hexToHsv(hex))} label="Hex code" className={cn(BOX, "w-0 min-w-0 flex-1 px-2")} />
           ) : (

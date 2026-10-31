@@ -44,6 +44,8 @@ import {
   type Quiz,
   type Status,
 } from "@/lib/data/learning"
+import { dropLine } from "@/components/ui/drop-line"
+import { SelectOptions } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { STATUS_DOT, StatusBadge } from "./content-board"
 
@@ -229,7 +231,7 @@ function Tree({ course, sel, onSelect, edit }: { course: Course; sel: Sel; onSel
                       setTarget(`m:${m.id}`)
                     }}
                     onDrop={() => dropOn("module", m.id)}
-                    className={cn("group flex items-center gap-1 rounded-md px-1 py-1.5 hover:bg-muted", target === `m:${m.id}` && "ring-2 ring-primary/40")}
+                    className={cn("group flex items-center gap-1 rounded-md px-1 py-1.5 hover:bg-muted", target === `m:${m.id}` && (drag?.kind === "module" ? dropLine("before") : "bg-primary/10"))}
                   />
                 }
               >
@@ -288,7 +290,7 @@ function Tree({ course, sel, onSelect, edit }: { course: Course; sel: Sel; onSel
                             "group relative flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted",
                             sel.kind === "lesson" && sel.id === l.id && "bg-background shadow-xs ring-1 ring-border",
                             drag?.id === l.id && "opacity-50",
-                            target === `l:${l.id}` && "before:absolute before:inset-x-1 before:-top-px before:h-0.5 before:rounded before:bg-primary",
+                            target === `l:${l.id}` && dropLine("before"),
                           )}
                         />
                       }
@@ -327,7 +329,7 @@ function Tree({ course, sel, onSelect, edit }: { course: Course; sel: Sel; onSel
                     setTarget(`end:${m.id}`)
                   }}
                   onDrop={() => dropOn("lesson", m.id)}
-                  className={cn("rounded-md", drag?.kind === "lesson" ? "h-6" : "h-0", target === `end:${m.id}` && "bg-primary/10 ring-1 ring-primary/40")}
+                  className={cn(drag?.kind === "lesson" ? "h-6" : "h-0", target === `end:${m.id}` && dropLine("before"))}
                 />
                 {m.lessons.length === 0 && !drag && <span className="px-2 py-1 text-xs text-muted-foreground">Empty. Add a lesson or drag one here.</span>}
               </div>
@@ -387,11 +389,11 @@ function CourseSettings({ course, edit }: { course: Course; edit: (fn: (c: Cours
           <Input value={course.tagline} onChange={(e) => set({ tagline: e.target.value })} placeholder="e.g. Six setups, step by step" />
         </Field>
         <Field label="Area">
-          <select value={course.area} onChange={(e) => set({ area: e.target.value })} className="h-9 rounded-lg border bg-background px-2 text-sm">
+          <SelectOptions value={course.area} onChange={(e) => set({ area: e.target.value })} className="h-9 rounded-lg border bg-background px-2 text-sm">
             {catalog.areas.map((a) => (
               <option key={a}>{a}</option>
             ))}
-          </select>
+          </SelectOptions>
         </Field>
       </section>
 
@@ -837,13 +839,13 @@ function QuizEditor({ lesson, onChange }: { lesson: Lesson; onChange: (p: Partia
             <Label>Pass mark</Label>
             <span className="text-xs text-muted-foreground">Right answers needed to pass</span>
           </div>
-          <select value={quiz.passMark} onChange={(e) => set({ passMark: Number(e.target.value) })} className="h-9 rounded-lg border bg-background px-2 text-sm">
+          <SelectOptions value={quiz.passMark} onChange={(e) => set({ passMark: Number(e.target.value) })} className="h-9 rounded-lg border bg-background px-2 text-sm">
             {quiz.questions.map((_, i) => (
               <option key={i} value={i + 1}>
                 {i + 1} of {quiz.questions.length}
               </option>
             ))}
-          </select>
+          </SelectOptions>
         </div>
         <label className="flex items-center justify-between gap-4">
           <span className="grid">

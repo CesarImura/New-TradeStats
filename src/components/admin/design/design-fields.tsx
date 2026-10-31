@@ -15,6 +15,7 @@ import { pictureFrom } from "@/lib/images"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import { chartStyleOf, headerFormOf, widgetFinishOf, type CoachTheme, type TemplateId } from "@/lib/theme/types"
+import { SelectOptions } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { BackgroundControl } from "./background-control"
 import { Field, More, Segmented, SliderField, Swatches } from "./controls"
@@ -253,7 +254,7 @@ function FontsField() {
       <More label="Choose fonts one by one">
         {(["heading", "body", "label"] as const).map((role) => (
           <Field key={role} label={role === "heading" ? "Headings" : role === "body" ? "Text" : "Small labels"}>
-            <select
+            <SelectOptions
               value={theme.fonts[role]}
               onChange={(e) => change({ theme: { fonts: { [role]: e.target.value as FontId } } }, `font-${role}`)}
               className="h-7 rounded-[4px] border bg-background px-2 text-xs"
@@ -263,7 +264,7 @@ function FontsField() {
                   {f.label}
                 </option>
               ))}
-            </select>
+            </SelectOptions>
           </Field>
         ))}
         <p className="text-xs text-muted-foreground">Uploading your own font file comes later.</p>

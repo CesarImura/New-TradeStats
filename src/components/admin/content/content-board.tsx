@@ -38,6 +38,7 @@ import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { STATUS_LABEL, allLessons, isSampleCourse, saveCatalog, uid, useCatalog, type Catalog, type Course, type Status } from "@/lib/data/learning"
+import { SelectOptions } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 
@@ -336,11 +337,11 @@ function NewCourseDialog({ area, areas, onClose, onCreate }: { area: string | nu
           </div>
           <div className="grid gap-2">
             <Label htmlFor="nc-area">Area</Label>
-            <select id="nc-area" value={pick} onChange={(e) => setPick(e.target.value)} className="h-9 rounded-lg border bg-background px-2 text-sm">
+            <SelectOptions id="nc-area" value={pick} onChange={(e) => setPick(e.target.value)} className="h-9 rounded-lg border bg-background px-2 text-sm">
               {areas.map((a) => (
                 <option key={a}>{a}</option>
               ))}
-            </select>
+            </SelectOptions>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={!title.trim()}>
@@ -477,11 +478,11 @@ function BulkUpload({ open, onOpenChange, areas, onCreate }: { open: boolean; on
               </div>
               <div className="grid gap-2">
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Course title" />
-                <select value={area} onChange={(e) => setArea(e.target.value)} className="h-9 rounded-lg border bg-background px-2 text-sm" aria-label="Area">
+                <SelectOptions value={area} onChange={(e) => setArea(e.target.value)} className="h-9 rounded-lg border bg-background px-2 text-sm" aria-label="Area">
                   {areas.map((a) => (
                     <option key={a}>{a}</option>
                   ))}
-                </select>
+                </SelectOptions>
               </div>
               <div className="grid gap-2 rounded-lg border p-3 text-sm">
                 {(files === SAMPLE_FOLDER ? AI_MODULES : [{ title: "Module 1", files: files.map((_, i) => i) }]).map((m) => (

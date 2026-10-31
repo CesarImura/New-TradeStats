@@ -294,3 +294,18 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Every one-line native select, admin and student alike: one chevron with room on its right, the same in every
+   browser (the native arrow sat flush against the edge). Unlayered on purpose, so a px-* on a select can't take
+   that room away. Its colour follows muted text, light and dark. */
+select:not([multiple]):not([size]) {
+  appearance: none;
+  padding-inline-end: 1.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 0.75rem;
+}
+select:not([multiple]):not([size]):is(.dark *):not(:is(.light, .light *)) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a1a1' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}

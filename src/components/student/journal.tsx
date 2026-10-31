@@ -28,6 +28,7 @@ import { AI_INSIGHT, DEMO_STUDENT, EQUITY, JOURNAL_DAYS, RULES, SETUPS } from "@
 import { ACCOUNTS, BROKERS, STRATEGIES, fmtPnl, fmtR } from "@/lib/data/trades"
 import { resolveColors } from "@/lib/theme/derive"
 import { heatCell } from "@/lib/theme/heat"
+import { SelectOptions } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { OwnTitle } from "@/components/student/own-title"
 
@@ -589,11 +590,11 @@ function NewTrade({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boo
           ))}
           <div className="col-span-2 grid gap-1.5">
             <Label className="text-[0.8rem]">Setup</Label>
-            <select className="h-9 rounded-(--r-inner) border bg-transparent px-2 text-sm">
+            <SelectOptions className="h-9 rounded-(--r-inner) border bg-transparent px-2 text-sm">
               {STRATEGIES.map((s) => (
                 <option key={s.id}>{s.name}</option>
               ))}
-            </select>
+            </SelectOptions>
           </div>
           <div className="col-span-2 grid gap-1.5">
             <Label className="text-[0.8rem]">Why you took it</Label>

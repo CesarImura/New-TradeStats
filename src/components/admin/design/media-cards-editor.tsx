@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { imgKey, parseEntries, useDefaultSlides, useShelfCards, type MediaEntry, type MediaItem, type Part } from "@/components/widgets/media"
 import type { WidgetProps } from "@/components/widgets/shared"
 import { series } from "@/components/widgets/kit"
+import { dropLine } from "@/components/ui/drop-line"
+import { SelectOptions } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { Field } from "./controls"
 
@@ -147,9 +149,9 @@ export function MediaCardsEditor({
                 setOver(null)
               }}
               className={cn(
-                "grid rounded-lg border bg-background transition-[box-shadow,opacity] duration-150",
+                "grid rounded-lg border bg-background transition-opacity duration-150",
                 drag === i && "opacity-50",
-                over === i && drag !== null && drag !== i && (drag < i ? "shadow-[0_2px_0_0_var(--primary)]" : "shadow-[0_-2px_0_0_var(--primary)]"),
+                over === i && drag !== null && drag !== i && dropLine(drag < i ? "after" : "before"),
                 e.hidden && "bg-muted/40",
               )}
             >
@@ -231,14 +233,14 @@ function EntryFields({ kind, entry: e, base: b, picture, onChange }: { kind: "sh
   )
   const target = (key: "target" | "target2", url: "url" | "url2") => (
     <>
-      <select value={e[key] ?? ""} onChange={(ev) => onChange({ [key]: ev.target.value })} className={selectClass} aria-label="Opens">
+      <SelectOptions value={e[key] ?? ""} onChange={(ev) => onChange({ [key]: ev.target.value })} className={selectClass} aria-label="Opens">
         <option value="">{b ? "Its own page" : "Courses"}</option>
         {TARGETS.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>
         ))}
-      </select>
+      </SelectOptions>
       {e[key] === "url" && <Input value={e[url] ?? ""} placeholder="https://…" aria-label="Web address" onChange={(ev) => onChange({ [url]: ev.target.value })} />}
     </>
   )
@@ -282,11 +284,11 @@ function EntryFields({ kind, entry: e, base: b, picture, onChange }: { kind: "sh
       )}
       {kind === "shelf" && (
         <Field label="Badge">
-          <select value={e.badge ?? ""} onChange={(ev) => onChange({ badge: ev.target.value as MediaEntry["badge"] })} className={selectClass}>
+          <SelectOptions value={e.badge ?? ""} onChange={(ev) => onChange({ badge: ev.target.value as MediaEntry["badge"] })} className={selectClass}>
             <option value="">{b ? "Automatic" : "None"}</option>
             <option value="new">New</option>
             <option value="none">None</option>
-          </select>
+          </SelectOptions>
         </Field>
       )}
       {!off.has("button") && (

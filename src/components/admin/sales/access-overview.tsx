@@ -19,6 +19,7 @@ import {
 } from "@/lib/data/access"
 import { saveCatalog, useCatalog, type Course } from "@/lib/data/learning"
 import { STUDENTS, tierFor } from "@/lib/data/people"
+import { SelectOptions } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { Mono } from "../kit"
 
@@ -184,7 +185,7 @@ export function AccessOverview() {
                             const rule = access.groups[`${c.id}/${g.id}`] ?? "tier"
                             return (
                               <td key={g.id} className={cn("px-1.5 text-center", i === 0 && "border-l")}>
-                                <select
+                                <SelectOptions
                                   value={rule}
                                   onChange={(e) => setRule(c.id, g.id, e.target.value as GroupRule)}
                                   aria-label={`${c.title} for ${g.name}`}
@@ -199,7 +200,7 @@ export function AccessOverview() {
                                       {r.short}
                                     </option>
                                   ))}
-                                </select>
+                                </SelectOptions>
                               </td>
                             )
                           })}

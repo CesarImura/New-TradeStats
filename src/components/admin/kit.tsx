@@ -3,6 +3,7 @@
 import { PlayCircle } from "@/components/icons"
 import { toast } from "sonner"
 import { setStored, useStored } from "@/lib/prototype-store"
+import { SelectOptions } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 /** Title row of an admin page: title, one plain sentence, the page's actions, and its video guide. */
@@ -33,17 +34,9 @@ export function Page({ children, wide }: { children: React.ReactNode; wide?: boo
   return <div className={cn("mx-auto flex w-full flex-col gap-6", wide ? "max-w-[1400px]" : "max-w-[1200px]")}>{children}</div>
 }
 
-/** A native select in the admin style. Simple, keyboard-friendly, works in dialogs. */
-export function NativeSelect({ className, ...props }: React.ComponentProps<"select">) {
-  return (
-    <select
-      {...props}
-      className={cn(
-        "h-7 min-w-0 rounded-[4px] border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 [&>option]:bg-popover",
-        className,
-      )}
-    />
-  )
+/** The admin's dropdown: the app's own (ui/select), with a native select's props and <option>s. Works in dialogs. */
+export function NativeSelect({ className, ...props }: React.ComponentProps<typeof SelectOptions>) {
+  return <SelectOptions {...props} className={cn("h-7 rounded-[4px]", className)} />
 }
 
 /** One setting: label and help text on the left, the control on the right. */

@@ -39,6 +39,7 @@ import {
   type NewsItem,
   type Window,
 } from "@/lib/data/schedule"
+import { SelectOptions } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 
@@ -232,13 +233,13 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="ev-len">Length</Label>
-                <select id="ev-len" value={e.minutes} onChange={(x) => set({ minutes: Number(x.target.value) })} className="h-9 rounded-lg border bg-background px-2 text-sm">
+                <SelectOptions id="ev-len" value={e.minutes} onChange={(x) => set({ minutes: Number(x.target.value) })} className="h-9 rounded-lg border bg-background px-2 text-sm">
                   {[30, 45, 60, 90, 120].map((m) => (
                     <option key={m} value={m}>
                       {m} min
                     </option>
                   ))}
-                </select>
+                </SelectOptions>
               </div>
             </div>
             <label className="flex items-center justify-between gap-3 text-sm">
@@ -631,13 +632,13 @@ function SettingSelect({ label, value, options, suffix, onChange }: { label: str
   return (
     <label className="flex items-center justify-between gap-3 text-sm">
       <span>{label}</span>
-      <select value={value} onChange={(e) => onChange(Number(e.target.value))} className="h-8 rounded-lg border bg-background px-2 text-sm">
+      <SelectOptions value={value} onChange={(e) => onChange(Number(e.target.value))} className="h-8 rounded-lg border bg-background px-2 text-sm">
         {options.map((o) => (
           <option key={o} value={o}>
             {o} {suffix}
           </option>
         ))}
-      </select>
+      </SelectOptions>
     </label>
   )
 }

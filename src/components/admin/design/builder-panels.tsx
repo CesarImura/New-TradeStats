@@ -9,12 +9,14 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { fitWidth, getWidget, heightFor, librarySections, lookOf, pageWidth, settingsFor, styleParts, widthsFor, type WidgetDef } from "@/components/widgets/registry"
 import { WidgetFrame } from "@/components/widgets/kit"
+import { filledStar } from "@/components/widgets/widget-scope"
 import { DataModeProvider } from "@/components/widgets/shared"
 import { useGroups } from "@/lib/data/access"
 import type { Coach } from "@/lib/data/coaches"
 import { pictureFrom } from "@/lib/images"
 import { COLS, ROW_HEIGHT, type Detail, type Emphasis, type PageId, type WidgetInstance, type WidgetNote, type WidgetOwnStyle, type WidgetPhase } from "@/lib/widgets/layout"
 import { BACKDROPS, MIN_WIDGET_DIM, widgetDimOf } from "@/lib/theme/backdrops"
+import { SelectOptions } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { Field, Segmented, SliderField } from "./controls"
 import { useDesign } from "./design-fields"
@@ -313,7 +315,7 @@ export function SizeIcons({ value, allowed, onChange }: { value: number; allowed
               onChange(o.value)
             }}
             className={cn(
-              "grid h-7 w-10 grid-cols-3 gap-[2px] rounded-md border p-1 outline-none active:scale-[0.97]",
+              "grid h-7 w-10 grid-cols-3 gap-[2px] rounded-md border p-1 outline-none focus-visible:ring-2 focus-visible:ring-[var(--ts-interactive)] active:scale-[0.97]",
               EASE,
               on ? "border-[var(--ts-interactive)] bg-[rgb(255_85_0/0.14)]" : "border-white/15 hover:border-white/45 hover:bg-white/[0.08]",
             )}
@@ -636,13 +638,13 @@ function WidgetDetails({
                 </label>
               ) : s.type === "select" ? (
                 <Field key={s.key} label={s.label}>
-                  <select value={String(props[s.key] ?? s.options[0].value)} onChange={(e) => setProps({ ...props, [s.key]: e.target.value })} className="h-8 rounded-lg border bg-background px-2 text-sm">
+                  <SelectOptions value={String(props[s.key] ?? s.options[0].value)} onChange={(e) => setProps({ ...props, [s.key]: e.target.value })} className="h-8 rounded-lg border bg-background px-2 text-sm">
                     {s.options.map((o) => (
                       <option key={o.value} value={o.value}>
                         {o.label}
                       </option>
                     ))}
-                  </select>
+                  </SelectOptions>
                 </Field>
               ) : null,
             )}
@@ -712,7 +714,7 @@ const FILL_HINT: Record<Fill, string> = {
 /**
  * This widget's own style: Card, Names, Charts and Numbers instead of All widgets (each with the way back), and its
  * background: a tone of the theme, or on content widgets a picture under the card colour. Charts and Numbers show
- * only on widgets that draw them; a Star keeps its own surface, so its background can't change.
+ * only on widgets that draw them; a Star that fills its card (Brand or Inverted Star) keeps that surface, so its background can't change.
  */
 function OwnStyleFields({ w, pinned, onChange }: { w: WidgetInstance; pinned?: boolean; onChange: (patch: Partial<WidgetInstance>, key: string) => void }) {
   const { theme } = useDesign()
@@ -723,7 +725,7 @@ function OwnStyleFields({ w, pinned, onChange }: { w: WidgetInstance; pinned?: b
     const next = Object.fromEntries(Object.entries({ ...own, ...patch }).filter(([, v]) => v !== undefined && v !== "")) as WidgetOwnStyle
     onChange({ style: Object.keys(next).length ? next : undefined }, `${w.id}-style-${key}`)
   }
-  const star = w.emphasis === "star"
+  const star = filledStar(theme, w.emphasis)
   const fill: Fill = own.image && parts.image ? "image" : (own.tone ?? "card")
   const fills: { value: Fill; label: string }[] = [
     { value: "card", label: "Card" },
@@ -757,7 +759,7 @@ function OwnStyleFields({ w, pinned, onChange }: { w: WidgetInstance; pinned?: b
       )}
       <Scoped label="Background" scope={<Scope own={fill !== "card"} onReset={() => set({ tone: undefined, image: undefined, dim: undefined }, "fill")} />}>
         {star ? (
-          <p className="rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">The Star widget keeps its own surface. Set Emphasis to Accent or Quiet to give it a background.</p>
+          <p className="rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">This is the page&apos;s Star: in this look its card is filled with your colour, so it keeps that surface. Set Emphasis to Accent or Quiet to give it a background.</p>
         ) : (
           <>
             <Segmented
@@ -1017,13 +1019,13 @@ export function WidgetSettings({
             if (s.type === "select")
               return (
                 <Field key={s.key} label={s.label}>
-                  <select value={String(props[s.key] ?? s.options[0].value)} onChange={(e) => setProp(s.key, e.target.value)} className="h-8 rounded-lg border bg-background px-2 text-sm">
+                  <SelectOptions value={String(props[s.key] ?? s.options[0].value)} onChange={(e) => setProp(s.key, e.target.value)} className="h-8 rounded-lg border bg-background px-2 text-sm">
                     {s.options.map((o) => (
                       <option key={o.value} value={o.value}>
                         {o.label}
                       </option>
                     ))}
-                  </select>
+                  </SelectOptions>
                 </Field>
               )
             if (s.type === "image")
@@ -1046,13 +1048,13 @@ export function WidgetSettings({
             <Field label="Your own content">
               <Textarea value={note.text ?? ""} placeholder="Text" aria-label="Text" onChange={(e) => setNote("text", e.target.value)} />
               <Input value={note.button ?? ""} placeholder="Button text" aria-label="Button text" onChange={(e) => setNote("button", e.target.value)} />
-              <select value={note.target ?? noteTargets()[0].value} aria-label="Opens" onChange={(e) => setNote("target", e.target.value)} className={selectClass}>
+              <SelectOptions value={note.target ?? noteTargets()[0].value} aria-label="Opens" onChange={(e) => setNote("target", e.target.value)} className={selectClass}>
                 {noteTargets().map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
                 ))}
-              </select>
+              </SelectOptions>
               {note.target === "url" && <Input value={note.url ?? ""} placeholder="Web address" aria-label="Web address" onChange={(e) => setNote("url", e.target.value)} />}
               <PictureUpload value={note.image} onChange={(v) => setNote("image", v)} />
               <p className="text-xs text-muted-foreground">Shows under the widget&apos;s header, next to its data. The button needs a text.</p>
@@ -1095,21 +1097,21 @@ export function WidgetSettings({
             </span>
             <Switch checked={!!w.hideOnPhone} onCheckedChange={(hideOnPhone) => onChange({ hideOnPhone }, `${w.id}-phone`)} />
           </label>
-          <select value={w.show?.phase ?? ""} aria-label="Phase" onChange={(e) => setShow("phase", e.target.value)} className={selectClass}>
+          <SelectOptions value={w.show?.phase ?? ""} aria-label="Phase" onChange={(e) => setShow("phase", e.target.value)} className={selectClass}>
             {PHASES.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
             ))}
-          </select>
-          <select value={w.show?.group ?? ""} aria-label="Group" onChange={(e) => setShow("group", e.target.value)} className={selectClass}>
+          </SelectOptions>
+          <SelectOptions value={w.show?.group ?? ""} aria-label="Group" onChange={(e) => setShow("group", e.target.value)} className={selectClass}>
             <option value="">Everyone</option>
             {groups.map((g) => (
               <option key={g.id} value={g.id}>
                 {g.name}
               </option>
             ))}
-          </select>
+          </SelectOptions>
           <p className="text-xs text-muted-foreground">Tiers have their own layouts: pick one with Layout for, above the page.</p>
         </Block>
       )}
