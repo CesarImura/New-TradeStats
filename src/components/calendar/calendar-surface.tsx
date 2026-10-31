@@ -311,6 +311,8 @@ function Week({
                       style={{ top: (h - HOURS.from) * ROW }}
                     />
                   ))}
+                  {/* The "now" line runs under the events, so it never crosses their text; only its dot sits on top (after the events). */}
+                  {isSameDay(d, NOW) && <span className="pointer-events-none absolute inset-x-0 h-0.5 bg-red-500" style={{ top: top(NOW) }} />}
                   {list.map((i) => {
                     const color = colorOf(i.kind)
                     const h = Math.max(22, ((+i.end - +i.start) / 3600000) * ROW)
@@ -338,11 +340,7 @@ function Week({
                       </button>
                     )
                   })}
-                  {isSameDay(d, NOW) && (
-                    <span className="pointer-events-none absolute inset-x-0 z-20 h-0.5 bg-red-500" style={{ top: top(NOW) }}>
-                      <span className="absolute -top-1 -left-1 size-2.5 rounded-full bg-red-500" />
-                    </span>
-                  )}
+                  {isSameDay(d, NOW) && <span className="pointer-events-none absolute -left-1 z-20 size-2.5 -translate-y-1 rounded-full bg-red-500" style={{ top: top(NOW) }} />}
                 </div>
               )
             })}
