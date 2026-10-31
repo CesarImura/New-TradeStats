@@ -190,7 +190,8 @@ function useDrift(n: number) {
   // Starts off zero, so the first paint already looks like an open account.
   const [d, setD] = useState<number[]>(() => Array.from({ length: n }, (_, i) => [6, -3, 4, 2, -5][i % 5]))
   useEffect(() => {
-    const id = setInterval(() => setD((x) => x.map((v, i) => Math.max(-14, Math.min(18, v + Math.round(Math.sin(Date.now() / 900 + i * 2) * 3))))), 1600)
+    // Skips the tick in a background tab, like the media carousel: nobody is watching and the timer keeps the CPU awake.
+    const id = setInterval(() => !document.hidden && setD((x) => x.map((v, i) => Math.max(-14, Math.min(18, v + Math.round(Math.sin(Date.now() / 900 + i * 2) * 3))))), 1600)
     return () => clearInterval(id)
   }, [])
   return d

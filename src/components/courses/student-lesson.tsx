@@ -44,6 +44,7 @@ import {
   type Lesson,
   type Quiz,
 } from "@/lib/data/learning"
+import { askAi } from "@/lib/data/ai"
 import { cn } from "@/lib/utils"
 import { AiMark, PreviewNotice, UpgradeDialog, useStudentTier } from "./shared"
 import { NotFound } from "./student-course"
@@ -667,7 +668,7 @@ function AskAi({ lesson }: { lesson: Lesson }) {
     <div className="grid gap-3 rounded-(--radius) bg-card p-4 text-card-foreground" style={{ boxShadow: "var(--card-shadow)" }}>
       <div className="flex items-center gap-2">
         <Sparkles className="size-4 text-primary" />
-        <span className="font-medium">{/^ask\b/i.test(coach.wording.ai) ? coach.wording.ai : `Ask ${coach.wording.ai}`}</span>
+        <span className="font-medium">{askAi(coach.wording.ai)}</span>
         <span className="ml-auto text-xs text-muted-foreground">about this {coach.wording.lesson.toLowerCase()}</span>
       </div>
       {asked && (

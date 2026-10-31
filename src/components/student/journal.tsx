@@ -22,7 +22,7 @@ import { Progress } from "@/components/ui/progress"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { aiTradeAnswer } from "@/lib/data/ai"
+import { aiTradeAnswer, askAi } from "@/lib/data/ai"
 import { addFeedback, allTrades, useFeedback } from "@/lib/data/feedback"
 import { AI_INSIGHT, DEMO_STUDENT, EQUITY, JOURNAL_DAYS, RULES, SETUPS } from "@/lib/data/sample"
 import { ACCOUNTS, BROKERS, STRATEGIES, fmtPnl, fmtR } from "@/lib/data/trades"
@@ -238,7 +238,7 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
             </Button>
             {coach.modules.ai && (
               <Button size="sm" variant="ghost" nativeButton={false} render={<Link href={`${base}/ai`} />}>
-                <Sparkles /> Ask {coach.wording.ai}
+                <Sparkles /> {askAi(coach.wording.ai)}
               </Button>
             )}
           </div>
@@ -438,7 +438,7 @@ function TradeDetail({ trade: t, onClose }: { trade: T | null; onClose: () => vo
                 </>
               ) : (
                 <Button variant="ghost" size="sm" className="justify-self-start" onClick={() => setAi(true)}>
-                  <Sparkles /> Ask {coach.wording.ai} about this trade
+                  <Sparkles /> {askAi(coach.wording.ai)} about this trade
                 </Button>
               )}
             </div>

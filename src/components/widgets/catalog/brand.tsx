@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowRight, ArrowUpRight, Handshake, Image as ImageIcon, Play, Quote, Search, Sparkles, Type, Video } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
+import { askAi } from "@/lib/data/ai"
 import { AI_INSIGHT, AI_SAMPLE, COACH_PROFILE } from "@/lib/data/sample"
 import { KIND_LABEL, useOffers, type PartnerOffer } from "@/lib/data/partners"
 import { cn } from "@/lib/utils"
@@ -17,7 +18,6 @@ import { Avatar, ChipMore, FitChips } from "../parts/bits"
 import { Cover, WidgetEmpty, useEmpty, type WidgetProps } from "../parts/shared"
 
 /** "Ask Kairo AI", but not "Ask Ask Marco" when the coach already named it that way. */
-const askAi = (name: string) => (/^ask\b/i.test(name) ? name : `Ask ${name}`)
 
 export const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
 
