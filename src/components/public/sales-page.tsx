@@ -356,7 +356,7 @@ function Closing({ block }: { block: Block }) {
     <div className={wrap}>
       <div className="grid justify-items-center gap-4 rounded-(--radius) bg-primary px-6 py-14 text-center text-primary-foreground">
         <h2 className="max-w-2xl text-3xl leading-tight sm:text-4xl">{block.title}</h2>
-        <p className="max-w-xl opacity-85">{block.text}</p>
+        <p className="max-w-xl">{block.text}</p>
         <Button size="lg" variant="secondary" nativeButton={false} render={<a href="#tiers" />}>
           See the plans <ArrowRight />
         </Button>
