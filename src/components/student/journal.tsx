@@ -157,7 +157,8 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <Card className="gap-2 px-5">
           <span className="eyebrow">Equity · last 20 days</span>
-          <ChartContainer config={equityConfig} className="aspect-auto h-56 w-full">
+          {/* Fills the card: beside the taller 4-week grid a fixed h-56 left an empty band under the chart. */}
+          <ChartContainer config={equityConfig} className="aspect-auto min-h-56 w-full flex-1">
             <AreaChart data={data} margin={{ left: 0, right: 4, top: 8 }}>
               <defs>
                 <linearGradient id="eq" x1="0" y1="0" x2="0" y2="1">
@@ -257,20 +258,21 @@ function TradeRows({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
     <div className="divide-y">
       {trades.map((t) => (
         <button key={t.id} onClick={() => onOpen(t.id)} className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm hover:bg-muted/60">
-          <span className="w-20 shrink-0 text-xs text-muted-foreground">
+          <span className="w-16 shrink-0 text-xs text-muted-foreground sm:w-20">
             {t.date}
             <span className="block">{t.time}</span>
           </span>
-          <span className="w-28 shrink-0 font-medium">
+          <span className="w-20 shrink-0 font-medium sm:w-28">
             {t.symbol} <span className="font-normal text-muted-foreground">{t.side}</span>
           </span>
           <span className="hidden flex-1 truncate text-muted-foreground sm:block">{t.setup}</span>
-          <span className="flex flex-1 justify-end gap-1.5 sm:flex-none">
+          {/* Badges wrap on a phone instead of pushing the result out of the card. */}
+          <span className="flex min-w-0 flex-1 flex-wrap justify-end gap-1.5 sm:flex-none">
             {t.rulesBroken.length > 0 && <Badge variant="destructive">Rule</Badge>}
             {t.review === "waiting" && <Badge variant="outline">Waiting for review</Badge>}
             {t.thread.at(-1)?.from === "coach" && <Badge>Feedback</Badge>}
           </span>
-          <span className={cn("w-14 text-right tabular-nums", t.r >= 0 ? "text-profit" : "text-loss")}>{fmtR(t.r)}</span>
+          <span className={cn("w-14 shrink-0 text-right tabular-nums", t.r >= 0 ? "text-profit" : "text-loss")}>{fmtR(t.r)}</span>
           <span className="hidden w-20 text-right text-muted-foreground tabular-nums md:block">{fmtPnl(t.pnl)}</span>
         </button>
       ))}
