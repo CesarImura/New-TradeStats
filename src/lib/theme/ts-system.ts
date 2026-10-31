@@ -127,6 +127,12 @@ ${ui("[data-slot=input]::placeholder, [data-slot=textarea]::placeholder")} { col
 ${ui("[data-slot=checkbox]")} { border-radius: 3px; background: ${TS.field}; border-color: #3a3a40; }
 ${ui("[data-slot=checkbox][data-checked]")} { background: var(--primary); border-color: var(--primary); }
 ${ui("[data-slot=switch]")} { box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.4); }
+/* In the Design editor a switch that is on is white, like every selection there (the yellow stays the Publish button's). */
+${ui("[data-design-ws] [data-slot=switch][data-checked]")} { background: #f4f4f5 !important; }
+${ui("[data-design-ws] [data-slot=switch][data-checked] [data-slot=switch-thumb]")} { background: #0b0b0c !important; }
+/* Focus there is white too: a field or a control being typed into never looks like the coach's orange. */
+${ui("[data-design-ws] :is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], select):focus-visible")} { border-color: rgb(244 244 245 / 0.6) !important; box-shadow: 0 0 0 3px rgb(244 244 245 / 0.12) !important; }
+${ui("[data-design-ws] :is([data-slot=button], [data-slot=tabs-trigger], [data-slot=checkbox], [data-slot=switch], a, button):focus-visible")} { outline-color: rgb(244 244 245 / 0.7) !important; box-shadow: 0 0 0 3px rgb(244 244 245 / 0.12) !important; }
 
 /*
  * Cards are panels: one surface, a 1px edge, 6px corners. A titled panel gets a
@@ -359,6 +365,11 @@ ${adm("[data-slot=table-cell]")} { height: 3.25rem; padding-inline: 0.75rem; fon
 /* Overlays: floating sheets, 12px corners, a faint edge and a deep shadow. */
 ${adm(":is([data-slot=dialog-content], [data-slot=popover-content], [data-slot=dropdown-menu-content], [data-slot=context-menu-content], [data-slot=select-content], [data-slot=command])")} {
   border-radius: 12px; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 16px 48px rgb(0 0 0 / 0.6);
+}
+/* Menus and dropdowns sit close to what opened them: a tighter, softer shadow (the dialog's deep one spread a dark
+   smudge far below a short list). */
+${adm(":is([data-slot=dropdown-menu-content], [data-slot=context-menu-content], [data-slot=select-content])")} {
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 10px 24px -8px rgb(0 0 0 / 0.55), 0 2px 6px -2px rgb(0 0 0 / 0.4);
 }
 ${adm(":is([data-slot=dialog-content], [data-slot=sheet-content])")} { background: ${ADMIN.canvas}; }
 ${adm("[data-slot=sheet-content]")} { box-shadow: -1px 0 0 ${ADMIN.edge}, -24px 0 48px rgb(0 0 0 / 0.5); }

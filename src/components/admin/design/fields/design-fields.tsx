@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useRef, useState } from "react"
-import { ArrowDown, ArrowUp, ImagePlus, Trash2 } from "@/components/icons"
+import { ArrowDown, ArrowUp, ImagePlus, Palette, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -141,7 +141,7 @@ function LogoField() {
   }
 
   return (
-    <Field id="logo" label="Logo" hint="PNG or SVG, square">
+    <Field id="logo" label="Logo" hint="Square PNG or SVG">
       <div className="flex items-center gap-3">
         {coach.logo ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -155,6 +155,12 @@ function LogoField() {
           <Button variant="outline" size="sm" onClick={() => input.current?.click()}>
             <ImagePlus /> {coach.logo ? "Replace" : "Upload logo"}
           </Button>
+          {/* Its colours again, for a logo uploaded before (they show by themselves after an upload). */}
+          {coach.logo && !suggested.length && (
+            <Button variant="ghost" size="sm" onClick={async () => setSuggested(await colorsFromLogo(coach.logo!))} title="Use a colour from your logo">
+              <Palette /> Colours
+            </Button>
+          )}
           {coach.logo && (
             <Button variant="ghost" size="sm" onClick={() => { onLogo(undefined); setSuggested([]) }} aria-label="Remove logo">
               <Trash2 />
@@ -175,7 +181,7 @@ function LogoField() {
       </div>
       {suggested.length > 0 && (
         <div className="flex items-center gap-2 rounded-[4px] bg-muted p-2 text-xs">
-          <span className="text-muted-foreground">Colours from your logo</span>
+          <span className="text-muted-foreground">From your logo</span>
           {suggested.map((c) => (
             <button key={c} onClick={() => pickColor(c)} className="size-5 rounded-full ring-1 ring-[color:color-mix(in_oklab,var(--foreground)_14%,transparent)] ring-inset transition-transform hover:scale-110" style={{ background: c }} aria-label={`Use ${c}`} />
           ))}
@@ -188,7 +194,7 @@ function LogoField() {
 function PrimaryField() {
   const { theme, change } = useDesign()
   return (
-    <Field id="primary" label="Brand colour" hint="Buttons, links, active menu">
+    <Field id="primary" label="Brand colour">
       <Swatches label="Brand colour" value={theme.primary} colors={BRAND_COLORS} onChange={(c) => change({ theme: { primary: c, primaryForeground: onColor(c) } }, "primary")} />
     </Field>
   )
@@ -197,7 +203,7 @@ function PrimaryField() {
 function HighlightField() {
   const { theme, change } = useDesign()
   return (
-    <Field id="highlight" label="Highlight colour" hint="Announcements, badges">
+    <Field id="highlight" label="Highlight colour">
       <Swatches
         label="Highlight colour"
         value={theme.highlight ?? theme.palettes[theme.mode].highlight}
@@ -398,13 +404,7 @@ function ChartStyleField() {
         label="Bars and gauges"
         value={chartStyleOf(theme)}
         onChange={(chartStyle) => change({ theme: { chartStyle } }, "chart-style")}
-        options={[
-          { value: "ticks", label: "Ticks" },
-          { value: "solid", label: "Solid" },
-          { value: "thin", label: "Thin" },
-          { value: "blocks", label: "Blocks" },
-          { value: "dots", label: "Dots" },
-        ]}
+        options={[{ value: "ticks", label: "Ticks" }, { value: "solid", label: "Solid" }, { value: "thin", label: "Thin" }, { value: "blocks", label: "Blocks" }, { value: "dots", label: "Dots" }]}
       />
     </Field>
   )
@@ -418,11 +418,7 @@ function WidgetFinishField() {
         label="Finish"
         value={widgetFinishOf(theme)}
         onChange={(widgetFinish) => change({ theme: { widgetFinish } }, "widget-finish")}
-        options={[
-          { value: "none", label: "None" },
-          { value: "corners", label: "Corners" },
-          { value: "grid", label: "Grid" },
-        ]}
+        options={[{ value: "none", label: "None" }, { value: "corners", label: "Corners" }, { value: "grid", label: "Grid" }]}
       />
     </Field>
   )
@@ -436,13 +432,7 @@ function HeaderFormField() {
         label="Widget names"
         value={headerFormOf(theme)}
         onChange={(headerForm) => change({ theme: { headerForm } }, "header-form")}
-        options={[
-          { value: "top", label: "Top" },
-          { value: "label", label: "Label" },
-          { value: "caption", label: "Caption" },
-          { value: "tag", label: "Tag" },
-          { value: "path", label: "Path" },
-        ]}
+        options={[{ value: "top", label: "Top" }, { value: "label", label: "Label" }, { value: "caption", label: "Caption" }, { value: "tag", label: "Tag" }, { value: "path", label: "Path" }]}
       />
     </Field>
   )
@@ -539,8 +529,7 @@ function MenuRow({ id }: { id: string }) {
     return (
       <div data-field="menu-home" className={menuRow()}>
         <FixedFirst />
-        <span className="w-16 shrink-0 text-xs text-muted-foreground">Home</span>
-        <Input className="h-7" value={coach.wording.home} onChange={(e) => change({ content: { wording: { home: e.target.value } } }, "w-home")} aria-label="Name for Home" />
+        <Input className="h-7 min-w-0 flex-1" value={coach.wording.home} onChange={(e) => change({ content: { wording: { home: e.target.value } } }, "w-home")} aria-label="Name for Home" />
         <span className="w-[1.875rem] shrink-0" />
       </div>
     )
@@ -551,14 +540,16 @@ function MenuRow({ id }: { id: string }) {
   return (
     <div data-field={`menu-${m}`} className={cn(menuRow(!coach.modules[m]), !sort && "pl-2.5")}>
       <SortHandle />
-      <span className={cn("w-16 shrink-0 truncate text-xs text-muted-foreground", !coach.modules[m] && "line-through decoration-muted-foreground/70")}>{MODULE_NAMES[m]}</span>
       <Input
-        className={cn("h-7", HIDDEN_INPUT)}
+        className={cn("h-7 min-w-0 flex-1", HIDDEN_INPUT)}
         value={coach.wording[m]}
         disabled={!coach.modules[m]}
         onChange={(e) => change({ content: { wording: { [m]: e.target.value } } }, `w-${m}`)}
         aria-label={`Name for ${MODULE_NAMES[m]}`}
+        placeholder={MODULE_NAMES[m]}
       />
+      {/* Renamed: what it is, so "Desk" still reads as Charts. */}
+      {coach.wording[m].trim().toLowerCase() !== MODULE_NAMES[m].toLowerCase() && <span className="max-w-20 shrink-0 truncate text-xs text-muted-foreground" title={MODULE_NAMES[m]}>{MODULE_NAMES[m]}</span>}
       <div className="flex shrink-0 items-center">
         {!sort && (
           <>
@@ -580,7 +571,6 @@ function MenuItemsField() {
   const { coach } = useDesign()
   return (
     <div className="grid gap-1.5">
-      <p className="text-xs text-muted-foreground">Rename, reorder or hide what students see. Hidden items disappear from the menu and Home. Add your own pages, built from widgets like every other page.</p>
       <SortHint />
       <MenuRow id="home" />
       <SortableMenu

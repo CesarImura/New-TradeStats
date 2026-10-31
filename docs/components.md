@@ -15,7 +15,7 @@ Fontes usadas: skills `shadcn`, `migrate-radix-to-base`, `emil-design-eng`, `web
 | `src/components/kit/` | Nossas peças genéricas montadas sobre `ui/`: `select-field.tsx` (`SelectField`, `SelectOptions`), `drop-line.ts` | Peça nova reutilizável e sem regra de negócio entra aqui, não em `ui/`. |
 | `src/components/admin/kit.tsx` | Peças do admin: `PageHeader`, `Page`, `NativeSelect`, `SettingRow`, `Field` | Tela nova do admin começa por elas. |
 | `src/components/widgets/` | Raiz: `registry.tsx` (catálogo e settings), `page.tsx`, `page-renderer.tsx` (masonry). `parts/`: o kit dos widgets, um assunto por arquivo: `frame.tsx` (`WidgetFrame`, `useFrame`, `useMore`), `tokens.tsx` (`FX`, `TYPE`, `ACCENT`, `MOTION`, `fill`, `series`), `card.tsx` (`W`, `Drop`, `useFitRows`, `Head`, `Big`, `Row`), `bits.tsx` (chips, avatar, `Tip`, `useBrokenImage`), `charts.tsx` (`Bars`, `Spark`, `Ring`…), `anatomy.tsx` (`WCard`, `Num`, `Chip`, estilos do Look), `visuals.tsx` (`Legend`, `TickGauge`, `StepChart`, `Timeline`…), `shared.tsx`, `widget-scope.tsx`, `layouts.tsx`. `catalog/`: um arquivo por grupo de widgets (`catalog/more/` para os extras) | Usar a skill `traderhub-widget-design` antes de mexer. Widget novo vai em `catalog/` e entra no `registry.tsx`. |
-| `src/components/admin/design/` | Editor de Design. `editor/`: casca, canvas, prévia (`page-builder.tsx`, `editor-shell.tsx`…). `panels/`: painéis laterais (`builder-panels.tsx`, `settings-panel.tsx`, `media-cards-editor.tsx`). `fields/`: campos e controles (`controls.tsx`, `design-fields.tsx`, `menu-sort.tsx`…). Raiz: dados (`looks.ts`, `options.ts`, `states.ts`) | Campo novo em `fields/`, painel novo em `panels/`. |
+| `src/components/admin/design/` | Editor de Design. `editor/`: casca, canvas, prévia (`page-builder.tsx`, `editor-shell.tsx`…). `panels/`: painéis laterais (`builder-panels.tsx` galeria, `widget-inspector.tsx` inspector da direita, `settings-panel.tsx`, `media-cards-editor.tsx`). `fields/`: campos e controles (`controls.tsx` com `Row`, `InspectorSection`, `YesNo`; `design-fields.tsx`, `menu-sort.tsx`…). `thumbs/`: miniaturas (`widget-thumb.tsx` dos widgets, `option-art.tsx` das opções de estilo). Raiz: dados (`looks.ts`, `options.ts`, `states.ts`) | Campo novo em `fields/`, painel novo em `panels/`, miniatura em `thumbs/` (ver seção 11). |
 | `src/components/icons.tsx` | Todos os ícones (Carbon embrulhado com nomes do lucide) | Nunca importar `lucide-react` ou `@carbon/icons-react` direto. Ícone que falta: adicionar aqui. |
 | `src/lib/theme/` | Tokens, `themeToCss`, contraste | Cor nova vira token, não hex solto no componente. |
 
@@ -122,3 +122,36 @@ ou `widgets/parts/`, estender em vez de duplicar.
 3. Telas em 390, 768 e 1440px, claro e escuro, com teclado (Tab, Enter, Esc, setas).
 4. Console sem erro de hydration (se o `next dev` ficar com SSR antigo, reiniciar o servidor).
 5. Build só na cópia isolada (porta 3100+), nunca na pasta compartilhada.
+
+## 11. Miniaturas (regras do Gustavo, 31/10)
+
+Valem para todo widget e toda opção de estilo, existentes e novos, em todos os templates, claro e escuro.
+
+- **Widget:** sempre `WidgetThumb` de `admin/design/thumbs/widget-thumb.tsx`. Nunca desenhar o widget à mão nem montar
+  `WidgetFrame` direto: a miniatura usa `WidgetView` (`widgets/page-renderer.tsx`), o mesmo caminho da página do aluno e do
+  canvas, então segue o tema do **rascunho** (cores via `ThumbStyles`, escolhas via `CoachContext`) e as mudanças do próprio
+  widget (estilo, emphasis, header, conteúdo, layout, largura).
+- **Onde aparece:** nos detalhes de um widget da galeria e nos layouts do inspector. A lista da galeria em si usa tiles de ícone (modelo Framer, decisão de 31/10), não o widget real.
+- **Widget novo na galeria:** `galleryWidget(def)` (Compact, sem a linha de descrição). Se ficar com espaço vazio ou
+  espremido, ajustar só ele em `THUMBS` (detail ou altura `h` para os longos) e conferir no olho. Widget novo no registry já
+  ganha miniatura sozinho.
+- **Padrão visual:** tile 2:1, margem de 6% da largura, widget inteiro (nada cortado), na própria altura, sem fundo nem sombra
+  atrás. A mesma miniatura em 1 coluna (galeria) e 2 (layouts). Card em volta: `ThumbCard`, selecionado com `TILE_ON`.
+- **Opção de estilo:** só tem desenho quando a diferença é de forma (Card, Shadows, Chart background, Layout); o resto é `Segmented` com palavras. Desenho: `OptionTiles` + uma arte de `option-art.tsx` (SVG 64×40). Cores só por `--a-page`, `--a-card`,
+  `--a-accent`, `--a-on` e `currentColor` (vêm do tema do rascunho) e cantos por `useRx()`. Nunca hex fixo na arte. A borda
+  do tile escolhido é a seleção do editor (`--ts-interactive`, branco no Design), não a cor do coach.
+- **Performance:** a miniatura só renderiza quando chega perto da tela (`useSeen`). Não remover.
+- **Conferir:** galeria de todas as páginas, "On this page", layouts no inspector, nos 3 templates em claro e escuro, e que
+  mudar algo em All widgets ou no widget muda a miniatura.
+
+## 12. Editor de Design: interface limpa (decisão de 31/10)
+
+- **Uma cor de seleção só do editor:** branco (`--ts-interactive` vale `#f4f4f5` dentro do workspace). Nunca laranja nem a cor do
+  coach para seleção, foco de tile, contorno do widget selecionado ou marcador de valor próprio. O painel é monocromático.
+- **Inspector em três níveis:** Layout aberto (Size, Shows, Layout); Look fechado com resumo (Stand out, Card, Background); More
+  style fechado dentro dele (Title, Bars, Numbers, Header). Coisa nova entra no nível mais fundo que fizer sentido.
+- **Palavras simples, em inglês:** a plataforma toda é em inglês. Sem jargão de design no primeiro nível; dica no `title`, não em
+  frase fixa embaixo do controle.
+- **Galeria:** grupos → tiles de ícone; "On this page" é uma lista de nomes. **Barra de cima:** voltar, aparelhos, desfazer, ⋯,
+  Preview, Publish; o resto vai no ⋯ (Reset, versões, template). Readability só aparece quando algo falha.
+

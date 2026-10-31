@@ -26,15 +26,20 @@ export type SettingsGroup = { title: string; note?: string; fields: string[]; ke
  */
 const RAIL_TONE =
   "[--rail-a:#c2410c] [--rail-b:#d9480f] [--rail-glow:rgb(234_88_12/0.35)] [--rail-wash:rgb(234_88_12/0.10)] [--rail-edge:rgb(234_88_12/0.30)] [--rail-hover:rgb(0_0_0/0.04)] [--rail-hover-edge:rgb(0_0_0/0.1)] [--rail-ring:#c2410c] " +
-  "dark:[--rail-a:#ff5500] dark:[--rail-b:#ff9f43] dark:[--rail-glow:rgb(255_85_0/0.55)] dark:[--rail-wash:rgb(255_85_0/0.13)] dark:[--rail-edge:rgb(255_110_40/0.32)] dark:[--rail-hover:rgb(255_255_255/0.04)] dark:[--rail-hover-edge:rgb(255_255_255/0.1)] dark:[--rail-ring:rgb(255_110_40/0.85)]"
+  // Monochrome in the dark editor: the open section is white, like every selection in Design (one accent, the editor's own).
+  "dark:[--rail-a:#ffffff] dark:[--rail-b:#d4d4d8] dark:[--rail-glow:rgb(255_255_255/0.25)] dark:[--rail-wash:rgb(255_255_255/0.07)] dark:[--rail-edge:rgb(255_255_255/0.16)] dark:[--rail-hover:rgb(255_255_255/0.04)] dark:[--rail-hover-edge:rgb(255_255_255/0.1)] dark:[--rail-ring:rgb(255_255_255/0.7)]"
+
+/** A block's title in Design, the TradeStats way: small mono capitals, spaced, quiet. */
+export const SECTION_LABEL = "font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] font-medium tracking-[0.08em] text-muted-foreground uppercase"
 
 /** `hidden`: not in the rail, but its settings are still found by search (Design's widget style, which lives in Pages). */
-export type SettingsTab = { id: string; label: string; icon: React.ReactNode; blurb?: string; heading?: string; groups?: SettingsGroup[]; content?: React.ReactNode; hidden?: boolean }
+/** `search`: the header's search looks in this section's own content (Pages: widgets), with this placeholder, instead of in every setting. */
+export type SettingsTab = { id: string; label: string; icon: React.ReactNode; blurb?: string; heading?: string; groups?: SettingsGroup[]; content?: React.ReactNode; hidden?: boolean; search?: string }
 
 /** The theme's settings, by section. Hosts add their own groups (identity, dark colours) and sections around these. */
 export const THEME_GROUPS = {
   colour: [
-    { title: "Brand", fields: ["primary", "highlight", "logo-colours"], keys: ["primary", "primaryForeground", "highlight"], words: "brand colour accent highlight buttons links badges logo" },
+    { title: "Colours", fields: ["primary", "highlight"], keys: ["primary", "primaryForeground", "highlight"], words: "brand colour accent highlight buttons links badges logo" },
     { title: "Profit and loss", fields: ["trading"], keys: ["trading"], words: "profit loss green red trading numbers" },
   ],
   type: [
@@ -76,7 +81,7 @@ export const THEME_GROUPS = {
   ],
   page: [
     {
-      title: "Background",
+      title: "Page",
       note: "Behind the widgets on every page",
       fields: ["background"],
       keys: ["background", "bgImage", "bgDim", "bgBlur", "bgWhere", "bgAngle"],
@@ -92,12 +97,12 @@ export const THEME_GROUPS = {
  */
 export type SectionId = "brand" | "look" | "type" | "shape" | "widgets" | "page" | "menu" | "pages"
 /** `heading`: the panel's title when it says more than the rail's label (Widgets: it changes every widget at once). */
-const SECTIONS: { id: SectionId; label: string; icon: React.ReactNode; blurb?: string; heading?: string }[] = [
+const SECTIONS: { id: SectionId; label: string; icon: React.ReactNode; blurb?: string; heading?: string; search?: string }[] = [
   { id: "brand", label: "Brand", icon: <Palette />, blurb: "Your name, logo and colours." },
   { id: "look", label: "Look", icon: <Wand2 />, blurb: "A ready-made look to start from. Your colours and logo stay." },
   { id: "type", label: "Type", icon: <Type /> },
   { id: "widgets", label: "Widgets", icon: <LayoutGrid />, heading: "Widgets · all widgets", blurb: "Applies to every widget, on every page. To move or change one widget, use Pages." },
-  { id: "pages", label: "Pages", icon: <LayoutDashboard />, blurb: "Arrange each page and edit one widget at a time." },
+  { id: "pages", label: "Pages", icon: <LayoutDashboard />, blurb: "Arrange each page and edit one widget at a time.", search: "Search widgets…" },
   { id: "menu", label: "Menu", icon: <PanelLeftIcon />, blurb: "What the menu shows and what you call things." },
   { id: "page", label: "Background", icon: <ImageIcon /> },
 ]
@@ -110,7 +115,7 @@ const DEFAULT_GROUPS: Partial<Record<SectionId, SettingsGroup[]>> = { brand: THE
  * content or a different line under the title.
  */
 export function designTabs(parts: Partial<Record<SectionId, Pick<SettingsTab, "groups" | "content" | "blurb">>>, only?: SectionId[]): SettingsTab[] {
-  return SECTIONS.filter((s) => !only || only.includes(s.id)).map((s) => ({ id: s.id, label: s.label, icon: s.icon, blurb: s.blurb, heading: s.heading, groups: DEFAULT_GROUPS[s.id], ...parts[s.id] }))
+  return SECTIONS.filter((s) => !only || only.includes(s.id)).map((s) => ({ id: s.id, label: s.label, icon: s.icon, blurb: s.blurb, heading: s.heading, search: s.search, groups: DEFAULT_GROUPS[s.id], ...parts[s.id] }))
 }
 
 /** Fields drawn by the panel itself instead of from the Design fields; hosts can add their own. */
@@ -151,14 +156,18 @@ const ABOUT: Record<string, string> = {
 /** Lets a field open another section (Type's link to the widgets' numbers). */
 const TabContext = createContext<(id: string) => void>(() => {})
 
+/** What is typed in the header's search, for a section that searches its own content (the widget gallery). */
+const PanelSearch = createContext("")
+export const usePanelSearch = () => useContext(PanelSearch)
+
 /** In Type: where headline numbers are set now, one click away. */
 function NumbersLink() {
   const open = useContext(TabContext)
   return (
     <div className="grid gap-2" data-field="numbers-link">
-      <p className="text-xs text-muted-foreground">How headline numbers look (Plain, Marked, Display, Mono) is set with the widgets, the only place they show.</p>
+      <p className="text-xs text-muted-foreground">Set with the widgets, the only place they show.</p>
       <button type="button" onClick={() => open("widgets")} className={cn("flex h-7 w-fit items-center gap-1.5 rounded-md border px-2.5 text-xs text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground", FOCUS)}>
-        Widgets → Numbers <ArrowRight className="size-3.5" />
+        All widgets → Numbers <ArrowRight className="size-3.5" />
       </button>
     </div>
   )
@@ -180,7 +189,16 @@ export function SettingsPanel({
   own,
   bodyRef,
   bodyProps,
+  merge,
+  collapsed,
+  onRail,
 }: {
+  /** Only the icon rail shows (narrow screens); the host opens the panel again from `onRail`. */
+  collapsed?: boolean
+  /** A rail icon was clicked (with which section it opens and whether it was already open). */
+  onRail?: (id: string, wasOpen: boolean) => void
+  /** Sections shown as one icon in the rail, with their own pills under the title (Theme: Brand, Look, Type, Background). */
+  merge?: { id: string; label: string; icon: React.ReactNode; of: string[] }
   tabs: SettingsTab[]
   tab: string
   onTab: (id: string) => void
@@ -195,14 +213,20 @@ export function SettingsPanel({
   const [searching, setSearching] = useState(false)
   const fields = { ...OWN, ...own }
   const current = tabs.find((t) => t.id === tab) ?? tabs[0]
-  const term = q.trim().toLowerCase()
+  // A section with its own search (Pages) gets the text; the others search every setting.
+  const ownSearch = !!current.search
+  const term = ownSearch ? "" : q.trim().toLowerCase()
   const found = term ? tabs.flatMap((t) => (t.groups ?? []).filter((g) => `${t.label} ${g.title} ${g.words}`.toLowerCase().includes(term)).map((g) => [t, g] as const)) : []
   const grad = `rail-${useId().replace(/:/g, "")}`
+  // The rail: the merged sections as one icon, where the first of them stands.
+  const visible = tabs.filter((t) => !t.hidden)
+  const railItems = merge ? visible.flatMap((t) => (t.id === merge.of[0] ? [{ ...t, id: merge.id, label: merge.label, icon: merge.icon }] : merge.of.includes(t.id) ? [] : [t])) : visible
+  const sub = merge && merge.of.includes(current.id) && !term ? tabs.filter((t) => merge.of.includes(t.id)) : null
 
   return (
     <div className="flex min-h-0 flex-1">
       {/* The sections, as an icon rail: always in view, one click each. */}
-      <nav aria-label="Settings" className={cn("flex w-[5.25rem] shrink-0 flex-col gap-1 overflow-y-auto border-r p-2 [scrollbar-width:none]", RAIL_TONE)}>
+      <nav aria-label="Settings" className={cn("flex w-16 shrink-0 flex-col items-center gap-2 overflow-y-auto border-r border-white/[0.06] py-3 [scrollbar-width:none]", RAIL_TONE)}>
         {/* The open section's icon is drawn in the orange gradient (Carbon icons are filled shapes in a 32 box). */}
         <svg aria-hidden width="0" height="0" className="absolute">
           <linearGradient id={grad} x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
@@ -210,18 +234,26 @@ export function SettingsPanel({
             <stop offset="1" style={{ stopColor: "var(--rail-b)" }} />
           </linearGradient>
         </svg>
-        {tabs.filter((t) => !t.hidden).map((t) => {
-          const on = !term && t.id === current.id
-          const dirty = (t.groups ?? []).some((g) => changedIn(draft, g.keys))
+        {railItems.map((t) => {
+          const on = !term && (t.id === current.id || (t.id === merge?.id && merge.of.includes(current.id)))
+          const dirty = (t.id === merge?.id ? tabs.filter((x) => merge.of.includes(x.id)) : [t]).some((x) => (x.groups ?? []).some((g) => changedIn(draft, g.keys)))
           return (
             <button
               key={t.id}
               type="button"
               aria-current={on ? "page" : undefined}
               title={t.label}
-              onClick={() => (onTab(t.id), setQ(""), setSearching(false))}
+              aria-label={t.label}
+              onClick={() => {
+                const id = t.id === merge?.id ? (merge.of.includes(current.id) ? current.id : merge.of[0]) : t.id
+                onRail?.(id, on)
+                onTab(id)
+                setQ("")
+                setSearching(false)
+              }}
               className={cn(
-                "group relative grid justify-items-center gap-1.5 rounded-lg px-0.5 pt-2.5 pb-2 text-[0.6875rem] leading-3.5 transition-[background-color,color,box-shadow,transform,scale] duration-150 ease-out outline-none active:scale-[0.97]",
+                // Icons only (the name is the tooltip), 36px square: the rail gives its room to the page.
+                "group relative grid size-11 place-items-center rounded-xl transition-[background-color,color,box-shadow,transform,scale] duration-150 ease-out outline-none active:scale-[0.94]",
                 "focus-visible:shadow-[0_0_0_2px_var(--rail-ring)]",
                 on
                   ? "bg-[linear-gradient(180deg,var(--rail-wash),transparent)] font-medium text-foreground shadow-[inset_0_0_0_1px_var(--rail-edge)] focus-visible:shadow-[inset_0_0_0_1px_var(--rail-edge),0_0_0_2px_var(--rail-ring)]"
@@ -229,23 +261,22 @@ export function SettingsPanel({
               )}
             >
               {/* The open section: an orange bar on the left edge, in the gradient, with a soft glow. */}
-              <span aria-hidden className={cn("absolute top-1/2 -left-2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-[linear-gradient(180deg,var(--rail-a),var(--rail-b))] shadow-[0_0_8px_var(--rail-glow)] transition-opacity duration-150", on ? "opacity-100" : "opacity-0")} />
+              <span aria-hidden className={cn("absolute top-1/2 -left-2.5 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-[linear-gradient(180deg,var(--rail-a),var(--rail-b))] shadow-[0_0_8px_var(--rail-glow)] transition-opacity duration-150", on ? "opacity-100" : "opacity-0")} />
               <span
-                className={cn("grid size-[1.125rem] place-items-center transition-transform duration-150 ease-out [&_svg]:size-[1.125rem]", on ? "[&_svg]:[fill:var(--rail-icon)]" : "group-hover:-translate-y-px")}
+                className={cn("grid size-5 place-items-center transition-transform duration-150 ease-out [&_svg]:size-5", on ? "[&_svg]:[fill:var(--rail-icon)]" : "group-hover:-translate-y-px")}
                 style={on ? ({ "--rail-icon": `url(#${grad})` } as React.CSSProperties) : undefined}
               >
                 {t.icon}
               </span>
-              <span className="max-w-full truncate">{t.label}</span>
-              {dirty && <span aria-label="changed" className="absolute top-1.5 right-2 size-1.5 rounded-full bg-muted-foreground" />}
+              {dirty && <span aria-label="changed" className="absolute top-1 right-1 size-1.5 rounded-full bg-muted-foreground" />}
             </button>
           )
         })}
       </nav>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className={cn("flex min-w-0 flex-1 flex-col", collapsed && "hidden")}>
         {/* The section's name, or a search across every section. */}
-        <div className="flex h-11 shrink-0 items-center gap-2 border-b pr-2 pl-5">
+        <div className="flex h-14 shrink-0 items-center gap-2 pr-3 pl-5">
           {searching ? (
             <label className="flex min-w-0 flex-1 items-center gap-2">
               <Search className="size-4 shrink-0 text-muted-foreground" />
@@ -254,21 +285,43 @@ export function SettingsPanel({
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => e.key === "Escape" && (e.stopPropagation(), setQ(""), setSearching(false))}
-                placeholder="Find a setting…"
-                aria-label="Find a setting"
+                placeholder={current.search ?? "Find a setting…"}
+                aria-label={current.search?.replace("…", "") ?? "Find a setting"}
                 className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-foreground outline-none placeholder:text-muted-foreground"
               />
             </label>
           ) : (
-            <h2 className="min-w-0 flex-1 truncate text-[0.8125rem] font-medium text-foreground">{current.heading ?? current.label}</h2>
+            <h2 className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold text-foreground">{sub ? merge!.label : (current.heading ?? current.label)}</h2>
           )}
-          <IconButton label={searching ? "Close search" : "Find a setting"} onClick={() => (setSearching(!searching), setQ(""))}>
+          {/* One search, in the same place in every section: in Pages it finds widgets, elsewhere any setting. */}
+          <IconButton label={searching ? "Close search" : (current.search?.replace("…", "") ?? "Find a setting")} onClick={() => (setSearching(!searching), setQ(""))}>
             {searching ? <X className="size-4" /> : <Search className="size-4" />}
           </IconButton>
         </div>
 
+        {/* A merged section's parts as pills (the TradeStats tabs): one click between Brand, Look, Type and Background. */}
+        {sub && (
+          <div role="tablist" aria-label={merge!.label} className="flex shrink-0 gap-0.5 overflow-x-auto px-4 pb-4 [scrollbar-width:none]">
+            {sub.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={t.id === current.id}
+                onClick={() => onTab(t.id)}
+                className={cn(
+                  "h-8 shrink-0 rounded-full px-2.5 text-[0.8125rem] transition-[background-color,color] duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]",
+                  t.id === current.id ? "bg-foreground font-medium text-background" : "text-muted-foreground hover:bg-white/6 hover:text-foreground",
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
         <TabContext.Provider value={(id) => (onTab(id), setQ(""), setSearching(false))}>
-        <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto" {...bodyProps}>
+        <PanelSearch.Provider value={ownSearch ? q.trim().toLowerCase() : ""}>
+        <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" {...bodyProps}>
           {term ? (
             found.length ? (
               found.map(([t, g]) => <Group key={`${t.id}/${g.title}`} group={g} section={t.label} draft={draft} onReset={onReset} fields={fields} />)
@@ -277,11 +330,12 @@ export function SettingsPanel({
             )
           ) : (
             <>
-              {current.blurb && <p className="border-b px-5 py-3 text-xs leading-relaxed text-muted-foreground">{current.blurb}</p>}
+              {/* No line under the title: what a section is for shows in its groups. */}
               {current.content ?? current.groups?.map((g) => <Group key={g.title} group={g} draft={draft} onReset={onReset} fields={fields} />)}
             </>
           )}
         </div>
+        </PanelSearch.Provider>
         </TabContext.Provider>
       </div>
     </div>
@@ -306,17 +360,18 @@ function Group({ group: g, section, draft, onReset, fields }: { group: SettingsG
     </>
   )
   return (
-    <section className="grid gap-5 border-b px-5 pt-5 pb-6 last:border-b-0">
+    <section className="grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] px-5 pt-6 pb-6">
       <div className="flex h-6 items-center gap-2">
         {g.folded && !section ? (
-          <button type="button" aria-expanded={!shut} onClick={() => setOpen(!open)} className={cn("flex items-center gap-1 rounded text-[0.6875rem] font-medium tracking-[0.06em] text-muted-foreground uppercase hover:text-foreground", FOCUS)}>
+          <button type="button" aria-expanded={!shut} onClick={() => setOpen(!open)} className={cn("flex items-center gap-1 rounded hover:text-foreground", SECTION_LABEL, "text-muted-foreground", FOCUS)}>
             <ChevronDown className={cn("size-3.5 transition-transform", shut && "-rotate-90")} />
             {title}
           </button>
         ) : (
-          <h3 className="text-[0.6875rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{title}</h3>
+          <h3 className={SECTION_LABEL} title={g.note}>{title}</h3>
         )}
-        {dirty && <span className="size-1.5 rounded-full bg-muted-foreground" />}
+        {/* Changed from the look: the same orange dot as a widget's own value in the inspector. */}
+        {dirty && <span aria-label="changed" className="size-1.5 rounded-full bg-[color:var(--ts-interactive,#fff)]" />}
         <span className="flex-1" />
         {dirty && (
           <button type="button" onClick={() => onReset(g.keys)} className={cn("flex h-6 items-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground", FOCUS)}>
@@ -324,17 +379,17 @@ function Group({ group: g, section, draft, onReset, fields }: { group: SettingsG
           </button>
         )}
       </div>
-      {g.note && !shut && <p className="-mt-3 text-xs leading-relaxed text-muted-foreground">{g.note}</p>}
-      {!shut && g.fields.map((f) => {
+      {/* A group's note is its title's tooltip, not a line of its own. Fields sit further apart than the title from the first one. */}
+      {!shut && <div className="grid grid-cols-[minmax(0,1fr)] gap-5">{g.fields.map((f) => {
         const Own = fields[f]
         const idle = IDLE[f]?.(theme) ?? ABOUT[f]
         return (
           <div key={f} className="grid gap-2">
-            <div className={cn("grid gap-5", IDLE[f]?.(theme) && "opacity-55")}>{Own ? <Own /> : <DesignField id={f} />}</div>
+            <div className={cn("grid gap-4", IDLE[f]?.(theme) && "opacity-55")}>{Own ? <Own /> : <DesignField id={f} />}</div>
             {idle && <p className="text-xs text-muted-foreground">{idle}</p>}
           </div>
         )
-      })}
+      })}</div>}
     </section>
   )
 }

@@ -1,7 +1,8 @@
 "use client"
 
+import { ArrowDown, ArrowUp } from "@/components/icons"
 import { cn } from "@/lib/utils"
-import { ColorField, Field } from "./controls"
+import { ColorField } from "./controls"
 import { useDesign } from "./design-fields"
 import { SWATCH_ON } from "../states"
 
@@ -26,49 +27,46 @@ export function TradingColoursField() {
   const write = (p: string, l: string) => change({ theme: { trading: { profit: p, loss: l } } }, "trading")
 
   return (
-    <Field id="trading" label="Trading colours" hint="Profit and loss, in charts and figures">
+    // The two colours, each with its arrow in that colour, then the ready-made pairs as swatches.
+    <div data-field="trading" className="grid gap-3">
       <div className="grid grid-cols-2 gap-2">
-        <div className="grid gap-1">
-          <span className="text-xs text-muted-foreground">Up / profit</span>
-          <ColorField value={profit} onChange={(c) => write(c, loss)} label="Up / profit colour" />
+        <div className="grid gap-1.5">
+          <span className="flex items-center gap-1 text-[0.8125rem] leading-5 text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)]">
+            <ArrowUp className="size-3" style={{ color: profit }} /> Profit
+          </span>
+          <ColorField value={profit} onChange={(c) => write(c, loss)} label="Profit colour" />
         </div>
-        <div className="grid gap-1">
-          <span className="text-xs text-muted-foreground">Down / loss</span>
-          <ColorField value={loss} onChange={(c) => write(profit, c)} label="Down / loss colour" />
-        </div>
-      </div>
-      <div className="grid gap-1.5">
-        <span className="text-xs text-muted-foreground">Suggested · the last pair is safe for colour-blind students</span>
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Suggested trading colours">
-          {SUGGESTED.map((s) => {
-            const on = set && s.profit.toLowerCase() === profit.toLowerCase() && s.loss.toLowerCase() === loss.toLowerCase()
-            return (
-              <button
-                key={s.name}
-                type="button"
-                role="radio"
-                aria-checked={on}
-                aria-label={`${s.name}: ${s.profit} up, ${s.loss} down`}
-                title={s.name}
-                onClick={() => write(s.profit, s.loss)}
-                className={cn(
-                  // No overflow-hidden (the halves are rounded instead), so the 24px click area (after) isn't clipped.
-                  "relative flex rounded-full ring-1 ring-[color:color-mix(in_oklab,var(--foreground)_14%,transparent)] ring-inset transition-transform outline-none hover:scale-110 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)] after:absolute after:inset-x-0 after:-inset-y-0.5 after:content-['']",
-                  on && SWATCH_ON,
-                )}
-              >
-                <span className="h-5 w-4 rounded-l-full" style={{ background: s.profit }} />
-                <span className="h-5 w-4 rounded-r-full" style={{ background: s.loss }} />
-              </button>
-            )
-          })}
+        <div className="grid gap-1.5">
+          <span className="flex items-center gap-1 text-[0.8125rem] leading-5 text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)]">
+            <ArrowDown className="size-3" style={{ color: loss }} /> Loss
+          </span>
+          <ColorField value={loss} onChange={(c) => write(profit, c)} label="Loss colour" />
         </div>
       </div>
-      {set && (
-        <button type="button" onClick={() => write("", "")} className="w-fit text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
-          Reset to template
-        </button>
-      )}
-    </Field>
+      <div className="flex items-center gap-2" role="radiogroup" aria-label="Ready-made pairs">
+        {SUGGESTED.map((s) => {
+          const on = set && s.profit.toLowerCase() === profit.toLowerCase() && s.loss.toLowerCase() === loss.toLowerCase()
+          return (
+            <button
+              key={s.name}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              aria-label={`${s.name}: ${s.profit} up, ${s.loss} down`}
+              title={s.name}
+              onClick={() => write(s.profit, s.loss)}
+              className={cn(
+                // Two rounded halves (no overflow-hidden), so the 24px click area (after) isn't clipped.
+                "relative flex size-5 rounded-full ring-1 ring-[color:color-mix(in_oklab,var(--foreground)_14%,transparent)] ring-inset transition-transform outline-none after:absolute after:-inset-0.5 after:content-[''] hover:scale-110 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
+                on && cn("scale-110 hover:scale-110", SWATCH_ON),
+              )}
+            >
+              <span className="h-5 w-2.5 rounded-l-full" style={{ background: s.profit }} />
+              <span className="h-5 w-2.5 rounded-r-full" style={{ background: s.loss }} />
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }

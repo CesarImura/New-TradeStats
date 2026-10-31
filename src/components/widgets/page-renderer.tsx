@@ -193,14 +193,18 @@ function Measured({ w, onHeight, style, children }: { w: WidgetInstance; onHeigh
 /** A card that spans the page: the page title, a page's own tool, and a card the coach made full width. */
 export const isBand = (w: WidgetInstance, cols: number) => cols > 1 && (w.type === "page-header" || !!getWidget(w.type)?.core || widthOf(w) >= 12)
 
-/** A card on the live page, at its content's height. */
-function WidgetView({ w, live }: { w: WidgetInstance; live?: boolean }) {
+/**
+ * One widget as it is drawn everywhere: the live page, the editor's canvas and every thumbnail. Its own style
+ * (WidgetStyleScope), then its frame (emphasis, detail, header, the coach's own content), then the widget. One path,
+ * so a thumbnail can never differ from the page. `fixed`: the cell gives it its height (a thumbnail of a long widget).
+ */
+export function WidgetView({ w, live, fixed = false }: { w: WidgetInstance; live?: boolean; fixed?: boolean }) {
   const def = getWidget(w.type)
   if (!def) return null
   const C = def.Component
   return (
     <WidgetStyleScope type={w.type} style={w.style} emphasis={w.emphasis}>
-      <WidgetFrame emphasis={w.emphasis} detail={w.detail} header={w.header} note={w.note} core={Boolean(def.core)} fixed={false} live={live}>
+      <WidgetFrame emphasis={w.emphasis} detail={w.detail} header={w.header} note={w.note} core={Boolean(def.core)} fixed={fixed} live={live}>
         <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
       </WidgetFrame>
     </WidgetStyleScope>

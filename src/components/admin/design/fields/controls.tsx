@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react"
 import { Slider as SliderPrimitive } from "@base-ui/react/slider"
-import { ChevronDown } from "@/components/icons"
+import { ChevronDown, RotateCcw } from "@/components/icons"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { SelectOptions } from "@/components/kit/select-field"
@@ -32,19 +32,21 @@ export function useReveal(ref: React.RefObject<HTMLElement | null>, open: () => 
  * faint fill and edge, hex codes in mono. Focus stays our orange ring.
  */
 
-const LABEL = "text-xs leading-5 font-medium text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)] select-none"
+const LABEL = "text-[0.8125rem] leading-5 text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)] select-none"
 const VALUE = "text-xs leading-5 tabular-nums text-muted-foreground"
 // The --ctl-* variables let a host restyle the fields (the library's theme editor sets them for its light chrome); unset, the admin's faint fill and edge apply.
-const BOX =
-  "h-7 rounded-[4px] border border-[color:var(--ctl-line,color-mix(in_oklab,var(--foreground)_12%,transparent))] bg-[color:var(--ctl-box,color-mix(in_oklab,var(--foreground)_5%,transparent))] text-xs outline-none transition-colors hover:border-[color:var(--ctl-line-hover,color-mix(in_oklab,var(--foreground)_20%,transparent))] focus-within:border-[color:var(--ring)]"
+// A filled field with a faint edge and 6px corners (the Framer and Webflow inspectors): the fill carries it, the edge only firms up on hover.
+export const BOX =
+  "h-8 rounded-[8px] border border-[color:var(--ctl-line,color-mix(in_oklab,var(--foreground)_8%,transparent))] bg-[color:var(--ctl-box,color-mix(in_oklab,var(--foreground)_6%,transparent))] text-[0.8125rem] outline-none transition-colors hover:border-[color:var(--ctl-line-hover,color-mix(in_oklab,var(--foreground)_18%,transparent))] focus-within:border-[color:var(--ring)]"
 
 /** A labelled row in the editor panel. `id` lets a click in the preview find it. */
 export function Field({ id, label, hint, children }: { id?: string; label: string; hint?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="grid gap-2" data-field={id}>
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-2" data-field={id}>
       <div className="flex min-w-0 items-center justify-between gap-3">
-        <Label className={LABEL}>{label}</Label>
-        {hint && <span className={cn(VALUE, "truncate text-right")}>{hint}</span>}
+        {/* The label never wraps; a long hint gives way (cut, whole in its tooltip). */}
+        <Label className={cn(LABEL, "shrink-0 whitespace-nowrap")}>{label}</Label>
+        {hint && <span title={typeof hint === "string" ? hint : undefined} className={cn(VALUE, "min-w-0 truncate text-right")}>{hint}</span>}
       </div>
       {children}
     </div>
@@ -164,25 +166,31 @@ export function Segmented<T extends string | number>({
   options,
   onChange,
   label,
+  className,
 }: {
   value: T
-  options: { value: T; label: React.ReactNode }[]
+  /** `hint` shows as the option's tooltip; an icon label needs `name` for screen readers. */
+  options: { value: T; label: React.ReactNode; hint?: string; name?: string }[]
   onChange: (v: T) => void
   label: string
+  className?: string
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn(BOX, "flex items-stretch gap-0.5 p-0.5 focus-within:border-[color:var(--ctl-line,color-mix(in_oklab,var(--foreground)_12%,transparent))]")}>
+    <div role="radiogroup" aria-label={label} className={cn(BOX, "flex items-stretch gap-0.5 p-0.5 focus-within:border-[color:var(--ctl-line,color-mix(in_oklab,var(--foreground)_8%,transparent))]", className)}>
       {options.map((o) => (
         <button
           key={String(o.value)}
           type="button"
           role="radio"
           aria-checked={o.value === value}
+          aria-label={o.name}
+          title={o.hint ?? o.name ?? (typeof o.label === "string" ? o.label : undefined)}
           onClick={() => onChange(o.value)}
           className={cn(
             // after: the click area reaches 24px tall inside the box's padding; the look doesn't change.
-            "relative flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[3px] px-2 text-xs after:absolute after:inset-x-0 after:-inset-y-px after:content-[''] font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:outline-1 focus-visible:outline-[color:var(--ring)]",
-            o.value === value && "bg-[color:var(--ctl-on,color-mix(in_oklab,var(--foreground)_12%,transparent))] text-foreground shadow-[var(--ctl-on-shadow,inset_0_1px_0_rgb(255_255_255/0.06))]",
+            "relative flex min-w-0 flex-[1_1_auto] items-center justify-center gap-1.5 overflow-hidden rounded-[6px] px-3 text-[0.8125rem] text-ellipsis after:absolute after:inset-x-0 after:-inset-y-px after:content-[''] font-medium whitespace-nowrap text-muted-foreground transition-[background-color,color,box-shadow] duration-150 ease-out outline-none hover:text-foreground focus-visible:outline-1 focus-visible:outline-[color:var(--ring)] [&_svg]:size-3.5",
+            // The chosen option is a raised chip: one step lighter, a hairline top light and a soft drop.
+            o.value === value && "bg-[color:var(--ctl-on,color-mix(in_oklab,var(--foreground)_13%,transparent))] text-foreground shadow-[var(--ctl-on-shadow,inset_0_1px_0_rgb(255_255_255/0.07),0_1px_2px_rgb(0_0_0/0.3))]",
           )}
         >
           {o.label}
@@ -541,5 +549,107 @@ export function More({ label = "More options", children }: { label?: string; chi
         {children}
       </div>
     </div>
+  )
+}
+
+/**
+ * One property of the inspector, label on the left and its control on the right (the Webflow and Framer rows). A value
+ * set on this widget only (`own`) turns its label orange with a dot, and a reset arrow shows on hover; `stack` puts a
+ * wide control (five options, a list of layouts) under the label. `hint` is the label's tooltip.
+ */
+export function Row({
+  id,
+  label,
+  hint,
+  own,
+  onReset,
+  from = "the default",
+  stack,
+  children,
+}: {
+  id?: string
+  label: string
+  hint?: string
+  own?: boolean
+  onReset?: () => void
+  /** Where the value goes back to, for the reset's label. */
+  from?: string
+  stack?: boolean
+  children: React.ReactNode
+}) {
+  const head = (
+    <span className="group/row flex min-h-8 min-w-0 items-center gap-1">
+      <span title={hint} className={cn(LABEL, "truncate", own && "text-foreground")}>
+        {label}
+      </span>
+      {own && <span aria-label="Changed on this widget" className="size-1.5 shrink-0 rounded-full bg-[color:var(--ts-interactive,#fff)]" />}
+      {own && onReset && (
+        <button
+          type="button"
+          onClick={onReset}
+          aria-label={`${label}: back to ${from}`}
+          title={`Back to ${from}`}
+          className="grid size-5 shrink-0 place-items-center rounded-[4px] text-muted-foreground opacity-0 transition-opacity duration-150 group-hover/row:opacity-100 hover:bg-[color:color-mix(in_oklab,var(--foreground)_8%,transparent)] hover:text-foreground focus-visible:opacity-100 focus-visible:outline-1 focus-visible:outline-[color:var(--ring)]"
+        >
+          <RotateCcw className="size-3" />
+        </button>
+      )}
+    </span>
+  )
+  return stack ? (
+    <div className="grid gap-1" data-field={id}>
+      {head}
+      {children}
+    </div>
+  ) : (
+    <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-2" data-field={id}>
+      {head}
+      <div className="min-w-0">{children}</div>
+    </div>
+  )
+}
+
+/**
+ * A titled block of the inspector that folds away (the chevron on the left, as in Webflow), with an optional action on
+ * the right (a "+" that adds what the block holds, a reset). Blocks sit on hairlines that run the panel's full width.
+ */
+export function InspectorSection({ title, action, summary, defaultOpen = true, children }: { title: string; action?: React.ReactNode; /** Shown on the right while folded: what the block holds now. */ summary?: string; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen)
+  const ref = useRef<HTMLElement>(null)
+  useReveal(ref, () => setOpen(true))
+  return (
+    <section ref={ref} className="border-t border-[color:color-mix(in_oklab,var(--foreground)_6%,transparent)] pt-1 first:border-t-0">
+      <div className="flex h-11 items-center gap-1 pr-3 pl-4">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+          className="flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-[6px] px-1 text-left font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] font-medium tracking-[0.08em] text-muted-foreground uppercase outline-none hover:text-foreground focus-visible:outline-1 focus-visible:outline-[color:var(--ring)]"
+        >
+          <ChevronDown className={cn("size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 ease-out", !open && "-rotate-90")} />
+          <span className="shrink-0">{title}</span>
+          {summary && !open && <span className="ml-auto min-w-0 truncate pl-3 font-sans text-xs font-normal tracking-normal normal-case text-muted-foreground">{summary}</span>}
+        </button>
+        {action}
+      </div>
+      <div hidden={!open} className="grid grid-cols-[minmax(0,1fr)] gap-3.5 px-5 pb-6">
+        {children}
+      </div>
+    </section>
+  )
+}
+
+/** Yes or No as two halves of one control (Framer's Visible, Required): clearer than a switch in a row of values. */
+export function YesNo({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <Segmented
+      label={label}
+      value={value ? "yes" : "no"}
+      onChange={(v) => onChange(v === "yes")}
+      options={[
+        { value: "yes", label: "Yes" },
+        { value: "no", label: "No" },
+      ]}
+    />
   )
 }

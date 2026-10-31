@@ -124,10 +124,12 @@ export function SetupWizard() {
         </>
       }
     >
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(400px,480px)_1fr]">
+      {/* The Design editor's look (31 Oct): a black panel, the platform on a grey workspace, no rules between parts, and white
+          (not orange) as the selection colour, so a choice never looks like the coach's own colour. */}
+      <div data-design-ws className="grid min-h-0 flex-1 [--background:#0b0b0c] [--border:rgb(255_255_255/0.08)] [--ts-interactive:#f4f4f5] lg:grid-cols-[minmax(400px,480px)_1fr]">
         {/* Left: the step */}
-        <div className="flex min-h-0 flex-col border-r bg-card">
-          <nav aria-label="Setup steps" className="flex gap-1 border-b px-4 py-2.5">
+        <div className="flex min-h-0 flex-col bg-[#0b0b0c]">
+          <nav aria-label="Setup steps" className="flex gap-1.5 px-5 pt-4 pb-2">
             {STEPS.map((s, i) => (
               <button
                 key={s.id}
@@ -145,13 +147,13 @@ export function SetupWizard() {
             ))}
           </nav>
 
-          <div className="flex-1 overflow-y-auto px-4 py-5 md:px-5">
-            <div className="grid gap-5">
-              <div className="grid gap-1.5 border-b pb-4">
+          <div className="flex-1 overflow-y-auto px-5 py-6 md:px-6">
+            <div className="grid gap-6">
+              <div className="grid gap-2">
                 <span className={cn(mono, "text-[var(--ts-interactive)]")}>
                   {String(step + 1).padStart(2, "0")} · {S.label}
                 </span>
-                <h1 className="text-lg leading-6 font-medium tracking-[-0.01em]">{S.title}</h1>
+                <h1 className="text-xl leading-7 font-medium tracking-[-0.01em]">{S.title}</h1>
                 <p className="text-sm text-muted-foreground">{S.text}</p>
                 <button onClick={() => setGuideOpen(true)} className="mt-0.5 flex w-fit items-center gap-1.5 text-sm text-[var(--ts-interactive)] hover:underline hover:underline-offset-4">
                   <PlayCircle className="size-4" /> Watch the {S.guide.minutes}-minute guide
@@ -163,7 +165,7 @@ export function SetupWizard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 border-t px-4 py-2.5 md:px-5">
+          <div className="flex items-center gap-2 px-5 py-4 md:px-6">
             {step > 0 && (
               <Button variant="ghost" onClick={() => go(step - 1)}>
                 <ArrowLeft /> Back
@@ -183,8 +185,8 @@ export function SetupWizard() {
         </div>
 
         {/* Right: the real platform, as students will see it */}
-        <div className="relative hidden min-h-0 flex-col bg-background lg:flex">
-          <div className="flex h-9 items-center justify-between gap-3 border-b bg-[var(--sidebar)] px-3">
+        <div className="relative hidden min-h-0 flex-col bg-[#2b2b2e] lg:flex">
+          <div className="flex h-12 items-center justify-between gap-3 px-6">
             <span className={cn(mono, "flex items-center gap-2 text-muted-foreground")}>
               <span className="size-1.5 rounded-full bg-[var(--ts-interactive)]" /> Live preview · {S.preview.label} · not public yet
             </span>

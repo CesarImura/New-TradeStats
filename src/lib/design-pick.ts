@@ -60,6 +60,9 @@ function own(el: Element): PickTarget | null {
 export function resolve(start: Element | null): { target: PickTarget; el: Element } | null {
   const widget = start?.closest('[data-slot="widget"]')
   if (widget) return { target: "cards", el: widget }
+  // The logo and a menu item are one part each: the name inside the logo is the logo, not a heading (it used to open Type).
+  const part = start?.closest('[data-edit="logo"], [data-edit^="menu:"]')
+  if (part) return { target: part.getAttribute("data-edit") as PickTarget, el: part }
   for (let el = start; el && el !== document.documentElement; el = el.parentElement) {
     const t = own(el)
     if (t) return { target: t, el }

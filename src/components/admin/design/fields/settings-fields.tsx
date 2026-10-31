@@ -9,8 +9,9 @@ import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { chartStyleOf, figureStyleOf, headerFormOf, panelStyleOf, starStyleOf, widgetFinishOf, widgetFontOf, widgetHeaderOf, widgetSetOf, widgetStyleOf, type CoachTheme, type FigureStyle, type PanelStyle, type WidgetHeader, type WidgetStyle } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { Field, Segmented } from "./controls"
+import { CardArt, OptionTiles } from "../thumbs/option-art"
 import { useDesign } from "./design-fields"
-import { card, chip } from "../states"
+import { chip } from "../states"
 
 /**
  * The theme editor's own fields, beside the Design fields (design-fields.tsx):
@@ -82,7 +83,7 @@ export function NumbersField() {
           const n = NUMBERS.find((x) => x.value === v)!
           change({ theme: { figureStyle: n.value, widgetFont: n.font } }, "numbers")
         }}
-        options={NUMBERS.map((n) => ({ value: n.value, label: n.label }))}
+        options={NUMBERS.map((n) => ({ value: n.value, label: n.label, hint: n.hint }))}
       />
     </Field>
   )
@@ -217,43 +218,6 @@ const SURFACES: { id: SurfaceId; label: string; hint: string; set: ThemeDraft }[
   { id: "outline", label: "Outline", hint: "No fill, a fine line around each", set: { widgetSet: "cards", cardSurface: "outline" } },
 ]
 
-/** The page behind every card picture: a step off the panel, with a faint edge, the same in Widgets, Shadows and Chart background. */
-const PICTURE_PAGE = "grid aspect-[4/3] w-full overflow-hidden rounded-md bg-[color-mix(in_oklab,var(--foreground)_4%,var(--background))] p-1.5 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--foreground)_6%,transparent)]"
-/** A raised card in the pictures: lighter than the page in dark mode, white on a light one. */
-const PICTURE_RAISED = "bg-background dark:bg-[color-mix(in_oklab,var(--foreground)_15%,var(--background))] dark:shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_12%,transparent)]"
-
-/** What a card holds in the pictures: a name, a figure and a small line chart. */
-function PictureContent() {
-  return (
-    <>
-      <span className="block h-[3px] w-3/5 rounded-full bg-foreground/35" />
-      <span className="block h-1.5 w-2/5 rounded-full bg-foreground/75" />
-      <svg viewBox="0 0 40 10" preserveAspectRatio="none" className="h-2 w-full text-foreground/50">
-        <polyline points="0,8 7,6 13,7 20,3 27,5 33,2 40,3" fill="none" stroke="currentColor" strokeWidth="1.25" vectorEffect="non-scaling-stroke" />
-      </svg>
-    </>
-  )
-}
-
-/**
- * One widget on a page, drawn the way `id` sets it, so the box is the only difference: Raised is a lighter
- * card with a shadow, Grey a flat grey card, Outline the page colour inside a fine line.
- */
-function SurfacePicture({ id }: { id: SurfaceId }) {
-  const box = {
-    raised: cn(PICTURE_RAISED, "shadow-[0_2px_5px_-1px_rgb(0_0_0/0.22)] dark:shadow-[0_3px_6px_-2px_rgb(0_0_0/0.5),inset_0_1px_0_color-mix(in_oklab,var(--foreground)_12%,transparent)]"),
-    grey: "bg-[color-mix(in_oklab,var(--foreground)_9%,var(--background))]",
-    outline: "shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--foreground)_35%,transparent)]",
-  }[id]
-  return (
-    <span aria-hidden className={PICTURE_PAGE}>
-      <span className={cn("grid min-h-0 content-center gap-1 rounded-[4px] px-1.5 py-1", box)}>
-        <PictureContent />
-      </span>
-    </span>
-  )
-}
-
 /**
  * One choice for how widgets sit on the page: three kinds of card. Raised cards also take a shadow, shown only
  * then, so no setting here ever does nothing.
@@ -265,22 +229,7 @@ export function SurfaceField() {
   return (
     <div className="grid gap-5">
       <Field id="widget-set" label="Widgets" hint={pick.hint}>
-        <div role="radiogroup" aria-label="Widgets" className="grid grid-cols-3 gap-2">
-          {SURFACES.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              role="radio"
-              aria-checked={s.id === now}
-              title={s.hint}
-              onClick={() => change({ theme: s.set }, "surface")}
-              className={cn("grid gap-1 p-1 text-[0.6875rem]", FOCUS, card(s.id === now), s.id === now ? "text-foreground" : "text-muted-foreground hover:text-foreground")}
-            >
-              <SurfacePicture id={s.id} />
-              {s.label}
-            </button>
-          ))}
-        </div>
+        <OptionTiles label="Widgets" value={now} onChange={(v) => change({ theme: SURFACES.find((s) => s.id === v)!.set }, "surface")} options={SURFACES.map((s) => ({ value: s.id, label: s.label, hint: s.hint, art: <CardArt surface={s.id} /> }))} />
       </Field>
       {now === "raised" && <ShadowField />}
     </div>
@@ -295,42 +244,12 @@ const SHADOWS: { id: ShadowId; label: string; hint: string }[] = [
   { id: "soft", label: "Soft", hint: "A light shadow lifts each card" },
   { id: "strong", label: "Strong", hint: "A deep shadow, tinted with your brand colour" },
 ]
-/** A raised card with the shadow `id` sets, a little higher in its frame so the shadow under it shows. */
-function ShadowPicture({ id }: { id: ShadowId }) {
-  const shadow = {
-    none: "",
-    soft: "shadow-[0_3px_7px_-2px_rgb(0_0_0/0.25)] dark:shadow-[0_5px_10px_-2px_rgb(0_0_0/0.95),inset_0_1px_0_color-mix(in_oklab,var(--foreground)_12%,transparent)]",
-    strong: "shadow-[0_8px_14px_-4px_color-mix(in_oklab,var(--primary)_45%,rgb(0_0_0/0.35))] dark:shadow-[0_9px_16px_-4px_color-mix(in_oklab,var(--primary)_40%,rgb(0_0_0/0.9)),inset_0_1px_0_color-mix(in_oklab,var(--foreground)_12%,transparent)]",
-  }[id]
-  return (
-    <span aria-hidden className={cn(PICTURE_PAGE, "px-2 pt-1.5 pb-2.5")}>
-      <span className={cn("grid min-h-0 content-center gap-1 rounded-[4px] px-1.5 py-1", PICTURE_RAISED, shadow)}>
-        <PictureContent />
-      </span>
-    </span>
-  )
-}
 function ShadowField() {
   const { theme, change } = useDesign()
   const now = (theme.shadow ?? "none") as ShadowId
   return (
     <Field id="shadows" label="Shadows" hint={SHADOWS.find((s) => s.id === now)?.hint}>
-      <div role="radiogroup" aria-label="Shadows" className="grid grid-cols-3 gap-2">
-        {SHADOWS.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            role="radio"
-            aria-checked={s.id === now}
-            title={s.hint}
-            onClick={() => change({ theme: { shadow: s.id } }, "shadow")}
-            className={cn("grid gap-1 p-1 text-[0.6875rem]", FOCUS, card(s.id === now), s.id === now ? "text-foreground" : "text-muted-foreground hover:text-foreground")}
-          >
-            <ShadowPicture id={s.id} />
-            {s.label}
-          </button>
-        ))}
-      </div>
+      <OptionTiles label="Shadows" value={now} onChange={(v) => change({ theme: { shadow: v } }, "shadow")} options={SHADOWS.map((s) => ({ value: s.id, label: s.label, hint: s.hint, art: <CardArt shadow={s.id} /> }))} />
     </Field>
   )
 }
@@ -342,52 +261,12 @@ const PANELS: { value: PanelStyle; label: string; hint: string }[] = [
   { value: "filled", label: "Filled", hint: "Charts sit on a soft inner panel" },
   { value: "outline", label: "Outline", hint: "Charts sit in a fine-line box" },
 ]
-/** A widget with a small area chart in it: a title, a figure, then the chart in the box `value` draws around it. */
-function PanelPicture({ value }: { value: PanelStyle }) {
-  return (
-    <span aria-hidden className="grid aspect-[4/3] w-full rounded-md bg-muted p-1.5">
-      <span className="grid size-full grid-rows-[auto_auto_minmax(0,1fr)] gap-1 rounded-[3px] bg-background p-1.5">
-        <span className="block h-1 w-1/2 rounded-full bg-foreground/30" />
-        <span className="block h-1.5 w-1/3 rounded-full bg-foreground/60" />
-        <span className={cn("relative min-h-0 overflow-hidden rounded-[2px]", value === "filled" && "bg-foreground/10", value === "outline" && "border border-foreground/30")}>
-          <svg viewBox="0 0 60 30" preserveAspectRatio="none" className="absolute inset-0 size-full text-foreground">
-            {[8, 16, 24].map((y) => (
-              <line key={y} x1="0" x2="60" y1={y} y2={y} stroke="currentColor" strokeOpacity="0.15" strokeWidth="0.6" strokeDasharray="1.5 1.5" vectorEffect="non-scaling-stroke" />
-            ))}
-            <path d="M0,24 L8,20 L16,22 L24,14 L32,16 L40,9 L48,11 L60,4 L60,30 L0,30 Z" fill="var(--primary, currentColor)" fillOpacity="0.18" />
-            <polyline points="0,24 8,20 16,22 24,14 32,16 40,9 48,11 60,4" fill="none" stroke="var(--primary, currentColor)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
-          </svg>
-        </span>
-      </span>
-    </span>
-  )
-}
 export function ChartPanelField() {
   const { theme, change } = useDesign()
   const now = panelStyleOf(theme)
   return (
     <Field id="panel-style" label="Chart background" hint={PANELS.find((p) => p.value === now)?.hint}>
-      <div role="radiogroup" aria-label="Chart background" className="grid grid-cols-3 gap-2">
-        {PANELS.map((p) => (
-          <button
-            key={p.value}
-            type="button"
-            role="radio"
-            aria-checked={p.value === now}
-            title={p.hint}
-            onClick={() => change({ theme: { panelStyle: p.value } }, "panel-style")}
-            className={cn(
-              "grid gap-1 p-1 text-[0.6875rem]",
-              FOCUS,
-              card(p.value === now),
-              p.value === now ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <PanelPicture value={p.value} />
-            {p.label}
-          </button>
-        ))}
-      </div>
+      <OptionTiles label="Chart background" value={now} onChange={(v) => change({ theme: { panelStyle: v } }, "panel-style")} options={PANELS.map((p) => ({ value: p.value, label: p.label, hint: p.hint, art: <CardArt panel={p.value} /> }))} />
     </Field>
   )
 }

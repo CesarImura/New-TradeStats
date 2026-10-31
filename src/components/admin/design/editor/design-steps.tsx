@@ -16,6 +16,7 @@ import { PaletteField } from "../fields/palette-field"
 import { CAN_SAVE_TEMPLATE } from "./save-template"
 import { card } from "../states"
 import { useConfirmSwitch } from "./switch-look"
+import { SECTION_LABEL } from "../panels/settings-panel"
 
 /**
  * Design's own panels (brand, looks, menu), shared by the Design workspace
@@ -23,8 +24,10 @@ import { useConfirmSwitch } from "./switch-look"
  */
 export function Section({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <section className="grid gap-5 border-b px-5 pt-5 pb-6 last:border-b-0">
-      {title && <h3 className="text-[0.6875rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{title}</h3>}
+    // minmax(0,1fr): a grid track never grows past the panel to fit a long word or a truncated line (they shrink instead).
+    // The same block as the theme's groups (settings-panel.tsx): hairline on top, the same padding and title.
+    <section className="grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] px-5 pt-6 pb-6">
+      {title && <h3 className={cn(SECTION_LABEL, "flex h-6 items-center")}>{title}</h3>}
       {children}
     </section>
   )
@@ -37,10 +40,11 @@ export function Section({ title, children }: { title?: string; children: React.R
  * `templates`: the note on which template the coach is on, and the palette tool.
  */
 export function LookCards({ suggested, templates = true }: { suggested?: TemplateId; templates?: boolean }) {
-  const { theme, coach, change } = useDesign()
+  const { theme, change } = useDesign()
   const active = currentLook(theme)
   const [ask, dialog] = useConfirmSwitch()
   return (
+    <>
     <Section>
       <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Look">
         {LOOKS.map((l) => (
@@ -62,13 +66,14 @@ export function LookCards({ suggested, templates = true }: { suggested?: Templat
       </div>
       {!active && <p className="text-xs text-muted-foreground">Your own mix. Pick a look to start again from it.</p>}
       {dialog}
-      {templates && CAN_SAVE_TEMPLATE && <PaletteField />}
-      {templates && (
-        <p className="text-xs text-muted-foreground">
-          Looks are built on three templates ({Object.values(TEMPLATES).map((t) => t.name).join(", ")}). {coach.name} is on {TEMPLATES[theme.template].name}.
-        </p>
-      )}
     </Section>
+    {/* A tool for the team (saving templates), apart from the looks. */}
+    {templates && CAN_SAVE_TEMPLATE && (
+      <Section>
+        <PaletteField />
+      </Section>
+    )}
+    </>
   )
 }
 

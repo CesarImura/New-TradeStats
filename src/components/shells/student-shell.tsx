@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { createContext, useContext, useState } from "react"
 import { Bell, LogOut, MoreHorizontal, Search, Settings, User } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CommunitySwitcher } from "@/components/student/community-switcher"
@@ -38,8 +38,20 @@ import { DEMO_STUDENT } from "@/lib/data/sample"
 import { backdropStyle, dimOf } from "@/lib/theme/backdrops"
 import { cn } from "@/lib/utils"
 
+/**
+ * The Design editor draws this shell round its canvas (one screen for the whole platform): it says which page is shown
+ * (the real address is the editor's) and leaves out what only a student sees (the tour, the preview picker and banner).
+ */
+export const ShellEditorContext = createContext<{ path: string } | null>(null)
+
+/** The page the shell is on: the address bar's, or in the Design editor the page being edited. */
+function useShellPath() {
+  const real = usePathname()
+  return useContext(ShellEditorContext)?.path ?? real
+}
+
 function useActive(base: string) {
-  const path = usePathname()
+  const path = useShellPath()
   return (item: NavItem) => (item.href === base ? path === base : path.startsWith(item.href))
 }
 
@@ -47,7 +59,8 @@ function useActive(base: string) {
 export function StudentShell({ children }: { children: React.ReactNode }) {
   const { coach, theme, base, preview } = useCoach()
   const items = studentNav(coach, base)
-  const path = usePathname()
+  const path = useShellPath()
+  const editor = !!useContext(ShellEditorContext)
   const texture = { grid: "coach-bg-grid", glow: "coach-bg-glow", dots: "coach-bg-dots" } as Record<string, string>
   // An image or gradient sits on its own layer behind the page, so the page itself turns see-through.
   const where = theme.bgWhere ?? "all"
@@ -59,8 +72,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const content = (
     <div data-edit-root className={cn("mx-auto w-full px-4 pt-5 pb-28 sm:px-6 md:pb-12 lg:px-8", wide ? "max-w-none pt-3 lg:px-4" : "max-w-[1280px]")}>
       {children}
-      <Tour />
-      {preview && <PreviewPicker />}
+      {!editor && <Tour />}
+      {!editor && preview && <PreviewPicker />}
     </div>
   )
 
@@ -72,7 +85,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     if (floating)
       return (
         <div className="min-h-svh bg-[var(--ground)]">
-          <PreviewAsBanner />
+          {!editor && <PreviewAsBanner />}
           <TopNav items={items} floating />
           <div className={cn("relative isolate min-h-[calc(100svh-4.75rem)] md:mx-3 md:mb-3", bg, canvas)}>
             {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
@@ -83,7 +96,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
       )
     return (
       <div className={cn("min-h-svh", bg)}>
-        <PreviewAsBanner />
+        {!editor && <PreviewAsBanner />}
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
         <TopNav items={items} />
         {content}
@@ -108,7 +121,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className={cn(bg, floating && canvas)}>
-        <PreviewAsBanner />
+        {!editor && <PreviewAsBanner />}
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
         <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur sm:px-6 lg:px-8">
           <SidebarTrigger className="max-md:hidden" />

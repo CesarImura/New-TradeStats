@@ -66,8 +66,8 @@ export function PaletteField() {
   const failing = checks.filter((c) => !c.pass)
 
   return (
-    <Field id="palette" label="Template greys (prototype)" hint="Saved into the template with Save as template">
-      <div className="grid gap-3">
+    <Field id="palette" label="Template greys" hint={<span title="Saved into the template with Save as template">Prototype</span>}>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
         <Segmented
           label="Palette"
           value={mode}
@@ -78,16 +78,17 @@ export function PaletteField() {
           ]}
         />
         {mode !== theme.mode && <p className="text-xs text-muted-foreground">The preview is in {theme.mode} mode. Switch Light or dark in Brand to see these.</p>}
-        <div className="grid gap-1.5">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-1.5">
           <span className="text-xs text-muted-foreground">Greys follow</span>
           <Segmented
             label="Greys follow"
             value={theme.tint ?? "brand"}
             onChange={(tint) => change({ theme: { tint } }, "tint")}
             options={[
-              { value: "brand", label: "Brand colour" },
-              { value: "template", label: "Exactly these" },
-              { value: "none", label: "Pure grey" },
+              // Short words: three options share a 240px row.
+              { value: "brand", label: "Brand", hint: "Brand colour" },
+              { value: "template", label: "Exact", hint: "Exactly these" },
+              { value: "none", label: "Grey", hint: "Pure grey" },
             ]}
           />
           <p className="text-[0.6875rem] text-muted-foreground">

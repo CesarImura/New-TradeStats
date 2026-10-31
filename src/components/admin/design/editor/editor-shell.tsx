@@ -70,12 +70,17 @@ export function useDraftEditor(slug: string) {
   )
   const change = (patch: Partial<Overrides>, key: string) => commit(mergeOverrides(working, patch), key)
 
+  // The discard toast's Undo runs the latest undo (the one that holds the discarded draft).
+  const doUndoRef = useRef(() => {})
   const doUndo = useCallback(() => {
     if (!undo.length) return
     write(undo[undo.length - 1])
     last.current = { key: "", at: 0 }
     setSteps((s) => ({ ...s, undo: s.undo.slice(0, -1), redo: [...s.redo, working] }))
   }, [write, undo, working])
+  useEffect(() => {
+    doUndoRef.current = doUndo
+  })
 
   const doRedo = useCallback(() => {
     if (!redo.length) return
@@ -115,13 +120,14 @@ export function useDraftEditor(slug: string) {
       setSteps((s) => ({ ...s, undo: [...s.undo, working], redo: [] }))
       last.current = { key: "", at: 0 }
       write(null)
-      toast("Changes discarded. Your platform is back to the live version.")
+      toast("Changes discarded. Your platform is back to the live version.", { action: { label: "Undo", onClick: () => doUndoRef.current() } })
     },
-    publish: () => {
+    /** `note`: what the success toast adds (one toast, never two). */
+    publish: (note?: { description: string; action?: { label: string; onClick: () => void } }) => {
       // A failed publish keeps the draft; the store has already said why.
       if (!publish(slug, `Published ${new Date().toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`)) return false
       setSteps((s) => ({ ...s, undo: [], redo: [] }))
-      toast.success("Published. Students see the changes now.")
+      toast.success("Published. Students see the changes now.", note)
       return true
     },
   }
@@ -197,7 +203,7 @@ export function EditorBar({
       >
         <Play />
       </Button>
-      <Button size="sm" disabled={!editor.dirty} onClick={editor.publish}>
+      <Button size="sm" disabled={!editor.dirty} onClick={() => editor.publish()}>
         Publish
       </Button>
     </div>

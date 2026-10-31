@@ -33,14 +33,15 @@ export function PreviewFrame({
   }, [])
 
   const fixed = device !== "desktop"
-  const scale = space.w ? Math.min(1, (space.w - 32) / size.w, fixed ? (space.h - 32) / size.h : 1) : 0
-  const height = fixed ? size.h : Math.max(size.h, (space.h - 32) / (scale || 1))
+  const scale = space.w ? Math.min(1, (space.w - 96) / size.w, fixed ? (space.h - 80) / size.h : 1) : 0
+  const height = fixed ? size.h : Math.max(size.h, (space.h - 80) / (scale || 1))
 
   return (
-    <div ref={box} className="relative grid h-full min-h-0 place-items-start justify-center overflow-hidden p-4">
+    <div ref={box} className="relative grid h-full min-h-0 place-items-start justify-center overflow-hidden px-12 pt-10">
       {scale > 0 && (
         <div
-          className="overflow-hidden rounded-xl bg-background shadow-xl ring-1 ring-black/10"
+          // The same frame as the canvas in Pages: its corners and its shadow.
+          className="overflow-hidden bg-background shadow-[0_24px_60px_-20px_rgb(0_0_0/0.7)]"
           style={{ width: size.w * scale, height: height * scale, borderRadius: fixed ? 28 : 12 }}
         >
           <iframe

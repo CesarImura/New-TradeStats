@@ -32,6 +32,8 @@ export type Setting = (
 ) & {
   /** Only offered for these layouts. */
   variants?: string[]
+  /** Drawn only when the widget shows More (Detailed), in these layouts: the inspector offers it there and then. */
+  more?: string[]
 }
 
 /** The settings a layout offers. */
@@ -122,7 +124,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "media", label: "Media", h: 4, minH: 3, maxH: 4, minW: 4, maxW: 12 },
     ],
     settings: [
-      { key: "title", label: "Small label", type: "text", placeholder: "Start here" },
+      { key: "title", label: "Small label", type: "text", placeholder: "Start here", variants: ["progress", "cover", "media"] },
       { key: "course", label: "Course", type: "select", options: COURSE_OPTIONS },
     ],
     defaultW: 8,
@@ -372,7 +374,8 @@ export const WIDGETS: WidgetDef[] = [
       { value: "heatmap", label: "Heatmap", h: 4, minH: 4, maxH: 6, minW: 3, maxW: 12 },
       { value: "join", label: "Join card", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12, hd: { compact: 3, detailed: 5 } },
     ],
-    settings: [{ key: "text", label: "Text", type: "textarea" }],
+    // The text shows under the channels and in the one-row layout (with More); the heatmap and the join card have none.
+    settings: [{ key: "text", label: "Text", type: "textarea", variants: ["card", "banner"], more: ["card", "banner"] }],
     defaultW: 4,
     minW: 3,
     Component: Discord,
@@ -390,7 +393,7 @@ export const WIDGETS: WidgetDef[] = [
     ],
     settings: [
       { key: "title", label: "Title", type: "text" },
-      { key: "text", label: "Text", type: "textarea" },
+      { key: "text", label: "Text", type: "textarea", variants: ["side", "stacked"] },
     ],
     defaultW: 12,
     minW: 4,
@@ -410,7 +413,7 @@ export const WIDGETS: WidgetDef[] = [
     settings: [
       { key: "eyebrow", label: "Small label", type: "text", placeholder: "Limited places" },
       { key: "title", label: "Headline", type: "text" },
-      { key: "text", label: "Text", type: "textarea" },
+      { key: "text", label: "Text", type: "textarea", more: ["slim"] },
       { key: "button", label: "Button text", type: "text", placeholder: "Find out more" },
       { key: "target", label: "Button opens", type: "select", options: PAGE_TARGETS },
     ],
@@ -430,10 +433,10 @@ export const WIDGETS: WidgetDef[] = [
       { value: "steps", label: "Steps", h: 3, minH: 3, wide: { from: 8, maxH: 3 }, maxH: 4, minW: 3, maxW: 12, hd: { detailed: 3 } },
     ],
     settings: [
-      { key: "title", label: "Heading", type: "text" },
+      { key: "title", label: "Heading", type: "text", variants: ["plain", "steps"] },
       { key: "text", label: "Text", type: "textarea" },
-      { key: "button", label: "Button text", type: "text", placeholder: "Leave empty for no button" },
-      { key: "target", label: "Button opens", type: "select", options: PAGE_TARGETS },
+      { key: "button", label: "Button text", type: "text", placeholder: "Leave empty for no button", variants: ["plain", "steps"] },
+      { key: "target", label: "Button opens", type: "select", options: PAGE_TARGETS, variants: ["plain", "steps"] },
     ],
     defaultW: 6,
     minW: 3,
@@ -560,7 +563,7 @@ export const WIDGETS: WidgetDef[] = [
       { value: "row", label: "One row", h: 1, minH: 1, maxH: 1, minW: 3, maxW: 12 },
     ],
     settings: [
-      { key: "title", label: "Title", type: "text", placeholder: "Questions" },
+      { key: "title", label: "Title", type: "text", placeholder: "Questions", variants: ["list", "two"] },
       { key: "items", label: "Questions and answers", type: "textarea", placeholder: "One per line: question | answer" },
     ],
     defaultW: 6,
@@ -600,7 +603,8 @@ export const WIDGETS: WidgetDef[] = [
     settings: [
       { key: "title", label: "Title", type: "text", placeholder: "Next cohort starts" },
       { key: "date", label: "Date and time", type: "text", placeholder: "2026-11-01 09:00" },
-      { key: "text", label: "Text", type: "textarea" },
+      // Only the With text layout shows a text.
+      { key: "text", label: "Text", type: "textarea", variants: ["card"] },
       { key: "button", label: "Button text", type: "text", placeholder: "Save my spot" },
       { key: "target", label: "Button opens", type: "select", options: PAGE_TARGETS },
     ],

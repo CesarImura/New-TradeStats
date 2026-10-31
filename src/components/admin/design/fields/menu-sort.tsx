@@ -33,7 +33,7 @@ export const menuRow = (hidden?: boolean) =>
   cn(
     "flex items-center gap-2 rounded-lg border py-1 pr-2.5 pl-1 transition-[background-color,border-color] duration-150",
     "hover:border-[color-mix(in_oklab,var(--foreground)_20%,transparent)] hover:bg-[color-mix(in_oklab,var(--foreground)_3%,transparent)]",
-    "focus-within:border-[rgb(255_110_40/0.45)] focus-within:bg-[rgb(255_85_0/0.04)] focus-within:hover:border-[rgb(255_110_40/0.45)]",
+    "focus-within:border-[color-mix(in_oklab,var(--ts-interactive)_45%,transparent)] focus-within:bg-[color-mix(in_oklab,var(--ts-interactive)_4%,transparent)] focus-within:hover:border-[color-mix(in_oklab,var(--ts-interactive)_45%,transparent)]",
     hidden && "border-dashed bg-transparent",
   )
 /** A hidden item's name field: still readable (secondary text, not faded), and not editable while it is off. */
@@ -47,7 +47,8 @@ export const SWITCH_OFF =
 /** How to reorder, for the line above the list (the handles point to it). */
 export function SortHint() {
   return (
-    <p id={HINT_ID} className="text-xs text-muted-foreground">
+    // Read by screen readers (each handle points to it); sighted coaches see the grip and the drag.
+    <p id={HINT_ID} className="sr-only">
       Drag <GripVertical className="inline size-3.5 align-[-3px]" /> to reorder, or focus it and press ↑ ↓. Home always comes first.
     </p>
   )
@@ -69,7 +70,7 @@ export function SortHandle() {
         s.controls.start(e)
       }}
       onKeyDown={s.onKey}
-      className="grid h-7 w-6 shrink-0 cursor-grab touch-none place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-[rgb(255_110_40/0.85)] focus-visible:outline-none active:cursor-grabbing"
+      className="grid h-7 w-6 shrink-0 cursor-grab touch-none place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] focus-visible:outline-none active:cursor-grabbing"
     >
       <GripVertical className="size-3.5" />
     </button>
@@ -162,8 +163,8 @@ function SortItem({ id, name, flash, onDrop, onMove, children }: { id: MenuId; n
     if (!flash || reduce) return
     ref.current?.animate(
       [
-        { boxShadow: "0 0 0 2px #ff5500", borderRadius: "8px" },
-        { boxShadow: "0 0 0 2px #ff550000", borderRadius: "8px" },
+        { boxShadow: "0 0 0 2px rgb(255 255 255 / 0.9)", borderRadius: "8px" },
+        { boxShadow: "0 0 0 2px rgb(255 255 255 / 0)", borderRadius: "8px" },
       ],
       { duration: 1200, easing: "ease-in" },
     )
@@ -190,7 +191,7 @@ function SortItem({ id, name, flash, onDrop, onMove, children }: { id: MenuId; n
       data-dragging={dragging || undefined}
       // Lifted while dragging: above the others, on the panel's colour, with a shadow.
       whileDrag={reduce ? { zIndex: 10 } : { scale: 1.02, zIndex: 10, boxShadow: "0 12px 28px -12px rgb(0 0 0 / 0.7)" }}
-      className={cn("relative rounded-lg", dragging && "bg-background [&>[data-field]]:border-[rgb(255_110_40/0.55)]")}
+      className={cn("relative rounded-lg", dragging && "bg-background [&>[data-field]]:border-[color:var(--ring)]")}
     >
       <SortContext.Provider value={{ controls, id, name, onKey }}>{children}</SortContext.Provider>
     </Reorder.Item>

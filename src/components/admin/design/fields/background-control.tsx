@@ -24,9 +24,9 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
 
   return (
     <div className="grid gap-4">
-      <Field label="Background">
+      <Field label="Style">
         <Segmented
-          label="Background"
+          label="Background style"
           value={kind}
           onChange={(k) =>
             onChange(

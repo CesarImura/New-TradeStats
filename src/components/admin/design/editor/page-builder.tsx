@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { verticalCompactor } from "react-grid-layout/core"
-import { ArrowDownToLine, ArrowUpToLine, Copy, EyeOff, Info, LayoutGrid, Lock, Pencil, Trash2, Wand2 } from "@/components/icons"
+import { ArrowDownToLine, ArrowUpToLine, Copy, EyeOff, Info, LayoutGrid, Lock, Minus, Pencil, Plus, Trash2, Wand2 } from "@/components/icons"
 import { toast as notify, type ExternalToast } from "sonner"
 import { CoachContext, useCoach } from "@/components/coach/coach-provider"
 import { studentNav } from "@/components/coach/nav"
-import { Button } from "@/components/ui/button"
 import { Toaster } from "@/components/ui/sonner"
 import {
   ContextMenu,
@@ -24,9 +23,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import { PageRenderer, WidgetGrid, isAvailable, placeItems, spanOf, widthOf, type Placement } from "@/components/widgets/page-renderer"
-import { WidgetFrame } from "@/components/widgets/parts/frame"
-import { WidgetStyleScope } from "@/components/widgets/parts/widget-scope"
+import { PageRenderer, WidgetGrid, WidgetView, isAvailable, placeItems, spanOf, widthOf, type Placement } from "@/components/widgets/page-renderer"
 import { fitWidth, getWidget, heightFor, heightOf, lookOf, widthsFor } from "@/components/widgets/registry"
 import { DataModeProvider, PageIdContext, PageTitleShownContext, type DataMode } from "@/components/widgets/parts/shared"
 import type { Coach } from "@/lib/data/coaches"
@@ -38,7 +35,9 @@ import { widgetFinishOf, widgetSetOf, type CoachTheme } from "@/lib/theme/types"
 import { isPageId } from "@/lib/data/coaches"
 import { COLS, GAP, ROW_HEIGHT, normalizeLayout, readingOrder, oneStar, uid, withCore, type Detail, type Emphasis, type PageId, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
-import { DETAIL, EMPHASIS, PHASE_LABEL, SizeIcons, WIDTH, type AddOptions } from "../panels/builder-panels"
+import { resolve, type PickTarget } from "@/lib/design-pick"
+import { ShellEditorContext, StudentShell } from "@/components/shells/student-shell"
+import { DETAIL, EMPHASIS, PHASE_LABEL, WIDTH, type AddOptions } from "../panels/builder-panels"
 import type { useDraftEditor } from "./editor-shell"
 
 /**
@@ -211,6 +210,8 @@ export function ArrangeCanvas({
   incoming,
   onDropped,
   allWidgets,
+  shell,
+  onPick,
 }: {
   arrange: Arrange
   coach: Coach
@@ -222,6 +223,10 @@ export function ArrangeCanvas({
   onDropped: () => void
   /** The panel edits every widget's style: every widget gets the group outline, so the scope shows on the page too. */
   allWidgets?: boolean
+  /** Draw the platform's menu and header round the page (desktop): the editor's one screen. */
+  shell?: boolean
+  /** A click on a part of the platform that is not a widget: the setting that changes it. */
+  onPick?: (target: PickTarget) => void
 }) {
   const ctx = useCoach()
   const { page, layout, selected, setSelected, save, updateItem, removeWidget, duplicateWidget, moveTo } = arrange
@@ -449,12 +454,13 @@ export function ArrangeCanvas({
   // The spot is as tall as the card it stands for: the moving card's own height, or the new widget's estimate.
   const slotHeight = (w: WidgetInstance) => (moving ? moving.h : (w.h * (ROW_HEIGHT + gap) - gap))
 
-  // Delete / Backspace removes the selected widget, Escape deselects.
+  // Delete / Backspace removes the selected widget, Escape deselects. Only while the page has the keyboard: with focus
+  // on a control (a button in the inspector, a dropdown, a dialog) those keys belong to it.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target
-      if (t instanceof Element && t.closest("input, textarea, select, [contenteditable=true]")) return
-      if (!selected) return
+      const onPage = t === document.body || (t instanceof Node && !!area.current?.contains(t) && !(t instanceof Element && t.closest("input, textarea, select, button, [role], [contenteditable=true]")))
+      if (!selected || !onPage) return
       if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault()
         removeWidget(selected)
@@ -462,7 +468,7 @@ export function ArrangeCanvas({
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  })
+  }, [selected, removeWidget, setSelected])
 
   // The canvas is laid out at real device width and scaled to fit the space.
   const area = useRef<HTMLDivElement>(null)
@@ -481,52 +487,80 @@ export function ArrangeCanvas({
     ro.observe(c)
     return () => ro.disconnect()
   }, [])
-  const logicalWidth = DEVICE_WIDTH[device]
-  const scale = areaWidth ? Math.min(1, (areaWidth - 32) / logicalWidth) : 1
+  // On desktop the page is drawn inside the platform's menu and header (StudentShell), at a laptop's width.
+  const shellOn = !!shell && device === "desktop"
+  const logicalWidth = shellOn ? 1440 : DEVICE_WIDTH[device]
+  // Zoom, as in Framer and Figma: "fit" fills the width; a number is a fixed scale and the workspace scrolls both ways.
+  const [zoom, setZoom] = useState<number | "fit">("fit")
+  const fit = areaWidth ? Math.min(1, (areaWidth - 96) / logicalWidth) : 1
+  const scale = zoom === "fit" ? fit : zoom
+  const stepZoom = (dir: 1 | -1) => setZoom((z) => {
+    const now = z === "fit" ? fit : z
+    const next = dir > 0 ? ZOOMS.find((v) => v > now + 0.001) : [...ZOOMS].reverse().find((v) => v < now - 0.001)
+    return next ?? now
+  })
+  // ⌘/Ctrl + scroll and pinch zoom round the pointer; ⌘ + / − / 0 step and fit. Space + drag (or the middle button) moves the page.
+  useEffect(() => {
+    const a = area.current
+    if (!a) return
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return
+      e.preventDefault()
+      setZoom((z) => Math.min(2, Math.max(0.25, (z === "fit" ? fit : z) * Math.exp(-e.deltaY / 300))))
+    }
+    a.addEventListener("wheel", onWheel, { passive: false })
+    return () => a.removeEventListener("wheel", onWheel)
+  }, [fit])
+  const [spaceDown, setSpaceDown] = useState(false)
+  useEffect(() => {
+    const typing = (t: EventTarget | null) => t instanceof Element && !!t.closest("input, textarea, select, [contenteditable=true]")
+    const down = (e: KeyboardEvent) => {
+      if (typing(e.target)) return
+      if (e.code === "Space" && !e.repeat) {
+        setSpaceDown(true)
+        e.preventDefault()
+      }
+      if (!(e.metaKey || e.ctrlKey)) return
+      const act = { "=": () => stepZoom(1), "+": () => stepZoom(1), "-": () => stepZoom(-1), "0": () => setZoom("fit") }[e.key]
+      if (!act) return
+      e.preventDefault()
+      act()
+    }
+    const up = (e: KeyboardEvent) => e.code === "Space" && setSpaceDown(false)
+    window.addEventListener("keydown", down)
+    window.addEventListener("keyup", up)
+    return () => {
+      window.removeEventListener("keydown", down)
+      window.removeEventListener("keyup", up)
+    }
+  })
+  const startPan = (e: React.PointerEvent) => {
+    if (!(spaceDown || e.button === 1)) return
+    e.preventDefault()
+    e.stopPropagation()
+    const a = area.current!
+    const start = { x: e.clientX, y: e.clientY, l: a.scrollLeft, t: a.scrollTop }
+    const move = (ev: PointerEvent) => {
+      a.scrollLeft = start.l - (ev.clientX - start.x)
+      a.scrollTop = start.t - (ev.clientY - start.y)
+    }
+    const end = () => {
+      window.removeEventListener("pointermove", move)
+      window.removeEventListener("pointerup", end)
+    }
+    window.addEventListener("pointermove", move)
+    window.addEventListener("pointerup", end)
+  }
 
   const scope = ".hb-canvas"
   const canvasClass = cn("hb-canvas", theme.mode === "dark" ? "dark" : "light")
   const canvasCtx = { ...ctx, coach, theme, base: `/c/${coach.slug}` }
 
-  return (
-    <PageIdContext.Provider value={page}>
-    <PageTitleShownContext.Provider value={!layout.items.some((w) => w.type === "page-header")}>
-    <CoachContext.Provider value={canvasCtx}>
-      <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, scope) }} />
-      <Toaster id={CANVAS_TOASTS} position="top-right" offset={{ top: 60, right: 16 }} />
-      {/* Stacked (narrow screens) the prototype bar sits over the bottom right: room at the foot lets the last cards scroll clear of it. */}
-      <div ref={area} className="h-full min-h-[60svh] min-w-0 overflow-x-hidden overflow-y-auto p-4 pb-32 md:pb-20 lg:min-h-0 lg:pb-4" onClick={() => setSelected(null)}>
-        {device !== "desktop" && (
-          <div className="mx-auto mb-3 flex max-w-xl items-center gap-2 rounded-[6px] border bg-card px-3 py-2 text-xs text-muted-foreground">
-            <Info className="size-4 shrink-0" />
-            This is how the page reflows on {device === "tablet" ? "tablets" : "phones"}. Arrange widgets on desktop; the order here follows it, top to bottom and left to right.
-          </div>
-        )}
-        {device === "desktop" && layout.items.length > 1 && (
-          <div className="mx-auto mb-2 flex justify-end" style={{ width: logicalWidth * scale }}>
-            <Button
-              size="sm"
-              variant="outline"
-              title="Moves the widgets so the page has no gaps. Undo puts them back."
-              onClick={(e) => {
-                e.stopPropagation()
-                tidy()
-              }}
-            >
-              <Wand2 /> Arrange automatically
-            </Button>
-          </div>
-        )}
-        <div className="mx-auto" style={{ width: logicalWidth * scale, height: canvasHeight * scale }}>
-          <DataModeProvider value={data}>
-            <div
-              ref={canvas}
-              data-canvas={device}
-              className={cn(canvasClass, "origin-top-left bg-background font-sans text-foreground shadow-xl ring-1 ring-black/10", device === "desktop" ? "rounded-xl" : "rounded-[28px]")}
-              style={{ width: logicalWidth, transform: `scale(${scale})`, padding: PAD[device] }}
-            >
+  // The page as students get it: on desktop inside the platform's own menu and header (the shell), so the editor is one screen.
+  const body = (
+    <>
               {page === "home" && (
-                <div className="pointer-events-none mb-[var(--page-gap)] flex flex-col gap-1 opacity-80">
+                <div className={cn("mb-[var(--page-gap)] flex flex-col gap-1 opacity-80", !shellOn && "pointer-events-none")}>
                   <span className="eyebrow">Monday, 12 October</span>
                   <h1 className="text-3xl leading-tight">Good morning, {DEMO_STUDENT.first}</h1>
                 </div>
@@ -547,7 +581,7 @@ export function ArrangeCanvas({
                 >
                   {/* A widget is on its way from the gallery: the whole page takes it. */}
                   {incoming && (
-                    <span aria-hidden className="pointer-events-none absolute -inset-3 z-0 rounded-[calc(var(--radius)+12px)] border-2 border-dashed border-[#ff5500]/35 transition-opacity" />
+                    <span aria-hidden className="pointer-events-none absolute -inset-3 z-0 rounded-[calc(var(--radius)+12px)] border-2 border-dashed border-[var(--ts-interactive)]/35 transition-opacity" />
                   )}
                   {layout.items.length === 0 && !arriving && (
                     <div className="pointer-events-none grid min-h-48 place-items-center rounded-(--radius) border-2 border-dashed text-sm text-muted-foreground">
@@ -565,7 +599,7 @@ export function ArrangeCanvas({
                       w.id === SLOT ? (
                         // Where the card lands: the page has already made room for it.
                         <div
-                          className="grid place-items-center rounded-(--radius) border-2 border-dashed border-[#ff5500]/70 bg-[#ff5500]/[0.06] font-[family-name:var(--ff-geist)] text-xs font-medium text-[#ff5500]"
+                          className="grid place-items-center rounded-(--radius) border-2 border-dashed border-[var(--ts-interactive)]/70 bg-[var(--ts-interactive)]/[0.06] font-[family-name:var(--ff-geist)] text-xs font-medium text-[var(--ts-interactive)]"
                           style={{ minHeight: slotHeight(w), flex: "none", transition: "min-height 200ms" }}
                         >
                           {!moving && `Drop here · ${WIDTH.find((o) => o.value === widthOf(w))?.label}`}
@@ -583,7 +617,7 @@ export function ArrangeCanvas({
                           onPhone={(hideOnPhone) => updateItem(w.id, { hideOnPhone }, `${w.id}-phone`)}
                           onRemove={() => removeWidget(w.id)}
                         >
-                          <GridWidget w={w} selected={selected === w.id} available={isAvailable(w, coach)} onRemove={() => removeWidget(w.id)} onDuplicate={() => duplicateWidget(w.id)} />
+                          <GridWidget w={w} selected={selected === w.id} available={isAvailable(w, coach)} onRemove={() => removeWidget(w.id)} onDuplicate={() => duplicateWidget(w.id)} onWidth={(cols) => updateItem(w.id, { w: cols }, `${w.id}-width`)} />
                         </WidgetMenu>
                       )
                     }
@@ -601,22 +635,7 @@ export function ArrangeCanvas({
                         >
                           {item}
                           {allWidgets && (
-                            <span aria-hidden className="pointer-events-none absolute -inset-[4px] z-20 rounded-[calc(var(--radius)+4px)] border-[1.5px] border-dashed border-[#ff5500]/75" />
-                          )}
-                          {/* The selected widget's bar, under it: how to move it, and its width in one click. */}
-                          {selected === w.id && !moving && !resizing && (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              className="no-drag absolute top-full left-0 z-40 mt-2 flex items-center gap-3 rounded-lg border border-white/10 bg-[#18181b] py-1 pr-1 pl-3 font-[family-name:var(--ff-geist)] text-xs whitespace-nowrap text-white shadow-[0_8px_24px_-8px_rgb(0_0_0/0.6)]"
-                            >
-                              <span>Drag to move. Pull a side to resize.</span>
-                              {!getWidget(w.type)?.core && w.type !== "page-header" && widthsFor(getWidget(w.type)!, w.variant).length > 1 && (
-                                <span className="flex items-center gap-1.5 border-l border-white/15 pl-3 text-white/70">
-                                  Size
-                                  <SizeIcons value={widthOf(w)} allowed={widthsFor(getWidget(w.type)!, w.variant)} onChange={(cols) => updateItem(w.id, { w: cols }, `${w.id}-width`)} />
-                                </span>
-                              )}
-                            </div>
+                            <span aria-hidden className="pointer-events-none absolute -inset-[4px] z-20 rounded-[calc(var(--radius)+4px)] border border-dashed border-[var(--ts-interactive)]/50" />
                           )}
                           {/* Resize: pull either side to set the width (one, two or three columns). Only for widgets with more than one width. */}
                           {!getWidget(w.type)?.core &&
@@ -664,9 +683,87 @@ export function ArrangeCanvas({
                   <PageRenderer layout={layout} />
                 </div>
               )}
+    </>
+  )
+
+  return (
+    <PageIdContext.Provider value={page}>
+    <PageTitleShownContext.Provider value={!layout.items.some((w) => w.type === "page-header")}>
+    <CoachContext.Provider value={canvasCtx}>
+      <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, scope) + SHELL_CSS }} />
+      <Toaster id={CANVAS_TOASTS} position="top-right" offset={{ top: 60, right: 16 }} />
+      {/* Stacked (narrow screens) the prototype bar sits over the bottom right: room at the foot lets the last cards scroll clear of it. */}
+      <div className="relative h-full min-h-[60svh] lg:min-h-0">
+      {/* The workspace: a mid grey round the page, so the page (in the coach's colours) always stands out from the editor's black panels. */}
+      <div
+        ref={area}
+        className={cn("h-full min-w-0 overflow-auto bg-[#2b2b2e] px-12 pt-10 pb-28 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", spaceDown && "cursor-grab active:cursor-grabbing")}
+        onClick={() => setSelected(null)}
+        onPointerDownCapture={startPan}
+      >
+        {device !== "desktop" && (
+          <div className="mx-auto mb-3 flex max-w-xl items-center gap-2 rounded-[6px] border bg-card px-3 py-2 text-xs text-muted-foreground">
+            <Info className="size-4 shrink-0" />
+            This is how the page reflows on {device === "tablet" ? "tablets" : "phones"}. Arrange widgets on desktop; the order here follows it, top to bottom and left to right.
+          </div>
+        )}
+        <div className="mx-auto" style={{ width: logicalWidth * scale, height: canvasHeight * scale, minWidth: logicalWidth * scale }}>
+          <DataModeProvider value={data}>
+            <div
+              ref={canvas}
+              data-canvas={device}
+              data-shell={shellOn || undefined}
+              // Click to edit (one screen): the platform's own links and menus never act; a click on anything that is not a widget
+              // opens the setting that changes it (the logo, the menu, a heading, the background), as the preview did.
+              onPointerDownCapture={(e) => {
+                if (!shellOn || inWidget(e.target)) return
+                e.stopPropagation()
+              }}
+              onClickCapture={(e) => {
+                if (!shellOn || inWidget(e.target)) return
+                e.preventDefault()
+                e.stopPropagation()
+                // Empty space only clears the selection; the background is set from Theme, never by a stray click.
+                const hit = resolve(e.target as Element)?.target
+                if (!hit || hit === "background") setSelected(null)
+                else onPick?.(hit)
+              }}
+              className={cn(canvasClass, "origin-top-left overflow-hidden bg-background font-sans text-foreground shadow-[0_24px_60px_-20px_rgb(0_0_0/0.7)]", spaceDown && "pointer-events-none")}
+              // The same corners as the preview frame (12px on screen, 28px on a tablet or phone), whatever the zoom.
+              style={{ width: logicalWidth, transform: `scale(${scale})`, padding: shellOn ? 0 : PAD[device], borderRadius: (device === "desktop" ? 12 : 28) / (scale || 1), "--ui-zoom": scale ? Math.min(2.5, 1 / scale) : 1 } as React.CSSProperties}
+            >
+              {shellOn ? (
+                <ShellEditorContext.Provider value={{ path: arrange.pageInfo.href }}>
+                  <StudentShell>{body}</StudentShell>
+                </ShellEditorContext.Provider>
+              ) : (
+                body
+              )}
             </div>
           </DataModeProvider>
         </div>
+      </div>
+      {/* The floating bar under the page (Framer, Figma): zoom, fit, and arranging the page. */}
+      <div role="toolbar" aria-label="Canvas" className="absolute bottom-4 left-1/2 z-30 flex h-10 -translate-x-1/2 items-center gap-0.5 rounded-xl border border-white/10 bg-[#141416] p-1 text-white shadow-[0_12px_32px_-12px_rgb(0_0_0/0.8)]">
+        <button type="button" className={BAR} aria-label="Zoom out" title="Zoom out (⌘ −)" onClick={() => stepZoom(-1)}>
+          <Minus className="size-4" />
+        </button>
+        <button type="button" className={cn(BAR, "w-14 text-xs tabular-nums")} title="Fit to screen (⌘ 0)" aria-label={`Zoom ${Math.round(scale * 100)}%. Fit to screen`} onClick={() => setZoom("fit")}>
+          {Math.round(scale * 100)}%
+        </button>
+        <button type="button" className={BAR} aria-label="Zoom in" title="Zoom in (⌘ +)" onClick={() => stepZoom(1)}>
+          <Plus className="size-4" />
+        </button>
+        <span aria-hidden className="mx-1 h-5 w-px bg-white/12" />
+        <button type="button" className={cn(BAR, "px-2.5 text-xs", zoom === "fit" && "text-white")} aria-pressed={zoom === "fit"} title="Fit the page to the screen (⌘ 0)" onClick={() => setZoom("fit")}>
+          Fit
+        </button>
+        {device === "desktop" && layout.items.length > 1 && (
+          <button type="button" className={cn(BAR, "gap-1.5 px-2.5 text-xs")} title="Moves the widgets so the page has no gaps. Undo puts them back." onClick={tidy}>
+            <Wand2 className="size-4" /> Arrange
+          </button>
+        )}
+      </div>
       </div>
     </CoachContext.Provider>
     </PageTitleShownContext.Provider>
@@ -674,7 +771,23 @@ export function ArrangeCanvas({
   )
 }
 
-/** One widget on the builder grid: the real widget, plus its name and selection outline. */
+/**
+ * The platform's shell drawn inside the canvas: the canvas is scaled (a transform), so the shell's fixed parts (the side
+ * menu, the backdrop) are placed in it already; they just must not take the window's height.
+ */
+const SHELL_CSS =
+  `[data-shell] [data-slot=sidebar-container]{height:auto!important}[data-shell] .min-h-svh{min-height:0!important}` +
+  // Click to edit shows itself: a part that opens a setting (the logo, the menu, a heading, a label) is outlined under the pointer, as in the preview.
+  `[data-shell] :is([data-edit],h1,h2,h3,.eyebrow):not([data-slot=widget] *):hover{outline:calc(1.5px * var(--ui-zoom,1)) solid rgb(244 244 245 / .55);outline-offset:3px;border-radius:4px;cursor:pointer}`
+
+/** A click inside a widget, its quick bar or the canvas tools: the builder's own, never click-to-edit. */
+const inWidget = (t: EventTarget | null) => t instanceof Element && !!t.closest("[data-widget-id], .group\\/wrap, .no-drag, [role=toolbar]")
+
+/** Zoom steps for − and +, as in Figma. */
+const ZOOMS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.25, 1.5, 2]
+/** One button of the floating canvas bar: 32px, white on near-black, a lighter fill on hover. */
+const BAR = "grid h-8 min-w-8 grid-flow-col place-items-center rounded-lg text-white/70 outline-none transition-[background-color,color,scale] duration-150 ease-out hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70 active:scale-[0.96]"
+
 /** Right-click menu for a widget on the grid. */
 function WidgetMenu({
   w,
@@ -729,7 +842,7 @@ function WidgetMenu({
             </ContextMenuSub>
           )}
           <ContextMenuSub>
-            <ContextMenuSubTrigger>Emphasis</ContextMenuSubTrigger>
+            <ContextMenuSubTrigger>Stand out</ContextMenuSubTrigger>
             <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
               <ContextMenuRadioGroup value={w.emphasis ?? "accent"} onValueChange={(v) => onEmphasis(v as Emphasis)}>
                 {EMPHASIS.map((o) => (
@@ -741,12 +854,12 @@ function WidgetMenu({
             </ContextMenuSubContent>
           </ContextMenuSub>
           <ContextMenuSub>
-            <ContextMenuSubTrigger>Detail</ContextMenuSubTrigger>
+            <ContextMenuSubTrigger>Shows</ContextMenuSubTrigger>
             <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
               <ContextMenuRadioGroup value={w.detail ?? "standard"} onValueChange={(v) => onDetail(v as Detail)}>
                 {DETAIL.map((o) => (
                   <ContextMenuRadioItem key={o.value} value={o.value}>
-                    {o.label}
+                    {{ compact: "Less", standard: "Standard", detailed: "More" }[o.value]}
                   </ContextMenuRadioItem>
                 ))}
               </ContextMenuRadioGroup>
@@ -800,27 +913,35 @@ function WidgetMenu({
   )
 }
 
-function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: WidgetInstance; selected: boolean; available: boolean; onRemove: () => void; onDuplicate: () => void }) {
+/** The editor's own chips on the canvas (a widget's name, its quick bar): near-black with white text and a fine light edge, the same on every theme. */
+// --ui-zoom undoes the canvas's scale, so the editor's chips keep their real size (24px buttons) however small the page is drawn.
+const EDITOR_CHIP = "[zoom:var(--ui-zoom,1)] bg-[#141416] text-white shadow-[0_0_0_1px_rgb(255_255_255/0.14),0_6px_16px_-6px_rgb(0_0_0/0.7)]"
+/** One button of the quick bar: 24px tall, a lighter fill on hover, the orange ring on keyboard focus. */
+const QUICK = "grid h-6 min-w-6 place-items-center rounded-md outline-none transition-[background-color,color,scale] duration-150 ease-out hover:bg-white/12 hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--ts-interactive)] active:scale-[0.94]"
+
+/** One widget on the builder grid: the real widget, plus its name and selection outline. */
+function GridWidget({ w, selected, available, onRemove, onDuplicate, onWidth }: { w: WidgetInstance; selected: boolean; available: boolean; onRemove: () => void; onDuplicate: () => void; onWidth?: (cols: number) => void }) {
   const def = getWidget(w.type)
   const { coach } = useCoach()
   const groups = useGroups(coach)
   if (!def) return null
-  const C = def.Component
+  const widths = !def.core && w.type !== "page-header" ? widthsFor(def, w.variant) : []
   // Widgets with a visibility rule stay on the canvas, tagged with who sees them.
   const rule = [w.show?.phase && PHASE_LABEL[w.show.phase], w.show?.group && (groups.find((g) => g.id === w.show?.group)?.name ?? "A group")].filter(Boolean).join(" · ")
   return (
     <div
       className={cn(
-        // The admin's own orange, never the coach's colour: a selected widget always reads as the editor's selection.
-        "group/w relative flex cursor-grab flex-col rounded-[calc(var(--radius)+2px)] outline-2 outline-offset-2 outline-transparent hover:outline-[#ff5500]/40 active:cursor-grabbing",
-        selected && "outline-[#ff5500]",
+        // The editor's selection colour (white, --ts-interactive in the workspace), never a coach's: a selected widget always reads as selected.
+        "group/w relative flex cursor-grab flex-col rounded-[calc(var(--radius)+2px)] outline-[calc(1.5px*var(--ui-zoom,1))] outline-offset-2 outline-transparent hover:outline-[var(--ts-interactive)]/35 active:cursor-grabbing",
+        selected && "outline-[var(--ts-interactive)]",
       )}
     >
       {/* Name, rule and quick actions sit on the card's top edge, half above it, so they never cover its header. .no-drag keeps
           clicks on the actions from starting a drag; the actions also show while one of them has keyboard focus. */}
       <div className="pointer-events-none absolute inset-x-2 top-0 z-20 flex -translate-y-[60%] items-center gap-1 font-[family-name:var(--ff-geist)]">
         <span
-          className="min-w-0 truncate rounded-md bg-foreground px-1.5 py-0.5 text-[0.65rem] text-background opacity-0 group-hover/w:opacity-100 data-[on=true]:opacity-100"
+          // Its name on hover; once selected the inspector names it, and the quick bar takes the edge.
+          className={cn("min-w-0 truncate rounded-md px-1.5 py-0.5 text-[0.65rem] opacity-0 group-hover/w:opacity-100 data-[on=true]:hidden", EDITOR_CHIP)}
           data-on={selected}
           title={def.name}
         >
@@ -831,39 +952,68 @@ function GridWidget({ w, selected, available, onRemove, onDuplicate }: { w: Widg
           {w.emphasis === "star" && " · Star"} · {WIDTH.find((o) => o.value === widthOf(w))?.label.toLowerCase()}
         </span>
         <span className="ml-auto" />
-        {rule && <span className="max-w-[45%] shrink-0 truncate rounded-[3px] bg-[#ff5500] px-1.5 py-0.5 font-mono text-[10px] leading-none font-medium tracking-[0.04em] text-black uppercase">{rule}</span>}
+        {rule && <span className="max-w-[45%] shrink-0 truncate rounded-[3px] bg-[var(--ts-interactive)] px-1.5 py-0.5 font-mono text-[10px] leading-none font-medium tracking-[0.04em] text-black uppercase">{rule}</span>}
+        {/* The quick bar: the width in one click (selected only), duplicate and remove. On the card's own top edge, so it never
+            covers the widget below; in the editor's colours, not the coach's, so it reads the same on every theme. */}
         <div
-          className="no-drag pointer-events-auto flex shrink-0 items-center gap-0.5 rounded-lg border bg-background p-0.5 text-foreground opacity-0 shadow-sm transition-opacity group-hover/w:opacity-100 focus-within:opacity-100 data-[on=true]:opacity-100"
+          role="toolbar"
+          aria-label={`${def.name} quick actions`}
+          className={cn("no-drag pointer-events-auto flex h-7 shrink-0 items-center gap-0.5 rounded-lg p-0.5 opacity-0 transition-opacity duration-150 group-hover/w:opacity-100 focus-within:opacity-100 data-[on=true]:opacity-100", EDITOR_CHIP)}
           data-on={selected}
+          onClick={(e) => e.stopPropagation()}
         >
           {w.hideOnPhone && (
-            <span className="flex items-center gap-1 px-1.5 text-[0.65rem] text-muted-foreground" title="Hidden on phones">
-              <EyeOff className="size-3" />
+            <span className="flex items-center gap-1 px-1.5 text-white/60" title="Hidden on phones" aria-label="Hidden on phones">
+              <EyeOff className="size-3.5" />
             </span>
           )}
+          {selected && onWidth && widths.length > 1 && (
+            <>
+              <span role="radiogroup" aria-label="Width" className="flex items-center gap-0.5">
+                {WIDTH.filter((o) => widths.includes(o.value)).map((o) => {
+                  const on = widthOf(w) === o.value
+                  return (
+                    <button
+                      key={o.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      aria-label={o.label}
+                      title={o.label}
+                      onClick={() => onWidth(o.value)}
+                      className={cn(QUICK, "w-8", on ? "bg-white text-black hover:bg-white hover:text-black" : "text-white/75")}
+                    >
+                      <span aria-hidden className="grid h-2.5 w-5 grid-cols-3 gap-px">
+                        {[0, 1, 2].map((i) => (
+                          <span key={i} className={cn("rounded-[1px] bg-current", i >= o.value / 4 && "opacity-30")} />
+                        ))}
+                      </span>
+                    </button>
+                  )
+                })}
+              </span>
+              <span aria-hidden className="mx-0.5 h-4 w-px bg-white/15" />
+            </>
+          )}
           {def.core ? (
-            <span className="flex items-center gap-1 px-1.5 py-0.5 text-[0.65rem] text-muted-foreground">
+            <span className="flex items-center gap-1 px-1.5 text-[0.65rem] text-white/75">
               <Lock className="size-3" /> Always on this page
             </span>
           ) : (
             <>
-              <Button variant="ghost" size="icon-xs" aria-label={`Duplicate ${def.name}`} onClick={(e) => { e.stopPropagation(); onDuplicate() }}>
-                <Copy />
-              </Button>
-              <Button variant="ghost" size="icon-xs" aria-label={`Remove ${def.name}`} className="hover:text-destructive" onClick={(e) => { e.stopPropagation(); onRemove() }}>
-                <Trash2 />
-              </Button>
+              <button type="button" aria-label={`Duplicate ${def.name}`} title="Duplicate" className={cn(QUICK, "text-white/75")} onClick={onDuplicate}>
+                <Copy className="size-3.5" />
+              </button>
+              <button type="button" aria-label={`Remove ${def.name}`} title="Remove (⌫)" className={cn(QUICK, "text-white/75 hover:text-[#ff6b6b]")} onClick={onRemove}>
+                <Trash2 className="size-3.5" />
+              </button>
             </>
           )}
         </div>
       </div>
       <div className="pointer-events-none flex flex-col select-none">
         {available ? (
-          <WidgetStyleScope type={w.type} style={w.style} emphasis={w.emphasis}>
-            <WidgetFrame emphasis={w.emphasis} detail={w.detail} header={w.header} note={w.note} core={Boolean(def.core)} fixed={false}>
-              <C variant={w.variant ?? def.variants[0].value} props={w.props ?? {}} />
-            </WidgetFrame>
-          </WidgetStyleScope>
+          <WidgetView w={w} />
         ) : (
           <div className="grid place-items-center rounded-(--radius) border border-dashed p-4 text-center text-xs text-muted-foreground">
             {def.name} is hidden: its page is switched off in the Menu step.
