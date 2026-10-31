@@ -1,8 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Chip, WCard } from "@/components/widgets/catalog/instrument"
-import { Spark, useFitRows, useMore } from "@/components/widgets/parts/kit"
+import { Chip, WCard } from "@/components/widgets/parts/anatomy"
+import { useMore } from "@/components/widgets/parts/frame"
+import { useFitRows } from "@/components/widgets/parts/card"
+import { Spark } from "@/components/widgets/parts/charts"
 import type { WidgetProps } from "@/components/widgets/parts/shared"
 import { Trophy } from "@/components/icons"
 import { cn } from "@/lib/utils"

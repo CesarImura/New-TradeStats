@@ -4,12 +4,16 @@ import { Check, Crown, Flag, Trophy } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { DEMO_STUDENT, LEADERBOARD, RANK_HISTORY } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { ACCENT, ACCENT_TEXT, Avatar, Drop, GROW_ROWS, SPLIT, TYPE, useFitRows, useFrame, useMore } from "../parts/kit"
-import { Axis, Chip, DotStrip, GREY, Label, Legend, Num, Rule, WCard, ink, useFigureFont, useChartStyle } from "./instrument"
+import { useFrame, useMore } from "../parts/frame"
+import { ACCENT, ACCENT_TEXT, GROW_ROWS, SPLIT, TYPE } from "../parts/tokens"
+import { Drop, useFitRows } from "../parts/card"
+import { Avatar } from "../parts/bits"
+import { Chip, GREY, Label, Num, WCard, ink, useFigureFont, useChartStyle } from "../parts/anatomy"
+import { Axis, DotStrip, Legend, Rule } from "../parts/visuals"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "../parts/shared"
 import { BleedArea, Compare, HeroCard, Rail, type RailItem } from "../parts/layouts"
 
-/** An empty tick or track (the same faint grey instrument.tsx uses). */
+/** An empty tick or track (the same faint grey parts/anatomy.tsx uses). */
 const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
 const HAIRLINE = "border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)]"
 

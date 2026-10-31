@@ -6,14 +6,18 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { EVENTS, MARKET_SESSIONS, NOW_HOUR, type CalEvent } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ACCENT, Drop, SPLIT, Tip, useFitGap, useFrame, useMore } from "../parts/kit"
+import { useFrame, useMore } from "../parts/frame"
+import { ACCENT, SPLIT, useFitGap } from "../parts/tokens"
+import { Drop } from "../parts/card"
+import { Tip } from "../parts/bits"
 import { Poster, Rail, SplitCard, type RailItem } from "../parts/layouts"
-import { Axis, Chip, GREY, Label, Legend, Num, Panel, Rolling, Rule, TickBar, Timeline, WCard, useFigureFont } from "./instrument"
+import { Chip, GREY, Label, Num, Panel, Rolling, WCard, useFigureFont } from "../parts/anatomy"
+import { Axis, Legend, Rule, TickBar, Timeline } from "../parts/visuals"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "../parts/shared"
 
 const WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 const TODAY_NAME = "Mon"
-/** An empty tick (same as instrument.tsx's track). */
+/** An empty tick (same as parts/anatomy.tsx's TRACK). */
 const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
 const LOSS = "var(--loss)"
 /** Loss as text: the shade that stays readable on the card. */

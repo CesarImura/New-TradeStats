@@ -6,7 +6,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { useStudentStart } from "@/lib/data/student-start"
 import type { WidgetPhase } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
-import { Drop, W } from "./kit"
+import { Drop, W } from "./card"
 
 export type WidgetProps = { variant?: string; props: Record<string, string | boolean> }
 

@@ -8,8 +8,11 @@ import { useViewerTier } from "@/lib/data/access"
 import { canAccess, courseStats, openLessons, resumeLesson, studentCourses, useCatalog, useProgress, type Course, type Progress } from "@/lib/data/learning"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { ACCENT, Drop, GROW_ROWS, TYPE, series, useFrame, useMore } from "../parts/kit"
-import { Axis, Chip, GREY, HatchBar, Label, Legend, Num, Rule, TickBar, Timeline, WCard, useFigureFont, useChartStyle } from "./instrument"
+import { useFrame, useMore } from "../parts/frame"
+import { ACCENT, GROW_ROWS, TYPE, series } from "../parts/tokens"
+import { Drop } from "../parts/card"
+import { Chip, GREY, Label, Num, WCard, useFigureFont, useChartStyle } from "../parts/anatomy"
+import { Axis, HatchBar, Legend, Rule, TickBar, Timeline } from "../parts/visuals"
 import { Cover, WidgetEmpty, inWords, useEmpty, type WidgetProps } from "../parts/shared"
 import { Artwork, MEDIA_FG, MediaCard, MediaProgress } from "../parts/layouts"
 
@@ -59,7 +62,7 @@ function unlocksOf(courses: Course[]) {
     })
   return [...groups.values()].sort((a, b) => a.inHours - b.inHours)
 }
-/** An empty tick or track (the same faint grey instrument.tsx uses). */
+/** An empty tick or track (the same faint grey parts/anatomy.tsx uses). */
 const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
 /** What's still ahead: faint diagonal hatching, like HatchBar's remainder. */
 const HATCH = { background: `repeating-linear-gradient(135deg, ${TRACK} 0 2px, transparent 2px 5px)`, boxShadow: `inset 0 0 0 1px ${TRACK}` }

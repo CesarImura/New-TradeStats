@@ -7,7 +7,7 @@ import { themeVars } from "@/lib/theme/css"
 import { mixHex, resolveColors } from "@/lib/theme/derive"
 import { starStyleOf, type CoachTheme } from "@/lib/theme/types"
 import type { Emphasis, WidgetOwnStyle } from "@/lib/widgets/layout"
-import { WidgetPictureContext, type WidgetPicture } from "./kit"
+import { WidgetPictureContext, type WidgetPicture } from "./frame"
 import { styleParts } from "../registry"
 
 /** Numbers sets the widget font as All widgets → Numbers does: Mono figures and labels, or the heading or body font. */

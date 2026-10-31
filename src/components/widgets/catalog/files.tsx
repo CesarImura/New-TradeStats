@@ -6,8 +6,10 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { useAccess, useViewerTier } from "@/lib/data/access"
 import { canDownload, categoryLabel, isRecent, shortDate, useDownloaded, useDownloads, type DownloadItem } from "@/lib/data/downloads"
 import { cn } from "@/lib/utils"
-import { Drop, FX, GROW_ROWS, series, tileDrop, TYPE, useMore } from "../parts/kit"
-import { Chip, WCard } from "./instrument"
+import { useMore } from "../parts/frame"
+import { FX, GROW_ROWS, series, TYPE } from "../parts/tokens"
+import { Drop, tileDrop } from "../parts/card"
+import { Chip, WCard } from "../parts/anatomy"
 import { Cover, WidgetEmpty, type WidgetProps } from "../parts/shared"
 
 /** Latest downloads: list (title and date), tiles (a small cover each), row (one line with the newest file). */

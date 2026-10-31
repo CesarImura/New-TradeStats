@@ -7,13 +7,17 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { CALL_ALLOWANCE, CALL_SLOTS, FEEDBACK } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { ACCENT, ACCENT_TEXT, Avatar, Drop, FX, GROW_ROWS, useFrame, useMore } from "../parts/kit"
-import { Chip, GREY, HatchBar, Label, Legend, Num, Rule, WCard, useFigureFont } from "./instrument"
+import { useFrame, useMore } from "../parts/frame"
+import { ACCENT, ACCENT_TEXT, FX, GROW_ROWS } from "../parts/tokens"
+import { Drop } from "../parts/card"
+import { Avatar } from "../parts/bits"
+import { Chip, GREY, Label, Num, WCard, useFigureFont } from "../parts/anatomy"
+import { HatchBar, Legend, Rule } from "../parts/visuals"
 import { WidgetEmpty, useEmpty, type WidgetProps } from "../parts/shared"
 import { CoachPhoto } from "./brand"
 import { Rail, SplitCard } from "../parts/layouts"
 
-/** An empty tick or track (same as instrument.tsx). */
+/** An empty tick or track (same as parts/anatomy.tsx). */
 const TRACK = "color-mix(in oklab, var(--foreground) 12%, transparent)"
 const HATCH = `repeating-linear-gradient(135deg, ${TRACK} 0 2px, transparent 2px 5px)`
 

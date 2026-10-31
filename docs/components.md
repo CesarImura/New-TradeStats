@@ -14,13 +14,13 @@ Fontes usadas: skills `shadcn`, `migrate-radix-to-base`, `emil-design-eng`, `web
 | `src/components/ui/` | Só os primitivos do shadcn (base-nova, em Base UI) | Gerenciada pelo CLI. Mudança aqui vale para admin, aluno e editor ao mesmo tempo. |
 | `src/components/kit/` | Nossas peças genéricas montadas sobre `ui/`: `select-field.tsx` (`SelectField`, `SelectOptions`), `drop-line.ts` | Peça nova reutilizável e sem regra de negócio entra aqui, não em `ui/`. |
 | `src/components/admin/kit.tsx` | Peças do admin: `PageHeader`, `Page`, `NativeSelect`, `SettingRow`, `Field` | Tela nova do admin começa por elas. |
-| `src/components/widgets/` | Raiz: `registry.tsx` (catálogo e settings), `page.tsx`, `page-renderer.tsx` (masonry). `parts/`: o kit dos widgets (`kit.tsx`: `W`, `WidgetFrame`, `Drop`, `MOTION`, `useFitRows`; `shared.tsx`, `widget-scope.tsx`, `layouts.tsx`). `catalog/`: um arquivo por grupo de widgets (`catalog/more/` para os extras) | Usar a skill `traderhub-widget-design` antes de mexer. Widget novo vai em `catalog/` e entra no `registry.tsx`. |
+| `src/components/widgets/` | Raiz: `registry.tsx` (catálogo e settings), `page.tsx`, `page-renderer.tsx` (masonry). `parts/`: o kit dos widgets, um assunto por arquivo: `frame.tsx` (`WidgetFrame`, `useFrame`, `useMore`), `tokens.tsx` (`FX`, `TYPE`, `ACCENT`, `MOTION`, `fill`, `series`), `card.tsx` (`W`, `Drop`, `useFitRows`, `Head`, `Big`, `Row`), `bits.tsx` (chips, avatar, `Tip`, `useBrokenImage`), `charts.tsx` (`Bars`, `Spark`, `Ring`…), `anatomy.tsx` (`WCard`, `Num`, `Chip`, estilos do Look), `visuals.tsx` (`Legend`, `TickGauge`, `StepChart`, `Timeline`…), `shared.tsx`, `widget-scope.tsx`, `layouts.tsx`. `catalog/`: um arquivo por grupo de widgets (`catalog/more/` para os extras) | Usar a skill `traderhub-widget-design` antes de mexer. Widget novo vai em `catalog/` e entra no `registry.tsx`. |
 | `src/components/admin/design/` | Editor de Design. `editor/`: casca, canvas, prévia (`page-builder.tsx`, `editor-shell.tsx`…). `panels/`: painéis laterais (`builder-panels.tsx`, `settings-panel.tsx`, `media-cards-editor.tsx`). `fields/`: campos e controles (`controls.tsx`, `design-fields.tsx`, `menu-sort.tsx`…). Raiz: dados (`looks.ts`, `options.ts`, `states.ts`) | Campo novo em `fields/`, painel novo em `panels/`. |
 | `src/components/icons.tsx` | Todos os ícones (Carbon embrulhado com nomes do lucide) | Nunca importar `lucide-react` ou `@carbon/icons-react` direto. Ícone que falta: adicionar aqui. |
 | `src/lib/theme/` | Tokens, `themeToCss`, contraste | Cor nova vira token, não hex solto no componente. |
 
 Antes de criar um componente: `rg` pelo nome e pelo comportamento. Se já existe algo parecido em `ui/`, `kit/`, `admin/kit.tsx`
-ou `widgets/parts/kit.tsx`, estender em vez de duplicar.
+ou `widgets/parts/`, estender em vez de duplicar.
 
 ## 2. shadcn e Base UI
 
@@ -84,8 +84,9 @@ ou `widgets/parts/kit.tsx`, estender em vez de duplicar.
   só dos reais). `reInit` quando a lista muda. Abaixo de 480px a Shelf vira Row.
 - **Recharts:** sempre por `ui/chart.tsx` (`ChartContainer`, cores por `--chart-*`). Altura explícita no container, senão o gráfico
   fica com 0px. Para gráfico de preço use `components/charts/trade-chart.tsx`.
-- **react-grid-layout:** está no `package.json` mas **não é usado** (as páginas usam masonry própria em `page-builder.tsx`). Não
-  reintroduzir; candidato a remover a dependência.
+- **react-grid-layout:** só o `verticalCompactor` (de `react-grid-layout/core`), usado pelo "Arrange automatically" em
+  `admin/design/editor/page-builder.tsx`. As páginas em si são uma masonry própria (`widgets/page-renderer.tsx`); não usar o
+  componente de grid da biblioteca.
 - **Sonner:** `toast` de `sonner`, já montado em `app/layout.tsx`. O editor tem um segundo, com `id` próprio (`CANVAS_TOASTS` em `editor/page-builder.tsx`); fora isso, não montar outro `<Toaster />`.
 
 ## 7. Comportamento (bugs que já aconteceram)

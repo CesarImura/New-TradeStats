@@ -6,7 +6,7 @@ import { GAP, ROW_HEIGHT, readingOrder, type PageLayout, type WidgetInstance } f
 import { widgetFinishOf, widgetSetOf } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { WidgetFrame } from "./parts/kit"
+import { WidgetFrame } from "./parts/frame"
 import { fitWidth, getWidget, heightFor } from "./registry"
 import { WidgetStyleScope } from "./parts/widget-scope"
 import { PageIdContext, PageTitleShownContext, usePhase } from "./parts/shared"

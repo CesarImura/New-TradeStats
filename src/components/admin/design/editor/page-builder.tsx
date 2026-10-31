@@ -25,7 +25,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
 import { PageRenderer, WidgetGrid, isAvailable, placeItems, spanOf, widthOf, type Placement } from "@/components/widgets/page-renderer"
-import { WidgetFrame } from "@/components/widgets/parts/kit"
+import { WidgetFrame } from "@/components/widgets/parts/frame"
 import { WidgetStyleScope } from "@/components/widgets/parts/widget-scope"
 import { fitWidth, getWidget, heightFor, heightOf, lookOf, widthsFor } from "@/components/widgets/registry"
 import { DataModeProvider, PageIdContext, PageTitleShownContext, type DataMode } from "@/components/widgets/parts/shared"

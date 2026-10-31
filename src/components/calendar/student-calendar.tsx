@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { useStudentTier } from "@/components/courses/shared"
-import { TONE, series } from "@/components/widgets/parts/kit"
+import { TONE, series } from "@/components/widgets/parts/tokens"
 import {
   KIND_LABEL,
   NOW,

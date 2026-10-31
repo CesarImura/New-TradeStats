@@ -6,7 +6,7 @@ import { ArrowLeft, CalendarClock, Check, CircleHelp, FileDown, Lock, Play } fro
 import { useCoach } from "@/components/coach/coach-provider"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
-import { Ring } from "@/components/widgets/parts/kit"
+import { Ring } from "@/components/widgets/parts/charts"
 import {
   asPreview,
   canAccess,

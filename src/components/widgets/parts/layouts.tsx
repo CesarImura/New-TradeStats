@@ -4,8 +4,11 @@ import { useId, useState } from "react"
 import { cn } from "@/lib/utils"
 import { useCoach } from "@/components/coach/coach-provider"
 import { widgetHeaderOf } from "@/lib/theme/types"
-import { ACCENT, ACCENT_TEXT, AreaFill, Drop, GROW_ROWS, SPREAD_ROWS, Tip, TYPE, useFrame, W } from "./kit"
-import { Chip, GREY, LINE, Label, Num, TRACK, ink, useFigureFont } from "../catalog/instrument"
+import { useFrame } from "./frame"
+import { ACCENT, ACCENT_TEXT, AreaFill, GROW_ROWS, SPREAD_ROWS, TYPE } from "./tokens"
+import { Drop, W } from "./card"
+import { Tip } from "./bits"
+import { Chip, GREY, LINE, Label, Num, TRACK, ink, useFigureFont } from "./anatomy"
 
 /**
  * Shared layout types, so widgets differ in SHAPE, not just in their chart:
