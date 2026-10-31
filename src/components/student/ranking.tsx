@@ -46,7 +46,7 @@ export function StudentRanking() {
           <div className="grid min-w-0 flex-1 gap-0.5">
             <span className="eyebrow">Competition · ends {live.end}</span>
             <span className="text-xl">{live.name}</span>
-            <span className="text-sm opacity-80">
+            <span className="text-sm">
               Prize: {live.prize} · {live.entrants + (joined ? 1 : 0)} taking part
             </span>
           </div>

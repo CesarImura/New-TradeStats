@@ -90,6 +90,10 @@ export function themeVars(theme: CoachTheme) {
     "--sidebar": p.sidebar,
     // The ground a floating page sits on: the menu's colour, or a step off the page colour when they are the same.
     "--ground": p.sidebar.toLowerCase() !== p.background.toLowerCase() ? p.sidebar : `color-mix(in oklab, ${p.foreground} ${isDark(p.background) ? 5 : 4}%, ${p.background})`,
+    // Pictures and covers (Cover, Shelf tiles): a dark panel in both modes and the text colour that reads on it.
+    // Widgets set their own (parts/card.tsx); this is the value everywhere else (course pages, downloads, the sales page).
+    "--media-bg": `color-mix(in oklab, ${p.foreground} ${darkPage ? 10 : 90}%, ${p.background})`,
+    "--media-fg": darkPage ? p.foreground : p.background,
     "--sidebar-foreground": sidebarFg,
     "--sidebar-primary": t.primary,
     "--sidebar-primary-foreground": t.primaryForeground,

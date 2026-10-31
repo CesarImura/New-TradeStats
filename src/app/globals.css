@@ -98,6 +98,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Pictures and covers outside a coach theme (coach themes write their own in lib/theme/css.ts). */
+  --media-bg: oklch(0.24 0 0);
+  --media-fg: oklch(0.985 0 0);
 }
 
 .dark {
@@ -177,11 +180,11 @@
    */
   .fx-hero {
     --on: var(--on-brand, var(--primary-foreground));
-    background: var(--brand, var(--chart-1));
     color: var(--on);
     --foreground: var(--on);
     --card-foreground: var(--on);
-    --muted-foreground: color-mix(in oklab, var(--on) 72%, transparent);
+    /* Secondary text stays at full strength: faded text on a mid-tone brand fails contrast (same rule as the widget Star in parts/card.tsx). */
+    --muted-foreground: var(--on);
     --muted: color-mix(in oklab, var(--on) 14%, transparent);
     --border: color-mix(in oklab, var(--on) 22%, transparent);
     --primary: var(--on);
@@ -207,6 +210,15 @@
       radial-gradient(40rem 24rem at -10% 110%, color-mix(in oklab, var(--highlight) 14%, transparent), transparent 70%);
     background-attachment: fixed;
   }
+}
+
+/*
+ * The brand surface's colour sits outside the layers on purpose: .fx-hero sets --card to transparent for what is
+ * inside it, so a bg-card on the same element (a shadcn Card made into a Star) used to paint it see-through, with
+ * the brand's text colour on the page colour (the Ranking competition banner). Unlayered, it always wins over bg-*.
+ */
+.fx-hero {
+  background: var(--brand, var(--chart-1));
 }
 
 /*
