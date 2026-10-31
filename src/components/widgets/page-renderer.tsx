@@ -133,16 +133,19 @@ export function WidgetGrid({
   const placed = useMemo(() => placeItems(shown, cols, heights, gap, !!free), [shown, cols, heights, gap, free])
   const colWidth = cols ? (width - gap * (cols - 1)) / cols : 0
   useLayoutEffect(() => onPlaced?.({ ...placed, cols, colWidth, heights }), [placed, cols, colWidth, heights, onPlaced])
-  // Cards glide to a new spot only once the page has been laid out, never on its first paint.
+  // Cards glide to a new spot only once the page has been laid out and its heights have stopped changing (fonts,
+  // pictures, measured cards replacing estimates). Gliding while it loads counted as layout shift (CLS 0.1–0.5 on Home).
   const [settled, setSettled] = useState(false)
   useEffect(() => {
-    if (!width) return
-    const id = requestAnimationFrame(() => setSettled(true))
-    return () => cancelAnimationFrame(id)
-  }, [width])
+    if (!width || settled) return
+    const id = setTimeout(() => setSettled(true), 300)
+    return () => clearTimeout(id)
+  }, [width, heights, settled])
   return (
     <div ref={box} className={cn("@container", className)}>
-      <div className={cn("g-page relative", !width && "flex flex-col gap-(--gap)")} data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ "--gap": `${gap}px`, height: width ? placed.height : undefined } as React.CSSProperties}>
+      {/* Before it is measured (server HTML, first paint) the page keeps its cards stacked but invisible: shown stacked, they
+          jumped to their columns on hydration, the largest layout shift on every page of widgets. */}
+      <div className={cn("g-page relative", !width && "invisible flex flex-col gap-(--gap)")} data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ "--gap": `${gap}px`, height: width ? placed.height : undefined } as React.CSSProperties}>
         {shown.map((w) => {
           const s = placed.spots.get(w.id)!
           // Until the page has been measured (server HTML, first paint) cards stack in the flow at full width, not at width 0.
