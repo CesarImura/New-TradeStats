@@ -180,6 +180,7 @@
    */
   .fx-hero {
     --on: var(--on-brand, var(--primary-foreground));
+    background: var(--brand, var(--chart-1));
     color: var(--on);
     --foreground: var(--on);
     --card-foreground: var(--on);
@@ -213,11 +214,12 @@
 }
 
 /*
- * The brand surface's colour sits outside the layers on purpose: .fx-hero sets --card to transparent for what is
- * inside it, so a bg-card on the same element (a shadcn Card made into a Star) used to paint it see-through, with
- * the brand's text colour on the page colour (the Ranking competition banner). Unlayered, it always wins over bg-*.
+ * A shadcn Card made into a brand surface: .fx-hero sets --card to transparent for what is inside it, so the Card's
+ * own bg-card (a utility, above the components layer) painted it see-through, with the brand's text colour on the
+ * page colour (the Ranking competition banner). This rule is unlayered so it wins, and only for Cards, so a bg-* on
+ * any other brand surface still works.
  */
-.fx-hero {
+.fx-hero[data-slot="card"] {
   background: var(--brand, var(--chart-1));
 }
 

@@ -262,14 +262,19 @@ function TradeRows({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
             {t.date}
             <span className="block">{t.time}</span>
           </span>
-          <span className="w-20 shrink-0 font-medium sm:w-28">
+          <span className="shrink-0 font-medium sm:w-28">
             {t.symbol} <span className="font-normal text-muted-foreground">{t.side}</span>
           </span>
           <span className="hidden flex-1 truncate text-muted-foreground sm:block">{t.setup}</span>
-          {/* Badges wrap on a phone instead of pushing the result out of the card. */}
-          <span className="flex min-w-0 flex-1 flex-wrap justify-end gap-1.5 sm:flex-none">
+          {/* On a phone the badges wrap and "Waiting for review" shortens, so they never cover the symbol or push the result out. */}
+          <span className="flex flex-1 flex-wrap justify-end gap-1.5 sm:flex-none">
             {t.rulesBroken.length > 0 && <Badge variant="destructive">Rule</Badge>}
-            {t.review === "waiting" && <Badge variant="outline">Waiting for review</Badge>}
+            {t.review === "waiting" && (
+              <Badge variant="outline">
+                <span className="sm:hidden">Review</span>
+                <span className="hidden sm:inline">Waiting for review</span>
+              </Badge>
+            )}
             {t.thread.at(-1)?.from === "coach" && <Badge>Feedback</Badge>}
           </span>
           <span className={cn("w-14 shrink-0 text-right tabular-nums", t.r >= 0 ? "text-profit" : "text-loss")}>{fmtR(t.r)}</span>

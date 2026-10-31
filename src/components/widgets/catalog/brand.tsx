@@ -17,8 +17,6 @@ import { Drop, FitText, tileDrop } from "../parts/card"
 import { Avatar, ChipMore, FitChips } from "../parts/bits"
 import { Cover, WidgetEmpty, useEmpty, type WidgetProps } from "../parts/shared"
 
-/** "Ask Kairo AI", but not "Ask Ask Marco" when the coach already named it that way. */
-
 export const link = (p: string) => ({ nativeButton: false as const, render: <Link href={p} /> })
 
 /** A web address the coach typed, made safe to open: http(s) only, "example.com" becomes "https://example.com". Anything else is undefined. */

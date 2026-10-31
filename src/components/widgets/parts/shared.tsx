@@ -106,13 +106,14 @@ export function Cover({ color = "var(--primary)", label, className }: { color?: 
         {candles.map((h, i) => {
           const x = 7.5 + i * 9.5
           const up = i % 3 !== 1
-          // Rising from 72% to 14% of the height; wicks reach 6% above and 8% below the body.
-          const top = 72 - ((h - 38) / 46) * 58
+          // Rising from 56% to 10% of the height, so the lowest wick ends above a label at the bottom; wicks reach 6% above and 8% below the body.
+          const top = 56 - ((h - 38) / 46) * 46
           const body = up ? 18 : 13
           return (
             <g key={i} stroke="var(--cover-fg, var(--media-fg))" fill={up ? "var(--cover-fg, var(--media-fg))" : "none"} opacity={i === candles.length - 1 ? 0.9 : 0.28}>
               <line x1={`${x}%`} x2={`${x}%`} y1={`${top - 6}%`} y2={`${top + body + 8}%`} strokeWidth="1" />
-              <rect y={`${top}%`} height={`${body}%`} strokeWidth="1" style={{ x: `calc(${x}% - min(1.5%, 5px))`, width: "min(3%, 10px)" }} />
+              {/* The attributes are the fallback where CSS geometry on SVG isn't supported; the style caps the width at 10px. */}
+              <rect x={`${x - 1.5}%`} width="3%" y={`${top}%`} height={`${body}%`} strokeWidth="1" style={{ x: `calc(${x}% - min(1.5%, 5px))`, width: "min(3%, 10px)" }} />
             </g>
           )
         })}
