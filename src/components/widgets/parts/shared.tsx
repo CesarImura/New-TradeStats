@@ -91,6 +91,9 @@ export function WidgetEmpty({
  * Course artwork until coaches upload their own: a near-black (or near-white)
  * panel with a fine candlestick line and the course name in the heading font.
  * `color` only tints it slightly; it never becomes a block of brand colour.
+ * Candles sit at a percentage of the width and height but keep their own width
+ * (3% up to 10px), so a wide course banner and a small thumbnail both read as a chart,
+ * never as stretched blocks, and every candle stays inside the panel.
  */
 export function Cover({ color = "var(--primary)", label, className }: { color?: string; hue?: number; label?: string; className?: string }) {
   const candles = [38, 52, 44, 61, 55, 70, 64, 78, 72, 84]
@@ -99,14 +102,17 @@ export function Cover({ color = "var(--primary)", label, className }: { color?: 
       className={cn("relative isolate overflow-hidden rounded-[min(var(--radius),8px)]", className)}
       style={{ background: `var(--cover-bg, color-mix(in oklab, ${color} 10%, var(--media-bg)))` }}
     >
-      <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="absolute inset-0 size-full" aria-hidden>
+      <svg className="absolute inset-0 size-full" aria-hidden>
         {candles.map((h, i) => {
-          const x = 6 + i * 9
+          const x = 7.5 + i * 9.5
           const up = i % 3 !== 1
+          // Rising from 72% to 14% of the height; wicks reach 6% above and 8% below the body.
+          const top = 72 - ((h - 38) / 46) * 58
+          const body = up ? 18 : 13
           return (
             <g key={i} stroke="var(--cover-fg, var(--media-fg))" fill={up ? "var(--cover-fg, var(--media-fg))" : "none"} opacity={i === candles.length - 1 ? 0.9 : 0.28}>
-              <line x1={x + 1.5} x2={x + 1.5} y1={60 - h - 5} y2={60 - h + 17} strokeWidth="0.4" />
-              <rect x={x} y={60 - h} width="3" height={up ? 11 : 8} strokeWidth="0.4" />
+              <line x1={`${x}%`} x2={`${x}%`} y1={`${top - 6}%`} y2={`${top + body + 8}%`} strokeWidth="1" />
+              <rect y={`${top}%`} height={`${body}%`} strokeWidth="1" style={{ x: `calc(${x}% - min(1.5%, 5px))`, width: "min(3%, 10px)" }} />
             </g>
           )
         })}
