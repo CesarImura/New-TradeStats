@@ -45,11 +45,11 @@ import { WidgetLibrary, type AddOptions } from "../panels/builder-panels"
 import { InspectorTop, WidgetInspector } from "../panels/widget-inspector"
 import { ThumbStyles } from "../thumbs/widget-thumb"
 import { RevealContext, Row, Segmented } from "../fields/controls"
-import { designTabs, DeviceSwitch, Readability, SettingsPanel, THEME_GROUPS, WidgetStyleGroups, without } from "../panels/settings-panel"
+import { designTabs, DeviceSwitch, Readability, SettingsPanel, THEME_GROUPS, without } from "../panels/settings-panel"
+import { AllWidgetsInspector } from "../panels/all-widgets-inspector"
 import { DesignProvider } from "../fields/design-fields"
 import { GuideDialog, VersionsSheet, useDraftEditor } from "./editor-shell"
 import { ArrangeCanvas, useArrange, type Device } from "./page-builder"
-import { PreviewFrame } from "./preview-frame"
 import { CAN_SAVE_TEMPLATE, SaveTemplateDialog } from "./save-template"
 import { LookCards, MenuStep } from "./design-steps"
 
@@ -211,22 +211,8 @@ export function DesignWorkspace() {
   // The right panel (the inspector of Webflow, Framer and Figma): the selected widget, every widget's style, or the page.
   const inspector =
     scope === "all" ? (
-      <div>
-        {/* A place of its own (not a switch on the widget's panel): the style every widget shares, with the way back. */}
-        <InspectorTop>
-          <button type="button" onClick={() => setScope("one")} className="-ml-1.5 flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
-            <ArrowLeft className="size-4 shrink-0" />
-            <span className="truncate text-[0.8125rem]">{selDef ? selDef.name : pageInfo.label}</span>
-          </button>
-        </InspectorTop>
-        <div className="grid gap-1 px-5 pb-2">
-          <span className="text-[0.9375rem] font-semibold">All widgets</span>
-          <span className="text-xs leading-4 text-muted-foreground">
-            Every page.{own ? ` ${own} widget${own === 1 ? " keeps its" : "s keep their"} own style.` : ""}
-          </span>
-        </div>
-        <WidgetStyleGroups draft={working.theme} onReset={resetTheme} />
-      </div>
+      // A place of its own (not a switch on the widget's panel): the style every widget shares, with the way back.
+      <AllWidgetsInspector draft={working.theme} onReset={resetTheme} onBack={() => setScope("one")} back={selDef ? selDef.name : pageInfo.label} own={own} />
     ) : sel ? (
       <WidgetInspector
         key={sel.id}
@@ -472,12 +458,8 @@ export function DesignWorkspace() {
                 <div />
               )}
               <div className="min-h-0 min-w-0 overflow-hidden">
-                {/* One screen: on desktop the platform, with its menu, is the canvas in every section; tablet and phone in Theme and Menu show the live preview. */}
-                {step === "pages" || device === "desktop" ? (
-                  <ArrangeCanvas arrange={arrange} coach={coach} theme={theme} device={device} data={data} incoming={incoming} onDropped={() => setIncoming(null)} allWidgets={scope === "all"} shell onPick={pick.pick} />
-                ) : (
-                  <PreviewFrame src={src} device={device} frameRef={pick.frameRef} />
-                )}
+                {/* One screen: the platform, with its menu, is the canvas in every section and on every device. */}
+                <ArrangeCanvas arrange={arrange} coach={coach} theme={theme} device={device} data={data} incoming={incoming} onDropped={() => setIncoming(null)} allWidgets={scope === "all"} shell onPick={pick.pick} />
               </div>
               {/* The inspector: always a column of its own, as in Framer; the page between the sidebars gives way. */}
               {/* Always there, in every section: the selected widget, every widget's style, or the page. */}

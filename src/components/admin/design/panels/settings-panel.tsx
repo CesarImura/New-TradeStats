@@ -342,11 +342,6 @@ export function SettingsPanel({
   )
 }
 
-/** Every widget's style (the Widgets section's groups), for a host that shows it outside the rail: Design shows it in Pages, as "All widgets". */
-export function WidgetStyleGroups({ draft, onReset }: { draft: ThemeDraft; onReset: (keys: (keyof ThemeDraft)[]) => void }) {
-  return THEME_GROUPS.widgets.map((g) => <Group key={g.title} group={g} draft={draft} onReset={onReset} fields={OWN} />)
-}
-
 function Group({ group: g, section, draft, onReset, fields }: { group: SettingsGroup; section?: string; draft: ThemeDraft; onReset: (keys: (keyof ThemeDraft)[]) => void; fields: Record<string, () => React.ReactNode> }) {
   const { theme } = useDesign()
   const dirty = changedIn(draft, g.keys)

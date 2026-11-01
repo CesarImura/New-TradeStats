@@ -42,7 +42,7 @@ import { cn } from "@/lib/utils"
  * The Design editor draws this shell round its canvas (one screen for the whole platform): it says which page is shown
  * (the real address is the editor's) and leaves out what only a student sees (the tour, the preview picker and banner).
  */
-export const ShellEditorContext = createContext<{ path: string } | null>(null)
+export const ShellEditorContext = createContext<{ path: string; /** The editor shows a phone: the page is narrow but the window isn't, so the phone layout is chosen here, not by the screen's width. */ phone?: boolean } | null>(null)
 
 /** The page the shell is on: the address bar's, or in the Design editor the page being edited. */
 function useShellPath() {
@@ -61,6 +61,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const items = studentNav(coach, base)
   const path = useShellPath()
   const editor = !!useContext(ShellEditorContext)
+  const phone = !!useContext(ShellEditorContext)?.phone
   const texture = { grid: "coach-bg-grid", glow: "coach-bg-glow", dots: "coach-bg-dots" } as Record<string, string>
   // An image or gradient sits on its own layer behind the page, so the page itself turns see-through.
   const where = theme.bgWhere ?? "all"
@@ -76,6 +77,26 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
       {!editor && preview && <PreviewPicker />}
     </div>
   )
+
+  // A phone in the Design editor: the logo bar on top and the bottom bar, as a phone's screen draws them (both layouts).
+  if (phone)
+    return (
+      <div className={cn("relative isolate flex min-h-full flex-col", bg)}>
+        {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur" data-edit="nav">
+          <div className="flex min-w-0" data-edit="logo">
+            <CommunitySwitcher placement="bar" />
+          </div>
+          <div className="ml-auto flex items-center gap-1">
+            <HeaderActions />
+          </div>
+        </header>
+        <div data-edit-root className="mx-auto w-full flex-1 px-4 pt-5 pb-6">
+          {children}
+        </div>
+        <MobileBar items={items} phone />
+      </div>
+    )
 
   // Floating: the page is a rounded canvas on the menu's ground, with a gutter around it (like the admin area).
   const floating = theme.nav.frame === "floating"
@@ -262,7 +283,7 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
 }
 
 /** Phone: both layouts become a bottom bar. Up to five items show; with more, four show and the rest sit under "More". */
-function MobileBar({ items }: { items: NavItem[] }) {
+function MobileBar({ items, phone }: { items: NavItem[]; /** Shown as a phone in the editor: at the foot of the page, whatever the window's width. */ phone?: boolean }) {
   const isActive = useActive(useCoach().base)
   const [open, setOpen] = useState(false)
   const overflow = items.length > 5
@@ -270,7 +291,7 @@ function MobileBar({ items }: { items: NavItem[] }) {
   const hidden = overflow ? items.slice(4) : []
   const itemClass = "flex w-full flex-col items-center gap-1 py-2.5 text-[0.7rem] text-muted-foreground data-[active=true]:text-brand-text"
   return (
-    <nav data-edit="nav" className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+    <nav data-edit="nav" className={cn("inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur", phone ? "sticky" : "fixed md:hidden")}>
       <ul className="grid grid-cols-5">
         {shown.map((item) => (
           <li key={item.id}>

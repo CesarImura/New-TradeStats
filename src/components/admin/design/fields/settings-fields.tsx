@@ -64,7 +64,7 @@ export function HeaderPartsField() {
 /* ---------- Numbers: one control for how figures look ---------- */
 
 /** How headline numbers read. Mono also sets the widget font (figures and small labels) to mono; the rest use the heading font. */
-const NUMBERS: { value: FigureStyle; label: string; hint: string; font: "mono" | "heading" | "body" }[] = [
+export const NUMBERS: { value: FigureStyle; label: string; hint: string; font: "mono" | "heading" | "body" }[] = [
   { value: "plain", label: "Plain", hint: "The text font, nothing added", font: "body" },
   { value: "marked", label: "Marked", hint: "A bar in the accent beside the number", font: "heading" },
   { value: "display", label: "Display", hint: "The heading font, the change under it", font: "heading" },
@@ -211,8 +211,8 @@ export function LogoColoursField() {
 
 /* ---------- Card: how each widget sits on the page, as pictures ---------- */
 
-type SurfaceId = "raised" | "grey" | "outline"
-const SURFACES: { id: SurfaceId; label: string; hint: string; set: ThemeDraft }[] = [
+export type SurfaceId = "raised" | "grey" | "outline"
+export const SURFACES: { id: SurfaceId; label: string; hint: string; set: ThemeDraft }[] = [
   { id: "raised", label: "Raised", hint: "Cards stand on the page", set: { widgetSet: "cards", cardSurface: "raised" } },
   { id: "grey", label: "Grey", hint: "Flat grey cards on the page colour", set: { widgetSet: "cards", cardSurface: "grey" } },
   { id: "outline", label: "Outline", hint: "No fill, a fine line around each", set: { widgetSet: "cards", cardSurface: "outline" } },
@@ -256,7 +256,7 @@ function ShadowField() {
 
 /* ---------- The box behind a widget's chart, as pictures ---------- */
 
-const PANELS: { value: PanelStyle; label: string; hint: string }[] = [
+export const PANELS: { value: PanelStyle; label: string; hint: string }[] = [
   { value: "none", label: "None", hint: "Charts sit right on the widget" },
   { value: "filled", label: "Filled", hint: "Charts sit on a soft inner panel" },
   { value: "outline", label: "Outline", hint: "Charts sit in a fine-line box" },

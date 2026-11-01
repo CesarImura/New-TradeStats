@@ -487,9 +487,10 @@ export function ArrangeCanvas({
     ro.observe(c)
     return () => ro.disconnect()
   }, [])
-  // On desktop the page is drawn inside the platform's menu and header (StudentShell), at a laptop's width.
-  const shellOn = !!shell && device === "desktop"
-  const logicalWidth = shellOn ? 1440 : DEVICE_WIDTH[device]
+  // The page is drawn inside the platform's menu and header (StudentShell): at a laptop's width on desktop, at the
+  // device's on tablet and phone (where the shell takes its phone layout from the editor, not from the window).
+  const shellOn = !!shell
+  const logicalWidth = shellOn && device === "desktop" ? 1440 : DEVICE_WIDTH[device]
   // Zoom, as in Framer and Figma: "fit" fills the width; a number is a fixed scale and the workspace scrolls both ways.
   const [zoom, setZoom] = useState<number | "fit">("fit")
   const fit = areaWidth ? Math.min(1, (areaWidth - 96) / logicalWidth) : 1
@@ -733,7 +734,7 @@ export function ArrangeCanvas({
               style={{ width: logicalWidth, transform: `scale(${scale})`, padding: shellOn ? 0 : PAD[device], borderRadius: (device === "desktop" ? 12 : 28) / (scale || 1), "--ui-zoom": scale ? Math.min(2.5, 1 / scale) : 1 } as React.CSSProperties}
             >
               {shellOn ? (
-                <ShellEditorContext.Provider value={{ path: arrange.pageInfo.href }}>
+                <ShellEditorContext.Provider value={{ path: arrange.pageInfo.href, phone: device === "phone" }}>
                   <StudentShell>{body}</StudentShell>
                 </ShellEditorContext.Provider>
               ) : (

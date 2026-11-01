@@ -21,6 +21,7 @@ import { useDesign } from "../fields/design-fields"
 import { card, chip } from "../states"
 import { DETAIL, EMPHASIS, PHASES, PictureUpload, WIDTH, noteTargets, type AddOptions } from "./builder-panels"
 import { ThumbCard, WidgetThumb, dragGhost } from "../thumbs/widget-thumb"
+import { CardArt, OptionTiles } from "../thumbs/option-art"
 import { MediaCardsEditor } from "./media-cards-editor"
 import { Flyout } from "./flyout"
 import { capsOf, headerParts } from "./widget-caps"
@@ -337,8 +338,9 @@ function StyleTab({
             <Segmented label="Stand out" value={caps.standOut.includes(emphasis) ? emphasis : "accent"} options={EMPHASIS.filter((o) => caps.standOut.includes(o.value)).map((o) => ({ value: o.value, label: o.label, hint: o.hint }))} onChange={(v) => onChange({ emphasis: v }, `${w.id}-emphasis`)} />
           </Row>
         )}
-        <Row label="Card" hint={SURFACES.find((o) => o.value === surface)?.hint} own={!!own.surface} from="all widgets" onReset={() => setStyle({ surface: undefined }, "surface")}>
-          <Segmented label="Card" value={surface} options={SURFACES.map((o) => ({ value: o.value, label: o.label, hint: o.hint }))} onChange={(v) => setStyle({ surface: v }, "surface")} />
+        <Row label="Card" hint={SURFACES.find((o) => o.value === surface)?.hint} own={!!own.surface} from="all widgets" onReset={() => setStyle({ surface: undefined }, "surface")} stack>
+          {/* A choice of shape: pictures (the editor's rule), the rest in words. */}
+          <OptionTiles label="Card" value={surface} onChange={(v) => setStyle({ surface: v }, "surface")} options={SURFACES.map((o) => ({ value: o.value, label: o.label, hint: o.hint, art: <CardArt surface={o.value} /> }))} />
         </Row>
         <OwnBackground w={w} onChange={onChange} />
         {!pinned && caps.header && (caps.titleStyle || canShow.length > 0) && (
@@ -654,7 +656,7 @@ function Visibility({ w, onChange, groups, setShow, select }: { w: WidgetInstanc
 }
 
 /** A property whose choice opens beside the panel: its current value and a chevron (Layout, Header, Charts). */
-function OpenRow({ open, onClick, value }: { open: boolean; onClick: () => void; value: string }) {
+export function OpenRow({ open, onClick, value }: { open: boolean; onClick: () => void; value: string }) {
   return (
     <button type="button" aria-expanded={open} onClick={onClick} className={cn(BOX, "flex w-full items-center justify-between gap-2 pr-1.5 pl-3 text-left hover:text-foreground", open && "border-[color:var(--ts-interactive)]")}>
       <span className="truncate">{value}</span>
