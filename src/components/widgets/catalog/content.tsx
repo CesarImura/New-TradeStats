@@ -14,7 +14,7 @@ import { CTA, FX, TYPE, GROW_ROWS } from "../parts/tokens"
 import { Drop, FitText, W } from "../parts/card"
 import { ChipMore, FitChips, useBrokenImage } from "../parts/bits"
 import { MediaCard } from "../parts/layouts"
-import { Featured } from "./media"
+import { Featured } from "./featured"
 import { Cover, type WidgetProps } from "../parts/shared"
 
 // The coach's own content: pictures, buttons, embeds and a hero. These are the
@@ -250,7 +250,7 @@ function HeroWords({ props, split }: { props: WidgetProps["props"]; split?: bool
   )
 }
 
-/** Hero: image and video (the picture fills the card, the words on a solid strip under it), split (picture beside the words, stacked when narrow), featured (full-width slides, media.tsx). */
+/** Hero: image and video (the picture fills the card, the words on a solid strip under it), split (picture beside the words, stacked when narrow), featured (full-width slides, featured.tsx). */
 export function Hero({ variant = "image", props }: WidgetProps) {
   const title = String(props.title || "Trade with a plan")
 

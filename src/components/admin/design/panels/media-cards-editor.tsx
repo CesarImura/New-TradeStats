@@ -5,7 +5,7 @@ import { ArrowDown, ArrowUp, ChevronRight, Eye, EyeOff, GripVertical, Plus, Rota
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { imgKey, parseEntries, useDefaultSlides, useShelfCards, type MediaEntry, type MediaItem, type Part } from "@/components/widgets/catalog/media"
+import { imgKey, parseEntries, useDefaultSlides, useShelfCards, type MediaEntry, type MediaItem, type Part } from "@/components/widgets/catalog/media-data"
 import type { WidgetProps } from "@/components/widgets/parts/shared"
 import { series } from "@/components/widgets/parts/tokens"
 import { dropLine } from "@/components/kit/drop-line"
@@ -15,7 +15,7 @@ import { Field } from "../fields/controls"
 
 // The cards of a Shelf and the slides of a Featured hero, edited in Design → Content: add, edit, hide, delete and
 // drag into order. The list saves as JSON in the widget's `cards` prop and each picture in its own prop
-// (media.tsx imgKey), so the store keeps each picture once. Cards from the coach's courses, lessons or files keep a
+// (media-data.ts imgKey), so the store keeps each picture once. Cards from the coach's courses, lessons or files keep a
 // link to them (their progress stays live) and can be hidden, not deleted.
 
 type Props = WidgetProps["props"]

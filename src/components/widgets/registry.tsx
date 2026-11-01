@@ -16,7 +16,8 @@ import { CoachProfile, Upgrade } from "./catalog/offer"
 import type { WidgetProps } from "./parts/shared"
 import { Drawdown } from "./catalog/trading"
 import { NEW_WIDGETS } from "./catalog/more/registry"
-import { MAX_CARDS, MAX_SLIDES, Shelf } from "./catalog/media"
+import { MAX_CARDS, MAX_SLIDES } from "./catalog/media-data"
+import { Shelf } from "./catalog/shelf"
 
 export type WidgetGroup = "Learning" | "Calendar" | "Journal" | "Coaching" | "Progress" | "Community" | "Your content" | "Coach and brand" | "AI" | "Page"
 
@@ -27,7 +28,7 @@ export type Setting = (
   | { key: string; label: string; type: "toggle"; defaultOn?: boolean }
   /** An uploaded picture: `props[key]` is a data URL, or empty for the sample picture. */
   | { key: string; label: string; type: "image" }
-  /** A list of cards or slides the coach adds, edits, hides and orders (media.tsx MediaEntry, as JSON in `props[key]`). */
+  /** A list of cards or slides the coach adds, edits, hides and orders (catalog/media-data.ts MediaEntry, as JSON in `props[key]`). */
   | { key: string; label: string; type: "cards"; kind: "shelf" | "hero"; max: number }
 ) & {
   /** Only offered for these layouts. */
