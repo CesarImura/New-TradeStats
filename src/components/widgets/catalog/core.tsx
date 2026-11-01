@@ -1,28 +1,24 @@
 "use client"
 
 import { Suspense } from "react"
-import { StudentCalendar } from "@/components/calendar/student-calendar"
-import { StudentCourses } from "@/components/courses/student-courses"
-import { StudentAi } from "@/components/student/ai-chat"
-import { StudentCharts } from "@/components/student/charts"
-import { StudentCommunity } from "@/components/student/community"
-import { StudentDownloads } from "@/components/student/downloads"
-import { StudentJournal } from "@/components/student/journal"
-import { StudentPartners } from "@/components/student/partners"
-import { StudentRanking } from "@/components/student/ranking"
+import dynamic from "next/dynamic"
 import type { ModuleId } from "@/lib/data/coaches"
 import type { WidgetProps } from "../parts/shared"
 
-const PAGES: Record<ModuleId, (p: { props?: WidgetProps["props"] }) => React.ReactNode> = {
-  courses: StudentCourses,
-  calendar: StudentCalendar,
-  charts: StudentCharts,
-  community: StudentCommunity,
-  journal: StudentJournal,
-  ranking: StudentRanking,
-  ai: StudentAi,
-  downloads: StudentDownloads,
-  partners: StudentPartners,
+type CorePage = React.ComponentType<{ props?: WidgetProps["props"] }>
+
+// Each page's tool is its own chunk: every section is a page of widgets, so a static import here sent all nine (the
+// journal's charts, the calendar, the AI chat…) to every page. The server still renders the page's own one.
+const PAGES: Record<ModuleId, CorePage> = {
+  courses: dynamic(() => import("@/components/courses/student-courses").then((m) => m.StudentCourses)),
+  calendar: dynamic(() => import("@/components/calendar/student-calendar").then((m) => m.StudentCalendar)),
+  charts: dynamic(() => import("@/components/student/charts").then((m) => m.StudentCharts)),
+  community: dynamic(() => import("@/components/student/community").then((m) => m.StudentCommunity)),
+  journal: dynamic(() => import("@/components/student/journal").then((m) => m.StudentJournal)),
+  ranking: dynamic(() => import("@/components/student/ranking").then((m) => m.StudentRanking)),
+  ai: dynamic(() => import("@/components/student/ai-chat").then((m) => m.StudentAi)),
+  downloads: dynamic(() => import("@/components/student/downloads").then((m) => m.StudentDownloads)),
+  partners: dynamic(() => import("@/components/student/partners").then((m) => m.StudentPartners)),
 }
 
 /**
