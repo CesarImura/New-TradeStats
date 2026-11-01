@@ -734,7 +734,7 @@ export function ArrangeCanvas({
               style={{ width: logicalWidth, transform: `scale(${scale})`, padding: shellOn ? 0 : PAD[device], borderRadius: (device === "desktop" ? 12 : 28) / (scale || 1), "--ui-zoom": scale ? Math.min(2.5, 1 / scale) : 1 } as React.CSSProperties}
             >
               {shellOn ? (
-                <ShellEditorContext.Provider value={{ path: arrange.pageInfo.href, phone: device === "phone" }}>
+                <ShellEditorContext.Provider value={{ path: arrange.pageInfo.href, phone: device === "phone", tablet: device === "tablet" }}>
                   <StudentShell>{body}</StudentShell>
                 </ShellEditorContext.Provider>
               ) : (

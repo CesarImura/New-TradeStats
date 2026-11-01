@@ -42,12 +42,17 @@ import { cn } from "@/lib/utils"
  * The Design editor draws this shell round its canvas (one screen for the whole platform): it says which page is shown
  * (the real address is the editor's) and leaves out what only a student sees (the tour, the preview picker and banner).
  */
-export const ShellEditorContext = createContext<{ path: string; /** The editor shows a phone: the page is narrow but the window isn't, so the phone layout is chosen here, not by the screen's width. */ phone?: boolean } | null>(null)
+export const ShellEditorContext = createContext<{ path: string; /** The editor shows a phone: the page is narrow but the window isn't, so the phone layout is chosen here, not by the screen's width. */ phone?: boolean; /** A tablet in the editor: the window is wider, so the tablet's breakpoints (md, not lg) are applied here. */ tablet?: boolean } | null>(null)
 
 /** The page the shell is on: the address bar's, or in the Design editor the page being edited. */
 function useShellPath() {
   const real = usePathname()
   return useContext(ShellEditorContext)?.path ?? real
+}
+
+/** The page's side padding: grows with the screen, and on the editor's tablet stops at the tablet's. */
+function usePad() {
+  return useContext(ShellEditorContext)?.tablet ? "px-6" : "px-4 sm:px-6 lg:px-8"
 }
 
 function useActive(base: string) {
@@ -62,6 +67,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const path = useShellPath()
   const editor = !!useContext(ShellEditorContext)
   const phone = !!useContext(ShellEditorContext)?.phone
+  const pad = usePad()
   const texture = { grid: "coach-bg-grid", glow: "coach-bg-glow", dots: "coach-bg-dots" } as Record<string, string>
   // An image or gradient sits on its own layer behind the page, so the page itself turns see-through.
   const where = theme.bgWhere ?? "all"
@@ -71,7 +77,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   // The Charts terminal uses the full width, like a trading screen.
   const wide = path.startsWith(`${base}/charts`)
   const content = (
-    <div data-edit-root className={cn("mx-auto w-full px-4 pt-5 pb-28 sm:px-6 md:pb-12 lg:px-8", wide ? "max-w-none pt-3 lg:px-4" : "max-w-[1280px]")}>
+    <div data-edit-root className={cn("mx-auto w-full pt-5 pb-28 md:pb-12", pad, wide ? "max-w-none pt-3 lg:px-4" : "max-w-[1280px]")}>
       {children}
       {!editor && <Tour />}
       {!editor && preview && <PreviewPicker />}
@@ -144,7 +150,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
       <SidebarInset className={cn(bg, floating && canvas)}>
         {!editor && <PreviewAsBanner />}
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur sm:px-6 lg:px-8">
+        <header className={cn("sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 backdrop-blur", pad)}>
           <SidebarTrigger className="max-md:hidden" />
           <div className="flex min-w-0 md:hidden" data-edit="logo">
             <CommunitySwitcher placement="bar" />
@@ -195,9 +201,13 @@ function TopNav({ items, floating }: { items: NavItem[]; floating?: boolean }) {
   const { theme, base } = useCoach()
   const isActive = useActive(base)
   const centered = theme.nav.logo === "center"
+  const pad = usePad()
+  const tablet = !!useContext(ShellEditorContext)?.tablet
+  // More than five pages don't fit as words on a tablet (768 to 1023px): there they show as icons, named in the tooltip.
+  const tight = theme.nav.style !== "icons" && items.length > 5
   return (
     <header className={cn("sticky top-0 z-20", floating ? "bg-[var(--ground)]" : "border-b bg-background/85 backdrop-blur")} data-edit="nav">
-      <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-6 px-4 sm:px-6 lg:px-8">
+      <div className={cn("mx-auto flex h-16 max-w-[1280px] items-center gap-6", pad)}>
         <div className={cn("flex min-w-0", centered && "md:absolute md:left-1/2 md:-translate-x-1/2")} data-edit="logo">
           <CommunitySwitcher placement="bar" />
         </div>
@@ -209,9 +219,19 @@ function TopNav({ items, floating }: { items: NavItem[]; floating?: boolean }) {
               data-active={isActive(item)}
               data-tour={item.id}
               data-edit={`menu:${item.id}`}
-              className="rounded-[var(--r-menu)] px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
+              title={tight ? item.label : undefined}
+              className="rounded-[var(--r-menu)] px-3 py-2 text-sm whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
             >
-              {theme.nav.style === "icons" ? <item.icon className="size-4" aria-label={item.label} /> : item.label}
+              {theme.nav.style === "icons" ? (
+                <item.icon className="size-4" aria-label={item.label} />
+              ) : tight ? (
+                <>
+                  <item.icon aria-hidden className={cn("size-4", !tablet && "lg:hidden")} />
+                  <span className={tablet ? "sr-only" : "max-lg:sr-only"}>{item.label}</span>
+                </>
+              ) : (
+                item.label
+              )}
             </Link>
           ))}
         </nav>
