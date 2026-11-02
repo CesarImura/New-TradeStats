@@ -2,6 +2,8 @@ import type { CoachTheme, TemplateId } from "@/lib/theme/types"
 import type { HomeLayouts, PageLayouts } from "@/lib/widgets/layout"
 import { CircleHelp, Download, FileText, Flag, Gift, Info, Lightbulb, Link2, Star, Users, type LucideIcon } from "@/components/icons"
 import { customCommunities } from "./communities"
+import type { CoursePageDraft } from "./course-page"
+import type { JoinDraft } from "./join"
 
 export type ModuleId = "courses" | "calendar" | "charts" | "community" | "journal" | "ranking" | "ai" | "downloads" | "partners"
 
@@ -69,6 +71,10 @@ export type Coach = {
   home?: HomeLayouts
   /** Layouts the coach built, per page and tier. Without one, Home follows the template and a module page is just its core widget. */
   pages?: PageLayouts
+  /** Log in, sign up and subscribe: their words, layout and own look (Design → Join). */
+  join?: JoinDraft
+  /** The page inside a course: its sections, order and look (Design → Course). */
+  coursePage?: CoursePageDraft
   tiers: Tier[]
   discordUrl?: string
 }

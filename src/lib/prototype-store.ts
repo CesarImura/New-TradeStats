@@ -3,6 +3,8 @@
 import { useSyncExternalStore } from "react"
 import { toast } from "sonner"
 import type { CustomPage, MenuId, ModuleId, Wording } from "@/lib/data/coaches"
+import type { CoursePageDraft } from "@/lib/data/course-page"
+import type { JoinDraft } from "@/lib/data/join"
 import type { HomeLayouts, PageLayouts } from "@/lib/widgets/layout"
 import type { CoachTheme, Mode, Palette } from "@/lib/theme/types"
 
@@ -38,6 +40,10 @@ export type ContentDraft = {
   /** Older drafts kept only Home here; it now lives in pages.home. */
   home?: HomeLayouts
   pages?: PageLayouts
+  /** The screens people join through (log in, sign up, subscribe): their words, layout and own look. */
+  join?: JoinDraft
+  /** The page inside a course (Design → Course). */
+  coursePage?: CoursePageDraft
 }
 
 export type Overrides = { theme: ThemeDraft; content: ContentDraft }
