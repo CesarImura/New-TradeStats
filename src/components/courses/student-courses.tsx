@@ -175,16 +175,16 @@ export function StudentCourses({ props = {} }: { props?: Record<string, string |
                 )
                 if (waits)
                   return (
-                    <div key={c.id} className={cls} style={{ boxShadow: "var(--card-shadow)" }} title={`Opens for ${group?.name} on ${opening?.date}`}>
+                    <div key={c.id} data-blend-box="" className={cls} style={{ boxShadow: "var(--card-shadow)" }} title={`Opens for ${group?.name} on ${opening?.date}`}>
                       {body}
                     </div>
                   )
                 return open ? (
-                  <Link key={c.id} href={`${base}/courses/${c.id}`} className={cls} style={{ boxShadow: "var(--card-shadow)" }}>
+                  <Link key={c.id} data-blend-box="" href={`${base}/courses/${c.id}`} className={cls} style={{ boxShadow: "var(--card-shadow)" }}>
                     {body}
                   </Link>
                 ) : (
-                  <button key={c.id} onClick={() => setLocked(c)} className={cls} style={{ boxShadow: "var(--card-shadow)" }}>
+                  <button key={c.id} data-blend-box="" onClick={() => setLocked(c)} className={cls} style={{ boxShadow: "var(--card-shadow)" }}>
                     {body}
                   </button>
                 )
@@ -216,7 +216,7 @@ function ResumeCard({ course, lessonId }: { course: Course; lessonId: string }) 
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/60 via-black/35 to-transparent" />
       <div className="flex flex-col gap-4 p-[calc(1.5rem*var(--density,1))] @2xl:flex-row @2xl:items-end @2xl:justify-between">
         <div className="grid max-w-xl gap-1.5">
-          <span className="text-[0.7rem] font-medium tracking-wide text-white/75 uppercase">Pick up where you left off</span>
+          <span className="text-[0.6875rem] font-medium tracking-wide text-white/75 uppercase">Pick up where you left off</span>
           <span className="font-heading text-2xl leading-tight @lg:text-3xl">{lesson.title}</span>
           <span className="text-sm text-white/80">
             {course.title} · {mod?.title} · {lesson.minutes} min

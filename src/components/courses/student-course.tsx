@@ -7,15 +7,20 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Ring } from "@/components/widgets/parts/charts"
+import { Avatar } from "@/components/widgets/parts/bits"
+import { courseSections } from "@/lib/data/course-page"
 import {
   asPreview,
   canAccess,
   courseStats,
   gateBefore,
+  openLessons,
   resumeLesson,
+  studentCourses,
   useCatalog,
   useProgress,
   visibleLessons,
+  type Course,
   type Lesson,
 } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
@@ -45,16 +50,15 @@ export function StudentCourse({ courseId }: { courseId: string }) {
   const downloads = course.modules.flatMap((m) => m.lessons).reduce((n, l) => n + (l.status === "published" ? l.downloads.length : 0), 0)
   const lessonHref = (id: string) => `${base}/courses/${course.id}/${id}${preview ? "?preview=draft" : ""}`
   const notes = course.modules.flatMap((m) => m.lessons).reduce((n, l) => n + (progress.notes[l.id]?.length ?? 0), 0)
+  // The coach's layout for the page inside a course (Design → Course): the same for every course.
+  const page = coach.coursePage
+  const cards = page?.lessons === "cards"
+  const upNext = open ? openLessons(course).filter((l) => !progress.done.includes(l.id)).slice(0, 3) : []
+  const others = studentCourses(catalog).filter((c) => c.id !== course.id)
 
-  return (
-    <div className="flex flex-col page-gap">
-      <PreviewNotice />
-      <Link href={`${base}/courses`} className="flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-4" /> {coach.wording.courses}
-      </Link>
-
+  const hero = (
       <div className="@container overflow-hidden rounded-(--radius) bg-card text-card-foreground" style={{ boxShadow: "var(--card-shadow)" }}>
-        <CourseCover course={course} locked={!open} className="h-28 @2xl:h-36" />
+        {page?.hero !== "plain" && <CourseCover course={course} locked={!open} className="h-28 @2xl:h-36" />}
         <div className="flex flex-col gap-5 p-[calc(1.25rem*var(--density,1))] @2xl:flex-row @2xl:items-center">
           <div className="grid flex-1 gap-1.5">
             <span className="eyebrow">{course.area}</span>
@@ -95,7 +99,20 @@ export function StudentCourse({ courseId }: { courseId: string }) {
           )}
         </div>
       </div>
+  )
 
+  const keepWatching = upNext.length > 0 && (
+    <section className="grid gap-3">
+      <h2 className="font-heading text-xl">{s.done === 0 ? "Start here" : "Keep watching"}</h2>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {upNext.map((l, i) => (
+          <LessonCard key={l.id} lesson={l} course={course} href={lessonHref(l.id)} current={i === 0} done={false} blocked={false} />
+        ))}
+      </div>
+    </section>
+  )
+
+  const modules = (
       <Accordion multiple defaultValue={course.modules.filter((m) => !resume || m.id === resume.module.id).map((m) => m.id)} className="flex flex-col gap-3">
         {course.modules.map((m, mi) => {
           const lessons = visibleLessons(m)
@@ -121,20 +138,92 @@ export function StudentCourse({ courseId }: { courseId: string }) {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pb-2 [&_a]:no-underline">
+                {cards ? (
+                  <div className="grid gap-3 px-[calc(1rem*var(--density,1))] pb-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {lessons.map((l) => {
+                      const gate = mOpen ? gateBefore(course, l.id, progress) : null
+                      const blocked = !mOpen || l.status === "scheduled" || !!gate
+                      return <LessonCard key={l.id} lesson={l} course={course} href={lessonHref(l.id)} current={resume?.lesson.id === l.id} done={progress.done.includes(l.id)} blocked={blocked} onLocked={!mOpen ? () => setUpgrade(true) : undefined} />
+                    })}
+                  </div>
+                ) : (
                 <ol className="grid">
                   {lessons.map((l) => (
                     <LessonRow key={l.id} lesson={l} courseId={course.id} locked={!mOpen} gate={mOpen ? gateBefore(course, l.id, progress) : null} current={resume?.lesson.id === l.id} done={progress.done.includes(l.id)} onLocked={() => setUpgrade(true)} />
                   ))}
                 </ol>
+                )}
               </AccordionContent>
             </AccordionItem>
           )
         })}
       </Accordion>
+  )
 
+  const teacher = (
+    <section className="flex items-center gap-4 rounded-(--radius) bg-card p-[calc(1.25rem*var(--density,1))] text-card-foreground" style={{ boxShadow: "var(--card-shadow)" }}>
+      <Avatar initials={coach.coachName.slice(0, 2).toUpperCase()} size={48} />
+      <div className="grid min-w-0">
+        <span className="eyebrow">Taught by</span>
+        <span className="font-heading text-lg">{coach.coachName}</span>
+        <span className="line-clamp-2 text-sm text-muted-foreground">{coach.tagline}</span>
+      </div>
+    </section>
+  )
+
+  const more = others.length > 0 && (
+    <section className="grid gap-3">
+      <h2 className="font-heading text-xl">More {coach.wording.courses.toLowerCase()}</h2>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {others.slice(0, 3).map((c) => (
+          <Link key={c.id} href={`${base}/courses/${c.id}${preview ? "?preview=draft" : ""}`} className="group grid overflow-hidden rounded-(--radius) bg-card text-card-foreground" style={{ boxShadow: "var(--card-shadow)" }}>
+            <CourseCover course={c} className="aspect-[16/8]" />
+            <span className="p-3 text-sm font-medium group-hover:underline">{c.title}</span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+
+  const parts = { hero, continue: keepWatching, modules, coach: teacher, others: more }
+
+  return (
+    <div className="flex flex-col page-gap">
+      <PreviewNotice />
+      <Link href={`${base}/courses`} className="flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="size-4" /> {coach.wording.courses}
+      </Link>
+      {courseSections(page).filter((x) => x.on).map((x) => <div key={x.id} className="contents">{parts[x.id]}</div>)}
       <UpgradeDialog course={course} open={upgrade} onOpenChange={setUpgrade} />
     </div>
   )
+}
+
+/** A lesson as a card: a picture (the lesson's own, else the course's), the play button, its length, and where the student is. */
+function LessonCard({ lesson, course, href, current, done, blocked, onLocked }: { lesson: Lesson; course: Course; href: string; current: boolean; done: boolean; blocked: boolean; onLocked?: () => void }) {
+  const icon = done ? <Check className="size-5" /> : lesson.status === "scheduled" ? <CalendarClock className="size-5" /> : blocked ? <Lock className="size-5" /> : <Play className="size-5" />
+  const inner = (
+    <>
+      <div className="relative overflow-hidden">
+        <CourseCover course={{ ...course, cover: lesson.thumbnail ?? course.cover }} className="aspect-video" />
+        <span className={cn("absolute inset-0 grid place-items-center text-white", blocked ? "bg-black/45" : "bg-black/10 transition-colors group-hover:bg-black/25")}>
+          <span className="grid size-10 place-items-center rounded-full bg-black/45 backdrop-blur-sm">{icon}</span>
+        </span>
+        <span className="absolute right-2 bottom-2 rounded bg-black/60 px-1.5 py-0.5 text-[0.6875rem] text-white tabular-nums">{lesson.minutes} min</span>
+        {done && <span className="absolute top-2 left-2 rounded bg-primary px-1.5 py-0.5 text-[0.6875rem] font-medium text-primary-foreground">Done</span>}
+      </div>
+      <div className="grid gap-0.5 p-3 text-left">
+        <span className={cn("line-clamp-2 text-sm", current && "font-medium", blocked && "text-muted-foreground")}>{lesson.title}</span>
+        {current && !done && <span className="text-xs text-muted-foreground">Up next</span>}
+        {lesson.status === "scheduled" && <span className="text-xs text-muted-foreground">Opens {lesson.unlockAt}</span>}
+      </div>
+    </>
+  )
+  const cls = "group grid overflow-hidden rounded-(--radius) bg-card text-card-foreground"
+  const style = { boxShadow: "var(--card-shadow)" }
+  if (onLocked) return <button className={cls} style={style} onClick={onLocked}>{inner}</button>
+  if (blocked) return <div className={cls} style={style}>{inner}</div>
+  return <Link href={href} className={cls} style={style}>{inner}</Link>
 }
 
 function LessonRow({

@@ -19,10 +19,15 @@ export function useStudentTier() {
 }
 
 /** Course artwork in the brand's series colours. */
-export function CourseCover({ course, className, locked }: { course: Pick<Course, "color" | "title">; className?: string; locked?: boolean }) {
+export function CourseCover({ course, className, locked }: { course: Pick<Course, "color" | "title" | "cover">; className?: string; locked?: boolean }) {
   return (
     <div className={cn("relative overflow-hidden", className)}>
-      <Cover color={series(course.color)} className="absolute inset-0 rounded-none" />
+      {course.cover ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={course.cover} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
+      ) : (
+        <Cover color={series(course.color)} className="absolute inset-0 rounded-none" />
+      )}
       {locked && (
         <div className="absolute inset-0 grid place-items-center bg-black/45 text-white backdrop-blur-[1px]">
           <Lock className="size-6" />
@@ -48,7 +53,7 @@ export function PreviewNotice() {
 export function AiMark({ className }: { className?: string }) {
   return (
     // The word in the text colour: brand-text isn't checked against the brand tint behind it. The sparkle keeps the brand.
-    <span className={cn("inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.65rem] font-medium text-foreground", className)}>
+    <span className={cn("inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.6875rem] font-medium text-foreground", className)}>
       <Sparkles className="size-3 text-primary" /> AI
     </span>
   )
