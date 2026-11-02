@@ -21,7 +21,7 @@ function Row({ label, hint, htmlFor, children }: { label: string; hint?: React.R
   return (
     <div className="grid gap-2">
       <div className="flex items-baseline justify-between gap-3">
-        <Label htmlFor={htmlFor} className="text-[0.8rem] font-normal text-muted-foreground">
+        <Label htmlFor={htmlFor} className="text-[0.8125rem] font-normal text-muted-foreground">
           {label}
         </Label>
         {hint && <span className="text-xs text-muted-foreground">{hint}</span>}

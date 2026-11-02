@@ -35,6 +35,8 @@ export type Lesson = {
   transcript?: string[]
   /** The video file, once uploaded. */
   video?: string
+  /** The lesson's picture in lists (a small JPEG as a data URL). Empty: the course's cover. */
+  thumbnail?: string
 }
 
 export type Module = { id: string; title: string; lessons: Lesson[] }
@@ -50,6 +52,8 @@ export type Course = {
   tiers: string[]
   /** Index into the brand's series colours, for the cover. */
   color: number
+  /** The course's own cover picture (a small JPEG as a data URL). Empty: its colour. */
+  cover?: string
   modules: Module[]
 }
 

@@ -152,7 +152,7 @@ function Results({ block }: { block: Block }) {
         {(block.items ?? []).map((q, i) => (
           <figure key={i} className="grid content-between gap-4 rounded-(--radius) bg-card p-5 text-card-foreground" style={{ boxShadow: "var(--card-shadow)" }}>
             <Quote className="size-5 text-primary" />
-            <blockquote className="text-[0.95rem] leading-relaxed">{q.a}</blockquote>
+            <blockquote className="text-[0.9375rem] leading-relaxed">{q.a}</blockquote>
             <figcaption className="text-sm text-muted-foreground">{q.who}</figcaption>
           </figure>
         ))}

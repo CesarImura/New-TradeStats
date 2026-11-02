@@ -88,7 +88,7 @@ function Question({ n, title, hint, children }: { n: number; title: string; hint
     <fieldset className="grid gap-2">
       <legend className="mb-2 flex w-full items-baseline gap-2">
         <span className={cn(mono, "text-[var(--ts-interactive)]")}>0{n}</span>
-        <span className="text-[0.875rem] font-medium">{title}</span>
+        <span className="text-sm font-medium">{title}</span>
         {hint && <span className="ml-auto text-xs text-muted-foreground">{hint}</span>}
       </legend>
       {children}
@@ -104,7 +104,7 @@ function Pill({ on, onClick, children }: { on: boolean; onClick: () => void; chi
       aria-checked={on}
       onClick={onClick}
       className={cn(
-        "h-7 rounded-[4px] border border-[#2a2a2f] bg-[var(--ts-layer-2)] px-2.5 text-[0.78125rem] shadow-[inset_0_1px_0_rgb(255_255_255/0.04)] transition-colors outline-none hover:border-[#3a3a40] hover:bg-[var(--ts-layer-3)] focus-visible:border-[var(--ts-interactive)] focus-visible:shadow-[0_0_0_3px_rgb(255_85_0/0.18)]",
+        "h-7 rounded-[4px] border border-[#2a2a2f] bg-[var(--ts-layer-2)] px-2.5 text-[0.8125rem] shadow-[inset_0_1px_0_rgb(255_255_255/0.04)] transition-colors outline-none hover:border-[#3a3a40] hover:bg-[var(--ts-layer-3)] focus-visible:border-[var(--ts-interactive)] focus-visible:shadow-[0_0_0_3px_rgb(255_85_0/0.18)]",
         on && "border-[var(--ts-interactive)] bg-[color-mix(in_oklab,var(--ts-interactive)_12%,var(--ts-layer-2))] text-foreground hover:border-[var(--ts-interactive)] hover:bg-[color-mix(in_oklab,var(--ts-interactive)_16%,var(--ts-layer-2))]",
         !on && "text-muted-foreground",
       )}

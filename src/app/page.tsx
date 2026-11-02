@@ -1,7 +1,7 @@
 import { LauncherCards } from "@/components/onboarding/launcher-cards"
 import { LauncherOnboarding } from "@/components/onboarding/launcher-section"
 
-const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
+const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] uppercase tracking-[0.06em]"
 
 /** Prototype launcher, in our own TradeStats look. */
 export default function Launcher() {

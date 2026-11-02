@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, CalendarClock, Check, Hash, Megaphone, Pin, RefreshCw, Send, Unplug } from "@/components/icons"
+import { Bell, CalendarClock, Check, Hash, Megaphone, Pin, Plus, RefreshCw, Send, Trash2, Unplug } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
@@ -11,13 +11,14 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { DEFAULT_RULES, DEFAULT_SPACES, type Space } from "@/lib/data/community"
 import { ANNOUNCEMENTS, DISCORD_ROLES } from "@/lib/data/people"
 import { DISCORD } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { Field, Mono, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
 import { SetupTip, useWizardCommunity } from "../setup-checklist"
 
-export type Announcement = (typeof ANNOUNCEMENTS)[number] & { tiers?: string[]; scheduled?: string }
+export type Announcement = (typeof ANNOUNCEMENTS)[number] & { tiers?: string[]; scheduled?: string; space?: string }
 type DiscordSetup = { connected: boolean; roles: Record<string, string>; posts: Record<string, boolean>; removeOnCancel: boolean }
 const DEFAULT_DISCORD: DiscordSetup = {
   connected: true,
@@ -38,6 +39,8 @@ const CHANNELS = [
 export function CommunityAdmin() {
   const { coach } = useCoach()
   const [list, setList] = useCommunityData<Announcement[]>(coach.slug, "announcements", ANNOUNCEMENTS)
+  const [spaces, setSpaces] = useCommunityData<Space[]>(coach.slug, "spaces", DEFAULT_SPACES)
+  const [rules, setRules] = useCommunityData<string[]>(coach.slug, "rules", DEFAULT_RULES)
   const [d, setD] = useCommunityData(coach.slug, "discord", useWizardCommunity(coach.slug) ? NO_DISCORD : DEFAULT_DISCORD)
 
   return (
@@ -51,22 +54,29 @@ export function CommunityAdmin() {
       <Tabs defaultValue="announcements" className="gap-5">
         <TabsList>
           <TabsTrigger value="announcements">Announcements</TabsTrigger>
+          <TabsTrigger value="spaces">Spaces</TabsTrigger>
+          <TabsTrigger value="rules">Rules</TabsTrigger>
           <TabsTrigger value="discord">Discord</TabsTrigger>
         </TabsList>
         <TabsContent value="announcements">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <Composer onPost={(a) => setList((l) => [a, ...l])} />
+            <Composer spaces={spaces} onPost={(a) => setList((l) => [a, ...l])} />
             <div className="grid content-start gap-3">
               <h2 className="font-medium">Sent</h2>
               {list.map((a) => (
-                <article key={a.id} className="grid gap-1.5 rounded-lg border bg-card p-4">
-                  <div className="flex items-start gap-2">
+                <article key={a.id} className="grid gap-3 rounded-lg border bg-card p-4">
+                  <div className="flex items-start gap-3">
                     {a.pinned && <Pin className="mt-0.5 size-3.5 shrink-0 text-[var(--ts-interactive)]" />}
                     <span className="flex-1 font-medium">{a.title}</span>
                     <span className="shrink-0 text-xs text-muted-foreground">{a.scheduled ? `Scheduled · ${a.scheduled}` : a.when}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{a.body}</p>
-                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <p className="text-sm leading-relaxed text-muted-foreground">{a.body}</p>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {a.space && spaces.find((x) => x.id === a.space) && (
+                      <Badge variant="secondary" className="font-normal">
+                        {spaces.find((x) => x.id === a.space)?.name}
+                      </Badge>
+                    )}
                     {a.channels.map((c) => (
                       <Badge key={c} variant="outline" className="font-normal">
                         {CHANNELS.find((x) => x.id === c)?.label}
@@ -86,6 +96,14 @@ export function CommunityAdmin() {
               ))}
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="spaces">
+          <SpacesTab spaces={spaces} setSpaces={setSpaces} />
+        </TabsContent>
+
+        <TabsContent value="rules">
+          <RulesTab rules={rules} setRules={setRules} />
         </TabsContent>
 
         <TabsContent value="discord" className="grid gap-6">
@@ -172,13 +190,14 @@ export function CommunityAdmin() {
   )
 }
 
-function Composer({ onPost }: { onPost: (a: Announcement) => void }) {
+function Composer({ spaces, onPost }: { spaces: Space[]; onPost: (a: Announcement) => void }) {
   const { coach } = useCoach()
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
   const [channels, setChannels] = useState<string[]>(["platform", "email", "discord"])
   const [tiers, setTiers] = useState<string[]>([])
   const [pin, setPin] = useState(false)
+  const [space, setSpace] = useState("")
   const [later, setLater] = useState(false)
   const [when, setWhen] = useState("Tue 13 Oct, 08:00")
 
@@ -193,8 +212,19 @@ function Composer({ onPost }: { onPost: (a: Announcement) => void }) {
       <Field label="Message">
         <Textarea rows={5} value={body} onChange={(e) => setBody(e.target.value)} placeholder="What should everyone know?" />
       </Field>
+      {spaces.length > 0 && (
+        <Field label="Post in">
+          <NativeSelect value={space || spaces[0].id} onChange={(e) => setSpace(e.target.value)}>
+            {spaces.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </NativeSelect>
+        </Field>
+      )}
       <div className="grid gap-2">
-        <span className="text-[0.8rem] font-medium">Send it</span>
+        <span className="text-[0.8125rem] font-medium">Send it</span>
         <div className="flex flex-wrap gap-3">
           {CHANNELS.map((c) => (
             <label key={c.id} className="flex items-center gap-1.5 text-sm">
@@ -205,16 +235,16 @@ function Composer({ onPost }: { onPost: (a: Announcement) => void }) {
         </div>
       </div>
       <div className="grid gap-2">
-        <span className="text-[0.8rem] font-medium">To</span>
+        <span className="text-[0.8125rem] font-medium">To</span>
         <div className="flex flex-wrap gap-1.5">
-          <button onClick={() => setTiers([])} className={cn("rounded-md border px-2.5 py-1 text-sm", tiers.length === 0 && "border-[var(--ts-interactive)]")}>
+          <button onClick={() => setTiers([])} className={cn("rounded-md border px-2.5 py-1 text-sm bg-card", tiers.length === 0 && "border-[var(--ts-interactive)]")}>
             Everyone
           </button>
           {coach.tiers.map((t) => (
             <button
               key={t.id}
               onClick={() => setTiers((x) => (x.includes(t.id) ? x.filter((y) => y !== t.id) : [...x, t.id]))}
-              className={cn("rounded-md border px-2.5 py-1 text-sm", tiers.includes(t.id) && "border-[var(--ts-interactive)]")}
+              className={cn("rounded-md border px-2.5 py-1 text-sm bg-card", tiers.includes(t.id) && "border-[var(--ts-interactive)]")}
             >
               {t.name}
             </button>
@@ -238,7 +268,7 @@ function Composer({ onPost }: { onPost: (a: Announcement) => void }) {
           className="ml-auto"
           disabled={!title.trim() || !body.trim() || channels.length === 0}
           onClick={() => {
-            onPost({ id: `n${Date.now()}`, title: title.trim(), body: body.trim(), when: "just now", pinned: pin, channels, reads: 0, tiers, scheduled: later ? when : undefined })
+            onPost({ id: `n${Date.now()}`, title: title.trim(), body: body.trim(), when: "just now", pinned: pin, channels, reads: 0, tiers, scheduled: later ? when : undefined, space: spaces.length ? space || spaces[0].id : undefined })
             toast(later ? `Scheduled for ${when}` : "Announcement sent", { icon: later ? <CalendarClock className="size-4" /> : <Check className="size-4" /> })
             setTitle("")
             setBody("")
@@ -249,6 +279,54 @@ function Composer({ onPost }: { onPost: (a: Announcement) => void }) {
         </Button>
       </div>
     </div>
+  )
+}
+
+function SpacesTab({ spaces, setSpaces }: { spaces: Space[]; setSpaces: (n: Space[] | ((c: Space[]) => Space[])) => void }) {
+  const edit = (id: string, patch: Partial<Space>) => setSpaces((l) => l.map((s) => (s.id === id ? { ...s, ...patch } : s)))
+  return (
+    <section className="grid max-w-2xl content-start gap-1">
+      <h2 className="font-medium">Spaces</h2>
+      <p className="text-sm text-muted-foreground">Topics your students can filter the feed by. Every post goes in one space.</p>
+      <div className="mt-2 grid gap-2">
+        {spaces.map((s) => (
+          <div key={s.id} className="flex items-center gap-2 rounded-lg border bg-card p-2.5">
+            <Hash className="size-4 shrink-0 text-muted-foreground" />
+            <Input aria-label="Space name" value={s.name} onChange={(e) => edit(s.id, { name: e.target.value })} className="h-8 w-44" />
+            <Input aria-label="Short description" value={s.text} onChange={(e) => edit(s.id, { text: e.target.value })} className="h-8 flex-1" placeholder="What is it for?" />
+            <Button variant="ghost" size="icon-xs" aria-label={`Delete ${s.name}`} onClick={() => setSpaces((l) => l.filter((x) => x.id !== s.id))}>
+              <Trash2 />
+            </Button>
+          </div>
+        ))}
+        <Button variant="outline" size="sm" className="justify-self-start" onClick={() => setSpaces((l) => [...l, { id: `s${Date.now()}`, name: "New space", text: "" }])}>
+          <Plus /> Add a space
+        </Button>
+      </div>
+    </section>
+  )
+}
+
+function RulesTab({ rules, setRules }: { rules: string[]; setRules: (n: string[] | ((c: string[]) => string[])) => void }) {
+  return (
+    <section className="grid max-w-2xl content-start gap-1">
+      <h2 className="font-medium">Community rules</h2>
+      <p className="text-sm text-muted-foreground">Students see these at the top of the community.</p>
+      <div className="mt-2 grid gap-2">
+        {rules.map((r, i) => (
+          <div key={i} className="flex items-center gap-2 rounded-lg border bg-card p-2.5">
+            <span className="w-5 text-center text-xs text-muted-foreground tabular-nums">{i + 1}</span>
+            <Input aria-label={`Rule ${i + 1}`} value={r} onChange={(e) => setRules((l) => l.map((x, j) => (j === i ? e.target.value : x)))} className="h-8 flex-1" />
+            <Button variant="ghost" size="icon-xs" aria-label={`Delete rule ${i + 1}`} onClick={() => setRules((l) => l.filter((_, j) => j !== i))}>
+              <Trash2 />
+            </Button>
+          </div>
+        ))}
+        <Button variant="outline" size="sm" className="justify-self-start" onClick={() => setRules((l) => [...l, ""])}>
+          <Plus /> Add a rule
+        </Button>
+      </div>
+    </section>
   )
 }
 

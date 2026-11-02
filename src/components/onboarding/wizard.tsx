@@ -140,7 +140,7 @@ export function SetupWizard() {
                 className="group -my-[11px] grid flex-1 gap-1.5 py-[11px] text-left disabled:cursor-default"
               >
                 <span className={cn("h-0.5 w-full bg-white/12", i < step && "bg-[var(--ts-cta)]", i === step && "bg-[var(--ts-interactive)]")} />
-                <span className={cn(mono, "hidden truncate text-[0.6rem] text-muted-foreground xl:block", i === step && "text-foreground", i < step && "group-hover:text-foreground")}>
+                <span className={cn(mono, "hidden truncate text-[0.6875rem] text-muted-foreground xl:block", i === step && "text-foreground", i < step && "group-hover:text-foreground")}>
                   {s.label}
                 </span>
               </button>

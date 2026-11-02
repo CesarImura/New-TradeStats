@@ -20,6 +20,11 @@ export const FIRST_WEEK: Record<FirstWeekItem, { label: string; text: string; mo
   call: { label: "Book your welcome call", text: "15 minutes to set your goals", module: "calendar" },
 }
 
+/** A question the coach adds to the short profile: a short answer, or one choice from a list. */
+export type CustomQuestion = { id: string; text: string; kind: "short" | "choice"; options: string[] }
+export const NO_QUESTIONS: CustomQuestion[] = []
+export const MAX_CUSTOM_QUESTIONS = 5
+
 export type OnboardingSettings = {
   video: boolean
   message: string
@@ -29,6 +34,7 @@ export type OnboardingSettings = {
   login: "code" | "password" | "both"
   startHere: boolean
   firstWeek: FirstWeekItem[]
+  custom?: CustomQuestion[]
 }
 
 export const ONBOARDING_DEFAULTS: OnboardingSettings = {
@@ -53,7 +59,7 @@ export type StudentStart = {
   tour: boolean
   done: FirstWeekItem[]
   dismissed: boolean
-  profile: { nickname: string; experience: string; markets: string[]; goal: string }
+  profile: { nickname: string; experience: string; markets: string[]; goal: string; answers?: Record<string, string> }
 }
 
 export const START_DONE: StudentStart = { stage: "done", tour: false, done: [], dismissed: true, profile: { nickname: "alexm", experience: "", markets: [], goal: "" } }

@@ -5,7 +5,7 @@ import { ArrowRight, ArrowUpRight, RotateCcw, Trash2 } from "@/components/icons"
 import { deleteCommunity, setAccount } from "@/lib/data/communities"
 import { useAccount, useCustomCommunities } from "@/lib/data/use-communities"
 
-const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
+const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] uppercase tracking-[0.06em]"
 
 /** Start page: the coach sign-up entry, and communities made with the wizard in this browser. */
 export function LauncherOnboarding() {
@@ -26,12 +26,12 @@ export function LauncherOnboarding() {
           <Link
             href="/signup"
             onClick={() => setAccount(null)}
-            className="inline-flex h-7 w-fit items-center gap-1.5 rounded-[4px] bg-[#f8ff9e] px-2.5 text-[0.78125rem] font-medium text-[#040404] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),0_0_0_1px_rgb(0_0_0/0.5)] hover:bg-[#ecf38a]"
+            className="inline-flex h-7 w-fit items-center gap-1.5 rounded-[4px] bg-[#f8ff9e] px-2.5 text-[0.8125rem] font-medium text-[#040404] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),0_0_0_1px_rgb(0_0_0/0.5)] hover:bg-[#ecf38a]"
           >
             Start as a new coach <ArrowRight className="size-3.5" />
           </Link>
           {inProgress && (
-            <Link href="/setup" className="inline-flex h-7 items-center gap-1.5 rounded-[4px] border border-[#2a2a2f] bg-[#222226] px-2.5 text-[0.78125rem] font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_1px_1px_rgb(0_0_0/0.4)] hover:bg-[#2e2e33]">
+            <Link href="/setup" className="inline-flex h-7 items-center gap-1.5 rounded-[4px] border border-[#2a2a2f] bg-[#222226] px-2.5 text-[0.8125rem] font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_1px_1px_rgb(0_0_0/0.4)] hover:bg-[#2e2e33]">
               Resume setup <RotateCcw className="size-3.5" />
             </Link>
           )}
@@ -45,7 +45,7 @@ export function LauncherOnboarding() {
             <li key={c.slug} className="flex items-center gap-3 border-t border-white/10 py-2.5 first:border-0">
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">{c.name}</span>
-                <span className={`${mono} text-[0.6rem] text-white/40`}>
+                <span className={`${mono} text-[0.6875rem] text-white/40`}>
                   {c.status === "live" ? `${c.slug}.tradestats.app` : "Setting up"}
                 </span>
               </span>

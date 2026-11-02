@@ -62,6 +62,7 @@ export function Checkout() {
   const [applied, setApplied] = useState<Applied | null>(() => applyCode(params.get("ref") ?? "", coupons))
   const [method, setMethod] = useState<"card" | "wallet">("card")
   const [busy, setBusy] = useState(false)
+  const copy = coach.join?.screens?.subscribe ?? {}
 
   if (!tier) return <p className="p-10 text-center text-muted-foreground">No paid plans yet.</p>
 
@@ -84,8 +85,8 @@ export function Checkout() {
     <div className="mx-auto grid w-full max-w-[1080px] gap-8 px-4 py-8 sm:px-6 sm:py-12 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="grid content-start gap-8">
         <div className="grid gap-1">
-          <h1 className="text-3xl leading-tight">Join {coach.name}</h1>
-          <p className="text-muted-foreground">One page, about a minute. Your account is made from your e-mail after you pay.</p>
+          <h1 className="text-3xl leading-tight">{copy.title || `Join ${coach.name}`}</h1>
+          <p className="text-muted-foreground">{copy.subtitle || "One page, about a minute. Your account is made from your e-mail after you pay."}</p>
         </div>
 
         <section className="grid gap-3">

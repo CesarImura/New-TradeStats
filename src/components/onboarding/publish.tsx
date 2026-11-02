@@ -77,7 +77,7 @@ export function PublishStep() {
           </div>
 
           <div className="grid gap-1 rounded-[var(--radius)] border bg-card px-4 py-3">
-            <span className={cn(mono, "text-[0.6rem] text-muted-foreground")}>Your address</span>
+            <span className={cn(mono, "text-[0.6875rem] text-muted-foreground")}>Your address</span>
             <span className="truncate text-sm">
               {address}
               <span className="text-muted-foreground">.tradestats.app</span>

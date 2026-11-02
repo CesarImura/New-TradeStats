@@ -183,6 +183,7 @@ export function Login() {
   const [step, setStep] = useState<"email" | "code">("email")
   const [busy, setBusy] = useState(false)
   const password = settings.login !== "code"
+  const copy = coach.join?.screens?.login ?? {}
   const enter = () => {
     setBusy(true)
     setTimeout(() => router.push(`/c/${coach.slug}`), 500)
@@ -218,7 +219,7 @@ export function Login() {
 
   return (
     <FocusCard>
-      <Title eyebrow={coach.name} title="Welcome back" text={step === "code" ? `We sent a code to ${email}.` : "Log in to your platform."} />
+      <Title eyebrow={coach.name} title={copy.title || "Welcome back"} text={step === "code" ? `We sent a code to ${email}.` : copy.subtitle || "Log in to your platform."} />
       {step === "email" ? (
         <form
           className="grid gap-3"
@@ -246,9 +247,9 @@ export function Login() {
           )}
           <Button size="lg" type="submit" disabled={!email.includes("@") || busy}>
             {busy && <Loader2 className="animate-spin" />}
-            {password ? "Log in" : "Send me a code"}
+            {copy.button || (password ? "Log in" : "Send me a code")}
           </Button>
-          {settings.login !== "password" && (
+          {settings.login !== "password" && copy.discord !== false && (
             <>
               <Or />
               <DiscordButton onClick={enter} />
@@ -284,6 +285,7 @@ export function JoinFree({ invite }: { invite?: boolean }) {
   const [name, setName] = useState(invite ? "Lena Hoffmann" : "")
   const [email, setEmail] = useState(invite ? "lena.hoffmann@mail.com" : "")
   const [step, setStep] = useState<"form" | "code">("form")
+  const copy = (!invite && coach.join?.screens?.signup) || {}
   const go = () => {
     resetAsNewStudent(coach.slug)
     router.push(`${base}/start`)
@@ -292,8 +294,8 @@ export function JoinFree({ invite }: { invite?: boolean }) {
     <FocusCard>
       <Title
         eyebrow={invite ? `Invitation from ${coach.coachName}` : `Join ${tier?.name} for free`}
-        title={invite ? `You're invited to ${coach.name}` : `Join ${coach.name}`}
-        text={invite ? `${coach.coachName} gave you ${tier?.name}. Check your name and you're in.` : step === "code" ? `We sent a code to ${email}.` : "No card needed."}
+        title={invite ? `You're invited to ${coach.name}` : copy.title || `Join ${coach.name}`}
+        text={invite ? `${coach.coachName} gave you ${tier?.name}. Check your name and you're in.` : step === "code" ? `We sent a code to ${email}.` : copy.subtitle || "No card needed."}
       />
       {step === "form" ? (
         <form
@@ -313,9 +315,9 @@ export function JoinFree({ invite }: { invite?: boolean }) {
             <Input id="jf-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} readOnly={invite} autoComplete="email" className={cn(invite && "text-muted-foreground")} />
           </div>
           <Button size="lg" type="submit" disabled={!name || !email.includes("@")}>
-            {invite ? "Accept and start" : "Join free"}
+            {invite ? "Accept and start" : copy.button || "Join free"}
           </Button>
-          {!invite && (
+          {!invite && copy.discord !== false && (
             <>
               <Or />
               <DiscordButton onClick={go} label="Join with Discord" />
@@ -400,7 +402,7 @@ export function LegalPage({ doc }: { doc: string }) {
         ))}
       </nav>
       <h1 className="text-3xl">{page.name}</h1>
-      <div className="text-[0.95rem] leading-relaxed whitespace-pre-line text-muted-foreground">{(texts[doc] ?? page.text).replace(/Northline Trading/g, coach.org)}</div>
+      <div className="text-[0.9375rem] leading-relaxed whitespace-pre-line text-muted-foreground">{(texts[doc] ?? page.text).replace(/Northline Trading/g, coach.org)}</div>
       <span className="text-xs text-muted-foreground">Last updated 1 October 2026</span>
     </div>
   )

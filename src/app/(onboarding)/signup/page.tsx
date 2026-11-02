@@ -113,7 +113,7 @@ export default function SignUp() {
 function FieldRow({ id, label, error, children }: { id: string; label: string; error?: string | false; children: React.ReactNode }) {
   return (
     <div className="grid gap-1.5">
-      <Label htmlFor={id} className="text-[0.8rem] font-normal text-muted-foreground">
+      <Label htmlFor={id} className="text-[0.8125rem] font-normal text-muted-foreground">
         {label}
       </Label>
       {children}
