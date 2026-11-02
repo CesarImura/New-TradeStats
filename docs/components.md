@@ -136,6 +136,7 @@ ou `widgets/parts/`, estender em vez de duplicar.
 3. Telas em 390, 768 e 1440px, claro e escuro, com teclado (Tab, Enter, Esc, setas).
 4. Console sem erro de hydration (se o `next dev` ficar com SSR antigo, reiniciar o servidor).
 5. Build só na cópia isolada (porta 3100+), nunca na pasta compartilhada.
+6. Todo card do Admin com borda e fundo (seção 13).
 
 ## 11. Miniaturas (regras do Gustavo, 31/10)
 
@@ -169,3 +170,38 @@ Valem para todo widget e toda opção de estilo, existentes e novos, em todos os
 - **Galeria:** grupos → tiles de ícone; "On this page" é uma lista de nomes. **Barra de cima:** voltar, aparelhos, desfazer, ⋯,
   Preview, Publish; o resto vai no ⋯ (Reset, versões, template). Readability só aparece quando algo falha.
 
+## 13. Cards e fundos (regra do Gustavo, 02/11)
+
+Todo card do Admin tem **borda e fundo**, nunca só borda sobre o fundo da página.
+
+- **Card ou painel no Admin:** `rounded-lg border bg-card` (cards grandes e de capa: `rounded-xl`). Vale para listas de linhas (`divide-y rounded-lg border bg-card`), caixas de configuração, cards de curso/gráfico/anúncio e blocos de formulário. Nunca `bg-background` num card (some no fundo da página).
+- **Exceções com fundo próprio:** chip ou etiqueta pequena, grupo de segmented (`p-0.5`), campo de texto, área de soltar arquivo (tracejada), prévia em cor fixa.
+- **Linha de lista dentro do painel do editor Design** (Pages, Menu, seções do curso): use `menuRow()` de `fields/menu-sort.tsx`. Item desligado = borda tracejada e nome riscado, não opacidade.
+- **Card dentro de card:** o de dentro continua `bg-card` (fica igual); não invente outro tom.
+- Antes de entregar, procure cards sem fundo: `grep -rnE "rounded-(lg|xl) border( |\")" src/components/admin | grep -v "bg-"`.
+
+### Espaçamento dentro do card de item (padrão de 02/11)
+
+Vale para cards que mostram um item (post, gráfico, curso, transmissão): capa opcional, título, meta, texto, link e etiquetas.
+
+- **Padding do corpo:** `p-4` (com capa: `px-4 pb-4`, e `gap-4` entre a capa e o corpo).
+- **Entre os grupos:** `grid gap-3` no corpo. Os grupos são: cabeçalho (título + meta), texto, link, etiquetas. Não use `pt-1` nem `mt-*` para empurrar um grupo: o espaço vem do `gap-3`.
+- **Cabeçalho:** título (`font-medium`) e meta (`text-xs text-muted-foreground`) juntos em `grid gap-0.5`; ações ou data à direita, `flex items-start gap-3`.
+- **Texto:** `text-sm leading-relaxed text-muted-foreground` (`line-clamp-2` em lista).
+- **Etiquetas e chips:** `flex flex-wrap gap-1.5`.
+- Já seguem o padrão: ChartCard, anúncios do Community, cards de curso (Content) e transmissões (Livestreams). Card novo de item começa daqui.
+
+## 14. Escala de texto (regra do review de 02/11)
+
+Não crie tamanhos soltos. Use só estes: `text-xs` (12px), `text-sm` (14px) e os três micro-tamanhos já usados: `text-[0.6875rem]` (11px, rótulos e legendas), `text-[0.8125rem]` (13px, controles do editor) e `text-[0.9375rem]` (15px, títulos de painel). Abaixo de 11px o texto não é legível: não use. Se um tamanho novo for mesmo necessário, escreva o motivo aqui. Antes eram 14 tamanhos diferentes; o grep `grep -rhoE "text-\[[0-9.]+(px|rem)\]" src | sort | uniq -c` deve listar só os três acima, mais títulos grandes (1.375, 1.75, 2, 2.5rem).
+
+
+## 15. Tamanho de arquivo (divisão de 02/11)
+
+Um arquivo de componente passa de ~600 linhas? Divida por responsabilidade, sem mudar comportamento. Arquivos de dados (uma lista longa, como `registry-widgets.tsx`) são a exceção.
+
+- **Editor Design, construtor de páginas:** `editor/page-builder.tsx` é só o canvas (`ArrangeCanvas`); a lógica de edição está em `use-arrange.ts`, o menu de contexto em `widget-menu.tsx`, o cartão da grade em `grid-widget.tsx` e o toaster do canvas em `canvas-toast.ts`. `page-builder` reexporta `useArrange`, `Arrange` e `Device`.
+- **Widgets:** `widgets/registry.tsx` guarda os tipos e as regras (largura, altura, `lookOf`, `styleParts`). A lista de widgets mora em `registry-widgets.tsx`, os widgets das páginas (core) em `registry-core.tsx`. Widget novo entra em `registry-widgets.tsx` (ou em `catalog/more/registry`).
+- **Journal:** `catalog/journal.tsx` (JournalPnl), `catalog/rules-followed.tsx` (RulesFollowed), peças em comum em `catalog/journal-shared.tsx`.
+- **Aula do aluno:** `courses/student-lesson.tsx` monta a página; `lesson-player`, `lesson-tabs`, `lesson-quiz` e `lesson-side` (índice e AI) são as partes; `lesson-utils` tem `link`, `seek` e `toSec`.
+- Ao dividir: mova por intervalo de linhas, exporte só o que outro arquivo usa, rode `tsc`, `eslint` e o rastreio de telas, e mantenha o caminho de import antigo reexportando.
