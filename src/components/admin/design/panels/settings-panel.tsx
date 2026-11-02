@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useId, useRef, useState } from "react"
-import { ArrowRight, Check, ChevronDown, Image as ImageIcon, LayoutDashboard, LayoutGrid, Monitor, Palette, PanelLeftIcon, RotateCcw, Search, Smartphone, Tablet, TriangleAlert, Type, Wand2, X } from "@/components/icons"
+import { ArrowRight, Check, ChevronDown, GraduationCap, Image as ImageIcon, LayoutDashboard, LayoutGrid, Monitor, Palette, PanelLeftIcon, RotateCcw, Search, Smartphone, Tablet, TriangleAlert, Type, UserPlus, Wand2, X } from "@/components/icons"
 import type { ThemeDraft } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
 import { widgetFinishOf, widgetSetOf, type CoachTheme } from "@/lib/theme/types"
@@ -95,7 +95,7 @@ export const THEME_GROUPS = {
  * the admin's Design, the setup wizard and the library's theme editor all
  * build their tabs from here, so they look and work the same.
  */
-export type SectionId = "brand" | "look" | "type" | "shape" | "widgets" | "page" | "menu" | "pages"
+export type SectionId = "brand" | "look" | "type" | "shape" | "widgets" | "page" | "menu" | "pages" | "course" | "join"
 /** `heading`: the panel's title when it says more than the rail's label (Widgets: it changes every widget at once). */
 const SECTIONS: { id: SectionId; label: string; icon: React.ReactNode; blurb?: string; heading?: string; search?: string }[] = [
   { id: "brand", label: "Brand", icon: <Palette />, blurb: "Your name, logo and colours." },
@@ -105,6 +105,8 @@ const SECTIONS: { id: SectionId; label: string; icon: React.ReactNode; blurb?: s
   { id: "pages", label: "Pages", icon: <LayoutDashboard />, blurb: "Arrange each page and edit one widget at a time.", search: "Search widgets…" },
   { id: "menu", label: "Menu", icon: <PanelLeftIcon />, blurb: "What the menu shows and what you call things." },
   { id: "page", label: "Background", icon: <ImageIcon /> },
+  { id: "course", label: "Course", icon: <GraduationCap />, blurb: "The page inside a course: which sections show, in what order, and how lessons look." },
+  { id: "join", label: "Join", icon: <UserPlus />, blurb: "Log in, sign up and subscribe: the screens people pass through to join." },
 ]
 /** The theme sections' settings unless a host gives its own. */
 const DEFAULT_GROUPS: Partial<Record<SectionId, SettingsGroup[]>> = { brand: THEME_GROUPS.colour, type: THEME_GROUPS.type, widgets: THEME_GROUPS.widgets, page: THEME_GROUPS.page }
@@ -137,12 +139,12 @@ const IDLE: Record<string, (t: CoachTheme) => string | undefined> = {
   "widget-finish": (t) => {
     const finish = widgetFinishOf(t)
     if (finish === "corners" && t.radius > 4) return "Corner brackets show on square cards: set Corners to 4px or less (above)."
-    if (finish === "grid" && widgetSetOf(t) === "open") return "Open widgets have no surface, so the grid would run behind their text: pick a card in Card, above, to show it."
+    if (finish === "grid" && widgetSetOf(t) === "open") return "Blended widgets have no surface, so the grid would run behind their text: pick a card in Card, above, to show it."
     return undefined
   },
   borders: (t) => {
     const set = widgetSetOf(t)
-    if (set === "open") return "Open widgets have no line: this only outlines other cards (lists, forms). Widgets, above, changes it."
+    if (set === "open") return "Blended widgets have no line: this only outlines other cards (lists, forms). Widgets, above, changes it."
     if ((t.cardSurface ?? "raised") === "outline") return "Outline cards always have a line: pick Raised or Grey in Widgets, above, to turn it off."
     return undefined
   },

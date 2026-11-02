@@ -110,9 +110,9 @@ function Head({ x = 12, y = 11 }: { x?: number; y?: number }) {
 const CARD_LINE = "M12,27 L18,24.5 L23,25.5 L29,21.5 L35,23 L41,19 L46,20 L52,17"
 
 /** A widget in one of the card surfaces, with the shadow and the chart box it can have. */
-export function CardArt({ surface = "raised", shadow, panel }: { surface?: "raised" | "grey" | "outline"; shadow?: "none" | "soft" | "strong"; panel?: PanelStyle }) {
+export function CardArt({ surface = "raised", shadow, panel }: { surface?: "raised" | "grey" | "outline" | "blended"; shadow?: "none" | "soft" | "strong"; panel?: PanelStyle }) {
   const rx = useRx()
-  const fill = surface === "outline" ? "none" : surface === "grey" ? "color-mix(in oklab, var(--a-ink) 9%, var(--a-page))" : CARD
+  const fill = surface === "outline" || surface === "blended" ? "none" : surface === "grey" ? "color-mix(in oklab, var(--a-ink) 9%, var(--a-page))" : CARD
   const glow = shadow === "strong" ? "color-mix(in oklab, var(--a-accent) 50%, transparent)" : "rgb(0 0 0 / 0.5)"
   return (
     <Art>

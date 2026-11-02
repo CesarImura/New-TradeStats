@@ -4,7 +4,7 @@ import { useRef } from "react"
 import { toast } from "sonner"
 import { ImagePlus } from "@/components/icons"
 import { pictureFrom } from "@/lib/images"
-import { BACKDROPS, MIN_DIM } from "@/lib/theme/backdrops"
+import { BACKDROPS, minDimOf } from "@/lib/theme/backdrops"
 import type { BackgroundStyle, CoachTheme } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { Field, Segmented, SliderField } from "./controls"
@@ -17,7 +17,7 @@ const KIND = (b: BackgroundStyle) => (b === "grid" || b === "glow" || b === "dot
  * The platform background, shared by the Design editor and the setup wizard
  * so both offer exactly the same choices. Plain stays the default.
  */
-export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onChange: (p: Patch, key: string) => void }) {
+export function BackgroundControl({ theme, onChange, where = true }: { theme: CoachTheme; onChange: (p: Patch, key: string) => void; /** Offer "Where it shows" (the platform); the Join screens are one place, so they leave it out. */ where?: boolean }) {
   const file = useRef<HTMLInputElement>(null)
   const kind = KIND(theme.background)
   const uploaded = theme.bgImage && !theme.bgImage.startsWith("preset:") ? theme.bgImage : undefined
@@ -68,7 +68,7 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
                 key={b.id}
                 onClick={() => onChange({ bgImage: `preset:${b.id}` }, "bg-image")}
                 aria-pressed={theme.bgImage === `preset:${b.id}`}
-                className={cn("grid gap-1 p-1 text-left text-[0.7rem]", card(theme.bgImage === `preset:${b.id}`))}
+                className={cn("grid gap-1 p-1 text-left text-[0.6875rem]", card(theme.bgImage === `preset:${b.id}`))}
               >
                 <span className="aspect-[4/3] rounded-[4px] bg-[#0b0c10] ring-1 ring-white/10" style={{ backgroundImage: b.css, backgroundSize: "cover", backgroundPosition: "center" }} />
                 <span className="truncate px-0.5 text-muted-foreground">{b.name}</span>
@@ -77,7 +77,7 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
             <button
               onClick={() => file.current?.click()}
               aria-pressed={!!uploaded}
-              className={cn("grid gap-1 p-1 text-left text-[0.7rem]", card(!!uploaded))}
+              className={cn("grid gap-1 p-1 text-left text-[0.6875rem]", card(!!uploaded))}
             >
               <span className="grid aspect-[4/3] place-items-center rounded-[4px] border border-dashed bg-cover bg-center" style={uploaded ? { backgroundImage: `url("${uploaded}")` } : undefined}>
                 {!uploaded && <ImagePlus className="size-4 text-muted-foreground" />}
@@ -104,8 +104,8 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
           />
           <SliderField
             label="Readability"
-            value={Math.max(MIN_DIM, theme.bgDim ?? 70)}
-            min={MIN_DIM}
+            value={Math.max(minDimOf(theme), theme.bgDim ?? 70)}
+            min={minDimOf(theme)}
             max={95}
             unit="%"
             format={(v) => `${v}% page colour on top`}
@@ -115,7 +115,7 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
         </>
       )}
 
-      {(kind === "image" || kind === "gradient") && (
+      {where && (kind === "image" || kind === "gradient") && (
         <Field label="Where it shows">
           <Segmented
             label="Where the background shows"
@@ -124,7 +124,6 @@ export function BackgroundControl({ theme, onChange }: { theme: CoachTheme; onCh
             options={[
               { value: "all", label: "Everywhere" },
               { value: "home", label: "Home only" },
-              { value: "login", label: "Login page" },
             ]}
           />
         </Field>

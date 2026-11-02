@@ -1,51 +1,27 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { verticalCompactor } from "react-grid-layout/core"
-import { ArrowDownToLine, ArrowUpToLine, Copy, EyeOff, Info, LayoutGrid, Lock, Minus, Pencil, Plus, Trash2, Wand2 } from "@/components/icons"
-import { toast as notify, type ExternalToast } from "sonner"
+import { Info, LayoutGrid, Minus, Plus, Wand2 } from "@/components/icons"
 import { CoachContext, useCoach } from "@/components/coach/coach-provider"
-import { studentNav } from "@/components/coach/nav"
 import { Toaster } from "@/components/ui/sonner"
-import {
-  ContextMenu,
-  ContextMenuCheckboxItem,
-  ContextMenuContent,
-  ContextMenuGroup,
-  ContextMenuItem,
-  ContextMenuLabel,
-  ContextMenuRadioGroup,
-  ContextMenuRadioItem,
-  ContextMenuSeparator,
-  ContextMenuShortcut,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu"
-import { PageRenderer, WidgetGrid, WidgetView, isAvailable, placeItems, spanOf, widthOf, type Placement } from "@/components/widgets/page-renderer"
-import { fitWidth, getWidget, heightFor, heightOf, lookOf, widthsFor } from "@/components/widgets/registry"
+import { PageRenderer, WidgetGrid, isAvailable, placeItems, spanOf, widthOf, type Placement } from "@/components/widgets/page-renderer"
+import { fitWidth, getWidget, heightFor, widthsFor } from "@/components/widgets/registry"
 import { DataModeProvider, PageIdContext, PageTitleShownContext, type DataMode } from "@/components/widgets/parts/shared"
 import type { Coach } from "@/lib/data/coaches"
-import { useGroups } from "@/lib/data/access"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { themeToCss } from "@/lib/theme/css"
-import { pageLayout } from "@/lib/theme/resolve"
 import { widgetFinishOf, widgetSetOf, type CoachTheme } from "@/lib/theme/types"
-import { isPageId } from "@/lib/data/coaches"
-import { COLS, GAP, ROW_HEIGHT, normalizeLayout, readingOrder, oneStar, uid, withCore, type Detail, type Emphasis, type PageId, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
+import { COLS, GAP, ROW_HEIGHT, readingOrder, uid, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { resolve, type PickTarget } from "@/lib/design-pick"
 import { ShellEditorContext, StudentShell } from "@/components/shells/student-shell"
-import { DETAIL, EMPHASIS, PHASE_LABEL, WIDTH, type AddOptions } from "../panels/builder-panels"
-import type { useDraftEditor } from "./editor-shell"
+import { WIDTH, type AddOptions } from "../panels/builder-panels"
+import { CANVAS_TOASTS, toast } from "./canvas-toast"
+import { GridWidget } from "./grid-widget"
+import { useArrange, type Arrange } from "./use-arrange"
+import { WidgetMenu } from "./widget-menu"
 
-/**
- * The canvas's notices ("added at the bottom", "removed"…) have their own toaster, top right under the editor's bar,
- * so while they show they never sit over the cards' resize handles or quick actions at the bottom of the canvas.
- */
-const CANVAS_TOASTS = "canvas"
-const toast = (message: string, data?: ExternalToast) => notify(message, { ...data, toasterId: CANVAS_TOASTS })
+export { useArrange, type Arrange }
 
 const DEVICE_WIDTH: Record<Device, number> = { desktop: 1180, tablet: 820, phone: 390 }
 const PAD = { desktop: 32, tablet: 24, phone: 16 }
@@ -59,141 +35,6 @@ type Slot = { col: number; span: number; index: number }
 /** The id of the spot drawn where a card would land. */
 const SLOT = "__slot"
 
-/**
- * ADM-37 / ADM-39: the layout of one student page, per tier, and every edit
- * to it. Home is all widgets; a module page also has its core widget (the
- * page's own tool), which can move and resize but not be removed.
- */
-export function useArrange({
-  coach,
-  theme,
-  editor,
-  page,
-  tier,
-  selected,
-  setSelected,
-}: {
-  coach: Coach
-  theme: CoachTheme
-  editor: ReturnType<typeof useDraftEditor>
-  page: PageId
-  tier: string
-  selected: string | null
-  setSelected: (id: string | null) => void
-}) {
-  const { working, commit } = editor
-  const pages = studentNav(coach, `/c/${coach.slug}`)
-  const pageInfo = pages.find((p) => p.id === page) ?? pages[0]
-  const layouts = coach.pages?.[page] ?? {}
-  const baseLayout = pageLayout(coach, page, theme.template, undefined, heightOf)
-  const inherits = tier !== "default" && !layouts[tier]
-  const own = (l: PageLayout) => (page === "home" || isPageId(page) ? l : withCore(page, l))
-  const layout = tier === "default" || !layouts[tier] ? baseLayout : own(normalizeLayout(layouts[tier], heightOf))
-  const tierName = coach.tiers.find((t) => t.id === tier)?.name
-  const savePages = (next: typeof layouts, key: string) =>
-    commit({ ...working, content: { ...working.content, pages: { ...coach.pages, [page]: next } } }, `${page}-${key}`)
-
-  /**
-   * Every edit goes through here. Only one Star per page: `keep` names the
-   * widget that just became the star; any other star becomes Accent in the
-   * same commit, so one undo brings both back.
-   */
-  const save = (next: PageLayout, key: string, keep?: string) => {
-    const items = oneStar(next.items, keep)
-    const demoted = next.items.filter((w, i) => w.emphasis === "star" && items[i].emphasis !== "star")
-    // Keep "title removed on purpose", and set it when this save drops the Page title.
-    const titleRemoved = page !== "home" && !items.some((w) => w.type === "page-header") ? true : undefined
-    // An edit that doesn't touch the arrangement keeps it free (each widget in the column it was put in).
-    const free = next.free ?? layout.free
-    savePages({ ...layouts, [tier]: { ...next, items, titleRemoved, free } }, `${tier}-${key}`)
-    if (demoted.length) {
-      const names = demoted.map((w) => getWidget(w.type)?.name ?? "A widget").join(", ")
-      toast(`${names} gave up ${demoted.length > 1 ? "their" : "its"} star.`, { description: "Only one Star per page; it is Accent now." })
-    }
-    if (inherits) toast(`${tierName} now has its own ${pageInfo.label} page. Other tiers keep the default.`)
-  }
-  const pinned = (id: string) => !!getWidget(layout.items.find((w) => w.id === id)?.type ?? "")?.core
-  const updateItem = (id: string, patch: Partial<WidgetInstance>, key: string) => {
-    const cur = layout.items.find((w) => w.id === id)
-    const def = cur && getWidget(cur.type)
-    // A new layout keeps the width only if the layout allows it (its minW to maxW), else the nearest it allows.
-    if (cur && def && patch.variant) patch = { ...patch, w: fitWidth(def, patch.variant, patch.w ?? cur.w) }
-    // Detailed shows more, so it gets more rows (and back); widgets below move down to make room.
-    if (cur && def && patch.detail && patch.detail !== (cur.detail ?? "standard")) {
-      const grow = heightFor(def, cur.variant, patch.detail) - heightFor(def, cur.variant, cur.detail)
-      const next = { ...cur, ...patch, h: Math.max(lookOf(def, cur.variant).minH, cur.h + grow) }
-      saveCompacted(layout.items.map((w) => (w.id === id ? next : w)), key)
-      return
-    }
-    save({ items: layout.items.map((w) => (w.id === id ? { ...w, ...patch } : w)) }, key, patch.emphasis === "star" ? id : undefined)
-  }
-
-  const addWidget = (type: string) => {
-    const def = getWidget(type)!
-    const look = def.variants[0]
-    const bottom = layout.items.reduce((m, w) => Math.max(m, w.y + w.h), 0)
-    const w: WidgetInstance = { id: uid(), type, x: 0, y: bottom, w: fitWidth(def, look.value, def.defaultW), h: look.h }
-    save({ items: [...layout.items, w] }, `add-${w.id}`)
-    setSelected(w.id)
-    toast(`${def.name} added at the bottom. Drag it where you want it.`)
-  }
-
-  /** Save with the grid compacted upward, so the live page never has overlaps. */
-  const saveCompacted = (items: WidgetInstance[], key: string) => {
-    const packed = verticalCompactor.compact(items.map((w) => ({ i: w.id, x: w.x, y: w.y, w: w.w, h: w.h })), COLS)
-    const pos = new Map(packed.map((g) => [g.i, g]))
-    save({ items: items.map((w) => ({ ...w, x: pos.get(w.id)!.x, y: pos.get(w.id)!.y })) }, key)
-  }
-  const removeWidget = (id: string) => {
-    if (pinned(id)) {
-      toast(`${pageInfo.label} is the main part of this page, so it stays. Move or resize it instead.`)
-      return
-    }
-    const def = getWidget(layout.items.find((w) => w.id === id)?.type ?? "")
-    saveCompacted(layout.items.filter((w) => w.id !== id), `del-${id}`)
-    if (selected === id) setSelected(null)
-    toast(`${def?.name ?? "Widget"} removed.`, { description: "Press ⌘Z to undo." })
-  }
-  const duplicateWidget = (id: string) => {
-    const w = layout.items.find((x) => x.id === id)
-    if (!w || pinned(id)) return
-    // A copy of the star is Accent: the original keeps the star.
-    const copy: WidgetInstance = { ...w, id: uid(), y: w.y + w.h, emphasis: w.emphasis === "star" ? "accent" : w.emphasis }
-    saveCompacted([...layout.items, copy], `dup-${copy.id}`)
-    setSelected(copy.id)
-  }
-  const moveTo = (id: string, where: "top" | "bottom") =>
-    saveCompacted(layout.items.map((w) => (w.id === id ? { ...w, y: where === "top" ? -1 : 9999 } : w)), `order-${uid()}`)
-  const useDefault = () => {
-    const rest = { ...layouts }
-    delete rest[tier]
-    savePages(rest, `reset-${tier}`)
-    toast(`${tierName} uses the default ${pageInfo.label} page again.`)
-  }
-
-  return {
-    page,
-    tier,
-    pageInfo,
-    layout,
-    layouts,
-    inherits,
-    tierName,
-    selected,
-    setSelected,
-    selWidget: layout.items.find((w) => w.id === selected) ?? null,
-    pinned,
-    save,
-    updateItem,
-    addWidget,
-    removeWidget,
-    duplicateWidget,
-    moveTo,
-    useDefault,
-  }
-}
-
-export type Arrange = ReturnType<typeof useArrange>
 
 /**
  * The page as students see it (a masonry, see Masonry in page-renderer) in
@@ -572,6 +413,7 @@ export function ArrangeCanvas({
                   ref={grid}
                   className="hb-set relative"
                   data-set={widgetSetOf(theme)}
+                  data-bg={theme.background}
                   data-finish={widgetFinishOf(theme)}
                   style={{ minHeight: 6 * (ROW_HEIGHT + gap), "--gap": `${gap}px` } as React.CSSProperties}
                   onDragOver={overGrid}
@@ -595,8 +437,9 @@ export function ArrangeCanvas({
                   <WidgetGrid
                     items={shown}
                     free={free}
+                    phoneOrder={layout.phoneOrder}
                     onPlaced={onPlaced}
-                    render={(w) =>
+                    render={(w, fixed) =>
                       w.id === SLOT ? (
                         // Where the card lands: the page has already made room for it.
                         <div
@@ -618,7 +461,7 @@ export function ArrangeCanvas({
                           onPhone={(hideOnPhone) => updateItem(w.id, { hideOnPhone }, `${w.id}-phone`)}
                           onRemove={() => removeWidget(w.id)}
                         >
-                          <GridWidget w={w} selected={selected === w.id} available={isAvailable(w, coach)} onRemove={() => removeWidget(w.id)} onDuplicate={() => duplicateWidget(w.id)} onWidth={(cols) => updateItem(w.id, { w: cols }, `${w.id}-width`)} />
+                          <GridWidget w={w} fixed={fixed} selected={selected === w.id} available={isAvailable(w, coach)} onRemove={() => removeWidget(w.id)} onDuplicate={() => duplicateWidget(w.id)} onWidth={(cols) => updateItem(w.id, { w: cols }, `${w.id}-width`)} />
                         </WidgetMenu>
                       )
                     }
@@ -627,7 +470,7 @@ export function ArrangeCanvas({
                         item
                       ) : (
                         <div
-                          className="group/wrap relative touch-none"
+                          className="group/wrap relative h-full touch-none"
                           onPointerDown={(e) => startMove(e, w)}
                           onClick={(e) => {
                             e.stopPropagation()
@@ -789,238 +632,3 @@ const ZOOMS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.25, 1.5, 2]
 /** One button of the floating canvas bar: 32px, white on near-black, a lighter fill on hover. */
 const BAR = "grid h-8 min-w-8 grid-flow-col place-items-center rounded-lg text-white/70 outline-none transition-[background-color,color,scale] duration-150 ease-out hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70 active:scale-[0.96]"
 
-/** Right-click menu for a widget on the grid. */
-function WidgetMenu({
-  w,
-  children,
-  onOpen,
-  onLook,
-  onEmphasis,
-  onDetail,
-  onWidth,
-  onDuplicate,
-  onMove,
-  onPhone,
-  onRemove,
-}: {
-  w: WidgetInstance
-  children: React.ReactNode
-  onOpen: () => void
-  onLook: (variant: string, minH: number) => void
-  onEmphasis: (emphasis: Emphasis) => void
-  onDetail: (detail: Detail) => void
-  /** Columns: 4 (one), 8 (two) or 12 (the page's full width), as the layout allows (widthsFor). */
-  onWidth: (cols: number) => void
-  onDuplicate: () => void
-  onMove: (where: "top" | "bottom") => void
-  onPhone: (hide: boolean) => void
-  onRemove: () => void
-}) {
-  const def = getWidget(w.type)
-  if (!def) return <>{children}</>
-  const look = lookOf(def, w.variant)
-  return (
-    <ContextMenu onOpenChange={(open) => open && onOpen()}>
-      <ContextMenuTrigger render={<div className="size-full select-auto" />}>{children}</ContextMenuTrigger>
-      <ContextMenuContent className="w-56 font-[family-name:var(--ff-geist)]">
-        <ContextMenuGroup>
-          <ContextMenuLabel className="text-xs text-muted-foreground">{def.name}</ContextMenuLabel>
-          <ContextMenuItem onClick={onOpen}>
-            <Pencil /> Edit settings
-          </ContextMenuItem>
-          {def.variants.length > 1 && (
-            <ContextMenuSub>
-              <ContextMenuSubTrigger>Layout</ContextMenuSubTrigger>
-              <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
-                <ContextMenuRadioGroup value={look.value} onValueChange={(v) => onLook(String(v), def.variants.find((x) => x.value === v)?.minH ?? 1)}>
-                  {def.variants.map((v) => (
-                    <ContextMenuRadioItem key={v.value} value={v.value}>
-                      {v.label}
-                    </ContextMenuRadioItem>
-                  ))}
-                </ContextMenuRadioGroup>
-              </ContextMenuSubContent>
-            </ContextMenuSub>
-          )}
-          <ContextMenuSub>
-            <ContextMenuSubTrigger>Stand out</ContextMenuSubTrigger>
-            <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
-              <ContextMenuRadioGroup value={w.emphasis ?? "accent"} onValueChange={(v) => onEmphasis(v as Emphasis)}>
-                {EMPHASIS.map((o) => (
-                  <ContextMenuRadioItem key={o.value} value={o.value}>
-                    {o.label}
-                  </ContextMenuRadioItem>
-                ))}
-              </ContextMenuRadioGroup>
-            </ContextMenuSubContent>
-          </ContextMenuSub>
-          <ContextMenuSub>
-            <ContextMenuSubTrigger>Shows</ContextMenuSubTrigger>
-            <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
-              <ContextMenuRadioGroup value={w.detail ?? "standard"} onValueChange={(v) => onDetail(v as Detail)}>
-                {DETAIL.map((o) => (
-                  <ContextMenuRadioItem key={o.value} value={o.value}>
-                    {{ compact: "Less", standard: "Standard", detailed: "More" }[o.value]}
-                  </ContextMenuRadioItem>
-                ))}
-              </ContextMenuRadioGroup>
-            </ContextMenuSubContent>
-          </ContextMenuSub>
-          {!def.core && w.type !== "page-header" && widthsFor(def, w.variant).length > 1 && (
-            <ContextMenuSub>
-              <ContextMenuSubTrigger>Width</ContextMenuSubTrigger>
-              <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
-                <ContextMenuRadioGroup value={widthOf(w)} onValueChange={(v) => onWidth(Number(v))}>
-                  {WIDTH.map((o) => (
-                    <ContextMenuRadioItem key={o.value} value={o.value} disabled={!widthsFor(def, w.variant).includes(o.value)}>
-                      {o.label}
-                    </ContextMenuRadioItem>
-                  ))}
-                </ContextMenuRadioGroup>
-              </ContextMenuSubContent>
-            </ContextMenuSub>
-          )}
-        </ContextMenuGroup>
-        <ContextMenuSeparator />
-        <ContextMenuGroup>
-          {!def.core && (
-            <ContextMenuItem onClick={onDuplicate}>
-              <Copy /> Duplicate
-            </ContextMenuItem>
-          )}
-          <ContextMenuItem onClick={() => onMove("top")}>
-            <ArrowUpToLine /> Bring to top
-          </ContextMenuItem>
-          <ContextMenuItem onClick={() => onMove("bottom")}>
-            <ArrowDownToLine /> Send to bottom
-          </ContextMenuItem>
-          {!def.core && (
-            <ContextMenuCheckboxItem checked={!!w.hideOnPhone} onCheckedChange={(v) => onPhone(!!v)}>
-              Hide on phones
-            </ContextMenuCheckboxItem>
-          )}
-        </ContextMenuGroup>
-        {!def.core && (
-          <>
-            <ContextMenuSeparator />
-            <ContextMenuItem variant="destructive" onClick={onRemove}>
-              <Trash2 /> Remove
-              <ContextMenuShortcut>⌫</ContextMenuShortcut>
-            </ContextMenuItem>
-          </>
-        )}
-      </ContextMenuContent>
-    </ContextMenu>
-  )
-}
-
-/** The editor's own chips on the canvas (a widget's name, its quick bar): near-black with white text and a fine light edge, the same on every theme. */
-// --ui-zoom undoes the canvas's scale, so the editor's chips keep their real size (24px buttons) however small the page is drawn.
-const EDITOR_CHIP = "[zoom:var(--ui-zoom,1)] bg-[#141416] text-white shadow-[0_0_0_1px_rgb(255_255_255/0.14),0_6px_16px_-6px_rgb(0_0_0/0.7)]"
-/** One button of the quick bar: 24px tall, a lighter fill on hover, the orange ring on keyboard focus. */
-const QUICK = "grid h-6 min-w-6 place-items-center rounded-md outline-none transition-[background-color,color,scale] duration-150 ease-out hover:bg-white/12 hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--ts-interactive)] active:scale-[0.94]"
-
-/** One widget on the builder grid: the real widget, plus its name and selection outline. */
-function GridWidget({ w, selected, available, onRemove, onDuplicate, onWidth }: { w: WidgetInstance; selected: boolean; available: boolean; onRemove: () => void; onDuplicate: () => void; onWidth?: (cols: number) => void }) {
-  const def = getWidget(w.type)
-  const { coach } = useCoach()
-  const groups = useGroups(coach)
-  if (!def) return null
-  const widths = !def.core && w.type !== "page-header" ? widthsFor(def, w.variant) : []
-  // Widgets with a visibility rule stay on the canvas, tagged with who sees them.
-  const rule = [w.show?.phase && PHASE_LABEL[w.show.phase], w.show?.group && (groups.find((g) => g.id === w.show?.group)?.name ?? "A group")].filter(Boolean).join(" · ")
-  return (
-    <div
-      className={cn(
-        // The editor's selection colour (white, --ts-interactive in the workspace), never a coach's: a selected widget always reads as selected.
-        "group/w relative flex cursor-grab flex-col rounded-[calc(var(--radius)+2px)] outline-[calc(1.5px*var(--ui-zoom,1))] outline-offset-2 outline-transparent hover:outline-[var(--ts-interactive)]/35 active:cursor-grabbing",
-        selected && "outline-[var(--ts-interactive)]",
-      )}
-    >
-      {/* Name, rule and quick actions sit on the card's top edge, half above it, so they never cover its header. .no-drag keeps
-          clicks on the actions from starting a drag; the actions also show while one of them has keyboard focus. */}
-      <div className="pointer-events-none absolute inset-x-2 top-0 z-20 flex -translate-y-[60%] items-center gap-1 font-[family-name:var(--ff-geist)]">
-        <span
-          // Its name on hover; once selected the inspector names it, and the quick bar takes the edge.
-          className={cn("min-w-0 truncate rounded-md px-1.5 py-0.5 text-[0.65rem] opacity-0 group-hover/w:opacity-100 data-[on=true]:hidden", EDITOR_CHIP)}
-          data-on={selected}
-          title={def.name}
-        >
-          {def.core && <Lock className="mr-1 inline size-2.5 align-[-1px]" />}
-          {def.core ? `${def.name} · main part of the page` : def.name}
-          {w.header && Object.keys(w.header).length > 0 && " · own header"}
-          {w.style && Object.values(w.style).some((v) => v !== undefined) && " · own style"}
-          {w.emphasis === "star" && " · Star"} · {WIDTH.find((o) => o.value === widthOf(w))?.label.toLowerCase()}
-        </span>
-        <span className="ml-auto" />
-        {rule && <span className="max-w-[45%] shrink-0 truncate rounded-[3px] bg-[var(--ts-interactive)] px-1.5 py-0.5 font-mono text-[10px] leading-none font-medium tracking-[0.04em] text-black uppercase">{rule}</span>}
-        {/* The quick bar: the width in one click (selected only), duplicate and remove. On the card's own top edge, so it never
-            covers the widget below; in the editor's colours, not the coach's, so it reads the same on every theme. */}
-        <div
-          role="toolbar"
-          aria-label={`${def.name} quick actions`}
-          className={cn("no-drag pointer-events-auto flex h-7 shrink-0 items-center gap-0.5 rounded-lg p-0.5 opacity-0 transition-opacity duration-150 group-hover/w:opacity-100 focus-within:opacity-100 data-[on=true]:opacity-100", EDITOR_CHIP)}
-          data-on={selected}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {w.hideOnPhone && (
-            <span className="flex items-center gap-1 px-1.5 text-white/60" title="Hidden on phones" aria-label="Hidden on phones">
-              <EyeOff className="size-3.5" />
-            </span>
-          )}
-          {selected && onWidth && widths.length > 1 && (
-            <>
-              <span role="radiogroup" aria-label="Width" className="flex items-center gap-0.5">
-                {WIDTH.filter((o) => widths.includes(o.value)).map((o) => {
-                  const on = widthOf(w) === o.value
-                  return (
-                    <button
-                      key={o.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={on}
-                      aria-label={o.label}
-                      title={o.label}
-                      onClick={() => onWidth(o.value)}
-                      className={cn(QUICK, "w-8", on ? "bg-white text-black hover:bg-white hover:text-black" : "text-white/75")}
-                    >
-                      <span aria-hidden className="grid h-2.5 w-5 grid-cols-3 gap-px">
-                        {[0, 1, 2].map((i) => (
-                          <span key={i} className={cn("rounded-[1px] bg-current", i >= o.value / 4 && "opacity-30")} />
-                        ))}
-                      </span>
-                    </button>
-                  )
-                })}
-              </span>
-              <span aria-hidden className="mx-0.5 h-4 w-px bg-white/15" />
-            </>
-          )}
-          {def.core ? (
-            <span className="flex items-center gap-1 px-1.5 text-[0.65rem] text-white/75">
-              <Lock className="size-3" /> Always on this page
-            </span>
-          ) : (
-            <>
-              <button type="button" aria-label={`Duplicate ${def.name}`} title="Duplicate" className={cn(QUICK, "text-white/75")} onClick={onDuplicate}>
-                <Copy className="size-3.5" />
-              </button>
-              <button type="button" aria-label={`Remove ${def.name}`} title="Remove (⌫)" className={cn(QUICK, "text-white/75 hover:text-[#ff6b6b]")} onClick={onRemove}>
-                <Trash2 className="size-3.5" />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-      <div className="pointer-events-none flex flex-col select-none">
-        {available ? (
-          <WidgetView w={w} />
-        ) : (
-          <div className="grid place-items-center rounded-(--radius) border border-dashed p-4 text-center text-xs text-muted-foreground">
-            {def.name} is hidden: its page is switched off in the Menu step.
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}

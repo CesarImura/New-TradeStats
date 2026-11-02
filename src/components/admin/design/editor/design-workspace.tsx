@@ -52,10 +52,15 @@ import { GuideDialog, VersionsSheet, useDraftEditor } from "./editor-shell"
 import { ArrangeCanvas, useArrange, type Device } from "./page-builder"
 import { CAN_SAVE_TEMPLATE, SaveTemplateDialog } from "./save-template"
 import { LookCards, MenuStep } from "./design-steps"
+import { JOIN_SCREENS, type JoinScreenId } from "@/lib/data/join"
+import { studentCourses, useCatalog } from "@/lib/data/learning"
+import { CourseInspector, CourseSections } from "../panels/course-panels"
+import { JoinInspector, JoinScreens } from "../panels/join-panels"
+import { PreviewFrame } from "./preview-frame"
 
 /** Design's sections, in the order a coach goes through them; the theme ones are the library's theme editor's. */
-type Step = "brand" | "look" | "type" | "shape" | "widgets" | "page" | "menu" | "pages"
-const STEP_IDS: Step[] = ["brand", "look", "type", "shape", "widgets", "page", "menu", "pages"]
+type Step = "brand" | "look" | "type" | "shape" | "widgets" | "page" | "menu" | "pages" | "course" | "join"
+const STEP_IDS: Step[] = ["brand", "look", "type", "shape", "widgets", "page", "menu", "pages", "course", "join"]
 
 /** Where a part clicked in the preview is set. */
 const STEP_OF: Record<string, Step> = {
@@ -126,6 +131,9 @@ export function DesignWorkspace() {
   const page = (pages.some((p) => p.id === pageAsked) ? pageAsked : "home") as PageId
   const [tier, setTier] = useState(params.get("tier") ?? "default")
   const [data, setData] = useState<DataMode>("sample")
+  // Join: which of the screens people pass through is on the canvas.
+  const [joinAsked, setJoinScreen] = useState(params.get("screen") ?? "login")
+  const joinScreen = (JOIN_SCREENS.some((x) => x.id === joinAsked) ? joinAsked : "login") as JoinScreenId
   const [device, setDevice] = useState<Device>("desktop")
   const [widget, setWidget] = useState<string | null>(params.get("w"))
   // The widget being dragged in from the gallery, with what was chosen in its details (if it came from there).
@@ -146,14 +154,14 @@ export function DesignWorkspace() {
   useEffect(() => {
     const u = new URL(window.location.href)
     u.searchParams.set("step", step)
-    for (const [k, v] of [["page", page !== "home" ? page : null], ["tier", tier !== "default" ? tier : null], ["w", widget], ["scope", step === "pages" && scope === "all" ? "all" : null]] as const) {
+    for (const [k, v] of [["page", page !== "home" ? page : null], ["tier", tier !== "default" ? tier : null], ["w", widget], ["scope", step === "pages" && scope === "all" ? "all" : null], ["screen", step === "join" && joinScreen !== "login" ? joinScreen : null]] as const) {
       if (v) u.searchParams.set(k, v)
       else u.searchParams.delete(k)
     }
     u.searchParams.delete("mode")
     u.searchParams.delete("panel")
     if (u.href !== window.location.href) window.history.replaceState(window.history.state, "", u)
-  }, [step, page, tier, widget, scope])
+  }, [step, page, tier, widget, scope, joinScreen])
   const panel = useRef<HTMLDivElement>(null)
   // Below 1280px the left sidebar starts as icons only (the page needs the room); wider, it is always open.
   const [narrow, setNarrow] = useState(false)
@@ -200,7 +208,11 @@ export function DesignWorkspace() {
   const fromSetup = params.get("from") === "setup"
   const pageInfo = arrange.pageInfo
   // Preview opens what the canvas shows, in every section: this page, for this tier, with this data.
-  const src = `${pageInfo.href}?preview=draft${tier !== "default" ? `&tier=${tier}` : ""}${data !== "sample" ? `&data=${data}` : ""}`
+  const joinInfo = JOIN_SCREENS.find((x) => x.id === joinScreen)!
+  // The course the Course step shows: the first one students can open.
+  const catalog = useCatalog(coach)
+  const previewCourse = studentCourses(catalog).find((c) => c.modules.length > 0) ?? catalog.courses[0]
+  const src = step === "join" ? `/site/${slug}/${joinInfo.route}?preview=draft` : step === "course" ? `/c/${slug}/courses/${previewCourse?.id ?? ""}?preview=draft` : `${pageInfo.href}?preview=draft${tier !== "default" ? `&tier=${tier}` : ""}${data !== "sample" ? `&data=${data}` : ""}`
   const checks = auditTheme(theme)
   const tierLabel = tier === "default" ? "Everyone" : (arrange.tierName ?? tier)
   const sel = arrange.selWidget
@@ -210,7 +222,11 @@ export function DesignWorkspace() {
   const selDef = sel && getWidget(sel.type)
   // The right panel (the inspector of Webflow, Framer and Figma): the selected widget, every widget's style, or the page.
   const inspector =
-    scope === "all" ? (
+    step === "join" ? (
+      <JoinInspector screen={joinScreen} />
+    ) : step === "course" ? (
+      <CourseInspector />
+    ) : scope === "all" ? (
       // A place of its own (not a switch on the widget's panel): the style every widget shares, with the way back.
       <AllWidgetsInspector draft={working.theme} onReset={resetTheme} onBack={() => setScope("one")} back={selDef ? selDef.name : pageInfo.label} own={own} />
     ) : sel ? (
@@ -225,6 +241,7 @@ export function DesignWorkspace() {
         onDuplicate={() => arrange.duplicateWidget(sel.id)}
         onRemove={() => arrange.removeWidget(sel.id)}
         onMove={(to) => arrange.moveTo(sel.id, to)}
+        phone={{ index: arrange.phoneList.indexOf(sel.id), total: arrange.phoneList.length, custom: !!arrange.layout.phoneOrder, onMove: (step) => arrange.movePhone(sel.id, step), onReset: arrange.resetPhoneOrder }}
         onClose={() => select(null)}
         onDrag={(o) => setIncoming(o ? { type: sel.type, opts: o } : null)}
         // The widget as the page starts (the template's page, before any edit): what its settings are compared with and Reset goes back to.
@@ -258,13 +275,15 @@ export function DesignWorkspace() {
     brand: { groups: [{ title: "Your platform", fields: ["logo", "name", "mode"], keys: ["mode"], words: "logo name platform light dark mode" }, ...THEME_GROUPS.colour] },
     look: { content: <LookTab /> },
     menu: { content: <MenuStep /> },
+    course: { content: <CourseSections /> },
+    join: { content: <JoinScreens screen={joinScreen} onScreen={setJoinScreen} /> },
     // No line under the title: the gallery speaks for itself.
     pages: { content: pagesContent, blurb: undefined },
     // Every widget's style is in Pages (All widgets); off the rail, still found by search.
   }).map((t) => (t.id === "widgets" ? { ...t, hidden: true, label: "All widgets" } : t))
 
   return (
-    <DesignProvider value={{ coach, theme, working, change, commit, keepVersion: (label) => keepVersion(slug, label, working) }}>
+    <DesignProvider value={{ coach, theme, working, change, commit, keepVersion: (label) => keepVersion(slug, label, working), undo: editor.undo }}>
       <StepCtx.Provider value={{ go }}>
         <ThumbStyles />
         {/* A screen of its own, over the admin: one menu (the editor's sections) instead of two side by side. */}
@@ -288,6 +307,16 @@ export function DesignWorkspace() {
             </div>
             {/* The same in every section: the canvas shows this page in all of them, so its name is always in sight. */}
             <div className="flex min-w-0 items-center justify-center gap-2 max-sm:col-span-2 max-sm:row-start-2">
+              {step === "course" ? (
+                <span className="truncate px-2.5 text-[0.9375rem] font-semibold" title="The page inside a course, the same for every course">
+                  Course page{previewCourse ? ` · ${previewCourse.title}` : ""}
+                </span>
+              ) : step === "join" ? (
+                // Join's screens aren't pages of the platform: they are chosen on the left, so here only a name, no list to open.
+                <span className="truncate px-2.5 text-[0.9375rem] font-semibold" title="Chosen on the left">
+                  Join · {joinInfo.label}
+                </span>
+              ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger render={<Button variant="ghost" className="min-w-0 gap-1.5 px-2.5 text-[0.9375rem] font-semibold" aria-label={`Page: ${pageInfo.label}. Change page`} title="The page you are editing" />}>
                   <span className="truncate">{pageInfo.label}</span>
@@ -308,6 +337,7 @@ export function DesignWorkspace() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+              )}
               <span aria-hidden className="h-5 w-px bg-white/10" />
               <DeviceSwitch value={device} onChange={setDevice} />
             </div>
@@ -414,6 +444,7 @@ export function DesignWorkspace() {
             {/* The platform. On Pages it's the widget grid; elsewhere, click a part to change it. */}
             <section className={cn("relative grid min-h-0 min-w-0 grid-cols-[minmax(0,1fr)_336px] grid-rows-[minmax(0,1fr)] overflow-hidden bg-[#2b2b2e]")}>
               <div className="relative min-h-0 min-w-0 overflow-hidden">
+                {step !== "join" && step !== "course" && (<>
                 {/* In the canvas's corner: whose layout of this page is on the canvas. Each tier can have its own; until then it uses Everyone's. */}
                 <div className="absolute top-3 left-3 z-30 flex h-10 items-center rounded-xl border border-white/10 bg-[#141416] p-1 text-white shadow-[0_12px_32px_-12px_rgb(0_0_0/0.8)]">
                   <DropdownMenu>
@@ -458,7 +489,10 @@ export function DesignWorkspace() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
+                </>)}
+                {step === "join" || step === "course" ? <PreviewFrame src={src} device={device} desktopWidth={1100} /> : (
                 <ArrangeCanvas arrange={arrange} coach={coach} theme={theme} device={device} data={data} incoming={incoming} onDropped={() => setIncoming(null)} allWidgets={scope === "all"} shell onPick={pick.pick} />
+                )}
               </div>
               {/* The inspector: always a column of its own, as in Framer; the page between the sidebars gives way. */}
               {/* Always there, in every section: the selected widget, every widget's style, or the page. */}

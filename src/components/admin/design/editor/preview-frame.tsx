@@ -15,14 +15,17 @@ export function PreviewFrame({
   src,
   device,
   frameRef,
+  desktopWidth,
 }: {
   src: string
   device: keyof typeof SIZES
+  /** A narrower desktop than the platform's 1440, for screens that are one card (Join): they read larger in the frame. */
+  desktopWidth?: number
   frameRef?: React.Ref<HTMLIFrameElement>
 }) {
   const box = useRef<HTMLDivElement>(null)
   const [space, setSpace] = useState({ w: 0, h: 0 })
-  const size = SIZES[device]
+  const size = device === "desktop" && desktopWidth ? { ...SIZES.desktop, w: desktopWidth } : SIZES[device]
 
   useEffect(() => {
     const el = box.current

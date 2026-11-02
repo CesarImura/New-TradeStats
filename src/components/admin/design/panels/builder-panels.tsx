@@ -399,7 +399,7 @@ function WidgetDetails({
       <div className="grid flex-1 content-start gap-6 px-1 pb-2">
         <div className="grid gap-3">
           <div {...drag(variant)} title="Drag onto the page" className="group/card relative cursor-grab overflow-hidden rounded-xl border p-1.5 active:cursor-grabbing">
-            <span aria-hidden className="pointer-events-none absolute top-3 right-3 z-10 flex items-center gap-1 rounded-md bg-black/75 py-0.5 pr-2 pl-1 text-[0.7rem] font-medium text-white shadow-sm backdrop-blur-sm">
+            <span aria-hidden className="pointer-events-none absolute top-3 right-3 z-10 flex items-center gap-1 rounded-md bg-black/75 py-0.5 pr-2 pl-1 text-[0.6875rem] font-medium text-white shadow-sm backdrop-blur-sm">
               <GripVertical className="size-3.5" /> Drag to page
             </span>
             <div data-thumb className="pointer-events-none overflow-hidden rounded-lg">
@@ -422,13 +422,13 @@ function WidgetDetails({
         )}
         {def.type !== "page-header" && widths.length > 1 && (
           <div className="grid gap-2">
-            <span className="text-[0.8rem] font-medium">Size</span>
+            <span className="text-[0.8125rem] font-medium">Size</span>
             <SizePicker value={pageWidth(w)} allowed={widths} onChange={setW} />
           </div>
         )}
         {def.variants.length > 1 && (
           <div className="grid gap-2">
-            <span className="text-[0.8rem] font-medium">Layout</span>
+            <span className="text-[0.8125rem] font-medium">Layout</span>
             <div role="radiogroup" aria-label="Layout" className="grid grid-cols-2 gap-2">
               {def.variants.map((v) => (
                 <ThumbCard
@@ -458,15 +458,15 @@ function WidgetDetails({
           </div>
         )}
         <div className="grid gap-2">
-          <span className="text-[0.8rem] font-medium">Detail</span>
+          <span className="text-[0.8125rem] font-medium">Detail</span>
           <Segmented label="How much it shows" value={detail} options={DETAIL.map((o) => ({ value: o.value, label: o.value === "compact" ? "Less" : o.value === "detailed" ? "More" : "Standard", hint: o.hint }))} onChange={setDetail} />
         </div>
         {choices.length > 0 && (
           <div className="grid gap-3">
-            <span className="text-[0.8rem] font-medium">Shows</span>
+            <span className="text-[0.8125rem] font-medium">Shows</span>
             {choices.map((s) =>
               s.type === "toggle" ? (
-                <label key={s.key} className="flex items-center justify-between gap-3 text-[0.8rem]">
+                <label key={s.key} className="flex items-center justify-between gap-3 text-[0.8125rem]">
                   {s.label}
                   <Switch checked={props[s.key] === undefined ? !!s.defaultOn : !!props[s.key]} onCheckedChange={(v) => setProps({ ...props, [s.key]: v })} />
                 </label>

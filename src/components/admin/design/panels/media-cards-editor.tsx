@@ -107,7 +107,7 @@ export function MediaCardsEditor({
   return (
     <div className="grid gap-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[0.8rem] font-medium">
+        <span className="text-[0.8125rem] font-medium">
           {label} <span className="text-muted-foreground tabular-nums">{list.filter((e) => !e.hidden).length}</span>
         </span>
         {saved && (
@@ -164,7 +164,7 @@ export function MediaCardsEditor({
                   )}
                 </span>
                 <button type="button" onClick={() => setOpen(expanded ? null : e.id)} className="grid min-w-0 flex-1 text-left outline-none focus-visible:underline" aria-expanded={expanded}>
-                  <span className={cn("truncate text-[0.8rem] font-medium", e.hidden && "text-muted-foreground line-through")}>{title}</span>
+                  <span className={cn("truncate text-[0.8125rem] font-medium", e.hidden && "text-muted-foreground line-through")}>{title}</span>
                   <span className="truncate text-xs text-muted-foreground">{e.hidden ? "Hidden" : e.ref ? (kind === "hero" && e.ref === "own" ? "Your headline" : "From your content") : `Your ${noun}`}</span>
                 </button>
                 <div className="flex shrink-0 items-center">

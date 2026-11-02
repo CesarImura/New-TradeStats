@@ -2,18 +2,18 @@
 
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
-import { ArrowDownToLine, ArrowRight, ArrowUpToLine, Check, ChevronRight, Copy, ImagePlus, Lock, MoreHorizontal, Plus, RotateCcw, Trash2, X } from "@/components/icons"
+import { ArrowDown, ArrowDownToLine, ArrowRight, ArrowUp, ArrowUpToLine, Check, ChevronRight, Copy, ImagePlus, Lock, MoreHorizontal, Plus, RotateCcw, Trash2, X } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { SelectOptions } from "@/components/kit/select-field"
-import { fitWidth, getWidget, heightFor, lookOf, pageWidth, settingsFor, styleParts, widthsFor } from "@/components/widgets/registry"
+import { fitWidth, getWidget, heightFor, lookOf, pageWidth, settingApplies, settingsFor, styleParts, widthsFor } from "@/components/widgets/registry"
 import { filledStar } from "@/components/widgets/parts/widget-scope"
 import { useGroups } from "@/lib/data/access"
 import { pictureFrom } from "@/lib/images"
 import { BACKDROPS, MIN_WIDGET_DIM, widgetDimOf } from "@/lib/theme/backdrops"
-import { chartStyleOf, figureStyleOf, headerFormOf, widgetFontOf, widgetHeaderOf, type CardSurface, type ChartStyle, type FigureStyle, type HeaderForm, type WidgetHeader } from "@/lib/theme/types"
+import { chartStyleOf, figureStyleOf, headerFormOf, widgetFontOf, widgetHeaderOf, widgetSetOf, type CardSurface, type ChartStyle, type FigureStyle, type HeaderForm, type WidgetHeader } from "@/lib/theme/types"
 import type { WidgetInstance, WidgetNote, WidgetOwnStyle } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { BOX, InspectorSection, Row, Segmented, SliderField, YesNo } from "../fields/controls"
@@ -31,10 +31,11 @@ const HEADER_NAME = { top: "Top", label: "Label", caption: "Caption", tag: "Tag"
 const CHART_NAME = { ticks: "Ticks", solid: "Solid", thin: "Thin", blocks: "Blocks", dots: "Dots" } as const
 const NUMBER_NAME = { plain: "Plain", marked: "Marked", display: "Display", mono: "Mono" } as const
 
-const SURFACES: { value: CardSurface; label: string; hint: string }[] = [
+const SURFACES: { value: CardSurface | "blended"; label: string; hint: string }[] = [
   { value: "raised", label: "Raised", hint: "The card colour, standing on the page" },
   { value: "grey", label: "Grey", hint: "A flat grey card on the page colour" },
   { value: "outline", label: "Outline", hint: "No fill, a fine line around it" },
+  { value: "blended", label: "Blended", hint: "No card: it sits right on the page" },
 ]
 const HEADER_FORMS: { value: HeaderForm; label: string }[] = (Object.keys(HEADER_NAME) as HeaderForm[]).map((value) => ({ value, label: HEADER_NAME[value] }))
 const CHARTS: { value: ChartStyle; label: string }[] = (Object.keys(CHART_NAME) as ChartStyle[]).map((value) => ({ value, label: CHART_NAME[value] }))
@@ -103,6 +104,7 @@ export function WidgetInspector({
   onClose,
   start,
   onDrag,
+  phone,
 }: {
   w: WidgetInstance
   /** The page's core widget: it can't be removed, duplicated or hidden. */
@@ -118,6 +120,8 @@ export function WidgetInspector({
   start?: WidgetInstance
   /** A layout dragged onto the page adds another widget of this type in that layout (starts with what it adds, ends with null). */
   onDrag?: (opts: AddOptions | null) => void
+  /** Where phones show this widget, and how to change it. */
+  phone?: PhoneOrder
 }) {
   const def = getWidget(w.type)!
   const look = lookOf(def, w.variant)
@@ -193,7 +197,7 @@ export function WidgetInspector({
       <StyleTab part="layout" w={w} pinned={pinned} start={start} onChange={onChange} onDrag={onDrag} onAllWidgets={() => onScope("all")} count={count} />
       <ContentTab w={w} pinned={pinned} onChange={onChange} part="content" />
       <StyleTab part="style" w={w} pinned={pinned} start={start} onChange={onChange} onDrag={onDrag} onAllWidgets={() => onScope("all")} count={count} />
-      <ContentTab w={w} pinned={pinned} onChange={onChange} part="visibility" />
+      <ContentTab w={w} pinned={pinned} onChange={onChange} part="visibility" phone={phone} />
     </div>
   )
 }
@@ -249,7 +253,7 @@ function StyleTab({
   const shown = caps.shows.includes(detail) ? detail : "standard"
   const form = own.headerForm ?? headerFormOf(theme)
   const canShow = headerParts(caps, form, detail)
-  const surface = own.surface ?? theme.cardSurface ?? "raised"
+  const surface = own.surface ?? (widgetSetOf(theme) === "open" ? "blended" : (theme.cardSurface ?? "raised"))
   const figure = own.figureStyle ?? (widgetFontOf(theme) === "mono" ? "mono" : figureStyleOf(theme))
   const setStyle = useOwnStyle(w, onChange)
   const ownHeader = !!w.header && Object.keys(w.header).length > 0
@@ -340,7 +344,7 @@ function StyleTab({
         )}
         <Row label="Card" hint={SURFACES.find((o) => o.value === surface)?.hint} own={!!own.surface} from="all widgets" onReset={() => setStyle({ surface: undefined }, "surface")} stack>
           {/* A choice of shape: pictures (the editor's rule), the rest in words. */}
-          <OptionTiles label="Card" value={surface} onChange={(v) => setStyle({ surface: v }, "surface")} options={SURFACES.map((o) => ({ value: o.value, label: o.label, hint: o.hint, art: <CardArt surface={o.value} /> }))} />
+          <OptionTiles label="Card" cols={2} value={surface} onChange={(v) => setStyle({ surface: v }, "surface")} options={SURFACES.map((o) => ({ value: o.value, label: o.label, hint: o.hint, art: <CardArt surface={o.value} /> }))} />
         </Row>
         <OwnBackground w={w} onChange={onChange} />
         {!pinned && caps.header && (caps.titleStyle || canShow.length > 0) && (
@@ -503,7 +507,9 @@ function OwnBackground({ w, onChange }: { w: WidgetInstance; onChange: (patch: P
 }
 
 /** The widget's own fields (from the registry), the coach's own text, button and picture, and who sees it. */
-function ContentTab({ w, pinned, onChange, part }: { w: WidgetInstance; pinned?: boolean; onChange: (patch: Partial<WidgetInstance>, key: string) => void; part: "content" | "visibility" }) {
+export type PhoneOrder = { index: number; total: number; custom: boolean; onMove: (step: -1 | 1) => void; onReset: () => void }
+
+function ContentTab({ w, pinned, onChange, part, phone }: { w: WidgetInstance; pinned?: boolean; onChange: (patch: Partial<WidgetInstance>, key: string) => void; part: "content" | "visibility"; phone?: PhoneOrder }) {
   const def = getWidget(w.type)!
   const { coach } = useDesign()
   const groups = useGroups(coach)
@@ -518,13 +524,14 @@ function ContentTab({ w, pinned, onChange, part }: { w: WidgetInstance; pinned?:
   const variant = lookOf(def, w.variant).value
   // A field this layout draws only with More waits for More, and says so (as the header's description does).
   const all = settingsFor(def, w.variant)
-  const settings = all.filter((s) => !s.more?.includes(variant) || w.detail === "detailed")
-  const later = all.filter((s) => !settings.includes(s))
+  const unlocked = all.filter((s) => !s.more?.includes(variant) || w.detail === "detailed")
+  const settings = unlocked.filter((s) => settingApplies(def, s, props))
+  const later = all.filter((s) => !unlocked.includes(s))
   const free = !pinned && def.type !== "page-header"
   // Only where the layout draws it: the coach's own text, button and picture.
   const drawsNote = free && capsOf(w.type, variant).note
   if (part === "visibility")
-    return free ? <Visibility w={w} onChange={onChange} groups={groups} setShow={setShow} select={select} /> : null
+    return free ? <Visibility w={w} onChange={onChange} groups={groups} setShow={setShow} select={select} phone={phone} /> : null
   return (
     <>
       {/* One block for everything the widget says: its own fields, then the coach's extra text, button or picture. */}
@@ -616,7 +623,7 @@ function ContentTab({ w, pinned, onChange, part }: { w: WidgetInstance; pinned?:
 /** A control that can't be used right now: dimmed, dashed edge, not-allowed cursor. */
 const DISABLED = "cursor-not-allowed border-dashed opacity-40"
 
-function Visibility({ w, onChange, groups, setShow, select }: { w: WidgetInstance; onChange: (patch: Partial<WidgetInstance>, key: string) => void; groups: { id: string; name: string }[]; setShow: (k: "phase" | "group", v: string) => void; select: string }) {
+function Visibility({ w, onChange, groups, setShow, select, phone }: { w: WidgetInstance; onChange: (patch: Partial<WidgetInstance>, key: string) => void; groups: { id: string; name: string }[]; setShow: (k: "phase" | "group", v: string) => void; select: string; phone?: PhoneOrder }) {
   // Hidden: who sees it doesn't apply, so Phase and Group stay in view, plainly off (dimmed, dashed, no pointer), with why.
   const off = !!w.hideOnPhone
   return (
@@ -632,6 +639,18 @@ function Visibility({ w, onChange, groups, setShow, select }: { w: WidgetInstanc
             ]}
           />
         </Row>
+        {phone && !off && phone.index >= 0 && (
+          <Row label="Order on phones" hint={phone.custom ? `Number ${phone.index + 1} of ${phone.total}, set for phones` : `Number ${phone.index + 1} of ${phone.total}, same as the desktop`} own={phone.custom} onReset={phone.onReset} from="desktop order">
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1" disabled={phone.index === 0} onClick={() => phone.onMove(-1)}>
+                <ArrowUp /> Earlier
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1" disabled={phone.index === phone.total - 1} onClick={() => phone.onMove(1)}>
+                <ArrowDown /> Later
+              </Button>
+            </div>
+          </Row>
+        )}
         <Row label="Phase" hint={off ? "Hidden on phones: shown again with Show" : "Show it only in one phase of a student's life"} own={!!w.show?.phase} onReset={() => setShow("phase", "")} from="everyone">
           <SelectOptions disabled={off} value={w.show?.phase ?? ""} aria-label="Phase" onChange={(e) => setShow("phase", e.target.value)} className={cn(select, off && DISABLED)}>
             {PHASES.map((o) => (

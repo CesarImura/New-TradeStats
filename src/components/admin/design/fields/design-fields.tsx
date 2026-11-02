@@ -14,7 +14,8 @@ import { onColor } from "@/lib/theme/derive"
 import { pictureFrom } from "@/lib/images"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
-import { chartStyleOf, headerFormOf, widgetFinishOf, type CoachTheme, type TemplateId } from "@/lib/theme/types"
+import { chartStyleOf, headerFormOf, widgetFinishOf, type CoachTheme, type NavFill, type TemplateId } from "@/lib/theme/types"
+import { brandMenuReads, navFillOf } from "@/lib/theme/nav-fill"
 import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { BackgroundControl } from "./background-control"
@@ -41,6 +42,8 @@ export type DesignCtx = {
   commit: (next: Overrides, key: string) => void
   /** Keeps the design as it is now in Earlier versions (the Design editor; the wizard and the lab have none). */
   keepVersion?: (label: string) => void
+  /** Goes back one step (the Design editor), so a toast can offer Undo right after a big change. */
+  undo?: () => void
 }
 
 const Ctx = createContext<DesignCtx | null>(null)
@@ -500,6 +503,23 @@ function NavFrameField() {
   )
 }
 
+/** The menu's background: the page colour (as it is), a wash of the brand, the brand colour, or nothing. Brand only when its text reads on it. */
+function NavFillField() {
+  const { theme, change } = useDesign()
+  const now = navFillOf(theme)
+  const options: { value: NavFill; label: string; hint: string }[] = [
+    { value: "page", label: "Page", hint: "The same colour as the page" },
+    { value: "tint", label: "Tinted", hint: "A light wash of your brand colour" },
+    ...(brandMenuReads(theme) ? [{ value: "brand" as const, label: "Brand", hint: "Your brand colour, with text that reads on it" }] : []),
+    { value: "clear", label: "Clear", hint: "No fill and no line: the page background shows through" },
+  ]
+  return (
+    <Field id="nav-fill" label="Menu background">
+      <Segmented label="Menu background" value={now} onChange={(fill) => change({ theme: { nav: { fill } } }, "nav-fill")} options={options} />
+    </Field>
+  )
+}
+
 function NavLogoField() {
   const { theme, change } = useDesign()
   if (theme.nav.layout !== "top") return null
@@ -624,6 +644,7 @@ const FIELDS: Record<string, () => React.ReactNode> = {
   "nav-style": NavStyleField,
   "nav-logo": NavLogoField,
   "nav-frame": NavFrameField,
+  "nav-fill": NavFillField,
   "menu-items": MenuItemsField,
   wording: WordingField,
 }

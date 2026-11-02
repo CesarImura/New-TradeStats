@@ -18,7 +18,7 @@ import { move, useDesign } from "./design-fields"
  */
 
 const HINT_ID = "menu-sort-hint"
-type Sort = { controls: DragControls; id: MenuId; name: string; onKey: (e: React.KeyboardEvent) => void }
+type Sort = { controls: DragControls; id: string; name: string; onKey: (e: React.KeyboardEvent) => void }
 const SortContext = createContext<Sort | null>(null)
 
 /** The row's handle, when it is in a sortable list (null elsewhere, e.g. the setup's page list). */
@@ -45,11 +45,11 @@ export const SWITCH_OFF =
   "data-unchecked:border-[color-mix(in_oklab,var(--foreground)_45%,transparent)]! data-unchecked:bg-[color-mix(in_oklab,var(--foreground)_10%,transparent)]! *:data-unchecked:bg-muted-foreground!"
 
 /** How to reorder, for the line above the list (the handles point to it). */
-export function SortHint() {
+export function SortHint({ home = true }: { home?: boolean } = {}) {
   return (
     // Read by screen readers (each handle points to it); sighted coaches see the grip and the drag.
     <p id={HINT_ID} className="sr-only">
-      Drag <GripVertical className="inline size-3.5 align-[-3px]" /> to reorder, or focus it and press ↑ ↓. Home always comes first.
+      Drag <GripVertical className="inline size-3.5 align-[-3px]" /> to reorder, or focus it and press ↑ ↓.{home && " Home always comes first."}
     </p>
   )
 }
@@ -91,22 +91,35 @@ export function FixedFirst() {
  * The menu's items in order, each rendered by `row`, sortable by handle. The
  * order shown while dragging is local; the draft changes once, on drop.
  */
-export function SortableMenu({ items, nameOf, row }: { items: MenuId[]; nameOf: (id: MenuId) => string; row: (id: MenuId) => React.ReactNode }) {
+export function SortableMenu<T extends string = MenuId>({
+  items,
+  nameOf,
+  row,
+  onSave,
+}: {
+  items: T[]
+  nameOf: (id: T) => string
+  row: (id: T) => React.ReactNode
+  /** Saves a new order (a list other than the menu: the course page's sections). Without it, the order is the menu's. */
+  onSave?: (next: T[], key: string) => void
+}) {
   const { change } = useDesign()
-  const [order, setOrder] = useState<MenuId[] | null>(null)
-  const latest = useRef<MenuId[] | null>(null)
-  const [moved, setMoved] = useState<{ id: MenuId; n: number } | null>(null)
+  const [order, setOrder] = useState<T[] | null>(null)
+  const latest = useRef<T[] | null>(null)
+  const [moved, setMoved] = useState<{ id: T; n: number } | null>(null)
   const [said, setSaid] = useState("")
   // Counts moves: each one is its own undo step and its own flash.
   const moves = useRef(0)
   const list = order ?? items
 
-  const save = (next: MenuId[], id: MenuId) => {
+  const save = (next: T[], id: T) => {
     if (next.join() === items.join()) return
     moves.current += 1
-    change({ content: { menu: next } }, `menu-sort-${moves.current}`)
-    // Home is first in the student menu, so positions count from 2.
-    setSaid(`${nameOf(id)} moved to place ${next.indexOf(id) + 2} of ${next.length + 1}.`)
+    if (onSave) onSave(next, `sort-${moves.current}`)
+    else change({ content: { menu: next as unknown as MenuId[] } }, `menu-sort-${moves.current}`)
+    // Home is first in the student menu, so its positions count from 2.
+    const home = onSave ? 0 : 1
+    setSaid(`${nameOf(id)} moved to place ${next.indexOf(id) + 1 + home} of ${next.length + home}.`)
     setMoved({ id, n: moves.current })
   }
 
@@ -116,7 +129,7 @@ export function SortableMenu({ items, nameOf, row }: { items: MenuId[]; nameOf: 
         as="div"
         axis="y"
         values={list}
-        onReorder={(next: MenuId[]) => {
+        onReorder={(next: T[]) => {
           latest.current = next
           setOrder(next)
         }}
@@ -153,7 +166,7 @@ export function SortableMenu({ items, nameOf, row }: { items: MenuId[]; nameOf: 
   )
 }
 
-function SortItem({ id, name, flash, onDrop, onMove, children }: { id: MenuId; name: string; flash: number; onDrop: () => void; onMove: (by: number) => void; children: React.ReactNode }) {
+function SortItem({ id, name, flash, onDrop, onMove, children }: { id: string; name: string; flash: number; onDrop: () => void; onMove: (by: number) => void; children: React.ReactNode }) {
   const controls = useDragControls()
   const reduce = useReducedMotion()
   const ref = useRef<HTMLDivElement>(null)

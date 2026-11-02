@@ -254,15 +254,15 @@ export function PagesCanvas() {
                 {/* The label keeps a readable size at any zoom. */}
                 <div
                   className={cn(
-                    "absolute bottom-full left-0 flex origin-bottom-left items-center gap-1.5 pb-2 text-[13px] whitespace-nowrap",
+                    "absolute bottom-full left-0 flex origin-bottom-left items-center gap-1.5 pb-2 text-[0.8125rem] whitespace-nowrap",
                     on ? "text-foreground" : "text-muted-foreground",
                   )}
                   style={{ transform: `scale(${1 / cam.z})` }}
                 >
                   <Icon className="size-3.5" />
                   <span className="font-medium text-foreground">{p.label}</span>
-                  {p.id !== "home" && <span className="font-mono text-[11px]">{p.href.replace(`/c/${slug}`, "")}</span>}
-                  {p.id === "home" && <span className="rounded bg-foreground/8 px-1.5 py-0.5 text-[11px]">Widgets</span>}
+                  {p.id !== "home" && <span className="font-mono text-[0.6875rem]">{p.href.replace(`/c/${slug}`, "")}</span>}
+                  {p.id === "home" && <span className="rounded bg-foreground/8 px-1.5 py-0.5 text-[0.6875rem]">Widgets</span>}
                 </div>
                 <div
                   data-page={i}

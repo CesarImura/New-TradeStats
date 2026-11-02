@@ -7,7 +7,7 @@ import { chartStyleOf, headerFormOf, panelStyleOf, widgetFinishOf, widgetFontOf,
 import { cn } from "@/lib/utils"
 import { InspectorSection, Row, Segmented, SliderField } from "../fields/controls"
 import { useDesign } from "../fields/design-fields"
-import { NUMBERS, PANELS, StylePresetField, SURFACES, type SurfaceId } from "../fields/settings-fields"
+import { NUMBERS, PANELS, StylePresetField, SURFACES, surfaceOf, type SurfaceId } from "../fields/settings-fields"
 import { chip } from "../states"
 import { CardArt, OptionTiles } from "../thumbs/option-art"
 import { changedIn } from "./settings-panel"
@@ -66,7 +66,7 @@ export function AllWidgetsInspector({ draft, onReset, onBack, back, own }: { dra
   })
   const set = (patch: ThemeDraft, key: string) => change({ theme: patch }, key)
   const changed = (...keys: (keyof ThemeDraft)[]) => changedIn(draft, keys)
-  const surface: SurfaceId = theme.cardSurface ?? "raised"
+  const surface: SurfaceId = surfaceOf(theme)
   const header = widgetHeaderOf(theme)
   const form = headerFormOf(theme)
   const numbers = widgetFontOf(theme) === "mono" ? "mono" : figureStyleOf(theme)
@@ -86,7 +86,7 @@ export function AllWidgetsInspector({ draft, onReset, onBack, back, own }: { dra
       <InspectorSection title="Card">
         <Row label="Card" hint={SURFACES.find((s) => s.id === surface)?.hint} own={changed("widgetSet", "cardSurface")} onReset={() => onReset(["widgetSet", "cardSurface", "shadow"])} from="the look" stack>
           {/* A choice of shape: pictures (the editor's rule), the rest in words. */}
-          <OptionTiles label="Card" value={surface} onChange={(v) => set(SURFACES.find((s) => s.id === v)!.set, "surface")} options={SURFACES.map((s) => ({ value: s.id, label: s.label, hint: s.hint, art: <CardArt surface={s.id} /> }))} />
+          <OptionTiles label="Card" cols={2} value={surface} onChange={(v) => set(SURFACES.find((s) => s.id === v)!.set, "surface")} options={SURFACES.map((s) => ({ value: s.id, label: s.label, hint: s.hint, art: <CardArt surface={s.id} /> }))} />
         </Row>
         {/* Only raised cards take a shadow: the row shows then, so it never does nothing. */}
         {surface === "raised" && (

@@ -40,7 +40,7 @@ export function Section({ title, children }: { title?: string; children: React.R
  * `templates`: the note on which template the coach is on, and the palette tool.
  */
 export function LookCards({ suggested, templates = true }: { suggested?: TemplateId; templates?: boolean }) {
-  const { theme, change } = useDesign()
+  const { theme, change, undo } = useDesign()
   const active = currentLook(theme)
   const [ask, dialog] = useConfirmSwitch()
   return (
@@ -58,7 +58,7 @@ export function LookCards({ suggested, templates = true }: { suggested?: Templat
               active?.id !== l.id &&
               ask(l.name, () => {
                 change({ theme: { template: l.template, ...l.set } }, "look")
-                toast(`${l.name} look applied. Your colours and logo stay.`)
+                toast(`${l.name} look applied. Your colours and logo stay.`, undo ? { action: { label: "Undo", onClick: undo } } : undefined)
               })
             }
           />
@@ -89,6 +89,9 @@ export function MenuStep() {
           <DesignField id="nav-frame" />
           <DesignField id="nav-style" />
           <DesignField id="nav-logo" />
+        </More>
+        <More label="Menu background">
+          <DesignField id="nav-fill" />
         </More>
         <More label="What you call things">
           <DesignField id="wording" />
@@ -133,7 +136,7 @@ export function LookCard({ look, theme, selected, fits, onSelect }: { look: Look
           {look.name}
           {selected && <Check className="size-3 text-[var(--ts-interactive)]" />}
           {fits && (
-            <Badge variant="outline" className={cn(mono, "ml-auto h-5 border-[var(--ts-interactive)]/50 text-[0.58rem] text-[var(--ts-interactive)]")}>
+            <Badge variant="outline" className={cn(mono, "ml-auto h-5 border-[var(--ts-interactive)]/50 text-[0.6875rem] text-[var(--ts-interactive)]")}>
               Fits you
             </Badge>
           )}

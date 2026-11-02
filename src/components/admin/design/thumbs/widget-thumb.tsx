@@ -193,7 +193,7 @@ export function ThumbCard({
         {dragHint && (
           <span
             aria-hidden
-            className="pointer-events-none absolute top-1.5 right-1.5 flex items-center gap-1 rounded-md bg-black/75 py-0.5 pr-2 pl-1 text-[0.7rem] font-medium text-white opacity-0 shadow-sm backdrop-blur-sm transition-opacity duration-150 group-hover/card:opacity-100 group-focus-visible/card:opacity-100"
+            className="pointer-events-none absolute top-1.5 right-1.5 flex items-center gap-1 rounded-md bg-black/75 py-0.5 pr-2 pl-1 text-[0.6875rem] font-medium text-white opacity-0 shadow-sm backdrop-blur-sm transition-opacity duration-150 group-hover/card:opacity-100 group-focus-visible/card:opacity-100"
           >
             <GripVertical className="size-3.5" /> Drag to page
           </span>

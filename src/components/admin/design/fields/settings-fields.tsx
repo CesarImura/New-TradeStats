@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, ImagePlus } from "lucide-react"
+import { Check, ImagePlus } from "@/components/icons"
 import { useRef, useState } from "react"
 import type { ThemeDraft } from "@/lib/prototype-store"
 import { toast } from "sonner"
@@ -211,12 +211,15 @@ export function LogoColoursField() {
 
 /* ---------- Card: how each widget sits on the page, as pictures ---------- */
 
-export type SurfaceId = "raised" | "grey" | "outline"
+export type SurfaceId = "raised" | "grey" | "outline" | "blended"
 export const SURFACES: { id: SurfaceId; label: string; hint: string; set: ThemeDraft }[] = [
   { id: "raised", label: "Raised", hint: "Cards stand on the page", set: { widgetSet: "cards", cardSurface: "raised" } },
   { id: "grey", label: "Grey", hint: "Flat grey cards on the page colour", set: { widgetSet: "cards", cardSurface: "grey" } },
   { id: "outline", label: "Outline", hint: "No fill, a fine line around each", set: { widgetSet: "cards", cardSurface: "outline" } },
+  { id: "blended", label: "Blended", hint: "No card: widgets sit right on the page", set: { widgetSet: "open" } },
 ]
+/** The surface a theme draws: Blended when widgets have no box, else the card surface. */
+export const surfaceOf = (t: CoachTheme): SurfaceId => (widgetSetOf(t) === "open" ? "blended" : (t.cardSurface ?? "raised"))
 
 /**
  * One choice for how widgets sit on the page: three kinds of card. Raised cards also take a shadow, shown only
@@ -224,12 +227,12 @@ export const SURFACES: { id: SurfaceId; label: string; hint: string; set: ThemeD
  */
 export function SurfaceField() {
   const { theme, change } = useDesign()
-  const now: SurfaceId = theme.cardSurface ?? "raised"
+  const now = surfaceOf(theme)
   const pick = SURFACES.find((s) => s.id === now)!
   return (
     <div className="grid gap-5">
       <Field id="widget-set" label="Widgets" hint={pick.hint}>
-        <OptionTiles label="Widgets" value={now} onChange={(v) => change({ theme: SURFACES.find((s) => s.id === v)!.set }, "surface")} options={SURFACES.map((s) => ({ value: s.id, label: s.label, hint: s.hint, art: <CardArt surface={s.id} /> }))} />
+        <OptionTiles label="Widgets" cols={2} value={now} onChange={(v) => change({ theme: SURFACES.find((s) => s.id === v)!.set }, "surface")} options={SURFACES.map((s) => ({ value: s.id, label: s.label, hint: s.hint, art: <CardArt surface={s.id} /> }))} />
       </Field>
       {now === "raised" && <ShadowField />}
     </div>
