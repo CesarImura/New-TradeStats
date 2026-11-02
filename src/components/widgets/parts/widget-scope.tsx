@@ -30,7 +30,8 @@ export function ownTheme(theme: CoachTheme, type: string, style: WidgetOwnStyle 
   if (!style) return theme
   const parts = styleParts(type)
   const t: CoachTheme = { ...theme }
-  if (style.surface) t.cardSurface = style.surface
+  // Blended is not a card surface: the widget keeps the card colours and drops the box (data-blended, globals.css).
+  if (style.surface && style.surface !== "blended") t.cardSurface = style.surface
   if (style.headerForm) t.headerForm = style.headerForm
   if (style.chartStyle && parts.chart) t.chartStyle = style.chartStyle
   if (style.figureStyle && parts.figure) {
@@ -68,7 +69,7 @@ export function WidgetStyleScope({ type, style, emphasis, children }: { type: st
     const vars = Object.fromEntries(KEYS.map((k) => [k, all[k]]))
     // A tone changes the card's colour, not how it stands: shadow and edge stay those of its own surface (a Grey card stays flat).
     if (own.cardTone) {
-      const surface = themeVars({ ...own, cardTone: undefined, cardSurface: style?.surface ?? theme?.cardSurface })
+      const surface = themeVars({ ...own, cardTone: undefined, cardSurface: style?.surface === "blended" ? theme?.cardSurface : (style?.surface ?? theme?.cardSurface) })
       vars["--card-shadow"] = surface["--card-shadow"]
       vars["--card-edge"] = surface["--card-edge"]
     }
@@ -80,12 +81,13 @@ export function WidgetStyleScope({ type, style, emphasis, children }: { type: st
     () => (image && theme && !filledStar(theme, emphasis) && styleParts(type).image ? { style: pictureOf(image), dim: widgetDimOf(dim) } : null),
     [image, dim, emphasis, type, theme],
   )
-  if (!ctx || !own || !vars) return <>{children}</>
+  const blended = style?.surface === "blended"
+  if (!ctx || !own || !vars) return blended ? <div className="contents" data-blended="">{children}</div> : <>{children}</>
   return (
     <CoachContext.Provider value={{ ...ctx, theme: own }}>
       <WidgetPictureContext.Provider value={picture}>
         {/* data-own-card: the widget chose its own card (surface, tone or picture), so an Open page still draws it (globals.css). */}
-        <div className="contents" style={vars} data-own-card={style?.surface || own.cardTone || picture ? "" : undefined}>
+        <div className="contents" style={vars} data-own-card={(style?.surface && !blended) || own.cardTone || picture ? "" : undefined} data-blended={blended ? "" : undefined}>
           {children}
         </div>
       </WidgetPictureContext.Provider>

@@ -432,7 +432,7 @@ export function StepChart({ series, format = (v) => v.toLocaleString("en"), heig
           }}
         >
           {series.map((s, k) => (
-            <span key={k} className="flex items-center gap-1.5 text-[0.75rem] leading-4">
+            <span key={k} className="flex items-center gap-1.5 text-xs leading-4">
               <i className="r-chip size-2 shrink-0" style={{ background: k === 0 ? accent : (s.color ?? GREY[k]) }} />
               <span className="text-muted-foreground">{s.label ?? (k === 0 ? "You" : "Compare")}</span>
               <span className="ml-auto pl-3 font-medium">{format(s.values[at])}</span>

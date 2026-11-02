@@ -186,7 +186,7 @@ function GridCard({ item, shape }: { item: MediaItem; shape: Shape }) {
               <span className={cn(TYPE.small, "truncate tabular-nums")}>{shows(item, "progress") ? item.status : ""}</span>
             )}
             {shows(item, "button") && (
-              <span className="inline-flex shrink-0 items-center gap-1 text-[0.75rem] leading-4 font-medium text-card-foreground">
+              <span className="inline-flex shrink-0 items-center gap-1 text-xs leading-4 font-medium text-card-foreground">
                 <span className="max-w-[10rem] truncate">{ctaOf(item)}</span>
                 <ArrowRight className="size-3.5 transition-transform duration-300 group-hover/card:translate-x-0.5" />
               </span>

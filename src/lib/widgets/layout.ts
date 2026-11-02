@@ -42,7 +42,8 @@ export type WidgetTone = "brand" | "highlight"
  * colour (dim, never below MIN_WIDGET_DIM), so text stays readable. The Star widget keeps its own surface.
  */
 export type WidgetOwnStyle = {
-  surface?: CardSurface
+  /** A card surface, or "blended": this widget sits straight on the page (no box, no line) whatever All widgets says. */
+  surface?: CardSurface | "blended"
   headerForm?: HeaderForm
   chartStyle?: ChartStyle
   figureStyle?: FigureStyle
@@ -81,6 +82,8 @@ export type PageLayout = {
   titleRemoved?: boolean
   /** Arranged on the free grid: each widget keeps the column it was put in (x), in order (y). Before, columns were automatic. */
   free?: boolean
+  /** The phone's own order (widget ids). Unset: phones follow the desktop order. */
+  phoneOrder?: string[]
 }
 
 /** One page's layouts: "default" plus optional per-tier versions. */
@@ -99,6 +102,15 @@ export const uid = () => Math.random().toString(36).slice(2, 10)
 
 /** Reading order: top to bottom, then left to right. */
 export const readingOrder = (items: WidgetInstance[]) => [...items].sort((a, b) => a.y - b.y || a.x - b.x)
+
+/** The order a phone shows: the phone's own list first, then any widget it doesn't name (new ones) in reading order. */
+export const phoneSequence = (items: WidgetInstance[], order?: string[]) => {
+  const reading = readingOrder(items)
+  if (!order?.length) return reading
+  const rank = new Map(order.map((id, i) => [id, i]))
+  const named = reading.filter((w) => rank.has(w.id)).sort((a, b) => rank.get(a.id)! - rank.get(b.id)!)
+  return [...named, ...reading.filter((w) => !rank.has(w.id))]
+}
 
 type LegacyWidget = { id: string; type: string; variant?: string; span?: number; props?: Record<string, string | boolean>; hideOnPhone?: boolean }
 type LegacySection = { widgets?: LegacyWidget[]; slots?: LegacyWidget[][]; columns?: string }

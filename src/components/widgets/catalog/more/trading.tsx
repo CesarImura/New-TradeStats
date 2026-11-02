@@ -44,7 +44,7 @@ function SortHead({ k, sort, dir, onSort, children, right }: { k: SortKey; sort:
     <th className={cn("h-8 px-2 font-medium", right ? "text-right" : "text-left")} aria-sort={on ? (dir === 1 ? "ascending" : "descending") : "none"}>
       <button type="button" onClick={() => onSort(k)} className={cn("inline-flex items-center gap-1 rounded-sm transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-(--brand-mark)", on && "text-foreground")}>
         {children}
-        <span aria-hidden className={cn("text-[0.625rem]", !on && "opacity-0")}>
+        <span aria-hidden className={cn("text-[0.6875rem]", !on && "opacity-0")}>
           {dir === 1 ? "▲" : "▼"}
         </span>
       </button>

@@ -45,7 +45,7 @@ export function Leaderboard({ variant = "table" }: WidgetProps) {
     <th className={cn("h-8 px-2 text-right font-medium", className)} aria-sort={sort === k ? "descending" : "none"}>
       <button type="button" onClick={() => setSort(k)} className={cn("rounded-sm transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-(--brand-mark)", sort === k && "text-foreground")}>
         {label}
-        <span aria-hidden className={cn("ml-0.5 text-[0.625rem]", sort !== k && "opacity-0")}>
+        <span aria-hidden className={cn("ml-0.5 text-[0.6875rem]", sort !== k && "opacity-0")}>
           ▼
         </span>
       </button>
@@ -81,7 +81,7 @@ export function Leaderboard({ variant = "table" }: WidgetProps) {
               </td>
               <td className="px-2">
                 <span className="flex items-center gap-2">
-                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-muted text-[0.625rem] font-medium">{x.initials}</span>
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-muted text-[0.6875rem] font-medium">{x.initials}</span>
                   <span className={cn("truncate", x.me && "font-medium")}>{x.name}</span>
                 </span>
               </td>

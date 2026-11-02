@@ -2,7 +2,7 @@
 
 import { useCoach } from "@/components/coach/coach-provider"
 import type { Coach } from "@/lib/data/coaches"
-import { GAP, ROW_HEIGHT, readingOrder, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
+import { GAP, ROW_HEIGHT, phoneSequence, readingOrder, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { widgetFinishOf, widgetSetOf } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
@@ -31,7 +31,7 @@ export function PageRenderer({ layout, page = "home", live }: { layout: PageLayo
   return (
     <PageIdContext.Provider value={page}>
     <PageTitleShownContext.Provider value={!items.some((w) => w.type === "page-header")}>
-      <WidgetGrid items={items} free={layout.free} render={(w) => <WidgetView w={w} live={live} />} />
+      <WidgetGrid items={items} free={layout.free} phoneOrder={layout.phoneOrder} render={(w, fixed) => <WidgetView w={w} live={live} fixed={fixed} />} />
     </PageTitleShownContext.Provider>
     </PageIdContext.Provider>
   )
@@ -51,9 +51,9 @@ export const widthOf = (w: WidgetInstance) => {
 export const spanOf = (w: WidgetInstance, cols: number) => Math.min(cols, isBand(w, 3) ? 3 : widthOf(w) >= 8 ? 2 : 1)
 
 /** The height a card is drawn at before it is measured: an estimate from its layout. */
-const estimate = (w: WidgetInstance, gap: number) => {
+export const estimate = (w: WidgetInstance, gap: number) => {
   const def = getWidget(w.type)
-  return def ? heightFor(def, w.variant, w.detail) * (ROW_HEIGHT + gap) - gap : 200
+  return def ? heightFor(def, w.variant, w.detail, widthOf(w)) * (ROW_HEIGHT + gap) - gap : 200
 }
 
 /**
@@ -99,6 +99,7 @@ export const colsFor = (width: number) => (width >= 960 ? 3 : width >= 640 ? 2 :
 export function WidgetGrid({
   items,
   free,
+  phoneOrder,
   render,
   wrap,
   className,
@@ -107,7 +108,9 @@ export function WidgetGrid({
 }: {
   items: WidgetInstance[]
   free?: boolean
-  render: (w: WidgetInstance) => React.ReactNode
+  /** The phone's own order, if the coach set one. */
+  phoneOrder?: string[]
+  render: (w: WidgetInstance, fixed: boolean) => React.ReactNode
   wrap?: (w: WidgetInstance, item: React.ReactNode) => React.ReactNode
   className?: string
   onPlaced?: (p: Placement & { cols: number; colWidth: number; heights: Record<string, number> }) => void
@@ -129,10 +132,14 @@ export function WidgetGrid({
   const gap = GAP[theme.density]
   const cols = colsFor(width)
   // Hidden on phones: left out of the phone's columns, so it leaves no hole.
-  const shown = useMemo(() => (cols === 1 ? items.filter((w) => !w.hideOnPhone) : items), [items, cols])
-  const placed = useMemo(() => placeItems(shown, cols, heights, gap, !!free), [shown, cols, heights, gap, free])
+  const shown = useMemo(() => (cols === 1 ? (phoneOrder?.length ? phoneSequence(items, phoneOrder) : items).filter((w) => !w.hideOnPhone) : items), [items, cols, phoneOrder])
+  // On the three-column page every card is as tall as its layout was designed (rows, see the registry), so neighbours line up
+  // and the content adapts inside; tablets and phones keep each card as tall as its content.
+  const fixed = cols === 3
+  const sized = useMemo(() => (fixed ? Object.fromEntries(shown.map((w) => [w.id, w.type === "page-header" || getWidget(w.type)?.core ? (heights[w.id] ?? estimate(w, gap)) : estimate(w, gap)])) : heights), [fixed, shown, heights, gap])
+  const placed = useMemo(() => placeItems(shown, cols, sized, gap, !!free), [shown, cols, sized, gap, free])
   const colWidth = cols ? (width - gap * (cols - 1)) / cols : 0
-  useLayoutEffect(() => onPlaced?.({ ...placed, cols, colWidth, heights }), [placed, cols, colWidth, heights, onPlaced])
+  useLayoutEffect(() => onPlaced?.({ ...placed, cols, colWidth, heights: sized }), [placed, cols, colWidth, sized, onPlaced])
   // Cards glide to a new spot only once the page has been laid out and its heights have stopped changing (fonts,
   // pictures, measured cards replacing estimates). Gliding while it loads counted as layout shift (CLS 0.1–0.5 on Home).
   const [settled, setSettled] = useState(false)
@@ -145,7 +152,7 @@ export function WidgetGrid({
     <div ref={box} className={cn("@container", className)}>
       {/* Before it is measured (server HTML, first paint) the page keeps its cards stacked but invisible: shown stacked, they
           jumped to their columns on hydration, the largest layout shift on every page of widgets. */}
-      <div className={cn("g-page relative", !width && "invisible flex flex-col gap-(--gap)")} data-set={widgetSetOf(theme)} data-finish={widgetFinishOf(theme)} style={{ "--gap": `${gap}px`, height: width ? placed.height : undefined } as React.CSSProperties}>
+      <div className={cn("g-page relative", !width && "invisible flex flex-col gap-(--gap)")} data-set={widgetSetOf(theme)} data-bg={theme.background} data-finish={widgetFinishOf(theme)} style={{ "--gap": `${gap}px`, height: width ? placed.height : undefined } as React.CSSProperties}>
         {shown.map((w) => {
           const s = placed.spots.get(w.id)!
           // Until the page has been measured (server HTML, first paint) cards stack in the flow at full width, not at width 0.
@@ -154,11 +161,12 @@ export function WidgetGrid({
             left: s.col * (colWidth + gap),
             top: s.top,
             width: s.span * colWidth + (s.span - 1) * gap,
+            height: fixed ? sized[w.id] : undefined,
             transition: settled ? "left 240ms var(--ease-out), top 240ms var(--ease-out), width 240ms var(--ease-out)" : undefined,
           }
           const node = (
-            <Measured key={w.id} w={w} onHeight={onHeight} style={wrap ? undefined : style}>
-              {render(w)}
+            <Measured key={w.id} w={w} onHeight={onHeight} style={wrap ? undefined : style} fill={!!wrap && fixed}>
+              {render(w, fixed)}
             </Measured>
           )
           return wrap ? (
@@ -176,7 +184,7 @@ export function WidgetGrid({
 }
 
 /** A card's `.g-item`, as tall as its content (measured, so the cards under it know where to start). */
-function Measured({ w, onHeight, style, children }: { w: WidgetInstance; onHeight: (id: string, h: number) => void; style?: React.CSSProperties; children: React.ReactNode }) {
+function Measured({ w, onHeight, style, fill, children }: { w: WidgetInstance; onHeight: (id: string, h: number) => void; style?: React.CSSProperties; /** Fill the cell it is in (the builder wraps it) instead of sizing itself. */ fill?: boolean; children: React.ReactNode }) {
   const def = getWidget(w.type)
   const ref = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
@@ -187,7 +195,7 @@ function Measured({ w, onHeight, style, children }: { w: WidgetInstance; onHeigh
     return () => ro.disconnect()
   }, [w.id, onHeight])
   return (
-    <div ref={ref} data-widget-id={w.id} className={cn("g-item", def?.core && "g-core", (def?.core || w.type === "page-header") && "g-plain")} style={style}>
+    <div ref={ref} data-widget-id={w.id} className={cn("g-item", fill && "h-full", def?.core && "g-core", (def?.core || w.type === "page-header") && "g-plain")} style={style}>
       {children}
     </div>
   )

@@ -498,7 +498,7 @@ export function CourseProgress({ variant = "rings" }: WidgetProps) {
                 )}
               </LessonRing>
               <div className="grid max-w-full">
-                <span className={cn("line-clamp-2 text-[0.6875rem] leading-4 text-balance", !fixed && "[@container_card_(min-width:34rem)]:text-[0.875rem] [@container_card_(min-width:34rem)]:leading-5", here ? "font-medium text-foreground" : "text-muted-foreground")} title={c.title}>
+                <span className={cn("line-clamp-2 text-[0.6875rem] leading-4 text-balance", !fixed && "[@container_card_(min-width:34rem)]:text-sm [@container_card_(min-width:34rem)]:leading-5", here ? "font-medium text-foreground" : "text-muted-foreground")} title={c.title}>
                   {c.title}
                 </span>
                 {standard && (
