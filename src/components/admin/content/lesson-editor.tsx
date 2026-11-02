@@ -17,6 +17,8 @@ import { STATUS_LABEL, fmtTime, uid, type Chapter, type Course, type Lesson, typ
 import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { STATUS_DOT, StatusBadge } from "./content-board"
+import { PictureField } from "./thumbs"
+import { videoFrames } from "@/lib/video-frames"
 import { Field } from "./course-settings"
 
 const parseTime = (v: string) => {
@@ -26,6 +28,8 @@ const parseTime = (v: string) => {
 
 export function LessonEditor({ course, lesson, onChange }: { course: Course; lesson: Lesson; onChange: (p: Partial<Lesson>) => void }) {
   const { coach } = useCoach()
+  // Frames from the video the coach just chose: kept while this lesson is open, so one can be picked as the thumbnail.
+  const [frames, setFrames] = useState<string[]>([])
   const mod = course.modules.find((m) => m.lessons.some((l) => l.id === lesson.id))
   return (
     <div className="grid gap-6">
@@ -56,7 +60,24 @@ export function LessonEditor({ course, lesson, onChange }: { course: Course; les
         </TabsList>
 
         <TabsContent value="content" className="grid gap-6">
-          <VideoField lesson={lesson} onChange={onChange} />
+          <VideoField lesson={lesson} onChange={onChange} onFrames={setFrames} />
+          <div className="grid gap-2">
+            <Label>Thumbnail</Label>
+            <PictureField value={lesson.thumbnail} color={course.color} onChange={(thumbnail) => onChange({ thumbnail })} label="Thumbnail" empty="No picture yet: the list shows the course cover." />
+            {frames.length > 0 && (
+              <div className="grid gap-1.5">
+                <span className="text-xs text-muted-foreground">Or pick a moment from your video</span>
+                <div className="grid grid-cols-5 gap-2">
+                  {frames.map((f, i) => (
+                    <button key={i} type="button" aria-label={`Use moment ${i + 1}`} aria-pressed={lesson.thumbnail === f} onClick={() => onChange({ thumbnail: f })} className={cn("overflow-hidden rounded-md border outline-none focus-visible:ring-2 focus-visible:ring-ring bg-card", lesson.thumbnail === f && "ring-2 ring-foreground")}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={f} alt="" className="aspect-video w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label>Summary</Label>
@@ -98,7 +119,7 @@ export function LessonEditor({ course, lesson, onChange }: { course: Course; les
           <div className="grid gap-2">
             <Label>Downloads</Label>
             {lesson.downloads.map((d) => (
-              <div key={d.name} className="flex items-center gap-3 rounded-lg border p-2.5 text-sm">
+              <div key={d.name} className="flex items-center gap-3 rounded-lg border p-2.5 text-sm bg-card">
                 <FileDown className="size-4 text-muted-foreground" />
                 <span className="flex-1 truncate">{d.name}</span>
                 <span className="text-xs text-muted-foreground">{d.size}</span>
@@ -131,26 +152,42 @@ export function LessonEditor({ course, lesson, onChange }: { course: Course; les
 
 const AI_CHAPTERS = ["Intro", "The idea", "On the chart", "Common mistakes", "Recap"]
 
-function VideoField({ lesson, onChange }: { lesson: Lesson; onChange: (p: Partial<Lesson>) => void }) {
+function VideoField({ lesson, onChange, onFrames }: { lesson: Lesson; onChange: (p: Partial<Lesson>) => void; onFrames: (f: string[]) => void }) {
   const [pct, setPct] = useState<number | null>(null)
   const [processing, setProcessing] = useState(false)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
   useEffect(() => () => void (timer.current && clearInterval(timer.current)), [])
 
-  const upload = () => {
+  const input = useRef<HTMLInputElement>(null)
+  /** The video the coach chose: its real length, and frames to pick a thumbnail from (the first one is the thumbnail if there is none yet). */
+  const choose = async (file: File | undefined) => {
+    if (!file) return
+    if (!file.type.startsWith("video/")) return void toast.error("This file isn't a video. Use an MP4, MOV or WebM.")
+    try {
+      const { frames, seconds } = await videoFrames(file)
+      onFrames(frames)
+      upload(file.name, Math.max(1, Math.round(seconds / 60)), lesson.thumbnail ? undefined : frames[Math.floor(frames.length / 2)])
+    } catch (e) {
+      // A video this browser can't read (some MOV and MKV files) is still uploaded; it just has no frames to pick from.
+      toast(e instanceof Error ? e.message : "No frames from this video.")
+      onFrames([])
+      upload(file.name, lesson.minutes || 16)
+    }
+  }
+  const upload = (name = `${lesson.title}.mp4`, length = lesson.minutes || 16, thumbnail?: string) => {
     setPct(0)
     timer.current = setInterval(() => {
       setPct((p) => {
         const n = Math.min(100, (p ?? 0) + 9)
         if (n >= 100) {
           clearInterval(timer.current!)
-          const minutes = lesson.minutes || 16
-          onChange({ video: `${lesson.title}.mp4`, minutes })
+          const minutes = length
+          onChange({ video: name, minutes, ...(thumbnail ? { thumbnail } : {}) })
           setProcessing(true)
           setTimeout(() => {
             setProcessing(false)
             setPct(null)
-            if (!lesson.chapters.length) onChange({ video: `${lesson.title}.mp4`, minutes, chapters: AI_CHAPTERS.map((title, i) => ({ at: Math.round(((minutes * 60) / AI_CHAPTERS.length) * i), title, ai: true })) })
+            if (!lesson.chapters.length) onChange({ video: name, minutes, chapters: AI_CHAPTERS.map((title, i) => ({ at: Math.round(((minutes * 60) / AI_CHAPTERS.length) * i), title, ai: true })) })
             toast.success("Video ready. AI added chapters and a transcript.")
           }, 1600)
         }
@@ -159,12 +196,13 @@ function VideoField({ lesson, onChange }: { lesson: Lesson; onChange: (p: Partia
     }, 180)
   }
 
+  const picker = <input ref={input} type="file" accept="video/*" aria-label="Video" className="sr-only" onChange={(e) => (void choose(e.target.files?.[0]), (e.target.value = ""))} />
   if (pct !== null || processing) {
     return (
-      <div className="grid gap-2 rounded-xl border p-4">
+      <div className="grid gap-2 rounded-xl border p-4 bg-card">
         <div className="flex items-center gap-2 text-sm">
           <FileVideo className="size-4 text-muted-foreground" />
-          <span className="flex-1">{processing ? "Processing: transcript and chapters…" : `Uploading ${lesson.title}.mp4`}</span>
+          <span className="flex-1">{processing ? "Processing: transcript and chapters…" : "Uploading your video"}</span>
           <span className="text-muted-foreground tabular-nums">{processing ? "" : `${pct}%`}</span>
         </div>
         <Progress value={processing ? 100 : pct ?? 0} className={cn("h-1.5", processing && "animate-pulse")} />
@@ -174,9 +212,11 @@ function VideoField({ lesson, onChange }: { lesson: Lesson; onChange: (p: Partia
   }
   if (lesson.video || lesson.status === "published") {
     return (
-      <div className="flex items-center gap-4 rounded-xl border p-3">
-        <div className="grid aspect-video w-36 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-neutral-700 to-neutral-900 text-white">
-          <FileVideo className="size-6 opacity-80" />
+      <div className="flex items-center gap-4 rounded-xl border p-3 bg-card">
+        <div className="relative grid aspect-video w-36 shrink-0 place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-neutral-700 to-neutral-900 text-white">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {lesson.thumbnail && <img src={lesson.thumbnail} alt="" className="absolute inset-0 size-full object-cover" />}
+          <FileVideo className="relative size-6 drop-shadow" />
         </div>
         <div className="grid min-w-0 flex-1 gap-0.5">
           <span className="truncate text-sm font-medium">{lesson.video ?? `${lesson.title}.mp4`}</span>
@@ -184,18 +224,22 @@ function VideoField({ lesson, onChange }: { lesson: Lesson; onChange: (p: Partia
             {lesson.minutes} min · {lesson.chapters.length} chapters{lesson.transcript ? " · transcript" : ""}
           </span>
         </div>
-        <Button variant="outline" size="sm" onClick={upload}>
+        <Button variant="outline" size="sm" onClick={() => input.current?.click()}>
           Replace
         </Button>
+        {picker}
       </div>
     )
   }
   return (
-    <button onClick={upload} onDragOver={(e) => e.preventDefault()} onDrop={(e) => (e.preventDefault(), upload())} className="grid place-items-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 text-center hover:bg-muted/50">
-      <Upload className="size-6 text-muted-foreground" />
-      <span className="font-medium">Drop the video, or click to upload</span>
-      <span className="text-sm text-muted-foreground">AI writes the transcript, chapters and a summary while it uploads.</span>
-    </button>
+    <>
+      <button onClick={() => input.current?.click()} onDragOver={(e) => e.preventDefault()} onDrop={(e) => (e.preventDefault(), void choose(e.dataTransfer.files[0]))} className="grid place-items-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 text-center hover:bg-muted/50">
+        <Upload className="size-6 text-muted-foreground" />
+        <span className="font-medium">Drop the video, or click to upload</span>
+        <span className="text-sm text-muted-foreground">AI writes the transcript, chapters and a summary while it uploads. You can pick the thumbnail from your video.</span>
+      </button>
+      {picker}
+    </>
   )
 }
 
@@ -227,7 +271,7 @@ function ChaptersEditor({ lesson, onChange }: { lesson: Lesson; onChange: (p: Pa
         </Button>
       </div>
 
-      <div className="grid gap-2 rounded-xl border p-4">
+      <div className="grid gap-2 rounded-xl border p-4 bg-card">
         <div
           ref={bar}
           className="relative h-12 touch-none rounded-md bg-muted"
@@ -242,7 +286,7 @@ function ChaptersEditor({ lesson, onChange }: { lesson: Lesson; onChange: (p: Pa
           {lesson.chapters.map((c, i) => {
             const end = lesson.chapters[i + 1]?.at ?? duration
             return (
-              <div key={i} className="absolute inset-y-1 overflow-hidden rounded bg-primary/15 px-1.5 text-[0.65rem] leading-5 whitespace-nowrap text-foreground/80" style={{ left: `${(c.at / duration) * 100}%`, width: `calc(${((end - c.at) / duration) * 100}% - 2px)` }}>
+              <div key={i} className="absolute inset-y-1 overflow-hidden rounded bg-primary/15 px-1.5 text-[0.6875rem] leading-5 whitespace-nowrap text-foreground/80" style={{ left: `${(c.at / duration) * 100}%`, width: `calc(${((end - c.at) / duration) * 100}% - 2px)` }}>
                 {c.title}
               </div>
             )
@@ -349,7 +393,7 @@ function QuizEditor({ lesson, onChange }: { lesson: Lesson; onChange: (p: Partia
         </div>
       )}
       {quiz.questions.map((q, qi) => (
-        <div key={q.id} className="grid gap-3 rounded-xl border p-4">
+        <div key={q.id} className="grid gap-3 rounded-xl border p-4 bg-card">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-muted-foreground tabular-nums">{qi + 1}.</span>
             <Input value={q.q} onChange={(e) => updateQ(q.id, { q: e.target.value })} placeholder="Question" />
@@ -388,7 +432,7 @@ function QuizEditor({ lesson, onChange }: { lesson: Lesson; onChange: (p: Partia
         <Plus /> Add question
       </Button>
 
-      <div className="grid gap-4 rounded-xl border p-4">
+      <div className="grid gap-4 rounded-xl border p-4 bg-card">
         <div className="flex items-center justify-between gap-4">
           <div className="grid">
             <Label>Pass mark</Label>
@@ -432,7 +476,7 @@ function PublishLesson({ course, lesson, onChange }: { course: Course; lesson: L
               onChange({ status: s, unlockAt: s === "scheduled" ? lesson.unlockAt ?? "Thu 15 Oct" : lesson.unlockAt })
               if (s === "published" && notify) toast.success(`Published. ${[channels.app && "In-app", channels.email && "e-mail", channels.discord && "Discord"].filter(Boolean).join(", ")} notifications sent.`)
             }}
-            className={cn("grid gap-1 rounded-lg border p-3 text-left text-sm", lesson.status === s && "border-primary ring-1 ring-primary")}
+            className={cn("grid gap-1 rounded-lg border p-3 text-left text-sm bg-card", lesson.status === s && "border-primary ring-1 ring-primary")}
           >
             <span className="flex items-center gap-2 font-medium">
               <span className={cn("size-2 rounded-full", STATUS_DOT[s])} /> {STATUS_LABEL[s]}
@@ -446,7 +490,7 @@ function PublishLesson({ course, lesson, onChange }: { course: Course; lesson: L
           <Input value={lesson.unlockAt ?? ""} onChange={(e) => onChange({ unlockAt: e.target.value })} placeholder="e.g. Thu 15 Oct" className="max-w-48" />
         </Field>
       )}
-      <div className="grid gap-3 rounded-xl border p-4">
+      <div className="grid gap-3 rounded-xl border p-4 bg-card">
         <label className="flex items-center justify-between gap-4">
           <span className="grid">
             <span className="text-sm font-medium">Tell students when it goes live</span>
@@ -470,7 +514,7 @@ function PublishLesson({ course, lesson, onChange }: { course: Course; lesson: L
           </div>
         )}
       </div>
-      <div className="rounded-xl border p-4 text-sm">
+      <div className="rounded-xl border p-4 text-sm bg-card">
         <span className="font-medium">Access</span>
         <p className="text-muted-foreground">
           Follows the course: {tiers}. Change it in Course settings.

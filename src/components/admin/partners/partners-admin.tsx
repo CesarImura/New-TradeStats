@@ -191,7 +191,7 @@ function CatalogueDialog({ onClose }: { onClose: () => void }) {
         {left.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">You have added every offer in the catalogue.</p>
         ) : (
-          <div className="grid divide-y rounded-lg border">
+          <div className="grid divide-y rounded-lg border bg-card">
             {left.map((c) => (
               <div key={c.id} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
                 <div className="grid min-w-0 flex-1 basis-56 gap-0.5">
@@ -295,7 +295,7 @@ function OwnDialog({ item, onClose }: { item?: PartnerOffer; onClose: () => void
             </Field>
           </div>
           <Field label="Who sees it unlocked" hint={chosen.length === 0 ? "Everyone" : undefined}>
-            <div className="grid gap-1.5 rounded-lg border p-2.5">
+            <div className="grid gap-1.5 rounded-lg border p-2.5 bg-card">
               {tiers.map((t) => (
                 <label key={t.id} className="flex cursor-pointer items-center gap-2 text-sm">
                   <Checkbox checked={chosen.includes(t.id)} onCheckedChange={(v) => setChosen((c) => (v ? [...c, t.id] : c.filter((x) => x !== t.id)))} />

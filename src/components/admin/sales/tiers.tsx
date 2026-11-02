@@ -135,7 +135,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
                 </NativeSelect>
               </Field>
             </div>
-            <div className="divide-y rounded-lg border px-3">
+            <div className="divide-y rounded-lg border px-3 bg-card">
               <SettingRow label="Also offer yearly" text="Usually two months free">
                 {x.yearly !== undefined && <Input value={x.yearly} onChange={(e) => set({ yearly: e.target.value })} className="h-8 w-24 tabular-nums" aria-label="Yearly price" />}
                 <Switch checked={x.yearly !== undefined} onCheckedChange={(v) => set({ yearly: v ? `€${Math.round(amount(x.price ?? "") * 10)}` : undefined })} />
@@ -161,7 +161,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
             </div>
 
             <div className="grid gap-2">
-              <span className="text-[0.8rem] font-medium">What the sales page lists</span>
+              <span className="text-[0.8125rem] font-medium">What the sales page lists</span>
               <ul className="grid gap-1">
                 {x.features.map((f, i) => (
                   <li key={i} className="flex items-center gap-2">
@@ -189,7 +189,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
             </div>
 
             <div className="grid gap-2">
-              <span className="text-[0.8rem] font-medium">Courses it unlocks</span>
+              <span className="text-[0.8125rem] font-medium">Courses it unlocks</span>
               {catalog.courses
                 .filter((c) => c.status !== "archived")
                 .map((c) => (

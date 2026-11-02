@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { Check, Copy, Eye, Globe, Loader2, Mail, Plus, Upload, Wand2 } from "@/components/icons"
+import { Check, Copy, Eye, Globe, Loader2, Mail, Plus, Trash2, Upload, Wand2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { FIRST_WEEK, resetAsNewStudent, useOnboardingSettings, type FirstWeekItem, type OnboardingSettings } from "@/lib/data/student-start"
+import { FIRST_WEEK, MAX_CUSTOM_QUESTIONS, NO_QUESTIONS, resetAsNewStudent, useOnboardingSettings, type CustomQuestion, type FirstWeekItem, type OnboardingSettings } from "@/lib/data/student-start"
 import { setStored } from "@/lib/prototype-store"
 import { EMAIL_TEMPLATES, LEGAL, ROLES, TEAM } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
@@ -323,6 +323,8 @@ function StudentOnboarding() {
   const s = useOnboardingSettings(coach.slug)
   const setS = (fn: (x: OnboardingSettings) => OnboardingSettings) => setStored(`${coach.slug}:student-onboarding`, fn(s))
   const set = (p: Partial<OnboardingSettings>) => setS((x) => ({ ...x, ...p }))
+  const custom = s.custom ?? NO_QUESTIONS
+  const editQuestion = (id: string, patch: Partial<CustomQuestion>) => set({ custom: custom.map((c) => (c.id === id ? { ...c, ...patch } : c)) })
   const items = (Object.keys(FIRST_WEEK) as FirstWeekItem[]).filter((id) => {
     const m = FIRST_WEEK[id].module
     return !m || coach.modules[m]
@@ -381,6 +383,32 @@ function StudentOnboarding() {
               <Switch checked={s.questions[id]} onCheckedChange={(v) => set({ questions: { ...s.questions, [id]: v } })} />
             </SettingRow>
           ))}
+        </div>
+      </Section>
+      <Section title="Your own questions" text={`Added to the short profile, after the ones above. Up to ${MAX_CUSTOM_QUESTIONS}.`}>
+        <div className="grid gap-2">
+          {custom.map((c) => (
+            <div key={c.id} className="grid gap-2 rounded-lg border bg-card p-3">
+              <div className="flex items-center gap-2">
+                <Input aria-label="Question" value={c.text} placeholder="What do you want to get from this community?" onChange={(e) => editQuestion(c.id, { text: e.target.value })} className="h-8 flex-1" />
+                <NativeSelect aria-label="Answer type" value={c.kind} onChange={(e) => editQuestion(c.id, { kind: e.target.value as CustomQuestion["kind"] })}>
+                  <option value="short">Short answer</option>
+                  <option value="choice">Choose one</option>
+                </NativeSelect>
+                <Button variant="ghost" size="icon-xs" aria-label="Delete question" onClick={() => set({ custom: custom.filter((x) => x.id !== c.id) })}>
+                  <Trash2 />
+                </Button>
+              </div>
+              {c.kind === "choice" && (
+                <Input aria-label="Choices, separated by commas" value={c.options.join(", ")} placeholder="Choices, separated by commas" onChange={(e) => editQuestion(c.id, { options: e.target.value.split(",").map((o) => o.trimStart()) })} className="h-8" />
+              )}
+            </div>
+          ))}
+          {custom.length < MAX_CUSTOM_QUESTIONS && (
+            <Button variant="outline" size="sm" className="justify-self-start" onClick={() => set({ custom: [...custom, { id: `q${Date.now()}`, text: "", kind: "short", options: [] }] })}>
+              <Plus /> Add a question
+            </Button>
+          )}
         </div>
       </Section>
       <Section title="After the profile">

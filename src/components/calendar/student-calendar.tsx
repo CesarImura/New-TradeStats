@@ -504,9 +504,9 @@ function BookDialog({ open, replace, onClose, allowance, used }: { open: boolean
                     i === day && "border-primary bg-primary text-primary-foreground",
                   )}
                 >
-                  <span className="text-[0.65rem] uppercase opacity-75">{format(d.day, "EEE")}</span>
+                  <span className="text-[0.6875rem] uppercase opacity-75">{format(d.day, "EEE")}</span>
                   <span className="font-heading text-xl leading-none">{d.day.getDate()}</span>
-                  <span className="text-[0.65rem] opacity-75">{d.times.length} free</span>
+                  <span className="text-[0.6875rem] opacity-75">{d.times.length} free</span>
                 </button>
               ))}
             </div>
@@ -563,9 +563,9 @@ function MyBookings({ items, onOpen, onReschedule }: { items: Item[]; onOpen: (i
             className="grid w-14 shrink-0 content-start justify-items-center rounded-[var(--r-inner)] py-2 text-white"
             style={{ background: STUDENT_COLORS[i.kind] }}
           >
-            <span className="text-[0.65rem] uppercase opacity-80">{format(i.start, "MMM")}</span>
+            <span className="text-[0.6875rem] uppercase opacity-80">{format(i.start, "MMM")}</span>
             <span className="font-heading text-2xl leading-none">{i.start.getDate()}</span>
-            <span className="text-[0.65rem] opacity-80">{format(i.start, "EEE")}</span>
+            <span className="text-[0.6875rem] opacity-80">{format(i.start, "EEE")}</span>
           </div>
           <div className="grid min-w-0 flex-1 content-start gap-1">
             <span className="eyebrow">

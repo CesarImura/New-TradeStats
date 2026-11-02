@@ -259,7 +259,7 @@ export function StudentProfile() {
             <DialogDescription>You keep everything until 1 Nov. Your account, journal and notes stay; you can come back any time.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-1.5">
-            <Label className="text-[0.8rem]">Why are you leaving? (optional)</Label>
+            <Label className="text-[0.8125rem]">Why are you leaving? (optional)</Label>
             <Input placeholder="Too expensive, no time, found what I needed…" />
           </div>
           <DialogFooter>

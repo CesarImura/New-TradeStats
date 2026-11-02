@@ -305,10 +305,10 @@ export function AdminOverview() {
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {FEEDBACK_REQUESTS.map((f) => (
-              <div key={f.id} className="flex flex-col gap-1.5 rounded-lg border p-3">
+              <div key={f.id} className="flex flex-col gap-1.5 rounded-lg border p-3 bg-card">
                 <div className="flex items-center gap-2">
                   <Avatar className="size-6">
-                    <AvatarFallback className="text-[0.65rem]">{f.initials}</AvatarFallback>
+                    <AvatarFallback className="text-[0.6875rem]">{f.initials}</AvatarFallback>
                   </Avatar>
                   <span className="text-sm font-medium">{f.student}</span>
                   <span className="ml-auto text-xs text-muted-foreground">{f.waiting}</span>

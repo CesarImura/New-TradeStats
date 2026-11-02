@@ -9,6 +9,7 @@ import { STATUS_LABEL, allLessons, uid, type Course, type Lesson, type Module, t
 import { dropLine } from "@/components/kit/drop-line"
 import { cn } from "@/lib/utils"
 import { STATUS_DOT } from "./content-board"
+import { Tile } from "./thumbs"
 
 export type Sel = { kind: "course" } | { kind: "lesson"; id: string }
 type Drag = { kind: "lesson" | "module"; id: string } | null
@@ -122,6 +123,7 @@ export function Tree({ course, sel, onSelect, edit }: { course: Course; sel: Sel
                 <button onClick={() => setClosed((c) => (open ? [...c, m.id] : c.filter((x) => x !== m.id)))} aria-label={open ? "Collapse" : "Expand"} className="rounded p-0.5 hover:bg-background">
                   <ChevronDown className={cn("size-3.5 transition-transform", !open && "-rotate-90")} />
                 </button>
+                <Tile src={m.lessons.find((l) => l.thumbnail)?.thumbnail ?? course.cover} color={course.color} className="aspect-video w-9 shrink-0 rounded" />
                 {renaming === m.id ? (
                   <RenameInput value={m.title} onDone={(v) => (v && rename(m.id, v), setRenaming(null))} />
                 ) : (
@@ -178,6 +180,7 @@ export function Tree({ course, sel, onSelect, edit }: { course: Course; sel: Sel
                         />
                       }
                     >
+                      <Tile src={l.thumbnail ?? course.cover} color={course.color} className="aspect-video w-10 shrink-0 rounded" />
                       <span className={cn("size-1.5 shrink-0 rounded-full", STATUS_DOT[l.status])} title={STATUS_LABEL[l.status]} />
                       {renaming === l.id ? (
                         <RenameInput value={l.title} onDone={(v) => (v && rename(l.id, v), setRenaming(null))} />
@@ -187,7 +190,7 @@ export function Tree({ course, sel, onSelect, edit }: { course: Course; sel: Sel
                         </span>
                       )}
                       {l.quiz && <CircleHelp className="size-3 text-muted-foreground" />}
-                      {!l.video && <span className="text-[0.65rem] text-amber-600">no video</span>}
+                      {!l.video && <span className="text-[0.6875rem] text-amber-600">no video</span>}
                       <span className="text-xs text-muted-foreground tabular-nums">{l.minutes ? `${l.minutes}′` : ""}</span>
                     </ContextMenuTrigger>
                     <ContextMenuContent className="w-44">

@@ -101,7 +101,7 @@ export function StudentJournal() {
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="trades">Trades</TabsTrigger>
           <TabsTrigger value="feedback">
-            Feedback {unread > 0 && <span className="rounded-full bg-primary px-1.5 text-[0.65rem] text-primary-foreground tabular-nums">{unread}</span>}
+            Feedback {unread > 0 && <span className="rounded-full bg-primary px-1.5 text-[0.6875rem] text-primary-foreground tabular-nums">{unread}</span>}
           </TabsTrigger>
           <TabsTrigger value="strategies">Rules</TabsTrigger>
         </TabsList>
@@ -190,7 +190,7 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
                   <span
                     key={j}
                     title={v ? fmtPnl(v) : "No trades"}
-                    className="grid aspect-square place-items-center rounded-(--r-bar) text-[0.6rem] tabular-nums"
+                    className="grid aspect-square place-items-center rounded-(--r-bar) text-[0.6875rem] tabular-nums"
                     style={v === 0 ? { background: "var(--muted)" } : heatCell(colors, v, Math.min(90, 25 + Math.abs(v) / 6) / 100)}
                   >
                     {v ? (v > 0 ? "+" : "−") + Math.abs(Math.round(v / 10)) * 10 : ""}
@@ -332,7 +332,7 @@ function MyFeedback({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => v
             <Card key={t.id} className="gap-2 px-5">
               <div className="flex items-center gap-2">
                 <Avatar className="size-7">
-                  <AvatarFallback className="text-[0.6rem]">{coach.mark}</AvatarFallback>
+                  <AvatarFallback className="text-[0.6875rem]">{coach.mark}</AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium">{coach.coachName}</span>
                 <span className="text-xs text-muted-foreground">on your {t.symbol} {t.side} · {last.when}</span>
@@ -457,7 +457,7 @@ function TradeDetail({ trade: t, onClose }: { trade: T | null; onClose: () => vo
             {t.thread.map((m, i) => (
               <div key={i} className={cn("flex gap-2.5", m.from === "student" && "flex-row-reverse")}>
                 <Avatar className="size-7">
-                  <AvatarFallback className="text-[0.6rem]">{m.from === "coach" ? coach.mark : DEMO_STUDENT.initials}</AvatarFallback>
+                  <AvatarFallback className="text-[0.6875rem]">{m.from === "coach" ? coach.mark : DEMO_STUDENT.initials}</AvatarFallback>
                 </Avatar>
                 <div className={cn("grid max-w-[80%] gap-1 rounded-(--r-inner) px-3 py-2 text-sm", m.from === "coach" ? "bg-muted" : "bg-primary text-primary-foreground")}>
                   <p className="flex items-center gap-1.5">
@@ -472,7 +472,7 @@ function TradeDetail({ trade: t, onClose }: { trade: T | null; onClose: () => vo
                       m.text
                     )}
                   </p>
-                  <span className="text-[0.7rem] opacity-70">{m.when}</span>
+                  <span className="text-[0.6875rem] opacity-70">{m.when}</span>
                 </div>
               </div>
             ))}
@@ -591,12 +591,12 @@ function NewTrade({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boo
             ["Target", "20,250.00"],
           ].map(([l, p]) => (
             <div key={l} className="grid gap-1.5">
-              <Label className="text-[0.8rem]">{l}</Label>
+              <Label className="text-[0.8125rem]">{l}</Label>
               <Input placeholder={p} />
             </div>
           ))}
           <div className="col-span-2 grid gap-1.5">
-            <Label className="text-[0.8rem]">Setup</Label>
+            <Label className="text-[0.8125rem]">Setup</Label>
             <SelectOptions className="h-9 rounded-(--r-inner) border bg-transparent px-2 text-sm">
               {STRATEGIES.map((s) => (
                 <option key={s.id}>{s.name}</option>
@@ -604,7 +604,7 @@ function NewTrade({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boo
             </SelectOptions>
           </div>
           <div className="col-span-2 grid gap-1.5">
-            <Label className="text-[0.8rem]">Why you took it</Label>
+            <Label className="text-[0.8125rem]">Why you took it</Label>
             <Textarea rows={2} />
           </div>
         </div>

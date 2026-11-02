@@ -265,7 +265,7 @@ function SymbolSwitcher({ symbol, watchlist, mine, setMine, onPick }: { symbol: 
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger className="flex items-center gap-2 rounded-(--radius) border bg-card px-3 py-2 text-left hover:bg-muted">
         <span className="font-heading text-lg">{symbol.name}</span>
-        <span className="rounded-(--r-chip) bg-muted px-1.5 py-0.5 text-[0.7rem] text-muted-foreground">{symbol.tv.split(":")[1]}</span>
+        <span className="rounded-(--r-chip) bg-muted px-1.5 py-0.5 text-[0.6875rem] text-muted-foreground">{symbol.tv.split(":")[1]}</span>
         <ChevronDown className="size-4 text-muted-foreground" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 gap-0 p-0">

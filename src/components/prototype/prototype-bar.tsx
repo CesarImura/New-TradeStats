@@ -49,7 +49,7 @@ function Segment<T extends string>({
 }) {
   return (
     <div className="grid gap-1.5">
-      <span className="text-[0.7rem] font-medium tracking-wide text-neutral-500 uppercase">{label}</span>
+      <span className="text-[0.6875rem] font-medium tracking-wide text-neutral-500 uppercase">{label}</span>
       <div className="flex rounded-md bg-neutral-100 p-0.5">
         {options.map((o) => (
           <button
@@ -117,7 +117,7 @@ export function PrototypeBar({ area }: { area: "student" | "admin" | "site" }) {
         className="w-80 gap-4 border-neutral-200 bg-white p-4 font-[family-name:var(--ff-geist)] text-neutral-950 shadow-xl [&_[data-slot=button]]:rounded-md!"
       >
         <div className="grid gap-1.5">
-          <span className="text-[0.7rem] font-medium tracking-wide text-neutral-500 uppercase">Community</span>
+          <span className="text-[0.6875rem] font-medium tracking-wide text-neutral-500 uppercase">Community</span>
           <div className="grid gap-1">
             {COACHES.map((c) => (
               <Link
@@ -137,7 +137,7 @@ export function PrototypeBar({ area }: { area: "student" | "admin" | "site" }) {
 
 
         <div className="grid gap-1.5">
-          <span className="text-[0.7rem] font-medium tracking-wide text-neutral-500 uppercase">Before joining</span>
+          <span className="text-[0.6875rem] font-medium tracking-wide text-neutral-500 uppercase">Before joining</span>
           <div className="flex flex-wrap gap-1">
             {(
               [

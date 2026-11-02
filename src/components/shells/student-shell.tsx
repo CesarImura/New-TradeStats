@@ -36,6 +36,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { backdropStyle, dimOf } from "@/lib/theme/backdrops"
+import { navFillOf } from "@/lib/theme/nav-fill"
 import { cn } from "@/lib/utils"
 
 /**
@@ -68,6 +69,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const editor = !!useContext(ShellEditorContext)
   const phone = !!useContext(ShellEditorContext)?.phone
   const pad = usePad()
+  const fill = navFillOf(theme)
+  const nav = fill === "page" ? undefined : fill
   const texture = { grid: "coach-bg-grid", glow: "coach-bg-glow", dots: "coach-bg-dots" } as Record<string, string>
   // An image or gradient sits on its own layer behind the page, so the page itself turns see-through.
   const where = theme.bgWhere ?? "all"
@@ -89,7 +92,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     return (
       <div className={cn("relative isolate flex min-h-full flex-col", bg)}>
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur" data-edit="nav">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur" data-edit="nav" data-nav-fill={nav}>
           <div className="flex min-w-0" data-edit="logo">
             <CommunitySwitcher placement="bar" />
           </div>
@@ -100,41 +103,43 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         <div data-edit-root className="mx-auto w-full flex-1 px-4 pt-5 pb-6">
           {children}
         </div>
-        <MobileBar items={items} phone />
+        <MobileBar items={items} phone fill={nav} />
       </div>
     )
 
   // Floating: the page is a rounded canvas on the menu's ground, with a gutter around it (like the admin area).
   const floating = theme.nav.frame === "floating"
+  // Floating: the menu's colour is the ground the page sits on, so the fill colours the ground.
+  const ground = floating && nav ? ({ "--ground": nav === "brand" ? "var(--primary)" : nav === "tint" ? "color-mix(in oklab, var(--primary) 10%, var(--background))" : "transparent" } as React.CSSProperties) : undefined
   const canvas = "md:rounded-[var(--r-panel)] md:overflow-clip md:shadow-[0_0_0_1px_var(--border),0_1px_3px_rgb(0_0_0/0.08)]"
 
   if (theme.nav.layout === "top") {
     if (floating)
       return (
-        <div className="min-h-svh bg-[var(--ground)]">
+        <div className="min-h-svh bg-[var(--ground)]" style={ground}>
           {!editor && <PreviewAsBanner />}
-          <TopNav items={items} floating />
+          <TopNav items={items} floating fill={nav} />
           <div className={cn("relative isolate min-h-[calc(100svh-4.75rem)] md:mx-3 md:mb-3", bg, canvas)}>
             {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
             {content}
           </div>
-          <MobileBar items={items} />
+          <MobileBar items={items} fill={nav} />
         </div>
       )
     return (
       <div className={cn("min-h-svh", bg)}>
         {!editor && <PreviewAsBanner />}
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
-        <TopNav items={items} />
+        <TopNav items={items} fill={nav} />
         {content}
-        <MobileBar items={items} />
+        <MobileBar items={items} fill={nav} />
       </div>
     )
   }
 
   return (
-    <SidebarProvider key={theme.nav.style} defaultOpen={theme.nav.style === "labels"} style={floating ? ({ "--sidebar": "var(--ground)" } as React.CSSProperties) : undefined}>
-      <Sidebar collapsible="icon" variant={floating ? "inset" : "sidebar"} className="max-md:hidden" data-edit="nav">
+    <SidebarProvider key={theme.nav.style} defaultOpen={theme.nav.style === "labels"} style={floating ? ({ "--sidebar": "var(--ground)", ...ground } as React.CSSProperties) : undefined}>
+      <Sidebar collapsible="icon" variant={floating ? "inset" : "sidebar"} className="max-md:hidden" data-edit="nav" data-nav-fill={nav}>
         <SidebarHeader className="h-16 justify-center" data-edit="logo">
           <CommunitySwitcher placement="sidebar" />
         </SidebarHeader>
@@ -160,7 +165,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         {content}
-        <MobileBar items={items} />
+        <MobileBar items={items} fill={nav} />
       </SidebarInset>
     </SidebarProvider>
   )
@@ -197,7 +202,7 @@ function SideItems({ items }: { items: NavItem[] }) {
   )
 }
 
-function TopNav({ items, floating }: { items: NavItem[]; floating?: boolean }) {
+function TopNav({ items, floating, fill }: { items: NavItem[]; floating?: boolean; fill?: string }) {
   const { theme, base } = useCoach()
   const isActive = useActive(base)
   const centered = theme.nav.logo === "center"
@@ -206,7 +211,7 @@ function TopNav({ items, floating }: { items: NavItem[]; floating?: boolean }) {
   // More than five pages don't fit as words on a tablet (768 to 1023px): there they show as icons, named in the tooltip.
   const tight = theme.nav.style !== "icons" && items.length > 5
   return (
-    <header className={cn("sticky top-0 z-20", floating ? "bg-[var(--ground)]" : "border-b bg-background/85 backdrop-blur")} data-edit="nav">
+    <header className={cn("sticky top-0 z-20", floating ? "bg-[var(--ground)]" : "border-b bg-background/85 backdrop-blur")} data-edit="nav" data-nav-fill={fill}>
       <div className={cn("mx-auto flex h-16 max-w-[1280px] items-center gap-6", pad)}>
         <div className={cn("flex min-w-0", centered && "md:absolute md:left-1/2 md:-translate-x-1/2")} data-edit="logo">
           <CommunitySwitcher placement="bar" />
@@ -303,15 +308,15 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
 }
 
 /** Phone: both layouts become a bottom bar. Up to five items show; with more, four show and the rest sit under "More". */
-function MobileBar({ items, phone }: { items: NavItem[]; /** Shown as a phone in the editor: at the foot of the page, whatever the window's width. */ phone?: boolean }) {
+function MobileBar({ items, phone, fill }: { items: NavItem[]; fill?: string; /** Shown as a phone in the editor: at the foot of the page, whatever the window's width. */ phone?: boolean }) {
   const isActive = useActive(useCoach().base)
   const [open, setOpen] = useState(false)
   const overflow = items.length > 5
   const shown = overflow ? items.slice(0, 4) : items
   const hidden = overflow ? items.slice(4) : []
-  const itemClass = "flex w-full flex-col items-center gap-1 py-2.5 text-[0.7rem] text-muted-foreground data-[active=true]:text-brand-text"
+  const itemClass = "flex w-full flex-col items-center gap-1 py-2.5 text-[0.6875rem] text-muted-foreground data-[active=true]:text-brand-text"
   return (
-    <nav data-edit="nav" className={cn("inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur", phone ? "sticky" : "fixed md:hidden")}>
+    <nav data-edit="nav" data-nav-fill={fill} className={cn("inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur", phone ? "sticky" : "fixed md:hidden")}>
       <ul className="grid grid-cols-5">
         {shown.map((item) => (
           <li key={item.id}>

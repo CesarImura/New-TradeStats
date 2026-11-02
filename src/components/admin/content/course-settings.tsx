@@ -6,14 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { STATUS_LABEL, allLessons, useCatalog, type Course, type Status } from "@/lib/data/learning"
-import { SelectOptions } from "@/components/kit/select-field"
+import { STATUS_LABEL, allLessons, type Course, type Status } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
 import { STATUS_DOT } from "./content-board"
+import { PictureField } from "./thumbs"
 
 export function CourseSettings({ course, edit }: { course: Course; edit: (fn: (c: Course) => Course) => void }) {
   const { coach } = useCoach()
-  const catalog = useCatalog(coach)
   const set = (patch: Partial<Course>) => edit((c) => ({ ...c, ...patch }))
   const lessons = allLessons(course)
   const missing = lessons.filter((l) => !l.video).length
@@ -32,12 +31,8 @@ export function CourseSettings({ course, edit }: { course: Course; edit: (fn: (c
         <Field label="Short description" hint="Shown under the title">
           <Input value={course.tagline} onChange={(e) => set({ tagline: e.target.value })} placeholder="e.g. Six setups, step by step" />
         </Field>
-        <Field label="Area">
-          <SelectOptions value={course.area} onChange={(e) => set({ area: e.target.value })} className="h-9 rounded-lg border bg-background px-2 text-sm">
-            {catalog.areas.map((a) => (
-              <option key={a}>{a}</option>
-            ))}
-          </SelectOptions>
+        <Field label="Cover" hint="Shown on Home, in the course list and on the sales page">
+          <PictureField value={course.cover} color={course.color} onChange={(cover) => set({ cover })} label="Cover" empty="No picture yet: students see your brand colour." />
         </Field>
       </section>
 
@@ -46,13 +41,13 @@ export function CourseSettings({ course, edit }: { course: Course; edit: (fn: (c
           <h3 className="font-medium">Who gets it</h3>
           <p className="text-sm text-muted-foreground">Students in other tiers see it locked, with an upgrade button.</p>
         </div>
-        <label className="flex items-center gap-3 rounded-lg border p-3 text-sm">
+        <label className="flex items-center gap-3 rounded-lg border p-3 text-sm bg-card">
           <Checkbox checked={course.tiers.length === 0} onCheckedChange={(v) => v && set({ tiers: [] })} />
           <span className="flex-1">Every tier</span>
         </label>
         <div className="grid gap-2 sm:grid-cols-3">
           {coach.tiers.map((t) => (
-            <label key={t.id} className={cn("flex items-center gap-3 rounded-lg border p-3 text-sm", course.tiers.includes(t.id) && "border-primary/50 bg-primary/5")}>
+            <label key={t.id} className={cn("flex items-center gap-3 rounded-lg border p-3 text-sm bg-card", course.tiers.includes(t.id) && "border-primary/50 bg-primary/5")}>
               <Checkbox
                 checked={course.tiers.includes(t.id)}
                 onCheckedChange={(v) => set({ tiers: v ? [...course.tiers, t.id] : course.tiers.filter((x) => x !== t.id) })}
@@ -73,7 +68,7 @@ export function CourseSettings({ course, edit }: { course: Course; edit: (fn: (c
             <button
               key={s}
               onClick={() => set({ status: s, scheduledFor: s === "scheduled" ? course.scheduledFor ?? "Thu 29 Oct" : course.scheduledFor })}
-              className={cn("flex items-center gap-2 rounded-lg border p-3 text-left text-sm", course.status === s && "border-primary ring-1 ring-primary")}
+              className={cn("flex items-center gap-2 rounded-lg border p-3 text-left text-sm bg-card", course.status === s && "border-primary ring-1 ring-primary")}
             >
               <span className={cn("size-2 rounded-full", STATUS_DOT[s])} />
               {STATUS_LABEL[s]}

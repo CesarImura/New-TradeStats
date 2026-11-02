@@ -43,7 +43,7 @@ export function StudentRanking() {
       {live && (
         <Card className="fx-hero flex-row flex-wrap items-center gap-4 px-5">
           <Trophy className="size-8 shrink-0" />
-          <div className="grid min-w-0 flex-1 gap-0.5">
+          <div className="grid min-w-0 flex-1 basis-52 gap-0.5">
             <span className="eyebrow">Competition · ends {live.end}</span>
             <span className="text-xl">{live.name}</span>
             <span className="text-sm">
@@ -126,7 +126,7 @@ export function StudentRanking() {
               {BADGES.map((b, i) => (
                 <div key={b.name} className={cn("grid justify-items-center gap-1.5 rounded-(--r-inner) border p-2.5 text-center", i > 2 && "opacity-40")}>
                   <Medal className={cn("size-6", i <= 2 ? "text-primary" : "text-muted-foreground")} />
-                  <span className="text-[0.7rem] leading-tight">{b.name}</span>
+                  <span className="text-[0.6875rem] leading-tight">{b.name}</span>
                 </div>
               ))}
             </div>

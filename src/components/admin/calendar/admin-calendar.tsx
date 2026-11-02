@@ -208,7 +208,7 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
                   <button
                     key={k.value}
                     onClick={() => set({ kind: k.value, streamed: k.value !== "call", seats: k.value === "workshop" ? e.seats ?? 20 : e.seats })}
-                    className={cn("grid gap-0.5 rounded-lg border p-2.5 text-left", e.kind === k.value && "border-primary ring-1 ring-primary")}
+                    className={cn("grid gap-0.5 rounded-lg border p-2.5 text-left bg-card", e.kind === k.value && "border-primary ring-1 ring-primary")}
                   >
                     <span className="flex items-center gap-1.5 text-sm font-medium">
                       <span className="size-2 rounded-full" style={{ background: COLORS[k.value] }} /> {k.label}
@@ -261,7 +261,7 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
               </div>
             </div>
 
-            <div className="grid gap-3 rounded-lg border p-3">
+            <div className="grid gap-3 rounded-lg border p-3 bg-card">
               <label className="flex items-center justify-between gap-3 text-sm">
                 <span className="grid">
                   <span className="font-medium">Live in the platform</span>
@@ -374,7 +374,7 @@ function BookingDetail({ item, onClose }: { item: Item; onClose: () => void }) {
             <p>{b.question}</p>
           </div>
         )}
-        <div className="grid gap-2 rounded-lg border p-3">
+        <div className="grid gap-2 rounded-lg border p-3 bg-card">
           <span className="flex items-center gap-2 font-medium">
             <Sparkles className="size-4" /> Briefing
             <Badge variant="secondary">AI</Badge>
@@ -428,7 +428,7 @@ function NewsEditor({ news, onClose }: { news: NewsItem; onClose: () => void }) 
             </div>
           ))}
         </div>
-        <label className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
+        <label className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm bg-card">
           <span className="grid">
             <span className="font-medium">No-trade event</span>
             <span className="text-xs text-muted-foreground">Marked in red for students; the journal checks the rule.</span>

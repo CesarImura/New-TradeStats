@@ -98,7 +98,7 @@ function RequestList({ trades, active, onPick }: { trades: ReturnType<typeof all
           >
             <span className="flex items-center gap-2">
               <Avatar className="size-6">
-                <AvatarFallback className="text-[0.6rem]">{s.initials}</AvatarFallback>
+                <AvatarFallback className="text-[0.6875rem]">{s.initials}</AvatarFallback>
               </Avatar>
               <span className="text-sm font-medium">{s.name}</span>
               <span className="ml-auto text-xs text-muted-foreground">{ask?.when}</span>
@@ -192,7 +192,7 @@ function Review({ trade: t, onDone, readOnly }: { trade: ReturnType<typeof allTr
         {t.thread.map((m, i) => (
           <div key={i} className={cn("flex gap-2.5", m.from === "coach" && "flex-row-reverse")}>
             <Avatar className="size-7">
-              <AvatarFallback className="text-[0.6rem]">{m.from === "coach" ? coach.mark : s.initials}</AvatarFallback>
+              <AvatarFallback className="text-[0.6875rem]">{m.from === "coach" ? coach.mark : s.initials}</AvatarFallback>
             </Avatar>
             <div className={cn("grid max-w-[80%] gap-1 rounded-lg px-3 py-2 text-sm", m.from === "coach" ? "bg-[var(--ts-cta)]/10" : "bg-muted")}>
               {m.kind === "text" ? (
@@ -211,7 +211,7 @@ function Review({ trade: t, onDone, readOnly }: { trade: ReturnType<typeof allTr
                   </span>
                 </span>
               )}
-              <span className="text-[0.7rem] text-muted-foreground">{m.when}</span>
+              <span className="text-[0.6875rem] text-muted-foreground">{m.when}</span>
             </div>
           </div>
         ))}

@@ -21,7 +21,7 @@ export function CoachLogo({
           {coach.mark}
         </span>
       )}
-      {showName && <span className="truncate font-heading text-[0.95rem] leading-tight">{coach.name}</span>}
+      {showName && <span className="truncate font-heading text-[0.9375rem] leading-tight">{coach.name}</span>}
     </span>
   )
 }

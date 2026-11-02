@@ -224,7 +224,7 @@ function UploadDialog({ item, onClose }: { item?: DownloadItem; onClose: () => v
             </Field>
           </div>
           <Field label="Who gets it" hint={chosen.length === 0 ? "Everyone" : undefined}>
-            <div className="grid gap-1.5 rounded-lg border p-2.5">
+            <div className="grid gap-1.5 rounded-lg border p-2.5 bg-card">
               {tiers.map((t) => (
                 <label key={t.id} className="flex cursor-pointer items-center gap-2 text-sm">
                   <Checkbox checked={chosen.includes(t.id)} onCheckedChange={(v) => setChosen((c) => (v ? [...c, t.id] : c.filter((x) => x !== t.id)))} />

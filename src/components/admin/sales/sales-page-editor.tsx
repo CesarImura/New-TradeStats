@@ -90,7 +90,7 @@ export function SalesPageEditor() {
             {block.items && (
               <div className="grid gap-3">
                 {block.items.map((it, i) => (
-                  <div key={i} className="grid gap-1.5 rounded-md border p-2.5">
+                  <div key={i} className="grid gap-1.5 rounded-md border p-2.5 bg-card">
                     <div className="flex items-center gap-2">
                       <Input
                         value={block.type === "faq" ? it.q : (it.who ?? "")}

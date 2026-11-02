@@ -272,7 +272,7 @@ function Week({
               {hours.map((h) => (
                 <span
                   key={h}
-                  className="absolute right-2 -translate-y-1/2 text-[0.65rem] text-muted-foreground tabular-nums"
+                  className="absolute right-2 -translate-y-1/2 text-[0.6875rem] text-muted-foreground tabular-nums"
                   style={{ top: (h - HOURS.from) * ROW }}
                 >
                   {h > HOURS.from ? `${String(h).padStart(2, "0")}:00` : ""}
@@ -323,7 +323,7 @@ function Week({
                         key={i.key}
                         ref={eventStyle === "solid" ? (el) => solidTextFallback(el) : undefined}
                         onClick={(e) => (e.stopPropagation(), onSelect(i, e.currentTarget))}
-                        className="absolute overflow-hidden rounded-[var(--r-chip,6px)] border-l-[3px] px-1.5 py-0.5 text-left text-[0.7rem] leading-tight shadow-xs transition-shadow hover:z-10 hover:shadow-md"
+                        className="absolute overflow-hidden rounded-[var(--r-chip,6px)] border-l-[3px] px-1.5 py-0.5 text-left text-[0.6875rem] leading-tight shadow-xs transition-shadow hover:z-10 hover:shadow-md"
                         style={{
                           top: top(i.start),
                           height: h,

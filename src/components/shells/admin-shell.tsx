@@ -121,7 +121,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
           <div className="ml-auto flex items-center gap-2">
             <Button variant="outline" className="hidden w-56 justify-start text-muted-foreground sm:inline-flex" aria-label="Search">
               <Search /> <span className="font-normal">Search</span>
-              <kbd className="ml-auto rounded-[5px] bg-white/[0.06] px-1.5 text-[0.65rem]">⌘K</kbd>
+              <kbd className="ml-auto rounded-[5px] bg-white/[0.06] px-1.5 text-[0.6875rem]">⌘K</kbd>
             </Button>
             <HelpButton />
             <Button variant="outline" size="icon" aria-label="Notifications" className="relative">
