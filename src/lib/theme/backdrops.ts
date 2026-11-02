@@ -1,8 +1,11 @@
 import type { CSSProperties } from "react"
-import type { CoachTheme } from "./types"
+import { widgetSetOf, type CoachTheme } from "./types"
 
 /** The readability minimum: the page colour always covers an image at least this much. */
 export const MIN_DIM = 45
+/** Blended widgets have no card under their text, so the page colour covers an image more. */
+export const BLENDED_MIN_DIM = 65
+export const minDimOf = (t: CoachTheme) => (widgetSetOf(t) === "open" ? BLENDED_MIN_DIM : MIN_DIM)
 
 const svg = (body: string, w = 400, h = 300) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 ${w} ${h}'>${body}</svg>`)}")`
 
@@ -74,7 +77,7 @@ export function backdropStyle(t: CoachTheme): CSSProperties | null {
 }
 
 /** How much page colour sits over the image, never below the readability minimum. */
-export const dimOf = (t: CoachTheme) => Math.max(MIN_DIM, t.bgDim ?? 70)
+export const dimOf = (t: CoachTheme) => Math.max(minDimOf(t), t.bgDim ?? 70)
 
 /** A picture (upload, web address or a library one) as the CSS for a layer: one widget's own background (widget-scope.tsx). */
 export function pictureOf(src: string): CSSProperties {

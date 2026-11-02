@@ -7,7 +7,7 @@
  * edged by 1px lines, titled panels with a header band, recessed fields,
  * small tactile buttons (28px, 4px corners, a top highlight), 13px body text,
  * compact tables, tabs and menus. Geist and Carbon icons; TradeStats
- * colours stay: yellow for the main action, orange for selection and focus.
+ * colours stay: orange for the main action, selection and focus; yellow only for small accents.
  *
  * Everything sits under `:root:has(.ts-ui)`, so menus and dialogs rendered
  * outside the tree match. Coach previews shown inside our UI (Design editor,
@@ -39,9 +39,13 @@ export const TS = {
   textSecondary: "#a8a8b1",
   /** Hints and descriptions: the quietest text that still reads at 4.5:1 on every panel. */
   textHelper: "#8b8b94",
-  /** Main action: yellow button, near-black text. */
+  /** Main action button: TradeStats orange, near-black text (6:1). */
+  action: "#ff5500",
+  actionHover: "#e64d00",
+  /** Text on the orange: pure black (6.5:1), semibold, so a short label reads at a glance. */
+  actionText: "#000000",
+  /** The yellow kept for small accents (a step done, a starred tier, a count): not a button. */
   cta: "#f8ff9e",
-  ctaHover: "#ecf38a",
   /** Focus outlines, the open page, the active tab, selected options: orange. */
   interactive: "#ff5500",
   profit: "#42be65",
@@ -55,7 +59,7 @@ ${R} {
   --background: ${TS.bg}; --foreground: ${TS.text};
   --card: ${TS.layer1}; --card-foreground: ${TS.text};
   --popover: ${TS.layer2}; --popover-foreground: ${TS.text};
-  --primary: ${TS.cta}; --primary-foreground: ${TS.bg};
+  --primary: ${TS.action}; --primary-foreground: ${TS.actionText};
   --secondary: ${TS.layer2}; --secondary-foreground: ${TS.text};
   --muted: ${TS.layer2}; --muted-foreground: ${TS.textSecondary};
   --accent: ${TS.layerHover2}; --accent-foreground: ${TS.text};
@@ -66,7 +70,7 @@ ${R} {
   --highlight: ${TS.cta}; --highlight-foreground: ${TS.bg};
   --profit: ${TS.profit}; --loss: ${TS.loss}; --ts-loss-text: ${TS.lossText};
   --sidebar: #0e0e10; --sidebar-foreground: ${TS.textSecondary};
-  --sidebar-primary: ${TS.cta}; --sidebar-primary-foreground: ${TS.bg};
+  --sidebar-primary: ${TS.action}; --sidebar-primary-foreground: ${TS.actionText};
   --sidebar-accent: ${TS.layer1}; --sidebar-accent-foreground: ${TS.text};
   --sidebar-border: ${TS.borderSubtle}; --sidebar-ring: ${TS.interactive};
   --ts-interactive: ${TS.interactive}; --ts-cta: ${TS.cta};
@@ -103,9 +107,10 @@ ${ui("[data-slot=button].h-7")} { height: 1.5rem; font-size: 0.75rem; }
 ${ui("[data-slot=button].size-7")} { width: 1.5rem; height: 1.5rem; }
 ${ui("[data-slot=button]:active")} { translate: none; }
 ${ui("[data-slot=button].bg-primary")} {
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45), inset 0 -1px 0 rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.5);
+  color: ${TS.actionText}; font-weight: 600;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22), 0 0 0 1px rgb(0 0 0 / 0.5);
 }
-${ui("[data-slot=button].bg-primary:hover")} { background: ${TS.ctaHover}; }
+${ui("[data-slot=button].bg-primary:hover")} { background: ${TS.actionHover}; }
 ${ui(":is([data-slot=button].bg-secondary, [data-slot=button][class*='border-border'])")} {
   background: ${TS.layer2}; border-color: ${TS.panelBorder};
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 1px 1px rgb(0 0 0 / 0.4);

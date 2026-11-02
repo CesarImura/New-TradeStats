@@ -1,5 +1,7 @@
 import { DEFAULT_WORDING, isPageId, pageIdOf, type Coach, type MenuId, type ModuleId } from "@/lib/data/coaches"
 import type { ContentDraft, ThemeDraft } from "@/lib/prototype-store"
+import { contrast } from "./contrast"
+import { onColor } from "./derive"
 import { TEMPLATES } from "./templates"
 import type { CoachTheme, TemplateId } from "./types"
 import { defaultCustomPage, defaultHome, defaultPage, normalizeLayout, templatePage, withCore, type PageId, type PageLayout } from "@/lib/widgets/layout"
@@ -21,6 +23,8 @@ export function resolveCoach(coach: Coach, c: ContentDraft = {}): Coach {
     customPages,
     modules: { ...Object.fromEntries(all.map((m) => [m, false])), ...coach.modules, ...c.modules } as Coach["modules"],
     pages: pagesOf(coach, c),
+    join: c.join ?? coach.join,
+    coursePage: c.coursePage ?? coach.coursePage,
   }
 }
 
@@ -62,7 +66,7 @@ export function resolveTheme(coach: Coach, draft: ThemeDraft = {}): CoachTheme {
   const base = TEMPLATES[templateId].theme
   const keepBrand = templateId !== coach.template ? { primary: coach.overrides.primary ?? TEMPLATES[coach.template].theme.primary } : {}
   const layers: ThemeDraft[] = [templateId === coach.template ? coach.overrides : keepBrand, draft]
-  return layers.reduce<CoachTheme>(
+  const merged = layers.reduce<CoachTheme>(
     (acc, l) => ({
       ...acc,
       ...l,
@@ -74,5 +78,11 @@ export function resolveTheme(coach: Coach, draft: ThemeDraft = {}): CoachTheme {
     }),
     base,
   )
+  // The brand colour can come from one place and its text colour from another (a template switched in
+  // the editor keeps the coach's colour, not the template's white or black on it). When the coach didn't
+  // choose the text colour, it follows the brand colour so buttons always read.
+  const chosen = layers.some((l) => l.primaryForeground !== undefined)
+  if (!chosen && contrast(merged.primaryForeground, merged.primary) < 4.5) return { ...merged, primaryForeground: onColor(merged.primary) }
+  return merged
 }
 

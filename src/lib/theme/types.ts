@@ -31,7 +31,7 @@ export type ChartStyle = "ticks" | "solid" | "thin" | "blocks" | "dots"
 export type WidgetFont = "mono" | "heading" | "body"
 /** Which parts of a widget's header show: the icon, the title, the grey description line under it, and the value chip on the right. */
 export type WidgetHeader = { icon: boolean; title: boolean; description: boolean; value: boolean }
-/** How widgets sit on the page: Cards (one card each) or Open (no box and no line). "sheet" is retired and draws as Cards (widgetSetOf). */
+/** How widgets sit on the page: Cards (one card each) or Open, shown to the coach as "Blended" (no box and no line). "sheet" is retired and draws as Cards (widgetSetOf). */
 export type WidgetSet = "cards" | "sheet" | "open"
 /**
  * Where the widget's name sits and how it reads: Top (icon, title, chip), Label (a small label line, no icon tile),
@@ -50,6 +50,9 @@ export type WidgetFinish = "none" | "corners" | "grid"
 /** Cards: Raised (the card colour, as the template has it), Grey (a grey card on the page), Outline (no fill, a hairline). */
 export type CardSurface = "raised" | "grey" | "outline"
 /** Plain, a texture (grid, glow, dots), a gradient from the brand colours, or an image. */
+/** What the menu is filled with (side menu, top bar, phone bar): the page colour, a wash of the brand, the brand colour, or nothing. */
+export type NavFill = "page" | "tint" | "brand" | "clear"
+
 export type BackgroundStyle = "plain" | "grid" | "glow" | "dots" | "gradient" | "image"
 
 /** Everything a coach can change about the look of their platform. */
@@ -84,7 +87,7 @@ export type CoachTheme = {
   /** Retired (Brand depth): brand cards are flat brand colour, so no setting reads it. Kept so saved designs still load. */
   effects: "flat" | "soft" | "vivid"
   /** frame: classic (the menu and the page are one surface) or floating (the page sits on a rounded canvas on the menu's ground, like the admin). */
-  nav: { layout: NavLayout; style: NavStyle; logo: "left" | "center"; frame?: "classic" | "floating" }
+  nav: { layout: NavLayout; style: NavStyle; logo: "left" | "center"; frame?: "classic" | "floating"; fill?: NavFill }
   /** Widget style; each template has a default (widgetStyleOf). */
   widgetStyle?: WidgetStyle
   /** Defaults from the widget style (chartStyleOf). */
@@ -131,8 +134,8 @@ const WIDGET_SET_DEFAULT: Record<WidgetStyle, WidgetSet> = { instrument: "cards"
  */
 export const widgetSetOf = (t: Pick<CoachTheme, "template" | "widgetStyle" | "widgetSet" | "background">): WidgetSet => {
   const set = t.widgetSet ?? WIDGET_SET_DEFAULT[widgetStyleOf(t)]
-  // Open (no box) was taken out of the editor on 30/10: it read as no change at all. Saved designs with it get cards.
-  return set === "sheet" || set === "open" ? "cards" : set
+  // Open comes back as "Blended" (Design → All widgets → Card, 02/11): widgets sit straight on the page. Sheet stays retired.
+  return set === "sheet" ? "cards" : set
 }
 
 const HEADER_FORM_DEFAULT: Record<WidgetStyle, HeaderForm> = { instrument: "path", soft: "tag", editorial: "caption" }

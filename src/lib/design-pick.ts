@@ -35,7 +35,7 @@ const RULES: Rule[] = [
 
 const MARKED: Record<string, { label: string; fields: string[] }> = {
   logo: { label: "Logo and name", fields: ["logo", "name"] },
-  nav: { label: "Menu layout", fields: ["nav-layout", "nav-frame", "nav-style", "nav-logo"] },
+  nav: { label: "Menu layout", fields: ["nav-layout", "nav-frame", "nav-style", "nav-logo", "nav-fill"] },
   background: { label: "Page background", fields: ["background", "mode"] },
 }
 
