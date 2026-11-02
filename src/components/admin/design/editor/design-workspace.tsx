@@ -20,12 +20,12 @@ import {
   RotateCcw,
   Trash2,
   Undo2,
+  Users,
   Wand2,
 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { studentNav } from "@/components/coach/nav"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -146,14 +146,14 @@ export function DesignWorkspace() {
   useEffect(() => {
     const u = new URL(window.location.href)
     u.searchParams.set("step", step)
-    for (const [k, v] of [["page", page !== "home" ? page : null], ["w", widget], ["scope", step === "pages" && scope === "all" ? "all" : null]] as const) {
+    for (const [k, v] of [["page", page !== "home" ? page : null], ["tier", tier !== "default" ? tier : null], ["w", widget], ["scope", step === "pages" && scope === "all" ? "all" : null]] as const) {
       if (v) u.searchParams.set(k, v)
       else u.searchParams.delete(k)
     }
     u.searchParams.delete("mode")
     u.searchParams.delete("panel")
     if (u.href !== window.location.href) window.history.replaceState(window.history.state, "", u)
-  }, [step, page, widget, scope])
+  }, [step, page, tier, widget, scope])
   const panel = useRef<HTMLDivElement>(null)
   // Below 1280px the left sidebar starts as icons only (the page needs the room); wider, it is always open.
   const [narrow, setNarrow] = useState(false)
@@ -199,8 +199,8 @@ export function DesignWorkspace() {
 
   const fromSetup = params.get("from") === "setup"
   const pageInfo = arrange.pageInfo
-  // The style sections preview the Everyone layout, so a widget clicked there is the one "Edit only this widget" opens in Pages.
-  const src = `${step === "pages" ? pageInfo.href : `/c/${slug}`}?preview=draft${step === "pages" ? "" : "&layout=everyone"}${step === "pages" && tier !== "default" ? `&tier=${tier}` : ""}${step === "pages" && data !== "sample" ? `&data=${data}` : ""}`
+  // Preview opens what the canvas shows, in every section: this page, for this tier, with this data.
+  const src = `${pageInfo.href}?preview=draft${tier !== "default" ? `&tier=${tier}` : ""}${data !== "sample" ? `&data=${data}` : ""}`
   const checks = auditTheme(theme)
   const tierLabel = tier === "default" ? "Everyone" : (arrange.tierName ?? tier)
   const sel = arrange.selWidget
@@ -273,7 +273,7 @@ export function DesignWorkspace() {
         <div role="dialog" aria-modal aria-label="Design" data-design-ws className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-background [--background:#0b0b0c] [--border:rgb(255_255_255/0.08)] [--ring:rgb(244_244_245/0.6)] [--ts-interactive:#f4f4f5] lg:overflow-hidden">
           {/* Top bar, three groups (Framer, Webflow): where you are on the left; the page, its layout and the device in the middle;
               undo, more, preview and publish on the right. */}
-          <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/[0.06] px-4 max-lg:h-auto max-lg:grid-cols-1 max-lg:py-2 [&_[data-slot=button]]:h-9 [&_[data-slot=button][data-size^=icon]]:w-9 [&_[data-slot=button]]:text-[0.8125rem] [&_[data-slot=button]_svg]:size-4">
+          <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/[0.06] px-4 max-lg:grid-cols-[auto_minmax(0,1fr)_auto] max-lg:gap-2 max-sm:h-auto max-sm:grid-cols-[auto_minmax(0,1fr)] max-sm:py-2 [&_[data-slot=button]]:h-9 [&_[data-slot=button][data-size^=icon]]:w-9 [&_[data-slot=button]]:text-[0.8125rem] [&_[data-slot=button]_svg]:size-4">
             <div className="flex min-w-0 items-center gap-2">
             {fromSetup ? (
               <Button size="sm" nativeButton={false} render={<Link href="/setup" />}>
@@ -284,77 +284,39 @@ export function DesignWorkspace() {
                 <ArrowLeft /> Admin
               </Button>
             )}
-            <span className="px-1 text-[0.8125rem] font-semibold">Design</span>
-            {editor.dirty ? (
-              <Badge variant="secondary" className="gap-1.5">
-                <span className="size-1.5 rounded-full bg-amber-500" /> Not published yet
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="gap-1.5 text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-emerald-500" /> Live
-              </Badge>
-            )}
+            <span className="px-1 text-[0.8125rem] font-semibold max-lg:hidden">Design</span>
             </div>
-            <div className="flex min-w-0 items-center justify-center gap-1">
-              {step === "pages" && (
-                <>
-                  <DropdownMenu>
-                        <DropdownMenuTrigger render={<Button variant="ghost" className="h-8 gap-1.5 px-2 text-[0.9375rem] font-semibold" aria-label={`Page: ${pageInfo.label}. Change page`} />}>
-                          {pageInfo.label}
-                          <ChevronDown className="size-4 text-muted-foreground" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-56">
-                          {pages.map((p) => (
-                            <DropdownMenuItem
-                              key={p.id}
-                              onClick={() => {
-                                setPage(p.id)
-                                select(null)
-                              }}
-                            >
-                              <span className="flex-1">{p.label}</span>
-                              {p.id === page && <Check className="size-3.5" />}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="shrink-0 gap-1.5" aria-label={`Layout for ${tierLabel}. Change tier`} />}>
-                        <span className="text-muted-foreground">Layout for</span>
-                        <span className="font-medium">{tierLabel}</span>
-                        {tier !== "default" && <span className="text-muted-foreground">· {arrange.inherits ? "uses Everyone" : "own layout"}</span>}
-                        <ChevronDown className="size-3.5 text-muted-foreground" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-60">
-                        {[{ id: "default", name: "Everyone" }, ...coach.tiers].map((t) => (
-                          <DropdownMenuItem
-                            key={t.id}
-                            onClick={() => {
-                              setTier(t.id)
-                              select(null)
-                            }}
-                          >
-                            <span className="flex-1">
-                              {t.name}
-                              {t.id !== "default" && (coach.pages?.[page] ?? {})[t.id] ? <span className="text-muted-foreground"> · own layout</span> : null}
-                            </span>
-                            {t.id === tier && <Check className="size-3.5" />}
-                          </DropdownMenuItem>
-                        ))}
-                        {tier !== "default" && !arrange.inherits && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={arrange.useDefault}>Use the Everyone layout for {tierLabel}</DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  <span aria-hidden className="mx-1 h-5 w-px bg-white/10" />
-                </>
-              )}
+            {/* The same in every section: the canvas shows this page in all of them, so its name is always in sight. */}
+            <div className="flex min-w-0 items-center justify-center gap-2 max-sm:col-span-2 max-sm:row-start-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="ghost" className="min-w-0 gap-1.5 px-2.5 text-[0.9375rem] font-semibold" aria-label={`Page: ${pageInfo.label}. Change page`} title="The page you are editing" />}>
+                  <span className="truncate">{pageInfo.label}</span>
+                  <ChevronDown className="size-4 text-muted-foreground" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-56">
+                  {pages.map((p) => (
+                    <DropdownMenuItem
+                      key={p.id}
+                      onClick={() => {
+                        setPage(p.id)
+                        select(null)
+                      }}
+                    >
+                      <span className="flex-1">{p.label}</span>
+                      {p.id === page && <Check className="size-3.5" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <span aria-hidden className="h-5 w-px bg-white/10" />
               <DeviceSwitch value={device} onChange={setDevice} />
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-1">
+            <div className="flex flex-wrap items-center justify-end gap-1 max-sm:flex-nowrap max-sm:gap-0">
+              {/* Next to Publish, which it is about: whether students already see these changes. */}
+              <span className={cn("mr-1 inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs whitespace-nowrap", editor.dirty ? "bg-white/[0.06] text-foreground" : "text-muted-foreground")} title={editor.dirty ? "Students still see the last published design" : "Students see this design"}>
+                <span className={cn("size-1.5 rounded-full", editor.dirty ? "bg-amber-500" : "bg-emerald-500")} />
+                <span className="max-lg:sr-only">{editor.dirty ? "Not published yet" : "Live"}</span>
+              </span>
               {/* Only when something is hard to read: a check that passes needs no room in the bar. */}
               {checks.some((c) => !c.pass) && <Readability fails={checks.filter((c) => !c.pass)} total={checks.length} />}
               <Button variant="ghost" size="icon-sm" onClick={editor.undo} disabled={!editor.canUndo} aria-label="Undo" title="Undo (⌘Z)">
@@ -392,7 +354,7 @@ export function DesignWorkspace() {
                 </DropdownMenuContent>
               </DropdownMenu>
               <Button variant="outline" size="sm" nativeButton={false} render={<a href={src} target="_blank" rel="noreferrer" />} title="Open your platform as students see it, with your changes">
-                <ExternalLink /> Preview
+                <ExternalLink /> <span className="max-sm:sr-only">Preview</span>
               </Button>
               <Button
                 size="sm"
@@ -450,15 +412,52 @@ export function DesignWorkspace() {
             </aside>
 
             {/* The platform. On Pages it's the widget grid; elsewhere, click a part to change it. */}
-            <section className={cn("relative grid min-h-0 min-w-0 grid-cols-[minmax(0,1fr)_336px] grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-[#2b2b2e]")}>
-              {/* Above the canvas only what is not in the bar: on Pages the note that a tier borrows the Everyone layout; elsewhere how to use the preview. */}
-              {step === "pages" ? (
-                <div className="min-w-0">{arrange.inherits && <p className="truncate bg-[#2b2b2e] px-4 pt-2 text-xs text-white/60">{`${tierLabel} uses the Everyone layout. Changing it gives ${tierLabel} its own.`}</p>}</div>
-              ) : (
-                <div />
-              )}
-              <div className="min-h-0 min-w-0 overflow-hidden">
-                {/* One screen: the platform, with its menu, is the canvas in every section and on every device. */}
+            <section className={cn("relative grid min-h-0 min-w-0 grid-cols-[minmax(0,1fr)_336px] grid-rows-[minmax(0,1fr)] overflow-hidden bg-[#2b2b2e]")}>
+              <div className="relative min-h-0 min-w-0 overflow-hidden">
+                {/* In the canvas's corner: whose layout of this page is on the canvas. Each tier can have its own; until then it uses Everyone's. */}
+                <div className="absolute top-3 left-3 z-30 flex h-10 items-center rounded-xl border border-white/10 bg-[#141416] p-1 text-white shadow-[0_12px_32px_-12px_rgb(0_0_0/0.8)]">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <button
+                          type="button"
+                          aria-label={`Layout for ${tierLabel}. Change tier`}
+                          title={arrange.inherits ? `${tierLabel} uses the Everyone layout. Changing the page gives ${tierLabel} its own.` : "Each tier can have its own layout of this page"}
+                          className="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs text-white/70 outline-none transition-[background-color,color,scale] duration-150 ease-out hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70 active:scale-[0.96] data-[popup-open]:bg-white/10"
+                        />
+                      }
+                    >
+                      <Users className="size-3.5" />
+                      <span>Layout for</span>
+                      <span className="font-medium text-white">{tierLabel}</span>
+                      {tier !== "default" && <span className="text-white/50">· {arrange.inherits ? "uses Everyone" : "own layout"}</span>}
+                      <ChevronDown className="size-3.5 text-white/50" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-64">
+                      {[{ id: "default", name: "Everyone" }, ...coach.tiers].map((t) => (
+                        <DropdownMenuItem
+                          key={t.id}
+                          onClick={() => {
+                            setTier(t.id)
+                            select(null)
+                          }}
+                        >
+                          <span className="flex-1">
+                            {t.name}
+                            {t.id !== "default" && (coach.pages?.[page] ?? {})[t.id] ? <span className="text-muted-foreground"> · own layout</span> : null}
+                          </span>
+                          {t.id === tier && <Check className="size-3.5" />}
+                        </DropdownMenuItem>
+                      ))}
+                      {tier !== "default" && !arrange.inherits && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={arrange.useDefault}>Use the Everyone layout for {tierLabel}</DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
                 <ArrangeCanvas arrange={arrange} coach={coach} theme={theme} device={device} data={data} incoming={incoming} onDropped={() => setIncoming(null)} allWidgets={scope === "all"} shell onPick={pick.pick} />
               </div>
               {/* The inspector: always a column of its own, as in Framer; the page between the sidebars gives way. */}
@@ -466,7 +465,7 @@ export function DesignWorkspace() {
               {(
                 <aside
                   aria-label="Inspector"
-                  className="col-start-2 row-span-2 row-start-1 min-h-0 overflow-y-auto bg-background [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  className="col-start-2 row-start-1 min-h-0 overflow-y-auto bg-background [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
                   <RevealContext.Provider value={pick.reveal}>{inspector}</RevealContext.Provider>
                 </aside>

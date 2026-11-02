@@ -698,7 +698,7 @@ export function ArrangeCanvas({
       {/* The workspace: a mid grey round the page, so the page (in the coach's colours) always stands out from the editor's black panels. */}
       <div
         ref={area}
-        className={cn("h-full min-w-0 overflow-auto bg-[#2b2b2e] px-12 pt-10 pb-28 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", spaceDown && "cursor-grab active:cursor-grabbing")}
+        className={cn("h-full min-w-0 overflow-auto bg-[#2b2b2e] px-12 pt-16 pb-28 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", spaceDown && "cursor-grab active:cursor-grabbing")}
         onClick={() => setSelected(null)}
         onPointerDownCapture={startPan}
       >
