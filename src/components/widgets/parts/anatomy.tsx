@@ -431,7 +431,7 @@ export function WCard({
   const actionHref = action?.href && (action.href.startsWith("/") || /^https?:/.test(action.href) ? action.href : `${base}/${action.href}`)
   const note = footnote && detailed ? <span className="min-w-0 shrink-[999] truncate text-[0.6875rem] leading-4 text-muted-foreground">{footnote}</span> : null
   const rowCls =
-    "group flex h-8 w-full min-w-0 items-center gap-3 rounded-(--r-inner) px-2 text-left text-[0.8125rem] leading-5 outline-none transition-[box-shadow,scale] hover:shadow-[inset_0_0_0_100vmax_color-mix(in_oklab,var(--foreground)_5%,transparent)] duration-150 ease-out active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-(--brand-mark)"
+    "group flex h-8 max-lg:h-10 w-full min-w-0 items-center gap-3 rounded-(--r-inner) px-2 text-left text-[0.8125rem] leading-5 outline-none transition-[box-shadow,scale] hover:shadow-[inset_0_0_0_100vmax_color-mix(in_oklab,var(--foreground)_5%,transparent)] duration-150 ease-out active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-(--brand-mark)"
   const rowStyle: React.CSSProperties = { background: star ? "var(--brand-shade)" : RAISED }
   const rowInner = action && (
     <>
@@ -667,7 +667,7 @@ export function Seg<T extends string>({ value, options, onChange, label }: { val
       onClick={onClick}
       className={cn(
         // 20px to see, 24px to hit: the pseudo-element takes the clicks 2px above and below (the track's padding).
-        "relative z-[1] h-5 rounded-[5px] px-1.5 text-[0.6875rem] leading-none font-medium tabular-nums transition-colors duration-150 outline-none before:absolute before:inset-x-0 before:-inset-y-0.5 before:content-[''] focus-visible:ring-2 focus-visible:ring-(--brand-mark)",
+        "relative z-[1] h-5 rounded-[5px] px-1.5 text-[0.6875rem] leading-none font-medium tabular-nums transition-colors duration-150 outline-none before:absolute before:inset-x-0 before:-inset-y-0.5 max-lg:before:-inset-y-3 max-lg:before:-inset-x-1 before:content-[''] focus-visible:ring-2 focus-visible:ring-(--brand-mark)",
         v === value ? "text-foreground" : "text-muted-foreground hover:text-foreground",
         !live && v === value && raised,
       )}

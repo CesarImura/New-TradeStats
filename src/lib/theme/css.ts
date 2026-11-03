@@ -189,10 +189,14 @@ ${within("[data-slot=badge].text-destructive")}{color:color-mix(in oklab,var(--l
 ${within(".border-primary")}{border-color:var(--brand-mark);}
 ${within("[data-slot=button]")}{border-radius:var(--button-radius)!important;}
 ${within(':is([data-slot=card],[style*="var(--card-shadow)"])')}{outline:1px solid var(--card-edge);outline-offset:-1px;}
-${within("[data-slot=card]")}{box-shadow:var(--card-shadow);--card-spacing:calc(var(--spacing) * 4 * var(--density))!important;}
+${within("[data-slot=card]")}{box-shadow:var(--card-shadow);--card-spacing:round(calc(var(--spacing) * 4 * var(--density)), 2px)!important;}
+${within("[data-slot=card]:not([class~=p-0]):not([class~=px-0])")}{padding-inline:var(--card-spacing);}
 ${within(":is([data-slot=sidebar-menu-button],[data-slot=sidebar-menu-sub-button],[data-slot=tabs-trigger],[data-slot=dropdown-menu-item],[data-slot=dropdown-menu-sub-trigger],[data-slot=select-item],[data-slot=context-menu-item],[data-slot=command-item])")}{border-radius:var(--r-menu)!important;}
 ${within(":is([data-slot=dropdown-menu-content],[data-slot=dropdown-menu-sub-content],[data-slot=popover-content],[data-slot=select-content],[data-slot=context-menu-content],[data-slot=tooltip-content])")}{border-radius:var(--r-panel)!important;}
 ${within("[data-slot=tabs-list]:not([data-variant=line])")}{border-radius:calc(var(--r-menu) + 3px)!important;}
-${within("[data-slot=card][data-size=sm]")}{--card-spacing:calc(var(--spacing) * 3 * var(--density))!important;}
+/* Text is never smaller than 12px: the 11px micro labels (a utility, text-[0.6875rem]) read at 12px, and only the small capitals (.uppercase, .eyebrow) stay 11px. */
+${within('[class~="text-[0.6875rem]"]:not(.uppercase):not(.eyebrow)')}{font-size:0.75rem;}
+${within("[data-slot=card][data-size=sm]")}{--card-spacing:round(calc(var(--spacing) * 3 * var(--density)), 2px)!important;}
+${within("[data-slot=card][data-size=sm]:not([class~=p-0]):not([class~=px-0])")}{padding-inline:var(--card-spacing);}
 `
 }

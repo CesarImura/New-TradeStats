@@ -75,7 +75,7 @@ export function Flyout({
       }}
     >
       <div className="flex h-14 shrink-0 items-center gap-2 pr-3 pl-5">
-        <div className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold">{title}</div>
+        <div className="min-w-0 flex-1 truncate text-[0.875rem] font-semibold">{title}</div>
         <Button variant="ghost" size="icon" aria-label="Close" title="Close (Esc)" onClick={onClose}>
           <X />
         </Button>

@@ -360,7 +360,7 @@ export const BASE_WIDGETS: WidgetDef[] = [
     icon: ImageIcon,
     variants: [
       { value: "headline", label: "Headline", h: 2.5, minH: 2, maxH: 3, minW: 4, maxW: 12, hd: { compact: 2, detailed: 2.5 } },
-      { value: "picture", label: "With picture", h: 4.5, minH: 2, maxH: 5, minW: 4, maxW: 12, hd: { detailed: 4.5 } },
+      { value: "picture", label: "With picture", h: 4.5, minH: 2, maxH: 5, minW: 4, maxW: 12, hd: { detailed: 4.5 }, slim: { below: 8, maxH: 2.5 } },
       { value: "slim", label: "One line", h: 1, minH: 1, maxH: 1, minW: 4, maxW: 12, hd: { detailed: 1 } },
     ],
     settings: [

@@ -93,7 +93,7 @@ export function PublishStep() {
           <p className="-mt-4 text-xs text-muted-foreground">Videos, payouts, your menu and Home wait on a checklist in your admin, each with a short how-to.</p>
 
           <div className="mt-auto grid gap-3">
-            <Button size="lg" className="h-12 w-full justify-between px-4 text-[0.9375rem]" onClick={publish} disabled={busy}>
+            <Button size="lg" className="h-12 w-full justify-between px-4 text-[0.875rem]" onClick={publish} disabled={busy}>
               {busy ? (
                 <>
                   Publishing… <Loader2 className="animate-spin" />

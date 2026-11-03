@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react"
+import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import {
@@ -29,7 +29,7 @@ import { studentNav } from "@/components/coach/nav"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { DataMode } from "@/components/widgets/parts/shared"
 import { getDemoCoach } from "@/lib/data/coaches"
 import { keepVersion } from "@/lib/prototype-store"
@@ -54,8 +54,9 @@ import { CAN_SAVE_TEMPLATE, SaveTemplateDialog } from "./save-template"
 import { LookCards, MenuStep } from "./design-steps"
 import { JOIN_SCREENS, type JoinScreenId } from "@/lib/data/join"
 import { studentCourses, useCatalog } from "@/lib/data/learning"
-import { CourseInspector, CourseSections } from "../panels/course-panels"
-import { JoinInspector, JoinScreens } from "../panels/join-panels"
+import { BackToPlaybook, CourseInspector, CoursePageLink, CourseSections } from "../panels/course-panels"
+import type { CourseSectionId } from "@/lib/data/course-page"
+import { JoinInspector } from "../panels/join-panels"
 import { PreviewFrame } from "./preview-frame"
 
 /** Design's sections, in the order a coach goes through them; the theme ones are the library's theme editor's. */
@@ -91,6 +92,10 @@ const FLASH: Partial<Record<PickTarget, string[]>> = {
 type Scope = "one" | "all"
 
 /** Sections that now live in Pages, as All widgets (every widget's style, Shape's settings included): old links and clicks open it there. */
+/** The page menu's rows: roomy, and the open one filled and bold (not only a tick). */
+const MENU_ITEM = "h-9 gap-2.5 rounded-lg px-2.5 text-[0.875rem]"
+const MENU_ON = "bg-white/[0.09] font-semibold text-foreground"
+const MENU_LABEL = "px-2.5 pt-1.5 pb-1 text-[0.6875rem] font-medium tracking-wide text-muted-foreground uppercase"
 const IN_PAGES = (s: string) => s === "widgets" || s === "shape"
 
 const StepCtx = createContext<{ go: (s: Step) => void }>({ go: () => {} })
@@ -125,6 +130,8 @@ export function DesignWorkspace() {
   const asked = params.get("step") ?? (params.get("mode") === "arrange" || params.get("panel") === "pages" ? "pages" : params.get("panel") === "menu" ? "menu" : "brand")
   // Widgets' style lives in Pages, as All widgets: old links to Widgets open it there.
   const [step, setStep] = useState<Step>(IN_PAGES(asked) ? "pages" : STEP_IDS.includes(asked as Step) ? (asked as Step) : "brand")
+  // The section of the course page selected on the left, edited on the right.
+  const [courseSel, setCourseSel] = useState<CourseSectionId | null>(null)
   const [scope, setScope] = useState<Scope>(IN_PAGES(asked) || params.get("scope") === "all" ? "all" : "one")
   const pages = studentNav(coach, `/c/${slug}`)
   const [pageAsked, setPage] = useState(params.get("page") ?? "home")
@@ -187,6 +194,14 @@ export function DesignWorkspace() {
     step !== "pages",
     (target) => {
       const to = target.startsWith("menu:") ? "menu" : (STEP_OF[target] ?? "brand")
+      // A menu item clicked on the canvas: its row in the Menu panel, and its page on the canvas.
+      if (target.startsWith("menu:")) {
+        const page = target.slice(5)
+        if (pages.some((x) => x.id === page)) {
+          setPage(page)
+          select(null)
+        }
+      }
       if (IN_PAGES(to)) setScope("all")
       setStep(IN_PAGES(to) ? "pages" : to)
       return target.startsWith("menu:") ? describe(target).fields : (FLASH[target] ?? describe(target).fields)
@@ -209,6 +224,8 @@ export function DesignWorkspace() {
   const pageInfo = arrange.pageInfo
   // Preview opens what the canvas shows, in every section: this page, for this tier, with this data.
   const joinInfo = JOIN_SCREENS.find((x) => x.id === joinScreen)!
+  // What the page menu names: the platform page, the course page, or a Join screen.
+  const here = step === "join" ? joinInfo.label : step === "course" ? "Playbook · Course page" : pageInfo.label
   // The course the Course step shows: the first one students can open.
   const catalog = useCatalog(coach)
   const previewCourse = studentCourses(catalog).find((c) => c.modules.length > 0) ?? catalog.courses[0]
@@ -225,7 +242,7 @@ export function DesignWorkspace() {
     step === "join" ? (
       <JoinInspector screen={joinScreen} />
     ) : step === "course" ? (
-      <CourseInspector />
+      <CourseInspector selected={courseSel} onSelect={setCourseSel} />
     ) : scope === "all" ? (
       // A place of its own (not a switch on the widget's panel): the style every widget shares, with the way back.
       <AllWidgetsInspector draft={working.theme} onReset={resetTheme} onBack={() => setScope("one")} back={selDef ? selDef.name : pageInfo.label} own={own} />
@@ -275,15 +292,31 @@ export function DesignWorkspace() {
     brand: { groups: [{ title: "Your platform", fields: ["logo", "name", "mode"], keys: ["mode"], words: "logo name platform light dark mode" }, ...THEME_GROUPS.colour] },
     look: { content: <LookTab /> },
     menu: { content: <MenuStep /> },
-    course: { content: <CourseSections /> },
-    join: { content: <JoinScreens screen={joinScreen} onScreen={setJoinScreen} /> },
-    // No line under the title: the gallery speaks for itself.
-    pages: { content: pagesContent, blurb: undefined },
+        // No line under the title: the gallery speaks for itself.
+    pages: {
+      content:
+        step === "join" ? (
+          <p className="border-t border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] px-5 pt-6 text-xs leading-5 text-muted-foreground">The Join screens have no widgets. Their words, layout and look are on the right.</p>
+        ) : step === "course" ? (
+          <>
+            <BackToPlaybook onBack={() => (setPage("courses"), select(null), go("pages"))} />
+            <CourseSections selected={courseSel} onSelect={setCourseSel} />
+          </>
+        ) : page === "courses" ? (
+          <>
+            {pagesContent}
+            <CoursePageLink onOpen={() => (select(null), go("course"))} />
+          </>
+        ) : (
+          pagesContent
+        ),
+      blurb: undefined,
+    },
     // Every widget's style is in Pages (All widgets); off the rail, still found by search.
-  }).map((t) => (t.id === "widgets" ? { ...t, hidden: true, label: "All widgets" } : t))
+  }).map((t) => (t.id === "widgets" ? { ...t, hidden: true, label: "All widgets" } : t.id === "join" || t.id === "course" ? { ...t, hidden: true } : t.id === "pages" && (step === "join" || step === "course") ? { ...t, heading: step === "join" ? "Join screens" : "Course page" } : t))
 
   return (
-    <DesignProvider value={{ coach, theme, working, change, commit, keepVersion: (label) => keepVersion(slug, label, working), undo: editor.undo }}>
+    <DesignProvider value={{ coach, theme, working, change, commit, keepVersion: (label) => keepVersion(slug, label, working), undo: editor.undo, openPage: (id) => (setPage(id), select(null), go("pages")) }}>
       <StepCtx.Provider value={{ go }}>
         <ThumbStyles />
         {/* A screen of its own, over the admin: one menu (the editor's sections) instead of two side by side. */}
@@ -292,7 +325,7 @@ export function DesignWorkspace() {
         <div role="dialog" aria-modal aria-label="Design" data-design-ws className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-background [--background:#0b0b0c] [--border:rgb(255_255_255/0.08)] [--ring:rgb(244_244_245/0.6)] [--ts-interactive:#f4f4f5] lg:overflow-hidden">
           {/* Top bar, three groups (Framer, Webflow): where you are on the left; the page, its layout and the device in the middle;
               undo, more, preview and publish on the right. */}
-          <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/[0.06] px-4 max-lg:grid-cols-[auto_minmax(0,1fr)_auto] max-lg:gap-2 max-sm:h-auto max-sm:grid-cols-[auto_minmax(0,1fr)] max-sm:py-2 [&_[data-slot=button]]:h-9 [&_[data-slot=button][data-size^=icon]]:w-9 [&_[data-slot=button]]:text-[0.8125rem] [&_[data-slot=button]_svg]:size-4">
+          <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/[0.16] px-4 max-lg:grid-cols-[auto_minmax(0,1fr)_auto] max-lg:gap-2 max-sm:h-auto max-sm:grid-cols-[auto_minmax(0,1fr)] max-sm:py-2 [&_[data-slot=button]]:h-9 [&_[data-slot=button][data-size^=icon]]:w-9 [&_[data-slot=button]]:text-[0.8125rem] [&_[data-slot=button]_svg]:size-4">
             <div className="flex min-w-0 items-center gap-2">
             {fromSetup ? (
               <Button size="sm" nativeButton={false} render={<Link href="/setup" />}>
@@ -307,37 +340,64 @@ export function DesignWorkspace() {
             </div>
             {/* The same in every section: the canvas shows this page in all of them, so its name is always in sight. */}
             <div className="flex min-w-0 items-center justify-center gap-2 max-sm:col-span-2 max-sm:row-start-2">
-              {step === "course" ? (
-                <span className="truncate px-2.5 text-[0.9375rem] font-semibold" title="The page inside a course, the same for every course">
-                  Course page{previewCourse ? ` · ${previewCourse.title}` : ""}
-                </span>
-              ) : step === "join" ? (
-                // Join's screens aren't pages of the platform: they are chosen on the left, so here only a name, no list to open.
-                <span className="truncate px-2.5 text-[0.9375rem] font-semibold" title="Chosen on the left">
-                  Join · {joinInfo.label}
-                </span>
-              ) : (
               <DropdownMenu>
-                <DropdownMenuTrigger render={<Button variant="ghost" className="min-w-0 gap-1.5 px-2.5 text-[0.9375rem] font-semibold" aria-label={`Page: ${pageInfo.label}. Change page`} title="The page you are editing" />}>
-                  <span className="truncate">{pageInfo.label}</span>
+                <DropdownMenuTrigger render={<Button variant="ghost" className="min-w-0 gap-1.5 px-2.5 text-[0.875rem] font-semibold" aria-label={`Page: ${here}. Change page`} title="The page you are editing" />}>
+                  <span className="truncate">{here}</span>
                   <ChevronDown className="size-4 text-muted-foreground" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-56">
-                  {pages.map((p) => (
-                    <DropdownMenuItem
-                      key={p.id}
-                      onClick={() => {
-                        setPage(p.id)
-                        select(null)
-                      }}
-                    >
-                      <span className="flex-1">{p.label}</span>
-                      {p.id === page && <Check className="size-3.5" />}
-                    </DropdownMenuItem>
-                  ))}
+                <DropdownMenuContent align="center" className="w-60 p-1.5">
+                  {/* The platform's pages; the page inside a course sits under Playbook, which it belongs to. */}
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className={MENU_LABEL}>Pages</DropdownMenuLabel>
+                    {pages.map((p) => (
+                      <Fragment key={p.id}>
+                        <DropdownMenuItem
+                          className={cn(MENU_ITEM, step !== "join" && step !== "course" && p.id === page && MENU_ON)}
+                          aria-current={step !== "join" && step !== "course" && p.id === page ? "page" : undefined}
+                          onClick={() => {
+                            setPage(p.id)
+                            select(null)
+                            if (step === "join" || step === "course") go("pages")
+                          }}
+                        >
+                          <span className="flex-1 truncate">{p.label}</span>
+                          {step !== "join" && step !== "course" && p.id === page && <Check className="size-4" />}
+                        </DropdownMenuItem>
+                        {p.id === "courses" && (
+                          <DropdownMenuItem
+                            className={cn(MENU_ITEM, "pl-7 text-[0.875rem]", step === "course" ? MENU_ON : "text-muted-foreground")}
+                            aria-current={step === "course" ? "page" : undefined}
+                            onClick={() => (select(null), go("course"))}
+                          >
+                            <span className="flex-1 truncate">Course page</span>
+                            {step === "course" && <Check className="size-4" />}
+                          </DropdownMenuItem>
+                        )}
+                      </Fragment>
+                    ))}
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator className="mx-0 my-1.5" />
+                  {/* The screens people pass through to join aren't pages of the platform: apart from them. */}
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className={MENU_LABEL}>Join</DropdownMenuLabel>
+                    {JOIN_SCREENS.map((j) => (
+                      <DropdownMenuItem
+                        key={j.id}
+                        className={cn(MENU_ITEM, step === "join" && j.id === joinScreen && MENU_ON)}
+                        aria-current={step === "join" && j.id === joinScreen ? "page" : undefined}
+                        onClick={() => {
+                          setJoinScreen(j.id)
+                          select(null)
+                          go("join")
+                        }}
+                      >
+                        <span className="flex-1 truncate">{j.label}</span>
+                        {step === "join" && j.id === joinScreen && <Check className="size-4" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
-              )}
               <span aria-hidden className="h-5 w-px bg-white/10" />
               <DeviceSwitch value={device} onChange={setDevice} />
             </div>
@@ -413,7 +473,7 @@ export function DesignWorkspace() {
             {menu === "template" && <SaveTemplateDialog coach={coach} theme={theme} open onOpenChange={(o) => setMenu(o ? "template" : null)} />}
             <GuideDialog
               title="Designing your platform"
-              text="Your brand and a look first; then type and background to fine-tune; then your menu and pages. In Pages, select a widget to move, size, fill and style it, for that widget or all of them. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."
+              text="Your brand and a look first; then type and background to fine-tune; then your menu and pages. In Widgets, select a widget to move, size, fill and style it, for that widget or all of them. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."
               open={menu === "guide"}
               onOpenChange={(o) => setMenu(o ? "guide" : null)}
             />
@@ -422,11 +482,11 @@ export function DesignWorkspace() {
           {/* Below 1280px the left sidebar keeps only its icons, so the page has room; an icon opens it again. */}
           <div className={cn("grid min-h-0", leftOpen ? "grid-cols-[344px_minmax(0,1fr)]" : "grid-cols-[64px_minmax(0,1fr)]")}>
             {/* The one panel: the same editor as the library's themes, with Design's own sections (brand, look, menu, pages) around the theme's. */}
-            <aside className="flex min-h-0 flex-col">
+            <aside className="flex min-h-0 flex-col border-r border-white/[0.16]">
               <RevealContext.Provider value={pick.reveal}>
                 <SettingsPanel
                   tabs={tabs}
-                  tab={step}
+                  tab={step === "join" || step === "course" ? "pages" : step}
                   onTab={(id) => go(id as Step)}
                   draft={working.theme}
                   onReset={resetTheme}
@@ -499,7 +559,7 @@ export function DesignWorkspace() {
               {(
                 <aside
                   aria-label="Inspector"
-                  className="col-start-2 row-start-1 min-h-0 overflow-y-auto bg-background [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  className="col-start-2 row-start-1 min-h-0 overflow-y-auto border-l border-white/[0.16] bg-background [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
                   <RevealContext.Provider value={pick.reveal}>{inspector}</RevealContext.Provider>
                 </aside>
@@ -537,7 +597,7 @@ function PagePanel({
   return (
     <div>
       <InspectorTop>
-        <span className="truncate text-[0.9375rem] font-semibold">{name}</span>
+        <span className="truncate text-[0.875rem] font-semibold">{name}</span>
       </InspectorTop>
       <div className="grid gap-3 px-5 pb-4">
         <p className="text-xs leading-4 text-muted-foreground">Select a widget to edit it.</p>

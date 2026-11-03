@@ -137,6 +137,8 @@ export function WidgetGrid({
   // and the content adapts inside; tablets and phones keep each card as tall as its content.
   const fixed = cols === 3
   const sized = useMemo(() => (fixed ? Object.fromEntries(shown.map((w) => [w.id, w.type === "page-header" || getWidget(w.type)?.core ? (heights[w.id] ?? estimate(w, gap)) : estimate(w, gap)])) : heights), [fixed, shown, heights, gap])
+  // The title and the page's own tool are as tall as their content: a height set on them would be the one they measure back (a tool measured at 0 while it loads stayed at 0).
+  const ownHeight = (w: WidgetInstance) => w.type === "page-header" || !!getWidget(w.type)?.core
   const placed = useMemo(() => placeItems(shown, cols, sized, gap, !!free), [shown, cols, sized, gap, free])
   const colWidth = cols ? (width - gap * (cols - 1)) / cols : 0
   useLayoutEffect(() => onPlaced?.({ ...placed, cols, colWidth, heights: sized }), [placed, cols, colWidth, sized, onPlaced])
@@ -161,7 +163,7 @@ export function WidgetGrid({
             left: s.col * (colWidth + gap),
             top: s.top,
             width: s.span * colWidth + (s.span - 1) * gap,
-            height: fixed ? sized[w.id] : undefined,
+            height: fixed && !ownHeight(w) ? sized[w.id] : undefined,
             transition: settled ? "left 240ms var(--ease-out), top 240ms var(--ease-out), width 240ms var(--ease-out)" : undefined,
           }
           const node = (

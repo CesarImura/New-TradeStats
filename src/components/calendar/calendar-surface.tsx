@@ -1,8 +1,10 @@
 "use client"
 
+import { useContext } from "react"
 import { addDays, addMonths, addWeeks, endOfMonth, format, isSameDay, isSameMonth, startOfMonth, startOfWeek } from "date-fns"
 import { ChevronLeft, ChevronRight } from "@/components/icons"
 import { Button } from "@/components/ui/button"
+import { ShellEditorContext } from "@/components/shells/student-shell"
 import { NOW, hhmm, isLiveNow, type Item, type ItemKind } from "@/lib/data/schedule"
 import { cn } from "@/lib/utils"
 
@@ -43,6 +45,9 @@ export function CalendarSurface({
 }) {
   const step = (dir: 1 | -1) => onCursor(view === "month" ? addMonths(cursor, dir) : addWeeks(cursor, dir))
   const weekStart = startOfWeek(cursor, { weekStartsOn: 1 })
+  // On a phone the week grid is wider than the screen: students get the list instead (the coach, who clicks a time to create, keeps the grid).
+  const phoneList = !onEmptySlot
+  const listStart = isSameDay(weekStart, startOfWeek(NOW, { weekStartsOn: 1 })) ? NOW : weekStart
   const label =
     view === "month"
       ? format(cursor, "MMMM yyyy")
@@ -73,8 +78,10 @@ export function CalendarSurface({
                 aria-checked={view === v}
                 onClick={() => onView(v)}
                 className={cn(
-                  "rounded-md px-3 py-1 text-sm text-muted-foreground capitalize",
+                  "rounded-md px-3 py-1 text-sm text-muted-foreground capitalize max-lg:min-h-10",
+                  phoneList && v === "week" && "max-sm:hidden",
                   view === v && "bg-background font-medium text-foreground shadow-sm",
+                  phoneList && v === "list" && view === "week" && "max-sm:bg-background max-sm:font-medium max-sm:text-foreground max-sm:shadow-sm",
                 )}
               >
                 {v}
@@ -85,10 +92,17 @@ export function CalendarSurface({
       </div>
 
       {view === "month" && <Month items={items} cursor={cursor} onSelect={onSelect} colorOf={colorOf} eventStyle={eventStyle} onDay={(d) => (onCursor(d), onView("week"))} />}
-      {view === "week" && <Week items={items} start={weekStart} onSelect={onSelect} colorOf={colorOf} eventStyle={eventStyle} onEmptySlot={onEmptySlot} />}
-      {view === "list" && (
-        <List items={items} start={isSameDay(weekStart, startOfWeek(NOW, { weekStartsOn: 1 })) ? NOW : weekStart} onSelect={onSelect} colorOf={colorOf} />
+      {view === "week" && (
+        <div className={cn(phoneList && "max-sm:hidden")}>
+          <Week items={items} start={weekStart} onSelect={onSelect} colorOf={colorOf} eventStyle={eventStyle} onEmptySlot={onEmptySlot} />
+        </div>
       )}
+      {view === "week" && phoneList && (
+        <div className="sm:hidden">
+          <List items={items} start={listStart} onSelect={onSelect} colorOf={colorOf} />
+        </div>
+      )}
+      {view === "list" && <List items={items} start={listStart} onSelect={onSelect} colorOf={colorOf} />}
     </div>
   )
 }
@@ -243,6 +257,8 @@ function Week({
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i))
   const hours = Array.from({ length: HOURS.to - HOURS.from }, (_, i) => HOURS.from + i)
   const top = (d: Date) => (d.getHours() + d.getMinutes() / 60 - HOURS.from) * ROW
+  // The Design editor shows the page whole, so the hours aren't a scroll of their own there.
+  const editor = !!useContext(ShellEditorContext)
 
   return (
     <div className="overflow-x-auto rounded-(--radius) border bg-card text-card-foreground">
@@ -266,7 +282,7 @@ function Week({
             </div>
           ))}
         </div>
-        <div className="max-h-[640px] overflow-y-auto">
+        <div className={cn(!editor && "max-h-[640px] overflow-y-auto")}>
           <div className="relative grid grid-cols-[3.5rem_repeat(7,minmax(0,1fr))]" style={{ height: hours.length * ROW }}>
             <div className="relative">
               {hours.map((h) => (

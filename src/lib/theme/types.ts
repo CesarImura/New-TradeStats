@@ -52,6 +52,8 @@ export type CardSurface = "raised" | "grey" | "outline"
 /** Plain, a texture (grid, glow, dots), a gradient from the brand colours, or an image. */
 /** What the menu is filled with (side menu, top bar, phone bar): the page colour, a wash of the brand, the brand colour, or nothing. */
 export type NavFill = "page" | "tint" | "brand" | "clear"
+/** How the open page is marked in the menu: Soft (a quiet fill, the default), Pill (rounded, in the brand), Brand (solid brand colour), Rail (a bar in the brand) or Editorial (underlined). */
+export type NavMarker = "soft" | "pill" | "brand" | "rail" | "editorial"
 
 export type BackgroundStyle = "plain" | "grid" | "glow" | "dots" | "gradient" | "image"
 
@@ -87,7 +89,7 @@ export type CoachTheme = {
   /** Retired (Brand depth): brand cards are flat brand colour, so no setting reads it. Kept so saved designs still load. */
   effects: "flat" | "soft" | "vivid"
   /** frame: classic (the menu and the page are one surface) or floating (the page sits on a rounded canvas on the menu's ground, like the admin). */
-  nav: { layout: NavLayout; style: NavStyle; logo: "left" | "center"; frame?: "classic" | "floating"; fill?: NavFill }
+  nav: { layout: NavLayout; style: NavStyle; logo: "left" | "center"; frame?: "classic" | "floating"; fill?: NavFill; marker?: NavMarker; /** The search button in the header; on unless false. */ search?: boolean; /** Where Log out is: in the account menu (default) or also as a row at the foot of the side menu. */ signOut?: "account" | "menu"; /** A picture on the menu (an upload or "preset:<id>"), under the menu colour. */ image?: string; /** How much of the menu colour covers it, 40–95. */ imageDim?: number }
   /** Widget style; each template has a default (widgetStyleOf). */
   widgetStyle?: WidgetStyle
   /** Defaults from the widget style (chartStyleOf). */

@@ -140,13 +140,15 @@ export function ContentBoard() {
           const lessons = allLessons(c)
           const tiers = c.tiers.length ? coach.tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers"
           return (
-            <div key={c.id} className={cn("group relative overflow-hidden rounded-xl border bg-card shadow-xs transition-shadow hover:shadow-md", c.status === "archived" && "opacity-70")}>
+            <div key={c.id} data-interactive className={cn("group relative overflow-hidden rounded-xl border bg-card", c.status === "archived" && "opacity-70")}>
               <Link href={`${base}/content/${c.id}`} className="block">
-                <Tile src={c.cover} color={c.color} className="flex aspect-[16/7] items-end p-2.5">
-                  <span className="relative rounded bg-black/40 px-1.5 py-0.5 text-[0.6875rem] text-white backdrop-blur-sm">
-                    {c.modules.length} {c.modules.length === 1 ? "module" : "modules"} · {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}
-                  </span>
-                </Tile>
+                <div data-media>
+                  <Tile src={c.cover} color={c.color} className="flex aspect-[16/7] items-end p-2.5">
+                    <span className="relative rounded bg-black/40 px-1.5 py-0.5 text-[0.6875rem] text-white backdrop-blur-sm">
+                      {c.modules.length} {c.modules.length === 1 ? "module" : "modules"} · {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}
+                    </span>
+                  </Tile>
+                </div>
                 <div className="grid gap-3 p-4">
                   <div className="grid gap-0.5">
                     <span className="text-sm leading-tight font-medium">{c.title}</span>

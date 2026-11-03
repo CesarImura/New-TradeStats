@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useId, useRef, useState } from "react"
-import { ArrowRight, Check, ChevronDown, GraduationCap, Image as ImageIcon, LayoutDashboard, LayoutGrid, Monitor, Palette, PanelLeftIcon, RotateCcw, Search, Smartphone, Tablet, TriangleAlert, Type, UserPlus, Wand2, X } from "@/components/icons"
+import { ArrowRight, Check, ChevronDown, GraduationCap, Image as ImageIcon, LayoutGrid, Monitor, Palette, PanelLeftIcon, RotateCcw, Search, Smartphone, Tablet, TriangleAlert, Type, UserPlus, Wand2, X } from "@/components/icons"
 import type { ThemeDraft } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
 import { widgetFinishOf, widgetSetOf, type CoachTheme } from "@/lib/theme/types"
@@ -101,8 +101,8 @@ const SECTIONS: { id: SectionId; label: string; icon: React.ReactNode; blurb?: s
   { id: "brand", label: "Brand", icon: <Palette />, blurb: "Your name, logo and colours." },
   { id: "look", label: "Look", icon: <Wand2 />, blurb: "A ready-made look to start from. Your colours and logo stay." },
   { id: "type", label: "Type", icon: <Type /> },
-  { id: "widgets", label: "Widgets", icon: <LayoutGrid />, heading: "Widgets · all widgets", blurb: "Applies to every widget, on every page. To move or change one widget, use Pages." },
-  { id: "pages", label: "Pages", icon: <LayoutDashboard />, blurb: "Arrange each page and edit one widget at a time.", search: "Search widgets…" },
+  { id: "widgets", label: "Widgets", icon: <LayoutGrid />, heading: "Widgets · all widgets", blurb: "Applies to every widget, on every page. To move or change one widget, use Widgets." },
+  { id: "pages", label: "Widgets", icon: <LayoutGrid />, blurb: "Arrange each page and edit one widget at a time.", search: "Search widgets…" },
   { id: "menu", label: "Menu", icon: <PanelLeftIcon />, blurb: "What the menu shows and what you call things." },
   { id: "page", label: "Background", icon: <ImageIcon /> },
   { id: "course", label: "Course", icon: <GraduationCap />, blurb: "The page inside a course: which sections show, in what order, and how lessons look." },
@@ -228,7 +228,7 @@ export function SettingsPanel({
   return (
     <div className="flex min-h-0 flex-1">
       {/* The sections, as an icon rail: always in view, one click each. */}
-      <nav aria-label="Settings" className={cn("flex w-16 shrink-0 flex-col items-center gap-2 overflow-y-auto border-r border-white/[0.06] py-3 [scrollbar-width:none]", RAIL_TONE)}>
+      <nav aria-label="Settings" className={cn("flex w-16 shrink-0 flex-col items-center gap-2 overflow-y-auto border-r border-white/[0.16] py-3 [scrollbar-width:none]", RAIL_TONE)}>
         {/* The open section's icon is drawn in the orange gradient (Carbon icons are filled shapes in a 32 box). */}
         <svg aria-hidden width="0" height="0" className="absolute">
           <linearGradient id={grad} x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
@@ -293,7 +293,7 @@ export function SettingsPanel({
               />
             </label>
           ) : (
-            <h2 className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold text-foreground">{sub ? merge!.label : (current.heading ?? current.label)}</h2>
+            <h2 className="min-w-0 flex-1 truncate text-[0.875rem] font-semibold text-foreground">{sub ? merge!.label : (current.heading ?? current.label)}</h2>
           )}
           {/* One search, in the same place in every section: in Pages it finds widgets, elsewhere any setting. */}
           <IconButton label={searching ? "Close search" : (current.search?.replace("…", "") ?? "Find a setting")} onClick={() => (setSearching(!searching), setQ(""))}>

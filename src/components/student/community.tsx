@@ -18,7 +18,7 @@ import { OwnTitle } from "@/components/student/own-title"
 const NO_LIKES: string[] = []
 
 /** STU-30 the community feed: the coach's posts and announcements. Discord has its own page (StudentDiscord). */
-export function StudentCommunity() {
+export function StudentCommunity({ props = {} }: { props?: Record<string, string | boolean> } = {}) {
   const { coach } = useCoach()
   const tier = useStudentTier()
   const list = useStored<Announcement[]>(`${coach.slug}:announcements`, ANNOUNCEMENTS)
@@ -28,6 +28,8 @@ export function StudentCommunity() {
   const [space, setSpace] = useState("all")
   const [showRules, setShowRules] = useState(false)
   const visible = list.filter((a) => !a.scheduled && (!a.tiers?.length || a.tiers.includes(tier)))
+  const showSpaces = props.spaces !== false && spaces.length > 0
+  const showRulesButton = props.rules !== false && rules.length > 0
   const shown = visible.filter((a) => space === "all" || (a.space ?? "news") === space).sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned))
 
   return (
@@ -40,9 +42,9 @@ export function StudentCommunity() {
       </OwnTitle>
 
       <div className="grid max-w-3xl gap-4">
-        {(spaces.length > 0 || rules.length > 0) && (
+        {(showSpaces || showRulesButton) && (
           <div className="flex flex-wrap items-center gap-1.5">
-            {spaces.length > 0 &&
+            {showSpaces &&
               [{ id: "all", name: "All" }, ...spaces].map((s) => (
                 <button
                   key={s.id}
@@ -53,14 +55,14 @@ export function StudentCommunity() {
                   {s.name}
                 </button>
               ))}
-            {rules.length > 0 && (
+            {showRulesButton && (
               <Button variant="ghost" size="sm" className="ml-auto" aria-expanded={showRules} onClick={() => setShowRules((v) => !v)}>
                 Community rules
               </Button>
             )}
           </div>
         )}
-        {showRules && (
+        {showRules && showRulesButton && (
           <Card className="gap-2 px-5">
             <h2 className="text-base">Community rules</h2>
             <ol className="grid list-decimal gap-1 pl-4 text-sm text-muted-foreground">
@@ -71,7 +73,7 @@ export function StudentCommunity() {
           </Card>
         )}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xl">From {coach.coachName}</h2>
+          <h2 className="text-xl">{String(props.feedTitle || `From ${coach.coachName}`)}</h2>
           {shown.length === 0 && <p className="rounded-(--radius) border border-dashed p-6 text-center text-sm text-muted-foreground">{space === "all" ? "No announcements yet." : "Nothing in this space yet."}</p>}
           {shown.map((a) => {
             const on = liked.includes(a.id)

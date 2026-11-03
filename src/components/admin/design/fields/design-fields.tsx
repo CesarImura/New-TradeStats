@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useRef, useState } from "react"
-import { ArrowDown, ArrowUp, ImagePlus, Palette, Trash2 } from "@/components/icons"
+import { ArrowDown, ArrowUp, ImagePlus, Palette, Pencil, Trash2, X } from "@/components/icons"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,9 +12,10 @@ import type { Overrides } from "@/lib/prototype-store"
 import { themeToCss } from "@/lib/theme/css"
 import { onColor } from "@/lib/theme/derive"
 import { pictureFrom } from "@/lib/images"
+import { BACKDROPS, NAV_MIN_DIM } from "@/lib/theme/backdrops"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
-import { chartStyleOf, headerFormOf, widgetFinishOf, type CoachTheme, type NavFill, type TemplateId } from "@/lib/theme/types"
+import { chartStyleOf, headerFormOf, widgetFinishOf, type CoachTheme, type NavFill, type NavMarker, type TemplateId } from "@/lib/theme/types"
 import { brandMenuReads, navFillOf } from "@/lib/theme/nav-fill"
 import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
@@ -44,6 +45,8 @@ export type DesignCtx = {
   keepVersion?: (label: string) => void
   /** Goes back one step (the Design editor), so a toast can offer Undo right after a big change. */
   undo?: () => void
+  /** Opens a page of the platform on the canvas to arrange and edit it (the Design editor; the wizard has none). */
+  openPage?: (id: string) => void
 }
 
 const Ctx = createContext<DesignCtx | null>(null)
@@ -520,6 +523,127 @@ function NavFillField() {
   )
 }
 
+/** The open page's marker in the menu, drawn on a small menu: Soft, Pill, Brand, Rail or Editorial. */
+const MARKERS: { value: NavMarker; label: string }[] = [
+  { value: "soft", label: "Soft" },
+  { value: "pill", label: "Pill" },
+  { value: "brand", label: "Brand" },
+  { value: "rail", label: "Rail" },
+  { value: "editorial", label: "Editorial" },
+]
+const markerLine: Record<NavMarker, string> = {
+  soft: "rounded-[3px] bg-foreground/15",
+  pill: "rounded-full bg-primary/25",
+  brand: "rounded-[3px] bg-primary",
+  rail: "rounded-r-[3px] border-l-2 border-primary bg-transparent",
+  editorial: "rounded-none border-b border-foreground/50 bg-transparent",
+}
+function NavMarkerField() {
+  const { theme, change } = useDesign()
+  const now = theme.nav.marker ?? "soft"
+  return (
+    <div data-field="nav-marker" className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Menu style">
+      {MARKERS.map((m) => (
+        <button key={m.value} type="button" role="radio" aria-checked={now === m.value} onClick={() => change({ theme: { nav: { marker: m.value } } }, "nav-marker")} className={cn("grid gap-1.5 p-1.5 text-left", card(now === m.value))}>
+          <span className="grid aspect-[16/10] content-center gap-1.5 rounded-[4px] bg-background px-3">
+            <span className="h-1.5 w-3/4 rounded-full bg-foreground/20" />
+            <span className={cn("h-2.5 w-full", markerLine[m.value])} />
+            <span className="h-1.5 w-2/3 rounded-full bg-foreground/20" />
+          </span>
+          <span className="px-0.5 text-xs font-medium">{m.label}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function NavSearchField() {
+  const { theme, change } = useDesign()
+  return (
+    <Field id="nav-search" label="Search in the menu">
+      <Segmented
+        label="Search in the menu"
+        value={theme.nav.search === false ? "no" : "yes"}
+        onChange={(v) => change({ theme: { nav: { search: v === "yes" } } }, "nav-search")}
+        options={[
+          { value: "yes", label: "Yes" },
+          { value: "no", label: "No" },
+        ]}
+      />
+    </Field>
+  )
+}
+
+function NavSignOutField() {
+  const { theme, change } = useDesign()
+  return (
+    <Field id="nav-signout" label="Log out" hint={theme.nav.signOut === "menu" ? "A row at the foot of the side menu, and in the account menu" : "In the account menu, under the avatar"}>
+      <Segmented
+        label="Log out"
+        value={theme.nav.signOut ?? "account"}
+        onChange={(signOut) => change({ theme: { nav: { signOut } } }, "nav-signout")}
+        options={[
+          { value: "account", label: "Account menu" },
+          { value: "menu", label: "In the menu" },
+        ]}
+      />
+    </Field>
+  )
+}
+
+/** A picture on the menu: the library's, or the coach's own, with how much of the menu colour covers it. */
+function NavImageField() {
+  const { theme, change } = useDesign()
+  const file = useRef<HTMLInputElement>(null)
+  const image = theme.nav.image
+  const uploaded = image && !image.startsWith("preset:") ? image : undefined
+  const set = (patch: Partial<CoachTheme["nav"]>, key: string) => change({ theme: { nav: patch } }, key)
+  return (
+    <Field id="nav-image" label="Menu image">
+      <div className="grid gap-3">
+        <div className="grid grid-cols-3 gap-2">
+          {BACKDROPS.map((b) => (
+            <button key={b.id} type="button" onClick={() => set({ image: `preset:${b.id}` }, "nav-image")} aria-pressed={image === `preset:${b.id}`} className={cn("grid gap-1 p-1 text-left text-[0.6875rem]", card(image === `preset:${b.id}`))}>
+              <span className="aspect-[4/3] rounded-[4px] bg-[#0b0c10] ring-1 ring-white/10" style={{ backgroundImage: b.css, backgroundSize: "cover", backgroundPosition: "center" }} />
+              <span className="truncate px-0.5 text-muted-foreground">{b.name}</span>
+            </button>
+          ))}
+          <button type="button" onClick={() => file.current?.click()} aria-pressed={!!uploaded} className={cn("grid gap-1 p-1 text-left text-[0.6875rem]", card(!!uploaded))}>
+            <span className="grid aspect-[4/3] place-items-center rounded-[4px] border border-dashed bg-cover bg-center" style={uploaded ? { backgroundImage: `url("${uploaded}")` } : undefined}>
+              {!uploaded && <ImagePlus className="size-4 text-muted-foreground" />}
+            </span>
+            <span className="truncate px-0.5 text-muted-foreground">{uploaded ? "Yours" : "Upload"}</span>
+          </button>
+        </div>
+        <input
+          ref={file}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={async (e) => {
+            const f = e.target.files?.[0]
+            e.target.value = ""
+            if (!f) return
+            try {
+              set({ image: await pictureFrom(f, { max: 800, side: "width", quality: 0.8, keep: [] }) }, "nav-image")
+            } catch (err) {
+              toast.error((err as Error).message)
+            }
+          }}
+        />
+        {image && (
+          <>
+            <SliderField label="Image covered by" value={Math.max(NAV_MIN_DIM, theme.nav.imageDim ?? 80)} min={NAV_MIN_DIM} max={95} unit="%" onChange={(imageDim) => set({ imageDim }, "nav-image-dim")} />
+            <button type="button" onClick={() => set({ image: undefined, imageDim: undefined }, "nav-image")} className="flex h-7 w-fit items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+              <X className="size-3.5" /> No image
+            </button>
+          </>
+        )}
+      </div>
+    </Field>
+  )
+}
+
 function NavLogoField() {
   const { theme, change } = useDesign()
   if (theme.nav.layout !== "top") return null
@@ -543,14 +667,21 @@ function NavLogoField() {
  * moves by its handle (menu-sort.tsx); elsewhere (no handle) by its arrows.
  */
 function MenuRow({ id }: { id: string }) {
-  const { coach, change } = useDesign()
+  const { coach, change, openPage } = useDesign()
   const sort = useSort()
+  /** The way to the page itself: a pencil that opens it on the canvas, to arrange and edit its widgets. */
+  const edit = (page: string, name: string) =>
+    openPage && (
+      <Button variant="ghost" size="icon" style={{ width: 36, height: 36 }} className="size-9 shrink-0 bg-[color-mix(in_oklab,var(--foreground)_6%,transparent)] hover:bg-[color-mix(in_oklab,var(--foreground)_12%,transparent)]" aria-label={`Edit the ${name} page`} title={`Edit the ${name} page`} onClick={() => openPage(page)}>
+        <Pencil className="size-[1.125rem]" />
+      </Button>
+    )
   if (id === "home")
     return (
-      <div data-field="menu-home" className={menuRow()}>
+      <div data-field="menu-home" className={cn(menuRow(), "gap-2.5 py-1.5 pr-1.5")}>
         <FixedFirst />
-        <Input className="h-7 min-w-0 flex-1" value={coach.wording.home} onChange={(e) => change({ content: { wording: { home: e.target.value } } }, "w-home")} aria-label="Name for Home" />
-        <span className="w-[1.875rem] shrink-0" />
+        <Input className="h-9 min-w-0 flex-1" value={coach.wording.home} onChange={(e) => change({ content: { wording: { home: e.target.value } } }, "w-home")} aria-label="Name for Home" />
+        {edit("home", "Home")}
       </div>
     )
   if (isPageId(id)) return <PageRow id={id} />
@@ -558,19 +689,20 @@ function MenuRow({ id }: { id: string }) {
   const i = coach.menu.indexOf(m)
   if (i < 0) return null
   return (
-    <div data-field={`menu-${m}`} className={cn(menuRow(!coach.modules[m]), !sort && "pl-2.5")}>
+    <div data-field={`menu-${m}`} className={cn(menuRow(!coach.modules[m]), "gap-2.5 py-1.5 pr-1.5", !sort && "pl-2.5")}>
       <SortHandle />
       <Input
-        className={cn("h-7 min-w-0 flex-1", HIDDEN_INPUT)}
+        className={cn("h-9 min-w-0 flex-1", HIDDEN_INPUT)}
         value={coach.wording[m]}
         disabled={!coach.modules[m]}
         onChange={(e) => change({ content: { wording: { [m]: e.target.value } } }, `w-${m}`)}
         aria-label={`Name for ${MODULE_NAMES[m]}`}
+        // A renamed page keeps its own name in the tooltip, so "Desk" still reads as Charts.
+        title={MODULE_NAMES[m]}
         placeholder={MODULE_NAMES[m]}
       />
-      {/* Renamed: what it is, so "Desk" still reads as Charts. */}
-      {coach.wording[m].trim().toLowerCase() !== MODULE_NAMES[m].toLowerCase() && <span className="max-w-20 shrink-0 truncate text-xs text-muted-foreground" title={MODULE_NAMES[m]}>{MODULE_NAMES[m]}</span>}
-      <div className="flex shrink-0 items-center">
+      <div className="flex shrink-0 items-center gap-2">
+        {coach.modules[m] && edit(m, MODULE_NAMES[m])}
         {!sort && (
           <>
             <Button variant="ghost" size="icon-xs" disabled={i === 0} aria-label={`Move ${MODULE_NAMES[m]} up`} onClick={() => change({ content: { menu: move(coach.menu, i, -1) } }, `menu-${Date.now()}`)}>
@@ -645,6 +777,10 @@ const FIELDS: Record<string, () => React.ReactNode> = {
   "nav-logo": NavLogoField,
   "nav-frame": NavFrameField,
   "nav-fill": NavFillField,
+  "nav-marker": NavMarkerField,
+  "nav-search": NavSearchField,
+  "nav-image": NavImageField,
+  "nav-signout": NavSignOutField,
   "menu-items": MenuItemsField,
   wording: WordingField,
 }

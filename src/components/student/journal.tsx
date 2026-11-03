@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { CandlestickChart, Check, Link2, Loader2, MessageSquareReply, Mic, Plus, RefreshCw, Search, Send, Sparkles, Video } from "@/components/icons"
 import { toast } from "sonner"
 import { useCommunityData } from "@/components/admin/kit"
@@ -14,7 +14,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -33,10 +32,11 @@ import { cn } from "@/lib/utils"
 import { OwnTitle } from "@/components/student/own-title"
 
 type T = ReturnType<typeof allTrades>[number]
-const equityConfig = { v: { label: "Equity", color: "var(--primary)" } } satisfies ChartConfig
+// The chart library is the heaviest part of this page: it loads on its own, and the card holds its height meanwhile.
+const EquityChart = dynamic(() => import("./journal-equity").then((m) => m.EquityChart), { loading: () => <div aria-hidden className="min-h-56 w-full flex-1" /> })
 
 /** STU-13 journal, STU-14 connect broker, STU-15 trade detail, STU-16 analytics, STU-28 my feedback. */
-export function StudentJournal() {
+export function StudentJournal({ props = {} }: { props?: Record<string, string | boolean> } = {}) {
   const { coach } = useCoach()
   const store = useFeedback(coach.slug)
   const trades = allTrades(store)
@@ -103,10 +103,10 @@ export function StudentJournal() {
           <TabsTrigger value="feedback">
             Feedback {unread > 0 && <span className="rounded-full bg-primary px-1.5 text-[0.6875rem] text-primary-foreground tabular-nums">{unread}</span>}
           </TabsTrigger>
-          <TabsTrigger value="strategies">Rules</TabsTrigger>
+          {props.rulesTab !== false && <TabsTrigger value="strategies">Rules</TabsTrigger>}
         </TabsList>
         <TabsContent value="dashboard">
-          <Dashboard trades={trades} onOpen={setOpen} />
+          <Dashboard trades={trades} onOpen={setOpen} props={props} />
         </TabsContent>
         <TabsContent value="trades">
           <TradeList trades={trades} onOpen={setOpen} />
@@ -114,9 +114,11 @@ export function StudentJournal() {
         <TabsContent value="feedback">
           <MyFeedback trades={trades} onOpen={setOpen} />
         </TabsContent>
-        <TabsContent value="strategies">
-          <Strategies />
-        </TabsContent>
+        {props.rulesTab !== false && (
+          <TabsContent value="strategies">
+            <Strategies />
+          </TabsContent>
+        )}
       </Tabs>
 
       <TradeDetail trade={trades.find((t) => t.id === open) ?? null} onClose={() => setOpen(null)} />
@@ -136,7 +138,7 @@ function Stat({ label, value, tone, sub }: { label: string; value: string; tone?
   )
 }
 
-function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => void }) {
+function Dashboard({ trades, onOpen, props }: { trades: T[]; onOpen: (id: string) => void; props: Record<string, string | boolean> }) {
   const { coach, base, theme } = useCoach()
   // The heat map picks each number's colour from the theme's real colours.
   const colors = resolveColors(theme)
@@ -145,6 +147,11 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
   const exp = trades.reduce((n, t) => n + t.r, 0) / trades.length
   const kept = Math.round((RULES.reduce((n, r) => n + r.kept, 0) / RULES.reduce((n, r) => n + r.total, 0)) * 100)
   const data = EQUITY.map((v, i) => ({ d: i + 1, v }))
+  // The stats and the latest trades are the page's core; the cards between can be switched off, and the rows reflow.
+  const showEquity = props.equity !== false
+  const showWeeks = props.weeks !== false
+  const middle = [showEquity, showWeeks].filter(Boolean).length
+  const lower = [props.rulesCard !== false, props.setups !== false, props.insight !== false].filter(Boolean).length
 
   return (
     <div className="grid gap-4">
@@ -154,27 +161,17 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
         <Stat label="Expectancy" value={fmtR(exp)} tone={exp >= 0 ? "profit" : "loss"} sub="Average per trade" />
         <Stat label="Rules kept" value={`${kept}%`} sub="Your coach's rules" />
       </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      {middle > 0 && (
+      <div className={cn("grid gap-4", middle === 2 && "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]")}>
+        {showEquity && (
         <Card className="gap-2 px-5">
           <span className="eyebrow">Equity · last 20 days</span>
           {/* Fills the card: beside the taller 4-week grid a fixed h-56 left an empty band under the chart. */}
-          <ChartContainer config={equityConfig} className="aspect-auto min-h-56 w-full flex-1">
-            <AreaChart data={data} margin={{ left: 0, right: 4, top: 8 }}>
-              <defs>
-                <linearGradient id="eq" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-v)" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="var(--color-v)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="d" tickLine={false} axisLine={false} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickFormatter={(d) => (d % 5 === 0 ? `Day ${d}` : "")} />
-              <YAxis hide domain={["dataMin - 100", "dataMax + 100"]} />
-              <ChartTooltip content={<ChartTooltipContent hideLabel formatter={(v) => <span className="font-mono tabular-nums">{fmtPnl(Number(v))}</span>} />} />
-              <Area dataKey="v" type="monotone" stroke="var(--color-v)" strokeWidth={2} fill="url(#eq)" />
-            </AreaChart>
-          </ChartContainer>
+          <EquityChart data={data} />
         </Card>
-        <Card className="gap-3 px-5">
+        )}
+        {showWeeks && (
+        <Card className={cn("gap-3 px-5", !showEquity && "lg:max-w-xl")}>
           <span className="eyebrow">Last 4 weeks</span>
           <div className="grid grid-cols-[auto_repeat(5,1fr)] gap-1.5 text-xs">
             <span />
@@ -200,8 +197,12 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
             ))}
           </div>
         </Card>
+        )}
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
+      )}
+      {lower > 0 && (
+      <div className={cn("grid gap-4", lower === 2 && "lg:grid-cols-2", lower === 3 && "lg:grid-cols-3")}>
+        {props.rulesCard !== false && (
         <Card className="gap-3 px-5">
           <span className="eyebrow">Rules · 30 days</span>
           {RULES.map((r) => (
@@ -216,6 +217,8 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
             </div>
           ))}
         </Card>
+        )}
+        {props.setups !== false && (
         <Card className="gap-3 px-5">
           <span className="eyebrow">By setup</span>
           {SETUPS.map((s) => (
@@ -226,6 +229,8 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
             </div>
           ))}
         </Card>
+        )}
+        {props.insight !== false && (
         <Card className="gap-2 px-5">
           <div className="flex items-center justify-between">
             <span className="eyebrow">Your week</span>
@@ -244,7 +249,9 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
             )}
           </div>
         </Card>
+        )}
       </div>
+      )}
       <Card className="gap-1 px-0">
         <span className="eyebrow px-5">Latest trades</span>
         <TradeRows trades={trades.slice(0, 4)} onOpen={onOpen} />
@@ -278,7 +285,7 @@ function TradeRows({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
             {t.thread.at(-1)?.from === "coach" && <Badge>Feedback</Badge>}
           </span>
           <span className={cn("w-14 shrink-0 text-right tabular-nums", t.r >= 0 ? "text-profit" : "text-loss")}>{fmtR(t.r)}</span>
-          <span className="hidden w-20 text-right text-muted-foreground tabular-nums md:block">{fmtPnl(t.pnl)}</span>
+          <span className="hidden w-20 text-right text-muted-foreground tabular-nums lg:block">{fmtPnl(t.pnl)}</span>
         </button>
       ))}
     </div>

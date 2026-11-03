@@ -6,7 +6,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { series } from "@/components/widgets/parts/tokens"
-import { Cover } from "@/components/widgets/parts/shared"
+import { Cover, EDGE_LEFT, EDGE_TOP } from "@/components/widgets/parts/shared"
 import { useViewerTier } from "@/lib/data/access"
 import type { Course } from "@/lib/data/learning"
 import { UPGRADE } from "@/lib/data/sample"
@@ -19,12 +19,13 @@ export function useStudentTier() {
 }
 
 /** Course artwork in the brand's series colours. */
-export function CourseCover({ course, className, locked }: { course: Pick<Course, "color" | "title" | "cover">; className?: string; locked?: boolean }) {
+export function CourseCover({ course, className, locked, edge = "top" }: { course: Pick<Course, "color" | "title" | "cover">; className?: string; locked?: boolean; edge?: "top" | "left" }) {
   return (
-    <div className={cn("relative overflow-hidden", className)}>
+    <div className={cn("relative overflow-hidden", edge === "left" ? EDGE_LEFT : EDGE_TOP, className)}>
       {course.cover ? (
+        // The picture is cropped to the box: from the left, so a title written on the picture's left is never the part cut away.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={course.cover} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
+        <img src={course.cover} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover object-left" />
       ) : (
         <Cover color={series(course.color)} className="absolute inset-0 rounded-none" />
       )}

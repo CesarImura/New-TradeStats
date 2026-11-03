@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { ArrowLeft, History, Play, PlayCircle, Redo2, Undo2 } from "@/components/icons"
+import { ArrowLeft, ExternalLink, History, MoreHorizontal, PlayCircle, Redo2, Trash2, Undo2 } from "@/components/icons"
 import { toast } from "sonner"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import {
@@ -160,65 +161,62 @@ export function EditorBar({
   // Opened from the setup wizard: keep the way back, everywhere in Design.
   const fromSetup = useSearchParams().get("from") === "setup"
   const way = fromSetup ? { href: "/setup", label: "Back to setup" } : back
+  const [menu, setMenu] = useState<"versions" | "guide" | null>(null)
+  // The same bar as the Design workspace: where you are on the left, the screen in the middle, status and actions on the right.
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b bg-[var(--sidebar)] px-3 py-1.5" data-design-slug={slug}>
-      {way && (
-        <Button size="sm" variant={fromSetup ? "default" : "ghost"} nativeButton={false} render={<Link href={way.href} />}>
-          <ArrowLeft /> {way.label}
-        </Button>
-      )}
-      <span className="px-1 text-[0.8125rem] font-semibold">{title}</span>
-      {children}
-      <div className="mr-auto">
-        {editor.dirty ? (
-          <Badge variant="secondary" className="gap-1.5">
-            <span className="size-1.5 rounded-full bg-amber-500" /> Unpublished changes
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="gap-1.5 text-muted-foreground">
-            <span className="size-1.5 rounded-full bg-emerald-500" /> Live
-          </Badge>
+    <div
+      className="grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/[0.16] px-4 max-sm:grid-cols-[auto_minmax(0,1fr)_auto] [&_[data-slot=button]]:h-9 [&_[data-slot=button][data-size^=icon]]:w-9 [&_[data-slot=button]]:text-[0.8125rem] [&_[data-slot=button]_svg]:size-4"
+      data-design-slug={slug}
+    >
+      <div className="flex min-w-0 items-center gap-2">
+        {way && (
+          <Button size="sm" variant={fromSetup ? "default" : "ghost"} nativeButton={false} render={<Link href={way.href} />}>
+            <ArrowLeft /> {way.label}
+          </Button>
         )}
       </div>
-      <GuideButton {...guide} />
-      <Button variant="ghost" size="sm" onClick={editor.undo} disabled={!editor.canUndo} title="Undo (⌘Z)">
-        <Undo2 /> Undo
-      </Button>
-      <Button variant="ghost" size="icon-sm" onClick={editor.redo} disabled={!editor.canRedo} aria-label="Redo" title="Redo (⇧⌘Z)">
-        <Redo2 />
-      </Button>
-      <Versions slug={slug} />
-      {editor.dirty && (
-        <Button variant="ghost" size="sm" onClick={editor.discard}>
-          Discard
+      <div className="flex min-w-0 items-center justify-center gap-2">
+        <span className="truncate px-2.5 text-[0.875rem] font-semibold">{title}</span>
+        {children}
+      </div>
+      <div className="flex items-center justify-end gap-1">
+        <span className={cn("mr-1 inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs whitespace-nowrap", editor.dirty ? "bg-white/[0.06] text-foreground" : "text-muted-foreground")} title={editor.dirty ? "Students still see the last published design" : "Students see this design"}>
+          <span className={cn("size-1.5 rounded-full", editor.dirty ? "bg-amber-500" : "bg-emerald-500")} />
+          <span className="max-lg:sr-only">{editor.dirty ? "Not published yet" : "Live"}</span>
+        </span>
+        <Button variant="ghost" size="icon-sm" onClick={editor.undo} disabled={!editor.canUndo} aria-label="Undo" title="Undo (⌘Z)">
+          <Undo2 />
         </Button>
-      )}
-      <Button
-        variant="outline"
-        size="icon-sm"
-        aria-label="Preview in a new tab"
-        title={editor.dirty ? "Preview your draft in a new tab" : "Preview in a new tab"}
-        nativeButton={false}
-        render={<a href={previewHref} target="_blank" rel="noreferrer" />}
-      >
-        <Play />
-      </Button>
-      <Button size="sm" disabled={!editor.dirty} onClick={() => editor.publish()}>
-        Publish
-      </Button>
+        <Button variant="ghost" size="icon-sm" onClick={editor.redo} disabled={!editor.canRedo} aria-label="Redo" title="Redo (⇧⌘Z)">
+          <Redo2 />
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More" />}>
+            <MoreHorizontal />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem onClick={() => setMenu("versions")}>
+              <History /> Earlier versions
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setMenu("guide")}>
+              <PlayCircle /> 2-minute guide
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" disabled={!editor.dirty} onClick={editor.discard}>
+              <Trash2 /> Discard changes
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button variant="outline" size="sm" nativeButton={false} render={<a href={previewHref} target="_blank" rel="noreferrer" />} title={editor.dirty ? "Preview your draft in a new tab" : "Preview in a new tab"}>
+          <ExternalLink /> <span className="max-sm:sr-only">Preview</span>
+        </Button>
+        <Button size="sm" disabled={!editor.dirty} onClick={() => editor.publish()}>
+          Publish
+        </Button>
+      </div>
+      <VersionsSheet slug={slug} open={menu === "versions"} onOpenChange={(o) => setMenu(o ? "versions" : null)} />
+      <GuideDialog title={guide.title} text={guide.text} open={menu === "guide"} onOpenChange={(o) => setMenu(o ? "guide" : null)} />
     </div>
-  )
-}
-
-function GuideButton({ title, text }: { title: string; text: string }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <>
-      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
-        <PlayCircle /> 2-min guide
-      </Button>
-      <GuideDialog title={title} text={text} open={open} onOpenChange={setOpen} />
-    </>
   )
 }
 
@@ -243,18 +241,6 @@ export function GuideDialog({ title, text, open, onOpenChange }: { title: string
         </p>
       </DialogContent>
     </Dialog>
-  )
-}
-
-function Versions({ slug }: { slug: string }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <>
-      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
-        <History /> Versions
-      </Button>
-      <VersionsSheet slug={slug} open={open} onOpenChange={setOpen} />
-    </>
   )
 }
 

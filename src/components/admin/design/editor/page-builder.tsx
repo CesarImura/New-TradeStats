@@ -622,7 +622,8 @@ export function ArrangeCanvas({
 const SHELL_CSS =
   `[data-shell] [data-slot=sidebar-container]{height:auto!important}[data-shell] .min-h-svh{min-height:0!important}` +
   // Click to edit shows itself: a part that opens a setting (the logo, the menu, a heading, a label) is outlined under the pointer, as in the preview.
-  `[data-shell] :is([data-edit],h1,h2,h3,.eyebrow):not([data-slot=widget] *):hover{outline:calc(1.5px * var(--ui-zoom,1)) solid rgb(244 244 245 / .55);outline-offset:3px;border-radius:4px;cursor:pointer}`
+  // Only the innermost part: pointing at a menu item outlines the item, not also the whole side menu around it.
+  `[data-shell] :is([data-edit],h1,h2,h3,.eyebrow):not([data-slot=widget] *):not(:has([data-edit]:hover)):hover{outline:calc(1.5px * var(--ui-zoom,1)) solid rgb(244 244 245 / .55);outline-offset:3px;border-radius:4px;cursor:pointer}`
 
 /** A click inside a widget, its quick bar or the canvas tools: the builder's own, never click-to-edit. */
 const inWidget = (t: EventTarget | null) => t instanceof Element && !!t.closest("[data-widget-id], .group\\/wrap, .no-drag, [role=toolbar]")

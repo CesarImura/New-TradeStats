@@ -33,6 +33,17 @@ const CORE_SETTINGS: Partial<Record<ModuleId, Setting[]>> = {
   ],
   calendar: [
     {
+      key: "view",
+      label: "Opens on",
+      type: "select",
+      options: [
+        { value: "week", label: "Week" },
+        { value: "month", label: "Month" },
+        { value: "list", label: "List" },
+      ],
+    },
+    { key: "book", label: "Book a 1:1 button", type: "toggle", defaultOn: true },
+    {
       key: "open",
       label: "An event opens in",
       type: "select",
@@ -62,6 +73,38 @@ const CORE_SETTINGS: Partial<Record<ModuleId, Setting[]>> = {
         { value: "mono", label: "Greys, lives in my colour" },
       ],
     },
+  ],
+  journal: [
+    { key: "equity", label: "Equity chart", type: "toggle", defaultOn: true },
+    { key: "weeks", label: "Last 4 weeks", type: "toggle", defaultOn: true },
+    { key: "rulesCard", label: "Rules kept, 30 days", type: "toggle", defaultOn: true },
+    { key: "setups", label: "By setup", type: "toggle", defaultOn: true },
+    { key: "insight", label: "Your week (AI note)", type: "toggle", defaultOn: true },
+    { key: "rulesTab", label: "Rules tab", type: "toggle", defaultOn: true },
+  ],
+  charts: [
+    { key: "planTitle", label: "Game plan title", type: "text", placeholder: "Coach's game plan" },
+    { key: "levelsTitle", label: "Levels title", type: "text", placeholder: "Levels" },
+    { key: "actions", label: "Log a trade and Ask buttons", type: "toggle", defaultOn: true },
+    { key: "note", label: "The coach's note", type: "toggle", defaultOn: true },
+    { key: "trades", label: "My trades", type: "toggle", defaultOn: true },
+  ],
+  community: [
+    { key: "feedTitle", label: "Feed title", type: "text", placeholder: "From the coach" },
+    { key: "spaces", label: "Space filters", type: "toggle", defaultOn: true },
+    { key: "rules", label: "Community rules", type: "toggle", defaultOn: true },
+  ],
+  ranking: [
+    { key: "boardTitle", label: "Leaderboard title", type: "text", placeholder: "Leaderboard" },
+    { key: "competition", label: "Running competition", type: "toggle", defaultOn: true },
+    { key: "level", label: "Your level", type: "toggle", defaultOn: true },
+    { key: "badges", label: "Badges", type: "toggle", defaultOn: true },
+  ],
+  ai: [
+    { key: "intro", label: "Line above the title", type: "text", placeholder: "Answers from the coach's lessons" },
+    { key: "welcome", label: "Welcome headline", type: "text", placeholder: "Ask anything about trading the coach's way" },
+    { key: "welcomeText", label: "Welcome text", type: "textarea", placeholder: "Answers come from the lessons…" },
+    { key: "placeholder", label: "Question field hint", type: "text", placeholder: "Ask…" },
   ],
   downloads: [
     { key: "whatsNew", label: "Show what's new", type: "toggle", defaultOn: true },

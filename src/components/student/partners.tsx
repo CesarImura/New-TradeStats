@@ -67,7 +67,7 @@ export function StudentPartners({ props = {} }: { props?: Record<string, string 
                   aria-checked={kind === k.id}
                   onClick={() => setKind(k.id)}
                   className={cn(
-                    "r-chip border px-3 py-1.5 text-sm transition-colors",
+                    "r-chip border px-3 py-1.5 text-sm transition-colors max-lg:min-h-10",
                     kind === k.id ? "border-foreground bg-foreground text-background" : "bg-card text-muted-foreground hover:text-foreground",
                   )}
                 >

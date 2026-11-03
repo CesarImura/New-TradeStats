@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { DEMO_STUDENT } from "@/lib/data/sample"
-import { backdropStyle, dimOf } from "@/lib/theme/backdrops"
+import { backdropStyle, dimOf, navImageStyle } from "@/lib/theme/backdrops"
 import { navFillOf } from "@/lib/theme/nav-fill"
 import { cn } from "@/lib/utils"
 
@@ -92,7 +92,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     return (
       <div className={cn("relative isolate flex min-h-full flex-col", bg)}>
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur" data-edit="nav" data-nav-fill={nav}>
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur" data-edit="nav" data-nav-fill={nav} data-nav-marker={theme.nav.marker} style={navImageStyle(theme)}>
           <div className="flex min-w-0" data-edit="logo">
             <CommunitySwitcher placement="bar" />
           </div>
@@ -139,7 +139,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider key={theme.nav.style} defaultOpen={theme.nav.style === "labels"} style={floating ? ({ "--sidebar": "var(--ground)", ...ground } as React.CSSProperties) : undefined}>
-      <Sidebar collapsible="icon" variant={floating ? "inset" : "sidebar"} className="max-md:hidden" data-edit="nav" data-nav-fill={nav}>
+      <Sidebar collapsible="icon" variant={floating ? "inset" : "sidebar"} className={cn("max-md:hidden", theme.nav.image && "[&_[data-sidebar=sidebar]]:bg-transparent")} data-edit="nav" data-nav-fill={nav} data-nav-marker={theme.nav.marker} style={navImageStyle(theme)}>
         <SidebarHeader className="h-16 justify-center" data-edit="logo">
           <CommunitySwitcher placement="sidebar" />
         </SidebarHeader>
@@ -149,6 +149,16 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter className="p-3">
+          {theme.nav.signOut === "menu" && (
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton tooltip="Log out" render={<Link href={`/site/${coach.slug}/login`} />} className="h-10">
+                  <LogOut />
+                  <span>Log out</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          )}
           <ProfileMenu compact />
         </SidebarFooter>
       </Sidebar>
@@ -211,7 +221,7 @@ function TopNav({ items, floating, fill }: { items: NavItem[]; floating?: boolea
   // More than five pages don't fit as words on a tablet (768 to 1023px): there they show as icons, named in the tooltip.
   const tight = theme.nav.style !== "icons" && items.length > 5
   return (
-    <header className={cn("sticky top-0 z-20", floating ? "bg-[var(--ground)]" : "border-b bg-background/85 backdrop-blur")} data-edit="nav" data-nav-fill={fill}>
+    <header className={cn("sticky top-0 z-20", floating ? "bg-[var(--ground)]" : "border-b bg-background/85 backdrop-blur")} data-edit="nav" data-nav-fill={fill} data-nav-marker={theme.nav.marker} style={navImageStyle(theme)}>
       <div className={cn("mx-auto flex h-16 max-w-[1280px] items-center gap-6", pad)}>
         <div className={cn("flex min-w-0", centered && "md:absolute md:left-1/2 md:-translate-x-1/2")} data-edit="logo">
           <CommunitySwitcher placement="bar" />
@@ -249,11 +259,14 @@ function TopNav({ items, floating, fill }: { items: NavItem[]; floating?: boolea
 }
 
 function HeaderActions() {
+  const { theme } = useCoach()
   return (
     <>
-      <Button variant="ghost" size="icon" aria-label="Search">
-        <Search />
-      </Button>
+      {theme.nav.search !== false && (
+        <Button variant="ghost" size="icon" aria-label="Search">
+          <Search />
+        </Button>
+      )}
       <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
         <Bell />
         <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />
@@ -277,7 +290,7 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
           />
         }
       >
-        <Avatar className="size-8">
+        <Avatar className="size-8 max-lg:size-10">
           <AvatarFallback className="bg-highlight text-xs text-highlight-foreground">{DEMO_STUDENT.initials}</AvatarFallback>
         </Avatar>
         {compact && (
@@ -309,14 +322,15 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
 
 /** Phone: both layouts become a bottom bar. Up to five items show; with more, four show and the rest sit under "More". */
 function MobileBar({ items, phone, fill }: { items: NavItem[]; fill?: string; /** Shown as a phone in the editor: at the foot of the page, whatever the window's width. */ phone?: boolean }) {
-  const isActive = useActive(useCoach().base)
+  const { base, theme } = useCoach()
+  const isActive = useActive(base)
   const [open, setOpen] = useState(false)
   const overflow = items.length > 5
   const shown = overflow ? items.slice(0, 4) : items
   const hidden = overflow ? items.slice(4) : []
   const itemClass = "flex w-full flex-col items-center gap-1 py-2.5 text-[0.6875rem] text-muted-foreground data-[active=true]:text-brand-text"
   return (
-    <nav data-edit="nav" data-nav-fill={fill} className={cn("inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur", phone ? "sticky" : "fixed md:hidden")}>
+    <nav data-edit="nav" data-nav-fill={fill} data-nav-marker={theme.nav.marker} style={navImageStyle(theme)} className={cn("inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur", phone ? "sticky" : "fixed md:hidden")}>
       <ul className="grid grid-cols-5">
         {shown.map((item) => (
           <li key={item.id}>

@@ -83,6 +83,13 @@ export function MenuStep() {
       <Section>
         <DesignField id="menu-items" />
       </Section>
+      <Section title="Menu style">
+        <DesignField id="nav-marker" />
+      </Section>
+      <Section>
+        <DesignField id="nav-search" />
+        <DesignField id="nav-signout" />
+      </Section>
       <Section>
         <More label="Menu layout">
           <DesignField id="nav-layout" />
@@ -92,6 +99,7 @@ export function MenuStep() {
         </More>
         <More label="Menu background">
           <DesignField id="nav-fill" />
+          <DesignField id="nav-image" />
         </More>
         <More label="What you call things">
           <DesignField id="wording" />

@@ -30,8 +30,8 @@ function useJoin() {
   return { join, set }
 }
 
-/** Left: the screens in the order a person meets them, then the look they share. */
-export function JoinScreens({ screen, onScreen }: { screen: JoinScreenId; onScreen: (s: JoinScreenId) => void }) {
+/** The look the three Join screens share, in the inspector with each screen's own settings. */
+function JoinLook() {
   const { theme } = useDesign()
   const { join, set } = useJoin()
   const custom = join.look !== undefined
@@ -40,26 +40,9 @@ export function JoinScreens({ screen, onScreen }: { screen: JoinScreenId; onScre
   const setLook = (patch: JoinLook, key: string) => set({ ...join, look: { ...look, ...patch } }, key)
 
   return (
-    // The hairline under the title, like every other section (Menu, Pages, Theme).
-    <div className="grid gap-6 border-t border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] px-5 pt-6 pb-6">
-      <section className="grid gap-2">
-        <h3 className="text-xs font-medium text-muted-foreground">Screens</h3>
-        <div className="grid gap-2" role="radiogroup" aria-label="Screen">
-          {JOIN_SCREENS.map((s, i) => (
-            <button key={s.id} type="button" role="radio" aria-checked={s.id === screen} onClick={() => onScreen(s.id)} className={cn("flex items-center gap-3 p-3 text-left", card(s.id === screen))}>
-              <span className="grid size-6 shrink-0 place-items-center rounded-full border text-xs tabular-nums">{i + 1}</span>
-              <span className="grid min-w-0">
-                <span className="truncate text-sm font-medium">{s.label}</span>
-                <span className="truncate text-xs text-muted-foreground">{s.hint}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="grid gap-3">
-        <h3 className="text-xs font-medium text-muted-foreground">Look of these screens</h3>
-        <p className="text-xs leading-4 text-muted-foreground">Shared by the three screens. The platform your members use after they join does not change.</p>
+    <InspectorSection title="Look · all Join screens" defaultOpen={false} summary={custom ? "Custom" : "Platform"}>
+      <div className="grid gap-4">
+        <p className="text-xs leading-4 text-muted-foreground">Shared by Log in, Sign up and Subscribe. The platform your members use after they join does not change.</p>
         <Segmented
           label="Look of the Join screens"
           value={custom ? "custom" : "platform"}
@@ -109,8 +92,8 @@ export function JoinScreens({ screen, onScreen }: { screen: JoinScreenId; onScre
             </Button>
           </div>
         )}
-      </section>
-    </div>
+      </div>
+    </InspectorSection>
   )
 }
 
@@ -142,7 +125,7 @@ export function JoinInspector({ screen }: { screen: JoinScreenId }) {
   return (
     <div>
       <InspectorTop>
-        <span className="truncate text-[0.9375rem] font-semibold">{info.label}</span>
+        <span className="truncate text-[0.875rem] font-semibold">{info.label}</span>
       </InspectorTop>
       <div className="grid gap-4 px-5 pb-5">
         <p className="text-xs leading-4 text-muted-foreground">{info.hint}. Leave a field empty to keep the default words.</p>
@@ -210,6 +193,7 @@ export function JoinInspector({ screen }: { screen: JoinScreenId }) {
           </div>
         </InspectorSection>
       )}
+      <JoinLook />
       {own && (
         <div className="px-5 pb-6">
           <Button variant="ghost" size="sm" onClick={() => set({ ...join, screens: { ...join.screens, [screen]: undefined } }, `${screen}-reset`)}>

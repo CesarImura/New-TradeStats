@@ -402,7 +402,7 @@ export function LegalPage({ doc }: { doc: string }) {
         ))}
       </nav>
       <h1 className="text-3xl">{page.name}</h1>
-      <div className="text-[0.9375rem] leading-relaxed whitespace-pre-line text-muted-foreground">{(texts[doc] ?? page.text).replace(/Northline Trading/g, coach.org)}</div>
+      <div className="text-[0.875rem] leading-relaxed whitespace-pre-line text-muted-foreground">{(texts[doc] ?? page.text).replace(/Northline Trading/g, coach.org)}</div>
       <span className="text-xs text-muted-foreground">Last updated 1 October 2026</span>
     </div>
   )

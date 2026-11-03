@@ -5,6 +5,47 @@ import { cn } from "@/lib/utils"
 
 const STYLE = { bars: "0", candles: "1", line: "2" } as const
 
+/** Candles for the stand-in chart: the same symbol always draws the same ones. */
+function candlesOf(seed: string, n = 40) {
+  let h = 0
+  for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0
+  const rnd = () => ((h = (h * 1664525 + 1013904223) >>> 0) / 4294967296)
+  let p = 50
+  return Array.from({ length: n }, () => {
+    const o = p
+    p = Math.min(85, Math.max(15, o + (rnd() - 0.46) * 12))
+    return { o, c: p, hi: Math.max(o, p) + rnd() * 6, lo: Math.min(o, p) - rnd() * 6 }
+  })
+}
+
+/**
+ * What sits behind a TradingView widget: a quiet candle chart, so the box is never an empty grey block while the widget
+ * loads, when it is blocked or when there is no connection. The widget paints over it once it is there.
+ */
+function StandInChart({ seed }: { seed: string }) {
+  const bars = candlesOf(seed)
+  const step = 100 / bars.length
+  const y = (v: number) => 100 - v
+  return (
+    <svg aria-hidden viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 size-full">
+      {[20, 40, 60, 80].map((g) => (
+        <line key={g} x1="0" x2="100" y1={g} y2={g} stroke="currentColor" strokeOpacity="0.07" strokeWidth="0.3" vectorEffect="non-scaling-stroke" />
+      ))}
+      {bars.map((b, i) => {
+        const x = step * i + step / 2
+        const up = b.c >= b.o
+        const col = up ? "var(--profit)" : "var(--loss)"
+        return (
+          <g key={i} opacity="0.55">
+            <line x1={x} x2={x} y1={y(b.hi)} y2={y(b.lo)} stroke={col} strokeWidth="1" vectorEffect="non-scaling-stroke" />
+            <rect x={x - step * 0.3} y={y(Math.max(b.o, b.c))} width={step * 0.6} height={Math.max(Math.abs(b.c - b.o), 0.8)} fill={col} />
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
 /**
  * Embeds one of TradingView's widgets. Charting on the platform is the
  * TradingView integration (PRD feature 10): every chart, in Charts, the
@@ -53,7 +94,8 @@ function TradingViewEmbed({ widget, config, className }: { widget: string; confi
 
   return (
     <div className={cn("relative min-h-0 overflow-hidden", className)}>
-      <div ref={box} className="tradingview-widget-container size-full" />
+      <StandInChart seed={String(config.symbol ?? widget)} />
+      <div ref={box} className="tradingview-widget-container relative size-full" />
       {failed && (
         <div className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-muted-foreground">
           The TradingView chart couldn&apos;t load. Check the internet connection.

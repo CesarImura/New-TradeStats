@@ -451,13 +451,15 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
             className={cn("group flex min-w-0 items-center gap-2.5 focus-visible:rounded-sm border-[color:color-mix(in_oklab,var(--foreground)_7%,transparent)] py-1.5", FX.focus)}
           >
             <Mark name={o.name} size={more ? 28 : 22} />
-            <span className="grid min-w-0 flex-1">
+            <span className="grid min-w-[6.5rem] flex-1">
               <span className="truncate font-heading text-[0.8125rem] leading-5 font-medium tracking-tight group-hover:underline">{o.name}</span>
               {more && <span className={cn(TYPE.small, "truncate")}>{KIND_LABEL[o.kind]}</span>}
             </span>
-            <span className="flex shrink-0 items-center gap-1.5">
+            <span className="flex min-w-0 max-w-[58%] shrink items-center gap-1.5">
               {detailed && o.code && <Label className="hidden @[20rem]:inline">{o.code}</Label>}
-              <Chip tone={i === 0 ? "accent" : "neutral"}>{o.offer}</Chip>
+              <Chip tone={i === 0 ? "accent" : "neutral"} className="max-w-full overflow-hidden">
+                <span className="min-w-0 truncate">{o.offer}</span>
+              </Chip>
             </span>
           </a>
         ))}

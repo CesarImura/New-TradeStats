@@ -116,7 +116,7 @@ export function StudentCourses({ props = {} }: { props?: Record<string, string |
                     aria-checked={area === a}
                     onClick={() => setArea(a)}
                     className={cn(
-                      "r-chip border px-3 py-1.5 text-sm transition-colors",
+                      "r-chip border px-3 py-1.5 text-sm transition-colors max-lg:min-h-10",
                       area === a ? "border-foreground bg-foreground text-background" : "bg-card text-muted-foreground hover:text-foreground",
                     )}
                   >
@@ -135,7 +135,7 @@ export function StudentCourses({ props = {} }: { props?: Record<string, string |
                 const needs = coach.tiers.find((t) => c.tiers.includes(t.id))
                 const body = (
                   <>
-                    {card !== "list" && <CourseCover course={c} locked={!open} className={card === "side" ? "aspect-[4/3] w-2/5 shrink-0 self-stretch" : "aspect-[16/8]"} />}
+                    {card !== "list" && <CourseCover course={c} locked={!open} edge={card === "side" ? "left" : "top"} className={card === "side" ? "aspect-[4/3] w-2/5 shrink-0 self-stretch" : "aspect-[16/8]"} />}
                     <div className="flex flex-1 flex-col gap-3 p-[calc(1rem*var(--density,1))]">
                       <div className="flex items-start justify-between gap-2">
                         <div className="grid gap-0.5">

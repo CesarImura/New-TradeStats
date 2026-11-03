@@ -39,11 +39,11 @@ export const TS = {
   textSecondary: "#a8a8b1",
   /** Hints and descriptions: the quietest text that still reads at 4.5:1 on every panel. */
   textHelper: "#8b8b94",
-  /** Main action button: TradeStats orange, near-black text (6:1). */
-  action: "#ff5500",
-  actionHover: "#e64d00",
-  /** Text on the orange: pure black (6.5:1), semibold, so a short label reads at a glance. */
-  actionText: "#000000",
+  /** Main action button: TradeStats orange, a notch deeper than the brand #ff5500 so white text reads (4.7:1). */
+  action: "#cf4500",
+  actionHover: "#b83d00",
+  /** Text and icon on the orange: white, semibold, so a short label reads at a glance. */
+  actionText: "#ffffff",
   /** The yellow kept for small accents (a step done, a starred tier, a count): not a button. */
   cta: "#f8ff9e",
   /** Focus outlines, the open page, the active tab, selected options: orange. */
@@ -132,9 +132,10 @@ ${ui("[data-slot=input]::placeholder, [data-slot=textarea]::placeholder")} { col
 ${ui("[data-slot=checkbox]")} { border-radius: 3px; background: ${TS.field}; border-color: #3a3a40; }
 ${ui("[data-slot=checkbox][data-checked]")} { background: var(--primary); border-color: var(--primary); }
 ${ui("[data-slot=switch]")} { box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.4); }
-/* In the Design editor a switch that is on is white, like every selection there (the yellow stays the Publish button's). */
-${ui("[data-design-ws] [data-slot=switch][data-checked]")} { background: #f4f4f5 !important; }
-${ui("[data-design-ws] [data-slot=switch][data-checked] [data-slot=switch-thumb]")} { background: #0b0b0c !important; }
+${ui("[data-slot=switch][data-checked] [data-slot=switch-thumb]")} { background: ${TS.actionText}; }
+/* A switch that is on is the action orange with a white thumb, in the Design editor too (the yellow stays the Publish button's). */
+${ui("[data-design-ws] [data-slot=switch][data-checked]")} { background: ${TS.action} !important; }
+${ui("[data-design-ws] [data-slot=switch][data-checked] [data-slot=switch-thumb]")} { background: ${TS.actionText} !important; }
 /* Focus there is white too: a field or a control being typed into never looks like the coach's orange. */
 ${ui("[data-design-ws] :is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], select):focus-visible")} { border-color: rgb(244 244 245 / 0.6) !important; box-shadow: 0 0 0 3px rgb(244 244 245 / 0.12) !important; }
 ${ui("[data-design-ws] :is([data-slot=button], [data-slot=tabs-trigger], [data-slot=checkbox], [data-slot=switch], a, button):focus-visible")} { outline-color: rgb(244 244 245 / 0.7) !important; box-shadow: 0 0 0 3px rgb(244 244 245 / 0.12) !important; }
@@ -211,7 +212,7 @@ ${ui(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-s
   border-radius: 3px; min-height: 1.625rem; padding-block: 0.25rem; font-size: 0.78125rem;
 }
 ${ui(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item]):is(:hover, [data-highlighted], [data-selected=true])")} { background: var(--ts-hover-2); }
-${ui("[data-slot=sheet-content]")} { background: var(--ts-layer-1); box-shadow: -1px 0 0 ${TS.panelBorder}, -16px 0 40px rgb(0 0 0 / 0.5); }
+${ui("[data-slot=sheet-content]")} { background: var(--ts-layer-1); box-shadow: -1px 0 0 ${TS.panelBorder}; }
 ${ui("[data-slot=tooltip-content]")} {
   border-radius: 4px; background: ${TS.layer3}; color: ${TS.text}; font-size: 0.71875rem; padding: 0.25rem 0.5rem;
   box-shadow: 0 0 0 1px #3a3a40, 0 4px 12px rgb(0 0 0 / 0.5);
@@ -258,6 +259,16 @@ ${ui("[data-slot=sidebar][data-collapsible=icon] [data-slot=sidebar-group-label]
  */
 const A = ":root:has(.ts-admin)"
 const adm = (sel: string) => `${A} ${sel}:not(${COACH}, ${COACH} *)`
+/** A border that carries a state or a brand colour (selected, error, accent): panel strokes never replace it. A transparent one is not. */
+const STATE_BORDER = CUSTOM_BORDER.replace('[class*="border-transparent"], ', "")
+/** A box that is itself a link or button. */
+const CLICKABLE = ":is(a, button, [role=button]):is(.rounded-lg, .rounded-xl, .rounded-2xl).border.bg-card"
+/** Every card that answers the pointer: marked data-interactive, or clickable by itself. */
+const HOVERABLE = `:is([data-interactive], ${CLICKABLE})`
+/** An admin page rule: like `adm`, but never the Design editor (it keeps its own surfaces). */
+const pg = (sel: string) => `${A} ${sel}:not(${COACH}, ${COACH} *, [data-design-ws], [data-design-ws] *)`
+/** The page panels: a step lighter than the canvas, a 1px stroke on every one, and a nested step for boxes inside them. */
+const PG = { surface: "#1b1b1f", nested: "#252529", hover: "#222227", stroke: "rgb(255 255 255 / 0.09)", strokeHover: "rgb(255 255 255 / 0.16)" } as const
 export const ADMIN = {
   /** Behind everything: the side menu and the gutter around the canvas. */
   ground: "#09090b",
@@ -305,7 +316,12 @@ ${adm("[data-slot=button]:is(.h-8, .h-9)")} { height: 2rem; }
 ${adm("[data-slot=button]:is(.size-8, .size-9)")} { width: 2rem; height: 2rem; }
 ${adm("[data-slot=button].h-7")} { height: 1.75rem; font-size: 0.78125rem; border-radius: 7px; }
 ${adm("[data-slot=button].size-7")} { width: 1.75rem; height: 1.75rem; border-radius: 7px; }
+${adm("[data-slot=button]:is(.size-7, .size-8, .size-9)")} { width: 2.5rem; height: 2.5rem; }
+${adm("[data-slot=sidebar-menu-button]:not([data-size=lg])")} { height: 2.5rem; }
+}
 ${adm("[data-slot=button].bg-primary")} { box-shadow: none; }
+/* After the card rule below, which would otherwise darken the thumb: an on switch keeps the white thumb. */
+${adm("[data-slot=switch][data-checked] [data-slot=switch-thumb]")} { background: ${TS.actionText} !important; }
 ${adm(":is([data-slot=button].bg-secondary, [data-slot=button][class*='border-border'])")} {
   background: rgb(255 255 255 / 0.05); border-color: transparent; box-shadow: inset 0 0 0 1px ${ADMIN.edge};
 }
@@ -367,17 +383,18 @@ ${adm("[data-slot=table-body] [data-slot=table-row]")} { border-color: ${ADMIN.l
 ${adm("[data-slot=table-body] [data-slot=table-row]:hover")} { background: rgb(255 255 255 / 0.025); }
 ${adm("[data-slot=table-cell]")} { height: 3.25rem; padding-inline: 0.75rem; font-size: 0.875rem; }
 
-/* Overlays: floating sheets, 12px corners, a faint edge and a deep shadow. */
+/* Overlays: floating sheets, 12px corners, a faint edge and no drop shadow on dialogs (a shadow reads as a dark smudge on a dark page). */
 ${adm(":is([data-slot=dialog-content], [data-slot=popover-content], [data-slot=dropdown-menu-content], [data-slot=context-menu-content], [data-slot=select-content], [data-slot=command])")} {
-  border-radius: 12px; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 16px 48px rgb(0 0 0 / 0.6);
+  border-radius: 12px; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08);
 }
+${adm(":is([data-slot=popover-content], [data-slot=command])")} { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 14px 32px -12px rgb(0 0 0 / 0.6); }
 /* Menus and dropdowns sit close to what opened them: a tighter, softer shadow (the dialog's deep one spread a dark
    smudge far below a short list). */
 ${adm(":is([data-slot=dropdown-menu-content], [data-slot=context-menu-content], [data-slot=select-content])")} {
   box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 10px 24px -8px rgb(0 0 0 / 0.55), 0 2px 6px -2px rgb(0 0 0 / 0.4);
 }
 ${adm(":is([data-slot=dialog-content], [data-slot=sheet-content])")} { background: ${ADMIN.canvas}; }
-${adm("[data-slot=sheet-content]")} { box-shadow: -1px 0 0 ${ADMIN.edge}, -24px 0 48px rgb(0 0 0 / 0.5); }
+${adm("[data-slot=sheet-content]")} { box-shadow: -1px 0 0 ${ADMIN.edge}; }
 ${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item])")} {
   border-radius: 6px; min-height: 2rem; font-size: 0.875rem;
 }
@@ -399,4 +416,47 @@ ${adm("[data-slot=sidebar-menu-button]:hover")} { background: rgb(255 255 255 / 
 ${adm("[data-slot=sidebar-menu-button][data-active]")} { background: rgb(255 255 255 / 0.07); color: ${TS.text}; box-shadow: none; }
 ${adm("[data-slot=sidebar-menu-button][data-active] > svg")} { color: ${TS.text}; }
 ${adm("[data-slot=sidebar][data-collapsible=icon] [data-slot=sidebar-group-label]")} { margin-top: -2rem; }
+
+/*
+ * Panels on an admin page (never the Design editor): one recipe for shadcn cards and hand-built boxes. Same fill, the same 1px
+ * stroke on every top-level panel, roomier content, and the same hover, press, focus and disabled states on the clickable ones.
+ */
+${pg("[data-slot=card]")} { --card-spacing: 1.5rem; background: ${PG.surface}; box-shadow: 0 0 0 1px ${PG.stroke}; }
+${pg("[data-slot=card][data-size=sm]")} { --card-spacing: 1.25rem; }
+${pg(`:is(.rounded-lg, .rounded-xl, .rounded-2xl).border.bg-card:not([data-slot], ${STATE_BORDER})`)} { background-color: ${PG.surface}; border-color: ${PG.stroke}; }
+${pg(`.border:is(.bg-card, .bg-background):not([data-slot], input, textarea, select, .border-dashed, ${STATE_BORDER}):not(:is([data-slot=card], .border.bg-card, .border.bg-background) *)`)} { background-color: ${PG.surface}; border-color: ${PG.stroke}; }
+${pg(`:is(.rounded-lg, .rounded-xl, .rounded-2xl).border:not([data-slot], .border-dashed, ${STATE_BORDER}):is(.bg-muted, .bg-muted\\/40, .bg-muted\\/50)`)} { background-color: ${PG.surface}; border-color: ${PG.stroke}; }
+${pg(`:is(.rounded-lg, .rounded-xl, .rounded-2xl).border.bg-card:is(.p-2, .p-2\\.5, .p-3, .p-4):not(:is([data-slot=card], .border.bg-card) *)`)} { padding: 1.25rem; }
+${pg(`:is([data-slot=card], .rounded-lg.border.bg-card, .rounded-xl.border.bg-card) :is(.rounded-lg, .rounded-xl, .rounded-md).border:not([data-slot], .border-dashed, ${CUSTOM_BORDER}):not([class*="bg-"]):not(:is(a, button))`)} { background-color: ${PG.nested}; }
+/*
+ * One hover for every card on an admin page: a card marked data-interactive (the face opens something) or a clickable box.
+ * It brightens, takes a stronger edge and lifts 2px; pressed, it settles back and shrinks a touch. Only colours and
+ * translate/scale animate (no shadow, no size), so it stays on the compositor. Pointer devices only: touch never sticks.
+ */
+${pg(CLICKABLE)} { cursor: pointer; }
+${pg(HOVERABLE)} {
+  transition: background-color 220ms var(--ease-out), border-color 220ms var(--ease-out), translate 260ms var(--ease-out), scale 160ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  ${pg(`${HOVERABLE}:hover`)} { background-color: #232328 !important; border-color: rgb(255 255 255 / 0.2) !important; translate: 0 -2px; }
+}
+${pg(`${HOVERABLE}:active`)} { translate: 0 0; scale: 0.985; transition-duration: 120ms; }
+${pg(`${HOVERABLE}:is(:focus-visible, :has(:focus-visible))`)} { outline: 2px solid ${TS.interactive}; outline-offset: 2px; }
+${pg(`${CLICKABLE}:is(:disabled, [aria-disabled=true])`)} { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+  ${pg(HOVERABLE)} { transition-property: background-color, border-color; }
+  ${pg(`${HOVERABLE}:is(:hover, :active)`)} { translate: none; scale: 1; }
+}
+${pg("[data-media]")} { border-bottom: 1px solid ${PG.stroke}; }
+${pg(".bg-card:not([data-slot])")} { background-color: ${PG.surface}; }
+${pg("main .text-xs")} { font-size: 0.8125rem; line-height: 1.125rem; }
+
+/* Touch (a phone, a tablet, a coarse pointer): buttons, fields and menu rows are at least 40px, the reach of a thumb. Last in the sheet, so it wins over the compact sizes above. */
+@media (max-width: 1023px), (pointer: coarse) {
+${adm("[data-slot=button]:is(.h-7, .h-8, .h-9)")} { height: 2.5rem; }
+${adm("[data-slot=button]:is(.size-7, .size-8, .size-9)")} { width: 2.5rem; height: 2.5rem; }
+${adm("[data-slot=sidebar-menu-button]:not([data-size=lg])")} { height: 2.5rem; }
+${adm(":is([data-slot=input], [data-slot=select-trigger], select):not(textarea)")} { height: 2.5rem; }
+}
+
 `

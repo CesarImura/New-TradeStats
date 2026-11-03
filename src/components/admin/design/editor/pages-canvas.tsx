@@ -12,8 +12,10 @@ import { resolveCoach } from "@/lib/theme/resolve"
 import { cn } from "@/lib/utils"
 import { EditorBar, useDraftEditor } from "./editor-shell"
 
-/** Every page is laid out at real desktop size on the canvas. */
+/** Every page is laid out at real desktop width on the canvas; its height is its own (FRAME.h until measured, never below MIN_H). */
 const FRAME = { w: 1280, h: 820 }
+const MIN_H = 560
+const MAX_H = 8000
 const COLS = 3
 const GAP = { x: 160, y: 220 }
 const MIN_Z = 0.05
@@ -44,6 +46,31 @@ function stayOnPage(frame: HTMLIFrameElement | null) {
   doc.addEventListener("keydown", (e) => e.key === "Escape" && window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })))
 }
 
+/** The pages fill their window (min-h-svh), so their content height is read with that floor lifted for a moment. */
+const FLOOR_OFF = ".min-h-svh, [class*='min-h-[calc(100svh']{min-height:0!important}"
+
+/** Reports a page's content height now and whenever it grows; returns the cleanup. */
+function watchHeight(frame: HTMLIFrameElement, report: (h: number) => void) {
+  const doc = frame.contentDocument
+  if (!doc?.body) return () => {}
+  const measure = () => {
+    const style = doc.createElement("style")
+    style.textContent = FLOOR_OFF
+    doc.head.append(style)
+    const h = Math.ceil(doc.body.getBoundingClientRect().height)
+    style.remove()
+    if (h > 0) report(h)
+  }
+  measure()
+  const ro = new ResizeObserver(measure)
+  ro.observe(doc.body)
+  const timers = [400, 1500, 3500].map((ms) => window.setTimeout(measure, ms))
+  return () => {
+    ro.disconnect()
+    timers.forEach(window.clearTimeout)
+  }
+}
+
 const clampZ = (z: number) => Math.min(MAX_Z, Math.max(MIN_Z, z))
 
 /**
@@ -59,15 +86,37 @@ export function PagesCanvas() {
   const custom = useCustomCommunities()
   const original = getDemoCoach(slug) ?? custom.find((c) => c.slug === slug) ?? published
   const coach = useMemo(() => resolveCoach(original, editor.working.content), [original, editor.working.content])
-  const pages = studentNav(coach, `/c/${slug}`).map((p, i) => ({
-    ...p,
-    x: (i % COLS) * (FRAME.w + GAP.x),
-    y: Math.floor(i / COLS) * (FRAME.h + GAP.y),
-  }))
-  const rows = Math.ceil(pages.length / COLS)
+  const [heights, setHeights] = useState<Record<string, number>>({})
+  const nav = studentNav(coach, `/c/${slug}`)
+  const heightOf = (id: string) => Math.min(MAX_H, Math.max(MIN_H, heights[id] ?? FRAME.h))
+  // A row is as tall as its tallest page; each page keeps its own height inside it.
+  const rows = Math.ceil(nav.length / COLS)
+  const rowTops: number[] = []
+  for (let r = 0, top = 0; r < rows; r++) {
+    rowTops.push(top)
+    top += Math.max(...nav.slice(r * COLS, r * COLS + COLS).map((p) => heightOf(p.id))) + GAP.y
+  }
+  const pages = nav.map((p, i) => ({ ...p, x: (i % COLS) * (FRAME.w + GAP.x), y: rowTops[Math.floor(i / COLS)], h: heightOf(p.id) }))
   const world = {
     w: Math.min(pages.length, COLS) * (FRAME.w + GAP.x) - GAP.x,
-    h: rows * (FRAME.h + GAP.y) - GAP.y,
+    h: Math.max(...pages.map((p) => p.y + p.h)),
+  }
+  // fitAll reads the world through a ref, so a page growing doesn't re-run the resize effect and recentre a camera the coach moved.
+  const worldRef = useRef(world)
+  useEffect(() => {
+    worldRef.current = world
+  })
+  const watchers = useRef(new Map<string, () => void>())
+  useEffect(() => {
+    const all = watchers.current
+    return () => all.forEach((stop) => stop())
+  }, [])
+  const watch = (id: string, frame: HTMLIFrameElement) => {
+    watchers.current.get(id)?.()
+    watchers.current.set(
+      id,
+      watchHeight(frame, (h) => setHeights((cur) => (cur[id] === h ? cur : { ...cur, [id]: h }))),
+    )
   }
 
   const view = useRef<HTMLDivElement>(null)
@@ -75,6 +124,13 @@ export function PagesCanvas() {
   const [animate, setAnimate] = useState(false)
   const [focus, setFocus] = useState<number | null>(null)
   const [ready, setReady] = useState(false)
+  // The pages load one after the other, the one in focus first: with all of them compiling at once (in development) the
+  // server's build files get written over each other and it answers with errors. A page that never loads is skipped after 10 s.
+  const [turn, setTurn] = useState(1)
+  useEffect(() => {
+    const id = setTimeout(() => setTurn((t) => (t === turn ? t + 1 : t)), 10000)
+    return () => clearTimeout(id)
+  }, [turn])
 
   /** Move the camera so a box (in world units) fits the view with some padding. */
   const fitBox = useCallback((box: { x: number; y: number; w: number; h: number }, pad: number, top = 0) => {
@@ -97,13 +153,13 @@ export function PagesCanvas() {
   const fitAll = useCallback(() => {
     fitted.current = true
     setFocus(null)
-    fitBox({ x: 0, y: -60, w: world.w, h: world.h + 60 }, 64)
-  }, [fitBox, world.w, world.h])
+    fitBox({ x: 0, y: -60, w: worldRef.current.w, h: worldRef.current.h + 60 }, 64)
+  }, [fitBox])
 
   const open = (i: number) => {
     fitted.current = false
     setFocus(i)
-    fitBox({ x: pages[i].x, y: pages[i].y, w: FRAME.w, h: FRAME.h }, 24, 56)
+    fitBox({ x: pages[i].x, y: pages[i].y, w: FRAME.w, h: pages[i].h }, 24, 56)
   }
 
   // Show all pages each time the canvas is shown, and keep them in view as its size
@@ -204,7 +260,8 @@ export function PagesCanvas() {
   const dot = 22 * cam.z < 8 ? 22 * 4 * cam.z : 22 * cam.z // keep the dots from getting too dense when zoomed out
 
   return (
-    <div className="-mx-4 -mt-6 -mb-10 grid min-h-[calc(100svh-4.5rem)] grid-rows-[auto_1fr] md:-mx-10 md:-mt-8 lg:h-[calc(100svh-4.5rem)]">
+    // A screen of its own over the admin, like the Design workspace: the same bar, the same colours.
+    <div role="dialog" aria-modal aria-label="All pages" className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-background [--background:#0b0b0c] [--border:rgb(255_255_255/0.08)] [--ring:rgb(244_244_245/0.6)]">
       <EditorBar
         slug={slug}
         title="All pages"
@@ -219,7 +276,7 @@ export function PagesCanvas() {
 
       <div
         ref={view}
-        className={cn("relative min-h-[70svh] touch-none overflow-hidden bg-muted/40 select-none lg:min-h-0", panning ? "cursor-grabbing" : "cursor-grab")}
+        className={cn("relative min-h-[70svh] touch-none overflow-clip bg-[#2b2b2e] select-none [overflow-anchor:none] lg:min-h-0", panning ? "cursor-grabbing" : "cursor-grab")}
         style={{
           backgroundImage: "radial-gradient(circle, color-mix(in oklab, var(--foreground) 13%, transparent) 1px, transparent 1.4px)",
           backgroundSize: `${dot}px ${dot}px`,
@@ -250,7 +307,7 @@ export function PagesCanvas() {
             const Icon = p.icon
             const on = focus === i
             return (
-              <div key={p.id} className="absolute" style={{ left: p.x, top: p.y, width: FRAME.w, height: FRAME.h }}>
+              <div key={p.id} className="absolute" style={{ left: p.x, top: p.y, width: FRAME.w, height: p.h }}>
                 {/* The label keeps a readable size at any zoom. */}
                 <div
                   className={cn(
@@ -271,15 +328,22 @@ export function PagesCanvas() {
                     !on && "hover:ring-[6px] hover:ring-primary/50",
                   )}
                 >
-                  <iframe
-                    src={`${p.href}?preview=draft`}
-                    title={`${p.label} page`}
-                    loading="lazy"
-                    tabIndex={on ? 0 : -1}
-                    className={cn("size-full border-0", !on && "pointer-events-none")}
-                    ref={stayOnPage}
-                    onLoad={(e) => stayOnPage(e.currentTarget)}
-                  />
+                  {(i < turn || on) && (
+                    <iframe
+                      src={`${p.href}?preview=draft`}
+                      title={`${p.label} page`}
+                      loading="lazy"
+                      tabIndex={on ? 0 : -1}
+                      className={cn("size-full border-0", !on && "pointer-events-none")}
+                      ref={stayOnPage}
+                      onLoad={(e) => {
+                        stayOnPage(e.currentTarget)
+                        watch(p.id, e.currentTarget)
+                        // Its turn is done: the next page's, after a short rest.
+                        if (i === turn - 1) setTimeout(() => setTurn((t) => (t === turn ? t + 1 : t)), 400)
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             )
@@ -310,8 +374,8 @@ export function PagesCanvas() {
           </div>
         )}
 
-        {/* Zoom controls (bottom left: the prototype switcher sits bottom right) */}
-        <div className="absolute bottom-3 left-3 flex items-center gap-3" onPointerDown={(e) => e.stopPropagation()}>
+        {/* Zoom controls, bottom centre like the editor's canvas bar (the prototype switcher sits bottom left) */}
+        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3" onPointerDown={(e) => e.stopPropagation()}>
           <div className="flex items-center gap-0.5 rounded-lg border bg-background p-0.5 shadow-sm" onPointerDown={(e) => e.stopPropagation()}>
             <Button variant="ghost" size="icon-sm" aria-label="Zoom out" onClick={() => zoomBy(1 / 1.25)}>
               <Minus />
@@ -331,7 +395,7 @@ export function PagesCanvas() {
             </Button>
           </div>
           {!focused && (
-            <p className="pointer-events-none hidden text-xs text-muted-foreground md:block">
+            <p className="pointer-events-none hidden text-xs whitespace-nowrap text-muted-foreground xl:block">
               Drag to move · Pinch or ⌘ + scroll to zoom · Click a page to open it
             </p>
           )}

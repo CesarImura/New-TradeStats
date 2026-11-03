@@ -246,8 +246,8 @@ export function ChartCard({ chart: c, actions, onOpen, tierNames, dark = true }:
   const { coach } = useCoach()
   const who = c.tiers.length ? c.tiers.map((id) => coach.tiers.find((t) => t.id === id)?.name ?? id).join(", ") : "Everyone"
   return (
-    <article className="grid content-start gap-4 overflow-hidden rounded-lg border bg-card">
-      <div className="relative h-44 bg-background">
+    <article data-interactive className="grid content-start gap-4 overflow-hidden rounded-lg border bg-card">
+      <div data-media className="relative h-44 bg-background">
         <TradingViewMini symbol={c.symbol.tv} dark={dark} className="size-full" />
         {onOpen && <button onClick={onOpen} className="absolute inset-0" aria-label={`Open ${c.title}`} />}
       </div>

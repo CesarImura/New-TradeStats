@@ -17,7 +17,7 @@ import { OwnTitle } from "@/components/student/own-title"
 type Msg = { from: "me" | "ai"; text: string; reply?: AiReply; typing?: boolean }
 
 /** STU-17 · Chat with the coach's AI, ask about a trade, see what's left of today's questions. */
-export function StudentAi() {
+export function StudentAi({ props = {} }: { props?: Record<string, string | boolean> } = {}) {
   const { coach } = useCoach()
   const tier = useStudentTier()
   const ai = useStored(`${coach.slug}:ai`, DEFAULT_AI)
@@ -44,7 +44,7 @@ export function StudentAi() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <OwnTitle>
           <div className="flex flex-col gap-1">
-          <span className="eyebrow">Answers from {coach.coachName}&apos;s lessons</span>
+          <span className="eyebrow">{String(props.intro || `Answers from ${coach.coachName}'s lessons`)}</span>
           <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.ai}</h1>
         </div>
         </OwnTitle>
@@ -65,8 +65,8 @@ export function StudentAi() {
                   <Sparkles className="size-6" />
                 </span>
                 <div className="grid gap-1">
-                  <p className="text-lg">Ask anything about trading the {coach.coachName} way</p>
-                  <p className="text-sm text-muted-foreground">Answers come from the lessons, with the exact minute to rewatch. No signals, no investment advice.</p>
+                  <p className="text-lg">{String(props.welcome || `Ask anything about trading the ${coach.coachName} way`)}</p>
+                  <p className="text-sm text-muted-foreground">{String(props.welcomeText || "Answers come from the lessons, with the exact minute to rewatch. No signals, no investment advice.")}</p>
                 </div>
                 <div className="grid w-full gap-2">
                   {SUGGESTED.map((s) => (
@@ -151,7 +151,7 @@ export function StudentAi() {
                   e.currentTarget.form?.requestSubmit()
                 }
               }}
-              placeholder={left > 0 ? `${askAi(coach.wording.ai)}…` : "No questions left today. Back tomorrow."}
+              placeholder={left > 0 ? (props.placeholder ? String(props.placeholder) : `${askAi(coach.wording.ai)}…`) : "No questions left today. Back tomorrow."}
               disabled={left <= 0}
               aria-label="Your question"
               className="max-h-32 min-h-9 resize-none"

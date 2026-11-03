@@ -178,6 +178,7 @@ Todo card do Admin tem **borda e fundo**, nunca só borda sobre o fundo da pági
 - **Exceções com fundo próprio:** chip ou etiqueta pequena, grupo de segmented (`p-0.5`), campo de texto, área de soltar arquivo (tracejada), prévia em cor fixa.
 - **Linha de lista dentro do painel do editor Design** (Pages, Menu, seções do curso): use `menuRow()` de `fields/menu-sort.tsx`. Item desligado = borda tracejada e nome riscado, não opacidade.
 - **Card dentro de card:** o de dentro continua `bg-card` (fica igual); não invente outro tom.
+- **Capa colada na borda do card do aluno:** a borda do card é um outline interno (`--card-edge`), então a capa pinta por cima dela. Use `EDGE_TOP` (capa em cima) ou `EDGE_LEFT` (capa ao lado) de `widgets/parts/shared.tsx` na caixa `relative` da capa; `CourseCover` já aplica (`edge="left"` para capa ao lado).
 - Antes de entregar, procure cards sem fundo: `grep -rnE "rounded-(lg|xl) border( |\")" src/components/admin | grep -v "bg-"`.
 
 ### Espaçamento dentro do card de item (padrão de 02/11)
@@ -193,7 +194,7 @@ Vale para cards que mostram um item (post, gráfico, curso, transmissão): capa 
 
 ## 14. Escala de texto (regra do review de 02/11)
 
-Não crie tamanhos soltos. Use só estes: `text-xs` (12px), `text-sm` (14px) e os três micro-tamanhos já usados: `text-[0.6875rem]` (11px, rótulos e legendas), `text-[0.8125rem]` (13px, controles do editor) e `text-[0.9375rem]` (15px, títulos de painel). Abaixo de 11px o texto não é legível: não use. Se um tamanho novo for mesmo necessário, escreva o motivo aqui. Antes eram 14 tamanhos diferentes; o grep `grep -rhoE "text-\[[0-9.]+(px|rem)\]" src | sort | uniq -c` deve listar só os três acima, mais títulos grandes (1.375, 1.75, 2, 2.5rem).
+Não crie tamanhos soltos. Use só estes: `text-xs` (12px), `text-sm` (14px) e os três micro-tamanhos já usados: `text-[0.6875rem]` (11px, só rótulos em caixa alta; o resto vira 12px pelo piso do tema), `text-[0.8125rem]` (13px, controles do editor) e `text-[0.875rem]` (14px, títulos de painel; o 15px saiu em 03/11). Abaixo de 11px o texto não é legível: não use. Se um tamanho novo for mesmo necessário, escreva o motivo aqui. Antes eram 14 tamanhos diferentes; o grep `grep -rhoE "text-\[[0-9.]+(px|rem)\]" src | sort | uniq -c` deve listar só os três acima, mais títulos grandes (1.375, 1.75, 2, 2.5rem).
 
 
 ## 15. Tamanho de arquivo (divisão de 02/11)
@@ -205,3 +206,14 @@ Um arquivo de componente passa de ~600 linhas? Divida por responsabilidade, sem 
 - **Journal:** `catalog/journal.tsx` (JournalPnl), `catalog/rules-followed.tsx` (RulesFollowed), peças em comum em `catalog/journal-shared.tsx`.
 - **Aula do aluno:** `courses/student-lesson.tsx` monta a página; `lesson-player`, `lesson-tabs`, `lesson-quiz` e `lesson-side` (índice e AI) são as partes; `lesson-utils` tem `link`, `seek` e `toSec`.
 - Ao dividir: mova por intervalo de linhas, exporte só o que outro arquivo usa, rode `tsc`, `eslint` e o rastreio de telas, e mantenha o caminho de import antigo reexportando.
+
+## 16. Toque, texto e telas no celular (refinamento de 03/11)
+
+- **Alvos de toque:** abaixo de 1024px (`max-lg:`) ou em tela de toque (`pointer-coarse:`), botão, campo, item de sidebar e aba têm no mínimo 40px. No admin isso vem do bloco no fim de `lib/theme/ts-system.ts` (tem de ficar por último, senão regras anteriores o sobrescrevem). Desktop não muda. Chips de filtro usam `max-lg:min-h-10`.
+- **Card:** espaçamento interno por `--card-spacing` em `lib/theme/css.ts` (compacto 14, confortável 16). Não colocar `p-4` solto num card novo.
+- **Texto:** piso de 12px; só rótulo em caixa alta (`uppercase`/`eyebrow`) fica em 11px. Tamanhos soltos no código: 12 (`text-xs`), 13, 14 (`text-sm`), 16 e 20. Não usar 15px nem 17px.
+- **Capas de curso:** `CourseCover` usa `object-cover object-left`, porque o título fica na esquerda da arte.
+- **Calendar:** abaixo de 640px o aluno vê Lista no lugar de Semana (a grade de 720px não cabe). O admin mantém a grade, porque lá se clica no horário.
+- **Colunas que só cabem em tela larga:** no menu lateral aberto, `md:` (768px) não é largura de conteúdo de verdade. Mostrar a coluna extra só em `lg:`.
+- **Carrossel horizontal no celular:** estender até a borda da tela (`max-sm:-mr-4 max-sm:pr-4`) para o card cortado indicar que há mais.
+- **CSS global:** edição em `globals.css` às vezes não recompila no dev server. Preferir classes Tailwind ou `lib/theme/css.ts`.

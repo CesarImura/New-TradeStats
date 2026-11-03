@@ -96,7 +96,7 @@ export function StudentStart() {
                 </button>
               )}
               <figure className="grid gap-3 border-l-2 border-primary pl-4">
-                <blockquote className="text-[0.9375rem] leading-relaxed">{settings.message}</blockquote>
+                <blockquote className="text-[0.875rem] leading-relaxed">{settings.message}</blockquote>
                 <figcaption className="text-sm text-muted-foreground">
                   {coach.coachName} · {tier?.name}
                 </figcaption>

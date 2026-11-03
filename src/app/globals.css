@@ -279,6 +279,40 @@
   color: var(--primary);
 }
 
+/* Menu style (theme.nav.marker): how the open page is marked in the side menu, the top bar and the phone bar (they carry data-nav-marker).
+   Soft is the default and needs nothing. Rail is a bar on the left of a side menu item and under an item of a bar. */
+[data-nav-marker="pill"] [data-active]:not([data-active="false"]) {
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--primary) 16%, transparent);
+  color: var(--brand-text);
+}
+[data-nav-marker="brand"] [data-active]:not([data-active="false"]) {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+[data-nav-fill="brand"][data-nav-marker="brand"] [data-active]:not([data-active="false"]) {
+  background: var(--on-brand);
+  color: var(--primary);
+}
+[data-nav-marker="rail"] [data-active]:not([data-active="false"]) {
+  border-radius: 0 var(--r-menu, 8px) var(--r-menu, 8px) 0;
+  background: transparent;
+  box-shadow: inset 3px 0 0 var(--brand-mark, var(--primary));
+  color: var(--foreground);
+}
+header[data-nav-marker="rail"] [data-active]:not([data-active="false"]),
+nav[data-nav-marker="rail"] [data-active]:not([data-active="false"]) {
+  border-radius: 0;
+  box-shadow: inset 0 -2px 0 var(--brand-mark, var(--primary));
+}
+[data-nav-marker="editorial"] [data-active]:not([data-active="false"]) {
+  background: transparent;
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
 /* Widget set (Design → Widgets → Card). Cards need nothing here (lib/theme/css.ts). Blended (data-set="open"): no box at all, no fill and no
    line, so the page shows through and widgets are set apart by the gap alone (Outline is the one with a fine line).
    The page title and the page's own tool (g-plain) are untouched, the Star widget keeps its brand fill, and a widget

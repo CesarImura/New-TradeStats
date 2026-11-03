@@ -95,6 +95,13 @@ export function WidgetEmpty({
  * (3% up to 10px), so a wide course banner and a small thumbnail both read as a chart,
  * never as stretched blocks, and every candle stays inside the panel.
  */
+/**
+ * A card's edge is an inset outline, so artwork that fills the card's top (or left) edge paints over it: these draw the
+ * edge again on top of the artwork, on the sides it touches. Add to the artwork's own box (it must be `relative`).
+ */
+export const EDGE_TOP = "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:shadow-[inset_1px_0_0_var(--card-edge),inset_-1px_0_0_var(--card-edge),inset_0_1px_0_var(--card-edge)]"
+export const EDGE_LEFT = "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:shadow-[inset_1px_0_0_var(--card-edge),inset_0_1px_0_var(--card-edge),inset_0_-1px_0_var(--card-edge)]"
+
 export function Cover({ color = "var(--primary)", label, className }: { color?: string; hue?: number; label?: string; className?: string }) {
   const candles = [38, 52, 44, 61, 55, 70, 64, 78, 72, 84]
   return (

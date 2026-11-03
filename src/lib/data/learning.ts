@@ -100,6 +100,7 @@ function seed(coach: Coach): Catalog {
         status: "published",
         tiers: [],
         color: 0,
+        cover: "/placeholders/course-foundations.svg",
         modules: [
           {
             id: "m1",
@@ -176,6 +177,7 @@ function seed(coach: Coach): Catalog {
         status: "published",
         tiers: [],
         color: 1,
+        cover: "/placeholders/course-playbook.svg",
         modules: [
           {
             id: "p1",
@@ -200,6 +202,7 @@ function seed(coach: Coach): Catalog {
         status: "published",
         tiers: upper,
         color: 2,
+        cover: "/placeholders/course-psychology.svg",
         modules: [
           { id: "x1", title: "Tilt", lessons: [L("x1l1", "Spotting tilt early", 15), L("x1l2", "Your stop-trading rule", 12)] },
           { id: "x2", title: "Routines", lessons: [L("x2l1", "A morning routine that holds", 14)] },
@@ -214,6 +217,7 @@ function seed(coach: Coach): Catalog {
         scheduledFor: "Thu 29 Oct",
         tiers: [],
         color: 3,
+        cover: "/placeholders/course-breakdowns.svg",
         modules: [{ id: "b1", title: "October", lessons: [L("b1l1", "NY open, 5 Oct", 26, { status: "draft" }), L("b1l2", "NY open, 7 Oct", 31, { status: "draft" })] }],
       },
       {
@@ -224,6 +228,7 @@ function seed(coach: Coach): Catalog {
         status: "draft",
         tiers: [],
         color: 4,
+        cover: "/placeholders/course-risk-lab.svg",
         modules: [{ id: "r1", title: "Drills", lessons: [L("r1l1", "The 1% drill", 9, { status: "draft" })] }],
       },
       {

@@ -78,7 +78,7 @@ export function AllWidgetsInspector({ draft, onReset, onBack, back, own }: { dra
           <button type="button" onClick={onBack} aria-label={`Back to ${back}`} title={`Back to ${back}`} className="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
             <ArrowLeft className="size-4" />
           </button>
-          <span className="truncate text-[0.9375rem] font-semibold">All widgets</span>
+          <span className="truncate text-[0.875rem] font-semibold">All widgets</span>
         </div>
       </InspectorTop>
       <p className="-mt-1 px-5 pb-3 text-xs leading-4 text-muted-foreground">Every page.{own ? ` ${own} widget${own === 1 ? " keeps its" : "s keep their"} own style.` : ""}</p>

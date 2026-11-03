@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { Area, AreaChart, CartesianGrid, YAxis } from "recharts"
-import { ArrowRight, ArrowUpRight, ChevronDown, Download, Radio } from "@/components/icons"
+import { ArrowRight, ArrowUpRight, ChevronDown, Download, Video } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -168,7 +168,7 @@ export function AdminOverview() {
           Students online: <span className="font-medium tabular-nums">23</span>
         </span>
         <Button>
-          <Radio /> Go live
+          <Video /> Go live
         </Button>
       </div>
 
@@ -197,7 +197,7 @@ export function AdminOverview() {
           <FilterChip name="Tier" value={tier} options={tiers} onChange={setTier} />
         </div>
 
-        <div className="overflow-hidden rounded-xl bg-[var(--adm-surface)]">
+        <div className="overflow-hidden rounded-xl border bg-card">
           <div className="grid grid-cols-2 gap-1 p-1.5 sm:grid-cols-3 lg:grid-flow-col lg:auto-cols-fr lg:grid-cols-none">
             {strip.map(({ m, value }) => {
               const on = m.id === metric.id
@@ -206,12 +206,12 @@ export function AdminOverview() {
                   key={m.id}
                   onClick={() => setPicked((p) => ({ ...p, [view]: m.id }))}
                   className={cn(
-                    "flex flex-col gap-1.5 rounded-[10px] px-4 py-3.5 text-left transition-colors",
-                    on ? "bg-[var(--adm-raised)]" : "hover:bg-white/[0.03]",
+                    "flex flex-col gap-1.5 rounded-[10px] px-4 py-3.5 text-left outline-none transition-[background-color,scale] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98] motion-reduce:active:scale-100",
+                    on ? "bg-white/[0.07]" : "hover:bg-white/[0.04]",
                   )}
                 >
                   <span className={cn("text-sm", on ? "text-foreground" : "text-muted-foreground")}>{m.label}</span>
-                  <span className={cn("text-[1.375rem] leading-7 tabular-nums", on ? "text-foreground" : "text-[#a8a8b1]")}>
+                  <span className={cn("text-[1.375rem] leading-7 tabular-nums", on ? "text-foreground" : "text-muted-foreground")}>
                     {format(m, value)}
                     {m.unit && <span className="ml-1 text-sm text-muted-foreground">{m.unit}</span>}
                   </span>

@@ -80,7 +80,14 @@ export function StudentCalendar({ props = {} }: { props?: Record<string, string 
   const schedule = useSchedule(coach)
   const mine = useStudentCal(coach.slug)
   const tier = useStudentTier()
-  const [view, setView] = useState<View>("week")
+  const firstView = (["month", "week", "list"].includes(props.view as string) ? props.view : "week") as View
+  const [view, setView] = useState<View>(firstView)
+  // The coach's choice of the opening view changes the page at once in the editor (the student's own pick stays after that).
+  const [seenView, setSeenView] = useState(firstView)
+  if (seenView !== firstView) {
+    setSeenView(firstView)
+    setView(firstView)
+  }
   const [cursor, setCursor] = useState(NOW)
   const [hidden, setHidden] = useState<ItemKind[]>([])
   const [open, setOpen] = useState<Item | null>(null)
@@ -102,7 +109,7 @@ export function StudentCalendar({ props = {} }: { props?: Record<string, string 
           <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.calendar}</h1>
         </div>
         </OwnTitle>
-        {allowance > 0 && (
+        {allowance > 0 && props.book !== false && (
           <Button onClick={() => setBooking({})}>
             <CalendarPlus /> Book a 1:1
           </Button>
@@ -162,7 +169,7 @@ export function StudentCalendar({ props = {} }: { props?: Record<string, string 
                       key={k}
                       onClick={() => setHidden((h) => (on ? [...h, k] : h.filter((x) => x !== k)))}
                       aria-pressed={on}
-                      className={cn("r-chip flex items-center gap-1.5 border px-2.5 py-1 text-xs transition-opacity", !on && "opacity-45")}
+                      className={cn("r-chip flex items-center gap-1.5 border px-2.5 py-1 text-xs transition-opacity max-lg:min-h-10", !on && "opacity-45")}
                     >
                       <span className="size-2 rounded-full" style={{ background: colors[k] }} />
                       {KIND_LABEL[k]}

@@ -185,7 +185,7 @@ export function WidgetInspector({
           <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] [&_svg]:size-4">
             <def.icon />
           </span>
-          <span className="truncate text-[0.9375rem] font-semibold">{def.name}</span>
+          <span className="truncate text-[0.875rem] font-semibold">{def.name}</span>
         </span>
       </InspectorTop>
       {pinned && (

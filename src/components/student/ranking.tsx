@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils"
 import { OwnTitle } from "@/components/student/own-title"
 
 /** STU-25 leaderboards and competitions, STU-26 level, points, badges and streak. */
-export function StudentRanking() {
+export function StudentRanking({ props = {} }: { props?: Record<string, string | boolean> } = {}) {
   const { coach } = useCoach()
   const r = useStored<RankingSetup>(`${coach.slug}:ranking`, DEFAULT_RANKING)
   const [period, setPeriod] = useState(r.period)
@@ -30,6 +30,8 @@ export function StudentRanking() {
   const points = 1180
   const level = [...LEVELS].reverse().find((l) => points >= l.from)!
   const next = LEVELS[LEVELS.indexOf(level) + 1]
+  const showLevel = props.level !== false
+  const showBadges = props.badges !== false
 
   return (
     <div className="flex flex-col page-gap">
@@ -40,7 +42,7 @@ export function StudentRanking() {
       </div>
       </OwnTitle>
 
-      {live && (
+      {live && props.competition !== false && (
         <Card className="fx-hero flex-row flex-wrap items-center gap-4 px-5">
           <Trophy className="size-8 shrink-0" />
           <div className="grid min-w-0 flex-1 basis-52 gap-0.5">
@@ -62,10 +64,10 @@ export function StudentRanking() {
         </Card>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+      <div className={cn("grid gap-4", (showLevel || showBadges) && "lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]")}>
         <Card className="gap-3 px-0">
           <div className="flex flex-wrap items-center justify-between gap-2 px-5">
-            <h2 className="text-lg">Leaderboard</h2>
+            <h2 className="text-lg">{String(props.boardTitle || "Leaderboard")}</h2>
             <Tabs value={period} onValueChange={setPeriod}>
               <TabsList>
                 <TabsTrigger value="week">Week</TabsTrigger>
@@ -101,7 +103,9 @@ export function StudentRanking() {
           )}
         </Card>
 
+        {(showLevel || showBadges) && (
         <div className="flex flex-col gap-4">
+          {showLevel && (
           <Card className="gap-3 px-5">
             <span className="eyebrow">Your level</span>
             <div className="flex items-baseline justify-between">
@@ -120,6 +124,8 @@ export function StudentRanking() {
               <Flame className="size-4 text-primary" /> 6-day streak of journaling
             </div>
           </Card>
+          )}
+          {showBadges && (
           <Card className="gap-3 px-5">
             <span className="eyebrow">Badges</span>
             <div className="grid grid-cols-3 gap-2">
@@ -131,7 +137,9 @@ export function StudentRanking() {
               ))}
             </div>
           </Card>
+          )}
         </div>
+        )}
       </div>
     </div>
   )

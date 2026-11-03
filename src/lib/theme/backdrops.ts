@@ -89,3 +89,13 @@ export function pictureOf(src: string): CSSProperties {
 /** A widget's picture sits under the card colour at least this much: its text is smaller than the page's, so it needs more cover. */
 export const MIN_WIDGET_DIM = 70
 export const widgetDimOf = (dim?: number) => Math.max(MIN_WIDGET_DIM, dim ?? 80)
+
+/** A picture on the menu (side menu, top bar, phone bar): the menu's colour over it, so the labels stay readable. */
+export const NAV_MIN_DIM = 40
+export function navImageStyle(t: CoachTheme): CSSProperties | undefined {
+  if (!t.nav.image) return undefined
+  const pic = pictureOf(t.nav.image)
+  const dim = Math.min(95, Math.max(NAV_MIN_DIM, t.nav.imageDim ?? 80))
+  const cover = `color-mix(in oklab, var(--sidebar, var(--background)) ${dim}%, transparent)`
+  return { backgroundImage: `linear-gradient(${cover}, ${cover}), ${pic.backgroundImage}`, backgroundSize: `cover, ${pic.backgroundSize}`, backgroundPosition: "center" }
+}

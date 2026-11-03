@@ -87,7 +87,7 @@ export function PrototypeBar({ area }: { area: "student" | "admin" | "site" }) {
   // the bar stands upright at the foot of the editor's section rail instead, the one place with nothing under it.
   const inEditor = area === "admin" && section === "design"
   const tab = cn(
-    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors max-lg:min-h-10 pointer-coarse:min-h-10",
     inEditor && "lg:flex-col lg:gap-1 lg:rounded-xl lg:px-1 lg:py-2 lg:text-[0.6875rem] lg:leading-3.5",
   )
 
@@ -106,7 +106,7 @@ export function PrototypeBar({ area }: { area: "student" | "admin" | "site" }) {
           <Eye className="size-3.5" /> Student
         </Link>
         <PopoverTrigger
-          render={<button className={cn("grid size-7 place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white", inEditor && "lg:w-full")} aria-label="Prototype settings" />}
+          render={<button className={cn("grid size-7 max-lg:size-10 pointer-coarse:size-10 place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white", inEditor && "lg:w-full")} aria-label="Prototype settings" />}
         >
           <FlaskConical className="size-3.5" />
         </PopoverTrigger>

@@ -5,8 +5,8 @@
     "theme": {
       "template": "terminal",
       "mode": "dark",
-      "primary": "#ff5500",
-      "primaryForeground": "#0b0b0b",
+      "primary": "#cf4500",
+      "primaryForeground": "#ffffff",
       "palettes": {
         "light": {
           "background": "#ffffff",
