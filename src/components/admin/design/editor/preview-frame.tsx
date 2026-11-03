@@ -44,7 +44,7 @@ export function PreviewFrame({
       {scale > 0 && (
         <div
           // The same frame as the canvas in Pages: its corners and its shadow.
-          className="overflow-hidden bg-background shadow-[0_24px_60px_-20px_rgb(0_0_0/0.7)]"
+          className="overflow-hidden bg-background ring-1 ring-white/[0.08]"
           style={{ width: size.w * scale, height: height * scale, borderRadius: fixed ? 28 : 12 }}
         >
           <iframe

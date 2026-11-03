@@ -63,7 +63,7 @@ export function Flyout({
       role="dialog"
       aria-label={typeof title === "string" ? title : undefined}
       className={cn(
-        "fixed z-[45] flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#111113] text-foreground shadow-[0_24px_64px_-16px_rgb(0_0_0/0.85)]",
+        "fixed z-[45] flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#111113] text-foreground",
         "animate-in fade-in-0 duration-150 ease-out motion-reduce:animate-none",
         side === "right" ? "slide-in-from-left-2" : "slide-in-from-right-2",
       )}

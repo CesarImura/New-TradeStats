@@ -87,7 +87,7 @@ function useSeen<T extends Element>() {
 }
 
 /** A widget's thumbnail: `w` as it would be on the page (see the rules above), fitted into a 2:1 tile. */
-export function WidgetThumb({ w }: { w: WidgetInstance }) {
+export function WidgetThumb({ w, inset = 0.06 }: { w: WidgetInstance; /** The margin around the widget, as a share of the tile width (the layouts grid in the inspector asks for less). */ inset?: number }) {
   const def = getWidget(w.type)
   // The widgets' own code (chart style, names, numbers…) reads the coach from CoachContext: give it the draft, or a
   // thumbnail would mix the draft's colours (ThumbStyles) with the published design's choices.
@@ -110,7 +110,7 @@ export function WidgetThumb({ w }: { w: WidgetInstance }) {
   const width = cols * COL_PX + (cols - 1) * GAP_PX
   const h = THUMBS[w.type]?.h
   // The same proportions at any size: a tile in one column and in two is the same picture, larger or smaller.
-  const pad = size.w * 0.06
+  const pad = size.w * inset
   const scale = size.h && size.w ? Math.min(1, (size.w - pad * 2) / width, (size.th - pad * 2) / size.h) : 0
   return (
     <div ref={tile} data-thumb-type={w.type} className="grid aspect-[2/1] w-full place-items-center overflow-hidden" aria-hidden inert>
@@ -176,14 +176,16 @@ export function ThumbCard({
   off,
   className,
   dragHint,
+  tight,
   ...rest
-}: React.HTMLAttributes<HTMLDivElement> & { thumb: React.ReactNode; title: string; meta?: React.ReactNode; sub?: string; chevron?: boolean; selected?: boolean; off?: boolean; /** It can be dragged onto the page: a grip and "Drag to page" show on hover. */ dragHint?: boolean }) {
+}: React.HTMLAttributes<HTMLDivElement> & { thumb: React.ReactNode; title: string; meta?: React.ReactNode; sub?: string; chevron?: boolean; selected?: boolean; off?: boolean; /** It can be dragged onto the page: a grip and "Drag to page" show on hover. */ dragHint?: boolean; /** Less padding around the thumbnail, for the small tiles of the inspector. */ tight?: boolean }) {
   return (
     <div
       {...rest}
       className={cn(
-        "group/card grid gap-1.5 rounded-xl border p-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] active:scale-[0.985] motion-reduce:active:scale-100",
+        "group/card grid gap-1.5 rounded-xl border text-left outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] active:scale-[0.985] motion-reduce:active:scale-100",
         EASE,
+        tight ? "p-1" : "p-1.5",
         off ? "border-transparent opacity-55 active:scale-100" : cn("cursor-pointer", selected ? TILE_ON : TILE_IDLE),
         className,
       )}

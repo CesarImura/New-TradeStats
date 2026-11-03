@@ -551,7 +551,9 @@ export function ArrangeCanvas({
             This is how the page reflows on {device === "tablet" ? "tablets" : "phones"}. Arrange widgets on desktop; the order here follows it, top to bottom and left to right.
           </div>
         )}
-        <div className="mx-auto" style={{ width: logicalWidth * scale, height: canvasHeight * scale, minWidth: logicalWidth * scale }}>
+        <div className="relative mx-auto" style={{ width: logicalWidth * scale, height: canvasHeight * scale, minWidth: logicalWidth * scale }}>
+          {/* The frame's outline is drawn here, at screen size, with no drop shadow: a blurred shadow on a dark grey shows as banded strips beside the frame. */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 ring-1 ring-white/[0.08]" style={{ borderRadius: device === "desktop" ? 12 : 28 }} />
           <DataModeProvider value={data}>
             <div
               ref={canvas}
@@ -572,7 +574,7 @@ export function ArrangeCanvas({
                 if (!hit || hit === "background") setSelected(null)
                 else onPick?.(hit)
               }}
-              className={cn(canvasClass, "origin-top-left overflow-hidden bg-background font-sans text-foreground shadow-[0_24px_60px_-20px_rgb(0_0_0/0.7)]", spaceDown && "pointer-events-none")}
+              className={cn(canvasClass, "origin-top-left overflow-hidden bg-background font-sans text-foreground", spaceDown && "pointer-events-none")}
               // The same corners as the preview frame (12px on screen, 28px on a tablet or phone), whatever the zoom.
               style={{ width: logicalWidth, transform: `scale(${scale})`, padding: shellOn ? 0 : PAD[device], borderRadius: (device === "desktop" ? 12 : 28) / (scale || 1), "--ui-zoom": scale ? Math.min(2.5, 1 / scale) : 1 } as React.CSSProperties}
             >

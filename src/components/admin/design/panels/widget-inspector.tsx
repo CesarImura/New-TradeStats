@@ -231,13 +231,10 @@ function StyleTab({
   const emphasis = w.emphasis ?? "accent"
   const baseDetail = start?.detail ?? "standard"
   const baseEmphasis = start?.emphasis ?? "accent"
-  // One flyout at a time beside the panel: the layouts, the header, or the charts and numbers.
-  const [fly, setFly] = useState<"layout" | "header" | "charts" | null>(null)
-  const layoutsOpen = fly === "layout"
-  const setLayoutsOpen = (o: boolean) => setFly(o ? "layout" : null)
+  // One flyout at a time beside the panel: the header, or the charts and numbers.
+  const [fly, setFly] = useState<"header" | "charts" | null>(null)
   // The flyouts open against the inspector's edge: the panel (aside) that holds this block. Taken from the block's own
   // root, so it is there in both parts (it was read from the Layout button, absent in Style: Header and Charts never opened).
-  const layoutBtn = useRef<HTMLButtonElement>(null)
   const root = useRef<HTMLDivElement>(null)
   const panelEdge = useRef<HTMLElement | null>(null)
   useEffect(() => {
@@ -273,26 +270,10 @@ function StyleTab({
             />
           </Row>
         )}
-        {caps.shows.length > 1 && (
-          <Row label="Shows" hint={DETAIL.find((o) => o.value === shown)?.hint} own={detail !== baseDetail} onReset={() => onChange({ detail: baseDetail }, `${w.id}-detail`)}>
-            <Segmented label="How much it shows" value={shown} options={DETAIL.filter((o) => caps.shows.includes(o.value)).map((o) => ({ value: o.value, label: SHOWS[o.value], hint: o.hint }))} onChange={(v) => onChange({ detail: v }, `${w.id}-detail`)} />
-          </Row>
-        )}
         {def.variants.length > 1 && (
-          // The current layout as one row; the choice opens beside the panel, large, over the page (the sidebar keeps its width).
-          <Row label="Layout" own={look.value !== first} onReset={() => pick(lookOf(def, first))}>
-            <button
-              ref={layoutBtn}
-              type="button"
-              aria-expanded={layoutsOpen}
-              onClick={() => setLayoutsOpen(!layoutsOpen)}
-              className={cn(BOX, "flex w-full items-center justify-between gap-2 pr-1.5 pl-3 text-left hover:text-foreground", layoutsOpen && "border-[color:var(--ts-interactive)]")}
-            >
-              <span className="truncate">{look.label}</span>
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-            </button>
-            <Flyout open={layoutsOpen} onClose={() => setLayoutsOpen(false)} anchor={panelEdge} side="left" width={360} title={`${def.name} · Layout`}>
-              <div className="grid gap-3" role="radiogroup" aria-label="Layout">
+          // Every layout of this widget as a picture, open under Size: one click swaps it on the page (the gallery's tiles, same widget, same draft).
+          <Row label="Layout" stack own={look.value !== first} onReset={() => pick(lookOf(def, first))}>
+            <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Layout">
               {def.variants.map((v) => (
                 // A div, not a button: the thumbnail contains the widget's own buttons.
                 <ThumbCard
@@ -322,12 +303,18 @@ function StyleTab({
                     }
                   }}
                   selected={look.value === v.value}
-                  thumb={<WidgetThumb w={{ ...w, variant: v.value, w: fitWidth(def, v.value, w.w) }} />}
+                  tight
+                  dragHint={!!onDrag && !pinned}
+                  thumb={<WidgetThumb inset={0.03} w={{ ...w, variant: v.value, w: fitWidth(def, v.value, w.w) }} />}
                   title={v.label}
                 />
               ))}
-              </div>
-            </Flyout>
+            </div>
+          </Row>
+        )}
+        {caps.shows.length > 1 && (
+          <Row label="Shows" hint={DETAIL.find((o) => o.value === shown)?.hint} own={detail !== baseDetail} onReset={() => onChange({ detail: baseDetail }, `${w.id}-detail`)}>
+            <Segmented label="How much it shows" value={shown} options={DETAIL.filter((o) => caps.shows.includes(o.value)).map((o) => ({ value: o.value, label: SHOWS[o.value], hint: o.hint }))} onChange={(v) => onChange({ detail: v }, `${w.id}-detail`)} />
           </Row>
         )}
       </InspectorSection>
