@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
     ];
   },
   turbopack: {
+    // Stray lockfiles in ~ make Next pick the home folder as the root, which scans ~/.Trash (EPERM on macOS).
+    root: __dirname,
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],
