@@ -56,7 +56,7 @@ const BUTTONS = [
   { value: "pill", radius: "999px", label: "Pill" },
 ] as const
 
-export function AllWidgetsInspector({ draft, onReset, onBack, back, own }: { draft: ThemeDraft; onReset: (keys: (keyof ThemeDraft)[]) => void; onBack: () => void; /** Where the arrow goes back to: the selected widget or the page. */ back: string; /** Widgets that keep their own style. */ own: number }) {
+export function AllWidgetsInspector({ draft, onReset, onBack, back, own, onClearOwn }: { draft: ThemeDraft; onReset: (keys: (keyof ThemeDraft)[]) => void; onBack: () => void; /** Where the arrow goes back to: the selected widget or the page. */ back: string; /** Widgets that keep their own style. */ own: number; /** Puts every widget on this page back to the style set here. */ onClearOwn: () => void }) {
   const { theme, change } = useDesign()
   const [fly, setFly] = useState<"header" | "charts" | null>(null)
   const root = useRef<HTMLDivElement>(null)
@@ -82,6 +82,13 @@ export function AllWidgetsInspector({ draft, onReset, onBack, back, own }: { dra
         </div>
       </InspectorTop>
       <p className="-mt-1 px-5 pb-3 text-xs leading-4 text-muted-foreground">Every page.{own ? ` ${own} widget${own === 1 ? " keeps its" : "s keep their"} own style.` : ""}</p>
+      {own > 0 && (
+        <div className="px-5 pb-3">
+          <button type="button" onClick={onClearOwn} className="h-8 w-full rounded-md border border-border px-3 text-xs font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
+            Use these settings on {own === 1 ? "that widget" : `all ${own}`} (this page)
+          </button>
+        </div>
+      )}
 
       <InspectorSection title="Card">
         <Row label="Card" hint={SURFACES.find((s) => s.id === surface)?.hint} own={changed("widgetSet", "cardSurface")} onReset={() => onReset(["widgetSet", "cardSurface", "shadow"])} from="the look" stack>

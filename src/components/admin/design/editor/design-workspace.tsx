@@ -245,7 +245,7 @@ export function DesignWorkspace() {
       <CourseInspector selected={courseSel} onSelect={setCourseSel} />
     ) : scope === "all" ? (
       // A place of its own (not a switch on the widget's panel): the style every widget shares, with the way back.
-      <AllWidgetsInspector draft={working.theme} onReset={resetTheme} onBack={() => setScope("one")} back={selDef ? selDef.name : pageInfo.label} own={own} />
+      <AllWidgetsInspector draft={working.theme} onReset={resetTheme} onBack={() => setScope("one")} back={selDef ? selDef.name : pageInfo.label} own={own} onClearOwn={arrange.clearOwnStyles} />
     ) : sel ? (
       <WidgetInspector
         key={sel.id}

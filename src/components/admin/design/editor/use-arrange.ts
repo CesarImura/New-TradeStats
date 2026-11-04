@@ -81,6 +81,9 @@ export function useArrange({
     save({ items: layout.items.map((w) => (w.id === id ? { ...w, ...patch } : w)) }, key, patch.emphasis === "star" ? id : undefined)
   }
 
+  /** Every widget on this page goes back to All widgets' style: the surface, tone, picture, header and charts they kept as their own. */
+  const clearOwnStyles = () => save({ items: layout.items.map((w) => (w.style ? { ...w, style: undefined } : w)) }, "clear-own-styles")
+
   const addWidget = (type: string) => {
     const def = getWidget(type)!
     const look = def.variants[0]
@@ -151,6 +154,7 @@ export function useArrange({
     pinned,
     save,
     updateItem,
+    clearOwnStyles,
     addWidget,
     removeWidget,
     duplicateWidget,
