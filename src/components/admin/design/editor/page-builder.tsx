@@ -300,7 +300,9 @@ export function ArrangeCanvas({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target
-      const onPage = t === document.body || (t instanceof Node && !!area.current?.contains(t) && !(t instanceof Element && t.closest("input, textarea, select, button, [role], [contenteditable=true]")))
+      // A widget on the canvas can hold the keyboard itself (Tab to it): Delete and Esc act on it.
+      const onWidget = t instanceof Element && t.hasAttribute("data-widget-wrap")
+      const onPage = t === document.body || onWidget || (t instanceof Node && !!area.current?.contains(t) && !(t instanceof Element && t.closest("input, textarea, select, button, [role], [contenteditable=true]")))
       if (!selected || !onPage) return
       if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault()
@@ -470,8 +472,17 @@ export function ArrangeCanvas({
                         item
                       ) : (
                         <div
-                          className="group/wrap relative h-full touch-none"
+                          data-widget-wrap
+                          role="group"
+                          tabIndex={0}
+                          aria-label={`${getWidget(w.type)?.name ?? "Widget"}${selected === w.id ? ", selected" : ""}. Press Enter to select, Delete to remove.`}
+                          className="group/wrap relative h-full touch-none rounded-[calc(var(--radius)+2px)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ts-interactive)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                           onPointerDown={(e) => startMove(e, w)}
+                          onKeyDown={(e) => {
+                            if (e.target !== e.currentTarget || (e.key !== "Enter" && e.key !== " ")) return
+                            e.preventDefault()
+                            setSelected(w.id)
+                          }}
                           onClick={(e) => {
                             e.stopPropagation()
                             setSelected(w.id)
