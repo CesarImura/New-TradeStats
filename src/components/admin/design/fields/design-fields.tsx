@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { isPageId, type Coach, type ModuleId } from "@/lib/data/coaches"
 import { FONT_LIBRARY, type FontId } from "@/lib/fonts"
 import type { Overrides } from "@/lib/prototype-store"
-import { themeToCss } from "@/lib/theme/css"
+import { themeToCss, themeVars } from "@/lib/theme/css"
 import { onColor } from "@/lib/theme/derive"
 import { pictureFrom } from "@/lib/images"
 import { BACKDROPS, NAV_MIN_DIM } from "@/lib/theme/backdrops"
@@ -532,23 +532,26 @@ const MARKERS: { value: NavMarker; label: string }[] = [
   { value: "editorial", label: "Editorial" },
 ]
 const markerLine: Record<NavMarker, string> = {
-  soft: "rounded-[3px] bg-foreground/15",
-  pill: "rounded-full bg-primary/25",
-  brand: "rounded-[3px] bg-primary",
-  rail: "rounded-r-[3px] border-l-2 border-primary bg-transparent",
-  editorial: "rounded-none border-b border-foreground/50 bg-transparent",
+  soft: "rounded-[3px] bg-[color-mix(in_oklab,var(--a-ink)_15%,transparent)]",
+  pill: "rounded-full bg-[color-mix(in_oklab,var(--a-accent)_25%,transparent)]",
+  brand: "rounded-[3px] bg-[var(--a-accent)]",
+  rail: "rounded-r-[3px] border-l-2 border-[var(--a-accent)] bg-transparent",
+  editorial: "rounded-none border-b border-[color-mix(in_oklab,var(--a-ink)_50%,transparent)] bg-transparent",
 }
 function NavMarkerField() {
   const { theme, change } = useDesign()
   const now = theme.nav.marker ?? "soft"
+  // The little menus are drawn in the draft's own colours (light or dark), not the editor's.
+  const v = themeVars(theme) as Record<string, string>
+  const well = { "--a-ink": v["--foreground"], "--a-accent": v["--brand-mark"] ?? v["--primary"], backgroundColor: v["--background"] } as React.CSSProperties
   return (
     <div data-field="nav-marker" className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Menu style">
       {MARKERS.map((m) => (
         <button key={m.value} type="button" role="radio" aria-checked={now === m.value} onClick={() => change({ theme: { nav: { marker: m.value } } }, "nav-marker")} className={cn("grid gap-1.5 p-1.5 text-left", card(now === m.value))}>
-          <span className="grid aspect-[16/10] content-center gap-1.5 rounded-[4px] bg-background px-3">
-            <span className="h-1.5 w-3/4 rounded-full bg-foreground/20" />
+          <span style={well} className="grid aspect-[16/10] content-center gap-1.5 rounded-[4px] px-3 ring-1 ring-black/10">
+            <span className="h-1.5 w-3/4 rounded-full bg-[color-mix(in_oklab,var(--a-ink)_20%,transparent)]" />
             <span className={cn("h-2.5 w-full", markerLine[m.value])} />
-            <span className="h-1.5 w-2/3 rounded-full bg-foreground/20" />
+            <span className="h-1.5 w-2/3 rounded-full bg-[color-mix(in_oklab,var(--a-ink)_20%,transparent)]" />
           </span>
           <span className="px-0.5 text-xs font-medium">{m.label}</span>
         </button>
