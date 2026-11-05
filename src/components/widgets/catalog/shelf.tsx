@@ -12,7 +12,18 @@ import { TYPE } from "../parts/tokens"
 import { WCard } from "../parts/anatomy"
 import { WidgetEmpty, type WidgetProps } from "../parts/shared"
 import { SHAPE_OF, autoOf, everyOf, shows, useShelfCards, type MediaItem, type Shape } from "./media-data"
+import { Drop, tileDrop } from "../parts/card"
 import { Art, FADE_TO, Meter, RATIO, SameTitleSize, Tag, Tile, WIDE, ctaOf } from "./poster"
+
+/**
+ * In a cell that sets the height (the desktop grid, see GROW_ROWS in parts/tokens.tsx) the Grid layout fills it instead of
+ * going by its own proportions: the column that holds the grid, the grid, a tile and its picture. Where a card is as tall
+ * as its content (phones, the library) none of it applies. Whole class names, so Tailwind sees them.
+ */
+const GRID_COLUMN = "[@container_card_(min-height:0px)]:flex [@container_card_(min-height:0px)]:min-h-0 [@container_card_(min-height:0px)]:flex-1 [@container_card_(min-height:0px)]:flex-col"
+const GRID_FILL = "[@container_card_(min-height:0px)]:min-h-0 [@container_card_(min-height:0px)]:flex-1 [@container_card_(min-height:0px)]:auto-rows-[minmax(0,1fr)]"
+const TILE_FILL = "[@container_card_(min-height:0px)]:min-h-0 [@container_card_(min-height:0px)]:grid-rows-[minmax(5rem,1fr)_auto]"
+const PICTURE_FILL = "[@container_card_(min-height:0px)]:aspect-auto"
 
 /** How wide a poster is in a row, by shape and the card's width: a part of the next one always shows. */
 const ROW_BASIS: Record<"tall" | "wide", string> = {
@@ -135,12 +146,14 @@ function GridCard({ item, shape }: { item: MediaItem; shape: Shape }) {
       className={cn(
         FADE_TO,
         "group/card grid min-w-0 content-start overflow-hidden rounded-[min(var(--radius),12px)] outline-none",
+        // In a cell that sets the height the picture takes what the words leave (rather than its own ratio), so nothing is cut.
+        TILE_FILL,
         "bg-[color-mix(in_oklab,var(--card-foreground)_3%,var(--card))] ring-1 ring-[color-mix(in_oklab,var(--card-foreground)_9%,transparent)] ring-inset",
         "transition-[box-shadow,transform,scale] duration-300 ease-out active:scale-[0.99] motion-reduce:active:scale-100",
         "[@media(hover:hover)]:hover:ring-[color-mix(in_oklab,var(--card-foreground)_20%,transparent)] focus-visible:ring-2 focus-visible:ring-ring",
       )}
     >
-      <div className={cn("@container/tile relative overflow-hidden", RATIO[shape])}>
+      <div className={cn("@container/tile relative overflow-hidden", RATIO[shape], PICTURE_FILL)}>
         <div className="absolute inset-0 transition-transform duration-[700ms] ease-out motion-reduce:transition-none [@media(hover:hover)]:group-hover/card:scale-[1.05] motion-reduce:[@media(hover:hover)]:group-hover/card:scale-100">
           <Art item={item} shape={shape} />
         </div>
@@ -204,14 +217,23 @@ function Grid({ items, shape }: { items: MediaItem[]; shape: Shape }) {
   const gridShape: Shape = shape === "portrait" ? "classic" : shape
   return (
     <>
-      <div className="hidden gap-3 @[26rem]:grid" style={{ gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${WIDE.has(gridShape) ? 13 : 11}rem), 1fr))` }}>
-        {items.map((it) => (
-          <GridCard key={it.id} item={it} shape={gridShape} />
-        ))}
+      <div className={cn("hidden gap-3 @[26rem]:grid", GRID_FILL)} style={{ gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${WIDE.has(gridShape) ? 13 : 11}rem), 1fr))` }}>
+        {items.map((it, i) =>
+          // In a cell that sets the height, a tile that no longer fits whole gives way, the last one first; the first never does
+          // (a card whose every tile gave way would be empty, and one tile that is a little cut is better than none).
+          i === 0 ? (
+            <GridCard key={it.id} item={it} shape={gridShape} />
+          ) : (
+            <Drop key={it.id} level={tileDrop(i)}>
+              <GridCard item={it} shape={gridShape} />
+            </Drop>
+          ),
+        )}
       </div>
       <ul className="grid gap-2 @[26rem]:hidden">
-        {items.map((it) => (
-          <li key={it.id}>
+        {items.map((it, i) => (
+          // The same rule as the tiles: in a cell that sets the height a line that no longer fits whole gives way, the last first; the first stays.
+          <li key={it.id} data-drop={i === 0 ? undefined : tileDrop(i)}>
             <Link href={it.href} className="group/line flex min-w-0 items-center gap-3 rounded-[min(var(--radius),8px)] outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <span className="relative aspect-[4/3] w-20 shrink-0 overflow-hidden rounded-[min(var(--radius),6px)]">
                 <span className="absolute inset-0 transition-transform duration-500 ease-out [@media(hover:hover)]:group-hover/line:scale-[1.08]">
@@ -400,7 +422,7 @@ export function Shelf({ variant = "row", props }: WidgetProps) {
   return (
     <WCard icon={Icon} title={String(props.title || title)} meta={`${cards.length} ${unit}`} action={core || source === "own" ? undefined : { label: "See all", href }} bodyClassName="min-h-0">
       <SameTitleSize>
-        <div ref={ref} className="min-w-0">
+        <div ref={ref} className={cn("min-w-0", variant === "grid" && GRID_COLUMN)}>
           {carousel ? (
             <Carousel items={cards} shape={shape} over={over} nav={String(props.nav || "dots")} auto={auto} every={every} />
           ) : variant === "grid" ? (
