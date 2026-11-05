@@ -173,9 +173,17 @@ function useDropToFit(ref: React.RefObject<HTMLDivElement | null>) {
     }
     const ro = new ResizeObserver(fit)
     ro.observe(card)
-    // Charts and pictures settle a moment later, and the coach's fonts load late: measure again then.
-    const t = setTimeout(fit, 300)
-    document.fonts?.ready.then(later)
+    // Charts and pictures settle a moment later, and the coach's fonts load late: measure again then, from everything shown.
+    // (The first measurement after a resize can be taken before the layout has settled, and it can hide parts that fit; with the
+    // size unchanged nothing would ever bring them back, so these re-measurements start over: shown and hidden in one task, no paint between.)
+    const t = setTimeout(() => {
+      size = ""
+      fit()
+    }, 300)
+    document.fonts?.ready.then(() => {
+      size = ""
+      later()
+    })
     // New content (a layout or a setting changed) is measured on the next frame.
     const mo = new MutationObserver(later)
     mo.observe(card, { childList: true, subtree: true, characterData: true })
@@ -230,7 +238,9 @@ export function cut(card: HTMLElement) {
       if (o.overflowY === "visible" && o.overflowX === "visible") continue
       const b = box.getBoundingClientRect()
       // The card may lend half its bottom padding; an inner panel keeps its padding (2px slack, as the overflow rule allows).
-      limit = Math.min(limit, b.bottom - k * (box === card ? parseFloat(o.paddingBottom) / 2 : parseFloat(o.paddingBottom) + parseFloat(o.borderBottomWidth) - 2))
+      // A box with no padding (a list that clips its rows) has no padding to keep, so the 2px slack does not apply: only the 1px for rounding below.
+      const pad = parseFloat(o.paddingBottom)
+      limit = Math.min(limit, b.bottom - k * (box === card ? pad / 2 : pad > 0 ? pad + parseFloat(o.borderBottomWidth) - 2 : parseFloat(o.borderBottomWidth)))
       right = Math.min(right, b.right)
     }
     // Rows a Fit list wraps out of sight sit to the right of its box.
