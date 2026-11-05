@@ -79,7 +79,8 @@ export function Leaderboard({ variant = "table" }: WidgetProps) {
                 {x.me && <span aria-hidden className="absolute inset-y-1 left-0 w-[3px] rounded-full" style={{ background: "var(--w-accent, var(--primary))" }} />}
                 {x.rank}
               </td>
-              <td className="px-2">
+              {/* max-w-0: in an auto table the name column is as wide as its longest name; with it the name truncates and the figures keep their room. */}
+              <td className="max-w-0 px-2">
                 <span className="flex items-center gap-2">
                   <span className="grid size-6 shrink-0 place-items-center rounded-full bg-muted text-[0.6875rem] font-medium">{x.initials}</span>
                   <span className={cn("truncate", x.me && "font-medium")}>{x.name}</span>

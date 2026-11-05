@@ -89,7 +89,8 @@ export function RecentTrades({ variant = "table" }: WidgetProps) {
         bands
       >
         <div ref={body} className="min-h-0 flex-1 overflow-hidden">
-        <ul className="grid">
+        {/* One track that can be narrower than its row (minmax(0,1fr)): an auto track is as wide as the row's content, and a row of fixed columns (time, R, P&L) then runs past the card. The name gives way first. */}
+        <ul className="grid grid-cols-[minmax(0,1fr)]">
           {sorted.slice(0, per).map((t) => (
             <li key={t.id} className="flex items-center gap-3 py-2" style={{ borderColor: "var(--w-hair, var(--border))" }}>
               <span className="w-12 shrink-0 text-xs text-muted-foreground tabular-nums">{t.time}</span>
@@ -141,18 +142,19 @@ export function RecentTrades({ variant = "table" }: WidgetProps) {
           <tbody>
             {rows.map((t) => (
               <tr key={t.id} className="h-8 border-b transition-colors duration-150 last:border-b-0 hover:bg-[color-mix(in_oklab,var(--foreground)_4%,transparent)]" style={{ borderColor: "var(--w-hair, var(--border))" }}>
-                <td className="px-2 whitespace-nowrap text-muted-foreground">
-                  {detailed && <span className="mr-1 @[36rem]:hidden">{t.day}</span>}
-                  {t.time}
+                {/* The day and the time each stay whole, but may sit on two lines when the card is tight: it is the figures that must never break. */}
+                <td className="px-2 text-muted-foreground">
+                  {detailed && <span className="mr-1 inline-block whitespace-nowrap @[36rem]:hidden">{t.day}</span>}
+                  <span className="whitespace-nowrap">{t.time}</span>
                 </td>
                 <td className="hidden px-2 whitespace-nowrap text-muted-foreground @[36rem]:table-cell">{t.day}</td>
                 <td className="px-2 font-medium">{t.sym}</td>
                 {standard && <td className="hidden px-2 text-muted-foreground @[22rem]:table-cell">{t.side}</td>}
                 {standard && <td className="hidden px-2 text-right text-muted-foreground @[26rem]:table-cell">{t.size}</td>}
-                <td className="px-2 text-right" style={tone(t.r)}>
+                <td className="px-2 text-right whitespace-nowrap" style={tone(t.r)}>
                   {r(t.r)}
                 </td>
-                <td className="px-2 text-right" style={tone(t.pl)}>
+                <td className="px-2 text-right whitespace-nowrap" style={tone(t.pl)}>
                   {signed(t.pl)}
                 </td>
               </tr>
@@ -316,6 +318,7 @@ const BUCKETS = ["−2", "−1.5", "−1", "−0.5", "+0.5", "+1", "+2", "+3"]
 const COUNTS = [1, 2, 9, 4, 6, 7, 5, 2]
 
 export function RDistribution({ variant = "histogram" }: WidgetProps) {
+  const { fixed } = useFrame()
   const standard = useMore("standard")
   const detailed = useMore("detailed")
   const total = COUNTS.reduce((a, b) => a + b, 0)
@@ -336,8 +339,9 @@ export function RDistribution({ variant = "histogram" }: WidgetProps) {
   }
   return (
     <WCard icon={BarChart3} title="R distribution" meta={`Last ${total} trades · in R multiples`} chip={<Chip>avg +0.42R</Chip>} bodyClassName={SPLIT}>
+      {/* A wide card on a phone or tablet is as tall as its content, so its bars stand taller; in a cell that sets the height they take what is left. */}
       <div data-main className="flex min-h-min flex-1 flex-col">
-        <Bars values={COUNTS} labels={BUCKETS} active={mostIdx} className="min-h-24 flex-1 [@container_card_(min-width:34rem)]:min-h-36" format={(v) => `${v} trades`} />
+        <Bars values={COUNTS} labels={BUCKETS} active={mostIdx} className={cn("min-h-24 flex-1", !fixed && "[@container_card_(min-width:34rem)]:min-h-36")} format={(v) => `${v} trades`} />
       </div>
       {standard && (
         <Legend
