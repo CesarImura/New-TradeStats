@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import { ArrowLeft, Check, ChevronRight, GripVertical, ImagePlus, Plus } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { fitWidth, getWidget, librarySections, lookOf, pageWidth, settingsFor, widthsFor, type WidgetDef } from "@/components/widgets/registry"
+import { fitWidth, getWidget, librarySections, lookOf, pageWidth, settingApplies, settingsFor, widthsFor, type WidgetDef } from "@/components/widgets/registry"
 import type { Coach } from "@/lib/data/coaches"
 import { pictureFrom } from "@/lib/images"
 import { COLS, type Detail, type Emphasis, type PageId, type WidgetInstance, type WidgetPhase } from "@/lib/widgets/layout"
@@ -372,7 +372,7 @@ function WidgetDetails({
   const [props, setProps] = useState<Record<string, string | boolean>>({})
   const widths = widthsFor(def, variant)
   const settings = settingsFor(def, variant)
-  const choices = settings.filter((s) => s.type === "toggle" || s.type === "select")
+  const choices = settings.filter((s) => (s.type === "toggle" || s.type === "select") && settingApplies(def, s, props))
   const top = useRef<HTMLDivElement>(null)
   // The preview and each layout drag onto the page as chosen here (a layout with its own width, if the size does not fit it).
   const drag = (v: string) => ({

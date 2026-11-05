@@ -23,7 +23,7 @@ export type Setting = (
   variants?: string[]
   /** Drawn only when the widget shows More (Detailed), in these layouts: the inspector offers it there and then. */
   more?: string[]
-  /** Offered only while another setting of this widget has this value ("Time on each step" only when the cards move on their own). */
+  /** Offered only while another setting of this widget has this value ("Time on each step" only when the cards move on their own). Value "*": while that setting has any text ("Button opens" only when the button has a label). */
   when?: { key: string; value: string }
 }
 
@@ -33,7 +33,8 @@ export const settingApplies = (def: WidgetDef, s: Setting, props: Record<string,
   const w = s.when
   const other = (def.settings ?? []).find((o) => o.key === w.key)
   const fallback = other?.type === "select" ? other.options[0].value : ""
-  return String(props[w.key] ?? fallback) === w.value
+  const now = String(props[w.key] ?? fallback)
+  return w.value === "*" ? now.trim() !== "" : now === w.value
 }
 
 /** The settings a layout offers. */

@@ -389,7 +389,8 @@ export const BASE_WIDGETS: WidgetDef[] = [
       { key: "title", label: "Heading", type: "text", variants: ["plain", "steps"] },
       { key: "text", label: "Text", type: "textarea" },
       { key: "button", label: "Button text", type: "text", placeholder: "Leave empty for no button", variants: ["plain", "steps"] },
-      { key: "target", label: "Button opens", type: "select", options: PAGE_TARGETS, variants: ["plain", "steps"] },
+      // Only once the button has a label: with none there is no button for it to open.
+      { key: "target", label: "Button opens", type: "select", options: PAGE_TARGETS, variants: ["plain", "steps"], when: { key: "button", value: "*" } },
     ],
     defaultW: 6,
     minW: 3,
@@ -430,7 +431,8 @@ export const BASE_WIDGETS: WidgetDef[] = [
       { key: "title", label: "Label", type: "text", placeholder: "Book a call" },
       { key: "text", label: "Small text", type: "text" },
       { key: "target", label: "Opens", type: "select", options: [PAGE_TARGETS[1], PAGE_TARGETS[0], ...PAGE_TARGETS.slice(2), { value: "url", label: "A web address" }] },
-      { key: "url", label: "Web address", type: "text", placeholder: "https://…" },
+      // The address is only used when the button opens "A web address" (ctaLink).
+      { key: "url", label: "Web address", type: "text", placeholder: "https://…", when: { key: "target", value: "url" } },
     ],
     defaultW: 4,
     minW: 2,
@@ -468,7 +470,8 @@ export const BASE_WIDGETS: WidgetDef[] = [
       { value: "featured", label: "Featured", h: 8, minH: 6, maxH: 10, minW: 8, maxW: 12 },
     ],
     settings: [
-      { key: "image", label: "Picture", type: "image", variants: ["image", "video", "split"] },
+      // The Video layout draws a player, never the picture.
+      { key: "image", label: "Picture", type: "image", variants: ["image", "split"] },
       { key: "eyebrow", label: "Small label", type: "text", variants: ["image", "video", "split"] },
       { key: "title", label: "Headline", type: "text", placeholder: "Trade with a plan", variants: ["image", "video", "split"] },
       { key: "text", label: "Text", type: "textarea", variants: ["image", "video", "split"] },
@@ -603,6 +606,8 @@ export const BASE_WIDGETS: WidgetDef[] = [
           { value: "5", label: "5" },
           { value: "8", label: "8" },
         ],
+        // One line shows the newest file only.
+        variants: ["list", "tiles"],
       },
     ],
     defaultW: 4,
