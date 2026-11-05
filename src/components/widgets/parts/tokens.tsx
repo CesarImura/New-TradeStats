@@ -179,4 +179,4 @@ export const MOTION = {
 
 
 /** The headline figure at 2.5rem once the card is wide (at 1.75rem a figure in a 700px or 1100px card looks lost). */
-export const BIG_FIGURE = "[@container_card_(min-width:34rem)]:text-[2.5rem] [@container_card_(min-width:34rem)]:leading-[2.75rem]"
+export const BIG_FIGURE = "[@container_card_(min-width:34rem)]:text-[2.5rem] [@container_card_(min-width:34rem)]:leading-[2.75rem] [@container_card_(min-width:34rem)]:mb-1.5"
