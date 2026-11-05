@@ -1,5 +1,5 @@
 import type { Detail, Emphasis } from "@/lib/widgets/layout"
-import type { HeaderForm, WidgetHeader } from "@/lib/theme/types"
+import { starStyleOf, type CoachTheme, type HeaderForm, type TemplateId, type WidgetHeader } from "@/lib/theme/types"
 import { styleParts } from "@/components/widgets/registry"
 
 /*
@@ -101,8 +101,21 @@ export type WidgetCaps = {
   value: boolean
 }
 
-export function capsOf(type: string, variant: string): WidgetCaps {
+/**
+ * Layouts where Stand out → Star draws nothing different under a Spotlight Star (the default of Terminal and Pulse: a plain
+ * card with the figure at Star size), by template: they have no figure to make bigger, or its Star size does not show. Brand and
+ * Inverted Star fill the card, so they change every layout. Measured as pictures, one card at a time, in Terminal (the demo
+ * coach's own, Soft style), Pulse and Atelier (dark, Comfortable): scripts/widget-bench/custom/star-pixels.mjs.
+ */
+const SPOTLIGHT_NO_STAR: Partial<Record<TemplateId, string[]>> = {
+  terminal: ["banner:headline", "banner:picture", "banner:slim", "button:filled", "button:outline", "button:row", "check-in:mood", "check-in:notes", "coach-profile:compact", "coach-profile:hero", "countdown:big", "countdown:card", "embed:page", "embed:row", "embed:video", "faq:list", "faq:two", "hero:image", "hero:split", "hero:video", "image:caption", "image:cover", "image:side", "pnl-by-weekday:heatmap", "shelf:carousel", "shelf:grid", "shelf:row", "text:plain", "text:quote", "text:steps", "upgrade:split", "watchlist:list", "win-rate-trend:compare"],
+  pulse: ["banner:slim", "button:filled", "button:outline", "button:row", "coach-profile:compact", "embed:page", "embed:row", "embed:video", "hero:image", "hero:split", "hero:video", "image:caption", "image:cover", "image:side", "upgrade:split"],
+}
+
+/** `theme`: the Star of the theme the widget is in (Spotlight draws it only where there is a figure). Without it Star is offered wherever the layout allows it. */
+export function capsOf(type: string, variant: string, theme?: Pick<CoachTheme, "template" | "widgetStyle" | "starStyle">): WidgetCaps {
   const off = new Set([...(OFF[type] ?? []), ...(OFF[`${type}:${variant}`] ?? [])])
+  if (theme && starStyleOf(theme) === "spotlight" && SPOTLIGHT_NO_STAR[theme.template]?.includes(`${type}:${variant}`)) off.add("star")
   const parts = styleParts(type)
   return {
     shows: (["compact", "standard", "detailed"] as const).filter((d) => !(d === "compact" && off.has("less")) && !(d === "detailed" && off.has("more"))),

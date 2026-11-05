@@ -245,7 +245,7 @@ function StyleTab({
   const startW = pageWidth(fitWidth(def, w.variant, start?.w ?? def.defaultW))
   const header = widgetHeaderOf(theme, w.header)
   const own = w.style ?? {}
-  const caps = capsOf(w.type, look.value)
+  const caps = capsOf(w.type, look.value, theme)
   // Shows as the card looks: a level this layout draws like Standard reads as Standard.
   const shown = caps.shows.includes(detail) ? detail : "standard"
   const form = own.headerForm ?? headerFormOf(theme)
