@@ -2,7 +2,7 @@
 window.__sig = () => {
   const P = ["color", "backgroundColor", "backgroundImage", "borderTopColor", "borderTopWidth", "boxShadow", "fontFamily", "fontSize", "fontWeight", "letterSpacing", "display", "width", "height", "borderTopLeftRadius", "visibility"]
   const fnv = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) } return (h >>> 0).toString(16) }
-  const clean = (s) => s.replace(/ (id|for|aria-labelledby|aria-describedby|aria-controls)="[^"]*"/g, "")
+  const clean = (s) => s.replace(/url\("?#[^")]+"?\)/g, "url(#)").replace(/ (id|for|aria-labelledby|aria-describedby|aria-controls)="[^"]*"/g, "")
   // The tree as drawn: elements that take no box (display: contents, the style scopes) are walked through, so a wrapper that
   // only re-sets variables is not a change; the effect of the variables is in the computed styles.
   let count = 0
@@ -14,7 +14,7 @@ window.__sig = () => {
     if (c.display === "contents") { for (const k of n.childNodes) walk(k, parts); return }
     count++
     // every attribute (href, src, aria-label, title, data-*), so a link target or a label that changes counts
-    const at = n.getAttributeNames().filter((a) => a !== "id").sort().map((a) => a + "=" + n.getAttribute(a).replace(/_r_[0-9a-z]+_/g, "_r_").replace(/(opacity|transform): [^;]+;?/g, "")).join(" ")
+    const at = n.getAttributeNames().filter((a) => a !== "id" && a !== "data-emphasis" && a !== "data-spotlight").sort().map((a) => a + "=" + n.getAttribute(a).replace(/_r_[0-9a-z]+_/g, "_r_").replace(/(opacity|transform): [^;]+;?/g, "")).map((kv) => (kv.startsWith("style=") ? "style=" + kv.slice(6).split(";").map((d) => d.trim()).filter(Boolean).sort().join(";") : kv)).join(" ")
     const svg = n.namespaceURI && n.namespaceURI.includes("svg")
     parts.html.push("<" + n.tagName + clean(" " + at) + ">")
     parts.style.push(P.map((p) => c[p]).join("|"))
@@ -27,7 +27,7 @@ window.__sig = () => {
         for (const a of ["fill", "stroke", "stroke-width", "stroke-dasharray", "rx", "class"]) { const v = e.getAttribute(a); if (v) paints.add(a + "=" + v.replace(/_r_[0-9a-z]+_/g, "_r_")) }
         const cs = getComputedStyle(e); paints.add("cf=" + cs.fill + "|cs=" + cs.stroke)
       }
-      parts.html.push(JSON.stringify(tags) + [...paints].sort().join(";") + n.textContent)
+      parts.html.push(clean(JSON.stringify(tags) + [...paints].sort().join(";")) + n.textContent)
       parts.html.push("</>")
       return
     }
@@ -39,9 +39,9 @@ window.__sig = () => {
     count = 0
     const parts = { html: [], style: [] }
     // the card itself (the editor wraps it in its own chips and outline: those are not the widget)
-    const card = el.querySelector("[data-slot=widget]")
+    const card = window.__SIG_WHOLE ? null : el.querySelector("[data-slot=widget]")
     for (const k of card ? [card] : el.childNodes) walk(k, parts)
-    res[el.dataset.widgetId] = { html: fnv(parts.html.join("")), style: fnv(parts.style.join(";")), h: el.offsetHeight, w: el.offsetWidth, text: fnv(el.innerText), n: count }
+    res[el.dataset.widgetId] = { html: fnv(clean(parts.html.join(""))), style: fnv(parts.style.join(";")), h: el.offsetHeight, w: el.offsetWidth, text: fnv(el.innerText), n: count, ...(window.__SIG_RAW ? { raw: parts.html.join("") } : {}) }
   }
   return res
 }

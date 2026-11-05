@@ -43,6 +43,7 @@ async function run(w, v) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" })
   let first = true
   await ctx.addInitScript(([k, val]) => { try { if (!localStorage.getItem("__seeded")) { localStorage.clear(); localStorage.setItem(k, val); localStorage.setItem("__seeded", "1") } } catch {} }, [`proto:pub:${slug}`, JSON.stringify(payload)])
+  if (args.raw) await ctx.addInitScript(() => { window.__SIG_RAW = true })
   const page = await ctx.newPage()
   const errors = []
   page.on("pageerror", (e) => errors.push(String(e).slice(0, 160)))
@@ -143,10 +144,26 @@ async function run(w, v) {
         await loc.fill(f.value); 
       }
     }
+    // The widget's own choices are dropdowns (a combobox that opens a list), not native selects
+    const combos = await inspector.locator("[role=combobox][aria-label]").evaluateAll((els) => els.map((e) => ({ label: e.getAttribute("aria-label"), now: e.textContent.trim() })))
+    for (const cb of combos) {
+      if (["Phase", "Group", "Opens"].includes(cb.label)) continue
+      const trig = () => inspector.locator(`[role=combobox][aria-label="${cb.label}"]`).first()
+      await trig().click({ force: true }); await page.waitForTimeout(250)
+      const opts = await page.locator("[role=option]:visible").allInnerTexts(); await page.keyboard.press("Escape"); await page.waitForTimeout(200)
+      const pick = async (t) => { await trig().click({ force: true }); await page.waitForTimeout(250); await page.locator("[role=option]:visible").filter({ hasText: new RegExp("^\\s*" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*$") }).first().click({ force: true }); await page.waitForTimeout(250) }
+      const original = (await trig().textContent()).replace(/[▼▾⌄]\s*$/, "").trim()
+      for (const o of opts.map((x) => x.trim()).filter((x) => x && x !== original)) {
+        const b = await sigOf(); const d0 = JSON.stringify(await draftItem())
+        await pick(o); const a = await sigOf(); const d1 = JSON.stringify(await draftItem())
+        R({ control: cb.label, option: o, status: "clicked", effect: !same(b, a), draftKeys: d0 === d1 ? [] : ["props"] })
+        await pick(original); const back = await sigOf(); R({ control: cb.label, option: `${o} -> ${original}`, status: "restored", effect: same(back, b) })
+      }
+    }
     // the coach's own note
     const addBtn = inspector.getByRole("button", { name: /Add text, button or picture/ })
     if (await addBtn.count()) {
-      const b = await sigOf(); await addBtn.click(); const ta = inspector.locator('textarea[aria-label="Text"]'); await ta.fill("Probe note 123"); const a = await sigOf()
+      const b = await sigOf(); await addBtn.click(); const ta = inspector.locator('textarea[aria-label="Text"]').last(); await ta.fill("Probe note 123"); const a = await sigOf()
       R({ control: "Note", option: "text", status: "clicked", effect: !same(b, a), draftKeys: ["note"] })
     } else R({ control: "Note", option: "-", status: "not-offered" })
     // a combination, reload (persistence), restore

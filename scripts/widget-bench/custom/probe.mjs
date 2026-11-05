@@ -74,7 +74,7 @@ for (const template of templates) for (const mode of modes) for (const density o
   const cell = { template, mode, density }
   // pass -1 and -2: the plain widgets, twice (what changes between two identical loads is not a customization)
   for (const p of [-1, -2]) jobs.push({ cell, pass: p })
-  for (let p = 0; p < passes; p++) jobs.push({ cell, pass: p })
+  for (let p = 0; p < (args["solo-only"] ? 0 : passes); p++) jobs.push({ cell, pass: p })
   // one card at a time: Star (only one Star per page)
   items.forEach((it, idx) => it.alts.forEach((a, ai) => { if (a.solo) jobs.push({ cell, solo: { idx, ai } }) }))
 }

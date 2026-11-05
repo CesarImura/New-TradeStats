@@ -13,7 +13,7 @@ for (const [key, cell] of Object.entries(data.results)) {
     const stable = same(b1[it.id], b2[it.id])
     for (const a of it.alts) {
       if (a.internal) continue
-      const s = by[it.id]?.[a.name] ?? cell.solo?.[it.id]?.[a.name], ref = a.ref ? by[it.id]?.[a.ref] : b1[it.id]
+      const s = cell.solo?.[it.id]?.[a.name] ?? by[it.id]?.[a.name], ref = a.ref ? by[it.id]?.[a.ref] : b1[it.id]
       rows.push({ key, id: it.id, name: a.name, offered: a.offered, ref: a.ref, stable, changed: !same(s, ref) })
     }
   }

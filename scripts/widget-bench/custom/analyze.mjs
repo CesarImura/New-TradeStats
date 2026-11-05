@@ -20,7 +20,7 @@ for (const [key, cell] of Object.entries(data.results)) {
     const stable = same(base1[it.id], base2[it.id])
     for (const a of it.alts) {
       if (a.internal) continue
-      const s = byItem[it.id]?.[a.name] ?? cell.solo?.[it.id]?.[a.name]
+      const s = cell.solo?.[it.id]?.[a.name] ?? byItem[it.id]?.[a.name]
       const ref = a.ref ? byItem[it.id]?.[a.ref] : base1[it.id]
       if (!s || !ref) { rows.push({ key, id: it.id, name: a.name, offered: a.offered, status: "missing" }); continue }
       rows.push({ key, id: it.id, name: a.name, offered: a.offered, ref: a.ref, status: !stable ? "unstable" : same(s, ref) ? "none" : "changed" })
