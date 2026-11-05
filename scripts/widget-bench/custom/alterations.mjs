@@ -23,11 +23,11 @@ export function alterationsFor(w, v, width) {
   add("image:preset", { style: { image: "preset:" + "AUTO" } }, w.parts.image)
   // Header: title style and parts
   for (const f of ["top", "label", "caption", "tag", "path"]) add(`headerForm:${f}`, { style: { headerForm: f } }, caps.titleStyle)
-  add("header:icon off", { style: { headerForm: "top" }, header: { icon: false } }, caps.header && caps.titleStyle, "headerForm:top")
-  add("header:icon on", { style: { headerForm: "top" }, header: { icon: true } }, caps.header && caps.titleStyle, "headerForm:top")
+  add("header:icon off", { style: { headerForm: "top" }, header: { icon: false } }, caps.header && caps.titleStyle && caps.icon !== false, "headerForm:top")
+  add("header:icon on", { style: { headerForm: "top" }, header: { icon: true } }, caps.header && caps.titleStyle && caps.icon !== false, "headerForm:top")
   add("header:title off", { header: { title: false } }, caps.header && caps.title)
-  add("header:description on", { detail: "detailed", header: { description: true } }, caps.header && caps.shows.includes("detailed"), "detail:detailed")
-  add("header:description off", { detail: "detailed", header: { description: false } }, caps.header && caps.shows.includes("detailed"), "detail:detailed")
+  add("header:description on", { detail: "detailed", header: { description: true } }, caps.header && caps.shows.includes("detailed") && caps.description !== false, "detail:detailed")
+  add("header:description off", { detail: "detailed", header: { description: false } }, caps.header && caps.shows.includes("detailed") && caps.description !== false, "detail:detailed")
   add("header:value off", { header: { value: false } }, caps.header && caps.value)
   add("header:value on", { header: { value: true } }, caps.header && caps.value)
   // Charts and Main number

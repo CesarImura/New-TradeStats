@@ -10,53 +10,75 @@ import { styleParts } from "@/components/widgets/registry"
  * those two follow headerParts below.
  */
 
-type Off = "less" | "more" | "quiet" | "star" | "title-style" | "header" | "title" | "chart" | "figure" | "note" | "value"
+type Off = "less" | "more" | "quiet" | "star" | "title-style" | "header" | "title" | "icon" | "description" | "chart" | "figure" | "note" | "value"
 
 const OFF: Record<string, Off[]> = {
   "ai-ask:chat": ["chart"],
+  "ai-ask:insight": ["chart"],
   "ai-ask:search": ["quiet"],
+  "announcement:line": ["chart", "note", "title", "title-style"],
   "announcement:media": ["chart", "header", "quiet"],
   "announcement:plain": ["chart"],
   "announcement:post": ["chart", "quiet"],
-  "banner:headline": ["value"],
-  "banner:picture": ["value"],
-  "banner:slim": ["header", "quiet"],
+  "banner:headline": ["description", "icon", "more", "value"],
+  "banner:picture": ["description", "icon", "value"],
+  "banner:slim": ["header", "note", "quiet"],
   "book-call:allowance": ["less"],
   "book-call:split": ["chart", "header"],
-  "button:filled": ["less", "more", "quiet", "title", "value"],
-  "button:outline": ["less", "more", "quiet", "title", "value"],
-  "button:row": ["header", "more", "quiet"],
+  "button:filled": ["icon", "less", "more", "quiet", "title", "title-style", "value"],
+  "button:outline": ["icon", "less", "more", "quiet", "title", "title-style", "value"],
+  "button:row": ["header", "less", "more", "quiet"],
   "check-in:mood": ["value"],
   "check-in:notes": ["less", "value"],
   "coach-feedback:stats": ["less"],
   "coach-feedback:thread": ["chart"],
+  "coach-profile:compact": ["figure", "header"],
   "coach-profile:hero": ["value"],
-  "coach-profile:media": ["quiet", "title", "value"],
-  "community-feed:line": ["title", "title-style"],
-  "continue-lesson:card": ["header"],
-  "continue-lesson:media": ["title", "value"],
+  "coach-profile:media": ["description", "icon", "quiet", "title", "title-style", "value"],
+  "community-feed:line": ["note", "title", "title-style"],
+  "continue-lesson:card": ["header", "note"],
+  "continue-lesson:media": ["chart", "description", "icon", "title", "title-style", "value"],
   "countdown:big": ["less", "quiet", "value"],
   "countdown:card": ["value"],
-  "countdown:line": ["header", "more", "quiet"],
-  "discord:banner": ["chart", "figure", "quiet", "title", "title-style"],
+  "countdown:line": ["header", "more", "note", "quiet"],
+  "course-progress:rings": ["chart", "description"],
+  "course-progress:unlocks": ["description", "icon", "less"],
+  "discord:banner": ["chart", "figure", "note", "quiet", "title", "title-style"],
+  "discord:heatmap": ["chart"],
   "discord:join": ["chart"],
-  "embed:page": ["less", "more", "quiet", "title", "value"],
+  "discord:online": ["chart"],
+  "drawdown:bars": ["description", "icon"],
+  "drawdown:curve": ["chart"],
+  "drawdown:hero": ["chart", "description", "icon", "title-style"],
+  "econ-news:timeline": ["chart"],
+  "econ-news:week": ["chart"],
+  "embed:page": ["icon", "less", "more", "quiet", "title", "title-style", "value"],
   "embed:row": ["header", "more", "quiet"],
   "embed:video": ["header", "less", "more", "quiet"],
   "faq:list": ["less", "quiet", "value"],
-  "faq:row": ["less", "more", "quiet", "title", "title-style"],
+  "faq:row": ["less", "more", "note", "quiet", "title", "title-style"],
   "faq:two": ["less", "value"],
-  "hero:split": ["title", "value"],
+  "first-week:path": ["chart"],
+  "first-week:ring": ["chart", "note", "title", "title-style", "value"],
+  "hero:featured": ["header"],
+  "hero:image": ["header", "more"],
+  "hero:split": ["description", "icon", "more", "title", "title-style", "value"],
+  "hero:video": ["header", "more"],
   "image:caption": ["header", "less", "more", "quiet"],
   "image:cover": ["header", "less", "more", "quiet"],
-  "image:side": ["more", "title", "value"],
+  "image:side": ["icon", "more", "title", "title-style", "value"],
+  "journal-pnl:curve": ["value"],
+  "journal-pnl:hero": ["description", "icon", "title-style"],
   "latest-downloads:list": ["quiet", "value"],
-  "latest-downloads:row": ["header", "more", "quiet"],
+  "latest-downloads:row": ["header", "more", "note", "quiet"],
   "latest-downloads:tiles": ["value"],
   "links:list": ["less", "quiet"],
-  "links:row": ["more", "quiet", "title"],
-  "my-rank:leaderboard": ["more"],
-  "partner-links:chips": ["title"],
+  "links:row": ["less", "more", "note", "quiet", "title", "title-style"],
+  "my-rank:hero": ["description", "icon", "title-style"],
+  "my-rank:leaderboard": ["less", "more"],
+  "next-live:split": ["chart", "description", "icon"],
+  "next-live:week": ["chart"],
+  "partner-links:chips": ["note", "title", "title-style"],
   "partner-links:list": ["quiet"],
   "partner-links:tiles": ["quiet"],
   "pnl-by-instrument:table": ["quiet"],
@@ -65,19 +87,23 @@ const OFF: Record<string, Off[]> = {
   "recent-trades:list": ["quiet"],
   "rules-followed:compare": ["chart"],
   "rules-followed:grid": ["chart"],
-  "rules-followed:hero": ["chart", "title-style"],
+  "rules-followed:hero": ["chart", "description", "title-style"],
+  "rules-followed:streak": ["chart"],
+  "shelf:carousel": ["description", "value"],
   "shelf:grid": ["value"],
   "shelf:row": ["value"],
   "text:plain": ["quiet", "value"],
   "text:quote": ["less", "value"],
   "text:steps": ["value"],
   "trading-streak:streak": ["value"],
-  "upgrade:banner": ["chart", "figure", "header", "quiet"],
+  "upgrade:banner": ["chart", "figure", "header", "note", "quiet"],
+  "upgrade:compare": ["chart"],
+  "upgrade:split": ["chart", "figure", "header"],
   "watchlist:list": ["value"],
   "welcome-video:minimal": ["chart"],
   "welcome-video:side": ["chart"],
   "win-rate-trend:compare": ["value"],
-  "win-rate-trend:trend": ["value"],
+  "win-rate-trend:trend": ["less", "value"],
 }
 
 /** Layouts that draw no room for the coach's own text, button and picture (no Note in their card). */
@@ -99,6 +125,9 @@ export type WidgetCaps = {
   title: boolean
   /** It has a value chip in the header. */
   value: boolean
+  /** The header's icon (under a Top or Tag title) and its description (with More) show on this layout at all. */
+  icon: boolean
+  description: boolean
 }
 
 /**
@@ -127,6 +156,8 @@ export function capsOf(type: string, variant: string, theme?: Pick<CoachTheme, "
     note: !off.has("note") && !NO_NOTE.includes(type) && !NO_NOTE.includes(`${type}:${variant}`),
     title: !off.has("title"),
     value: !off.has("value"),
+    icon: !off.has("icon"),
+    description: !off.has("description"),
   }
 }
 
@@ -136,9 +167,9 @@ export function capsOf(type: string, variant: string, theme?: Pick<CoachTheme, "
  */
 export function headerParts(caps: WidgetCaps, form: HeaderForm, detail: Detail): (keyof WidgetHeader)[] {
   return [
-    ...(form === "top" || form === "tag" ? (["icon"] as const) : []),
+    ...((form === "top" || form === "tag") && caps.icon ? (["icon"] as const) : []),
     ...(caps.title ? (["title"] as const) : []),
-    ...(detail === "detailed" ? (["description"] as const) : []),
+    ...(detail === "detailed" && caps.description ? (["description"] as const) : []),
     ...(caps.value ? (["value"] as const) : []),
   ]
 }

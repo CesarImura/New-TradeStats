@@ -373,9 +373,9 @@ function StyleTab({
                 </button>
               ))}
             </div>
-            {(!canShow.includes("icon") || !canShow.includes("description")) && (
+            {((caps.icon && !canShow.includes("icon")) || (caps.description && !canShow.includes("description"))) && (
               <p className="text-[0.6875rem] leading-4 text-muted-foreground">
-                {[!canShow.includes("icon") && "The icon shows with a Top or Tag title.", !canShow.includes("description") && "The description shows with More."].filter(Boolean).join(" ")}
+                {[caps.icon && !canShow.includes("icon") && "The icon shows with a Top or Tag title.", caps.description && !canShow.includes("description") && "The description shows with More."].filter(Boolean).join(" ")}
               </p>
             )}
           </Row>
