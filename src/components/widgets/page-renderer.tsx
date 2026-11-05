@@ -4,10 +4,11 @@ import { useCoach } from "@/components/coach/coach-provider"
 import type { Coach } from "@/lib/data/coaches"
 import { GAP, ROW_HEIGHT, phoneSequence, readingOrder, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { widgetFinishOf, widgetSetOf } from "@/lib/theme/types"
+import { DENSITY } from "@/lib/theme/css"
 import { cn } from "@/lib/utils"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { WidgetFrame } from "./parts/frame"
-import { fitWidth, getWidget, heightFor } from "./registry"
+import { fitWidth, getWidget, heightFor, type CardBox } from "./registry"
 import { WidgetStyleScope } from "./parts/widget-scope"
 import { PageIdContext, PageTitleShownContext, usePhase } from "./parts/shared"
 import { useViewerGroup } from "@/lib/data/access"
@@ -50,10 +51,10 @@ export const widthOf = (w: WidgetInstance) => {
 
 export const spanOf = (w: WidgetInstance, cols: number) => Math.min(cols, isBand(w, 3) ? 3 : widthOf(w) >= 8 ? 2 : 1)
 
-/** The height a card is drawn at before it is measured: an estimate from its layout. */
-export const estimate = (w: WidgetInstance, gap: number) => {
+/** The height a card is drawn at before it is measured: an estimate from its layout (`box`: the card's px, when the page's width is known). */
+export const estimate = (w: WidgetInstance, gap: number, box?: CardBox) => {
   const def = getWidget(w.type)
-  return def ? heightFor(def, w.variant, w.detail, widthOf(w)) * (ROW_HEIGHT + gap) - gap : 200
+  return def ? heightFor(def, w.variant, w.detail, widthOf(w), box) * (ROW_HEIGHT + gap) - gap : 200
 }
 
 /**
@@ -136,11 +137,14 @@ export function WidgetGrid({
   // On the three-column page every card is as tall as its layout was designed (rows, see the registry), so neighbours line up
   // and the content adapts inside; tablets and phones keep each card as tall as its content.
   const fixed = cols === 3
-  const sized = useMemo(() => (fixed ? Object.fromEntries(shown.map((w) => [w.id, w.type === "page-header" || getWidget(w.type)?.core ? (heights[w.id] ?? estimate(w, gap)) : estimate(w, gap)])) : heights), [fixed, shown, heights, gap])
+  const colWidth = cols ? (width - gap * (cols - 1)) / cols : 0
+  // A card's px, from the layout alone: the columns it spans and the gaps between them, and its body's padding at this density.
+  const pad = 16 * DENSITY[theme.density]
+  const boxOf = useCallback((w: WidgetInstance): CardBox | undefined => (colWidth > 0 ? { width: spanOf(w, cols) * colWidth + (spanOf(w, cols) - 1) * gap, pad } : undefined), [colWidth, cols, gap, pad])
+  const sized = useMemo(() => (fixed ? Object.fromEntries(shown.map((w) => [w.id, w.type === "page-header" || getWidget(w.type)?.core ? (heights[w.id] ?? estimate(w, gap, boxOf(w))) : estimate(w, gap, boxOf(w))])) : heights), [fixed, shown, heights, gap, boxOf])
   // The title and the page's own tool are as tall as their content: a height set on them would be the one they measure back (a tool measured at 0 while it loads stayed at 0).
   const ownHeight = (w: WidgetInstance) => w.type === "page-header" || !!getWidget(w.type)?.core
   const placed = useMemo(() => placeItems(shown, cols, sized, gap, !!free), [shown, cols, sized, gap, free])
-  const colWidth = cols ? (width - gap * (cols - 1)) / cols : 0
   useLayoutEffect(() => onPlaced?.({ ...placed, cols, colWidth, heights: sized }), [placed, cols, colWidth, sized, onPlaced])
   // Cards glide to a new spot only once the page has been laid out and its heights have stopped changing (fonts,
   // pictures, measured cards replacing estimates). Gliding while it loads counted as layout shift (CLS 0.1–0.5 on Home).

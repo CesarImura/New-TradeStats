@@ -3,7 +3,7 @@ import { brandVisuals } from "./color"
 import { resolveColors } from "./derive"
 import type { CoachTheme } from "./types"
 
-const DENSITY = { compact: 0.85, comfortable: 1, airy: 1.3 } as const
+export const DENSITY = { compact: 0.85, comfortable: 1, airy: 1.3 } as const
 const PAGE_GAP = { compact: "1rem", comfortable: "1.5rem", airy: "2rem" } as const
 
 /** Is a hex colour dark? Used to pick readable text on coloured surfaces. */
