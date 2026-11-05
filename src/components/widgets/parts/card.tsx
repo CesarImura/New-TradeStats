@@ -171,7 +171,18 @@ function useDropToFit(ref: React.RefObject<HTMLDivElement | null>) {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(fit)
     }
-    const ro = new ResizeObserver(fit)
+    // A resize is measured at once, and again from everything shown once the card has stopped changing: the first measurement after a
+    // resize (a card made narrower, in the editor or in a window) can be taken before its layout has settled and hide parts that fit, and
+    // with the size unchanged afterwards nothing would bring them back (a widget taken from 3 columns to 1 lost its stats for good).
+    let settle = 0
+    const ro = new ResizeObserver(() => {
+      fit()
+      clearTimeout(settle)
+      settle = window.setTimeout(() => {
+        size = ""
+        fit()
+      }, 300)
+    })
     ro.observe(card)
     // Charts and pictures settle a moment later, and the coach's fonts load late: measure again then, from everything shown.
     // (The first measurement after a resize can be taken before the layout has settled, and it can hide parts that fit; with the
@@ -193,6 +204,7 @@ function useDropToFit(ref: React.RefObject<HTMLDivElement | null>) {
       mo.disconnect()
       cancelAnimationFrame(frame)
       clearTimeout(t)
+      clearTimeout(settle)
     }
   }, [ref])
 }
