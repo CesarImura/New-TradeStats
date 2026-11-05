@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { BLEED, Chip, GREY, Label, Num, Seg, useFigureFont, useMonoFigures, WCard } from "../parts/anatomy"
 import { Legend, Rule, StepChart } from "../parts/visuals"
 import { useMore } from "../parts/frame"
-import { ACCENT, ACCENT_TEXT, SPLIT, SPLIT_STATS } from "../parts/tokens"
+import { ACCENT, ACCENT_TEXT, SPLIT, SPLIT_STATS, SPLIT_STATS_XL } from "../parts/tokens"
 import { Drop } from "../parts/card"
 import { Tip } from "../parts/bits"
 import { BleedArea, Compare, HeatGrid, HeroCard, heatPl } from "../parts/layouts"
@@ -191,7 +191,7 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
   const best = Math.max(...DAILY)
   const worst = Math.min(...DAILY)
   const headline = <Num value={signed(total)} delta={`${signed(JOURNAL_STATS.pnl)} this week`} deltaTone={JOURNAL_STATS.pnl >= 0 ? "profit" : "loss"} />
-  // `split`: how the body lies when the card is wide and short (SPLIT_STATS: figures left, chart right; none: one column, the table just widens).
+  // `split`: how the body lies when the card is wide and short (SPLIT_STATS: figures left, chart right; the heatmap only at full width, SPLIT_STATS_XL; otherwise one column and the table just widens).
   const card = (children: React.ReactNode, split = "") => (
     <WCard icon={LineChart} title="Performance" meta={`${coach.wording.journal} · last ${DAILY.length} days · ${JOURNAL_STATS.trades} trades`} chip={<Chip>{JOURNAL_STATS.winRate}% win</Chip>} bodyClassName={split}>
       {children}
@@ -330,6 +330,7 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
         </Drop>
         <Drop level={3}>{detailed && <Edge />}</Drop>
       </>,
+      SPLIT_STATS_XL,
     )
   }
 

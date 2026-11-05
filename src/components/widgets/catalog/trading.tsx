@@ -149,7 +149,9 @@ export function Drawdown({ variant = "gauge" }: WidgetProps) {
           </div>
         </div>
         <div data-main className="grid content-center gap-1.5">
-          <TickBar value={TODAY.used} max={TODAY.limit} />
+          {/* Wide: a thicker bar with fewer, bigger segments (a thin one stretched over the card reads as a hairline). */}
+          <TickBar value={TODAY.used} max={TODAY.limit} className="[@container_card_(min-width:34rem)]:hidden" />
+          <TickBar value={TODAY.used} max={TODAY.limit} height={18} segments={32} className="hidden [@container_card_(min-width:34rem)]:flex" />
           <Axis labels={[0, q, q * 2, q * 3, TODAY.limit].map(euro)} />
         </div>
         <Drop level={2}>

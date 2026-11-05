@@ -146,7 +146,7 @@ export const NEW_WIDGETS: WidgetDef[] = [
     variants: [
       // Under about 340px of content the mood chips wrap onto a second row and the notes box needs its room: more rows there (narrow; found with the bench's find-rows).
       { value: "mood", label: "Mood", h: 3.5, minH: 2.5, maxH: 5, minW: 4, maxW: 8, hd: { compact: 2.5, detailed: 3.5 }, narrow: { below: 8, minH: 3, contentBelow: 340 } },
-      { value: "notes", label: "With a plan", h: 4.5, minH: 4.5, maxH: 6, minW: 4, maxW: 8, hd: { detailed: 5 }, narrow: { below: 8, minH: 5, contentBelow: 340, hd: { detailed: 5.5 } } },
+      { value: "notes", label: "With a plan", h: 4.5, minH: 4.5, maxH: 6, minW: 4, maxW: 8, hd: { detailed: 5 }, wide: { from: 8, maxH: 4, hd: { detailed: 4.5 } }, narrow: { below: 8, minH: 5, contentBelow: 340, hd: { detailed: 5.5 } } },
     ],
     defaultW: 4,
     minW: 4,

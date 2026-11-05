@@ -650,8 +650,8 @@ export const BASE_WIDGETS: WidgetDef[] = [
     icon: ShieldAlert,
     module: "journal",
     variants: [
-      { value: "gauge", label: "Gauge", h: 4, minH: 3, maxH: 6, minW: 3, maxW: 8, hd: { detailed: 4 }, wide: { from: 8, maxH: 4, hd: { detailed: 5 } } },
-      { value: "bars", label: "Daily limit", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12, hd: { compact: 3, detailed: 5 }, wide: { from: 8, maxH: 3, hd: { compact: 2.5, detailed: 4 } } },
+      { value: "gauge", label: "Gauge", h: 4, minH: 3, maxH: 6, minW: 3, maxW: 8, hd: { detailed: 4 }, wide: { from: 8, maxH: 4.5, h: 4.5, hd: { detailed: 5 } } },
+      { value: "bars", label: "Daily limit", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 8, hd: { compact: 3, detailed: 5 }, wide: { from: 8, maxH: 3, hd: { compact: 2.5, detailed: 4 } } },
       { value: "curve", label: "Balance and floor", h: 3.5, minH: 2.5, maxH: 5, minW: 3, maxW: 12, hd: { compact: 2.5, detailed: 5 } },
       { value: "hero", label: "Hero", h: 3, minH: 2, maxH: 4, minW: 3, maxW: 12, hd: { compact: 2, detailed: 3.5 } },
     ],
