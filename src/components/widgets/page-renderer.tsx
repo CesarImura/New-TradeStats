@@ -154,6 +154,29 @@ export function WidgetGrid({
     const id = setTimeout(() => setSettled(true), 300)
     return () => clearTimeout(id)
   }, [width, heights, settled])
+  // A change of column count re-lays the whole page at once (heights switch between measured and designed on the spot), so
+  // the cards must not glide from their old spots then: they would cross the new heights on the way. The change is noticed
+  // during render, so the new spots are painted with no transition, and gliding comes back two frames later.
+  const [regime, setRegime] = useState(cols)
+  const [snapping, setSnapping] = useState(false)
+  if (regime !== cols) {
+    setRegime(cols)
+    if (width) setSnapping(true)
+  }
+  useEffect(() => {
+    if (!snapping) return
+    let b = 0
+    const a = requestAnimationFrame(() => { b = requestAnimationFrame(() => setSnapping(false)) })
+    return () => { cancelAnimationFrame(a); cancelAnimationFrame(b) }
+  }, [snapping])
+  // Going back to measured heights (2 or 1 columns), the heights held are the designed ones of the three-column page. Read the
+  // real ones in the same commit, before paint: otherwise the first frame is laid out with the old heights and cards overlap.
+  useLayoutEffect(() => {
+    if (cols === 3 || !box.current) return
+    const real: Record<string, number> = {}
+    box.current.querySelectorAll<HTMLElement>("[data-widget-id]").forEach((el) => { real[el.dataset.widgetId!] = el.offsetHeight })
+    setHeights((m) => (Object.entries(real).some(([id, h]) => Math.abs((m[id] ?? -1) - h) >= 1) ? { ...m, ...real } : m))
+  }, [cols])
   return (
     <div ref={box} className={cn("@container", className)}>
       {/* Before it is measured (server HTML, first paint) the page keeps its cards stacked but invisible: shown stacked, they
@@ -168,7 +191,7 @@ export function WidgetGrid({
             top: s.top,
             width: s.span * colWidth + (s.span - 1) * gap,
             height: fixed && !ownHeight(w) ? sized[w.id] : undefined,
-            transition: settled ? "left 240ms var(--ease-out), top 240ms var(--ease-out), width 240ms var(--ease-out)" : undefined,
+            transition: settled && !snapping ? "left 240ms var(--ease-out), top 240ms var(--ease-out), width 240ms var(--ease-out)" : undefined,
           }
           const node = (
             <Measured key={w.id} w={w} onHeight={onHeight} style={wrap ? undefined : style} fill={!!wrap && fixed}>

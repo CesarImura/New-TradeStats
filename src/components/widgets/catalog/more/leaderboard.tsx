@@ -40,7 +40,11 @@ export function Leaderboard({ variant = "table" }: WidgetProps) {
   const [body, fit] = useFitRows<HTMLDivElement>(36, { min: 2, item: "tbody tr" })
   const want = fit ?? (variant === "compact" ? (standard ? 5 : 4) : detailed ? 9 : standard ? 7 : 5)
   const top = rows.slice(0, want)
-  const shown = top.some((x) => x.me) ? top : [...rows.slice(0, want - 1), me]
+  const pinned = !top.some((x) => x.me)
+  const shown = pinned ? [...rows.slice(0, want - 1), me] : top
+  // Pinned under the top, the rows between are not shown: a "…" on the line above the student's row says so, so the list never
+  // looks complete when it is not. It takes no room of its own (it sits in the row above's spare space), so the count of rows is unchanged.
+  const skipped = pinned ? rows.indexOf(me) - (want - 1) : 0
   const head = (k: Key, label: string, className?: string) => (
     <th className={cn("h-8 px-2 text-right font-medium", className)} aria-sort={sort === k ? "descending" : "none"}>
       <button type="button" onClick={() => setSort(k)} className={cn("rounded-sm transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-(--brand-mark)", sort === k && "text-foreground")}>
@@ -67,7 +71,7 @@ export function Leaderboard({ variant = "table" }: WidgetProps) {
           </tr>
         </thead>
         <tbody>
-          {shown.map((x) => (
+          {shown.map((x, i) => (
             <tr
               key={x.name}
               aria-current={x.me ? "true" : undefined}
@@ -78,6 +82,14 @@ export function Leaderboard({ variant = "table" }: WidgetProps) {
                 {/* The one accent mark: a bar beside the student's own row. */}
                 {x.me && <span aria-hidden className="absolute inset-y-1 left-0 w-[3px] rounded-full" style={{ background: "var(--w-accent, var(--primary))" }} />}
                 {x.rank}
+                {pinned && i === shown.length - 1 && skipped > 0 && (
+                  <>
+                    <span aria-hidden className="absolute -top-[9px] left-1/2 -translate-x-1/2 text-[0.6875rem] leading-3">
+                      …
+                    </span>
+                    <span className="sr-only">{skipped === 1 ? "1 row not shown above" : `${skipped} rows not shown above`}</span>
+                  </>
+                )}
               </td>
               {/* max-w-0: in an auto table the name column is as wide as its longest name; with it the name truncates and the figures keep their room. */}
               <td className="max-w-0 px-2">
@@ -95,7 +107,7 @@ export function Leaderboard({ variant = "table" }: WidgetProps) {
               )}
               {variant !== "compact" && standard && (
                 <td className="hidden px-2 @[30rem]:table-cell">
-                  <Spark values={x.trend} tone="muted" className="h-5" />
+                  <Spark values={x.trend} tone="muted" className="h-5 min-h-0" />
                 </td>
               )}
             </tr>

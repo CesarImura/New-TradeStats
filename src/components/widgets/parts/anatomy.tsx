@@ -349,19 +349,21 @@ export function WCard({
       <div className="grid shrink-0 gap-1 px-4 pt-4">
         <div className="flex min-w-0 items-center gap-2">
           {showTitle && (
-            <span className="flex min-w-0 flex-1 items-baseline overflow-hidden">
+            // The section and its slash are one piece that gives way before the name does (as the context line does). It keeps a
+            // floor of 2.5rem (about two letters and the "…" beside the slash, measured): when what the name leaves is less than that
+            // the piece does not squeeze, it wraps to a second line that the row clips, so the section and the slash go together and
+            // a bare or half-cut "/" is never left before the name. The name comes first in the markup, and row-reverse puts the piece
+            // back on its left; the name is never narrowed for it.
+            <span className={cn("flex min-w-0 flex-1 items-baseline overflow-hidden", section && "h-4 flex-row-reverse flex-wrap justify-end")}>
+              <Label className="min-w-0 truncate font-medium text-foreground">{title}</Label>
               {section && (
-                // The section and its slash are one piece that gives way before the name does (as the context line does): it truncates
-                // first, and when there is no room left the slash goes with it, so a bare "/" is never left before the name. The gap
-                // after the slash is inside the piece for the same reason.
-                <span className="flex min-w-0 shrink-[999] items-baseline gap-1.5 overflow-hidden">
+                <span className="flex max-w-fit shrink-0 grow basis-10 items-baseline gap-1.5 overflow-hidden">
                   <Label className="min-w-0 truncate">{section}</Label>
                   <Label className="shrink-0 pr-1.5" aria-hidden>
                     /
                   </Label>
                 </span>
               )}
-              <Label className="min-w-0 truncate font-medium text-foreground">{title}</Label>
             </span>
           )}
           {!showTitle && <span className="flex-1" />}
