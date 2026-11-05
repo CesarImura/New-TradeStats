@@ -218,9 +218,9 @@ export const BASE_WIDGETS: WidgetDef[] = [
     icon: LineChart,
     module: "journal",
     variants: [
-      { value: "curve", label: "Equity curve", h: 5, minH: 3, maxH: 6, minW: 3, maxW: 12, hd: { compact: 3.5, detailed: 6 } },
+      { value: "curve", label: "Equity curve", h: 5, minH: 3, maxH: 6, minW: 3, maxW: 12, hd: { compact: 3.5, detailed: 6 }, wide: { from: 8, maxH: 4, hd: { compact: 3.5, detailed: 5 } } },
       { value: "bars", label: "Daily P&L", h: 3.5, minH: 3, maxH: 6, minW: 3, maxW: 12, hd: { compact: 3 } },
-      { value: "heatmap", label: "Calendar", h: 4.5, minH: 3.5, maxH: 6, minW: 3, maxW: 12, hd: { compact: 3.5, detailed: 6 } },
+      { value: "heatmap", label: "Calendar", h: 4.5, minH: 3.5, maxH: 6, minW: 3, maxW: 12, hd: { compact: 3.5, detailed: 6 }, wide: { from: 8, maxH: 4, hd: { compact: 3.5, detailed: 6 } } },
       { value: "hero", label: "Hero", h: 2.5, minH: 1.5, maxH: 4, minW: 3, maxW: 12, hd: { compact: 1.5, detailed: 3.5 } },
       { value: "hours", label: "By hour", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12, hd: { compact: 3.5, detailed: 5 } },
       { value: "compare", label: "Compare", h: 5, minH: 3, maxH: 7, minW: 3, maxW: 12, hd: { compact: 3.5, detailed: 5.5 } },
@@ -650,8 +650,8 @@ export const BASE_WIDGETS: WidgetDef[] = [
     icon: ShieldAlert,
     module: "journal",
     variants: [
-      { value: "gauge", label: "Gauge", h: 4, minH: 3, maxH: 6, minW: 3, maxW: 7, hd: { detailed: 4 } },
-      { value: "bars", label: "Daily limit", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12, hd: { compact: 3, detailed: 5 } },
+      { value: "gauge", label: "Gauge", h: 4, minH: 3, maxH: 6, minW: 3, maxW: 8, hd: { detailed: 4 }, wide: { from: 8, maxH: 4, hd: { detailed: 5 } } },
+      { value: "bars", label: "Daily limit", h: 4, minH: 3, maxH: 5, minW: 3, maxW: 12, hd: { compact: 3, detailed: 5 }, wide: { from: 8, maxH: 3, hd: { compact: 2.5, detailed: 4 } } },
       { value: "curve", label: "Balance and floor", h: 3.5, minH: 2.5, maxH: 5, minW: 3, maxW: 12, hd: { compact: 2.5, detailed: 5 } },
       { value: "hero", label: "Hero", h: 3, minH: 2, maxH: 4, minW: 3, maxW: 12, hd: { compact: 2, detailed: 3.5 } },
     ],

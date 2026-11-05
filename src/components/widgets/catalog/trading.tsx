@@ -8,7 +8,7 @@ import { ACCOUNT } from "@/lib/data/sample"
 import { Chip, GREY, Label, Num, useFigureFont, WCard } from "../parts/anatomy"
 import { Axis, Donut, DonutFigure, GridLines, Legend, RING, RING_BODY, Rule, ShareRows, TickBar } from "../parts/visuals"
 import { useMore } from "../parts/frame"
-import { ACCENT, AreaFill, SPLIT } from "../parts/tokens"
+import { ACCENT, AreaFill, SPLIT, SPLIT_STATS } from "../parts/tokens"
 import { Drop } from "../parts/card"
 import { BleedArea, HeroCard } from "../parts/layouts"
 import { WidgetEmpty, signed, useEmpty, type WidgetProps } from "../parts/shared"
@@ -137,7 +137,7 @@ export function Drawdown({ variant = "gauge" }: WidgetProps) {
   if (variant === "bars") {
     const q = TODAY.limit / 4
     return (
-      <WCard crumb="Risk" title="Daily loss limit" chip={<Chip tone={dayPct > 85 ? "loss" : "accent"}>{pctText(dayPct)}</Chip>}>
+      <WCard crumb="Risk" title="Daily loss limit" chip={<Chip tone={dayPct > 85 ? "loss" : "accent"}>{pctText(dayPct)}</Chip>} bodyClassName={SPLIT_STATS}>
         <div className="flex min-w-0 items-start justify-between gap-3">
           <div className="grid min-w-0 gap-1">
             <Label>Used today</Label>
@@ -148,7 +148,7 @@ export function Drawdown({ variant = "gauge" }: WidgetProps) {
             <Num value={euro(TODAY.limit - TODAY.used)} />
           </div>
         </div>
-        <div className="grid gap-1.5">
+        <div data-main className="grid content-center gap-1.5">
           <TickBar value={TODAY.used} max={TODAY.limit} />
           <Axis labels={[0, q, q * 2, q * 3, TODAY.limit].map(euro)} />
         </div>

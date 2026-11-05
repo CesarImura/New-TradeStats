@@ -55,7 +55,7 @@ export type WidgetDef = {
    * stretches. Measured on the old stress bench (every width at its height, every height at its default
    * width, sample and long content), then judged; the builder keeps it inside.
    */
-  variants: { value: string; label: string; h: number; minH: number; maxH: number; minW: number; maxW: number; /** More rows when narrower than `below` columns (a layout that stacks there). */ narrow?: { below: number; minH: number; /** Measured in px, when the card's width is known (see CardBox): applies when the card is narrower than this. `below` (columns) is the fallback when it is not known. */ cardBelow?: number; /** Same, for the width the content has (the card less its padding). */ contentBelow?: number; /** Rows at Compact and Detailed when they differ from `minH` (as `hd` does for the layout). */ hd?: { compact?: number; detailed?: number } }; /** Fewer rows from `from` columns up (a layout that lies flat there). */ wide?: { from: number; maxH: number }; /** Fewer rows when narrower than `below` columns (a part, like a picture, is dropped there). */ slim?: { below: number; maxH: number }; /** Rows at Compact and Detailed when they differ from `h` and `h + DETAILED_EXTRA_ROWS`: measured so the card is as tall as what it shows. */ hd?: { compact?: number; detailed?: number } }[]
+  variants: { value: string; label: string; h: number; minH: number; maxH: number; minW: number; maxW: number; /** More rows when narrower than `below` columns (a layout that stacks there). */ narrow?: { below: number; minH: number; /** Measured in px, when the card's width is known (see CardBox): applies when the card is narrower than this. `below` (columns) is the fallback when it is not known. */ cardBelow?: number; /** Same, for the width the content has (the card less its padding). */ contentBelow?: number; /** Rows at Compact and Detailed when they differ from `minH` (as `hd` does for the layout). */ hd?: { compact?: number; detailed?: number } }; /** Fewer rows from `from` columns up (a layout that lies flat there). */ wide?: { from: number; maxH: number; /** Rows at Compact and Detailed when they differ from `maxH`. */ hd?: { compact?: number; detailed?: number } }; /** Fewer rows when narrower than `below` columns (a part, like a picture, is dropped there). */ slim?: { below: number; maxH: number }; /** Rows at Compact and Detailed when they differ from `h` and `h + DETAILED_EXTRA_ROWS`: measured so the card is as tall as what it shows. */ hd?: { compact?: number; detailed?: number } }[]
   settings?: Setting[]
   /** Width in columns when added, and the narrowest it can go before its content breaks. */
   defaultW: number
@@ -174,7 +174,10 @@ function heightWithoutNote(def: WidgetDef, variant?: string, detail?: "compact" 
   const rows = detail === "detailed" ? (v.hd?.detailed ?? v.h + DETAILED_EXTRA_ROWS) : detail === "compact" ? (v.hd?.compact ?? v.h) : v.h
   // A layout that stacks when narrow needs more rows there, and one that lies flat when wide needs fewer (`cols` = the card's width in grid columns).
   if (cols !== undefined && v.narrow && isNarrow(v.narrow, cols, box)) return Math.max(rows, (detail === "detailed" ? v.narrow.hd?.detailed : detail === "compact" ? v.narrow.hd?.compact : undefined) ?? v.narrow.minH)
-  if (cols !== undefined && v.wide && cols >= v.wide.from) return Math.min(rows, v.wide.maxH)
+  if (cols !== undefined && v.wide && cols >= v.wide.from) {
+    const own = detail === "detailed" ? v.wide.hd?.detailed : detail === "compact" ? v.wide.hd?.compact : undefined
+    return own ?? Math.min(rows, v.wide.maxH)
+  }
   if (cols !== undefined && v.slim && cols < v.slim.below) return Math.min(rows, v.slim.maxH)
   return rows
 }
