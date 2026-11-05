@@ -221,8 +221,8 @@ export function cut(card: HTMLElement) {
   for (const el of card.querySelectorAll<HTMLElement>("*")) {
     const tag = el.tagName
     const leaf = tag === "svg" || tag === "BUTTON" || tag === "IMG" || tag === "INPUT" || [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent?.trim())
-    // An odometer's off-screen digits are clipped on purpose.
-    if (!leaf || el.closest("[data-dropped], [data-rolling] [aria-hidden]")) continue
+    // An odometer's off-screen digits and a path header's section that does not fit (`data-clip`) are clipped on purpose.
+    if (!leaf || el.closest("[data-dropped], [data-rolling] [aria-hidden], [data-clip]")) continue
     const r = el.getBoundingClientRect()
     if (r.height < 1 || r.width < 1) continue
     // Every box that clips it, up to the card: it must fit inside all of them. A list that scrolls is fine as it is.

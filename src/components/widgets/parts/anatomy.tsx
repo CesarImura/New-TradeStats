@@ -353,11 +353,12 @@ export function WCard({
             // floor of 2.5rem (about two letters and the "…" beside the slash, measured): when what the name leaves is less than that
             // the piece does not squeeze, it wraps to a second line that the row clips, so the section and the slash go together and
             // a bare or half-cut "/" is never left before the name. The name comes first in the markup, and row-reverse puts the piece
-            // back on its left; the name is never narrowed for it.
+            // back on its left; the name is never narrowed for it. The piece is `data-clip`: what the row clips is not a cut, so cut() leaves it
+            // out (a wrapped section read as a cut made a narrow card drop its Detail and lose real content).
             <span className={cn("flex min-w-0 flex-1 items-baseline overflow-hidden", section && "h-4 flex-row-reverse flex-wrap justify-end")}>
               <Label className="min-w-0 truncate font-medium text-foreground">{title}</Label>
               {section && (
-                <span className="flex max-w-fit shrink-0 grow basis-10 items-baseline gap-1.5 overflow-hidden">
+                <span data-clip="" className="flex max-w-fit shrink-0 grow basis-10 items-baseline gap-1.5 overflow-hidden">
                   <Label className="min-w-0 truncate">{section}</Label>
                   <Label className="shrink-0 pr-1.5" aria-hidden>
                     /
