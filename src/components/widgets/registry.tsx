@@ -4,6 +4,8 @@ import { COLS, type PageId } from "@/lib/widgets/layout"
 import type { WidgetProps } from "./parts/shared"
 import { BASE_WIDGETS } from "./registry-widgets"
 import { CORE_WIDGETS } from "./registry-core"
+import { NOTE_IGNORED, noteExtraPx } from "./note-extra"
+import type { WidgetNote } from "@/lib/widgets/layout"
 
 export type WidgetGroup = "Learning" | "Calendar" | "Journal" | "Coaching" | "Progress" | "Community" | "Your content" | "Coach and brand" | "AI" | "Page"
 
@@ -152,8 +154,22 @@ const isNarrow = (n: NonNullable<WidgetDef["variants"][number]["narrow"]>, cols:
   return cols < n.below
 }
 
-/** Standard height for a widget's layout at a given Detail. */
-export function heightFor(def: WidgetDef, variant?: string, detail?: "compact" | "standard" | "detailed", cols?: number, box?: CardBox) {
+/**
+ * Rows a coach's note adds to a card (`note`), in half rows of `row` px (a row plus its gap): the note's px (note-extra.ts)
+ * rounded up to the half row, so the card keeps the grid's rhythm. Nothing for the page's own tools and for layouts that draw no note.
+ */
+export function noteRows(def: WidgetDef, variant: string | undefined, note: WidgetNote | undefined, width: number, row: number) {
+  if (def.core || NOTE_IGNORED.has(`${def.type}|${lookOf(def, variant).value}`)) return 0
+  const px = noteExtraPx(note, width)
+  return px > 0 ? Math.ceil(px / (row / 2)) / 2 : 0
+}
+
+/** Standard height for a widget's layout at a given Detail. `withNote`: the card's own note and the px of a row, to make room for the note (the three-column page, where `box` is known). */
+export function heightFor(def: WidgetDef, variant?: string, detail?: "compact" | "standard" | "detailed", cols?: number, box?: CardBox, withNote?: { note?: WidgetNote; row: number }) {
+  return heightWithoutNote(def, variant, detail, cols, box) + (box && withNote ? noteRows(def, variant, withNote.note, box.width, withNote.row) : 0)
+}
+
+function heightWithoutNote(def: WidgetDef, variant?: string, detail?: "compact" | "standard" | "detailed", cols?: number, box?: CardBox) {
   const v = lookOf(def, variant)
   const rows = detail === "detailed" ? (v.hd?.detailed ?? v.h + DETAILED_EXTRA_ROWS) : detail === "compact" ? (v.hd?.compact ?? v.h) : v.h
   // A layout that stacks when narrow needs more rows there, and one that lies flat when wide needs fewer (`cols` = the card's width in grid columns).

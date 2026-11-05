@@ -54,7 +54,7 @@ export const spanOf = (w: WidgetInstance, cols: number) => Math.min(cols, isBand
 /** The height a card is drawn at before it is measured: an estimate from its layout (`box`: the card's px, when the page's width is known). */
 export const estimate = (w: WidgetInstance, gap: number, box?: CardBox) => {
   const def = getWidget(w.type)
-  return def ? heightFor(def, w.variant, w.detail, widthOf(w), box) * (ROW_HEIGHT + gap) - gap : 200
+  return def ? heightFor(def, w.variant, w.detail, widthOf(w), box, { note: w.note, row: ROW_HEIGHT + gap }) * (ROW_HEIGHT + gap) - gap : 200
 }
 
 /**
