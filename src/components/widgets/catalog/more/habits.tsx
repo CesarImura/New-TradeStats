@@ -245,6 +245,7 @@ export function SessionCheckIn({ variant = "mood" }: WidgetProps) {
       {/* The questions at the top; wide and short, side by side. Under them, in a cell with room, the last sessions (what the
           check-in is for), so a taller card shows more, not a gap. The Save row stays at the foot. */}
       <div className={cn("grid gap-3", questions > 1 && "[@container_card_(min-aspect-ratio:2/1)_and_(min-width:34rem)]:grid-cols-2 [@container_card_(min-aspect-ratio:2/1)_and_(min-width:34rem)]:gap-x-8")}>
+        <div className={hasPlan ? "grid content-start gap-3" : "contents"}>
         <div className="grid gap-2">
           <Label>How do you feel?</Label>
           <div role="radiogroup" aria-label="Mood" className="flex flex-wrap gap-1.5">
@@ -278,15 +279,16 @@ export function SessionCheckIn({ variant = "mood" }: WidgetProps) {
             <input type="range" min={3} max={10} value={sleep} onChange={(e) => setSleep(Number(e.target.value))} className="w-full accent-[var(--w-accent,var(--primary))]" aria-label="Hours of sleep" />
           </label>
         ) : null}
+        </div>
         {hasPlan && (
-          <label className="grid gap-2">
+          <label className={"grid gap-2 [@container_card_(min-aspect-ratio:2/1)_and_(min-width:34rem)]:grid-rows-[auto_1fr]"}>
             <Label>Plan for today</Label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
               placeholder="NQ open only, max 2 trades, stop at −1R"
-              className="w-full resize-none rounded-md border bg-transparent px-2.5 py-2 text-[0.8125rem] outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-(--brand-mark)"
+              className={cn("w-full resize-none rounded-md border bg-transparent px-2.5 py-2 text-[0.8125rem] outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-(--brand-mark)", "[@container_card_(min-aspect-ratio:2/1)_and_(min-width:34rem)]:h-full")}
               style={{ borderColor: "var(--w-hair, var(--border))" }}
             />
           </label>

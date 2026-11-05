@@ -8,7 +8,7 @@ import { ACCOUNT } from "@/lib/data/sample"
 import { Chip, GREY, Label, Num, useFigureFont, WCard } from "../parts/anatomy"
 import { Axis, Donut, DonutFigure, GridLines, Legend, RING, RING_BODY, Rule, ShareRows, TickBar } from "../parts/visuals"
 import { useMore } from "../parts/frame"
-import { ACCENT, AreaFill, SPLIT, SPLIT_STATS } from "../parts/tokens"
+import { ACCENT, AreaFill, BIG_FIGURE, SPLIT } from "../parts/tokens"
 import { Drop } from "../parts/card"
 import { BleedArea, HeroCard } from "../parts/layouts"
 import { WidgetEmpty, signed, useEmpty, type WidgetProps } from "../parts/shared"
@@ -137,21 +137,21 @@ export function Drawdown({ variant = "gauge" }: WidgetProps) {
   if (variant === "bars") {
     const q = TODAY.limit / 4
     return (
-      <WCard crumb="Risk" title="Daily loss limit" chip={<Chip tone={dayPct > 85 ? "loss" : "accent"}>{pctText(dayPct)}</Chip>} bodyClassName={SPLIT_STATS}>
+      <WCard crumb="Risk" title="Daily loss limit" chip={<Chip tone={dayPct > 85 ? "loss" : "accent"}>{pctText(dayPct)}</Chip>} >
         <div className="flex min-w-0 items-start justify-between gap-3">
           <div className="grid min-w-0 gap-1">
             <Label>Used today</Label>
-            <Num value={euro(TODAY.used)} delta={`${neg(TODAY.lastHour)} last hr`} deltaTone="loss" />
+            <Num value={euro(TODAY.used)} delta={`${neg(TODAY.lastHour)} last hr`} deltaTone="loss" figureClassName={BIG_FIGURE} />
           </div>
           <div className="grid shrink-0 justify-items-end gap-1 text-right">
             <Label>Left</Label>
-            <Num value={euro(TODAY.limit - TODAY.used)} />
+            <Num value={euro(TODAY.limit - TODAY.used)} figureClassName={BIG_FIGURE} />
           </div>
         </div>
         <div data-main className="grid content-center gap-1.5">
-          {/* Wide: a thicker bar with fewer, bigger segments (a thin one stretched over the card reads as a hairline). */}
+          {/* Wide: the figures at both ends and a thicker bar of fewer, bigger blocks across (a thin one stretched over the card reads as a hairline). */}
           <TickBar value={TODAY.used} max={TODAY.limit} className="[@container_card_(min-width:34rem)]:hidden" />
-          <TickBar value={TODAY.used} max={TODAY.limit} height={18} segments={32} className="hidden [@container_card_(min-width:34rem)]:flex" />
+          <TickBar value={TODAY.used} max={TODAY.limit} height={28} segments={24} className="hidden [@container_card_(min-width:34rem)]:flex" />
           <Axis labels={[0, q, q * 2, q * 3, TODAY.limit].map(euro)} />
         </div>
         <Drop level={2}>
@@ -234,17 +234,17 @@ export function Drawdown({ variant = "gauge" }: WidgetProps) {
       // A ring of the drawdown used, the room left in its middle, and the limits beside it (stacked in a tall, narrow cell).
       bodyClassName={RING_BODY}
     >
-      <Donut className={RING} total={ACCOUNT.maxDrawdown} parts={[{ value: dd, color: ddPct > 75 ? "var(--loss)" : ACCENT }]} label={`${euro(left)} left before the floor`}>
+      <Donut className={cn(RING, "[@container_card_(min-width:40rem)]:w-[clamp(12rem,24cqw,16rem)]")} total={ACCOUNT.maxDrawdown} parts={[{ value: dd, color: ddPct > 75 ? "var(--loss)" : ACCENT }]} label={`${euro(left)} left before the floor`}>
         <DonutFigure value={euro(left)} caption="left before the floor" />
       </Donut>
       <Drop level={2}>
         {standard && (
           <ShareRows
-            className="min-w-0 flex-1"
+            className={"min-w-0 flex-1 [@container_card_(min-width:40rem)]:gap-5"}
             rows={[
               { label: "Down from peak", value: euro(dd), share: dd / ACCOUNT.maxDrawdown, on: true },
               { label: "Today", value: `${euro(TODAY.used)} / ${euro(TODAY.limit)}`, share: TODAY.used / TODAY.limit, tone: TODAY.used / TODAY.limit > 0.75 ? ("loss" as const) : undefined },
-              ...(detailed ? [{ label: "Trades today", value: `${TODAY.trades} of ${TODAY.maxTrades}`, share: TODAY.trades / TODAY.maxTrades }] : []),
+              ...(detailed || standard ? [{ label: "Trades today", value: `${TODAY.trades} of ${TODAY.maxTrades}`, share: TODAY.trades / TODAY.maxTrades }] : []),
             ]}
           />
         )}

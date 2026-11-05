@@ -502,7 +502,7 @@ export function WCard({
  * accent beside the figure and stacks the change over the caption; Display
  * puts the change and caption on a line under the figure.
  */
-export function Num({ value, unit, delta, deltaTone, caption, size = "lg", className }: { value: React.ReactNode; unit?: string; delta?: React.ReactNode; deltaTone?: "profit" | "loss" | "accent" | "muted"; caption?: React.ReactNode; size?: "md" | "lg"; className?: string }) {
+export function Num({ value, unit, delta, deltaTone, caption, size = "lg", className, figureClassName }: { value: React.ReactNode; /** Extra classes for the figure itself (a bigger size when the card is wide). */ figureClassName?: string; unit?: string; delta?: React.ReactNode; deltaTone?: "profit" | "loss" | "accent" | "muted"; caption?: React.ReactNode; size?: "md" | "lg"; className?: string }) {
   const { emphasis } = useFrame()
   const font = useFigureFont()
   const fig = useFigureStyle()
@@ -510,7 +510,7 @@ export function Num({ value, unit, delta, deltaTone, caption, size = "lg", class
   const cls = size === "lg" ? (star ? TYPE.star : TYPE.valueLg) : star ? TYPE.valueLg : TYPE.value
   const tone = deltaTone === "profit" ? "var(--profit-text)" : deltaTone === "loss" ? "var(--loss-text)" : deltaTone === "muted" ? "var(--muted-foreground)" : ink(ACCENT_TEXT)
   const number = (
-    <span className={cn(cls, "min-w-0 tracking-[-0.02em]")} style={{ fontFamily: font }}>
+    <span className={cn(cls, "min-w-0 tracking-[-0.02em]", figureClassName)} style={{ fontFamily: font }}>
       <Counting value={value} />
       {unit && <span className="ml-1 text-[0.8125rem] font-normal tracking-normal text-muted-foreground">{unit}</span>}
     </span>

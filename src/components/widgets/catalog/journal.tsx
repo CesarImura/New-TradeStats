@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils"
 import { BLEED, Chip, GREY, Label, Num, Seg, useFigureFont, useMonoFigures, WCard } from "../parts/anatomy"
 import { Legend, Rule, StepChart } from "../parts/visuals"
 import { useMore } from "../parts/frame"
-import { ACCENT, ACCENT_TEXT, SPLIT, SPLIT_STATS, SPLIT_STATS_XL } from "../parts/tokens"
+import { ACCENT, ACCENT_TEXT, BIG_FIGURE, SPLIT, SPLIT_STATS } from "../parts/tokens"
+
 import { Drop } from "../parts/card"
 import { Tip } from "../parts/bits"
 import { BleedArea, Compare, HeatGrid, HeroCard, heatPl } from "../parts/layouts"
@@ -190,8 +191,8 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
   const red = DAILY.filter((v) => v < 0).length
   const best = Math.max(...DAILY)
   const worst = Math.min(...DAILY)
-  const headline = <Num value={signed(total)} delta={`${signed(JOURNAL_STATS.pnl)} this week`} deltaTone={JOURNAL_STATS.pnl >= 0 ? "profit" : "loss"} />
-  // `split`: how the body lies when the card is wide and short (SPLIT_STATS: figures left, chart right; the heatmap only at full width, SPLIT_STATS_XL; otherwise one column and the table just widens).
+  const headline = <Num value={signed(total)} delta={`${signed(JOURNAL_STATS.pnl)} this week`} deltaTone={JOURNAL_STATS.pnl >= 0 ? "profit" : "loss"} figureClassName={BIG_FIGURE} />
+  // `split`: how the body lies when the card is wide and short (SPLIT_STATS: figures left, chart or table right).
   const card = (children: React.ReactNode, split = "") => (
     <WCard icon={LineChart} title="Performance" meta={`${coach.wording.journal} · last ${DAILY.length} days · ${JOURNAL_STATS.trades} trades`} chip={<Chip>{JOURNAL_STATS.winRate}% win</Chip>} bodyClassName={split}>
       {children}
@@ -330,7 +331,7 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
         </Drop>
         <Drop level={3}>{detailed && <Edge />}</Drop>
       </>,
-      SPLIT_STATS_XL,
+      SPLIT_STATS,
     )
   }
 
@@ -369,7 +370,7 @@ export function JournalPnl({ variant = "curve" }: WidgetProps) {
       {/* The period's P&L alone on its line; the comparison is a sentence under it, keyed to the dashed model line. */}
       <div className="grid min-w-0 shrink-0 gap-1.5">
         {/* Mono figures give the comma a whole cell ("1 , 220"): at this size the comma is pulled in to half a cell. */}
-        <Num value={mono ? tightComma(signed(gain)) : signed(gain)} />
+        <Num value={mono ? tightComma(signed(gain)) : signed(gain)} figureClassName={BIG_FIGURE} />
         <span className="flex min-w-0 items-center gap-2 text-[0.8125rem] leading-5 text-muted-foreground">
           <ModelKey />
           <span className="min-w-0 truncate">
