@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { createContext, useContext, useLayoutEffect, useRef, useState } from "react"
+import { createContext, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { WidgetHeader } from "@/lib/theme/types"
 import type { WidgetNote } from "@/lib/widgets/layout"
 import { cut } from "./card"
@@ -42,7 +42,9 @@ export function WidgetFrame({
   children: React.ReactNode
 }) {
   const box = useRef<HTMLDivElement>(null)
-  const shown = useFitDetail(detail, box)
+  // What the card says: its layout, the widget's own fields, the coach's note, the header parts. When it changes the level is worked out again.
+  const own = isValidElement<{ variant?: string; props?: unknown }>(children) ? [children.props.variant, children.props.props] : []
+  const shown = useFitDetail(detail, box, JSON.stringify([own, note, header]))
   return (
     <FrameCtx.Provider value={{ emphasis, detail: shown, header, note, core, fixed }}>
       {/* Outside the live page widgets show interactions only: links and buttons keep hover, focus and press, but never leave the page. */}
@@ -63,7 +65,7 @@ const LEVELS: Detail[] = ["compact", "standard", "detailed"]
  * card carries `data-detail-shown` while it shows less than was chosen, so
  * the builder can say why.
  */
-function useFitDetail(detail: Detail, box: React.RefObject<HTMLDivElement | null>) {
+function useFitDetail(detail: Detail, box: React.RefObject<HTMLDivElement | null>, contentKey: string) {
   const [chosen, setChosen] = useState(detail)
   const [shown, setShown] = useState(detail)
   // A new choice starts over from that level (adjusting state while rendering, as React recommends).
@@ -71,6 +73,19 @@ function useFitDetail(detail: Detail, box: React.RefObject<HTMLDivElement | null
     setChosen(detail)
     setShown(detail)
   }
+  // New content (a layout, a field or the note changed): the level is worked out again from the chosen one, once the editing has paused.
+  // Without it a card that stepped down for its old content stayed there (or never stepped down for its new one) until a reload.
+  const [tick, setTick] = useState(0)
+  const settled = useRef(contentKey)
+  useEffect(() => {
+    if (settled.current === contentKey) return
+    const t = setTimeout(() => {
+      settled.current = contentKey
+      setShown(detail)
+      setTick((n) => n + 1)
+    }, 400)
+    return () => clearTimeout(t)
+  }, [contentKey, detail])
   useLayoutEffect(() => {
     const card = box.current?.querySelector<HTMLElement>("[data-slot=widget]")
     if (!card) return
@@ -95,7 +110,7 @@ function useFitDetail(detail: Detail, box: React.RefObject<HTMLDivElement | null
       clearTimeout(t)
       ro.disconnect()
     }
-  }, [shown, detail, box])
+  }, [shown, detail, box, tick])
   return shown
 }
 
