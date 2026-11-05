@@ -427,7 +427,7 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
                 {/* The kind goes first when the tiles run short (a tall header, a short cell). */}
                 <Drop level={2}>{more && <span className={cn(TYPE.small, "line-clamp-1")}>{KIND_LABEL[o.kind]}</span>}</Drop>
                 {/* A long offer ends in "…" inside its tile (mono figures run wider). */}
-                <Chip tone={i === 0 ? "accent" : "neutral"} className="max-w-full overflow-hidden">
+                <Chip tone={i === 0 ? "accent" : "neutral"} className="max-w-full min-w-0 shrink overflow-hidden">
                   <span className="min-w-0 truncate">{o.offer}</span>
                 </Chip>
               </a>
@@ -457,7 +457,7 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
             </span>
             <span className="flex min-w-0 max-w-[58%] shrink items-center gap-1.5">
               {detailed && o.code && <Label className="hidden @[20rem]:inline">{o.code}</Label>}
-              <Chip tone={i === 0 ? "accent" : "neutral"} className="max-w-full overflow-hidden">
+              <Chip tone={i === 0 ? "accent" : "neutral"} className="max-w-full min-w-0 shrink overflow-hidden">
                 <span className="min-w-0 truncate">{o.offer}</span>
               </Chip>
             </span>

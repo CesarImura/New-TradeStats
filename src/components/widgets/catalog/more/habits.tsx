@@ -62,7 +62,7 @@ export function Watchlist({ variant = "list" }: WidgetProps) {
       {/* Whole rows only: a short card keeps the first markets. */}
       <ul className={cn("flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden *:w-full", GROW_ROWS)}>
         {rows.map((w) => (
-          <li key={w.sym} className="grid grid-cols-[1fr_4.5rem_auto] items-center gap-3 py-2 @[24rem]:grid-cols-[minmax(6rem,12rem)_minmax(5rem,1fr)_4.5rem_auto] @[24rem]:gap-x-6" style={{ borderColor: "var(--w-hair, var(--border))" }}>
+          <li key={w.sym} className="grid grid-cols-[1fr_4.5rem_auto] items-center gap-3 py-2 @[24rem]:grid-cols-[minmax(5rem,12rem)_minmax(2.5rem,1fr)_4.5rem_auto] @[24rem]:gap-x-6" style={{ borderColor: "var(--w-hair, var(--border))" }}>
             <span className="min-w-0">
               <span className="block font-medium">{w.sym}</span>
               {standard && <span className="block truncate text-xs text-muted-foreground">{w.name}</span>}
@@ -235,11 +235,16 @@ export function SessionCheckIn({ variant = "mood" }: WidgetProps) {
   const [note, setNote] = useState("")
   const [saved, setSaved] = useState(false)
   const warn = mood === "Tilted" || mood === "Rushed" || sleep < 6
+  // How many questions sit side by side when the card is wide: Compact asks only the mood, so it keeps one full-width column (two columns
+  // with one question would squeeze its chips into half the card and wrap them).
+  const hasSleep = variant === "notes" || standard
+  const hasPlan = variant === "notes"
+  const questions = 1 + (hasSleep ? 1 : 0) + (hasPlan ? 1 : 0)
   return (
     <WCard icon={NotebookPen} title="Session check-in" meta="Before you trade · 20 seconds" chip={saved ? <Chip tone="profit">Saved</Chip> : undefined}>
       {/* The questions at the top; wide and short, side by side. Under them, in a cell with room, the last sessions (what the
           check-in is for), so a taller card shows more, not a gap. The Save row stays at the foot. */}
-      <div className="grid gap-3 [@container_card_(min-aspect-ratio:2/1)_and_(min-width:34rem)]:grid-cols-2 [@container_card_(min-aspect-ratio:2/1)_and_(min-width:34rem)]:gap-x-8">
+      <div className={cn("grid gap-3", questions > 1 && "[@container_card_(min-aspect-ratio:2/1)_and_(min-width:34rem)]:grid-cols-2 [@container_card_(min-aspect-ratio:2/1)_and_(min-width:34rem)]:gap-x-8")}>
         <div className="grid gap-2">
           <Label>How do you feel?</Label>
           <div role="radiogroup" aria-label="Mood" className="flex flex-wrap gap-1.5">
@@ -264,7 +269,7 @@ export function SessionCheckIn({ variant = "mood" }: WidgetProps) {
             ))}
           </div>
         </div>
-        {variant === "notes" || standard ? (
+        {hasSleep ? (
           <label className="grid gap-2">
             <span className="flex items-baseline justify-between">
               <Label>Sleep</Label>
@@ -273,7 +278,7 @@ export function SessionCheckIn({ variant = "mood" }: WidgetProps) {
             <input type="range" min={3} max={10} value={sleep} onChange={(e) => setSleep(Number(e.target.value))} className="w-full accent-[var(--w-accent,var(--primary))]" aria-label="Hours of sleep" />
           </label>
         ) : null}
-        {variant === "notes" && (
+        {hasPlan && (
           <label className="grid gap-2">
             <Label>Plan for today</Label>
             <textarea
