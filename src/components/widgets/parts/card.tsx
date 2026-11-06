@@ -195,8 +195,18 @@ function useDropToFit(ref: React.RefObject<HTMLDivElement | null>) {
       size = ""
       later()
     })
-    // New content (a layout or a setting changed) is measured on the next frame.
-    const mo = new MutationObserver(later)
+    // New content (a layout or a setting changed) is measured on the next frame, from everything shown: a part given up for the old
+    // content (a bigger figure, a longer list) must come back when the new one fits, or going back to a setting would not bring back what it had.
+    // And again once it has stopped changing (a ring or a bar still growing when it was first measured can look cut for a moment).
+    const mo = new MutationObserver(() => {
+      size = ""
+      later()
+      clearTimeout(settle)
+      settle = window.setTimeout(() => {
+        size = ""
+        fit()
+      }, 300)
+    })
     mo.observe(card, { childList: true, subtree: true, characterData: true })
     fit()
     return () => {
@@ -282,7 +292,8 @@ export function useFitRows<T extends HTMLElement>(row: number, { min = 1, item }
     if (!el) return
     const fit = () => {
       const rows = [...el.querySelectorAll<HTMLElement>(item)]
-      if (!rows.length) return
+      // Not laid out yet (the Design canvas gives the card its height after the first paint): every row would count as cut.
+      if (!rows.length || !el.clientHeight) return
       // The bottom of what can be seen: the element and every box above it that clips, up to the card.
       let limit = Infinity
       for (let box: HTMLElement | null = el; box; box = box.dataset.slot === "widget" ? null : box.parentElement) {
