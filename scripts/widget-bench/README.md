@@ -60,6 +60,53 @@ A run takes about 4 s per cell with 3 workers (`full`, 324 cells, ≈ 20 min). F
 The summary names what the layer leaves out and which widgets are not laid out: the page title and each page's own tool
 (`page-*`), which are sized by their content and not by a width.
 
+### Scenarios
+
+A scenario is a named combination of coach settings laid over every cell. It is plain data in `scenarios.mjs`, in the shape the product saves
+(`theme` = CoachTheme, `item` = WidgetInstance fields, `props` by widget type, `data` = `?data=`), merged over the cell key by key, with no second model.
+
+```
+node scripts/widget-bench/run.mjs --scenarios S1,S5                      # the chosen scenarios, over the whole matrix
+node scripts/widget-bench/run.mjs --scenarios all --viewports 1440 --templates terminal --modes dark
+node scripts/widget-bench/run.mjs --scenarios S1 --only pnl-by-instrument
+node scripts/widget-bench/run.mjs --scenarios S1,S5 --dry-run true       # lists the cells and exits
+```
+
+Without `--scenarios` the bench runs exactly as before. A scenario may pin template, mode, density (`theme`) and Detail (`item.detail`);
+cells that end up equal are run once. S0 Default, S1 Short note, S2 Long note, S3 Header Top, S4 Figure Display, S5 Note + Top + Display,
+S6 Detailed, S7 Star + Detailed + long note, S8 Empty (`?data=empty`), S9 Atelier Airy. To add one, add an entry to `SCENARIOS`; a typo in a key or value fails at start.
+
+Each card in `results.json` carries `detailRequested` (what was saved) and `detailShown` (the `data-detail-shown` attribute, `null` when absent).
+The product sets that attribute only when it reduces the Detail, so `null` means "not reduced"; the bench does not infer a value. The summary has a
+"Detail asked for and shown" section. `compare.mjs` keys cells by scenario as well.
+
+### Regression gate (known defects)
+
+`gate.mjs` compares a run with `baseline.json`, the versioned list of defects already known. It runs a small matrix (S0, S1, S5 at Terminal dark compact 1440, and S9 which pins Atelier airy; 4 cells, 1416 cards) and never edits the baseline by itself.
+
+```
+node scripts/widget-bench/gate.mjs run     --base http://localhost:3100 --out /tmp/gate-run     # run the gate matrix only
+node scripts/widget-bench/gate.mjs create  --results /tmp/gate-run/results.json                  # first baseline; refuses to overwrite one
+node scripts/widget-bench/gate.mjs check   --results /tmp/gate-run/results.json [--show new|known|fixed|all] [--report-dir DIR] [--enforce]
+node scripts/widget-bench/gate.mjs verify  --base http://localhost:3100 --enforce                # run + check
+node scripts/widget-bench/gate.mjs update  --results /tmp/gate-run/results.json --yes [--reason "text"]   # only fixed defects
+node scripts/widget-bench/gate.mjs update  --results ... --accept-new --yes                       # also accepts NEW defects (regressions)
+node scripts/widget-bench/gate.mjs update  --results ... --accept-counts --yes                    # also accepts changed occurrence counts
+```
+
+- **Identity** of a defect: cell (scenario, template, mode, density, Detail asked, viewport and its column regime) + card (widget type, layout, width) + category. Coordinates, measured heights, order, element text, Drop count and live data are not part of it. The number of occurrences is kept as a diagnostic.
+- **Known**: in the baseline and in the run; does not block, stays in the report as debt. **New**: in the run and not in the baseline (also when a card the baseline never measured has a defect); blocks. **Fixed**: in the baseline and not in the run; never blocks and is listed for review; only `update --yes` removes it from the baseline. **Unclassified**: a change in occurrences for a known defect, a card not rendered in this run (not counted as fixed), a cell the baseline lacks.
+- Cells in the baseline that the run did not execute are listed; with `--enforce` the gate is INCOMPLETE (exit 3). New defects with `--enforce` exit 1. Missing or invalid baseline or results exit 2. Without `--enforce` the gate is report-only: it prints the verdict and exits 0.
+- `small-text` (a warning) is counted but not part of the identity.
+- **Updating the baseline** prints the plan first and writes nothing unless it is allowed:
+  - only fixed defects: `--yes` removes them from the baseline;
+  - new defects: a generic `--yes` is refused and the full list of new identities is printed; `--accept-new --yes` is the only way to add them (and is refused when the run has none);
+  - changed occurrence counts of known defects: refused unless `--accept-counts --yes`;
+  - incomplete run (a baseline cell not executed, a baseline card not measured, a cell the baseline lacks): always refused, because absence of a measurement is not a fix. Run the whole matrix again;
+  - no differences: "baseline unchanged", nothing written.
+  Each accepted update appends to `history` in `baseline.json`: date, cells changed, fixed, accepted new, counts changed (from, to), occurrences before/after and the optional `--reason`. No author is recorded.
+- It is not wired to any CI.
+
 ## What counts as a defect, and what does not
 
 Findings (`DEFECT`): `cut-content` (text or control partly outside a box that clips it), `hidden-content` (completely outside),

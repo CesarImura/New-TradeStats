@@ -11,6 +11,7 @@ import { chromium } from "playwright-core"
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import { pick, cellFor, cellKey as scenarioCellKey, queryFor, buildPayload } from "./scenarios.mjs"
 
 const here = dirname(fileURLToPath(import.meta.url))
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, all) => (x.startsWith("--") ? [...a, [x.slice(2), all[i + 1] && !all[i + 1].startsWith("--") ? all[i + 1] : "true"]] : a), []))
@@ -37,10 +38,21 @@ const templates = list(args.templates, TEMPLATES)
 const modes = list(args.modes, MODES)
 const details = list(args.details, layer.details)
 const cells = []
+// --scenarios S1,S5 (or all): each cell is also run under each scenario (scenarios.mjs); a scenario that pins an axis (its own template, density,
+// Detail) runs once for the cells that end up the same. Without the flag no scenario is applied: the matrix is what it always was.
+const scenarios = pick(args.scenarios)
+const seen = new Set()
 for (const vw of viewports) for (const t of templates) for (const m of modes) {
   const dens = args.densities ? list(args.densities) : layer.densities === "default" ? [DEFAULT_DENSITY[t]] : layer.densities
-  for (const d of dens) for (const det of details) cells.push({ vw, template: t, mode: m, density: d, detail: det })
+  for (const d of dens) for (const det of details) for (const sc of scenarios) {
+    const cell = cellFor({ vw, template: t, mode: m, density: d, detail: det }, sc)
+    const k = scenarioCellKey(cell)
+    if (seen.has(k)) continue
+    seen.add(k)
+    cells.push(cell)
+  }
 }
+if (args["dry-run"]) { console.log(`${cells.length} cells:`); for (const c of cells) console.log(scenarioCellKey(c)); process.exit(0) }
 
 // ---- playwright (a devDependency of the project; the browser is downloaded separately, see README)
 const base = (args.base || "http://localhost:3100").replace(/\/$/, "")
@@ -84,11 +96,12 @@ console.log(`catalog: ${catalog.length} widgets, ${items.length} cards per cell,
 const MODULES = { courses: true, calendar: true, charts: true, community: true, journal: true, ranking: true, ai: true, downloads: true, partners: true }
 async function runCell(cell) {
   const ctx = await browser.newContext({ viewport: { width: cell.vw, height: 900 }, ...(args["reduced-motion"] ? { reducedMotion: "reduce" } : {}) })
-  const layoutItems = items.map((it, i) => ({ ...it, detail: cell.detail, x: 0, y: i, h: 4 }))
-  const payload = { theme: { template: cell.template, mode: cell.mode, density: cell.density }, content: { modules: MODULES, pages: { home: { default: { items: layoutItems, free: false } } } } }
+  const scenario = scenarios.find((s) => s && s.id === cell.scenario) || null
+  const payload = buildPayload({ cell, items, modules: MODULES, scenario })
+  const requested = Object.fromEntries(payload.content.pages.home.default.items.map((it) => [it.id, it.detail]))
   await ctx.addInitScript(([key, value]) => { try { localStorage.clear(); localStorage.setItem(key, value) } catch {} }, [`proto:pub:${slug}`, JSON.stringify(payload)])
   const page = await ctx.newPage()
-  await page.goto(`${base}/c/${slug}`, { waitUntil: "networkidle" })
+  await page.goto(`${base}/c/${slug}${queryFor(scenario)}`, { waitUntil: "networkidle" })
   await page.waitForFunction((n) => document.querySelectorAll("[data-widget-id]").length >= n, items.length, { timeout: 30000 }).catch(() => {})
   // settled: the page height stops changing (fonts, measured heights, charts)
   let last = -1, still = 0
@@ -109,6 +122,9 @@ async function runCell(cell) {
     for (const c of bad) await page.locator(`[data-widget-id="${c.id}"]`).screenshot({ path: join(out, "shots", `${cell.vw}-${cell.template}-${cell.mode}-${cell.density}-${cell.detail}-${c.id.replace(/\|/g, "_")}.png`) }).catch(() => {})
   }
   await ctx.close()
+  // Detail: what was asked (the saved item), and what the card says it shows (data-detail-shown, read from the DOM, never inferred). The product sets the attribute only
+  // while a card shows less than was chosen, so null is "attribute absent", not "same as requested".
+  for (const c of res.cards) if (!c.missing) c.detailRequested = requested[c.id] ?? null
   return { cell, pageOverflow: res.pageOverflow, notRendered, cards: res.cards }
 }
 
@@ -127,9 +143,9 @@ await browser.close()
 console.log()
 
 // ---- report ----------------------------------------------------------------------------------------------------------
-const cellKey = (c) => `${c.vw}|${c.template}|${c.mode}|${c.density}|${c.detail}`
+const cellKey = (c) => `${c.scenario ? c.scenario + "|" : ""}${c.vw}|${c.template}|${c.mode}|${c.density}|${c.detail}`
 results.sort((a, b) => cellKey(a.cell).localeCompare(cellKey(b.cell), undefined, { numeric: true }))
-writeFileSync(join(out, "results.json"), JSON.stringify({ meta: { base, slug, layer: args.layer || "smoke", cells: cells.length, cardsPerCell: items.length, skipped, at: new Date().toISOString() }, results }))
+writeFileSync(join(out, "results.json"), JSON.stringify({ meta: { base, slug, layer: args.layer || "smoke", scenarios: scenarios.filter(Boolean).map((s) => s.id), cells: cells.length, cardsPerCell: items.length, skipped, at: new Date().toISOString() }, results }))
 
 const norm = (s) => String(s).replace(/\d+/g, "#")
 const groups = new Map()
@@ -143,7 +159,7 @@ for (const r of results) for (const c of r.cards) {
     const key = `${warn ? "warn" : "DEFECT"} ${f.kind} | ${c.id} | ${norm(f.el || "")}`
     const g = groups.get(key) || { n: 0, cells: new Set(), ex: f }
     g.n++
-    g.cells.add(`${r.cell.vw} ${r.cell.template}-${r.cell.mode}/${r.cell.density}/${r.cell.detail}`)
+    g.cells.add(`${r.cell.scenario ? r.cell.scenario + " " : ""}${r.cell.vw} ${r.cell.template}-${r.cell.mode}/${r.cell.density}/${r.cell.detail}`)
     groups.set(key, g)
   }
 }
@@ -157,6 +173,18 @@ const po = results.filter((r) => r.pageOverflow)
 lines.push(`- Page-level horizontal overflow in ${po.length} cells${po.length ? ": " + po.slice(0, 5).map((r) => cellKey(r.cell)).join(", ") : ""}.`)
 lines.push(`- Defects: **${total.defect}** occurrences in ${[...groups.keys()].filter((k) => k.startsWith("DEFECT")).length} distinct findings. Warnings: ${total.warn}.`)
 lines.push(`- Intentional mechanisms recognised (counted, not reported): ${Object.entries(intent).map(([k, n]) => `${k} ${n}`).join(", ") || "none"}.`, "")
+// Detail: asked for vs shown. The attribute is read from the DOM; absent is reported as absent (the product sets it only while a card shows less than chosen).
+{
+  const d = { cards: 0, reduced: 0, absent: 0, missing: 0 }, by = new Map()
+  for (const r of results) for (const c of r.cards) {
+    if (c.missing) { d.missing++; continue }
+    d.cards++
+    if (c.detailShown) { d.reduced++; const k = `${c.id.split("|")[0]}: ${c.detailRequested || "?"} -> ${c.detailShown}`; by.set(k, (by.get(k) || 0) + 1) } else d.absent++
+  }
+  lines.push(`## Detail asked for and shown`, "", `- Cards measured: ${d.cards}. With \`data-detail-shown\` (the card shows less than was asked for): **${d.reduced}**. Attribute absent: ${d.absent} (the product does not set it when nothing was reduced, so absent is not read as a value).`)
+  for (const [k, n] of [...by.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25)) lines.push(`  - ${k}: ${n}`)
+  lines.push("")
+}
 for (const sev of ["DEFECT", "warn"]) {
   const rows = [...groups.entries()].filter(([k]) => k.startsWith(sev)).sort((a, b) => b[1].n - a[1].n)
   lines.push(`## ${sev === "DEFECT" ? "Defects" : "Warnings"} (${rows.length})`, "")

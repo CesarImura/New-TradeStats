@@ -11,7 +11,8 @@ const outIdx = process.argv.indexOf("--out")
 const ignIdx = process.argv.indexOf("--ignore")
 const ignore = ignIdx > 0 ? process.argv[ignIdx + 1].split(",") : []
 const A = JSON.parse(readFileSync(a, "utf8")), B = JSON.parse(readFileSync(b, "utf8"))
-const key = (c) => `${c.vw}|${c.template}|${c.mode}|${c.density}|${c.detail}`
+// a run with scenarios (run.mjs --scenarios) keeps each scenario apart; without one the key is what it always was
+const key = (c) => `${c.scenario ? c.scenario + "|" : ""}${c.vw}|${c.template}|${c.mode}|${c.density}|${c.detail}`
 const mapB = new Map(B.results.map((r) => [key(r.cell), r]))
 const changes = []
 let compared = 0, ignored = 0
@@ -38,7 +39,7 @@ const byCard = new Map()
 for (const c of changes) { const g = byCard.get(c.id) || []; g.push(c); byCard.set(c.id, g) }
 L.push(`## By widget (${byCard.size})`, "")
 for (const [id, g] of [...byCard.entries()].sort((p, q) => q[1].length - p[1].length)) {
-  const cells = [...new Set(g.map((c) => `${c.cell.vw}px ${c.cell.template}-${c.cell.mode}/${c.cell.density}/${c.cell.detail}`))]
+  const cells = [...new Set(g.map((c) => `${c.cell.scenario ? c.cell.scenario + " " : ""}${c.cell.vw}px ${c.cell.template}-${c.cell.mode}/${c.cell.density}/${c.cell.detail}`))]
   const gone = [...new Set(g.flatMap((c) => c.gone))].slice(0, 4), added = [...new Set(g.flatMap((c) => c.added))].slice(0, 4)
   const nf = [...new Set(g.flatMap((c) => c.newF))].slice(0, 3), gf = [...new Set(g.flatMap((c) => c.goneF))].slice(0, 3)
   const hx = g.find((c) => Math.abs(c.h[0] - c.h[1]) > 2)

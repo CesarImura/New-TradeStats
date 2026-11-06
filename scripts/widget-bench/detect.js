@@ -7,6 +7,7 @@
  * Intentional mechanisms recognised (each one is read from the code, see README):
  *  - dropped      parts hidden by useDropToFit (`[data-dropped]`, parts/card.tsx)
  *  - rolling      odometer digits (`[data-rolling]`, parts/anatomy.tsx)
+ *  - clip         a path header's section that does not fit and is clipped on purpose (`[data-clip]`, parts/anatomy.tsx)
  *  - carousel     Embla viewports (inline touch-action pan-y) and snap scrollers (shelf.tsx)
  *  - scroll       a box that is meant to scroll (class overflow-auto / overflow-y-auto / overflow-x-auto)
  *  - wrapped-rows rows a flex-wrap column list moves out of sight to the side (GROW_ROWS, Watchlist): only when the whole
@@ -91,6 +92,7 @@
   function intentional(e, r, v, chain) {
     if (e.closest("[data-dropped]")) return "dropped"
     if (e.closest("[data-rolling]")) return "rolling"
+    if (e.closest("[data-clip]")) return "clip"
     for (const b of chain) {
       if (b.classList.contains("touch-pan-y") || /touch-action:\s*pan-y/.test(b.getAttribute("style") || "")) return "carousel"
       const cs = getComputedStyle(b)
@@ -204,7 +206,7 @@
         findings.push({ kind: "overlap", el: `${label(a.e)} × ${label(b.e)}`, px: `${Math.round(hit.ix)}x${Math.round(hit.iy)}`, a: boxInfo(a.e), b: boxInfo(b.e), via: via ? boxInfo(via) : "card" })
       }
     }
-    return { id, w: Math.round(cr.width * 10) / 10, h: Math.round(cr.height * 10) / 10, drops: card.querySelectorAll("[data-dropped]").length, sig: [...new Set(tokens)].sort().join("¦"), svg: visibleSvg, findings, intentional: intent }
+    return { id, w: Math.round(cr.width * 10) / 10, h: Math.round(cr.height * 10) / 10, drops: card.querySelectorAll("[data-dropped]").length, detailShown: card.hasAttribute("data-detail-shown") ? card.getAttribute("data-detail-shown") : null, sig: [...new Set(tokens)].sort().join("¦"), svg: visibleSvg, findings, intentional: intent }
   }
 
   window.__benchAnalyze = () => {
