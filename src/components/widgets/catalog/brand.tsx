@@ -64,7 +64,10 @@ export function CoachPhoto({ className }: { className?: string }) {
 export function VideoThumb({ length = "2:14", className }: { length?: string; className?: string }) {
   return (
     <div className={cn("relative min-h-0 overflow-hidden rounded-[min(var(--radius),8px)]", className)}>
-      <Cover className="absolute inset-0 rounded-none" />
+      {/* The artwork fills the box and its edge is cropped by the card on purpose (a few px at most): that is not a cut part, so it must not step the Detail down. */}
+      <div data-clip className="absolute inset-0">
+        <Cover className="absolute inset-0 rounded-none" />
+      </div>
       <span className="r-dot absolute top-1/2 left-1/2 grid size-10 -translate-1/2 place-items-center bg-background text-foreground shadow-sm">
         <Play className="size-4 translate-x-px" />
       </span>
@@ -85,8 +88,13 @@ function VideoFit({ length, className }: { length: string; className?: string })
     const el = box.current
     if (!el) return
     const ro = new ResizeObserver(() => {
+      // Measured from the box as the CSS alone draws it: a cap left from an earlier size would hold the box (and so its width) at that
+      // size when the card grows, and the same card then ended at a different size after a resize than after a reload.
+      el.style.maxHeight = ""
+      el.style.flexBasis = ""
       const w = el.clientWidth
-      el.style.maxHeight = `${Math.round((w * 9) / 16)}px`
+      // A box with no width yet (its card not laid out, as in the Design canvas's first pass) must not be capped at 0: a 16:9 box with no height has no width, so it would stay 0 for good.
+      el.style.maxHeight = w >= 1 ? `${Math.round((w * 9) / 16)}px` : ""
       // In a column it starts at 16:9 and only gives up height when the card needs it; beside the words (a row) the width is the CSS's.
       el.style.flexBasis = el.parentElement && getComputedStyle(el.parentElement).flexDirection === "column" ? el.style.maxHeight : ""
       // Narrow (a phone-width card): the video keeps its full 16:9 and the words around it give way instead (Drop, FitText).
@@ -121,7 +129,7 @@ const WATCHED = 48
 
 /** The chapters as a timeline: the one to watch next carries the accent. */
 function Chapters({ className }: { className?: string }) {
-  const next = CHAPTERS.findIndex((c, i) => (CHAPTERS[i + 1]?.s ?? LENGTH.s) > WATCHED)
+  const next = CHAPTERS.findIndex((_, i) => (CHAPTERS[i + 1]?.s ?? LENGTH.s) > WATCHED)
   return <Timeline className={className} items={CHAPTERS.map((c, i) => ({ time: c.at, title: c.title, value: c.len, color: i === next ? ACCENT : i < next ? GREY[2] : GREY[1], strong: i === next }))} />
 }
 
