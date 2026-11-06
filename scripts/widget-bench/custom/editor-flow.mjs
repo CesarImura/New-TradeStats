@@ -48,7 +48,7 @@ async function run(w, v) {
   const errors = []
   page.on("pageerror", (e) => errors.push(String(e).slice(0, 160)))
   const R = (extra) => note({ type: w.type, variant: v.value, template, mode, density, ...extra })
-  const sigOf = async () => { await page.waitForTimeout(450); await page.addScriptTag({ content: sigSrc }).catch(() => {}); return page.evaluate((i) => window.__sig()[i], id) }
+  const sigOf = async () => { await page.waitForTimeout(900); await page.addScriptTag({ content: sigSrc }).catch(() => {}); return page.evaluate((i) => window.__sig()[i], id) }
   const draftItem = () => page.evaluate(([k, i]) => { try { const d = JSON.parse(localStorage.getItem(k) || "null"); return d?.content?.pages?.home?.default?.items?.find((x) => x.id === i) ?? null } catch { return "ERR" } }, [`proto:draft:${slug}`, id])
   const same = (a, b) => a && b && a.html === b.html && a.style === b.style && a.h === b.h
   const open = async () => {
@@ -100,7 +100,7 @@ async function run(w, v) {
           await clickRadio(g.label, r.i)
           const after = await sigOf(); const di1 = JSON.stringify(await draftItem())
           const keys = (() => { try { const a = JSON.parse(di0) ?? {}, b = JSON.parse(di1) ?? {}; return Object.keys({ ...a, ...b }).filter((k) => JSON.stringify(a[k]) !== JSON.stringify(b[k])) } catch { return ["?"] } })()
-          R({ control: g.label, option: r.name, status: "clicked", effect: !same(before, after), draftKeys: keys })
+          R({ control: g.label, option: r.name, status: "clicked", effect: !same(before, after), draftKeys: keys, ds: after?.ds })
           if (orig >= 0) { await clickRadio(g.label, orig); const back = await sigOf(); R({ control: g.label, option: `${r.name} -> ${g.radios[orig].name}`, status: "restored", effect: same(back, before), ...(same(back, before) ? {} : { before, back }) }) }
         }
       }
@@ -113,7 +113,7 @@ async function run(w, v) {
           const before = await sigOf(); const di0 = JSON.stringify(await draftItem())
           await loc.click({ force: true }); const after = await sigOf(); const di1 = JSON.stringify(await draftItem())
           R({ control: "Header parts", option: `${c.name} ${c.on ? "off" : "on"}`, status: "clicked", effect: !same(before, after), draftKeys: di0 === di1 ? [] : ["header"] })
-          await loc.click({ force: true }); const back = await sigOf(); R({ control: "Header parts", option: `${c.name} back`, status: "restored", effect: same(back, before) })
+          await loc.click({ force: true }); const back = await sigOf(); R({ control: "Header parts", option: `${c.name} back`, status: "restored", effect: same(back, before), ...(same(back, before) ? {} : { before, back }) })
         }
       }
     }
@@ -121,7 +121,10 @@ async function run(w, v) {
     // Header and Charts open beside the panel: one button each (aria-expanded)
     const openers = async () => inspector.locator("button[aria-expanded]:not([data-slot=accordion-trigger])").evaluateAll((els) => els.map((e, i) => ({ i, t: e.textContent.trim(), w: e.getBoundingClientRect().width })).filter((x) => x.w > 0 && !["", "Layout", "Content", "Style", "Visibility"].includes(x.t)))
     for (const o of await openers()) {
-      await inspector.locator("button[aria-expanded]:not([data-slot=accordion-trigger])").nth(o.i).click({ force: true }); await page.waitForTimeout(500)
+      // A control another panel hides while it is open (the list of a widget's items, under a Header dialog) cannot be clicked by a person either: noted, not an error.
+      const opener = inspector.locator("button[aria-expanded]:not([data-slot=accordion-trigger])").nth(o.i)
+      if (!(await opener.isVisible())) { R({ control: o.t || "-", option: "-", status: "opener-hidden" }); continue }
+      await opener.click({ force: true }); await page.waitForTimeout(500)
       await processGroups()
     }
     await page.keyboard.press("Escape").catch(() => {})
@@ -157,7 +160,7 @@ async function run(w, v) {
         const b = await sigOf(); const d0 = JSON.stringify(await draftItem())
         await pick(o); const a = await sigOf(); const d1 = JSON.stringify(await draftItem())
         R({ control: cb.label, option: o, status: "clicked", effect: !same(b, a), draftKeys: d0 === d1 ? [] : ["props"] })
-        await pick(original); const back = await sigOf(); R({ control: cb.label, option: `${o} -> ${original}`, status: "restored", effect: same(back, b) })
+        await pick(original); const back = await sigOf(); R({ control: cb.label, option: `${o} -> ${original}`, status: "restored", effect: same(back, b), ...(same(back, b) ? {} : { before: b, back }) })
       }
     }
     // the coach's own note
@@ -188,7 +191,9 @@ async function run(w, v) {
 }
 
 const todo = []
-for (const w of catalog) { if (w.core || (only && !only.includes(w.type))) continue; for (const v of layoutsToo ? w.variants : w.variants.slice(0, 1)) todo.push([w, v]) }
+// The page title is not a card: in the editor it is drawn with the editor's own chrome (a block with a "own style" chip, not the student's H1), so neither its restore nor its student page can match a card signature.
+const NOT_A_CARD = new Set(["page-header"])
+for (const w of catalog) { if (w.core || NOT_A_CARD.has(w.type) || (only && !only.includes(w.type))) continue; for (const v of layoutsToo ? w.variants : w.variants.slice(0, 1)) todo.push([w, v]) }
 const queue = [...todo]; let done = 0
 await Promise.all(Array.from({ length: Number(args.concurrency || 2) }, async () => { while (queue.length) { const [w, v] = queue.shift(); await run(w, v); process.stdout.write(`\r${++done}/${todo.length} `) } }))
 await browser.close(); console.log()

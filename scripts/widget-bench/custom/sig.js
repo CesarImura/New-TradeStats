@@ -13,8 +13,9 @@ window.__sig = () => {
     const c = getComputedStyle(n)
     if (c.display === "contents") { for (const k of n.childNodes) walk(k, parts); return }
     count++
+    // (An empty style="" is what a part shown again by Drop leaves behind: no difference on screen, the computed styles below carry the real ones.)
     // every attribute (href, src, aria-label, title, data-*), so a link target or a label that changes counts
-    const at = n.getAttributeNames().filter((a) => a !== "id" && a !== "data-emphasis" && a !== "data-spotlight").sort().map((a) => a + "=" + n.getAttribute(a).replace(/_r_[0-9a-z]+_/g, "_r_").replace(/(opacity|transform): [^;]+;?/g, "")).map((kv) => (kv.startsWith("style=") ? "style=" + kv.slice(6).split(";").map((d) => d.trim()).filter(Boolean).sort().join(";") : kv)).join(" ")
+    const at = n.getAttributeNames().filter((a) => a !== "id" && a !== "data-emphasis" && a !== "data-spotlight" && !(a === "style" && !n.getAttribute(a).trim())).sort().map((a) => a + "=" + n.getAttribute(a).replace(/_r_[0-9a-z]+_/g, "_r_").replace(/(opacity|transform): [^;]+;?/g, "")).map((kv) => (kv.startsWith("style=") ? "style=" + kv.slice(6).split(";").map((d) => d.trim()).filter(Boolean).sort().join(";") : kv)).join(" ")
     const svg = n.namespaceURI && n.namespaceURI.includes("svg")
     parts.html.push("<" + n.tagName + clean(" " + at) + ">")
     parts.style.push(P.map((p) => c[p]).join("|"))
@@ -24,7 +25,7 @@ window.__sig = () => {
       const tags = {}, paints = new Set()
       for (const e of all) {
         tags[e.tagName] = (tags[e.tagName] || 0) + 1
-        for (const a of ["fill", "stroke", "stroke-width", "stroke-dasharray", "rx", "class"]) { const v = e.getAttribute(a); if (v) paints.add(a + "=" + v.replace(/_r_[0-9a-z]+_/g, "_r_")) }
+        for (const a of ["fill", "stroke", "stroke-width", "stroke-dasharray", "rx", "class"]) { const v = e.getAttribute(a); if (v) paints.add(a + "=" + v.replace(/_r_[0-9a-z]+_/g, "_r_").replace(/\d+\.\d+/g, (m) => String(Math.round(Number(m))))) }
         const cs = getComputedStyle(e); paints.add("cf=" + cs.fill + "|cs=" + cs.stroke)
       }
       parts.html.push(clean(JSON.stringify(tags) + [...paints].sort().join(";")) + n.textContent)
@@ -41,7 +42,10 @@ window.__sig = () => {
     // the card itself (the editor wraps it in its own chips and outline: those are not the widget)
     const card = window.__SIG_WHOLE ? null : el.querySelector("[data-slot=widget]")
     for (const k of card ? [card] : el.childNodes) walk(k, parts)
-    res[el.dataset.widgetId] = { html: fnv(clean(parts.html.join(""))), style: fnv(parts.style.join(";")), h: el.offsetHeight, w: el.offsetWidth, text: fnv(el.innerText), n: count, ...(window.__SIG_RAW ? { raw: parts.html.join("") } : {}) }
+    // A clock or a live price changes every second: for those widgets the digits are not compared (what is drawn, and where, still is).
+    const live = /(^|-)(next-live|countdown|open-positions)$/.test(el.dataset.widgetId)
+    const digits = (t) => (live ? t.replace(/[+\u2212-]?€?[\d.,]+/g, "#").replace(/var\(--(profit|loss)-text\)/g, "var(--pl)") : t)
+    res[el.dataset.widgetId] = { html: fnv(digits(clean(parts.html.join("")))), style: fnv((live ? parts.style.map((x) => x.split("|").filter((_, i) => P[i] !== "width" && P[i] !== "color").join("|")) : parts.style).join(";")), h: el.offsetHeight, w: el.offsetWidth, ds: (el.querySelector("[data-slot=widget]") || el).dataset.detailShown || "", text: fnv(digits(el.innerText)), n: count, ...(window.__SIG_RAW ? { raw: digits(parts.html.join("")) } : {}) }
   }
   return res
 }
