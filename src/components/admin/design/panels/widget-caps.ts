@@ -75,7 +75,7 @@ const OFF: Record<string, Off[]> = {
   "links:list": ["less", "quiet"],
   "links:row": ["less", "more", "note", "quiet", "title", "title-style"],
   "my-rank:hero": ["description", "icon", "title-style"],
-  "my-rank:leaderboard": ["less", "more"],
+  "my-rank:leaderboard": ["less"],
   "next-live:split": ["chart", "description", "icon"],
   "next-live:week": ["chart"],
   "partner-links:chips": ["note", "title", "title-style"],
@@ -107,7 +107,7 @@ const OFF: Record<string, Off[]> = {
 }
 
 /** Layouts that draw no room for the coach's own text, button and picture (no Note in their card). */
-const NO_NOTE = ["announcement:media", "book-call:split", "button", "coach-profile:compact", "coach-profile:media", "continue-lesson:media", "drawdown:hero", "embed", "hero", "image", "journal-pnl:hero", "my-rank", "next-live:split", "rules-followed:hero", "upgrade:split"]
+const NO_NOTE = ["announcement:media", "book-call:split", "button", "coach-profile:compact", "coach-profile:media", "continue-lesson:media", "drawdown:hero", "embed", "hero", "image", "journal-pnl:hero", "my-rank:hero", "next-live:split", "rules-followed:hero", "upgrade:split"]
 
 export type WidgetCaps = {
   /** The levels of Shows that look different; fewer than two and the row is left out. */
