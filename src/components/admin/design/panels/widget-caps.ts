@@ -1,28 +1,29 @@
 import type { Detail, Emphasis } from "@/lib/widgets/layout"
 import { starStyleOf, type CoachTheme, type HeaderForm, type TemplateId, type WidgetHeader } from "@/lib/theme/types"
 import { styleParts } from "@/components/widgets/registry"
+import { NOTE_IGNORED } from "@/components/widgets/note-extra"
 
 /*
  * What the inspector offers a widget: only the choices that change it. Every option was clicked on every layout of
  * every widget and the card compared before and after (Terminal, Atelier and Pulse, light and dark); a choice a layout
- * ignores is listed in OFF (and NO_NOTE), by widget ("faq") or by layout ("faq:row"). A new widget offers everything until it is
+ * ignores is listed in OFF (a note: NOTE_IGNORED in note-extra.ts), by widget ("faq") or by layout ("faq:row"). A new widget offers everything until it is
  * checked the same way. The header's icon and description also depend on the title style and on Shows (WCard), so
  * those two follow headerParts below.
  */
 
-type Off = "less" | "more" | "quiet" | "star" | "title-style" | "header" | "title" | "icon" | "description" | "chart" | "figure" | "note" | "value"
+type Off = "less" | "more" | "quiet" | "star" | "title-style" | "header" | "title" | "icon" | "description" | "chart" | "figure" | "value"
 
 const OFF: Record<string, Off[]> = {
   "ai-ask:chat": ["chart"],
   "ai-ask:insight": ["chart"],
   "ai-ask:search": ["quiet"],
-  "announcement:line": ["chart", "note", "title", "title-style"],
+  "announcement:line": ["chart", "title", "title-style"],
   "announcement:media": ["chart", "header", "quiet"],
   "announcement:plain": ["chart"],
   "announcement:post": ["chart", "quiet"],
   "banner:headline": ["description", "icon", "more", "value"],
   "banner:picture": ["description", "icon", "value"],
-  "banner:slim": ["header", "note", "quiet"],
+  "banner:slim": ["header", "quiet"],
   "book-call:allowance": ["less"],
   "book-call:split": ["chart", "header"],
   "button:filled": ["icon", "less", "more", "quiet", "title", "title-style", "value"],
@@ -35,15 +36,15 @@ const OFF: Record<string, Off[]> = {
   "coach-profile:compact": ["figure", "header"],
   "coach-profile:hero": ["value"],
   "coach-profile:media": ["description", "icon", "quiet", "title", "title-style", "value"],
-  "community-feed:line": ["note", "title", "title-style"],
-  "continue-lesson:card": ["header", "note"],
+  "community-feed:line": ["title", "title-style"],
+  "continue-lesson:card": ["header"],
   "continue-lesson:media": ["chart", "description", "icon", "title", "title-style", "value"],
   "countdown:big": ["less", "quiet", "value"],
   "countdown:card": ["value"],
-  "countdown:line": ["header", "more", "note", "quiet"],
+  "countdown:line": ["header", "more", "quiet"],
   "course-progress:rings": ["chart", "description"],
   "course-progress:unlocks": ["description", "icon", "less"],
-  "discord:banner": ["chart", "figure", "note", "quiet", "title", "title-style"],
+  "discord:banner": ["chart", "figure", "quiet", "title", "title-style"],
   "discord:heatmap": ["chart"],
   "discord:join": ["chart"],
   "discord:online": ["chart"],
@@ -56,10 +57,10 @@ const OFF: Record<string, Off[]> = {
   "embed:row": ["header", "more", "quiet"],
   "embed:video": ["header", "less", "more", "quiet"],
   "faq:list": ["less", "quiet", "value"],
-  "faq:row": ["less", "more", "note", "quiet", "title", "title-style"],
+  "faq:row": ["less", "more", "quiet", "title", "title-style"],
   "faq:two": ["less", "value"],
   "first-week:path": ["chart"],
-  "first-week:ring": ["chart", "note", "title", "title-style", "value"],
+  "first-week:ring": ["chart", "title", "title-style", "value"],
   "hero:featured": ["header"],
   "hero:image": ["header", "more"],
   "hero:split": ["description", "icon", "more", "title", "title-style", "value"],
@@ -70,15 +71,15 @@ const OFF: Record<string, Off[]> = {
   "journal-pnl:curve": ["value"],
   "journal-pnl:hero": ["description", "icon", "title-style"],
   "latest-downloads:list": ["quiet", "value"],
-  "latest-downloads:row": ["header", "more", "note", "quiet"],
+  "latest-downloads:row": ["header", "more", "quiet"],
   "latest-downloads:tiles": ["value"],
   "links:list": ["less", "quiet"],
-  "links:row": ["less", "more", "note", "quiet", "title", "title-style"],
+  "links:row": ["less", "more", "quiet", "title", "title-style"],
   "my-rank:hero": ["description", "icon", "title-style"],
   "my-rank:leaderboard": ["less"],
   "next-live:split": ["chart", "description", "icon"],
   "next-live:week": ["chart"],
-  "partner-links:chips": ["note", "title", "title-style"],
+  "partner-links:chips": ["title", "title-style"],
   "partner-links:list": ["quiet"],
   "partner-links:tiles": ["quiet"],
   "pnl-by-instrument:table": ["quiet"],
@@ -96,7 +97,7 @@ const OFF: Record<string, Off[]> = {
   "text:quote": ["less", "value"],
   "text:steps": ["value"],
   "trading-streak:streak": ["value"],
-  "upgrade:banner": ["chart", "figure", "header", "note", "quiet"],
+  "upgrade:banner": ["chart", "figure", "header", "quiet"],
   "upgrade:compare": ["chart"],
   "upgrade:split": ["chart", "figure", "header"],
   "watchlist:list": ["value"],
@@ -105,9 +106,6 @@ const OFF: Record<string, Off[]> = {
   "win-rate-trend:compare": ["value"],
   "win-rate-trend:trend": ["less", "value"],
 }
-
-/** Layouts that draw no room for the coach's own text, button and picture (no Note in their card). */
-const NO_NOTE = ["announcement:media", "book-call:split", "button", "coach-profile:compact", "coach-profile:media", "continue-lesson:media", "drawdown:hero", "embed", "hero", "image", "journal-pnl:hero", "my-rank:hero", "next-live:split", "rules-followed:hero", "upgrade:split"]
 
 export type WidgetCaps = {
   /** The levels of Shows that look different; fewer than two and the row is left out. */
@@ -153,7 +151,8 @@ export function capsOf(type: string, variant: string, theme?: Pick<CoachTheme, "
     titleStyle: !off.has("header") && !off.has("title-style"),
     chart: parts.chart && !off.has("chart"),
     figure: parts.figure && !off.has("figure"),
-    note: !off.has("note") && !NO_NOTE.includes(type) && !NO_NOTE.includes(`${type}:${variant}`),
+    // The layouts that draw no note are the ones that get no room for it (note-extra.ts): one list.
+    note: !NOTE_IGNORED.has(`${type}|${variant}`),
     title: !off.has("title"),
     value: !off.has("value"),
     icon: !off.has("icon"),
