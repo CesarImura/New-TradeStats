@@ -562,7 +562,8 @@ export const BASE_WIDGETS: WidgetDef[] = [
       // Only the With text layout shows a text.
       { key: "text", label: "Text", type: "textarea", variants: ["card"] },
       { key: "button", label: "Button text", type: "text", placeholder: "Save my spot" },
-      { key: "target", label: "Button opens", type: "select", options: PAGE_TARGETS },
+      // Unset, the button opens the Calendar (Countdown, content.tsx), so that is the option shown first.
+      { key: "target", label: "Button opens", type: "select", options: [PAGE_TARGETS[1], PAGE_TARGETS[0], ...PAGE_TARGETS.slice(2)] },
     ],
     defaultW: 4,
     minW: 2,
