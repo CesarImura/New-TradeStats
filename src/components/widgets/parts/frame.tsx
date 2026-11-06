@@ -42,9 +42,9 @@ export function WidgetFrame({
   children: React.ReactNode
 }) {
   const box = useRef<HTMLDivElement>(null)
-  // What the card says: its layout, the widget's own fields, the coach's note, the header parts. When it changes the level is worked out again.
+  // What the card says: its layout, the widget's own fields, the coach's note, the header parts, how much it stands out (Star draws bigger numbers). When it changes the level is worked out again.
   const own = isValidElement<{ variant?: string; props?: unknown }>(children) ? [children.props.variant, children.props.props] : []
-  const shown = useFitDetail(detail, box, JSON.stringify([own, note, header]))
+  const shown = useFitDetail(detail, box, JSON.stringify([own, note, header, emphasis]))
   return (
     <FrameCtx.Provider value={{ emphasis, detail: shown, header, note, core, fixed }}>
       {/* Outside the live page widgets show interactions only: links and buttons keep hover, focus and press, but never leave the page. */}
@@ -86,6 +86,20 @@ function useFitDetail(detail: Detail, box: React.RefObject<HTMLDivElement | null
     }, 400)
     return () => clearTimeout(t)
   }, [contentKey, detail])
+  // The coach's fonts load late: a level dropped on the first measurement, with the fallback font's wider letters, is worked out again from the chosen one once they are in.
+  const latest = useRef(detail)
+  latest.current = detail
+  useEffect(() => {
+    let live = true
+    document.fonts?.ready.then(() => {
+      if (!live) return
+      setShown(latest.current)
+      setTick((n) => n + 1)
+    })
+    return () => {
+      live = false
+    }
+  }, [])
   useLayoutEffect(() => {
     const card = box.current?.querySelector<HTMLElement>("[data-slot=widget]")
     if (!card) return
@@ -95,6 +109,8 @@ function useFitDetail(detail: Detail, box: React.RefObject<HTMLDivElement | null
     const h = card.clientHeight
     const step = () => {
       const i = LEVELS.indexOf(shown)
+      // A card the grid has not given its height yet (the Design canvas lays out after the first paint) has everything "cut": wait for its size.
+      if (!card.clientHeight) return
       if (i > 0 && cut(card)) setShown(LEVELS[i - 1])
     }
     // Measured once things settle: lists pick their row count and parts give way first, so a level is only
