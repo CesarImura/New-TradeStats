@@ -1,5 +1,6 @@
 "use client"
 
+import { SizeObserver } from "../parts/resizing"
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import useEmblaCarousel from "embla-carousel-react"
@@ -91,7 +92,7 @@ function Row({ items, shape, over, auto, every }: { items: MediaItem[]; shape: S
     const el = ref.current
     if (!el) return
     measure()
-    const ro = new ResizeObserver(measure)
+    const ro = new SizeObserver(measure)
     ro.observe(el)
     return () => ro.disconnect()
   }, [measure, items.length])

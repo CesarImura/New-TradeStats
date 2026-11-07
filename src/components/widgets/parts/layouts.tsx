@@ -70,7 +70,7 @@ export function HeroCard({
           {chip && h.value && <span className="hidden shrink-0 @[13rem]:inline-flex">{chip}</span>}
         </div>
       )}
-      <div className={cn("flex min-h-0 flex-1 flex-col justify-end gap-1 pb-[calc(0.875rem*var(--density,1))]", PAD)}>
+      <div className={cn("-mt-1.5 flex min-h-0 flex-1 flex-col justify-end gap-1 overflow-hidden pt-1.5 pb-[calc(0.875rem*var(--density,1))]", PAD)}>
         {label && <span className={cn(TYPE.small, "truncate")}>{label}</span>}
         <Num value={value} unit={unit} delta={delta} deltaTone={deltaTone} />
         {line && <p className={cn(TYPE.body, "line-clamp-2 text-muted-foreground")}>{line}</p>}

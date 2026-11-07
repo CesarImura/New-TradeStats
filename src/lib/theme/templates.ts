@@ -3,7 +3,7 @@ import type { CoachTheme, TemplateId } from "./types"
 import data from "./template-data.json"
 
 /** A page as a template stores it: widgets without ids (they get ids per coach when used). */
-export type TemplatePage = { items: Omit<WidgetInstance, "id">[] }
+export type TemplatePage = { items: Omit<WidgetInstance, "id">[]; /** Saved as tiles (see PageLayout.tiles). */ tiles?: boolean }
 
 export type TemplateDef = {
   name: string

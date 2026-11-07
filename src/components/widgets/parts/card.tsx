@@ -1,5 +1,6 @@
 "use client"
 
+import { SizeObserver } from "./resizing"
 import { useShouldReduceMotion, useTempoTransition } from "@animate-ui/react/utils/motion"
 import { motion } from "motion/react"
 import { useContext, useLayoutEffect, useRef, useState } from "react"
@@ -175,7 +176,7 @@ function useDropToFit(ref: React.RefObject<HTMLDivElement | null>) {
     // resize (a card made narrower, in the editor or in a window) can be taken before its layout has settled and hide parts that fit, and
     // with the size unchanged afterwards nothing would bring them back (a widget taken from 3 columns to 1 lost its stats for good).
     let settle = 0
-    const ro = new ResizeObserver(() => {
+    const ro = new SizeObserver(() => {
       fit()
       clearTimeout(settle)
       settle = window.setTimeout(() => {
@@ -249,7 +250,9 @@ export function cut(card: HTMLElement) {
     if (r.height < 1 || r.width < 1) continue
     // Every box that clips it, up to the card: it must fit inside all of them. A list that scrolls is fine as it is.
     let limit = Infinity
+    let floor = -Infinity
     let right = Infinity
+    let wrapRight = Infinity
     let scrolls = false
     for (let box: HTMLElement | null = el.parentElement; box; box = box === card ? null : box.parentElement) {
       const o = getComputedStyle(box)
@@ -263,13 +266,69 @@ export function cut(card: HTMLElement) {
       // A box with no padding (a list that clips its rows) has no padding to keep, so the 2px slack does not apply: only the 1px for rounding below.
       const pad = parseFloat(o.paddingBottom)
       limit = Math.min(limit, b.bottom - k * (box === card ? pad / 2 : pad > 0 ? pad + parseFloat(o.borderBottomWidth) - 2 : parseFloat(o.borderBottomWidth)))
+      // Content centred in a box too short for it spills over the top as well as the bottom: that is cut too.
+      const padTop = parseFloat(o.paddingTop)
+      floor = Math.max(floor, b.top + k * (box === card ? padTop / 2 : padTop > 0 ? padTop + parseFloat(o.borderTopWidth) - 2 : parseFloat(o.borderTopWidth)))
       right = Math.min(right, b.right)
+      // A column that wraps (a Fit list, the Split layouts) moves what does not fit into a column to the side: whole rows out of sight are
+      // fine, a row half in view is cut.
+      if (o.flexDirection === "column" && o.flexWrap.startsWith("wrap")) wrapRight = Math.min(wrapRight, b.right)
     }
     // Rows a Fit list wraps out of sight sit to the right of its box.
+    if (!scrolls && tag !== "svg" && tag !== "IMG" && r.left < wrapRight - 4 * k && r.right > wrapRight + 4 * k) return true
     if (scrolls || r.left >= right - k) continue
-    if (r.bottom > limit + k) return true
+    // A text's box is its font's content area, taller than its letters: the top may lose a quarter em without cutting one.
+    const lean = tag === "svg" || tag === "BUTTON" || tag === "IMG" || tag === "INPUT" ? 0 : 0.25 * parseFloat(getComputedStyle(el).fontSize)
+    if (r.bottom > limit + k || r.top < floor - k - k * lean) return true
+  }
+  return spills(card)
+}
+
+/**
+ * A box that does not clip, with more content than it can hold (a centred column in a box too short for it spills over both of its
+ * neighbours, a stack of rows squeezed by a fixed footer): nothing is cut, so the text check above sees nothing, but its content lies
+ * over what is next to it.
+ */
+function spills(card: HTMLElement) {
+  const k = scaleOf(card)
+  const rects = (el: Element, out: DOMRect[]) => {
+    for (const c of el.children) {
+      const o = getComputedStyle(c)
+      if (o.display === "none" || o.position === "absolute" || o.position === "fixed" || c.hasAttribute("data-dropped") || c.matches("[data-rolling], [data-clip], .sr-only")) continue
+      if (o.display === "contents") rects(c, out)
+      else {
+        const r = c.getBoundingClientRect()
+        if (r.height > 0 && r.width > 0) out.push(r)
+      }
+    }
+    return out
+  }
+  for (const el of card.querySelectorAll<HTMLElement>("*")) {
+    if (el === card || !el.children.length) continue
+    const o = getComputedStyle(el)
+    if (o.overflowY !== "visible" || o.display === "contents" || o.display.startsWith("inline") || o.position === "absolute" || el.closest("[data-dropped], [data-rolling], [data-clip], svg")) continue
+    const kids = rects(el, [])
+    if (!kids.length) continue
+    const r = el.getBoundingClientRect()
+    // A text's box is taller than its line (the font's content area): up to 8px over is not a spill.
+    const tol = k * Math.max(8, 0.3 * parseFloat(o.fontSize))
+    if (Math.min(...kids.map((q) => q.top)) < r.top - tol || Math.max(...kids.map((q) => q.bottom)) > r.bottom + tol) {
+      // A list that scrolls, or the track of a carousel: its own overflow is meant.
+      let meant = false
+      for (const b of ancestorsOf(el, card)) {
+        const y = getComputedStyle(b).overflowY
+        if (y === "auto" || y === "scroll") meant = true
+      }
+      if (!meant) return true
+    }
   }
   return false
+}
+
+const ancestorsOf = (el: HTMLElement, card: HTMLElement) => {
+  const out: HTMLElement[] = []
+  for (let b = el.parentElement; b && b !== card; b = b.parentElement) out.push(b)
+  return out
 }
 
 /**
@@ -309,7 +368,7 @@ export function useFitRows<T extends HTMLElement>(row: number, { min = 1, item }
       if (more > 0) setN((x) => (x !== undefined && rows.length < x ? x : rows.length + more))
     }
     check.current = fit
-    const ro = new ResizeObserver(fit)
+    const ro = new SizeObserver(fit)
     ro.observe(el)
     return () => ro.disconnect()
   }, [row, min, item])
@@ -329,7 +388,7 @@ export function FitText({ lines, className, children }: { lines: number; classNa
   useLayoutEffect(() => {
     const el = ref.current
     if (!el || !fixed) return setN(lines)
-    const ro = new ResizeObserver(() => {
+    const ro = new SizeObserver(() => {
       const lh = parseFloat(getComputedStyle(el).lineHeight) || 20
       // Never a cut line: as many whole lines as the box holds (at least one; a box too short for one makes the card drop it).
       setN(Math.max(1, Math.floor((el.clientHeight + 1) / lh)))

@@ -1,5 +1,6 @@
 "use client"
 
+import { SizeObserver } from "../parts/resizing"
 import { useLayoutEffect, useRef } from "react"
 import Link from "next/link"
 import { ArrowRight, ArrowUpRight, Handshake, Image as ImageIcon, Play, Quote, Search, Sparkles, Type, Video } from "@/components/icons"
@@ -87,7 +88,7 @@ function VideoFit({ length, className }: { length: string; className?: string })
   useLayoutEffect(() => {
     const el = box.current
     if (!el) return
-    const ro = new ResizeObserver(() => {
+    const ro = new SizeObserver(() => {
       // Measured from the box as the CSS alone draws it: a cap left from an earlier size would hold the box (and so its width) at that
       // size when the card grows, and the same card then ended at a different size after a resize than after a reload.
       el.style.maxHeight = ""

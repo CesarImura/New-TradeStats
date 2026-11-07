@@ -1,5 +1,6 @@
 "use client"
 
+import { SizeObserver } from "../parts/resizing"
 import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Lock, Play } from "@/components/icons"
@@ -133,7 +134,7 @@ function PosterTitle({ text, sizes, lines }: { text: string; sizes: number[]; li
       setSize(sizes[sizes.length - 1])
     }
     fit()
-    const ro = new ResizeObserver(fit)
+    const ro = new SizeObserver(fit)
     ro.observe(el.parentElement ?? el)
     return () => ro.disconnect()
     // sizes is a literal per call site; its contents are what matter

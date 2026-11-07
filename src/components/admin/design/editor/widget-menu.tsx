@@ -17,10 +17,9 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import { widthOf } from "@/components/widgets/page-renderer"
-import { getWidget, lookOf, widthsFor } from "@/components/widgets/registry"
+import { getWidget, lookOf } from "@/components/widgets/registry"
 import type { Detail, Emphasis, WidgetInstance } from "@/lib/widgets/layout"
-import { DETAIL, EMPHASIS, WIDTH } from "../panels/builder-panels"
+import { DETAIL, EMPHASIS } from "../panels/builder-panels"
 
 /** Right-click menu for a widget on the grid. */
 export function WidgetMenu({
@@ -30,7 +29,6 @@ export function WidgetMenu({
   onLook,
   onEmphasis,
   onDetail,
-  onWidth,
   onDuplicate,
   onMove,
   onPhone,
@@ -39,11 +37,9 @@ export function WidgetMenu({
   w: WidgetInstance
   children: React.ReactNode
   onOpen: () => void
-  onLook: (variant: string, minH: number) => void
+  onLook: (variant: string) => void
   onEmphasis: (emphasis: Emphasis) => void
   onDetail: (detail: Detail) => void
-  /** Columns: 4 (one), 8 (two) or 12 (the page's full width), as the layout allows (widthsFor). */
-  onWidth: (cols: number) => void
   onDuplicate: () => void
   onMove: (where: "top" | "bottom") => void
   onPhone: (hide: boolean) => void
@@ -65,7 +61,7 @@ export function WidgetMenu({
             <ContextMenuSub>
               <ContextMenuSubTrigger>Layout</ContextMenuSubTrigger>
               <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
-                <ContextMenuRadioGroup value={look.value} onValueChange={(v) => onLook(String(v), def.variants.find((x) => x.value === v)?.minH ?? 1)}>
+                <ContextMenuRadioGroup value={look.value} onValueChange={(v) => onLook(String(v))}>
                   {def.variants.map((v) => (
                     <ContextMenuRadioItem key={v.value} value={v.value}>
                       {v.label}
@@ -99,20 +95,6 @@ export function WidgetMenu({
               </ContextMenuRadioGroup>
             </ContextMenuSubContent>
           </ContextMenuSub>
-          {!def.core && w.type !== "page-header" && widthsFor(def, w.variant).length > 1 && (
-            <ContextMenuSub>
-              <ContextMenuSubTrigger>Width</ContextMenuSubTrigger>
-              <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
-                <ContextMenuRadioGroup value={widthOf(w)} onValueChange={(v) => onWidth(Number(v))}>
-                  {WIDTH.map((o) => (
-                    <ContextMenuRadioItem key={o.value} value={o.value} disabled={!widthsFor(def, w.variant).includes(o.value)}>
-                      {o.label}
-                    </ContextMenuRadioItem>
-                  ))}
-                </ContextMenuRadioGroup>
-              </ContextMenuSubContent>
-            </ContextMenuSub>
-          )}
         </ContextMenuGroup>
         <ContextMenuSeparator />
         <ContextMenuGroup>

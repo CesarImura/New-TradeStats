@@ -1,5 +1,6 @@
 "use client"
 
+import { SizeObserver } from "./resizing"
 import { useId, useLayoutEffect, useRef, useState } from "react"
 import { useFrame } from "./frame"
 
@@ -68,7 +69,7 @@ export function useFitGap<T extends HTMLElement>({ min = 4, base = 12, max = 20 
       setGap((g) => (g === px ? g : px))
     }
     fit()
-    const ro = new ResizeObserver(fit)
+    const ro = new SizeObserver(fit)
     ro.observe(el)
     return () => ro.disconnect()
   }, [fixed, min, base, max])

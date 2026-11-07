@@ -5,14 +5,13 @@ import { toast } from "sonner"
 import { ArrowLeft, Check, ChevronRight, GripVertical, ImagePlus, Plus } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { fitWidth, getWidget, librarySections, lookOf, pageWidth, settingApplies, settingsFor, widthsFor, type WidgetDef } from "@/components/widgets/registry"
+import { getWidget, librarySections, lookOf, settingApplies, settingsFor, type WidgetDef } from "@/components/widgets/registry"
 import type { Coach } from "@/lib/data/coaches"
 import { pictureFrom } from "@/lib/images"
-import { COLS, type Detail, type Emphasis, type PageId, type WidgetInstance, type WidgetPhase } from "@/lib/widgets/layout"
+import { type Detail, type Emphasis, type PageId, type WidgetInstance, type WidgetPhase } from "@/lib/widgets/layout"
 import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { Field, Segmented } from "../fields/controls"
-import { card } from "../states"
 import { ThumbCard, WidgetThumb, dragGhost, galleryWidget } from "../thumbs/widget-thumb"
 import { Flyout } from "./flyout"
 import { usePanelSearch } from "./settings-panel"
@@ -27,13 +26,6 @@ export const DETAIL: { value: Detail; label: string; hint: string }[] = [
   { value: "compact", label: "Compact", hint: "Just the headline number or item." },
   { value: "standard", label: "Standard", hint: "The headline plus its main context." },
   { value: "detailed", label: "Detailed", hint: "Everything this widget can show." },
-]
-
-/** Page widths (grid columns, see PAGE_WIDTHS) and what each does on every screen. Shared with the grid's right-click menu. */
-export const WIDTH: { value: number; label: string; hint: string }[] = [
-  { value: 4, label: "One column", hint: "Desktop: a third of the page. Tablet: half (the full width when the side menu leaves room for one column). Phone: the full width." },
-  { value: 8, label: "Two columns", hint: "Desktop: two thirds, the next widgets beside and under it. Tablet: like One column. Phone: the full width." },
-  { value: COLS, label: "Full width", hint: "The whole page on every screen." },
 ]
 
 /** Visibility rules: the phases of a student's life a widget can be limited to. */
@@ -133,42 +125,8 @@ const SHORT: Record<string, string> = {
 }
 export const shortOf = (d: WidgetDef) => SHORT[d.type] ?? d.description.split(/,|:| e\.g\./)[0]
 
-/** Width as pictures: the page's three columns, with the ones the widget takes filled. Widths the layout can't take are off. */
-export function SizePicker({ value, allowed, onChange }: { value: number; allowed: number[]; onChange: (w: number) => void }) {
-  return (
-    <div role="radiogroup" aria-label="Width" className="grid grid-cols-3 gap-2">
-      {WIDTH.map((o) => {
-        const on = value === o.value
-        const ok = allowed.includes(o.value)
-        const span = o.value / 4
-        return (
-          <button
-            key={o.value}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            disabled={!ok}
-            title={ok ? o.hint : "This layout can't take this width"}
-            onClick={() => onChange(o.value)}
-            className={cn(
-              "grid gap-1.5 p-2 text-left disabled:opacity-40 disabled:active:scale-100",
-              card(on),
-            )}
-          >
-            <span aria-hidden className="grid h-6 grid-cols-3 gap-[3px]">
-              {[0, 1, 2].map((i) => (
-                <span key={i} className={cn("rounded-[3px] transition-colors duration-150", i < span ? (on ? "bg-[var(--ts-interactive)]" : "bg-muted-foreground/60") : "border border-dashed border-muted-foreground/40")} />
-              ))}
-            </span>
-            <span className="text-[0.6875rem] leading-tight font-medium">{o.label}</span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
 /** What a widget from the gallery is added with: chosen in its details before it goes on the page. */
+/** `w` is always the whole page: a card is added in a row of its own. */
 export type AddOptions = { variant: string; w: number; detail: Detail; props: Record<string, string | boolean> }
 
 /**
@@ -367,21 +325,19 @@ function WidgetDetails({
   back?: string
 }) {
   const [variant, setVariant] = useState(def.variants[0].value)
-  const [w, setW] = useState(fitWidth(def, def.variants[0].value, def.defaultW))
   const [detail, setDetail] = useState<Detail>("standard")
   const [props, setProps] = useState<Record<string, string | boolean>>({})
-  const widths = widthsFor(def, variant)
   const settings = settingsFor(def, variant)
   const choices = settings.filter((s) => (s.type === "toggle" || s.type === "select") && settingApplies(def, s, props))
   const top = useRef<HTMLDivElement>(null)
-  // The preview and each layout drag onto the page as chosen here (a layout with its own width, if the size does not fit it).
+  // The preview and each layout drag onto the page as chosen here (a new card goes in a row of its own, the whole page wide).
   const drag = (v: string) => ({
     draggable: true,
     onDragStart: (e: React.DragEvent) => {
       e.dataTransfer.setData("text/plain", def.type)
       e.dataTransfer.effectAllowed = "copy"
       dragGhost(e, def.name)
-      onDrag({ variant: v, w: fitWidth(def, v, w), detail, props })
+      onDrag({ variant: v, w: 12, detail, props })
     },
     onDragEnd: () => onDrag(null),
   })
@@ -420,12 +376,6 @@ function WidgetDetails({
             or add another.
           </p>
         )}
-        {def.type !== "page-header" && widths.length > 1 && (
-          <div className="grid gap-2">
-            <span className="text-[0.8125rem] font-medium">Size</span>
-            <SizePicker value={pageWidth(w)} allowed={widths} onChange={setW} />
-          </div>
-        )}
         {def.variants.length > 1 && (
           <div className="grid gap-2">
             <span className="text-[0.8125rem] font-medium">Layout</span>
@@ -438,15 +388,11 @@ function WidgetDetails({
                   tabIndex={0}
                   aria-checked={variant === v.value}
                   aria-label={v.label}
-                  onClick={() => {
-                    setVariant(v.value)
-                    setW(fitWidth(def, v.value, w))
-                  }}
+                  onClick={() => setVariant(v.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault()
                       setVariant(v.value)
-                      setW(fitWidth(def, v.value, w))
                     }
                   }}
                   selected={variant === v.value}
@@ -489,7 +435,7 @@ function WidgetDetails({
         <Button variant="outline" className="flex-1" onClick={onBack}>
           Cancel
         </Button>
-        <Button className="flex-[2]" onClick={() => onAdd({ variant, w, detail, props })}>
+        <Button className="flex-[2]" onClick={() => onAdd({ variant, w: 12, detail, props })}>
           <Plus /> Add to {pageLabel}
         </Button>
       </div>

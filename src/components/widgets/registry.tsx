@@ -113,11 +113,11 @@ export function lookOf(def: WidgetDef, variant?: string) {
   return def.variants.find((v) => v.value === variant) ?? def.variants[0]
 }
 
-/** The widths a page offers, in grid columns: one column, two of three, the whole page. */
-export const PAGE_WIDTHS = [4, 8, COLS]
+/** The widths a page offers, in 12ths of the page: a quarter, a third, a half, two thirds, three quarters, the whole page. */
+export const PAGE_WIDTHS = [3, 4, 6, 8, 9, COLS]
 
-/** The page width a saved `w` draws at: 4 to 7 is one column, 8 to 11 two of three, 12 the whole page. */
-export const pageWidth = (w: number) => (w >= COLS ? COLS : w >= 8 ? 8 : 4)
+/** The page width a saved `w` draws at: the nearest of PAGE_WIDTHS (layouts saved before the grid are converted on load, see legacyWidth). */
+export const pageWidth = (w: number) => (w >= COLS ? COLS : w >= 9 ? 9 : w >= 8 ? 8 : w >= 6 ? 6 : w >= 4 ? 4 : 3)
 
 const nearest = (list: number[], to: number) => list.reduce((a, b) => (Math.abs(b - to) < Math.abs(a - to) ? b : a))
 
@@ -168,6 +168,22 @@ export function noteRows(def: WidgetDef, variant: string | undefined, note: Widg
 /** Standard height for a widget's layout at a given Detail. `withNote`: the card's own note and the px of a row, to make room for the note (the three-column page, where `box` is known). */
 export function heightFor(def: WidgetDef, variant?: string, detail?: "compact" | "standard" | "detailed", cols?: number, box?: CardBox, withNote?: { note?: WidgetNote; row: number }) {
   return heightWithoutNote(def, variant, detail, cols, box) + (box && withNote ? noteRows(def, variant, withNote.note, box.width, withNote.row) : 0)
+}
+
+/**
+ * The rows a card may be, without its note: `designed` is what its layout is drawn at for this width and Detail (the
+ * old fixed height); `min` is the least it can show there (the layout's minH, or the rows it needs once it stacks when
+ * narrow, never above `designed`; Detailed keeps `designed`); `max` is the tallest before it only stretches (the layout's maxH, never below
+ * `designed`: Detailed and a narrow stack can be taller than maxH). The coach resizes inside it; the widget's Drop,
+ * useFitRows and useFitDetail adapt the content to whatever height it gets.
+ */
+export function rowBounds(def: WidgetDef, variant: string | undefined, detail: "compact" | "standard" | "detailed" | undefined, cols: number, box?: CardBox) {
+  const v = lookOf(def, variant)
+  const designed = heightWithoutNote(def, variant, detail, cols, box)
+  const stacked = v.narrow && isNarrow(v.narrow, cols, box)
+  const needs = stacked ? ((detail === "compact" ? v.narrow?.hd?.compact : undefined) ?? v.narrow!.minH) : 0
+  // Detailed may go as low as Standard: on a shorter row the card steps down by itself (useFitDetail), so one Detailed card never holds its row up.
+  return { designed, min: Math.min(designed, Math.max(v.minH, needs)), max: Math.max(designed, v.maxH) }
 }
 
 function heightWithoutNote(def: WidgetDef, variant?: string, detail?: "compact" | "standard" | "detailed", cols?: number, box?: CardBox) {

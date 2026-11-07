@@ -1,12 +1,14 @@
 "use client"
 
-import { verticalCompactor } from "react-grid-layout/core"
+import { useState } from "react"
 import { studentNav } from "@/components/coach/nav"
-import { fitWidth, getWidget, heightFor, heightOf, lookOf } from "@/components/widgets/registry"
+import { designedHeight, dropAt, duplicateCard, fillGaps, fitCard, hasGaps, minHeight, minWidth, removeCard, stripAt, toTiles, type TileOptions } from "@/components/widgets/page-grid"
+import { getWidget, heightOf } from "@/components/widgets/registry"
 import { isPageId, type Coach } from "@/lib/data/coaches"
+import { DENSITY } from "@/lib/theme/css"
 import { pageLayout } from "@/lib/theme/resolve"
 import type { CoachTheme } from "@/lib/theme/types"
-import { COLS, normalizeLayout, oneStar, phoneSequence, uid, withCore, type PageId, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
+import { GAP, normalizeLayout, oneStar, phoneSequence, placeInOrder, stackOrder, uid, withCore, type PageId, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { toast } from "./canvas-toast"
 import type { useDraftEditor } from "./editor-shell"
 
@@ -41,6 +43,13 @@ export function useArrange({
   const own = (l: PageLayout) => (page === "home" || isPageId(page) ? l : withCore(page, l))
   const layout = tier === "default" || !layouts[tier] ? baseLayout : own(normalizeLayout(layouts[tier], heightOf))
   const tierName = coach.tiers.find((t) => t.id === tier)?.name
+
+  // The page's width in px, as the canvas last laid it out (set by the canvas): a card's least height and a note's rows depend on it.
+  // 0 until it is known (the editor opened on a tablet or phone), then they are worked out without the card's px.
+  const [pageWidth, setMeasure] = useState(0)
+  const opts: TileOptions = { gap: GAP[theme.density], width: pageWidth, pad: 16 * DENSITY[theme.density] }
+  /** The page's tiles (a layout saved before tiles is turned into them, as it is drawn). */
+  const tiles = toTiles(stackOrder(layout), opts, !!layout.tiles)
   const savePages = (next: typeof layouts, key: string) =>
     commit({ ...working, content: { ...working.content, pages: { ...coach.pages, [page]: next } } }, `${page}-${key}`)
 
@@ -50,78 +59,88 @@ export function useArrange({
    * same commit, so one undo brings both back.
    */
   const save = (next: PageLayout, key: string, keep?: string) => {
-    const items = oneStar(next.items, keep)
-    const demoted = next.items.filter((w, i) => w.emphasis === "star" && items[i].emphasis !== "star")
+    // The first save from the editor puts the page on tiles: a masonry's cards get the rectangles they are drawn in.
+    const asTiles = next.tiles ?? layout.tiles ? next.items : toTiles(next.items, opts, false)
+    const items = oneStar(asTiles, keep)
+    const demoted = asTiles.filter((w, i) => w.emphasis === "star" && items[i].emphasis !== "star")
     // Keep "title removed on purpose", and set it when this save drops the Page title.
     const titleRemoved = page !== "home" && !items.some((w) => w.type === "page-header") ? true : undefined
-    // An edit that doesn't touch the arrangement keeps it free (each widget in the column it was put in).
-    const free = next.free ?? layout.free
     // The phone's order survives edits that don't touch it; "phoneOrder" present (even unset) is the coach changing it.
     const phoneOrder = "phoneOrder" in next ? next.phoneOrder : layout.phoneOrder
-    savePages({ ...layouts, [tier]: { ...next, items, titleRemoved, free, phoneOrder } }, `${tier}-${key}`)
+    savePages({ ...layouts, [tier]: { ...next, items, titleRemoved, tiles: true, ordered: true, phoneOrder } }, `${tier}-${key}`)
     if (demoted.length) {
       const names = demoted.map((w) => getWidget(w.type)?.name ?? "A widget").join(", ")
       toast(`${names} gave up ${demoted.length > 1 ? "their" : "its"} star.`, { description: "Only one Star per page; it is Accent now." })
     }
     if (inherits) toast(`${tierName} now has its own ${pageInfo.label} page. Other tiers keep the default.`)
   }
+  /** Saves the page as these tiles. */
+  // `place`: the card that was moved or added, which takes its stacked place from where it landed. Without it (a line moved, a card removed
+  // or restyled) the stacked order of phones stays as it was.
+  const commitTiles = (next: WidgetInstance[], key: string, keep?: string, place?: string) => save({ items: place ? placeInOrder(next, place) : next, tiles: true }, key, keep)
   const pinned = (id: string) => !!getWidget(layout.items.find((w) => w.id === id)?.type ?? "")?.core
   const updateItem = (id: string, patch: Partial<WidgetInstance>, key: string) => {
-    const cur = layout.items.find((w) => w.id === id)
-    const def = cur && getWidget(cur.type)
-    // A new layout keeps the width only if the layout allows it (its minW to maxW), else the nearest it allows.
-    if (cur && def && patch.variant) patch = { ...patch, w: fitWidth(def, patch.variant, patch.w ?? cur.w) }
-    // Detailed shows more, so it gets more rows (and back); widgets below move down to make room.
-    if (cur && def && patch.detail && patch.detail !== (cur.detail ?? "standard")) {
-      const grow = heightFor(def, cur.variant, patch.detail) - heightFor(def, cur.variant, cur.detail)
-      const next = { ...cur, ...patch, h: Math.max(lookOf(def, cur.variant).minH, cur.h + grow) }
-      saveCompacted(layout.items.map((w) => (w.id === id ? next : w)), key)
-      return
+    if (!tiles.some((c) => c.id === id)) return
+    // A card's rectangle is the coach's, dragged on the canvas: a patch never carries one.
+    const rest = { ...patch }
+    delete rest.x
+    delete rest.y
+    delete rest.w
+    delete rest.h
+    let next = tiles.map((c) => (c.id === id ? { ...c, ...rest } : c))
+    // A new layout, Detail or note may need more room: only that card grows (wider, taller), and what it grows into slides down. Choosing a
+    // Detail asks for what it shows. Never smaller than before.
+    if ("variant" in patch || "detail" in patch || "note" in patch) {
+      const c = next.find((x) => x.id === id)!
+      next = fitCard(next, id, minWidth(c), 0)
+      const now = next.find((x) => x.id === id)!
+      next = fitCard(next, id, 0, "detail" in patch && patch.detail !== undefined ? Math.max(minHeight(now, opts), designedHeight(now, opts)) : minHeight(now, opts))
     }
-    save({ items: layout.items.map((w) => (w.id === id ? { ...w, ...patch } : w)) }, key, patch.emphasis === "star" ? id : undefined)
+    commitTiles(next, key, patch.emphasis === "star" ? id : undefined)
   }
 
   /** Every widget on this page goes back to All widgets' style: the surface, tone, picture, header and charts they kept as their own. */
-  const clearOwnStyles = () => save({ items: layout.items.map((w) => (w.style ? { ...w, style: undefined } : w)) }, "clear-own-styles")
+  const clearOwnStyles = () => save({ items: stackOrder(layout).map((w) => (w.style ? { ...w, style: undefined } : w)) }, "clear-own-styles")
 
+  /** Adds a card at the bottom of the last block, full width. */
+  const append = (w: WidgetInstance) => {
+    const next = dropAt(tiles, w, { end: true }, opts)
+    if (next) commitTiles(next, `add-${w.id}`, undefined, w.id)
+  }
   const addWidget = (type: string) => {
     const def = getWidget(type)!
-    const look = def.variants[0]
-    const bottom = layout.items.reduce((m, w) => Math.max(m, w.y + w.h), 0)
-    const w: WidgetInstance = { id: uid(), type, x: 0, y: bottom, w: fitWidth(def, look.value, def.defaultW), h: look.h }
-    save({ items: [...layout.items, w] }, `add-${w.id}`)
+    const w: WidgetInstance = { id: uid(), type, x: 0, y: 0, w: 12, h: def.variants[0].h }
+    append(w)
     setSelected(w.id)
     toast(`${def.name} added at the bottom. Drag it where you want it.`)
   }
 
-  /** Save with the grid compacted upward, so the live page never has overlaps. */
-  const saveCompacted = (items: WidgetInstance[], key: string) => {
-    const packed = verticalCompactor.compact(items.map((w) => ({ i: w.id, x: w.x, y: w.y, w: w.w, h: w.h })), COLS)
-    const pos = new Map(packed.map((g) => [g.i, g]))
-    save({ items: items.map((w) => ({ ...w, x: pos.get(w.id)!.x, y: pos.get(w.id)!.y })) }, key)
-  }
   const removeWidget = (id: string) => {
     if (pinned(id)) {
       toast(`${pageInfo.label} is the main part of this page, so it stays. Move or resize it instead.`)
       return
     }
     const def = getWidget(layout.items.find((w) => w.id === id)?.type ?? "")
-    saveCompacted(layout.items.filter((w) => w.id !== id), `del-${id}`)
+    commitTiles(removeCard(tiles, id), `del-${id}`)
     if (selected === id) setSelected(null)
     toast(`${def?.name ?? "Widget"} removed.`, { description: "Press ⌘Z to undo." })
   }
   const duplicateWidget = (id: string) => {
-    const w = layout.items.find((x) => x.id === id)
+    const w = tiles.find((c) => c.id === id)
     if (!w || pinned(id)) return
-    // A copy of the star is Accent: the original keeps the star.
-    const copy: WidgetInstance = { ...w, id: uid(), y: w.y + w.h, emphasis: w.emphasis === "star" ? "accent" : w.emphasis }
-    saveCompacted([...layout.items, copy], `dup-${copy.id}`)
+    // A copy of the star is Accent: the original keeps the star. It goes directly below the original, the same size.
+    const copy: WidgetInstance = { ...w, id: uid(), emphasis: w.emphasis === "star" ? "accent" : w.emphasis }
+    const next = duplicateCard(tiles, id, copy)
+    if (next) commitTiles(next, `dup-${copy.id}`, undefined, copy.id)
     setSelected(copy.id)
   }
-  const moveTo = (id: string, where: "top" | "bottom") =>
-    saveCompacted(layout.items.map((w) => (w.id === id ? { ...w, y: where === "top" ? -1 : 9999 } : w)), `order-${uid()}`)
+  const moveTo = (id: string, where: "top" | "bottom") => {
+    const w = tiles.find((c) => c.id === id)
+    const next = w && stripAt(tiles, w, where, opts)
+    if (next) commitTiles(next, `order-${uid()}`, undefined, id)
+  }
   /** The phone's order: the widgets phones show, in the order they show them. */
-  const phoneList = phoneSequence(layout.items, layout.phoneOrder).filter((w) => !w.hideOnPhone).map((w) => w.id)
+  const phoneList = phoneSequence(stackOrder(layout), layout.phoneOrder).filter((w) => !w.hideOnPhone).map((w) => w.id)
   const movePhone = (id: string, step: -1 | 1) => {
     const at = phoneList.indexOf(id)
     const to = at + step
@@ -130,9 +149,11 @@ export function useArrange({
     ;[next[at], next[to]] = [next[to], next[at]]
     // Widgets hidden on phones keep their place at the end of the list, so showing one again puts it back near the desktop order.
     const hidden = layout.items.filter((w) => w.hideOnPhone).map((w) => w.id)
-    save({ items: layout.items, phoneOrder: [...next, ...hidden] }, `${id}-phone-order`)
+    save({ items: stackOrder(layout), phoneOrder: [...next, ...hidden] }, `${id}-phone-order`)
   }
-  const resetPhoneOrder = () => save({ items: layout.items, phoneOrder: undefined }, "phone-order-reset")
+  const resetPhoneOrder = () => save({ items: stackOrder(layout), phoneOrder: undefined }, "phone-order-reset")
+  /** Closes every gap on the page: one undo step. */
+  const fillAll = () => commitTiles(fillGaps(tiles), `fill-${uid()}`)
   const useDefault = () => {
     const rest = { ...layouts }
     delete rest[tier]
@@ -150,9 +171,16 @@ export function useArrange({
     tierName,
     selected,
     setSelected,
-    selWidget: layout.items.find((w) => w.id === selected) ?? null,
+    selWidget: tiles.find((w) => w.id === selected) ?? null,
     pinned,
     save,
+    tiles,
+    gaps: hasGaps(tiles),
+    fillAll,
+    opts,
+    setMeasure,
+    commitTiles,
+    append,
     updateItem,
     clearOwnStyles,
     addWidget,

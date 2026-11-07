@@ -1,14 +1,17 @@
 "use client"
 
+import { SizeObserver } from "./parts/resizing"
 import { useCoach } from "@/components/coach/coach-provider"
 import type { Coach } from "@/lib/data/coaches"
-import { GAP, ROW_HEIGHT, phoneSequence, readingOrder, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
+import { GAP, ROW_HEIGHT, phoneSequence, stackOrder, type PageLayout, type WidgetInstance } from "@/lib/widgets/layout"
 import { widgetFinishOf, widgetSetOf } from "@/lib/theme/types"
 import { DENSITY } from "@/lib/theme/css"
 import { cn } from "@/lib/utils"
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { animate, motion, motionValue, useReducedMotion, type MotionValue } from "motion/react"
 import { WidgetFrame } from "./parts/frame"
-import { fitWidth, getWidget, heightFor, type CardBox } from "./registry"
+import { getWidget, heightFor, type CardBox } from "./registry"
+import { isBand, ownHeight, planGrid, placeStacked, type PlanOptions, type Placement } from "./page-grid"
 import { WidgetStyleScope } from "./parts/widget-scope"
 import { PageIdContext, PageTitleShownContext, usePhase } from "./parts/shared"
 import { useViewerGroup } from "@/lib/data/access"
@@ -28,78 +31,66 @@ export function PageRenderer({ layout, page = "home", live }: { layout: PageLayo
   const { coach } = useCoach()
   const phase = usePhase()
   const groupId = useViewerGroup(coach)?.id
-  const items = readingOrder(layout.items.filter((w) => isAvailable(w, coach) && isShownTo(w, phase, groupId)))
+  // The cards this student doesn't see (phase, group, module) are still in the page: the desktop grid takes them out of the tiling, so the cards beside them grow over their room.
+  const items = stackOrder(layout)
+  const hide = new Set(items.filter((w) => !(isAvailable(w, coach) && isShownTo(w, phase, groupId))).map((w) => w.id))
   return (
     <PageIdContext.Provider value={page}>
-    <PageTitleShownContext.Provider value={!items.some((w) => w.type === "page-header")}>
-      <WidgetGrid items={items} free={layout.free} phoneOrder={layout.phoneOrder} render={(w, fixed) => <WidgetView w={w} live={live} fixed={fixed} />} />
+    <PageTitleShownContext.Provider value={!items.some((w) => w.type === "page-header" && !hide.has(w.id))}>
+      <WidgetGrid items={items} hide={hide} tiles={layout.tiles} phoneOrder={layout.phoneOrder} render={(w, fixed) => <WidgetView w={w} live={live} fixed={fixed} />} />
     </PageTitleShownContext.Provider>
     </PageIdContext.Provider>
   )
 }
 
-/** Where a card sits: its first column, how many columns it spans, and its top (px). */
-export type Spot = { col: number; span: number; top: number }
-export type Placement = { spots: Map<string, Spot>; height: number }
+export { isBand }
+export type { Placement }
 
-/** Columns a card spans on a page of `cols`: the page title, a page's own tool and full-width cards span them all. */
-/** The width a card draws at: its saved width, kept to the sizes its layout allows (a layout can lose a size it once had). */
-export const widthOf = (w: WidgetInstance) => {
-  const def = getWidget(w.type)
-  return def ? fitWidth(def, w.variant, w.w) : w.w
-}
-
-export const spanOf = (w: WidgetInstance, cols: number) => Math.min(cols, isBand(w, 3) ? 3 : widthOf(w) >= 8 ? 2 : 1)
+/** Columns a card spans on a tablet or phone of `cols`: the page title, a page's own tool and full-width cards span them all, 8 twelfths or more take two (a tile's width is whatever the coach dragged it to). */
+export const spanOf = (w: WidgetInstance, cols: number) => Math.min(cols, isBand(w, 3) ? 3 : w.w >= 8 ? 2 : 1)
 
 /** The height a card is drawn at before it is measured: an estimate from its layout (`box`: the card's px, when the page's width is known). */
 export const estimate = (w: WidgetInstance, gap: number, box?: CardBox) => {
   const def = getWidget(w.type)
-  return def ? heightFor(def, w.variant, w.detail, widthOf(w), box, { note: w.note, row: ROW_HEIGHT + gap }) * (ROW_HEIGHT + gap) - gap : 200
+  return def ? heightFor(def, w.variant, w.detail, w.w, box, { note: w.note, row: ROW_HEIGHT + gap }) * (ROW_HEIGHT + gap) - gap : 200
 }
 
 /**
- * Places a page's cards on its columns, in order: each card goes to its own column (`free`, desktop: the coach put it
- * there) or to the column where it starts highest (tablets, phones and pages arranged before the free grid), and as
- * high as the cards above it in those columns allow. So cards fall up into any room left above them, and a card that
- * doesn't fit beside the others goes under them: the page reflows round every move and resize, like a board.
+ * The one spring every card of the page moves on (pushed out of the way, a card dropped, Fill gaps, undo, add): soft and critically
+ * damped (no visible overshoot), settled in about 250ms. A card moved again mid-flight carries its speed over to the new target.
  */
-export function placeItems(items: WidgetInstance[], cols: number, heights: Record<string, number>, gap: number, free: boolean): Placement {
-  const tops = Array.from({ length: cols }, () => 0)
-  const spots = new Map<string, Spot>()
-  for (const w of items) {
-    const span = spanOf(w, cols)
-    let col = 0
-    if (free && cols === 3) col = Math.max(0, Math.min(cols - span, Math.round(w.x / 4)))
-    else {
-      let best = Infinity
-      for (let c = 0; c + span <= cols; c++) {
-        const top = Math.max(...tops.slice(c, c + span))
-        if (top < best - 0.5) {
-          best = top
-          col = c
-        }
-      }
-    }
-    const top = Math.max(...tops.slice(col, col + span))
-    spots.set(w.id, { col, span, top })
-    const bottom = top + (heights[w.id] ?? estimate(w, gap)) + gap
-    for (let c = col; c < col + span; c++) tops[c] = bottom
-  }
-  return { spots, height: Math.max(0, ...tops.map((t) => t - gap)) }
-}
+export const GRID_SPRING = { type: "spring", stiffness: 560, damping: 48, mass: 1, restDelta: 0.1, restSpeed: 0.5 } as const
+/** One grid step while dragging: quick and almost without overshoot, so the card reads as clicking from cell to cell. */
+export const GRID_NUDGE = { type: "spring", stiffness: 900, damping: 52, mass: 1, restDelta: 0.1, restSpeed: 0.5 } as const
+
+/** Where a card is drawn (px of the page), as motion values: its position goes out as a transform, only its size is layout. */
+export type CellMV = { x: MotionValue<number>; y: MotionValue<number>; w: MotionValue<number>; h: MotionValue<number> }
+
+/** What the page reports after every layout: where each card went, how many columns the page has, and what it was planned with. On desktop `layout` has the tiles the page is made of (hidden cards taken out). */
+export type Placed = Placement & { cols: number; opts: PlanOptions; layout: WidgetInstance[] }
+/** What the builder needs to know of a card on the desktop page: whether it is a band, and whether a line runs along its right edge. */
+export type TileInfo = { band: boolean; right: boolean }
 
 /** Columns for a page this wide: three on desktop, two on a tablet, one on a phone. */
 export const colsFor = (width: number) => (width >= 960 ? 3 : width >= 640 ? 2 : 1)
 
 /**
- * A page's cards on a grid of columns (see placeItems): `.g-page` with the theme's widget set and gap, each card in a
- * `.g-item` at its spot and at exactly its own height (measured, so the cards under it know where to start). Cards
- * glide to a new spot when the page reflows. `render` draws a card; `wrap` may wrap its `.g-item` (the builder adds
- * dragging there); `onPlaced` reports where every card went and its height, for the builder's drag and drop.
+ * A page's cards as tiles (see planGrid; tablets and phones stack them in columns, see placeStacked): `.g-page` with the
+ * theme's widget set and gap, each card in a `.g-item` at its spot. On desktop a card is exactly its rectangle (tiles),
+ * except the page title and a page's own tool, which are as tall as their content (measured, so the cards under them know
+ * where to start); on tablets and phones every card is measured. Cards glide to a new spot when the page reflows. `render`
+ * draws a card; `wrap` may wrap its `.g-item` (the builder adds dragging there); `onPlaced` reports the placement, for the
+ * builder's drag, drop and resize.
  */
 export function WidgetGrid({
   items,
-  free,
+  tiles,
+  hide,
+  held,
+  jump,
+  busy,
+  rev,
+  cells,
   phoneOrder,
   render,
   wrap,
@@ -108,13 +99,26 @@ export function WidgetGrid({
   children,
 }: {
   items: WidgetInstance[]
-  free?: boolean
+  /** The layout was saved as tiles: x, y, w and h are exact. Unset: a masonry or an earlier grid, turned into tiles here. */
+  tiles?: boolean
+  /** Cards the viewer doesn't see: taken out of the tiling (desktop) or left out of the columns (tablet, phone). */
+  hide?: ReadonlySet<string>
+  /** A card the caller moves itself, straight to the pointer (it is being resized): the grid leaves its position and size alone until it is let go, then springs it to its spot. */
+  held?: string | null
+  /** A card that goes to its spot at once, with no spring (a card carried to a new place: it is hidden until it lands). */
+  jump?: string | null
+  /** Something is being dragged: cards that may move tell the browser (will-change). */
+  busy?: boolean
+  /** Everything `render` and `wrap` read that is not in the card itself (selection, the layout they act on…): a card is drawn again only when its content, this or its place in the grid changes. */
+  rev?: string
+  /** Receives the motion values of every card, by id (for the caller that drives a card itself). */
+  cells?: React.RefObject<Map<string, CellMV>>
   /** The phone's own order, if the coach set one. */
   phoneOrder?: string[]
   render: (w: WidgetInstance, fixed: boolean) => React.ReactNode
-  wrap?: (w: WidgetInstance, item: React.ReactNode) => React.ReactNode
+  wrap?: (w: WidgetInstance, item: React.ReactNode, info: TileInfo) => React.ReactNode
   className?: string
-  onPlaced?: (p: Placement & { cols: number; colWidth: number; heights: Record<string, number> }) => void
+  onPlaced?: (p: Placed) => void
   /** Drawn over the grid, in its coordinates (the builder's drop marker). */
   children?: React.ReactNode
 }) {
@@ -133,19 +137,26 @@ export function WidgetGrid({
   const gap = GAP[theme.density]
   const cols = colsFor(width)
   // Hidden on phones: left out of the phone's columns, so it leaves no hole.
-  const shown = useMemo(() => (cols === 1 ? (phoneOrder?.length ? phoneSequence(items, phoneOrder) : items).filter((w) => !w.hideOnPhone) : items), [items, cols, phoneOrder])
-  // On the three-column page every card is as tall as its layout was designed (rows, see the registry), so neighbours line up
-  // and the content adapts inside; tablets and phones keep each card as tall as its content.
+  const visible = useMemo(() => (hide?.size ? items.filter((w) => !hide.has(w.id)) : items), [items, hide])
+  const stacked = useMemo(() => (cols === 1 ? (phoneOrder?.length ? phoneSequence(visible, phoneOrder) : visible).filter((w) => !w.hideOnPhone) : visible), [visible, cols, phoneOrder])
+  // On the three-column page every card is as tall as its row, so neighbours line up and the content adapts inside; tablets and
+  // phones keep each card as tall as its content.
   const fixed = cols === 3
-  const colWidth = cols ? (width - gap * (cols - 1)) / cols : 0
-  // A card's px, from the layout alone: the columns it spans and the gaps between them, and its body's padding at this density.
+  // A card's px, from the layout alone: its width and its body's padding at this density.
   const pad = 16 * DENSITY[theme.density]
-  const boxOf = useCallback((w: WidgetInstance): CardBox | undefined => (colWidth > 0 ? { width: spanOf(w, cols) * colWidth + (spanOf(w, cols) - 1) * gap, pad } : undefined), [colWidth, cols, gap, pad])
-  const sized = useMemo(() => (fixed ? Object.fromEntries(shown.map((w) => [w.id, w.type === "page-header" || getWidget(w.type)?.core ? (heights[w.id] ?? estimate(w, gap, boxOf(w))) : estimate(w, gap, boxOf(w))])) : heights), [fixed, shown, heights, gap, boxOf])
-  // The title and the page's own tool are as tall as their content: a height set on them would be the one they measure back (a tool measured at 0 while it loads stayed at 0).
-  const ownHeight = (w: WidgetInstance) => w.type === "page-header" || !!getWidget(w.type)?.core
-  const placed = useMemo(() => placeItems(shown, cols, sized, gap, !!free), [shown, cols, sized, gap, free])
-  useLayoutEffect(() => onPlaced?.({ ...placed, cols, colWidth, heights: sized }), [placed, cols, colWidth, sized, onPlaced])
+  const ownPx = useCallback((w: WidgetInstance) => heights[w.id] ?? estimate(w, gap, width > 0 ? { width, pad } : undefined), [heights, gap, width, pad])
+  const opts = useMemo<PlanOptions>(() => ({ tiles: !!tiles, gap, width, pad, ownPx }), [tiles, gap, width, pad, ownPx])
+  const placed = useMemo(() => {
+    if (fixed) return planGrid(items, opts, hide)
+    return { ...placeStacked(stacked, cols, heights, gap, (w) => spanOf(w, cols), (w) => estimate(w, gap)), layout: [] as WidgetInstance[] }
+  }, [fixed, items, hide, opts, stacked, cols, heights, gap])
+  const shown = fixed ? placed.layout : stacked
+  useLayoutEffect(() => onPlaced?.({ ...placed, cols, opts }), [placed, cols, opts, onPlaced])
+  const tileInfo = useMemo(() => {
+    const m = new Map<string, TileInfo>()
+    for (const c of placed.layout) m.set(c.id, { band: ownHeight(c), right: !ownHeight(c) && c.x + c.w < 12 - 1e-6 })
+    return m
+  }, [placed.layout])
   // Cards glide to a new spot only once the page has been laid out and its heights have stopped changing (fonts,
   // pictures, measured cards replacing estimates). Gliding while it loads counted as layout shift (CLS 0.1–0.5 on Home).
   const [settled, setSettled] = useState(false)
@@ -185,25 +196,25 @@ export function WidgetGrid({
         {shown.map((w) => {
           const s = placed.spots.get(w.id)!
           // Until the page has been measured (server HTML, first paint) cards stack in the flow at full width, not at width 0.
-          const style: React.CSSProperties | undefined = !width ? undefined : {
-            position: "absolute",
-            left: s.col * (colWidth + gap),
-            top: s.top,
-            width: s.span * colWidth + (s.span - 1) * gap,
-            height: fixed && !ownHeight(w) ? sized[w.id] : undefined,
-            transition: settled && !snapping ? "left 240ms var(--ease-out), top 240ms var(--ease-out), width 240ms var(--ease-out)" : undefined,
-          }
-          const node = (
-            <Measured key={w.id} w={w} onHeight={onHeight} style={wrap ? undefined : style} fill={!!wrap && fixed}>
-              {render(w, fixed)}
-            </Measured>
-          )
-          return wrap ? (
-            <div key={w.id} className="min-w-0" style={style}>
-              {wrap(w, node)}
-            </div>
-          ) : (
-            node
+          const unit = (width + gap) / 12
+          const rect = width ? { x: s.x * unit, y: s.top, w: s.w * unit - gap, h: s.height } : null
+          return (
+            <Cell
+              key={w.id}
+              w={w}
+              rect={rect}
+              spring={settled && !snapping}
+              held={held === w.id}
+              jump={jump === w.id}
+              busy={!!busy}
+              fixed={fixed}
+              info={tileInfo.get(w.id) ?? { band: false, right: false }}
+              rev={rev ?? ""}
+              onHeight={onHeight}
+              render={render}
+              wrap={wrap}
+              cells={cells}
+            />
           )
         })}
         {children}
@@ -212,26 +223,137 @@ export function WidgetGrid({
   )
 }
 
-/** A card's `.g-item`, as tall as its content (measured, so the cards under it know where to start). */
-function Measured({ w, onHeight, style, fill, children }: { w: WidgetInstance; onHeight: (id: string, h: number) => void; style?: React.CSSProperties; /** Fill the cell it is in (the builder wraps it) instead of sizing itself. */ fill?: boolean; children: React.ReactNode }) {
+type CellProps = {
+  w: WidgetInstance
+  rect: { x: number; y: number; w: number; h: number | undefined } | null
+  spring: boolean
+  held: boolean
+  jump: boolean
+  busy: boolean
+  fixed: boolean
+  info: TileInfo
+  rev: string
+  onHeight: (id: string, h: number) => void
+  render: (w: WidgetInstance, fixed: boolean) => React.ReactNode
+  wrap?: (w: WidgetInstance, item: React.ReactNode, info: TileInfo) => React.ReactNode
+  cells?: React.RefObject<Map<string, CellMV>>
+}
+
+/** Two versions of a card's content are the same when nothing but its place on the page differs (its content never reads x, y, w or h: it adapts to the box it is in). */
+const sameContent = (a: WidgetInstance, b: WidgetInstance) => {
+  if (a === b) return true
+  const ka = Object.keys(a) as (keyof WidgetInstance)[]
+  if (ka.length !== Object.keys(b).length) return false
+  return ka.every((k) => k === "x" || k === "y" || k === "w" || k === "h" || a[k] === b[k] || (typeof a[k] === "object" && JSON.stringify(a[k]) === JSON.stringify(b[k])))
+}
+
+/** A card's content (`render`): drawn again only when the card's own content, `rev` or `fixed` change, not when it only moves or is resized. */
+const Content = memo(
+  function Content({ w, fixed, render }: { w: WidgetInstance; fixed: boolean; rev: string; render: CellProps["render"] }) {
+    return render(w, fixed)
+  },
+  (a, b) => sameContent(a.w, b.w) && a.rev === b.rev && a.fixed === b.fixed,
+)
+
+/**
+ * A card's cell: where it is drawn, and the card in it. The position is a transform (compositor only) and the size a width and height, all
+ * motion values, so a card that has to move goes there on GRID_SPRING and one moved again mid-flight carries its speed over; nothing
+ * animates until the page has settled (no load animation on a student's page). Drawn again only when its content, `rev` or its place changes,
+ * so a drag does not draw every widget of the page at every step.
+ */
+const Cell = memo(function Cell({ w, rect, spring, held, jump, busy, fixed, info, rev, onHeight, render, wrap, cells }: CellProps) {
+  void rev
+  const reduce = !!useReducedMotion()
+  const ready = rect !== null
+  // The values start where the card is first drawn (no flash at 0,0, no glide in from nowhere).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const mv = useMemo<CellMV | null>(() => (rect ? { x: motionValue(rect.x), y: motionValue(rect.y), w: motionValue(rect.w), h: motionValue(rect.h ?? 0) } : null), [ready])
+  const last = useRef<(number | undefined)[]>([])
+  const el = useRef<HTMLElement | null>(null)
+  const setEl = useCallback((n: HTMLElement | null) => {
+    el.current = n
+  }, [])
+  useEffect(() => {
+    if (!mv || !cells) return
+    const m = cells.current
+    m.set(w.id, mv)
+    return () => {
+      m.delete(w.id)
+    }
+  }, [mv, cells, w.id])
+  const rx = rect?.x
+  const ry = rect?.y
+  const rw = rect?.w
+  const rh = rect?.h
+  useLayoutEffect(() => {
+    if (!mv || held) {
+      last.current = []
+      return
+    }
+    const to = [rx, ry, rw, rh]
+    const vals = [mv.x, mv.y, mv.w, mv.h]
+    let now = false
+    to.forEach((t, i) => {
+      if (t === undefined || last.current[i] === t) return
+      last.current[i] = t
+      const v = vals[i]
+      if (!spring || reduce || jump) {
+        v.stop()
+        v.set(t)
+        now = true
+      } else if (v.get() !== t) animate(v, t, GRID_SPRING)
+    })
+    // A card that goes to its place at once (the page was just laid out, or its columns changed) is there in this commit, not a frame later: the
+    // values below are written to the element too (the same ones motion writes next frame), so nothing measures it, or paints it, at its old place.
+    const e = el.current
+    if (now && e) {
+      const x = mv.x.get()
+      const y = mv.y.get()
+      e.style.transform = [x && `translateX(${x}px)`, y && `translateY(${y}px)`].filter(Boolean).join(" ") || "none"
+      e.style.width = `${mv.w.get()}px`
+      if (rh !== undefined) e.style.height = `${mv.h.get()}px`
+    }
+  }, [mv, held, spring, reduce, jump, rx, ry, rw, rh])
+  const node = (
+    <Measured key={w.id} w={w} onHeight={onHeight} outer={wrap ? undefined : setEl} fill={!!wrap && fixed} style={wrap || !mv ? undefined : { position: "absolute", left: 0, top: 0, x: mv.x, y: mv.y, width: mv.w, ...(rh !== undefined && { height: mv.h }), willChange: busy ? "transform" : undefined }}>
+      <Content w={w} fixed={fixed} rev={rev} render={render} />
+    </Measured>
+  )
+  if (!wrap) return node
+  return (
+    <motion.div
+      ref={setEl}
+      // Each cell is its own layer (a transform): the one under the pointer or selected is above its neighbours, so its quick bar and edges are never covered.
+      className="min-w-0 focus-within:z-[2] hover:z-[2] has-[[data-selected=true]]:z-[3]"
+      style={mv ? { position: "absolute", left: 0, top: 0, x: mv.x, y: mv.y, width: mv.w, ...(rh !== undefined && { height: mv.h }), willChange: busy ? "transform" : undefined } : undefined}
+    >
+      {wrap(w, node, info)}
+    </motion.div>
+  )
+}, (a, b) => sameContent(a.w, b.w) && a.rev === b.rev && a.held === b.held && a.jump === b.jump && a.busy === b.busy && a.spring === b.spring && a.fixed === b.fixed && a.info.band === b.info.band && a.info.right === b.info.right && a.rect?.x === b.rect?.x && a.rect?.y === b.rect?.y && a.rect?.w === b.rect?.w && a.rect?.h === b.rect?.h && a.cells === b.cells && a.onHeight === b.onHeight)
+
+/** A card's `.g-item`: on tablets and phones, and the page title and tool, as tall as its content (measured, so the cards under it know where to start); on the desktop grid the height is set on it. */
+function Measured({ w, onHeight, style, fill, outer, children }: { w: WidgetInstance; /** The element, for the cell that places it. */ outer?: (n: HTMLElement | null) => void; onHeight: (id: string, h: number) => void; style?: React.ComponentProps<typeof motion.div>["style"]; /** Fill the cell it is in (the builder wraps it) instead of sizing itself. */ fill?: boolean; children: React.ReactNode }) {
   const def = getWidget(w.type)
   const ref = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
-    const ro = new ResizeObserver(() => onHeight(w.id, el.offsetHeight))
+    const ro = new SizeObserver(() => onHeight(w.id, el.offsetHeight))
     ro.observe(el)
     return () => ro.disconnect()
   }, [w.id, onHeight])
   return (
-    <div ref={ref} data-widget-id={w.id} className={cn("g-item", fill && "h-full", def?.core && "g-core", (def?.core || w.type === "page-header") && "g-plain")} style={style}>
+    <motion.div
+      ref={(n) => {
+        ref.current = n
+        outer?.(n)
+      }}
+      data-widget-id={w.id} className={cn("g-item", fill && "h-full", def?.core && "g-core", (def?.core || w.type === "page-header") && "g-plain")} style={style}>
       {children}
-    </div>
+    </motion.div>
   )
 }
-
-/** A card that spans the page: the page title, a page's own tool, and a card the coach made full width. */
-export const isBand = (w: WidgetInstance, cols: number) => cols > 1 && (w.type === "page-header" || !!getWidget(w.type)?.core || widthOf(w) >= 12)
 
 /**
  * One widget as it is drawn everywhere: the live page, the editor's canvas and every thumbnail. Its own style

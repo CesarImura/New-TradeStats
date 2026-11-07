@@ -1,5 +1,6 @@
 "use client"
 
+import { SizeObserver } from "./resizing"
 import { useLayoutEffect, useRef, useState } from "react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
@@ -15,7 +16,7 @@ import { ACCENT, FX, TYPE } from "./tokens"
  */
 export function useBrokenImage(src?: string) {
   const [broken, setBroken] = useState<string>()
-  // Remembered for the page, not just this mount: a card the masonry moves is mounted again, and finding out once more
+  // Remembered for the page, not just this mount: a card the grid moves is mounted again, and finding out once more
   // would change its height back and forth.
   const failed = () => {
     if (src) BROKEN.add(src)
@@ -42,7 +43,7 @@ export function FitChips({ chips, more, className }: { chips: React.ReactNode[];
   useLayoutEffect(() => {
     const el = outer.current
     if (!el) return
-    const ro = new ResizeObserver(() => setWidth(el.clientWidth))
+    const ro = new SizeObserver(() => setWidth(el.clientWidth))
     ro.observe(el)
     return () => ro.disconnect()
   }, [])

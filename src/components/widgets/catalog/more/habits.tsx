@@ -49,7 +49,7 @@ export function Watchlist({ variant = "list" }: WidgetProps) {
                 </span>
                 <span className="text-[0.8125rem] tabular-nums">{w.price.toLocaleString("en")}</span>
                 {/* The day's trace in its own direction's colour, quiet (no grid in a tile), with a faint fill. */}
-              <Spark values={w.line} tone={w.chg >= 0 ? "profit" : "loss"} grid={false} area className="mt-1 h-8 [@container_card_(min-height:0px)]:h-auto [@container_card_(min-height:0px)]:min-h-8 [@container_card_(min-height:0px)]:max-h-24 [@container_card_(min-height:0px)]:flex-1" />
+              <Spark values={w.line} tone={w.chg >= 0 ? "profit" : "loss"} grid={false} area className="mt-1 h-8 [@container_card_(min-height:0px)]:h-auto [@container_card_(min-height:0px)]:min-h-8 [@container_card_(min-height:0px)]:max-h-48 [@container_card_(min-height:0px)]:flex-1" />
               </Panel>
             </Drop>
           ))}

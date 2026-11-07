@@ -1,5 +1,6 @@
 "use client"
 
+import { SizeObserver } from "./parts/resizing"
 import { useLayoutEffect, useRef, useState } from "react"
 import { useCoach } from "@/components/coach/coach-provider"
 import { isPageId, pageIdOf, type ModuleId } from "@/lib/data/coaches"
@@ -36,7 +37,7 @@ function useShort() {
     if (!el) return
     const check = () => setShort(el.clientHeight > 0 && el.clientHeight < 100)
     check()
-    const ro = new ResizeObserver(check)
+    const ro = new SizeObserver(check)
     ro.observe(el)
     return () => ro.disconnect()
   }, [])

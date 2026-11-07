@@ -24,6 +24,14 @@ const BOARD: Row[] = [
   { name: "Ana L.", initials: "AL", score: 90, win: 53, r: 6.9, trend: [88, 89, 89, 90, 89, 90, 90] },
   { name: "You", initials: "AX", score: 88, win: 58, r: 6.2, trend: [74, 78, 80, 83, 85, 86, 88], me: true },
   { name: "Leo M.", initials: "LM", score: 86, win: 50, r: 4.1, trend: [88, 87, 87, 86, 86, 85, 86] },
+  { name: "Nina W.", initials: "NW", score: 85, win: 52, r: 3.8, trend: [83, 84, 84, 85, 85, 84, 85] },
+  { name: "Omar H.", initials: "OH", score: 83, win: 49, r: 3.2, trend: [80, 81, 82, 82, 83, 83, 83] },
+  { name: "Yuki T.", initials: "YT", score: 82, win: 51, r: 2.9, trend: [84, 83, 83, 82, 82, 81, 82] },
+  { name: "Ben C.", initials: "BC", score: 80, win: 47, r: 2.4, trend: [76, 77, 78, 79, 79, 80, 80] },
+  { name: "Lea D.", initials: "LD", score: 79, win: 48, r: 2.1, trend: [81, 80, 80, 79, 79, 79, 79] },
+  { name: "Raj P.", initials: "RP", score: 77, win: 46, r: 1.7, trend: [72, 74, 75, 76, 76, 77, 77] },
+  { name: "Ivy N.", initials: "IN", score: 75, win: 45, r: 1.2, trend: [78, 77, 76, 76, 75, 75, 75] },
+  { name: "Cal F.", initials: "CF", score: 73, win: 44, r: 0.8, trend: [70, 71, 72, 72, 73, 73, 73] },
 ]
 
 type Key = "score" | "win" | "r"

@@ -1,5 +1,6 @@
 "use client"
 
+import { SizeObserver } from "./resizing"
 import Link from "next/link"
 import { createContext, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { WidgetHeader } from "@/lib/theme/types"
@@ -116,7 +117,7 @@ function useFitDetail(detail: Detail, box: React.RefObject<HTMLDivElement | null
     // Measured once things settle: lists pick their row count and parts give way first, so a level is only
     // dropped when that wasn't enough. A bigger card gets the chosen level back; a smaller one is checked again.
     let t = setTimeout(step, 250)
-    const ro = new ResizeObserver(() => {
+    const ro = new SizeObserver(() => {
       if (shown !== detail && (card.clientHeight > h + 1 || card.clientWidth > w + 1)) return setShown(detail)
       clearTimeout(t)
       t = setTimeout(step, 250)

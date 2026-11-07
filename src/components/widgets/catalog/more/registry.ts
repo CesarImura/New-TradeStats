@@ -61,7 +61,7 @@ export const NEW_WIDGETS: WidgetDef[] = [
     icon: LayoutGrid,
     variants: [
       { value: "bars", label: "Bars", h: 3.5, minH: 3, maxH: 5, minW: 4, maxW: 12, hd: { compact: 3, detailed: 4 } },
-      { value: "table", label: "Table", h: 3.5, minH: 3, maxH: 4, minW: 4, maxW: 12, hd: { detailed: 4 } },
+      { value: "table", label: "Table", h: 3.5, minH: 3.5, maxH: 4, minW: 4, maxW: 12, hd: { detailed: 4 } },
     ],
     defaultW: 4,
     minW: 4,

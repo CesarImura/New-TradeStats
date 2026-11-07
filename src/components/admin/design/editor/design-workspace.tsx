@@ -9,6 +9,7 @@ import {
   Check,
   ChevronDown,
   ExternalLink,
+  Eye,
   FileDown,
   History,
   LayoutGrid,
@@ -29,6 +30,7 @@ import { studentNav } from "@/components/coach/nav"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { DataMode } from "@/components/widgets/parts/shared"
 import { getDemoCoach } from "@/lib/data/coaches"
@@ -42,7 +44,7 @@ import { TEMPLATES } from "@/lib/theme/templates"
 import { readingOrder, uid, type PageId, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { WidgetLibrary, type AddOptions } from "../panels/builder-panels"
-import { InspectorTop, WidgetInspector } from "../panels/widget-inspector"
+import { WidgetInspector } from "../panels/widget-inspector"
 import { ThumbStyles } from "../thumbs/widget-thumb"
 import { RevealContext, Row, Segmented } from "../fields/controls"
 import { designTabs, DeviceSwitch, Readability, SettingsPanel, THEME_GROUPS, without } from "../panels/settings-panel"
@@ -97,6 +99,13 @@ const MENU_ITEM = "h-9 gap-2.5 rounded-lg px-2.5 text-[0.875rem]"
 const MENU_ON = "bg-white/[0.09] font-semibold text-foreground"
 const MENU_LABEL = "px-2.5 pt-1.5 pb-1 text-[0.6875rem] font-medium tracking-wide text-muted-foreground uppercase"
 const IN_PAGES = (s: string) => s === "widgets" || s === "shape"
+/** Who the canvas and the preview show the platform to (the Preview popover). */
+const PREVIEW_AS: { value: DataMode; label: string; hint: string }[] = [
+  { value: "sample", label: "Sample", hint: "Sample data" },
+  { value: "empty", label: "New", hint: "A new student: their first week" },
+  { value: "inactive", label: "Inactive", hint: "An inactive student" },
+  { value: "finished", label: "Finished", hint: "A student who finished a course" },
+]
 
 const StepCtx = createContext<{ go: (s: Step) => void }>({ go: () => {} })
 
@@ -264,10 +273,14 @@ export function DesignWorkspace() {
         // The widget as the page starts (the template's page, before any edit): what its settings are compared with and Reset goes back to.
         start={pageLayout({ ...coach, pages: undefined }, page, theme.template, undefined, heightOf).items.find((x) => x.id === sel.id)}
       />
-    ) : (
-      <PagePanel name={pageInfo.label} data={data} onData={setData} onAllWidgets={() => setScope("all")} />
-    )
+    ) : null
   const pagesContent = (
+    <>
+    <div className="px-4 pb-3">
+      <Button variant="outline" size="sm" className="w-full" aria-pressed={scope === "all"} onClick={() => setScope(scope === "all" ? "one" : "all")}>
+        <Pencil /> Edit all widgets
+      </Button>
+    </div>
     <WidgetLibrary
       key={page}
       page={page}
@@ -278,15 +291,15 @@ export function DesignWorkspace() {
       onAdd={(type, o) => {
         // Added with what was chosen in its details, at the bottom, and selected: the rest is in its panel.
         const def = getWidget(type)!
-        const bottom = arrange.layout.items.reduce((m, x) => Math.max(m, x.y + x.h), 0)
-        const w: WidgetInstance = { id: uid(), type, x: 0, y: bottom, w: o.w, h: heightFor(def, o.variant, o.detail), variant: o.variant, detail: o.detail === "standard" ? undefined : o.detail, props: Object.keys(o.props).length ? o.props : undefined }
-        arrange.save({ ...arrange.layout, items: [...arrange.layout.items, w] }, `add-${w.id}`)
+        const w: WidgetInstance = { id: uid(), type, x: 0, y: 0, w: o.w, h: heightFor(def, o.variant, o.detail, o.w), variant: o.variant, detail: o.detail === "standard" ? undefined : o.detail, props: Object.keys(o.props).length ? o.props : undefined }
+        arrange.append(w)
         select(w.id)
         toast(`${def.name} added at the bottom of ${pageInfo.label}.`, { description: "Drag it where you want it. ⌘Z undoes it." })
       }}
       onSelect={select}
       onDragType={(type, opts) => setIncoming(type ? { type, opts } : null)}
     />
+    </>
   )
   const tabs = designTabs({
     brand: { groups: [{ title: "Your platform", fields: ["logo", "name", "mode"], keys: ["mode"], words: "logo name platform light dark mode" }, ...THEME_GROUPS.colour] },
@@ -443,9 +456,19 @@ export function DesignWorkspace() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="outline" size="sm" nativeButton={false} render={<a href={src} target="_blank" rel="noreferrer" />} title="Open your platform as students see it, with your changes">
-                <ExternalLink /> <span className="max-sm:sr-only">Preview</span>
-              </Button>
+              <Popover>
+                <PopoverTrigger render={<Button variant="outline" size="sm" title="Choose who to preview as, and open your platform" />}>
+                  <Eye /> <span className="max-sm:sr-only">Preview</span>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="ts-ui ts-admin w-80">
+                  <Row label="Preview as" hint={PREVIEW_AS.find((o) => o.value === data)?.hint} stack>
+                    <Segmented label="Preview data" value={data} onChange={setData} options={PREVIEW_AS} />
+                  </Row>
+                  <Button variant="outline" size="sm" className="w-full" nativeButton={false} render={<a href={src} target="_blank" rel="noreferrer" />}>
+                    <ExternalLink /> Open in a new tab
+                  </Button>
+                </PopoverContent>
+              </Popover>
               <Button
                 size="sm"
                 disabled={!editor.dirty}
@@ -502,7 +525,7 @@ export function DesignWorkspace() {
             </aside>
 
             {/* The platform. On Pages it's the widget grid; elsewhere, click a part to change it. */}
-            <section className={cn("relative grid min-h-0 min-w-0 grid-cols-[minmax(0,1fr)_336px] grid-rows-[minmax(0,1fr)] overflow-hidden bg-[#2b2b2e]")}>
+            <section className={cn("relative grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] overflow-hidden bg-[#2b2b2e]", inspector ? "grid-cols-[minmax(0,1fr)_336px]" : "grid-cols-[minmax(0,1fr)]")}>
               <div className="relative min-h-0 min-w-0 overflow-hidden">
                 {step !== "join" && step !== "course" && (<>
                 {/* In the canvas's corner: whose layout of this page is on the canvas. Each tier can have its own; until then it uses Everyone's. */}
@@ -554,9 +577,9 @@ export function DesignWorkspace() {
                 <ArrangeCanvas arrange={arrange} coach={coach} theme={theme} device={device} data={data} incoming={incoming} onDropped={() => setIncoming(null)} allWidgets={scope === "all"} shell onPick={pick.pick} />
                 )}
               </div>
-              {/* The inspector: always a column of its own, as in Framer; the page between the sidebars gives way. */}
-              {/* Always there, in every section: the selected widget, every widget's style, or the page. */}
-              {(
+              {/* The inspector: a column of its own, as in Framer; the page between the sidebars gives way. */}
+              {/* Only open when there is something to edit: a selected widget, every widget's style, or a Join or course screen. */}
+              {inspector && (
                 <aside
                   aria-label="Inspector"
                   className="col-start-2 row-start-1 min-h-0 overflow-y-auto border-l border-white/[0.16] bg-background [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -579,48 +602,6 @@ function LookTab() {
       <LookCards />
       <DesignHelp />
     </>
-  )
-}
-
-/** The right panel with no widget selected: the page, the way to every widget's style, and how the page is shown. */
-function PagePanel({
-  name,
-  data,
-  onData,
-  onAllWidgets,
-}: {
-  name: string
-  data: DataMode
-  onData: (d: DataMode) => void
-  onAllWidgets: () => void
-}) {
-  return (
-    <div>
-      <InspectorTop>
-        <span className="truncate text-[0.875rem] font-semibold">{name}</span>
-      </InspectorTop>
-      <div className="grid gap-3 px-5 pb-4">
-        <p className="text-xs leading-4 text-muted-foreground">Select a widget to edit it.</p>
-        <Button variant="outline" size="sm" className="w-full" onClick={onAllWidgets}>
-          <Pencil /> Edit all widgets
-        </Button>
-      </div>
-      <div className="grid gap-2 px-5 py-4">
-        <Row label="Preview as" hint={{ sample: "Sample data", empty: "A new student: their first week", inactive: "An inactive student", finished: "A student who finished a course" }[data]} stack>
-          <Segmented
-            label="Preview data"
-            value={data}
-            onChange={onData}
-            options={[
-              { value: "sample", label: "Sample", hint: "Sample data" },
-              { value: "empty", label: "New", hint: "A new student: their first week" },
-              { value: "inactive", label: "Inactive", hint: "An inactive student" },
-              { value: "finished", label: "Finished", hint: "A student who finished a course" },
-            ]}
-          />
-        </Row>
-      </div>
-    </div>
   )
 }
 

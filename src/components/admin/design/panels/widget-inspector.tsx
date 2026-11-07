@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { SelectOptions } from "@/components/kit/select-field"
-import { fitWidth, getWidget, heightFor, lookOf, pageWidth, settingApplies, settingsFor, styleParts, widthsFor } from "@/components/widgets/registry"
+import { fitWidth, getWidget, lookOf, settingApplies, settingsFor, styleParts } from "@/components/widgets/registry"
 import { filledStar } from "@/components/widgets/parts/widget-scope"
 import { useGroups } from "@/lib/data/access"
 import { pictureFrom } from "@/lib/images"
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils"
 import { BOX, InspectorSection, Row, Segmented, SliderField, YesNo } from "../fields/controls"
 import { useDesign } from "../fields/design-fields"
 import { card, chip } from "../states"
-import { DETAIL, EMPHASIS, PHASES, PictureUpload, WIDTH, noteTargets, type AddOptions } from "./builder-panels"
+import { DETAIL, EMPHASIS, PHASES, PictureUpload, noteTargets, type AddOptions } from "./builder-panels"
 import { ThumbCard, WidgetThumb, dragGhost } from "../thumbs/widget-thumb"
 import { CardArt, OptionTiles } from "../thumbs/option-art"
 import { MediaCardsEditor } from "./media-cards-editor"
@@ -56,17 +56,6 @@ const HEADER_PARTS: { key: keyof WidgetHeader; label: string; hint: string }[] =
   { key: "description", label: "Description", hint: "The grey line under the title" },
   { key: "value", label: "Value chip", hint: "The figure on the right, like “58% win”" },
 ]
-
-/** The page's three columns as a small picture: the ones a width takes are filled. */
-function ColumnsIcon({ span }: { span: number }) {
-  return (
-    <span aria-hidden className="grid h-3 w-5 grid-cols-3 gap-px">
-      {[0, 1, 2].map((i) => (
-        <span key={i} className={cn("rounded-[1.5px]", i < span ? "bg-current" : "bg-current opacity-25")} />
-      ))}
-    </span>
-  )
-}
 
 /**
  * The top of the right panel, the Framer way: no title block (the bar above already says which page, and the page
@@ -130,18 +119,16 @@ export function WidgetInspector({
   const emphasis = w.emphasis ?? "accent"
   const baseDetail = start?.detail ?? "standard"
   const baseEmphasis = start?.emphasis ?? "accent"
-  const defaultW = fitWidth(def, first, start?.w ?? def.defaultW)
   const own = w.style ?? {}
   const changed =
     look.value !== first ||
     detail !== baseDetail ||
     emphasis !== baseEmphasis ||
     (!!w.header && Object.keys(w.header).length > 0) ||
-    pageWidth(w.w) !== pageWidth(fitWidth(def, w.variant, start?.w ?? def.defaultW)) ||
     Object.values(own).some((v) => v !== undefined)
   const reset = () => {
     // One change, so one undo brings it all back. Content, visibility and phones stay.
-    onChange({ variant: first, w: pinned ? w.w : defaultW, h: heightFor(def, first, start?.detail), detail: start?.detail, emphasis: start?.emphasis, header: start?.header, style: start?.style }, `${w.id}-reset-widget`)
+    onChange({ variant: first, detail: start?.detail, emphasis: start?.emphasis, header: start?.header, style: start?.style }, `${w.id}-reset-widget`)
     toast("This widget is back to its default look.", { description: "Its content stays. Press ⌘Z to undo." })
   }
   const menu = (
@@ -226,7 +213,7 @@ function StyleTab({
   const def = getWidget(w.type)!
   const look = lookOf(def, w.variant)
   const first = lookOf(def, start?.variant).value
-  const pick = (v: (typeof def.variants)[number]) => onChange({ variant: v.value, h: Math.max(w.h, v.minH) }, `${w.id}-variant`)
+  const pick = (v: (typeof def.variants)[number]) => onChange({ variant: v.value }, `${w.id}-variant`)
   const detail = w.detail ?? "standard"
   const emphasis = w.emphasis ?? "accent"
   const baseDetail = start?.detail ?? "standard"
@@ -240,9 +227,6 @@ function StyleTab({
   useEffect(() => {
     panelEdge.current = root.current?.closest("aside") ?? null
   })
-  const widths = widthsFor(def, w.variant)
-  const width = pageWidth(w.w)
-  const startW = pageWidth(fitWidth(def, w.variant, start?.w ?? def.defaultW))
   const header = widgetHeaderOf(theme, w.header)
   const own = w.style ?? {}
   const caps = capsOf(w.type, look.value, theme)
@@ -260,16 +244,7 @@ function StyleTab({
       {/* First in the panel: its size, how much it shows and its layout. */}
       {part === "layout" && (
       <InspectorSection title="Layout">
-        {!pinned && def.type !== "page-header" && widths.length > 1 && (
-          <Row label="Size" hint={WIDTH.find((o) => o.value === width)?.hint} own={width !== startW} onReset={() => onChange({ w: fitWidth(def, w.variant, start?.w ?? def.defaultW) }, `${w.id}-width`)}>
-            <Segmented
-              label="Size"
-              value={width}
-              onChange={(v) => onChange({ w: v }, `${w.id}-width`)}
-              options={WIDTH.filter((o) => widths.includes(o.value)).map((o) => ({ value: o.value, label: <ColumnsIcon span={o.value / 4} />, name: o.label, hint: `${o.label}. ${o.hint}` }))}
-            />
-          </Row>
-        )}
+        {!pinned && def.type !== "page-header" && <p className="px-0.5 text-xs text-muted-foreground">Drag the lines between cards to resize.</p>}
         {def.variants.length > 1 && (
           // Every layout of this widget as a picture, open under Size: one click swaps it on the page (the gallery's tiles, same widget, same draft).
           <Row label="Layout" stack own={look.value !== first} onReset={() => pick(lookOf(def, first))}>
@@ -286,7 +261,7 @@ function StyleTab({
                           e.dataTransfer.setData("text/plain", def.type)
                           e.dataTransfer.effectAllowed = "copy"
                           dragGhost(e, `${def.name} · ${v.label}`)
-                          onDrag({ variant: v.value, w: fitWidth(def, v.value, w.w), detail, props: {} })
+                          onDrag({ variant: v.value, w: 12, detail, props: {} })
                         },
                         onDragEnd: () => onDrag(null),
                       }

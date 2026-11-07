@@ -106,8 +106,7 @@ export function WidgetThumb({ w, inset = 0.06 }: { w: WidgetInstance; /** The ma
     return () => ro.disconnect()
   }, [seen, tile])
   if (!def) return <div className="aspect-[2/1] w-full" />
-  const cols = Math.min(3, pageWidth(w.w) / 4)
-  const width = cols * COL_PX + (cols - 1) * GAP_PX
+  const width = (pageWidth(w.w) / 12) * (3 * COL_PX + 3 * GAP_PX) - GAP_PX
   const h = THUMBS[w.type]?.h
   // The same proportions at any size: a tile in one column and in two is the same picture, larger or smaller.
   const pad = size.w * inset

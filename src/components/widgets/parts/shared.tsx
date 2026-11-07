@@ -69,9 +69,9 @@ export function WidgetEmpty({
   className?: string
 }) {
   return (
-    <W className={cn("justify-center", className)}>
+    <W className={cn("justify-center py-2", className)}>
       {/* Narrow: centred in the cell, like any empty state. Wide: a left-aligned row. */}
-      <div className="flex min-w-0 flex-col items-center gap-3 text-center @md:flex-row @md:text-left">
+      <div className="flex min-w-0 flex-col items-center gap-2 text-center @md:flex-row @md:gap-3 @md:text-left">
         <Drop level={3}>
           <Icon className="size-4 shrink-0 text-muted-foreground" />
         </Drop>

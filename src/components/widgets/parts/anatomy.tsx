@@ -1,11 +1,12 @@
 "use client"
 
+import { SizeObserver } from "./resizing"
 import { Highlight, HighlightItem } from "@animate-ui/react/primitives/effects/highlight"
 import { CountingNumber } from "@animate-ui/react/primitives/texts/counting-number"
 import { SlidingNumber } from "@animate-ui/react/primitives/texts/sliding-number"
 import { useShouldReduceMotion, useTempoTransition } from "@animate-ui/react/utils/motion"
 import { useReducedMotion } from "motion/react"
-import { createContext, useContext, useSyncExternalStore } from "react"
+import { createContext, useContext, useLayoutEffect, useRef, useSyncExternalStore } from "react"
 import { ArrowRight, type LucideIcon } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { chartStyleOf, figureStyleOf, headerFormOf, panelStyleOf, widgetFontOf, widgetHeaderOf, widgetStyleOf, type ChartStyle, type FigureStyle, type PanelStyle, type WidgetFont, type WidgetStyle } from "@/lib/theme/types"
@@ -229,6 +230,45 @@ function HeadIcon({ icon: Icon }: { icon: LucideIcon }) {
 }
 
 /**
+ * A tall card's body: the card's own height is set by its cell, so the body can be much taller than what it holds. When more than a third
+ * of it is empty the parts are spread over it (`data-roomy`: space-evenly), so a roomy card reads as laid out, not as a block at the
+ * top with a blank below. A body with a part that grows (a chart) has no spare room and is left alone, as is a body that wraps in columns.
+ */
+function useRoomy(ref: React.RefObject<HTMLDivElement | null>) {
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const parts = (box: Element, out: Element[]) => {
+      for (const c of box.children) {
+        const o = getComputedStyle(c)
+        if (o.display === "none" || o.position === "absolute") continue
+        if (o.display === "contents") parts(c, out)
+        else out.push(c)
+      }
+      return out
+    }
+    const check = () => {
+      const o = getComputedStyle(el)
+      const inner = el.clientHeight - parseFloat(o.paddingTop) - parseFloat(o.paddingBottom)
+      const kids = parts(el, [])
+      if (inner <= 0 || o.flexWrap !== "nowrap" || kids.length === 0) return el.removeAttribute("data-roomy")
+      const used = kids.reduce((n, c) => n + (c as HTMLElement).offsetHeight, 0) + (kids.length - 1) * (parseFloat(o.rowGap) || 0)
+      if (inner - used > inner * 0.35) el.setAttribute("data-roomy", "")
+      else el.removeAttribute("data-roomy")
+    }
+    check()
+    const ro = new SizeObserver(check)
+    ro.observe(el)
+    const mo = new MutationObserver(check)
+    mo.observe(el, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["data-dropped"] })
+    return () => {
+      ro.disconnect()
+      mo.disconnect()
+    }
+  }, [ref])
+}
+
+/**
  * The widget card. `title` and `meta` (the grey context line) on the left,
  * `chip` on the right; `crumb` puts a "Section / Title" breadcrumb instead of
  * the icon. `flush` drops the inset body panel (for media and lists that fill
@@ -287,6 +327,8 @@ export function WCard({
   const s = useWidgetStyle()
   const { emphasis, header, core } = useFrame()
   const { theme, base } = useCoach()
+  const panel = useRef<HTMLDivElement>(null)
+  useRoomy(panel)
   const h = widgetHeaderOf(theme, header)
   // A one-row card keeps the Top header: there the title is the content.
   const form = row ? "top" : headerFormOf(theme)
@@ -476,10 +518,12 @@ export function WCard({
       {head}
       {!core && <Note inset />}
       <div
+        ref={panel}
         data-slot="frame-panel"
         className={cn(
-          // Flat on the card: the header and foot rules frame it, no inset panel of its own.
-          "flex min-h-0 flex-1 flex-col overflow-hidden",
+          // Flat on the card: the header and foot rules frame it, no inset panel of its own. When more than a third of it is empty (a tall
+          // card), what it holds is spread over it instead of left at the top (useRoomy).
+          "flex min-h-0 flex-1 flex-col overflow-hidden data-[roomy]:justify-evenly",
           bands ? "gap-[calc(1rem*var(--density,1))]" : "gap-3",
           // Always padded, so text never touches the edge; a chart can bleed to the edges with Bleed.
           "p-[calc(1rem*var(--density,1))]",
