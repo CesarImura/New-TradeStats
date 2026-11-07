@@ -11,7 +11,7 @@ import type { PageId, WidgetInstance } from "@/lib/widgets/layout"
  */
 const FILE = path.join(process.cwd(), "src/lib/theme/template-data.json")
 
-type Body = { id: TemplateId; name?: string; blurb?: string; theme: CoachTheme; pages: Partial<Record<PageId, { items: WidgetInstance[] }>> }
+type Body = { id: TemplateId; name?: string; blurb?: string; theme: CoachTheme; pages: Partial<Record<PageId, { items: WidgetInstance[]; tiles?: boolean }>> }
 
 /** A widget as the template stores it: no id, no empty fields. */
 const clean = (w: WidgetInstance) => Object.fromEntries(Object.entries(w).filter(([k, v]) => k !== "id" && v !== undefined && v !== null)) as TemplatePage["items"][number]
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   if (!old) return Response.json({ error: `Unknown template "${body.id}"` }, { status: 400 })
   if (!body.theme?.palettes || !body.pages?.home) return Response.json({ error: "A theme with palettes and a Home layout are required" }, { status: 400 })
 
-  const pages = Object.fromEntries(Object.entries(body.pages).map(([page, l]) => [page, { items: (l?.items ?? []).map(clean) }]))
+  const pages = Object.fromEntries(Object.entries(body.pages).map(([page, l]) => [page, { ...(l?.tiles ? { tiles: true } : {}), items: (l?.items ?? []).map(clean) }]))
   data[body.id] = {
     name: body.name?.trim() || old.name,
     blurb: body.blurb?.trim() || old.blurb,

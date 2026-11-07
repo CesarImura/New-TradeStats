@@ -11,11 +11,11 @@ import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import type { NavLayout, TemplateId } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 
-const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
+const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] uppercase tracking-[0.06em]"
 const btnPrimary =
-  "inline-flex h-7 items-center gap-1.5 rounded-[4px] bg-[#f8ff9e] px-2.5 text-[0.78125rem] font-medium text-[#040404] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),0_0_0_1px_rgb(0_0_0/0.5)] hover:bg-[#ecf38a]"
+  "inline-flex h-7 items-center gap-1.5 rounded-[4px] bg-[#f8ff9e] px-2.5 text-[0.8125rem] font-medium text-[#040404] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),0_0_0_1px_rgb(0_0_0/0.5)] hover:bg-[#ecf38a]"
 const btnSecondary =
-  "inline-flex h-7 items-center gap-1.5 rounded-[4px] border border-[#2a2a2f] bg-[#222226] px-2.5 text-[0.78125rem] font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_1px_1px_rgb(0_0_0/0.4)] hover:bg-[#2e2e33]"
+  "inline-flex h-7 items-center gap-1.5 rounded-[4px] border border-[#2a2a2f] bg-[#222226] px-2.5 text-[0.8125rem] font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_1px_1px_rgb(0_0_0/0.4)] hover:bg-[#2e2e33]"
 const iconBtn = "grid size-7 place-items-center rounded-[4px] text-white/40 hover:bg-white/10 hover:text-white"
 const input = "h-7 w-full rounded-[4px] border border-[#2a2a2f] bg-[#0a0a0b] px-2 text-[0.8125rem] text-white outline-none focus:border-white/40"
 
@@ -150,7 +150,7 @@ function CoachCard({ base }: { base: Coach }) {
       ) : (
         <>
           <div className="flex flex-col gap-1">
-            <h2 className="text-[0.875rem] font-semibold">{saved.name}</h2>
+            <h2 className="text-sm font-semibold">{saved.name}</h2>
             <p className="text-xs text-[#a8a8b1]">{saved.tagline}</p>
           </div>
           {confirming ? (

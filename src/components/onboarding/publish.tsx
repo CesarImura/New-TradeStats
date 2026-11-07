@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, Loader2, Monitor, Smartphone } from "@/components/icons"
 import { currentLook } from "@/components/admin/design/looks"
-import { PreviewFrame } from "@/components/admin/design/preview-frame"
+import { PreviewFrame } from "@/components/admin/design/editor/preview-frame"
 import { Button } from "@/components/ui/button"
 import { renameSlug, setAccount, slugify, updateCommunity } from "@/lib/data/communities"
 import { useAccount, useCustomCommunities } from "@/lib/data/use-communities"
@@ -46,8 +46,6 @@ export function PublishStep() {
 
   const address = c.address || slugify(c.name)
   const tier = c.tiers[0]
-  const lessons = c.setup?.courses?.reduce((n, m) => n + m.lessons.length, 0) ?? 0
-  const sections = Object.entries(c.modules).filter(([, on]) => on).length
 
   const publish = () => {
     setBusy(true)
@@ -56,7 +54,8 @@ export function PublishStep() {
       updateCommunity(c.slug, { status: "live" })
       renameSlug(c.slug, address)
       setAccount({ setupSlug: address, step: undefined })
-      router.push("/setup/invite")
+      // Straight to the admin: what setup left out waits on the Overview's checklist.
+      router.push(`/admin/${address}`)
     }, 900)
   }
 
@@ -78,7 +77,7 @@ export function PublishStep() {
           </div>
 
           <div className="grid gap-1 rounded-[var(--radius)] border bg-card px-4 py-3">
-            <span className={cn(mono, "text-[0.6rem] text-muted-foreground")}>Your address</span>
+            <span className={cn(mono, "text-[0.6875rem] text-muted-foreground")}>Your address</span>
             <span className="truncate text-sm">
               {address}
               <span className="text-muted-foreground">.tradestats.app</span>
@@ -89,14 +88,12 @@ export function PublishStep() {
             <DoneRow done>{look ? `${look.name} look` : "Your own look"}</DoneRow>
             <DoneRow done={!!c.name}>{c.name || "Name"}</DoneRow>
             <DoneRow done={!!c.logo}>{c.logo ? "Logo and colour" : "Colour set · no logo yet"}</DoneRow>
-            <DoneRow done>{sections} sections switched on</DoneRow>
             <DoneRow done={!!tier}>{tier ? `${tier.name} · ${tier.price === "Free" ? "Free" : `${tier.price} / ${tier.cadence}`}` : "No tier yet"}</DoneRow>
-            <DoneRow done={lessons > 0}>{lessons > 0 ? `${lessons} lessons uploaded` : "Videos · later"}</DoneRow>
-            <DoneRow done={c.setup?.payouts === "connected"}>{c.setup?.payouts === "connected" ? "Payouts connected" : "Payouts · later"}</DoneRow>
           </ul>
+          <p className="-mt-4 text-xs text-muted-foreground">Videos, payouts, your menu and Home wait on a checklist in your admin, each with a short how-to.</p>
 
           <div className="mt-auto grid gap-3">
-            <Button size="lg" className="h-12 w-full justify-between px-4 text-[0.9375rem]" onClick={publish} disabled={busy}>
+            <Button size="lg" className="h-12 w-full justify-between px-4 text-[0.875rem]" onClick={publish} disabled={busy}>
               {busy ? (
                 <>
                   Publishing… <Loader2 className="animate-spin" />

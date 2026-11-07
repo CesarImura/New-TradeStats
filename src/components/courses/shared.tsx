@@ -5,8 +5,8 @@ import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { series } from "@/components/widgets/kit"
-import { Cover } from "@/components/widgets/shared"
+import { series } from "@/components/widgets/parts/tokens"
+import { Cover, EDGE_LEFT, EDGE_TOP } from "@/components/widgets/parts/shared"
 import { useViewerTier } from "@/lib/data/access"
 import type { Course } from "@/lib/data/learning"
 import { UPGRADE } from "@/lib/data/sample"
@@ -19,10 +19,16 @@ export function useStudentTier() {
 }
 
 /** Course artwork in the brand's series colours. */
-export function CourseCover({ course, className, locked }: { course: Pick<Course, "color" | "title">; className?: string; locked?: boolean }) {
+export function CourseCover({ course, className, locked, edge = "top" }: { course: Pick<Course, "color" | "title" | "cover">; className?: string; locked?: boolean; edge?: "top" | "left" }) {
   return (
-    <div className={cn("relative overflow-hidden", className)}>
-      <Cover color={series(course.color)} className="absolute inset-0 rounded-none" />
+    <div className={cn("relative overflow-hidden", edge === "left" ? EDGE_LEFT : EDGE_TOP, className)}>
+      {course.cover ? (
+        // The picture is cropped to the box: from the left, so a title written on the picture's left is never the part cut away.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={course.cover} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover object-left" />
+      ) : (
+        <Cover color={series(course.color)} className="absolute inset-0 rounded-none" />
+      )}
       {locked && (
         <div className="absolute inset-0 grid place-items-center bg-black/45 text-white backdrop-blur-[1px]">
           <Lock className="size-6" />
@@ -47,8 +53,9 @@ export function PreviewNotice() {
 /** "AI" mark on everything AI-made. */
 export function AiMark({ className }: { className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.65rem] font-medium text-primary", className)}>
-      <Sparkles className="size-3" /> AI
+    // The word in the text colour: brand-text isn't checked against the brand tint behind it. The sparkle keeps the brand.
+    <span className={cn("inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.6875rem] font-medium text-foreground", className)}>
+      <Sparkles className="size-3 text-primary" /> AI
     </span>
   )
 }

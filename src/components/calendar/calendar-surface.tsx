@@ -1,8 +1,10 @@
 "use client"
 
+import { useContext } from "react"
 import { addDays, addMonths, addWeeks, endOfMonth, format, isSameDay, isSameMonth, startOfMonth, startOfWeek } from "date-fns"
 import { ChevronLeft, ChevronRight } from "@/components/icons"
 import { Button } from "@/components/ui/button"
+import { ShellEditorContext } from "@/components/shells/student-shell"
 import { NOW, hhmm, isLiveNow, type Item, type ItemKind } from "@/lib/data/schedule"
 import { cn } from "@/lib/utils"
 
@@ -43,6 +45,9 @@ export function CalendarSurface({
 }) {
   const step = (dir: 1 | -1) => onCursor(view === "month" ? addMonths(cursor, dir) : addWeeks(cursor, dir))
   const weekStart = startOfWeek(cursor, { weekStartsOn: 1 })
+  // On a phone the week grid is wider than the screen: students get the list instead (the coach, who clicks a time to create, keeps the grid).
+  const phoneList = !onEmptySlot
+  const listStart = isSameDay(weekStart, startOfWeek(NOW, { weekStartsOn: 1 })) ? NOW : weekStart
   const label =
     view === "month"
       ? format(cursor, "MMMM yyyy")
@@ -73,8 +78,10 @@ export function CalendarSurface({
                 aria-checked={view === v}
                 onClick={() => onView(v)}
                 className={cn(
-                  "rounded-md px-3 py-1 text-sm text-muted-foreground capitalize",
+                  "rounded-md px-3 py-1 text-sm text-muted-foreground capitalize max-lg:min-h-10",
+                  phoneList && v === "week" && "max-sm:hidden",
                   view === v && "bg-background font-medium text-foreground shadow-sm",
+                  phoneList && v === "list" && view === "week" && "max-sm:bg-background max-sm:font-medium max-sm:text-foreground max-sm:shadow-sm",
                 )}
               >
                 {v}
@@ -85,10 +92,17 @@ export function CalendarSurface({
       </div>
 
       {view === "month" && <Month items={items} cursor={cursor} onSelect={onSelect} colorOf={colorOf} eventStyle={eventStyle} onDay={(d) => (onCursor(d), onView("week"))} />}
-      {view === "week" && <Week items={items} start={weekStart} onSelect={onSelect} colorOf={colorOf} eventStyle={eventStyle} onEmptySlot={onEmptySlot} />}
-      {view === "list" && (
-        <List items={items} start={isSameDay(weekStart, startOfWeek(NOW, { weekStartsOn: 1 })) ? NOW : weekStart} onSelect={onSelect} colorOf={colorOf} />
+      {view === "week" && (
+        <div className={cn(phoneList && "max-sm:hidden")}>
+          <Week items={items} start={weekStart} onSelect={onSelect} colorOf={colorOf} eventStyle={eventStyle} onEmptySlot={onEmptySlot} />
+        </div>
       )}
+      {view === "week" && phoneList && (
+        <div className="sm:hidden">
+          <List items={items} start={listStart} onSelect={onSelect} colorOf={colorOf} />
+        </div>
+      )}
+      {view === "list" && <List items={items} start={listStart} onSelect={onSelect} colorOf={colorOf} />}
     </div>
   )
 }
@@ -104,11 +118,44 @@ function LiveDot() {
 
 export type EventStyle = "tinted" | "solid" | "outline"
 
-/** Colours of an event block in each style. Solid uses white text, so it reads on the coach's colour and the type shades. */
+/**
+ * An event's time: secondary text, a step closer to the main text colour. The theme's
+ * secondary text reads at 4.5:1 on the card, but a tinted event is a little darker
+ * (or lighter) than the card, which took it just under.
+ */
+const TIME_TEXT = "text-[color-mix(in_oklab,var(--muted-foreground)_70%,var(--foreground))]"
+
+/**
+ * Colours of an event block in each style. Solid picks black or white text, whichever
+ * the fill needs: below oklch L 0.565 white reads at 4.5:1, above it black does. That
+ * uses CSS relative colours (`oklch(from …)`: Chrome 119, Safari 18, Firefox 128);
+ * older browsers drop the value, and `solidTextFallback` picks the colour instead.
+ */
 export function blockStyle(color: string, style: EventStyle): React.CSSProperties {
-  if (style === "solid") return { background: color, borderColor: color, color: "#fff" }
+  if (style === "solid") return { background: color, borderColor: color, color: `oklch(from ${color} clamp(0, calc((0.565 - l) * 1000), 1) 0 0)` }
   if (style === "outline") return { background: "var(--card)", borderColor: color, boxShadow: `inset 0 0 0 1px ${color}` }
   return { background: `color-mix(in oklab, ${color} 14%, var(--card))`, borderColor: color }
+}
+
+const RELATIVE_COLOURS = typeof CSS !== "undefined" && CSS.supports("color", "oklch(from red l c h)")
+
+/**
+ * For browsers without relative colours (Next.js supports Safari 16.4 and Firefox 111):
+ * reads the solid block's real fill and sets black or white text, by the same 4.5:1 rule.
+ * Used as the block's ref, so it runs again whenever the block renders.
+ */
+function solidTextFallback(el: HTMLElement | null) {
+  if (!el || RELATIVE_COLOURS) return
+  const ctx = document.createElement("canvas").getContext("2d", { willReadFrequently: true })
+  if (!ctx) return
+  ctx.fillStyle = getComputedStyle(el).backgroundColor
+  ctx.fillRect(0, 0, 1, 1)
+  const [r, g, b] = [...ctx.getImageData(0, 0, 1, 1).data].map((v) => {
+    const c = v / 255
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  })
+  // At luminance 0.175 black and white text both read at about 4.5:1 or more.
+  el.style.color = 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.175 ? "#000" : "#fff"
 }
 
 function Chip({ item, color, onSelect, eventStyle = "tinted" }: { item: Item; color: string; onSelect: (i: Item, el?: HTMLElement) => void; eventStyle?: EventStyle }) {
@@ -116,13 +163,14 @@ function Chip({ item, color, onSelect, eventStyle = "tinted" }: { item: Item; co
   const tinted = eventStyle === "tinted"
   return (
     <button
+      ref={eventStyle === "solid" ? (el) => solidTextFallback(el) : undefined}
       onClick={(e) => (e.stopPropagation(), onSelect(item, e.currentTarget))}
       className={cn("flex w-full min-w-0 items-center gap-1.5 rounded-[var(--r-chip,6px)] px-1.5 py-0.5 text-left text-xs", tinted ? "hover:bg-muted" : "border hover:opacity-90")}
       style={tinted ? undefined : blockStyle(color, eventStyle)}
       title={`${hhmm(item.start)} ${item.title}`}
     >
       {live ? <LiveDot /> : tinted && <span className="size-1.5 shrink-0 rounded-full" style={{ background: color }} />}
-      <span className={cn("shrink-0 tabular-nums", eventStyle === "solid" ? "opacity-85" : "text-muted-foreground")}>{hhmm(item.start)}</span>
+      <span className={cn("shrink-0 tabular-nums", eventStyle !== "solid" && TIME_TEXT)}>{hhmm(item.start)}</span>
       <span className={cn("truncate", item.news?.noTrade && "font-medium")}>{item.title}</span>
     </button>
   )
@@ -209,6 +257,8 @@ function Week({
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i))
   const hours = Array.from({ length: HOURS.to - HOURS.from }, (_, i) => HOURS.from + i)
   const top = (d: Date) => (d.getHours() + d.getMinutes() / 60 - HOURS.from) * ROW
+  // The Design editor shows the page whole, so the hours aren't a scroll of their own there.
+  const editor = !!useContext(ShellEditorContext)
 
   return (
     <div className="overflow-x-auto rounded-(--radius) border bg-card text-card-foreground">
@@ -232,13 +282,13 @@ function Week({
             </div>
           ))}
         </div>
-        <div className="max-h-[640px] overflow-y-auto">
+        <div className={cn(!editor && "max-h-[640px] overflow-y-auto")}>
           <div className="relative grid grid-cols-[3.5rem_repeat(7,minmax(0,1fr))]" style={{ height: hours.length * ROW }}>
             <div className="relative">
               {hours.map((h) => (
                 <span
                   key={h}
-                  className="absolute right-2 -translate-y-1/2 text-[0.65rem] text-muted-foreground tabular-nums"
+                  className="absolute right-2 -translate-y-1/2 text-[0.6875rem] text-muted-foreground tabular-nums"
                   style={{ top: (h - HOURS.from) * ROW }}
                 >
                   {h > HOURS.from ? `${String(h).padStart(2, "0")}:00` : ""}
@@ -277,6 +327,8 @@ function Week({
                       style={{ top: (h - HOURS.from) * ROW }}
                     />
                   ))}
+                  {/* The "now" line runs under the events, so it never crosses their text; only its dot sits on top (after the events). */}
+                  {isSameDay(d, NOW) && <span className="pointer-events-none absolute inset-x-0 h-0.5 bg-red-500" style={{ top: top(NOW) }} />}
                   {list.map((i) => {
                     const color = colorOf(i.kind)
                     const h = Math.max(22, ((+i.end - +i.start) / 3600000) * ROW)
@@ -285,8 +337,9 @@ function Week({
                     return (
                       <button
                         key={i.key}
+                        ref={eventStyle === "solid" ? (el) => solidTextFallback(el) : undefined}
                         onClick={(e) => (e.stopPropagation(), onSelect(i, e.currentTarget))}
-                        className="absolute overflow-hidden rounded-[var(--r-chip,6px)] border-l-[3px] px-1.5 py-0.5 text-left text-[0.7rem] leading-tight shadow-xs transition-shadow hover:z-10 hover:shadow-md"
+                        className="absolute overflow-hidden rounded-[var(--r-chip,6px)] border-l-[3px] px-1.5 py-0.5 text-left text-[0.6875rem] leading-tight shadow-xs transition-shadow hover:z-10 hover:shadow-md"
                         style={{
                           top: top(i.start),
                           height: h,
@@ -299,15 +352,11 @@ function Week({
                           {live && <LiveDot />}
                           <span className="truncate">{i.title}</span>
                         </span>
-                        {h > 30 && <span className={cn("block tabular-nums", eventStyle === "solid" ? "opacity-85" : "text-muted-foreground")}>{hhmm(i.start)}</span>}
+                        {h > 30 && <span className={cn("block tabular-nums", eventStyle !== "solid" && TIME_TEXT)}>{hhmm(i.start)}</span>}
                       </button>
                     )
                   })}
-                  {isSameDay(d, NOW) && (
-                    <span className="pointer-events-none absolute inset-x-0 z-20 h-0.5 bg-red-500" style={{ top: top(NOW) }}>
-                      <span className="absolute -top-1 -left-1 size-2.5 rounded-full bg-red-500" />
-                    </span>
-                  )}
+                  {isSameDay(d, NOW) && <span className="pointer-events-none absolute -left-1 z-20 size-2.5 -translate-y-1 rounded-full bg-red-500" style={{ top: top(NOW) }} />}
                 </div>
               )
             })}

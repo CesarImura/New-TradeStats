@@ -76,7 +76,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
       <Sidebar variant="inset" collapsible="icon">
         <SidebarHeader className="gap-3 px-2 pt-0 pb-2 group-data-[collapsible=icon]:px-0">
           <div className="flex h-14 items-center px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-            <TsLogo className="gap-2.5 [&>span]:text-[1.0625rem] [&>span]:group-data-[collapsible=icon]:hidden [&>svg]:size-5" />
+            <TsLogo className="gap-2.5 [&>span]:text-[1rem] [&>span]:group-data-[collapsible=icon]:hidden [&>svg]:size-5" />
           </div>
           <WorkspaceSwitcher />
         </SidebarHeader>
@@ -114,14 +114,14 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <header className="ts-admin-bar sticky top-0 z-20 flex h-14 items-center gap-3 rounded-t-xl px-4 backdrop-blur-md md:px-6">
           <SidebarTrigger className="text-muted-foreground" />
-          <span className="truncate text-[0.9375rem] font-medium">{current?.label}</span>
+          <span className="truncate text-[0.875rem] font-medium">{current?.label}</span>
           <div className="ml-auto flex items-center gap-2">
             <Button variant="outline" className="hidden w-56 justify-start text-muted-foreground sm:inline-flex" aria-label="Search">
               <Search /> <span className="font-normal">Search</span>
-              <kbd className="ml-auto rounded-[5px] bg-white/[0.06] px-1.5 text-[0.65rem]">⌘K</kbd>
+              <kbd className="ml-auto rounded-[5px] bg-white/[0.06] px-1.5 text-[0.6875rem]">⌘K</kbd>
             </Button>
             <HelpButton />
             <Button variant="outline" size="icon" aria-label="Notifications" className="relative">
@@ -145,7 +145,7 @@ function InviteCard({ href }: { href: string }) {
   if (!open) return null
   return (
     <div className="relative rounded-xl bg-white/[0.04] p-3 group-data-[collapsible=icon]:hidden">
-      <button onClick={() => setOpen(false)} aria-label="Dismiss" className="absolute top-2 right-2 text-muted-foreground hover:text-foreground">
+      <button onClick={() => setOpen(false)} aria-label="Dismiss" className="absolute top-2 right-2 text-muted-foreground after:absolute after:-inset-[5px] after:content-[''] hover:text-foreground">
         <X className="size-3.5" />
       </button>
       <span className="grid size-7 place-items-center rounded-full bg-white/[0.07]">

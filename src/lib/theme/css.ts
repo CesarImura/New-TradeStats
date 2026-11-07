@@ -1,9 +1,9 @@
 import { FONT_LIBRARY } from "@/lib/fonts"
 import { brandVisuals } from "./color"
-import { resolveColors, type EngineOptions } from "./derive"
+import { resolveColors } from "./derive"
 import type { CoachTheme } from "./types"
 
-const DENSITY = { compact: 0.85, comfortable: 1, airy: 1.3 } as const
+export const DENSITY = { compact: 0.85, comfortable: 1, airy: 1.3 } as const
 const PAGE_GAP = { compact: "1rem", comfortable: "1.5rem", airy: "2rem" } as const
 
 /** Is a hex colour dark? Used to pick readable text on coloured surfaces. */
@@ -15,34 +15,51 @@ export function isDark(hex: string) {
 }
 
 /**
- * Turns a coach theme into CSS. It writes shadcn's own variables, so every
- * shadcn component takes the coach's look without being touched, plus a few
- * rules for the settings shadcn has no variable for (button shape, shadow,
- * density, label style).
- *
- * `scope` is `:root` for the student platform and a class for live previews.
+ * The theme's text goes into a <style> tag as is. In the prototype it comes from the
+ * coach's own browser; once it comes from the server and is sent to every student,
+ * a value must not be able to close a rule or the tag. No colour, font id or length
+ * needs these characters, so they are dropped (the background picture isn't written
+ * here: see backdropStyle).
  */
-export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOptions) {
-  const p = resolveColors(t, engine)
+function cssSafe<T>(value: T): T {
+  if (typeof value === "string") return value.replace(/[<>{};\\]/g, "") as T
+  if (Array.isArray(value)) return value.map(cssSafe) as T
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, k === "bgImage" ? v : cssSafe(v)])) as T
+  return value
+}
+
+/** The theme's CSS variables by name: themeToCss writes them, and one widget's own style re-sets a few (widgets/widget-scope.tsx). */
+export function themeVars(theme: CoachTheme) {
+  const t = cssSafe(theme)
+  const p = resolveColors(t)
   const sidebarDark = isDark(p.sidebar)
   const sidebarFg = sidebarDark ? "#f5f6fb" : p.foreground
+  // On a dark page a 5% shadow can't be seen, so dark themes get deeper ones: Soft and Strong must look different there too.
+  const darkPage = isDark(p.background)
   const shadow =
     t.shadow === "none"
       ? "none"
       : t.shadow === "soft"
-        ? "0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05)"
-        : `0 2px 4px rgb(0 0 0 / 0.06), 0 14px 36px color-mix(in oklab, ${t.primary} 16%, transparent)`
+        ? darkPage
+          ? "0 1px 2px rgb(0 0 0 / 0.35), 0 6px 18px rgb(0 0 0 / 0.4)"
+          : "0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05)"
+        : darkPage
+          ? `0 2px 4px rgb(0 0 0 / 0.45), 0 16px 40px color-mix(in oklab, ${t.primary} 22%, rgb(0 0 0 / 0.55))`
+          : `0 2px 4px rgb(0 0 0 / 0.06), 0 14px 36px color-mix(in oklab, ${t.primary} 16%, transparent)`
   // Card surface: raised (the palette's card), grey (a flat grey card on the page) or outline (no fill, a hairline).
   const surface = t.cardSurface ?? "raised"
   const card = surface === "grey" ? `color-mix(in oklab, ${p.foreground} ${isDark(p.background) ? 7 : 5}%, ${p.background})` : surface === "outline" ? p.background : p.card
   // The hairline is an inset outline, not a 1px shadow ring: a ring sits outside the card and on rounded
   // corners the page shows through between the two, so the corners read as a different colour.
-  const cardEdge = t.borders || surface === "outline" ? p.border : "transparent"
+  // Outline on cards draws the widgets' hairline round every card (derive.ts makes it read on the card's own fill, grey included);
+  // off, raised and grey cards stand on their fill (derive.ts keeps a raised card apart from the page). An outline card always
+  // has it. Open widgets draw their own line (globals.css).
+  const cardEdge = t.borders || surface === "outline" ? p.hair : "transparent"
   const cardShadow = shadow === "none" || surface !== "raised" ? "none" : shadow
   const buttonRadius =
     t.buttonShape === "pill" ? "9999px" : t.buttonShape === "square" ? `${Math.min(t.radius, 3)}px` : `${Math.max(6, t.radius * 0.7)}px`
 
-  const fx = brandVisuals(t.primary, t.mode, t.effects ?? "soft")
+  const fx = brandVisuals(t.primary, t.mode)
   const geometric = t.radius <= 3
   // Is the brand's own text colour light (white-ish) or dark?
   const onLight = !isDark(t.primaryForeground) || /^#f/i.test(t.primaryForeground)
@@ -73,6 +90,10 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
     "--sidebar": p.sidebar,
     // The ground a floating page sits on: the menu's colour, or a step off the page colour when they are the same.
     "--ground": p.sidebar.toLowerCase() !== p.background.toLowerCase() ? p.sidebar : `color-mix(in oklab, ${p.foreground} ${isDark(p.background) ? 5 : 4}%, ${p.background})`,
+    // Pictures and covers (Cover, Shelf tiles): a dark panel in both modes and the text colour that reads on it.
+    // Widgets set their own (parts/card.tsx); this is the value everywhere else (course pages, downloads, the sales page).
+    "--media-bg": `color-mix(in oklab, ${p.foreground} ${darkPage ? 10 : 90}%, ${p.background})`,
+    "--media-fg": darkPage ? p.foreground : p.background,
     "--sidebar-foreground": sidebarFg,
     "--sidebar-primary": t.primary,
     "--sidebar-primary-foreground": t.primaryForeground,
@@ -90,10 +111,23 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
     // Profit and loss read as text: the same colour, moved to a readable shade when the coach picked their own.
     "--profit-text": p.profitText,
     "--loss-text": p.lossText,
+    // The widget surface ladder (derive.ts surfaces): inner panel, empty track, hairline.
+    "--w-panel": p.panel,
+    "--w-track": p.track,
+    "--w-hair": p.hair,
+    // The Inverted Star card: the text colour as the card, the brand only as one mark.
+    "--inv-bg": p.invBg,
+    "--inv-fg": p.invFg,
+    "--inv-accent": p.invAccent,
     "--coach-font-heading": FONT_LIBRARY[t.fonts.heading].css,
     "--coach-font-body": FONT_LIBRARY[t.fonts.body].css,
     "--coach-font-label": FONT_LIBRARY[t.fonts.label].css,
     "--coach-heading-weight": String(t.headingWeight),
+    // Widgets follow the heading weight too: their big figures take it as is, their small titles at most semibold.
+    "--w-value-weight": String(t.headingWeight),
+    "--w-title-weight": String(Math.min(t.headingWeight, 600)),
+    // Corner brackets (Widget finish Corners) are a square-card detail: on a rounded card they would sit on the curve as a seam.
+    "--w-corners": t.radius <= 4 ? "block" : "none",
     "--label-transform": t.labelStyle === "caps" ? "uppercase" : "none",
     "--label-tracking": t.labelStyle === "caps" ? "0.06em" : "0",
     "--label-size": t.labelStyle === "caps" ? "0.6875rem" : "0.8125rem",
@@ -112,12 +146,7 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
     // for chips, avatars and pictures on a brand card: they keep or gain contrast instead of losing it.
     "--brand-shade": `color-mix(in oklab, ${t.primary} 84%, ${onLight ? "black" : "white"})`,
     "--brand-deep": `color-mix(in oklab, ${t.primary} 62%, ${onLight ? "black" : "white"})`,
-    "--brand-a": fx.a,
     "--brand-b": fx.b,
-    "--brand-c": fx.c,
-    "--brand-grad": `linear-gradient(135deg, ${fx.a}, ${fx.b} 55%, ${fx.c})`,
-    "--brand-grad-h": `linear-gradient(90deg, ${fx.a}, ${fx.b} 60%, ${fx.c})`,
-    "--brand-grad-v": `linear-gradient(to top, ${fx.c}, ${fx.b} 55%, ${fx.a})`,
     "--s1": fx.series[0],
     "--s2": fx.series[1],
     "--s3": fx.series[2],
@@ -135,8 +164,20 @@ export function themeToCss(t: CoachTheme, scope = ":root", engine?: EngineOption
     "--r-menu": `${Math.max(6, Math.min(Math.round(t.radius * 0.8), 12))}px`,
     "--r-panel": `${Math.max(10, Math.min(t.radius + 4, 18))}px`,
   }
+  return vars
+}
 
-  const body = Object.entries(vars).map(([k, v]) => `${k}:${v};`).join("")
+/**
+ * Turns a coach theme into CSS. It writes shadcn's own variables, so every
+ * shadcn component takes the coach's look without being touched, plus a few
+ * rules for the settings shadcn has no variable for (button shape, shadow,
+ * density, label style).
+ *
+ * `scope` is `:root` for the student platform and a class for live previews.
+ */
+export function themeToCss(theme: CoachTheme, scope = ":root") {
+  const t = cssSafe(theme)
+  const body = Object.entries(themeVars(theme)).map(([k, v]) => `${k}:${v};`).join("")
   const within = (sel: string) =>
     scope === ":root" ? sel : scope.split(",").map((p) => `${p.trim()} ${sel}`).join(", ")
   return `
@@ -144,13 +185,18 @@ ${scope}{${body}color-scheme:${t.mode};}
 ${within(".text-primary")}{color:var(--brand-text);}
 ${within(".text-profit")}{color:var(--profit-text);}
 ${within(".text-loss")}{color:var(--loss-text);}
+${within("[data-slot=badge].text-destructive")}{color:color-mix(in oklab,var(--loss-text) 80%,var(--foreground));}
 ${within(".border-primary")}{border-color:var(--brand-mark);}
 ${within("[data-slot=button]")}{border-radius:var(--button-radius)!important;}
 ${within(':is([data-slot=card],[style*="var(--card-shadow)"])')}{outline:1px solid var(--card-edge);outline-offset:-1px;}
-${within("[data-slot=card]")}{box-shadow:var(--card-shadow);--card-spacing:calc(var(--spacing) * 4 * var(--density))!important;}
+${within("[data-slot=card]")}{box-shadow:var(--card-shadow);--card-spacing:round(calc(var(--spacing) * 4 * var(--density)), 2px)!important;}
+${within("[data-slot=card]:not([class~=p-0]):not([class~=px-0])")}{padding-inline:var(--card-spacing);}
 ${within(":is([data-slot=sidebar-menu-button],[data-slot=sidebar-menu-sub-button],[data-slot=tabs-trigger],[data-slot=dropdown-menu-item],[data-slot=dropdown-menu-sub-trigger],[data-slot=select-item],[data-slot=context-menu-item],[data-slot=command-item])")}{border-radius:var(--r-menu)!important;}
 ${within(":is([data-slot=dropdown-menu-content],[data-slot=dropdown-menu-sub-content],[data-slot=popover-content],[data-slot=select-content],[data-slot=context-menu-content],[data-slot=tooltip-content])")}{border-radius:var(--r-panel)!important;}
 ${within("[data-slot=tabs-list]:not([data-variant=line])")}{border-radius:calc(var(--r-menu) + 3px)!important;}
-${within("[data-slot=card][data-size=sm]")}{--card-spacing:calc(var(--spacing) * 3 * var(--density))!important;}
+/* Text is never smaller than 12px: the 11px micro labels (a utility, text-[0.6875rem]) read at 12px, and only the small capitals (.uppercase, .eyebrow) stay 11px. */
+${within('[class~="text-[0.6875rem]"]:not(.uppercase):not(.eyebrow)')}{font-size:0.75rem;}
+${within("[data-slot=card][data-size=sm]")}{--card-spacing:round(calc(var(--spacing) * 3 * var(--density)), 2px)!important;}
+${within("[data-slot=card][data-size=sm]:not([class~=p-0]):not([class~=px-0])")}{padding-inline:var(--card-spacing);}
 `
 }

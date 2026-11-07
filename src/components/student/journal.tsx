@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { CandlestickChart, Check, Link2, Loader2, MessageSquareReply, Mic, Plus, RefreshCw, Search, Send, Sparkles, Video } from "@/components/icons"
 import { toast } from "sonner"
 import { useCommunityData } from "@/components/admin/kit"
@@ -14,7 +14,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,18 +21,22 @@ import { Progress } from "@/components/ui/progress"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { aiTradeAnswer } from "@/lib/data/ai"
+import { aiTradeAnswer, askAi } from "@/lib/data/ai"
 import { addFeedback, allTrades, useFeedback } from "@/lib/data/feedback"
 import { AI_INSIGHT, DEMO_STUDENT, EQUITY, JOURNAL_DAYS, RULES, SETUPS } from "@/lib/data/sample"
 import { ACCOUNTS, BROKERS, STRATEGIES, fmtPnl, fmtR } from "@/lib/data/trades"
+import { resolveColors } from "@/lib/theme/derive"
+import { heatCell } from "@/lib/theme/heat"
+import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { OwnTitle } from "@/components/student/own-title"
 
 type T = ReturnType<typeof allTrades>[number]
-const equityConfig = { v: { label: "Equity", color: "var(--primary)" } } satisfies ChartConfig
+// The chart library is the heaviest part of this page: it loads on its own, and the card holds its height meanwhile.
+const EquityChart = dynamic(() => import("./journal-equity").then((m) => m.EquityChart), { loading: () => <div aria-hidden className="min-h-56 w-full flex-1" /> })
 
 /** STU-13 journal, STU-14 connect broker, STU-15 trade detail, STU-16 analytics, STU-28 my feedback. */
-export function StudentJournal() {
+export function StudentJournal({ props = {} }: { props?: Record<string, string | boolean> } = {}) {
   const { coach } = useCoach()
   const store = useFeedback(coach.slug)
   const trades = allTrades(store)
@@ -98,12 +101,12 @@ export function StudentJournal() {
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="trades">Trades</TabsTrigger>
           <TabsTrigger value="feedback">
-            Feedback {unread > 0 && <span className="rounded-full bg-primary px-1.5 text-[0.65rem] text-primary-foreground tabular-nums">{unread}</span>}
+            Feedback {unread > 0 && <span className="rounded-full bg-primary px-1.5 text-[0.6875rem] text-primary-foreground tabular-nums">{unread}</span>}
           </TabsTrigger>
-          <TabsTrigger value="strategies">Rules</TabsTrigger>
+          {props.rulesTab !== false && <TabsTrigger value="strategies">Rules</TabsTrigger>}
         </TabsList>
         <TabsContent value="dashboard">
-          <Dashboard trades={trades} onOpen={setOpen} />
+          <Dashboard trades={trades} onOpen={setOpen} props={props} />
         </TabsContent>
         <TabsContent value="trades">
           <TradeList trades={trades} onOpen={setOpen} />
@@ -111,9 +114,11 @@ export function StudentJournal() {
         <TabsContent value="feedback">
           <MyFeedback trades={trades} onOpen={setOpen} />
         </TabsContent>
-        <TabsContent value="strategies">
-          <Strategies />
-        </TabsContent>
+        {props.rulesTab !== false && (
+          <TabsContent value="strategies">
+            <Strategies />
+          </TabsContent>
+        )}
       </Tabs>
 
       <TradeDetail trade={trades.find((t) => t.id === open) ?? null} onClose={() => setOpen(null)} />
@@ -133,13 +138,20 @@ function Stat({ label, value, tone, sub }: { label: string; value: string; tone?
   )
 }
 
-function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => void }) {
-  const { coach, base } = useCoach()
+function Dashboard({ trades, onOpen, props }: { trades: T[]; onOpen: (id: string) => void; props: Record<string, string | boolean> }) {
+  const { coach, base, theme } = useCoach()
+  // The heat map picks each number's colour from the theme's real colours.
+  const colors = resolveColors(theme)
   const pnl = trades.reduce((n, t) => n + t.pnl, 0)
   const wins = trades.filter((t) => t.r > 0).length
   const exp = trades.reduce((n, t) => n + t.r, 0) / trades.length
   const kept = Math.round((RULES.reduce((n, r) => n + r.kept, 0) / RULES.reduce((n, r) => n + r.total, 0)) * 100)
   const data = EQUITY.map((v, i) => ({ d: i + 1, v }))
+  // The stats and the latest trades are the page's core; the cards between can be switched off, and the rows reflow.
+  const showEquity = props.equity !== false
+  const showWeeks = props.weeks !== false
+  const middle = [showEquity, showWeeks].filter(Boolean).length
+  const lower = [props.rulesCard !== false, props.setups !== false, props.insight !== false].filter(Boolean).length
 
   return (
     <div className="grid gap-4">
@@ -149,26 +161,17 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
         <Stat label="Expectancy" value={fmtR(exp)} tone={exp >= 0 ? "profit" : "loss"} sub="Average per trade" />
         <Stat label="Rules kept" value={`${kept}%`} sub="Your coach's rules" />
       </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      {middle > 0 && (
+      <div className={cn("grid gap-4", middle === 2 && "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]")}>
+        {showEquity && (
         <Card className="gap-2 px-5">
           <span className="eyebrow">Equity · last 20 days</span>
-          <ChartContainer config={equityConfig} className="aspect-auto h-56 w-full">
-            <AreaChart data={data} margin={{ left: 0, right: 4, top: 8 }}>
-              <defs>
-                <linearGradient id="eq" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-v)" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="var(--color-v)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="d" tickLine={false} axisLine={false} tickFormatter={(d) => (d % 5 === 0 ? `Day ${d}` : "")} />
-              <YAxis hide domain={["dataMin - 100", "dataMax + 100"]} />
-              <ChartTooltip content={<ChartTooltipContent hideLabel formatter={(v) => <span className="font-mono tabular-nums">{fmtPnl(Number(v))}</span>} />} />
-              <Area dataKey="v" type="monotone" stroke="var(--color-v)" strokeWidth={2} fill="url(#eq)" />
-            </AreaChart>
-          </ChartContainer>
+          {/* Fills the card: beside the taller 4-week grid a fixed h-56 left an empty band under the chart. */}
+          <EquityChart data={data} />
         </Card>
-        <Card className="gap-3 px-5">
+        )}
+        {showWeeks && (
+        <Card className={cn("gap-3 px-5", !showEquity && "lg:max-w-xl")}>
           <span className="eyebrow">Last 4 weeks</span>
           <div className="grid grid-cols-[auto_repeat(5,1fr)] gap-1.5 text-xs">
             <span />
@@ -184,8 +187,8 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
                   <span
                     key={j}
                     title={v ? fmtPnl(v) : "No trades"}
-                    className="grid aspect-square place-items-center rounded-(--r-bar) text-[0.6rem] tabular-nums"
-                    style={{ background: v === 0 ? "var(--muted)" : `color-mix(in oklab, ${v > 0 ? "var(--profit)" : "var(--loss)"} ${Math.min(90, 25 + Math.abs(v) / 6)}%, transparent)` }}
+                    className="grid aspect-square place-items-center rounded-(--r-bar) text-[0.6875rem] tabular-nums"
+                    style={v === 0 ? { background: "var(--muted)" } : heatCell(colors, v, Math.min(90, 25 + Math.abs(v) / 6) / 100)}
                   >
                     {v ? (v > 0 ? "+" : "−") + Math.abs(Math.round(v / 10)) * 10 : ""}
                   </span>
@@ -194,8 +197,12 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
             ))}
           </div>
         </Card>
+        )}
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
+      )}
+      {lower > 0 && (
+      <div className={cn("grid gap-4", lower === 2 && "lg:grid-cols-2", lower === 3 && "lg:grid-cols-3")}>
+        {props.rulesCard !== false && (
         <Card className="gap-3 px-5">
           <span className="eyebrow">Rules · 30 days</span>
           {RULES.map((r) => (
@@ -210,6 +217,8 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
             </div>
           ))}
         </Card>
+        )}
+        {props.setups !== false && (
         <Card className="gap-3 px-5">
           <span className="eyebrow">By setup</span>
           {SETUPS.map((s) => (
@@ -220,6 +229,8 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
             </div>
           ))}
         </Card>
+        )}
+        {props.insight !== false && (
         <Card className="gap-2 px-5">
           <div className="flex items-center justify-between">
             <span className="eyebrow">Your week</span>
@@ -233,12 +244,14 @@ function Dashboard({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
             </Button>
             {coach.modules.ai && (
               <Button size="sm" variant="ghost" nativeButton={false} render={<Link href={`${base}/ai`} />}>
-                <Sparkles /> Ask {coach.wording.ai}
+                <Sparkles /> {askAi(coach.wording.ai)}
               </Button>
             )}
           </div>
         </Card>
+        )}
       </div>
+      )}
       <Card className="gap-1 px-0">
         <span className="eyebrow px-5">Latest trades</span>
         <TradeRows trades={trades.slice(0, 4)} onOpen={onOpen} />
@@ -252,21 +265,27 @@ function TradeRows({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
     <div className="divide-y">
       {trades.map((t) => (
         <button key={t.id} onClick={() => onOpen(t.id)} className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm hover:bg-muted/60">
-          <span className="w-20 shrink-0 text-xs text-muted-foreground">
+          <span className="w-16 shrink-0 text-xs text-muted-foreground sm:w-20">
             {t.date}
             <span className="block">{t.time}</span>
           </span>
-          <span className="w-28 shrink-0 font-medium">
+          <span className="shrink-0 font-medium sm:w-28">
             {t.symbol} <span className="font-normal text-muted-foreground">{t.side}</span>
           </span>
           <span className="hidden flex-1 truncate text-muted-foreground sm:block">{t.setup}</span>
-          <span className="flex flex-1 justify-end gap-1.5 sm:flex-none">
+          {/* On a phone the badges wrap and "Waiting for review" shortens, so they never cover the symbol or push the result out. */}
+          <span className="flex flex-1 flex-wrap justify-end gap-1.5 sm:flex-none">
             {t.rulesBroken.length > 0 && <Badge variant="destructive">Rule</Badge>}
-            {t.review === "waiting" && <Badge variant="outline">Waiting for review</Badge>}
+            {t.review === "waiting" && (
+              <Badge variant="outline">
+                <span className="sm:hidden">Review</span>
+                <span className="hidden sm:inline">Waiting for review</span>
+              </Badge>
+            )}
             {t.thread.at(-1)?.from === "coach" && <Badge>Feedback</Badge>}
           </span>
-          <span className={cn("w-14 text-right tabular-nums", t.r >= 0 ? "text-profit" : "text-loss")}>{fmtR(t.r)}</span>
-          <span className="hidden w-20 text-right text-muted-foreground tabular-nums md:block">{fmtPnl(t.pnl)}</span>
+          <span className={cn("w-14 shrink-0 text-right tabular-nums", t.r >= 0 ? "text-profit" : "text-loss")}>{fmtR(t.r)}</span>
+          <span className="hidden w-20 text-right text-muted-foreground tabular-nums lg:block">{fmtPnl(t.pnl)}</span>
         </button>
       ))}
     </div>
@@ -320,7 +339,7 @@ function MyFeedback({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => v
             <Card key={t.id} className="gap-2 px-5">
               <div className="flex items-center gap-2">
                 <Avatar className="size-7">
-                  <AvatarFallback className="text-[0.6rem]">{coach.mark}</AvatarFallback>
+                  <AvatarFallback className="text-[0.6875rem]">{coach.mark}</AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium">{coach.coachName}</span>
                 <span className="text-xs text-muted-foreground">on your {t.symbol} {t.side} · {last.when}</span>
@@ -433,7 +452,7 @@ function TradeDetail({ trade: t, onClose }: { trade: T | null; onClose: () => vo
                 </>
               ) : (
                 <Button variant="ghost" size="sm" className="justify-self-start" onClick={() => setAi(true)}>
-                  <Sparkles /> Ask {coach.wording.ai} about this trade
+                  <Sparkles /> {askAi(coach.wording.ai)} about this trade
                 </Button>
               )}
             </div>
@@ -445,7 +464,7 @@ function TradeDetail({ trade: t, onClose }: { trade: T | null; onClose: () => vo
             {t.thread.map((m, i) => (
               <div key={i} className={cn("flex gap-2.5", m.from === "student" && "flex-row-reverse")}>
                 <Avatar className="size-7">
-                  <AvatarFallback className="text-[0.6rem]">{m.from === "coach" ? coach.mark : DEMO_STUDENT.initials}</AvatarFallback>
+                  <AvatarFallback className="text-[0.6875rem]">{m.from === "coach" ? coach.mark : DEMO_STUDENT.initials}</AvatarFallback>
                 </Avatar>
                 <div className={cn("grid max-w-[80%] gap-1 rounded-(--r-inner) px-3 py-2 text-sm", m.from === "coach" ? "bg-muted" : "bg-primary text-primary-foreground")}>
                   <p className="flex items-center gap-1.5">
@@ -460,7 +479,7 @@ function TradeDetail({ trade: t, onClose }: { trade: T | null; onClose: () => vo
                       m.text
                     )}
                   </p>
-                  <span className="text-[0.7rem] opacity-70">{m.when}</span>
+                  <span className="text-[0.6875rem] opacity-70">{m.when}</span>
                 </div>
               </div>
             ))}
@@ -579,20 +598,20 @@ function NewTrade({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boo
             ["Target", "20,250.00"],
           ].map(([l, p]) => (
             <div key={l} className="grid gap-1.5">
-              <Label className="text-[0.8rem]">{l}</Label>
+              <Label className="text-[0.8125rem]">{l}</Label>
               <Input placeholder={p} />
             </div>
           ))}
           <div className="col-span-2 grid gap-1.5">
-            <Label className="text-[0.8rem]">Setup</Label>
-            <select className="h-9 rounded-(--r-inner) border bg-transparent px-2 text-sm">
+            <Label className="text-[0.8125rem]">Setup</Label>
+            <SelectOptions className="h-9 rounded-(--r-inner) border bg-transparent px-2 text-sm">
               {STRATEGIES.map((s) => (
                 <option key={s.id}>{s.name}</option>
               ))}
-            </select>
+            </SelectOptions>
           </div>
           <div className="col-span-2 grid gap-1.5">
-            <Label className="text-[0.8rem]">Why you took it</Label>
+            <Label className="text-[0.8125rem]">Why you took it</Label>
             <Textarea rows={2} />
           </div>
         </div>

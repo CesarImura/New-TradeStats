@@ -1,6 +1,6 @@
 "use client"
 
-import { addDays, addMinutes, addWeeks, differenceInCalendarDays, isBefore, isSameDay, startOfDay } from "date-fns"
+import { addDays, addMinutes, addWeeks, differenceInCalendarDays, isBefore, startOfDay } from "date-fns"
 import type { Coach } from "./coaches"
 import { DEMO_STUDENT } from "./sample"
 import { setStored, useStored } from "@/lib/prototype-store"
@@ -120,6 +120,9 @@ const seedFor = (coach: Coach) => {
   if (!SEEDS.has(coach.slug)) SEEDS.set(coach.slug, seed(coach))
   return SEEDS.get(coach.slug)!
 }
+/** Whether an event is one of the prototype's sample events rather than one the coach made. */
+export const isSampleEvent = (coach: Coach, id: string) => seedFor(coach).events.some((e) => e.id === id)
+export const isSampleBooking = (coach: Coach, id: string) => seedFor(coach).bookings.some((b) => b.id === id)
 const START_STUDENT: StudentCal = { signups: ["ws1@2026-10-15"] }
 
 const scheduleKey = (slug: string) => `schedule:${slug}`
@@ -218,8 +221,6 @@ export function freeSlots(s: Schedule, days = 14) {
   }
   return out
 }
-
-export const sameDay = isSameDay
 
 export const KIND_LABEL: Record<ItemKind, string> = { live: "Live", call: "Call", workshop: "Workshop", news: "News", "one-on-one": "1:1" }
 

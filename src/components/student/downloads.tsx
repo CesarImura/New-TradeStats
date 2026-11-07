@@ -9,9 +9,9 @@ import { UnlockDialog } from "@/components/student/unlock-dialog"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Chip } from "@/components/widgets/instrument"
-import { series } from "@/components/widgets/kit"
-import { Cover } from "@/components/widgets/shared"
+import { Chip } from "@/components/widgets/parts/anatomy"
+import { series } from "@/components/widgets/parts/tokens"
+import { Cover, EDGE_TOP } from "@/components/widgets/parts/shared"
 import { useAccess, useViewerTier } from "@/lib/data/access"
 import {
   DOWNLOAD_CATEGORIES,
@@ -101,7 +101,7 @@ export function StudentDownloads({ props = {} }: { props?: Record<string, string
                   aria-checked={category === c.id}
                   onClick={() => setCategory(c.id)}
                   className={cn(
-                    "r-chip border px-3 py-1.5 text-sm transition-colors",
+                    "r-chip border px-3 py-1.5 text-sm transition-colors max-lg:min-h-10",
                     category === c.id ? "border-foreground bg-foreground text-background" : "bg-card text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -130,7 +130,7 @@ export function StudentDownloads({ props = {} }: { props?: Record<string, string
                 const need = coach.tiers.find((t) => d.tiers.includes(t.id))
                 return (
                   <Card key={d.id} className="gap-0 overflow-hidden rounded-(--radius) p-0">
-                    <div className="relative">
+                    <div className={cn("relative", EDGE_TOP)}>
                       <Cover color={series(d.cover ?? 0)} label={d.file.type} className="aspect-[16/7] rounded-none" />
                       {!open && (
                         <div className="absolute inset-0 grid place-items-center bg-black/45 text-white backdrop-blur-[1px]">

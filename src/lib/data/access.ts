@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation"
 import type { Coach, Tier } from "./coaches"
 import type { Course } from "./learning"
-import { readStored, setStored, useStored } from "@/lib/prototype-store"
+import { setStored, useStored } from "@/lib/prototype-store"
 
 /**
  * Tiers, groups and access (ADM-14, ADM-15, ADM-29 to ADM-31). One store per
@@ -51,10 +51,6 @@ export function useTiers(coach: Coach): TierInfo[] {
   const extra = useStored(`${coach.slug}:tier-extra`, NO_EXTRA)
   const added = useStored(`${coach.slug}:tiers-added`, NO_TIERS)
   return mergeTiers(coach, extra, added)
-}
-
-export function readTiers(coach: Coach): TierInfo[] {
-  return mergeTiers(coach, readStored(`${coach.slug}:tier-extra`, NO_EXTRA), readStored(`${coach.slug}:tiers-added`, NO_TIERS))
 }
 
 function mergeTiers(coach: Coach, extra: Record<string, TierExtra>, added: Tier[]): TierInfo[] {

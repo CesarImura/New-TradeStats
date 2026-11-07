@@ -37,7 +37,7 @@ const LEVEL_KIND: Record<Level["kind"], { label: string; dot: string; text: stri
  * or sold here: the broker connection is read-only, and traders already have
  * order entry at their broker.
  */
-export function StudentCharts() {
+export function StudentCharts({ props = {} }: { props?: Record<string, string | boolean> } = {}) {
   const { coach, theme, base, preview } = useCoach()
   const tier = useStudentTier()
   const store = useFeedback(coach.slug)
@@ -97,6 +97,7 @@ export function StudentCharts() {
             setPlanId(null)
           }}
         />
+        {props.actions !== false && (
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Link href={`${base}/journal?new=1`} className={buttonVariants({ variant: "outline", size: "sm" })}>
             <NotebookPen /> Log a trade
@@ -107,6 +108,7 @@ export function StudentCharts() {
             </Link>
           )}
         </div>
+        )}
       </div>
 
       {plans.length === 0 && (
@@ -118,8 +120,8 @@ export function StudentCharts() {
       <div className={cn("grid min-h-0 flex-1 gap-3", plans.length > 0 && "lg:grid-cols-[260px_minmax(0,1fr)]")}>
         {plans.length > 0 && (
           <aside className="flex min-w-0 flex-col gap-2" aria-label={`${coach.coachName}'s game plan`}>
-            <span className="eyebrow px-1">{coach.coachName}&apos;s game plan</span>
-            <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
+            <span className="eyebrow px-1">{String(props.planTitle || `${coach.coachName}'s game plan`)}</span>
+            <div className="flex gap-2 overflow-x-auto pb-1 max-sm:-mr-4 max-sm:pr-4 sm:max-lg:-mr-6 sm:max-lg:pr-6 lg:flex-col lg:overflow-visible lg:pb-0">
               {plans.map((c) =>
                 hasTier(c) ? (
                   <PlanRow key={c.id} chart={c} active={plan?.id === c.id} onSelect={() => setPlanId(c.id)} />
@@ -140,7 +142,7 @@ export function StudentCharts() {
           <div className="grid items-start gap-3 md:grid-cols-2">
             <div className="grid min-w-0 gap-3">
               <section className={cn(panel, "grid gap-2 p-4")}>
-                <h2 className="text-sm font-medium">Levels{plan ? ` · ${plan.symbol.name}` : ""}</h2>
+                <h2 className="text-sm font-medium">{String(props.levelsTitle || "Levels")}{plan ? ` · ${plan.symbol.name}` : ""}</h2>
                 {plan && plan.levels.length > 0 ? (
                   <ul className="grid gap-1.5">
                     {[...plan.levels]
@@ -165,9 +167,10 @@ export function StudentCharts() {
                 )}
               </section>
 
-              <MyTrades symbol={symbol} store={store} />
+              {props.trades !== false && <MyTrades symbol={symbol} store={store} />}
             </div>
 
+            {props.note !== false && (
             <section className={cn(panel, "grid gap-2 p-4")}>
               <h2 className="text-sm font-medium">{plan ? `${coach.coachName}'s note` : "No plan selected"}</h2>
               {plan ? (
@@ -183,6 +186,7 @@ export function StudentCharts() {
                 </p>
               )}
             </section>
+            )}
           </div>
         </div>
       </div>
@@ -233,12 +237,12 @@ function MyTrades({ symbol, store }: { symbol: Sym; store: ReturnType<typeof use
       ) : (
         <ul className="grid gap-1.5">
           {trades.slice(0, 5).map((t) => (
-            <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 text-xs tabular-nums">
+            <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 text-xs tabular-nums max-sm:grid-cols-[auto_minmax(0,1fr)] max-sm:gap-y-0.5">
               <span className="text-muted-foreground">{t.date}</span>
               <span className="truncate">
                 <span className="text-muted-foreground">{t.side}</span> {fmtPrice(t.entry)} → {fmtPrice(t.exit)}
               </span>
-              <span className={cn("text-right", t.pnl >= 0 ? "text-profit" : "text-loss")}>
+              <span className={cn("text-right max-sm:col-start-2 max-sm:text-left", t.pnl >= 0 ? "text-profit" : "text-loss")}>
                 {fmtR(t.r)} · {fmtPnl(t.pnl)}
               </span>
             </li>
@@ -265,7 +269,7 @@ function SymbolSwitcher({ symbol, watchlist, mine, setMine, onPick }: { symbol: 
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger className="flex items-center gap-2 rounded-(--radius) border bg-card px-3 py-2 text-left hover:bg-muted">
         <span className="font-heading text-lg">{symbol.name}</span>
-        <span className="rounded-(--r-chip) bg-muted px-1.5 py-0.5 text-[0.7rem] text-muted-foreground">{symbol.tv.split(":")[1]}</span>
+        <span className="rounded-(--r-chip) bg-muted px-1.5 py-0.5 text-[0.6875rem] text-muted-foreground">{symbol.tv.split(":")[1]}</span>
         <ChevronDown className="size-4 text-muted-foreground" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 gap-0 p-0">

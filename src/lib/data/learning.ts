@@ -2,7 +2,7 @@
 
 import type { Coach } from "./coaches"
 import type { CourseDraft } from "./communities"
-import { readStored, setStored, useStored } from "@/lib/prototype-store"
+import { setStored, useStored } from "@/lib/prototype-store"
 
 /**
  * Courses: what the coach builds in Content (ADM-08 to ADM-13) and what
@@ -35,6 +35,8 @@ export type Lesson = {
   transcript?: string[]
   /** The video file, once uploaded. */
   video?: string
+  /** The lesson's picture in lists (a small JPEG as a data URL). Empty: the course's cover. */
+  thumbnail?: string
 }
 
 export type Module = { id: string; title: string; lessons: Lesson[] }
@@ -50,6 +52,8 @@ export type Course = {
   tiers: string[]
   /** Index into the brand's series colours, for the cover. */
   color: number
+  /** The course's own cover picture (a small JPEG as a data URL). Empty: its colour. */
+  cover?: string
   modules: Module[]
 }
 
@@ -96,6 +100,7 @@ function seed(coach: Coach): Catalog {
         status: "published",
         tiers: [],
         color: 0,
+        cover: "/placeholders/course-foundations.svg",
         modules: [
           {
             id: "m1",
@@ -172,6 +177,7 @@ function seed(coach: Coach): Catalog {
         status: "published",
         tiers: [],
         color: 1,
+        cover: "/placeholders/course-playbook.svg",
         modules: [
           {
             id: "p1",
@@ -196,6 +202,7 @@ function seed(coach: Coach): Catalog {
         status: "published",
         tiers: upper,
         color: 2,
+        cover: "/placeholders/course-psychology.svg",
         modules: [
           { id: "x1", title: "Tilt", lessons: [L("x1l1", "Spotting tilt early", 15), L("x1l2", "Your stop-trading rule", 12)] },
           { id: "x2", title: "Routines", lessons: [L("x2l1", "A morning routine that holds", 14)] },
@@ -210,6 +217,7 @@ function seed(coach: Coach): Catalog {
         scheduledFor: "Thu 29 Oct",
         tiers: [],
         color: 3,
+        cover: "/placeholders/course-breakdowns.svg",
         modules: [{ id: "b1", title: "October", lessons: [L("b1l1", "NY open, 5 Oct", 26, { status: "draft" }), L("b1l2", "NY open, 7 Oct", 31, { status: "draft" })] }],
       },
       {
@@ -220,6 +228,7 @@ function seed(coach: Coach): Catalog {
         status: "draft",
         tiers: [],
         color: 4,
+        cover: "/placeholders/course-risk-lab.svg",
         modules: [{ id: "r1", title: "Drills", lessons: [L("r1l1", "The 1% drill", 9, { status: "draft" })] }],
       },
       {
@@ -276,6 +285,9 @@ const seedFor = (coach: Coach): Catalog => {
   return SEEDS.get(coach.slug)!
 }
 
+/** Whether a course is one of the prototype's sample courses rather than one the coach made or uploaded. */
+export const isSampleCourse = (coach: Coach, id: string) => draftsOf(coach).length === 0 && seedFor(coach).courses.some((c) => c.id === id)
+
 const START_PROGRESS: Progress = { done: ["l1", "l2", "l3", "l4"], notes: {}, quiz: {}, last: "l5" }
 
 // ---------- reads
@@ -297,17 +309,8 @@ export function saveCatalog(coach: Coach, update: (c: Catalog) => Catalog) {
   setStored<Catalog>(catalogKey(coach.slug), (c) => update(c), seedFor(coach))
 }
 
-export function resetCatalog(slug: string) {
-  setStored(catalogKey(slug), null)
-  setStored(progressKey(slug), null)
-}
-
 export function updateProgress(slug: string, update: (p: Progress) => Progress) {
   setStored<Progress>(progressKey(slug), (p) => update(p), START_PROGRESS)
-}
-
-export function readCatalog(coach: Coach) {
-  return readStored<Catalog>(catalogKey(coach.slug), seedFor(coach))
 }
 
 // ---------- helpers

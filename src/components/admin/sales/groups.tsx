@@ -116,17 +116,17 @@ function GroupEditor({ group, isNew, onClose }: { group: Group | null; isNew: bo
               <Input type="number" min={1} value={g.seats} onChange={(e) => set({ seats: Number(e.target.value) || 0 })} className="w-28 tabular-nums" />
             </Field>
             <div className="grid gap-2">
-              <span className="text-[0.8rem] font-medium">Who can join</span>
+              <span className="text-[0.8125rem] font-medium">Who can join</span>
               <div className="grid gap-2 sm:grid-cols-2">
                 {tiers.map((t) => (
-                  <label key={t.id} className={cn("flex items-center gap-2 rounded-lg border p-2.5 text-sm", g.tiers.includes(t.id) && "border-[var(--ts-cta)]/50")}>
+                  <label key={t.id} className={cn("flex items-center gap-2 rounded-lg border p-2.5 text-sm bg-card", g.tiers.includes(t.id) && "border-[var(--ts-cta)]/50")}>
                     <Checkbox checked={g.tiers.includes(t.id)} onCheckedChange={(v) => set({ tiers: v ? [...g.tiers, t.id] : g.tiers.filter((x) => x !== t.id) })} />
                     {t.name}
                   </label>
                 ))}
               </div>
             </div>
-            <div className="divide-y rounded-lg border px-3">
+            <div className="divide-y rounded-lg border px-3 bg-card">
               <SettingRow label="Waiting list when full" text="People leave their e-mail and hear first when a seat opens">
                 <Switch checked={g.waitlist} onCheckedChange={(v) => set({ waitlist: v })} />
               </SettingRow>

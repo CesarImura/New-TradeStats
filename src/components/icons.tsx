@@ -94,6 +94,8 @@ import {
   Security as CSecurity,
   Send as CSend,
   Settings as CSettings,
+  Share as CShare,
+  CarouselHorizontal as CCarouselHorizontal,
   ShieldAlert as CShieldAlert,
   Shuffle as CShuffle,
   SidePanelOpen as CSidePanelOpen,
@@ -107,6 +109,7 @@ import {
   TouchInteraction as CTouchInteraction,
   TrashCan as CTrashCan,
   Trophy as CTrophy,
+  Redo as CRedo,
   Undo as CUndo,
   Unlink as CUnlink,
   Upload as CUpload,
@@ -177,7 +180,6 @@ export const CheckIcon = Check
 export const ChevronDown = i(CChevronDown, "ChevronDown")
 export const ChevronDownIcon = ChevronDown
 export const ChevronLeft = i(CChevronLeft, "ChevronLeft")
-export const ChevronLeftIcon = ChevronLeft
 export const ChevronRight = i(CChevronRight, "ChevronRight")
 export const ChevronRightIcon = ChevronRight
 export const ChevronUpIcon = i(CChevronUp, "ChevronUp")
@@ -229,7 +231,6 @@ export const Lock = i(CLocked, "Lock")
 export const LogOut = i(CLogout, "LogOut")
 export const Mail = i(CEmail, "Mail")
 export const Maximize = i(CMaximize, "Maximize")
-export const Maximize2 = Maximize
 export const Medal = i(CBadge, "Medal")
 export const Megaphone = i(CBullhorn, "Megaphone")
 export const MessageCircle = i(CChat, "MessageCircle")
@@ -240,7 +241,6 @@ export const Mic = i(CMicrophone, "Mic")
 export const Minus = i(CSubtract, "Minus")
 export const Monitor = i(CScreen, "Monitor")
 export const MoreHorizontal = i(COverflowMenuHorizontal, "MoreHorizontal")
-export const MoreHorizontalIcon = MoreHorizontal
 export const MousePointerClick = i(CTouchInteraction, "MousePointerClick")
 export const Newspaper = i(CDocument, "Newspaper")
 export const NotebookPen = i(CNotebook, "NotebookPen")
@@ -260,6 +260,8 @@ export const Search = i(CSearch, "Search")
 export const SearchIcon = Search
 export const Send = i(CSend, "Send")
 export const Settings = i(CSettings, "Settings")
+export const Share = i(CShare, "Share")
+export const GalleryHorizontal = i(CCarouselHorizontal, "GalleryHorizontal")
 export const Shield = i(CSecurity, "Shield")
 export const ShieldAlert = i(CShieldAlert, "ShieldAlert")
 export const Shuffle = i(CShuffle, "Shuffle")
@@ -273,6 +275,7 @@ export const Tag = i(CTag, "Tag")
 export const Trash2 = i(CTrashCan, "Trash2")
 export const Trophy = i(CTrophy, "Trophy")
 export const Undo2 = i(CUndo, "Undo2")
+export const Redo2 = i(CRedo, "Redo2")
 export const Unplug = i(CUnlink, "Unplug")
 export const Upload = i(CUpload, "Upload")
 export const User = i(CUser, "User")

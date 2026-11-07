@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { ArrowRight, Check, Copy, ExternalLink, Upload } from "@/components/icons"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -17,7 +18,9 @@ const SOURCES = ["Discord", "Whop", "Skool", "Kajabi", "CSV file"]
 export function InviteStep() {
   const acc = useAccount()
   const communities = useCustomCommunities()
-  const c = communities.find((x) => x.slug === acc?.setupSlug)
+  // "?c=<slug>" (from the admin's getting-started list) picks the community; otherwise the one just set up.
+  const slug = useSearchParams().get("c") ?? acc?.setupSlug
+  const c = communities.find((x) => x.slug === slug)
   const [copied, setCopied] = useState(false)
   const [emails, setEmails] = useState("")
   if (!c) return <OnbFrame>{null}</OnbFrame>

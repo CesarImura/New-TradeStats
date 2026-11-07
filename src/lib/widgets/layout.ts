@@ -1,16 +1,18 @@
 import type { Coach, ModuleId } from "@/lib/data/coaches"
 import { TEMPLATES } from "@/lib/theme/templates"
-import type { Density, TemplateId, WidgetHeader } from "@/lib/theme/types"
+import type { CardSurface, ChartStyle, Density, FigureStyle, HeaderForm, TemplateId, WidgetHeader } from "@/lib/theme/types"
 
 /**
- * The Home is one grid: 12 columns, rows of a fixed height. Every widget
- * covers a rectangle of cells (x, y, w, h) and snaps to the grid in both
- * directions, so a tall card can sit next to two stacked ones.
+ * A page's layout is saved as free cards (`tiles: true`): every card has its own rectangle on the page, `x` and `w` in 12ths of the
+ * page width, `y` and `h` in rows of ROW_HEIGHT (half rows count), top to bottom. Between two bands (the page title, a page's own
+ * tool) the cards of a block never overlap and may leave empty space; a block is as tall as its lowest card. The desktop page draws
+ * exactly those numbers (widgets/page-grid.ts, page-renderer.tsx). The coach drags a card's edge or corner and only that card changes:
+ * a card it grows into slides down, as little as needed, and nothing else moves; shrinking leaves empty space, which "Fill gaps"
+ * closes. A student who doesn't see a card (phase, group, module) gets its block closed up. Tablets and phones stack the cards in the
+ * order of `items` when `ordered` (see stackOrder), each as tall as its content.
  *
- * Responsive rules (by width of the page area, not the screen):
- * - wide (≥ 60rem): the grid exactly as arranged
- * - medium (≥ 40rem): widgets keep their order and height; narrow ones take half a row, wide ones the full row
- * - narrow (phones): one column, in reading order, each widget as tall as its content
+ * Layouts saved before (and the TEMPLATES) have no `tiles` flag: they were a masonry, their h only steered estimates and a w of 4 to
+ * 7 drew as one column. They are turned into tiles when drawn, and the editor saves `tiles: true` on its first edit.
  */
 export const COLS = 12
 export const ROW_HEIGHT = 56
@@ -37,6 +39,27 @@ export type WidgetNote = {
 export type WidgetPhase = "first-week" | "inactive" | "finished"
 export type WidgetShow = { phase?: WidgetPhase; group?: string }
 
+/** A tone of the theme a widget's card can take instead of the card colour: a touch of the brand or of the highlight. */
+export type WidgetTone = "brand" | "highlight"
+
+/**
+ * This widget's own style (Design → Pages → This widget → Style). Unset parts follow All widgets. A tone or a
+ * picture fills the card; a picture only on content widgets (registry canHaveImage) and always under the card
+ * colour (dim, never below MIN_WIDGET_DIM), so text stays readable. The Star widget keeps its own surface.
+ */
+export type WidgetOwnStyle = {
+  /** A card surface, or "blended": this widget sits straight on the page (no box, no line) whatever All widgets says. */
+  surface?: CardSurface | "blended"
+  headerForm?: HeaderForm
+  chartStyle?: ChartStyle
+  figureStyle?: FigureStyle
+  tone?: WidgetTone
+  /** A data URL or a library picture ("preset:<id>"). */
+  image?: string
+  /** How much the card colour covers the picture, 0–100. */
+  dim?: number
+}
+
 export type WidgetInstance = {
   id: string
   type: string
@@ -49,6 +72,8 @@ export type WidgetInstance = {
   note?: WidgetNote
   /** Show it only to a phase of the student's life, or to one group. */
   show?: WidgetShow
+  /** This widget's own style; unset parts follow All widgets. */
+  style?: WidgetOwnStyle
   x: number
   y: number
   w: number
@@ -61,6 +86,12 @@ export type PageLayout = {
   items: WidgetInstance[]
   /** The coach removed the Page title on purpose; don't add it back. */
   titleRemoved?: boolean
+  /** Saved as tiles (see the top of this file): x, y, w and h are exact. Unset: a masonry or an earlier grid, turned into tiles when drawn. */
+  tiles?: boolean
+  /** The phone's own order (widget ids). Unset: phones follow the desktop order. */
+  phoneOrder?: string[]
+  /** `items` is in the order tablets and phones stack the cards (see stackOrder). Unset: that order is reading order (y, then x), as layouts saved before. */
+  ordered?: boolean
 }
 
 /** One page's layouts: "default" plus optional per-tier versions. */
@@ -72,17 +103,43 @@ export type PageLayouts = Partial<Record<PageId, HomeLayouts>>
 
 /** The widget holding a module page's own tool (its trades, calendar, chart…). Pinned: it can move and resize, not go. */
 export const coreType = (page: ModuleId) => `page-${page}`
-export const isCoreType = (type: string) => type.startsWith("page-")
 /** Rows a page's core widget gets when the page is new. On the live page it grows with its content. */
 export const CORE_H = 8
+
+/** A width saved before the half width existed: 4 to 7 drew as one column, 8 to 11 as two, 12 as the page. */
+export const legacyWidth = (w: number) => (w >= COLS ? COLS : w >= 8 ? 8 : 4)
+/** The cards of a masonry layout with the widths they drew at, so a legacy 6 stays one column now that 6 is a half. */
+export const legacyWidths = (items: WidgetInstance[]) => items.map((w) => (w.w === legacyWidth(w.w) ? w : { ...w, w: legacyWidth(w.w) }))
 
 export const uid = () => Math.random().toString(36).slice(2, 10)
 
 /** Reading order: top to bottom, then left to right. */
 export const readingOrder = (items: WidgetInstance[]) => [...items].sort((a, b) => a.y - b.y || a.x - b.x)
 
-/** Width on medium screens: half a row or the full row. */
-export const wMd = (w: number) => (w <= 6 ? 6 : 12)
+/**
+ * The order tablets and phones stack the cards. A layout saved with `ordered` keeps it in `items`: resizing a card changes y and x
+ * but never this order; moving, adding or removing a card does (see placeInOrder). Layouts saved before follow reading order.
+ */
+export const stackOrder = (l: Pick<PageLayout, "items" | "ordered">) => (l.ordered ? l.items : readingOrder(l.items))
+
+/** The order a phone shows: the phone's own list first, then any widget it doesn't name (new ones) in the stacked order. `items` are already in it (see stackOrder). */
+export const phoneSequence = (items: WidgetInstance[], order?: string[]) => {
+  if (!order?.length) return items
+  const rank = new Map(order.map((id, i) => [id, i]))
+  const named = items.filter((w) => rank.has(w.id)).sort((a, b) => rank.get(a.id)! - rank.get(b.id)!)
+  return [...named, ...items.filter((w) => !rank.has(w.id))]
+}
+
+/** `items` with card `id` (just moved or added) taken to where reading order puts it: right after the card that comes before it, the others keeping their order. */
+export const placeInOrder = (items: WidgetInstance[], id: string) => {
+  const card = items.find((w) => w.id === id)
+  if (!card) return items
+  const rest = items.filter((w) => w.id !== id)
+  const before = readingOrder(items).filter((w) => w.id !== id && (w.y < card.y || (w.y === card.y && w.x < card.x)))
+  const prev = before[before.length - 1]
+  const at = prev ? rest.findIndex((w) => w.id === prev.id) + 1 : 0
+  return [...rest.slice(0, at), card, ...rest.slice(at)]
+}
 
 type LegacyWidget = { id: string; type: string; variant?: string; span?: number; props?: Record<string, string | boolean>; hideOnPhone?: boolean }
 type LegacySection = { widgets?: LegacyWidget[]; slots?: LegacyWidget[][]; columns?: string }
@@ -146,7 +203,10 @@ export function oneStar(items: WidgetInstance[], keep?: string): WidgetInstance[
 }
 
 export function normalizeLayout(l: PageLayout | { sections: LegacySection[] }, heightOf: (w: LegacyWidget) => number = () => 4): PageLayout {
-  if ("items" in l) return { items: oneStar(l.items.map(upgradeItem)) }
+  if ("items" in l) {
+    const items = oneStar(l.items.map(upgradeItem))
+    return { ...l, items: l.tiles ? items : legacyWidths(items) }
+  }
   const items: WidgetInstance[] = []
   let x = 0
   let y = 0
@@ -171,7 +231,7 @@ export function normalizeLayout(l: PageLayout | { sections: LegacySection[] }, h
       rowH = Math.max(rowH, h)
     }
   }
-  return { items }
+  return { items: legacyWidths(items) }
 }
 
 /** Rows the Page title widget gets on a new page: one, it turns compact to fit (see widgets/page.tsx). */
@@ -217,33 +277,11 @@ export function defaultCustomPage(id: string): PageLayout {
 
 /** Saved layouts always keep the core widget; if one is missing, put it back on top. */
 export function withCore(page: ModuleId, l: PageLayout): PageLayout {
-  if (!l.items.some((w) => w.type === coreType(page))) return { items: [...defaultPage(page).items, ...l.items.map((w) => ({ ...w, y: w.y + HEADER_H + CORE_H }))] }
+  if (!l.items.some((w) => w.type === coreType(page))) return { ...l, items: [...defaultPage(page).items, ...l.items.map((w) => ({ ...w, y: w.y + HEADER_H + CORE_H }))] }
   // Pages saved before the title became a widget: put the title on top, so it stays where it was.
   if (!l.items.some((w) => w.type === "page-header") && !l.titleRemoved)
-    return { items: [{ id: `title-${page}`, type: "page-header", x: 0, y: 0, w: COLS, h: HEADER_H }, ...l.items.map((w) => ({ ...w, y: w.y + HEADER_H }))] }
+    return { ...l, items: [{ id: `title-${page}`, type: "page-header", x: 0, y: 0, w: COLS, h: HEADER_H }, ...l.items.map((w) => ({ ...w, y: w.y + HEADER_H }))] }
   return l
-}
-
-/**
- * The same Detail for every widget on a page (setup's "How much each widget
- * shows"). The page title and the page's own tool keep theirs. A widget that
- * shows more gets the extra rows it needs (`grow`), and everything below it in
- * the same columns moves down by as much, so the gaps and order stay.
- */
-export function withDetail(l: PageLayout, detail: Detail, grow: (w: WidgetInstance, to: Detail) => number): PageLayout {
-  const order = readingOrder(l.items)
-  const placed: { w: WidgetInstance; delta: number; growth: number }[] = []
-  const items = order.map((w) => {
-    const fixed = w.type === "page-header" || isCoreType(w.type)
-    const growth = fixed ? 0 : grow(w, detail)
-    // Pushed down by the widgets above it that it shares columns with.
-    const delta = placed
-      .filter((p) => p.w.y + p.w.h <= w.y && p.w.x < w.x + w.w && w.x < p.w.x + p.w.w)
-      .reduce((m, p) => Math.max(m, p.delta + p.growth), 0)
-    placed.push({ w, delta, growth })
-    return fixed ? { ...w, y: w.y + delta } : { ...w, detail, y: w.y + delta, h: w.h + growth }
-  })
-  return { ...l, items }
 }
 
 // ---------- template defaults
@@ -257,7 +295,8 @@ export function templatePage(template: TemplateId, page: PageId, coach: Pick<Coa
   const l = TEMPLATES[template]?.pages?.[page]
   if (!l) return undefined
   const prefix = page === "home" ? `${coach.slug}-${template}` : `${coach.slug}-${template}-${page}`
-  return { items: l.items.map((w, i) => ({ ...w, id: `${prefix}-${i}` })) }
+  const items = l.items.map((w, i) => ({ ...w, id: `${prefix}-${i}` }))
+  return { ...l, items: l.tiles ? items : legacyWidths(items) }
 }
 
 /**

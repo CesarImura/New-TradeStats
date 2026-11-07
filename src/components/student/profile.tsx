@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useId, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Check, CreditCard, Download, Link2 } from "@/components/icons"
 import { toast } from "sonner"
@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { ControlLabel } from "@/components/kit/control-label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useViewerGroup } from "@/lib/data/access"
 import { DEMO_STUDENT } from "@/lib/data/sample"
@@ -24,13 +25,18 @@ import { ACCOUNTS } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 
 function Row({ label, text, children }: { label: string; text?: string; children: React.ReactNode }) {
+  const id = useId()
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3.5">
       <div className="grid min-w-0 flex-1 basis-56 gap-0.5">
-        <span className="text-sm font-medium">{label}</span>
+        <span id={id} className="text-sm font-medium">
+          {label}
+        </span>
         {text && <span className="text-xs text-muted-foreground">{text}</span>}
       </div>
-      <div className="flex shrink-0 items-center gap-2">{children}</div>
+      <ControlLabel value={id}>
+        <div className="flex shrink-0 items-center gap-2">{children}</div>
+      </ControlLabel>
     </div>
   )
 }
@@ -78,7 +84,7 @@ export function StudentProfile() {
         <TabsContent value="profile">
           <Card className="gap-0 divide-y px-5 py-1">
             <Row label="Nickname" text="Shown in the ranking and community instead of your name">
-              <Input value={nick} onChange={(e) => setNick(e.target.value)} className="w-48" />
+              <Input aria-label="Nickname" value={nick} onChange={(e) => setNick(e.target.value)} className="w-48" />
             </Row>
             <Row label="Picture">
               <Button variant="outline" size="sm" onClick={() => toast("Upload a picture")}>
@@ -253,7 +259,7 @@ export function StudentProfile() {
             <DialogDescription>You keep everything until 1 Nov. Your account, journal and notes stay; you can come back any time.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-1.5">
-            <Label className="text-[0.8rem]">Why are you leaving? (optional)</Label>
+            <Label className="text-[0.8125rem]">Why are you leaving? (optional)</Label>
             <Input placeholder="Too expensive, no time, found what I needed…" />
           </div>
           <DialogFooter>

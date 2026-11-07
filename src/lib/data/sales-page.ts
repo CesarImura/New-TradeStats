@@ -1,7 +1,7 @@
 "use client"
 
 import type { Coach } from "./coaches"
-import { readStored, setStored, useStored } from "@/lib/prototype-store"
+import { setStored, useStored } from "@/lib/prototype-store"
 
 /**
  * PUB-01 sales page, built from blocks in Sales & payments → Sales page
@@ -117,4 +117,3 @@ export function savePurchase(slug: string, p: Purchase | null) {
   setStored(`${slug}:purchase`, p, NO_PURCHASE)
 }
 
-export const readPurchase = (slug: string) => readStored(`${slug}:purchase`, NO_PURCHASE)

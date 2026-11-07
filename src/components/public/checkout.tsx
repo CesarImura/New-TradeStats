@@ -62,6 +62,7 @@ export function Checkout() {
   const [applied, setApplied] = useState<Applied | null>(() => applyCode(params.get("ref") ?? "", coupons))
   const [method, setMethod] = useState<"card" | "wallet">("card")
   const [busy, setBusy] = useState(false)
+  const copy = coach.join?.screens?.subscribe ?? {}
 
   if (!tier) return <p className="p-10 text-center text-muted-foreground">No paid plans yet.</p>
 
@@ -84,8 +85,8 @@ export function Checkout() {
     <div className="mx-auto grid w-full max-w-[1080px] gap-8 px-4 py-8 sm:px-6 sm:py-12 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="grid content-start gap-8">
         <div className="grid gap-1">
-          <h1 className="text-3xl leading-tight">Join {coach.name}</h1>
-          <p className="text-muted-foreground">One page, about a minute. Your account is made from your e-mail after you pay.</p>
+          <h1 className="text-3xl leading-tight">{copy.title || `Join ${coach.name}`}</h1>
+          <p className="text-muted-foreground">{copy.subtitle || "One page, about a minute. Your account is made from your e-mail after you pay."}</p>
         </div>
 
         <section className="grid gap-3">
@@ -133,8 +134,9 @@ export function Checkout() {
                     onClick={() => setGroupId(g.id)}
                     className={cn("r-chip border px-3 py-1.5 text-sm", groupId === g.id ? "border-foreground bg-foreground text-background" : "bg-card text-muted-foreground hover:text-foreground")}
                   >
-                    {g.name}
-                    {g.id && <span className="opacity-70"> · {g.start <= "2026-10-12" ? "running" : `starts ${fmtDate(g.start, false)}`}, {g.seats - g.members} left</span>}
+                    {/* Name first, details after it: told apart by weight, both in a colour that reads at 4.5:1. */}
+                    <span className="font-medium">{g.name}</span>
+                    {g.id && <span> · {g.start <= "2026-10-12" ? "running" : `starts ${fmtDate(g.start, false)}`}, {g.seats - g.members} left</span>}
                   </button>
                 ))}
               </div>
@@ -284,6 +286,8 @@ export function Checkout() {
             {busy && <Loader2 className="animate-spin" />}
             {trial > 0 ? `Start free trial` : `Pay ${money(today)}`}
           </Button>
+          {/* Say why the button is dimmed, before anything was typed too. */}
+          {!emailOk && email.length <= 3 && <span className="-mt-2 text-center text-xs text-muted-foreground">Enter your e-mail above to continue.</span>}
           {!emailOk && email.length > 3 && <span className="-mt-2 text-center text-xs text-destructive">Check the e-mail address.</span>}
           <p className="text-center text-xs text-muted-foreground">
             By joining you accept the{" "}

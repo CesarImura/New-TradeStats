@@ -23,11 +23,14 @@ import {
   at,
   freeSlots,
   hhmm,
+  isSampleBooking,
+  isSampleEvent,
   itemsBetween,
   saveSchedule,
   stamp,
   toMin,
   useSchedule,
+  type Booking,
   type CalEvent,
   type EventKind,
   type Impact,
@@ -36,7 +39,9 @@ import {
   type NewsItem,
   type Window,
 } from "@/lib/data/schedule"
+import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
+import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 
 const COLORS: Record<ItemKind, string> = { live: "#f97316", call: "#0ea5e9", workshop: "#8b5cf6", "one-on-one": "#10b981", news: "#e11d48" }
 const RANGE = { from: addDays(NOW, -45), to: addDays(NOW, 75) }
@@ -52,7 +57,11 @@ export function AdminCalendar() {
   const [isNew, setIsNew] = useState(false)
   const [open, setOpen] = useState<Item | null>(null)
 
-  const items = itemsBetween(schedule, RANGE.from, RANGE.to, { bookings: "all" })
+  // A community made in setup starts on the sample events; they read "Sample ·" until replaced.
+  const wizard = useWizardCommunity(coach.slug)
+  const sample = (e?: CalEvent) => !!wizard && !!e && isSampleEvent(coach, e.id)
+  const sampleBooking = (b?: Booking) => !!wizard && !!b && isSampleBooking(coach, b.id)
+  const items = itemsBetween(schedule, RANGE.from, RANGE.to, { bookings: "all" }).map((i) => (sample(i.event) || sampleBooking(i.booking) ? { ...i, title: `Sample · ${i.title}` } : i))
   const week = items.filter((i) => i.start >= NOW && i.start < addDays(NOW, 7))
   const stats = [
     { label: "Lives this week", value: week.filter((i) => i.kind === "live").length },
@@ -77,6 +86,10 @@ export function AdminCalendar() {
           <Plus /> New event
         </Button>
       </div>
+      <SetupTip task="live" />
+      <SampleNotice show={schedule.events.some((e) => sample(e))}>
+        Events and 1:1 bookings marked Sample are examples, so you can see how your calendar looks. Replace or delete them before you invite students.
+      </SampleNotice>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((s) => (
@@ -195,7 +208,7 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
                   <button
                     key={k.value}
                     onClick={() => set({ kind: k.value, streamed: k.value !== "call", seats: k.value === "workshop" ? e.seats ?? 20 : e.seats })}
-                    className={cn("grid gap-0.5 rounded-lg border p-2.5 text-left", e.kind === k.value && "border-primary ring-1 ring-primary")}
+                    className={cn("grid gap-0.5 rounded-lg border p-2.5 text-left bg-card", e.kind === k.value && "border-primary ring-1 ring-primary")}
                   >
                     <span className="flex items-center gap-1.5 text-sm font-medium">
                       <span className="size-2 rounded-full" style={{ background: COLORS[k.value] }} /> {k.label}
@@ -220,13 +233,13 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="ev-len">Length</Label>
-                <select id="ev-len" value={e.minutes} onChange={(x) => set({ minutes: Number(x.target.value) })} className="h-9 rounded-lg border bg-background px-2 text-sm">
+                <SelectOptions id="ev-len" value={e.minutes} onChange={(x) => set({ minutes: Number(x.target.value) })} className="h-9 rounded-lg border bg-background px-2 text-sm">
                   {[30, 45, 60, 90, 120].map((m) => (
                     <option key={m} value={m}>
                       {m} min
                     </option>
                   ))}
-                </select>
+                </SelectOptions>
               </div>
             </div>
             <label className="flex items-center justify-between gap-3 text-sm">
@@ -248,7 +261,7 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
               </div>
             </div>
 
-            <div className="grid gap-3 rounded-lg border p-3">
+            <div className="grid gap-3 rounded-lg border p-3 bg-card">
               <label className="flex items-center justify-between gap-3 text-sm">
                 <span className="grid">
                   <span className="font-medium">Live in the platform</span>
@@ -361,7 +374,7 @@ function BookingDetail({ item, onClose }: { item: Item; onClose: () => void }) {
             <p>{b.question}</p>
           </div>
         )}
-        <div className="grid gap-2 rounded-lg border p-3">
+        <div className="grid gap-2 rounded-lg border p-3 bg-card">
           <span className="flex items-center gap-2 font-medium">
             <Sparkles className="size-4" /> Briefing
             <Badge variant="secondary">AI</Badge>
@@ -415,7 +428,7 @@ function NewsEditor({ news, onClose }: { news: NewsItem; onClose: () => void }) 
             </div>
           ))}
         </div>
-        <label className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
+        <label className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm bg-card">
           <span className="grid">
             <span className="font-medium">No-trade event</span>
             <span className="text-xs text-muted-foreground">Marked in red for students; the journal checks the rule.</span>
@@ -619,13 +632,13 @@ function SettingSelect({ label, value, options, suffix, onChange }: { label: str
   return (
     <label className="flex items-center justify-between gap-3 text-sm">
       <span>{label}</span>
-      <select value={value} onChange={(e) => onChange(Number(e.target.value))} className="h-8 rounded-lg border bg-background px-2 text-sm">
+      <SelectOptions value={value} onChange={(e) => onChange(Number(e.target.value))} className="h-8 rounded-lg border bg-background px-2 text-sm">
         {options.map((o) => (
           <option key={o} value={o}>
             {o} {suffix}
           </option>
         ))}
-      </select>
+      </SelectOptions>
     </label>
   )
 }

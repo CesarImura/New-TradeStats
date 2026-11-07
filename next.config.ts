@@ -5,7 +5,16 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   devIndicators: false,
   partialPrefetching: true,
+  // The library (/lab) was removed; old links land on the launcher.
+  async redirects() {
+    return [
+      { source: "/lab", destination: "/", permanent: false },
+      { source: "/lab/:path*", destination: "/", permanent: false },
+    ];
+  },
   turbopack: {
+    // Stray lockfiles in ~ make Next pick the home folder as the root, which scans ~/.Trash (EPERM on macOS).
+    root: __dirname,
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],

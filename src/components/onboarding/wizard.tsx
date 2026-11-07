@@ -4,8 +4,8 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, Check, MessageCircle, Monitor, PlayCircle, Smartphone } from "@/components/icons"
-import { GuideDialog } from "@/components/admin/design/editor-shell"
-import { PreviewFrame } from "@/components/admin/design/preview-frame"
+import { GuideDialog } from "@/components/admin/design/editor/editor-shell"
+import { PreviewFrame } from "@/components/admin/design/editor/preview-frame"
 import { Button } from "@/components/ui/button"
 import { DEMO_ADMIN } from "@/lib/data/account"
 import { DEFAULT_WORDING } from "@/lib/data/coaches"
@@ -16,10 +16,8 @@ import { EMPTY, mergeOverrides, setDraft } from "@/lib/prototype-store"
 import { uid } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { OnbFrame, mono } from "./frame"
-import { BrandStep, ModulesStep, PayoutsStep, TierStep } from "./steps"
+import { BrandLookStep, TierStep } from "./steps"
 import { suggestedModules, suggestedTemplate } from "./suggest"
-import { HomeStep, LookPanel } from "./look-steps"
-import { VideosStep } from "./videos-step"
 import { WizardDesign } from "./wizard-design"
 
 export type StepProps = {
@@ -32,17 +30,15 @@ export type StepProps = {
 type Preview = { path: (slug: string) => string; label: string }
 const home: Preview = { path: (slug) => `/c/${slug}`, label: "Home" }
 
-/** The first four steps are the Design editor's (Brand, Look, Menu, Pages); the last three are setup only. */
+/**
+ * Setup is only what a coach needs to open their platform: brand and look, then a first membership.
+ * Menu, Pages, videos and payouts wait on the admin Overview's checklist (admin/setup-checklist.tsx).
+ */
 type Guide = { title: string; text: string; minutes: number }
 
 const STEPS: { id: string; label: string; title: string; text: string; skip?: string; guide: Guide; preview: Preview; Step: React.ComponentType<StepProps> }[] = [
-  { id: "brand", label: "Brand", title: "Your brand", text: "Logo, name and colour. We'll suggest colours from your logo.", guide: { title: "Your brand in one minute", text: "Your logo and colour in one minute: upload a logo, we suggest the colours.", minutes: 1 }, preview: home, Step: BrandStep },
-  { id: "look", label: "Look", title: "Pick a look", text: "Each one is a complete design. Fine-tune it if you like; your colours and logo stay.", skip: "Keep this look", guide: { title: "Picking a look", text: "Pick a look, then fine-tune roundness, depth and spacing.", minutes: 1 }, preview: home, Step: LookPanel },
-  { id: "menu", label: "Menu", title: "Your menu", text: "What's on your platform and what you call it. Hidden sections stay ready for later.", guide: { title: "Setting up your menu", text: "Switch sections on, rename them, add your own pages.", minutes: 1 }, preview: home, Step: ModulesStep },
-  { id: "pages", label: "Pages", title: "Your Home page", text: "What students see first. Arrange every page widget by widget in Design → Pages, any time.", skip: "Keep this Home", guide: { title: "Your Home page", text: "Pick a Home and how much each widget shows; arrange later in Design.", minutes: 1 }, preview: home, Step: HomeStep },
-  { id: "tier", label: "Membership", title: "Create your first membership", text: "What students join. Add more tiers and bundles later.", guide: { title: "Your first membership", text: "Free or paid, the price, a trial and a second tier.", minutes: 1 }, preview: { path: (slug) => `/site/${slug}#tiers`, label: "Sales page · prices" }, Step: TierStep },
-  { id: "videos", label: "Videos", title: "Bring your first videos", text: "Drop a folder. We'll suggest modules and lessons from the file names.", skip: "Add videos later", guide: { title: "Bringing your videos", text: "Drop a folder; we suggest modules and lessons from the file names.", minutes: 1 }, preview: { path: (slug) => `/c/${slug}/courses`, label: "Courses" }, Step: VideosStep },
-  { id: "payouts", label: "Get paid", title: "Get paid", text: "Connect where your money goes. Free tiers work without it.", skip: "Do this later", guide: { title: "Getting paid", text: "Connect payouts in five minutes; free tiers work without it.", minutes: 1 }, preview: { path: (slug) => `/site/${slug}/checkout`, label: "Checkout" }, Step: PayoutsStep },
+  { id: "brand", label: "Brand and look", title: "Your brand and look", text: "Logo, name and colour, then a ready-made look. Fine-tune it later in Design.", guide: { title: "Your brand and look", text: "Upload a logo (we suggest the colours), name your platform and pick a look. Fonts, roundness and widgets wait in Design.", minutes: 1 }, preview: home, Step: BrandLookStep },
+  { id: "tier", label: "Membership", title: "Create your first membership", text: "What students join. Add more tiers, payouts and bundles later.", guide: { title: "Your first membership", text: "Free or paid, the price, a trial and a second tier.", minutes: 1 }, preview: { path: (slug) => `/site/${slug}#tiers`, label: "Sales page · prices" }, Step: TierStep },
 ]
 
 /** The preview address with ?preview=draft before any #hash. */
@@ -104,11 +100,11 @@ export function SetupWizard() {
   const S = STEPS[step]
   const go = (n: number) => {
     setReady(true)
+    if (S.id === "tier" && n > step) update({ setup: { ...community.setup, membership: true } })
     if (n >= STEPS.length) return router.push("/setup/publish")
     setAccount({ step: Math.max(0, n) })
   }
   const update = (patch: Partial<CustomCommunity>) => updateCommunity(community.slug, patch)
-  const stepDone = (S.id === "videos" && !!community.setup?.courses?.length) || (S.id === "payouts" && community.setup?.payouts === "connected")
 
   return (
     <OnbFrame
@@ -128,10 +124,12 @@ export function SetupWizard() {
         </>
       }
     >
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(400px,480px)_1fr]">
+      {/* The Design editor's look (31 Oct): a black panel, the platform on a grey workspace, no rules between parts, and white
+          (not orange) as the selection colour, so a choice never looks like the coach's own colour. */}
+      <div data-design-ws className="grid min-h-0 flex-1 [--background:#0b0b0c] [--border:rgb(255_255_255/0.08)] [--ts-interactive:#f4f4f5] lg:grid-cols-[minmax(400px,480px)_1fr]">
         {/* Left: the step */}
-        <div className="flex min-h-0 flex-col border-r bg-card">
-          <nav aria-label="Setup steps" className="flex gap-1 border-b px-4 py-2.5">
+        <div className="flex min-h-0 flex-col bg-[#0b0b0c]">
+          <nav aria-label="Setup steps" className="flex gap-1.5 px-5 pt-4 pb-2">
             {STEPS.map((s, i) => (
               <button
                 key={s.id}
@@ -139,23 +137,23 @@ export function SetupWizard() {
                 disabled={i > step}
                 title={s.label}
                 aria-current={i === step ? "step" : undefined}
-                className="group grid flex-1 gap-1.5 text-left disabled:cursor-default"
+                className="group -my-[11px] grid flex-1 gap-1.5 py-[11px] text-left disabled:cursor-default"
               >
                 <span className={cn("h-0.5 w-full bg-white/12", i < step && "bg-[var(--ts-cta)]", i === step && "bg-[var(--ts-interactive)]")} />
-                <span className={cn(mono, "hidden truncate text-[0.6rem] text-muted-foreground xl:block", i === step && "text-foreground", i < step && "group-hover:text-foreground")}>
+                <span className={cn(mono, "hidden truncate text-[0.6875rem] text-muted-foreground xl:block", i === step && "text-foreground", i < step && "group-hover:text-foreground")}>
                   {s.label}
                 </span>
               </button>
             ))}
           </nav>
 
-          <div className="flex-1 overflow-y-auto px-4 py-5 md:px-5">
-            <div className="grid gap-5">
-              <div className="grid gap-1.5 border-b pb-4">
+          <div className="flex-1 overflow-y-auto px-5 py-6 md:px-6">
+            <div className="grid gap-6">
+              <div className="grid gap-2">
                 <span className={cn(mono, "text-[var(--ts-interactive)]")}>
                   {String(step + 1).padStart(2, "0")} · {S.label}
                 </span>
-                <h1 className="text-lg leading-6 font-medium tracking-[-0.01em]">{S.title}</h1>
+                <h1 className="text-xl leading-7 font-medium tracking-[-0.01em]">{S.title}</h1>
                 <p className="text-sm text-muted-foreground">{S.text}</p>
                 <button onClick={() => setGuideOpen(true)} className="mt-0.5 flex w-fit items-center gap-1.5 text-sm text-[var(--ts-interactive)] hover:underline hover:underline-offset-4">
                   <PlayCircle className="size-4" /> Watch the {S.guide.minutes}-minute guide
@@ -167,21 +165,15 @@ export function SetupWizard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 border-t px-4 py-2.5 md:px-5">
+          <div className="flex items-center gap-2 px-5 py-4 md:px-6">
             {step > 0 && (
               <Button variant="ghost" onClick={() => go(step - 1)}>
                 <ArrowLeft /> Back
               </Button>
             )}
             <div className="ml-auto flex items-center gap-2">
-              {S.skip && !stepDone && (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    if (S.id === "payouts") update({ setup: { ...community.setup, payouts: community.setup?.payouts ?? "later" } })
-                    go(step + 1)
-                  }}
-                >
+              {S.skip && (
+                <Button variant="ghost" onClick={() => go(step + 1)}>
                   {S.skip}
                 </Button>
               )}
@@ -193,8 +185,8 @@ export function SetupWizard() {
         </div>
 
         {/* Right: the real platform, as students will see it */}
-        <div className="relative hidden min-h-0 flex-col bg-background lg:flex">
-          <div className="flex h-9 items-center justify-between gap-3 border-b bg-[var(--sidebar)] px-3">
+        <div className="relative hidden min-h-0 flex-col bg-[#2b2b2e] lg:flex">
+          <div className="flex h-12 items-center justify-between gap-3 px-6">
             <span className={cn(mono, "flex items-center gap-2 text-muted-foreground")}>
               <span className="size-1.5 rounded-full bg-[var(--ts-interactive)]" /> Live preview · {S.preview.label} · not public yet
             </span>

@@ -5,6 +5,13 @@
 /* `.light` marks a light coach preview inside the dark admin. */
 @custom-variant dark (&:is(.dark *):not(:is(.light, .light *)));
 
+/* Motion: one ease-out for the whole app (the widgets' MOTION.ease in widgets/kit.tsx), so `ease-out` and every
+   plain `transition-*` share it: quick start, soft landing. 150ms stays the default duration. */
+@theme {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -41,6 +48,9 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  /* The brand colour as text, adjusted to pass AA (lib/theme/css.ts). Use text-brand-text with variants (data-[active=true]:, hover:):
+     the theme only swaps the plain .text-primary class, so a variant text-primary keeps the raw brand colour. */
+  --color-brand-text: var(--brand-text, var(--primary));
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -91,6 +101,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Pictures and covers outside a coach theme (coach themes write their own in lib/theme/css.ts). */
+  --media-bg: oklch(0.24 0 0);
+  --media-fg: oklch(0.985 0 0);
 }
 
 .dark {
@@ -174,13 +187,12 @@
     color: var(--on);
     --foreground: var(--on);
     --card-foreground: var(--on);
-    --muted-foreground: color-mix(in oklab, var(--on) 72%, transparent);
+    /* Secondary text stays at full strength: faded text on a mid-tone brand fails contrast (same rule as the widget Star in parts/card.tsx). */
+    --muted-foreground: var(--on);
     --muted: color-mix(in oklab, var(--on) 14%, transparent);
     --border: color-mix(in oklab, var(--on) 22%, transparent);
     --primary: var(--on);
     --primary-foreground: var(--brand-b, black);
-    --brand-a: var(--on);
-    --brand-c: var(--on);
     --highlight: var(--on);
     --highlight-foreground: var(--brand-b, black);
     --card: transparent;
@@ -205,20 +217,23 @@
 }
 
 /*
- * Widget grid (Home). One 12-column grid with fixed-height rows; each widget
- * sets --x --y --w --h (cells), --w-md (half or full row) and --order.
- * The rules follow the width of the page area, so the same page reflows in a
- * sidebar layout, a preview or on a phone.
+ * A shadcn Card made into a brand surface: .fx-hero sets --card to transparent for what is inside it, so the Card's
+ * own bg-card (a utility, above the components layer) painted it see-through, with the brand's text colour on the
+ * page colour (the Ranking competition banner). This rule is unlayered so it wins, and only for Cards, so a bg-* on
+ * any other brand surface still works.
+ */
+.fx-hero[data-slot="card"] {
+  background: var(--brand, var(--chart-1));
+}
+
+/*
+ * A page of widgets (.g-page) and each widget's cell (.g-item). The page lays
+ * itself out (the columns in widgets/page-renderer.tsx); a cell is a width container for the widget's own layout, and the
+ * widget fills it.
  */
 @layer components {
-  .g-page {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap);
-  }
   .g-item {
     container-type: inline-size;
-    order: var(--order);
     display: flex;
     flex-direction: column;
     min-width: 0;
@@ -228,76 +243,187 @@
     flex: 1;
     min-height: 0;
   }
-  @container (min-width: 40rem) {
-    .g-page {
-      display: grid;
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      /* Rows keep their height; only a page's core widget can make its rows taller, to fit the page's content. */
-      grid-auto-rows: minmax(var(--row-h), auto);
-      grid-auto-flow: row dense;
-    }
-    .g-item {
-      grid-column: span var(--w-md) / span var(--w-md);
-      grid-row: span var(--h) / span var(--h);
-      overflow: hidden;
-      contain: size;
-    }
-    .g-item.g-core {
-      overflow: visible;
-      contain: none;
-    }
+}
+
+/* Menu background (theme.nav.fill): side menu, top bar and phone bar carry data-nav-fill. Tinted = wash of the brand; Brand = brand colour with its own text; Clear = no fill, no line. */
+[data-nav-fill] {
+  --sidebar: var(--nav-bg);
+  background: var(--nav-bg);
+}
+[data-nav-fill="tint"] {
+  --nav-bg: color-mix(in oklab, var(--primary) 10%, var(--background));
+}
+[data-nav-fill="clear"] {
+  --nav-bg: transparent;
+  border-color: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+[data-nav-fill="brand"] {
+  --nav-bg: var(--primary);
+  color: var(--on-brand);
+  --foreground: var(--on-brand);
+  --sidebar-foreground: var(--on-brand);
+  --sidebar-accent-foreground: var(--on-brand);
+  --muted-foreground: color-mix(in oklab, var(--on-brand) 82%, var(--primary));
+  --muted: color-mix(in oklab, var(--on-brand) 16%, transparent);
+  --sidebar-accent: color-mix(in oklab, var(--on-brand) 16%, transparent);
+  --brand-text: var(--on-brand);
+  --border: color-mix(in oklab, var(--on-brand) 22%, transparent);
+  --sidebar-border: color-mix(in oklab, var(--on-brand) 22%, transparent);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+[data-nav-fill="brand"] .bg-primary {
+  background: var(--on-brand);
+  color: var(--primary);
+}
+
+/* Menu style (theme.nav.marker): how the open page is marked in the side menu, the top bar and the phone bar (they carry data-nav-marker).
+   Soft is the default and needs nothing. Rail is a bar on the left of a side menu item and under an item of a bar. */
+[data-nav-marker="pill"] [data-active]:not([data-active="false"]) {
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--primary) 16%, transparent);
+  color: var(--brand-text);
+}
+[data-nav-marker="brand"] [data-active]:not([data-active="false"]) {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+[data-nav-fill="brand"][data-nav-marker="brand"] [data-active]:not([data-active="false"]) {
+  background: var(--on-brand);
+  color: var(--primary);
+}
+[data-nav-marker="rail"] [data-active]:not([data-active="false"]) {
+  border-radius: 0 var(--r-menu, 8px) var(--r-menu, 8px) 0;
+  background: transparent;
+  box-shadow: inset 3px 0 0 var(--brand-mark, var(--primary));
+  color: var(--foreground);
+}
+header[data-nav-marker="rail"] [data-active]:not([data-active="false"]),
+nav[data-nav-marker="rail"] [data-active]:not([data-active="false"]) {
+  border-radius: 0;
+  box-shadow: inset 0 -2px 0 var(--brand-mark, var(--primary));
+}
+[data-nav-marker="editorial"] [data-active]:not([data-active="false"]) {
+  background: transparent;
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+/* Widget set (Design → Widgets → Card). Cards need nothing here (lib/theme/css.ts). Blended (data-set="open"): no box at all, no fill and no
+   line, so the page shows through and widgets are set apart by the gap alone (Outline is the one with a fine line).
+   The page title and the page's own tool (g-plain) are untouched, the Star widget keeps its brand fill, and a widget
+   that chose its own card (This widget → surface, tone or picture: data-own-card) keeps it. (Sheet is
+   retired for now: widgetSetOf draws a design saved with it as Cards.) */
+.g-page[data-set="open"] .g-item:not(.g-plain):not(:has([data-own-card])) [data-slot="widget"] {
+  --card-shadow: none;
+  --card-edge: transparent;
+}
+.g-page[data-set="open"] .g-item:not(.g-plain):not(:has([data-own-card])) [data-slot="widget"]:not([data-emphasis="star"]) {
+  background: transparent;
+  border-radius: var(--radius);
+}
+
+/* Blended also takes the boxes inside a widget that stand for its cards (the course tiles, data-blend-box). */
+.g-page[data-set="open"] [data-blend-box],
+[data-blended] [data-blend-box] {
+  background: transparent;
+  box-shadow: none !important;
+}
+/* One widget set to Blended on a page of cards: same as an Open page, for that widget only. */
+.g-item:not(.g-plain) [data-blended] [data-slot="widget"] {
+  --card-shadow: none;
+  --card-edge: transparent;
+}
+.g-item:not(.g-plain) [data-blended] [data-slot="widget"]:not([data-emphasis="star"]) {
+  background: transparent;
+  border-radius: var(--radius);
+}
+
+/* Blended on a drawn background (grid, dots, gradient or a picture): the lines would run through the text, so each widget gets
+   a soft veil of the page colour with a little blur. Plain and Glow pages need none. The veil is the page colour, never a card. */
+.g-page[data-set="open"]:is([data-bg="grid"], [data-bg="dots"], [data-bg="gradient"], [data-bg="image"]) .g-item:not(.g-plain):not(:has([data-own-card])) [data-slot="widget"]:not([data-emphasis="star"]),
+.g-page:is([data-bg="grid"], [data-bg="dots"], [data-bg="gradient"], [data-bg="image"]) .g-item:not(.g-plain) [data-blended] [data-slot="widget"]:not([data-emphasis="star"]) {
+  background: color-mix(in oklab, var(--background) 82%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* Widget finish Corners: only on square cards (lib/theme/css.ts sets --w-corners from Corners). */
+[data-corner] {
+  display: var(--w-corners, block);
+}
+
+/* Widget finish Grid (Design → Look → Widgets): a field of small crosses on the page behind the widgets, in the hairline colour.
+   Not with Open widgets: they have no surface of their own, so the crosses would run behind their text. */
+.g-page[data-finish="grid"]:not([data-set="open"]),
+.hb-set[data-finish="grid"]:not([data-set="open"]) {
+  position: relative;
+  isolation: isolate;
+}
+.g-page[data-finish="grid"]:not([data-set="open"])::before,
+.hb-set[data-finish="grid"]:not([data-set="open"])::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--gap) * -1);
+  z-index: -1;
+  pointer-events: none;
+  background: var(--w-hair, color-mix(in oklab, var(--foreground) 14%, transparent));
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cpath d='M32 27v11M27 32.5h11' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E") 0 0 / 64px 64px repeat;
+}
+
+/* Geometry that follows the theme's corner style (set by themeToCss). These went missing on 12 Oct (f4e8dae);
+   without them bars, chips and dots were square in every theme. */
+@layer components {
+  .r-bar {
+    border-radius: var(--r-bar, 4px);
   }
-  @container (min-width: 60rem) {
-    .g-item {
-      grid-column: calc(var(--x) + 1) / span var(--w);
-      grid-row: calc(var(--y) + 1) / span var(--h);
-    }
+  .r-chip {
+    border-radius: var(--r-chip, 6px);
   }
-  @container (max-width: 39.99rem) {
-    .g-hide-phone {
-      display: none;
-    }
+  .r-dot {
+    border-radius: var(--r-dot, 9999px);
+  }
+  .r-inner {
+    border-radius: var(--r-inner, 8px);
   }
 }
 
-/* Home builder grid: where a widget will land, and its resize handles. */
-.hb-canvas .react-grid-item.react-grid-placeholder {
-  background: color-mix(in oklab, var(--primary) 16%, transparent);
-  border: 2px dashed var(--primary);
-  border-radius: var(--radius);
-  opacity: 1;
+/* Less motion when asked: transitions and CSS animations finish at once (Motion's own animations read the same
+   setting through useShouldReduceMotion). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
-.hb-canvas .react-grid-item > .react-resizable-handle {
-  z-index: 20;
-  background: none;
-  opacity: 0;
+
+/* Every one-line native select, admin and student alike: one chevron with room on its right, the same in every
+   browser (the native arrow sat flush against the edge). Unlayered on purpose, so a px-* on a select can't take
+   that room away. Its colour follows muted text, light and dark. */
+select:not([multiple]):not([size]) {
+  appearance: none;
+  padding-inline-end: 1.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 0.75rem;
 }
-.hb-canvas .react-grid-item:hover > .react-resizable-handle,
-.hb-canvas .react-grid-item.resizing > .react-resizable-handle {
-  opacity: 1;
+select:not([multiple]):not([size]):is(.dark *):not(:is(.light, .light *)) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a1a1' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
-.hb-canvas .react-grid-item > .react-resizable-handle::after {
-  border: 0;
-  border-radius: 9999px;
-  background: var(--primary);
-  box-shadow: 0 0 0 2px var(--background);
+
+/* Charts can be focused with the keyboard (to read each value); recharts removes the outline, so show one. */
+.recharts-wrapper:focus-visible,
+.recharts-surface:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
-/* Edge handles: a short bar centred on each side. Corner handles: a dot. */
-.hb-canvas .react-grid-item > .react-resizable-handle { width: 20px; height: 20px; margin: 0; transform: none; }
-.hb-canvas .react-grid-item > .react-resizable-handle::after { right: auto; bottom: auto; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.hb-canvas .react-grid-item > .react-resizable-handle-n { top: -10px; left: calc(50% - 10px); cursor: ns-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-s { bottom: -10px; top: auto; left: calc(50% - 10px); cursor: ns-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-e { right: -10px; left: auto; top: calc(50% - 10px); cursor: ew-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-w { left: -10px; top: calc(50% - 10px); cursor: ew-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-n::after,
-.hb-canvas .react-grid-item > .react-resizable-handle-s::after { width: 18px; height: 4px; }
-.hb-canvas .react-grid-item > .react-resizable-handle-e::after,
-.hb-canvas .react-grid-item > .react-resizable-handle-w::after { width: 4px; height: 18px; }
-.hb-canvas .react-grid-item > .react-resizable-handle-nw { top: -10px; left: -10px; cursor: nwse-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-ne { top: -10px; right: -10px; left: auto; cursor: nesw-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-sw { bottom: -10px; top: auto; left: -10px; cursor: nesw-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-se { bottom: -10px; right: -10px; top: auto; left: auto; cursor: nwse-resize; }
-.hb-canvas .react-grid-item > .react-resizable-handle-nw::after,
-.hb-canvas .react-grid-item > .react-resizable-handle-ne::after,
-.hb-canvas .react-grid-item > .react-resizable-handle-sw::after,
-.hb-canvas .react-grid-item > .react-resizable-handle-se::after { width: 9px; height: 9px; }

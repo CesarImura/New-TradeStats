@@ -9,7 +9,7 @@ import { CourseCover, hours } from "@/components/courses/shared"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Cover } from "@/components/widgets/shared"
+import { Cover } from "@/components/widgets/parts/shared"
 import { amount, courseTiers, fmtDate, isFull, per, useGroups, useTiers, type TierInfo } from "@/lib/data/access"
 import { allLessons, studentCourses, useCatalog } from "@/lib/data/learning"
 import { useSalesPage, type Block } from "@/lib/data/sales-page"
@@ -152,7 +152,7 @@ function Results({ block }: { block: Block }) {
         {(block.items ?? []).map((q, i) => (
           <figure key={i} className="grid content-between gap-4 rounded-(--radius) bg-card p-5 text-card-foreground" style={{ boxShadow: "var(--card-shadow)" }}>
             <Quote className="size-5 text-primary" />
-            <blockquote className="text-[0.95rem] leading-relaxed">{q.a}</blockquote>
+            <blockquote className="text-[0.875rem] leading-relaxed">{q.a}</blockquote>
             <figcaption className="text-sm text-muted-foreground">{q.who}</figcaption>
           </figure>
         ))}
@@ -356,7 +356,7 @@ function Closing({ block }: { block: Block }) {
     <div className={wrap}>
       <div className="grid justify-items-center gap-4 rounded-(--radius) bg-primary px-6 py-14 text-center text-primary-foreground">
         <h2 className="max-w-2xl text-3xl leading-tight sm:text-4xl">{block.title}</h2>
-        <p className="max-w-xl opacity-85">{block.text}</p>
+        <p className="max-w-xl">{block.text}</p>
         <Button size="lg" variant="secondary" nativeButton={false} render={<a href="#tiers" />}>
           See the plans <ArrowRight />
         </Button>

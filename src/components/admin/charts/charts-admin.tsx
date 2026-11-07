@@ -115,7 +115,7 @@ export function ChartsAdmin() {
                   {MARKETS.map((m) => {
                     const checked = s.markets.includes(m.id)
                     return (
-                      <label key={m.id} className={cn("flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm", checked && "border-[var(--ts-interactive)]")}>
+                      <label key={m.id} className={cn("flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm bg-card", checked && "border-[var(--ts-interactive)]")}>
                         <Checkbox checked={checked} onCheckedChange={(v) => set({ markets: v ? [...s.markets, m.id] : s.markets.filter((x) => x !== m.id) })} />
                         {m.label}
                       </label>
@@ -218,7 +218,7 @@ export function ChartsAdmin() {
 
             <div className="grid content-start gap-2 xl:sticky xl:top-20">
               <span className="text-xs text-muted-foreground">Preview · what students see when they open {coach.wording.charts}</span>
-              <div className="h-[520px] overflow-hidden rounded-lg border">
+              <div className="h-[520px] overflow-hidden rounded-lg border bg-card">
                 <TradingViewChart
                   symbol={preview}
                   interval={s.interval}
@@ -246,13 +246,13 @@ export function ChartCard({ chart: c, actions, onOpen, tierNames, dark = true }:
   const { coach } = useCoach()
   const who = c.tiers.length ? c.tiers.map((id) => coach.tiers.find((t) => t.id === id)?.name ?? id).join(", ") : "Everyone"
   return (
-    <article className="grid content-start gap-3 overflow-hidden rounded-lg border bg-card">
-      <div className="relative h-44 bg-background">
+    <article data-interactive className="grid content-start gap-4 overflow-hidden rounded-lg border bg-card">
+      <div data-media className="relative h-44 bg-background">
         <TradingViewMini symbol={c.symbol.tv} dark={dark} className="size-full" />
         {onOpen && <button onClick={onOpen} className="absolute inset-0" aria-label={`Open ${c.title}`} />}
       </div>
-      <div className="grid gap-1.5 px-4 pb-4">
-        <div className="flex items-start gap-2">
+      <div className="grid gap-3 px-4 pb-4">
+        <div className="flex items-start gap-3">
           <div className="grid min-w-0 flex-1 gap-0.5">
             <span className="flex items-center gap-2">
               {c.pinned && <Pin className="size-3.5 shrink-0 text-[var(--ts-interactive,var(--primary))]" />}
@@ -265,13 +265,13 @@ export function ChartCard({ chart: c, actions, onOpen, tierNames, dark = true }:
           </div>
           {actions && <div className="flex shrink-0">{actions}</div>}
         </div>
-        <p className="text-sm text-muted-foreground">{c.note}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{c.note}</p>
         {c.link && (
           <a href={c.link} target="_blank" rel="noreferrer" className="flex w-fit items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
             <ExternalLink className="size-3.5" /> {coach.coachName}&apos;s layout on TradingView
           </a>
         )}
-        <div className="flex flex-wrap gap-1.5 pt-1">
+        <div className="flex flex-wrap gap-1.5">
           {c.levels.map((l) => (
             <Badge key={l.label} variant="outline" className="gap-1.5 font-normal">
               <span className="size-1.5 rounded-full" style={{ background: LEVEL_COLOR[l.kind] }} />
@@ -318,7 +318,7 @@ function NewChart({ open, onOpenChange, onSave, symbols }: { open: boolean; onOp
             </Field>
           </div>
           <div className="grid gap-1.5">
-            <span className="text-[0.8rem] font-medium">Levels</span>
+            <span className="text-[0.8125rem] font-medium">Levels</span>
             {levels.map((l, i) => (
               <div key={i} className="grid grid-cols-[1fr_110px_120px_auto] gap-2">
                 <Input className="h-8" value={l.label} onChange={(e) => setLevels((x) => x.map((y, j) => (j === i ? { ...y, label: e.target.value } : y)))} aria-label="Level name" />
@@ -351,7 +351,7 @@ function NewChart({ open, onOpenChange, onSave, symbols }: { open: boolean; onOp
             <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Above this level I'm only looking for longs…" />
           </Field>
           <div className="flex flex-wrap items-center gap-3 text-sm">
-            <span className="text-[0.8rem] font-medium">Who sees it</span>
+            <span className="text-[0.8125rem] font-medium">Who sees it</span>
             {coach.tiers.map((t) => (
               <label key={t.id} className="flex items-center gap-1.5">
                 <Checkbox checked={tiers.length === 0 || tiers.includes(t.id)} onCheckedChange={(v) => setTiers((x) => (v ? [...(x.length ? x : []), t.id] : (x.length ? x : coach.tiers.map((y) => y.id)).filter((y) => y !== t.id)))} />

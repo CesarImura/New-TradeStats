@@ -1,13 +1,23 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
+import type { Metadata } from "next"
+import { CoachHead } from "@/components/coach/coach-head"
 import { CoachProvider } from "@/components/coach/coach-provider"
 import { PrototypeBar } from "@/components/prototype/prototype-bar"
 import { PublicShell } from "@/components/public/public-shell"
 import { COACHES, isCommunitySlug } from "@/lib/data/coaches"
+import { markIcon } from "@/lib/theme/mark-icon"
 
 export function generateStaticParams() {
   return COACHES.map((c) => ({ coach: c.slug }))
 }
+
+/**
+ * The tab's title and icon are the coach's, set in the browser by CoachHead (as for wizard-made communities). Read
+ * from the address here, they would block the route's prefetch (Next's URL data in generateMetadata), so the server
+ * sends a neutral title.
+ */
+export const metadata: Metadata = { title: "Community", icons: { icon: markIcon("·", "#18181b", "#f4f4f5") } }
 
 /** PUB-01 to PUB-12 and STO-01 to STO-03: what people see before and right after they join, on the coach's own address. */
 export default function Layout({ children, params }: LayoutProps<"/site/[coach]">) {
@@ -23,6 +33,7 @@ async function SiteLayout({ children, params }: { children: React.ReactNode; par
   if (!isCommunitySlug(coach)) notFound()
   return (
     <CoachProvider slug={coach} base={`/site/${coach}`}>
+      <CoachHead />
       <PublicShell>{children}</PublicShell>
       <PrototypeBar area="site" />
     </CoachProvider>

@@ -11,7 +11,6 @@ import {
   Eye,
   FileVideo,
   FolderUp,
-  GripVertical,
   Link2,
   MoreHorizontal,
   Pencil,
@@ -37,8 +36,11 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { STATUS_LABEL, allLessons, saveCatalog, uid, useCatalog, type Catalog, type Course, type Status } from "@/lib/data/learning"
+import { STATUS_LABEL, allLessons, isSampleCourse, saveCatalog, uid, useCatalog, type Catalog, type Course, type Status } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
+import { Tile } from "./thumbs"
+import { videoFrames } from "@/lib/video-frames"
+import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 
 export const STATUS_DOT: Record<Status, string> = {
   published: "bg-emerald-500",
@@ -58,7 +60,7 @@ export function StatusBadge({ status, when }: { status: Status; when?: string })
 }
 
 /** Thumbnail tints for the admin, which keeps its own neutral look. */
-export const THUMB = ["#f97316", "#0ea5e9", "#8b5cf6", "#10b981", "#e11d48"]
+export { COVER_TINTS as THUMB } from "./thumbs"
 
 type Filter = "all" | Status
 
@@ -66,16 +68,17 @@ type Filter = "all" | Status
 export function ContentBoard() {
   const { coach, base } = useCoach()
   const catalog = useCatalog(coach)
+  // A community made in setup starts on the sample courses; they carry a "Sample" label until replaced.
+  const wizard = useWizardCommunity(coach.slug)
+  const sample = (id: string) => !!wizard && isSampleCourse(coach, id)
   const router = useRouter()
   const [filter, setFilter] = useState<Filter>("all")
-  const [creating, setCreating] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
   const [bulk, setBulk] = useState(false)
-  const [dragging, setDragging] = useState<string | null>(null)
-  const [over, setOver] = useState<string | null>(null)
 
   const edit = (fn: (c: Catalog) => Catalog) => saveCatalog(coach, fn)
   const count = (s: Filter) => catalog.courses.filter((c) => (s === "all" ? c.status !== "archived" : c.status === s)).length
-  const shown = (area: string) => catalog.courses.filter((c) => c.area === area && (filter === "all" ? c.status !== "archived" : c.status === filter))
+  const list = catalog.courses.filter((c) => (filter === "all" ? c.status !== "archived" : c.status === filter))
 
   const setStatus = (id: string, status: Status) => {
     edit((c) => ({ ...c, courses: c.courses.map((x) => (x.id === id ? { ...x, status } : x)) }))
@@ -97,7 +100,6 @@ export function ContentBoard() {
     edit((c) => ({ ...c, courses: c.courses.filter((x) => x.id !== course.id) }))
     toast(`${course.title} deleted.`, { action: { label: "Undo", onClick: () => edit(() => before) } })
   }
-  const moveTo = (id: string, area: string) => edit((c) => ({ ...c, courses: c.courses.map((x) => (x.id === id ? { ...x, area } : x)) }))
 
   return (
     <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
@@ -105,18 +107,22 @@ export function ContentBoard() {
         <div>
           <h1 className="text-xl leading-7 font-medium tracking-[-0.01em]">Content</h1>
           <p className="text-sm text-muted-foreground">
-            Areas and courses. Students see what&apos;s published, in your words: “{coach.wording.courses}”.
+            Your courses. Students see what&apos;s published, in your words: “{coach.wording.courses}”.
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setBulk(true)}>
             <FolderUp /> Bulk upload
           </Button>
-          <Button onClick={() => setCreating(catalog.areas[0] ?? "Core")}>
+          <Button onClick={() => setCreating(true)}>
             <Plus /> New course
           </Button>
         </div>
       </div>
+      <SetupTip task="course" />
+      <SampleNotice show={catalog.courses.some((c) => sample(c.id))}>
+        Courses marked Sample are examples, so you can see how your courses look. Replace or delete them before you invite students.
+      </SampleNotice>
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
         <TabsList>
@@ -129,61 +135,32 @@ export function ContentBoard() {
         </TabsList>
       </Tabs>
 
-      <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
-        {catalog.areas.map((area) => {
-          const list = shown(area)
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {list.map((c) => {
+          const lessons = allLessons(c)
+          const tiers = c.tiers.length ? coach.tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers"
           return (
-            <section
-              key={area}
-              onDragOver={(e) => {
-                if (!dragging) return
-                e.preventDefault()
-                setOver(area)
-              }}
-              onDragLeave={() => setOver((o) => (o === area ? null : o))}
-              onDrop={() => {
-                if (dragging) moveTo(dragging, area)
-                setDragging(null)
-                setOver(null)
-              }}
-              className={cn("flex w-72 shrink-0 flex-col gap-3 rounded-xl bg-muted/50 p-3 transition-colors", over === area && "bg-primary/10 ring-2 ring-primary/30")}
-            >
-              <div className="flex items-center gap-2 px-1">
-                <span className="text-sm font-medium">{area}</span>
-                <span className="text-xs text-muted-foreground tabular-nums">{list.length}</span>
-                <Button variant="ghost" size="icon-xs" className="ml-auto" aria-label={`New course in ${area}`} onClick={() => setCreating(area)}>
-                  <Plus />
-                </Button>
-              </div>
-              {list.map((c) => {
-                const lessons = allLessons(c)
-                const tiers = c.tiers.length ? coach.tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers"
-                return (
-                  <div
-                    key={c.id}
-                    draggable
-                    onDragStart={() => setDragging(c.id)}
-                    onDragEnd={() => (setDragging(null), setOver(null))}
-                    className={cn("group relative overflow-hidden rounded-lg border bg-background shadow-xs transition-shadow hover:shadow-md", dragging === c.id && "opacity-50", c.status === "archived" && "opacity-70")}
-                  >
-                    <Link href={`${base}/content/${c.id}`} className="block">
-                      <div className="flex h-16 items-end p-2.5" style={{ background: `linear-gradient(135deg, ${THUMB[c.color % 5]}, color-mix(in oklab, ${THUMB[c.color % 5]} 70%, black))` }}>
-                        <span className="rounded bg-black/30 px-1.5 py-0.5 text-[0.65rem] text-white backdrop-blur-sm">
-                          {c.modules.length} {c.modules.length === 1 ? "module" : "modules"} · {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}
-                        </span>
-                      </div>
-                      <div className="grid gap-2 p-3">
-                        <div className="grid gap-0.5">
-                          <span className="text-sm leading-tight font-medium">{c.title}</span>
-                          <span className="line-clamp-1 text-xs text-muted-foreground">{c.tagline}</span>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <StatusBadge status={c.status} when={c.scheduledFor} />
-                          <span className="truncate text-xs text-muted-foreground">{tiers}</span>
-                        </div>
-                      </div>
-                    </Link>
-                    <GripVertical className="absolute top-2 left-1 size-4 text-white/70 opacity-0 group-hover:opacity-100" />
+            <div key={c.id} data-interactive className={cn("group relative overflow-hidden rounded-xl border bg-card", c.status === "archived" && "opacity-70")}>
+              <Link href={`${base}/content/${c.id}`} className="block">
+                <div data-media>
+                  <Tile src={c.cover} color={c.color} className="flex aspect-[16/7] items-end p-2.5">
+                    <span className="relative rounded bg-black/40 px-1.5 py-0.5 text-[0.6875rem] text-white backdrop-blur-sm">
+                      {c.modules.length} {c.modules.length === 1 ? "module" : "modules"} · {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}
+                    </span>
+                  </Tile>
+                </div>
+                <div className="grid gap-3 p-4">
+                  <div className="grid gap-0.5">
+                    <span className="text-sm leading-tight font-medium">{c.title}</span>
+                    <span className="line-clamp-1 text-xs text-muted-foreground">{c.tagline}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <StatusBadge status={c.status} when={c.scheduledFor} />
+                    {sample(c.id) && <Badge variant="outline">Sample</Badge>}
+                    <span className="truncate text-xs text-muted-foreground">{tiers}</span>
+                  </div>
+                </div>
+              </Link>
                     <DropdownMenu>
                       <DropdownMenuTrigger render={<Button variant="secondary" size="icon-xs" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 data-popup-open:opacity-100" aria-label={`Actions for ${c.title}`} />}>
                         <MoreHorizontal />
@@ -218,25 +195,21 @@ export function ContentBoard() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </div>
-                )
-              })}
-              {list.length === 0 && (
-                <button onClick={() => setCreating(area)} className="grid place-items-center gap-1 rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground hover:bg-background">
-                  <BookOpen className="size-4" />
-                  {filter === "all" ? "No courses yet. Add one." : `Nothing ${STATUS_LABEL[filter as Status].toLowerCase()} here.`}
-                </button>
-              )}
-            </section>
+            </div>
           )
         })}
-        <NewArea onAdd={(name) => edit((c) => ({ ...c, areas: [...c.areas, name] }))} />
+        {list.length === 0 && (
+          <button onClick={() => setCreating(true)} className="grid place-items-center gap-1 rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground hover:bg-muted/50 sm:col-span-2 xl:col-span-3">
+            <BookOpen className="size-5" />
+            {filter === "all" ? "No courses yet. Add your first one." : `Nothing ${STATUS_LABEL[filter as Status].toLowerCase()} here.`}
+          </button>
+        )}
       </div>
 
       <NewCourseDialog
-        area={creating}
-        areas={catalog.areas}
-        onClose={() => setCreating(null)}
+        open={creating}
+        area={catalog.areas[0] ?? "Core"}
+        onClose={() => setCreating(false)}
         onCreate={(course) => {
           edit((c) => ({ ...c, courses: [...c.courses, course] }))
           router.push(`${base}/content/${course.id}`)
@@ -245,7 +218,7 @@ export function ContentBoard() {
       <BulkUpload
         open={bulk}
         onOpenChange={setBulk}
-        areas={catalog.areas}
+        area={catalog.areas[0] ?? "Core"}
         onCreate={(course) => {
           edit((c) => ({ ...c, courses: [...c.courses, course] }))
           router.push(`${base}/content/${course.id}`)
@@ -255,48 +228,10 @@ export function ContentBoard() {
   )
 }
 
-function NewArea({ onAdd }: { onAdd: (name: string) => void }) {
-  const [open, setOpen] = useState(false)
-  const [name, setName] = useState("")
-  if (!open)
-    return (
-      <button onClick={() => setOpen(true)} className="flex h-12 w-56 shrink-0 items-center justify-center gap-2 rounded-xl border border-dashed text-sm text-muted-foreground hover:bg-muted/50">
-        <Plus className="size-4" /> Add area
-      </button>
-    )
-  return (
-    <form
-      className="flex w-64 shrink-0 flex-col gap-2 self-start rounded-xl bg-muted/50 p-3"
-      onSubmit={(e) => {
-        e.preventDefault()
-        if (name.trim()) onAdd(name.trim())
-        setName("")
-        setOpen(false)
-      }}
-    >
-      <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Area name, e.g. Bonus" />
-      <div className="flex gap-2">
-        <Button size="sm" type="submit">
-          Add
-        </Button>
-        <Button size="sm" variant="ghost" type="button" onClick={() => setOpen(false)}>
-          Cancel
-        </Button>
-      </div>
-    </form>
-  )
-}
-
-function NewCourseDialog({ area, areas, onClose, onCreate }: { area: string | null; areas: string[]; onClose: () => void; onCreate: (c: Course) => void }) {
+function NewCourseDialog({ open, area, onClose, onCreate }: { open: boolean; area: string; onClose: () => void; onCreate: (c: Course) => void }) {
   const [title, setTitle] = useState("")
-  const [pick, setPick] = useState(area ?? "")
-  const [lastArea, setLastArea] = useState(area)
-  if (area !== lastArea) {
-    setLastArea(area)
-    setPick(area ?? "")
-  }
   return (
-    <Dialog open={area !== null} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>New course</DialogTitle>
@@ -311,7 +246,7 @@ function NewCourseDialog({ area, areas, onClose, onCreate }: { area: string | nu
               id: uid("c"),
               title: title.trim(),
               tagline: "",
-              area: pick || areas[0],
+              area,
               status: "draft",
               tiers: [],
               color: Math.floor(Math.random() * 5),
@@ -324,14 +259,6 @@ function NewCourseDialog({ area, areas, onClose, onCreate }: { area: string | nu
           <div className="grid gap-2">
             <Label htmlFor="nc-title">Title</Label>
             <Input id="nc-title" autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Order flow basics" />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="nc-area">Area</Label>
-            <select id="nc-area" value={pick} onChange={(e) => setPick(e.target.value)} className="h-9 rounded-lg border bg-background px-2 text-sm">
-              {areas.map((a) => (
-                <option key={a}>{a}</option>
-              ))}
-            </select>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={!title.trim()}>
@@ -355,24 +282,47 @@ const SAMPLE_FOLDER = [
   { name: "06 Live example ES.mp4", size: "1.2 GB", minutes: 32 },
   { name: "07 Live example NQ.mp4", size: "1.1 GB", minutes: 29 },
 ]
+type Entry = { name: string; size: string; minutes: number; thumb?: string }
+const sizeOf = (bytes: number) => (bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.max(1, Math.round(bytes / 1e6))} MB`)
 const AI_MODULES = [
   { title: "Basics", files: [0, 1] },
   { title: "Reading the footprint", files: [2, 3, 4] },
   { title: "Live examples", files: [5, 6] },
 ]
-const cleanName = (f: string) => f.replace(/^\d+\s*/, "").replace(/\.mp4$/, "").replace(/ - /, ": ").replace(/^./, (c) => c.toUpperCase())
+const cleanName = (f: string) => f.replace(/^\d+\s*/, "").replace(/\.(mp4|mov|mkv|webm|m4v)$/i, "").replace(/ - /, ": ").replace(/^./, (c) => c.toUpperCase())
 
 /** ADM-10: drop a folder or paste links; uploads run in the background while AI proposes the structure. */
-function BulkUpload({ open, onOpenChange, areas, onCreate }: { open: boolean; onOpenChange: (o: boolean) => void; areas: string[]; onCreate: (c: Course) => void }) {
-  const [files, setFiles] = useState<typeof SAMPLE_FOLDER>([])
+function BulkUpload({ open, onOpenChange, area, onCreate }: { open: boolean; onOpenChange: (o: boolean) => void; area: string; onCreate: (c: Course) => void }) {
+  const [files, setFiles] = useState<Entry[]>([])
+  const [reading, setReading] = useState(false)
+  const input = useRef<HTMLInputElement>(null)
   const [pct, setPct] = useState<number[]>([])
   const [links, setLinks] = useState("")
   const [title, setTitle] = useState("Order flow")
-  const [area, setArea] = useState(areas[1] ?? areas[0])
   const [over, setOver] = useState(false)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const start = (list = SAMPLE_FOLDER) => {
+  /** Real videos the coach dropped or picked: each gets its real length and a thumbnail from the middle of the video. */
+  const startWith = async (picked: File[]) => {
+    const videos = picked.filter((f) => f.type.startsWith("video/")).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+    // Nothing readable (a folder dropped, say): the sample folder keeps the demo working.
+    if (!videos.length) return start()
+    setReading(true)
+    const list = await Promise.all(
+      videos.map(async (f): Promise<Entry> => {
+        try {
+          const { frames, seconds } = await videoFrames(f, { count: 1, width: 480 })
+          return { name: f.name, size: sizeOf(f.size), minutes: Math.max(1, Math.round(seconds / 60)), thumb: frames[0] }
+        } catch {
+          // A video this browser can't read is still added, with the course cover as its thumbnail.
+          return { name: f.name, size: sizeOf(f.size), minutes: 10 }
+        }
+      }),
+    )
+    setReading(false)
+    start(list)
+  }
+  const start = (list: Entry[] = SAMPLE_FOLDER) => {
     setFiles(list)
     setPct(list.map(() => 0))
     if (timer.current) clearInterval(timer.current)
@@ -414,14 +364,15 @@ function BulkUpload({ open, onOpenChange, areas, onCreate }: { open: boolean; on
             <button
               onDragOver={(e) => (e.preventDefault(), setOver(true))}
               onDragLeave={() => setOver(false)}
-              onDrop={(e) => (e.preventDefault(), setOver(false), start())}
-              onClick={() => start()}
+              onDrop={(e) => (e.preventDefault(), setOver(false), void startWith([...e.dataTransfer.files]))}
+              onClick={() => input.current?.click()}
               className={cn("grid place-items-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors hover:bg-muted/50", over && "border-primary bg-primary/5")}
             >
               <FolderUp className="size-8 text-muted-foreground" />
-              <span className="font-medium">Drop a folder here, or click to pick one</span>
-              <span className="text-sm text-muted-foreground">MP4, MOV or MKV. Numbered file names keep their order.</span>
+              <span className="font-medium">{reading ? "Reading your videos…" : "Drop your videos here, or click to pick them"}</span>
+              <span className="text-sm text-muted-foreground">MP4, MOV or WebM. Numbered file names keep their order, and each lesson gets a thumbnail from its video.</span>
             </button>
+            <input ref={input} type="file" accept="video/*" multiple aria-label="Videos" className="sr-only" onChange={(e) => (void startWith([...(e.target.files ?? [])]), (e.target.value = ""))} />
             <div className="grid gap-2">
               <Label htmlFor="bu-links" className="flex items-center gap-1.5">
                 <Link2 className="size-3.5" /> Or import links
@@ -448,7 +399,7 @@ function BulkUpload({ open, onOpenChange, areas, onCreate }: { open: boolean; on
               </div>
               <div className="grid max-h-72 gap-2 overflow-y-auto pr-1">
                 {files.map((f, i) => (
-                  <div key={f.name} className="grid gap-1 rounded-lg border p-2">
+                  <div key={f.name} className="grid gap-1 rounded-lg border p-2 bg-card">
                     <div className="flex items-center gap-2 text-xs">
                       <FileVideo className="size-3.5 shrink-0 text-muted-foreground" />
                       <span className="flex-1 truncate">{f.name}</span>
@@ -468,13 +419,8 @@ function BulkUpload({ open, onOpenChange, areas, onCreate }: { open: boolean; on
               </div>
               <div className="grid gap-2">
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Course title" />
-                <select value={area} onChange={(e) => setArea(e.target.value)} className="h-9 rounded-lg border bg-background px-2 text-sm" aria-label="Area">
-                  {areas.map((a) => (
-                    <option key={a}>{a}</option>
-                  ))}
-                </select>
               </div>
-              <div className="grid gap-2 rounded-lg border p-3 text-sm">
+              <div className="grid gap-2 rounded-lg border p-3 text-sm bg-card">
                 {(files === SAMPLE_FOLDER ? AI_MODULES : [{ title: "Module 1", files: files.map((_, i) => i) }]).map((m) => (
                   <div key={m.title} className="grid gap-1">
                     <span className="font-medium">{m.title}</span>
@@ -511,7 +457,7 @@ function BulkUpload({ open, onOpenChange, areas, onCreate }: { open: boolean; on
                   modules: groups.map((g) => ({
                     id: uid("m"),
                     title: g.title,
-                    lessons: g.files.map((i) => ({ id: uid("l"), title: cleanName(files[i].name), minutes: files[i].minutes, status: "draft" as const, video: files[i].name, chapters: [], downloads: [] })),
+                    lessons: g.files.map((i) => ({ id: uid("l"), title: cleanName(files[i].name), minutes: files[i].minutes, status: "draft" as const, video: files[i].name, thumbnail: files[i].thumb, chapters: [], downloads: [] })),
                   })),
                 })
                 toast.success(ready ? "Course created as a draft." : "Course created. Uploads continue in the background.")

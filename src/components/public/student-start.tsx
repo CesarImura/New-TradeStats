@@ -10,10 +10,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useTiers } from "@/lib/data/access"
 import { usePurchase } from "@/lib/data/sales-page"
-import { saveStudentStart, useOnboardingSettings, useStudentStart } from "@/lib/data/student-start"
+import { saveStudentStart, useOnboardingSettings, useStudentStart, type CustomQuestion } from "@/lib/data/student-start"
 import { setStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
 
+const NONE: CustomQuestion[] = []
 const EXPERIENCE = ["Just starting", "Under a year", "1–3 years", "More than 3 years"]
 const MARKETS = ["Futures", "Forex", "Stocks", "Crypto", "Options", "Indices"]
 const GOALS = ["Pass a prop challenge", "A second income", "Trade full-time", "Understand the markets"]
@@ -48,7 +49,8 @@ export function StudentStart() {
   const tiers = useTiers(coach)
   const tier = tiers.find((t) => t.id === purchase?.tier) ?? tiers[0]
   const q = settings.questions
-  const askProfile = q.nickname || q.experience || q.markets || q.goal
+  const custom = (settings.custom ?? NONE).filter((c) => c.text.trim())
+  const askProfile = q.nickname || q.experience || q.markets || q.goal || custom.length > 0
   const askDiscord = settings.discord && coach.modules.community
   const steps = ["welcome", ...(askProfile ? ["profile"] : []), ...(askDiscord ? ["discord"] : [])] as const
   const [i, setI] = useState(0)
@@ -94,7 +96,7 @@ export function StudentStart() {
                 </button>
               )}
               <figure className="grid gap-3 border-l-2 border-primary pl-4">
-                <blockquote className="text-[0.95rem] leading-relaxed">{settings.message}</blockquote>
+                <blockquote className="text-[0.875rem] leading-relaxed">{settings.message}</blockquote>
                 <figcaption className="text-sm text-muted-foreground">
                   {coach.coachName} · {tier?.name}
                 </figcaption>
@@ -143,6 +145,21 @@ export function StudentStart() {
                   <Choices options={GOALS} value={p.goal} onChange={(v) => setP({ goal: v })} />
                 </div>
               )}
+              {custom.map((c) => {
+                const answer = p.answers?.[c.id] ?? ""
+                const setAnswer = (v: string) => setP({ answers: { ...p.answers, [c.id]: v } })
+                const options = c.options.filter((o) => o.trim())
+                return (
+                  <div key={c.id} className="grid gap-2">
+                    <Label htmlFor={`st-q-${c.id}`}>{c.text}</Label>
+                    {c.kind === "choice" && options.length > 0 ? (
+                      <Choices options={options} value={answer} onChange={(v) => setAnswer(answer === v ? "" : v)} />
+                    ) : (
+                      <Input id={`st-q-${c.id}`} value={answer} onChange={(e) => setAnswer(e.target.value)} />
+                    )}
+                  </div>
+                )
+              })}
             </>
           )}
 

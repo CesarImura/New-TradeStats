@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { createContext, useContext, useState } from "react"
 import { Bell, LogOut, MoreHorizontal, Search, Settings, User } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CommunitySwitcher } from "@/components/student/community-switcher"
@@ -35,11 +35,29 @@ import {
 } from "@/components/ui/sidebar"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { DEMO_STUDENT } from "@/lib/data/sample"
-import { backdropStyle, dimOf } from "@/lib/theme/backdrops"
+import { backdropStyle, dimOf, navImageStyle } from "@/lib/theme/backdrops"
+import { navFillOf } from "@/lib/theme/nav-fill"
 import { cn } from "@/lib/utils"
 
+/**
+ * The Design editor draws this shell round its canvas (one screen for the whole platform): it says which page is shown
+ * (the real address is the editor's) and leaves out what only a student sees (the tour, the preview picker and banner).
+ */
+export const ShellEditorContext = createContext<{ path: string; /** The editor shows a phone: the page is narrow but the window isn't, so the phone layout is chosen here, not by the screen's width. */ phone?: boolean; /** A tablet in the editor: the window is wider, so the tablet's breakpoints (md, not lg) are applied here. */ tablet?: boolean } | null>(null)
+
+/** The page the shell is on: the address bar's, or in the Design editor the page being edited. */
+function useShellPath() {
+  const real = usePathname()
+  return useContext(ShellEditorContext)?.path ?? real
+}
+
+/** The page's side padding: grows with the screen, and on the editor's tablet stops at the tablet's. */
+function usePad() {
+  return useContext(ShellEditorContext)?.tablet ? "px-6" : "px-4 sm:px-6 lg:px-8"
+}
+
 function useActive(base: string) {
-  const path = usePathname()
+  const path = useShellPath()
   return (item: NavItem) => (item.href === base ? path === base : path.startsWith(item.href))
 }
 
@@ -47,7 +65,12 @@ function useActive(base: string) {
 export function StudentShell({ children }: { children: React.ReactNode }) {
   const { coach, theme, base, preview } = useCoach()
   const items = studentNav(coach, base)
-  const path = usePathname()
+  const path = useShellPath()
+  const editor = !!useContext(ShellEditorContext)
+  const phone = !!useContext(ShellEditorContext)?.phone
+  const pad = usePad()
+  const fill = navFillOf(theme)
+  const nav = fill === "page" ? undefined : fill
   const texture = { grid: "coach-bg-grid", glow: "coach-bg-glow", dots: "coach-bg-dots" } as Record<string, string>
   // An image or gradient sits on its own layer behind the page, so the page itself turns see-through.
   const where = theme.bgWhere ?? "all"
@@ -57,44 +80,66 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   // The Charts terminal uses the full width, like a trading screen.
   const wide = path.startsWith(`${base}/charts`)
   const content = (
-    <div data-edit-root className={cn("mx-auto w-full px-4 pt-5 pb-28 sm:px-6 md:pb-12 lg:px-8", wide ? "max-w-none pt-3 lg:px-4" : "max-w-[1280px]")}>
+    <div data-edit-root className={cn("mx-auto w-full pt-5 pb-28 md:pb-12", pad, wide ? "max-w-none pt-3 lg:px-4" : "max-w-[1280px]")}>
       {children}
-      <Tour />
-      {preview && <PreviewPicker />}
+      {!editor && <Tour />}
+      {!editor && preview && <PreviewPicker />}
     </div>
   )
 
+  // A phone in the Design editor: the logo bar on top and the bottom bar, as a phone's screen draws them (both layouts).
+  if (phone)
+    return (
+      <div className={cn("relative isolate flex min-h-full flex-col", bg)}>
+        {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur" data-edit="nav" data-nav-fill={nav} data-nav-marker={theme.nav.marker} style={navImageStyle(theme)}>
+          <div className="flex min-w-0" data-edit="logo">
+            <CommunitySwitcher placement="bar" />
+          </div>
+          <div className="ml-auto flex items-center gap-1">
+            <HeaderActions />
+          </div>
+        </header>
+        <div data-edit-root className="mx-auto w-full flex-1 px-4 pt-5 pb-6">
+          {children}
+        </div>
+        <MobileBar items={items} phone fill={nav} />
+      </div>
+    )
+
   // Floating: the page is a rounded canvas on the menu's ground, with a gutter around it (like the admin area).
   const floating = theme.nav.frame === "floating"
+  // Floating: the menu's colour is the ground the page sits on, so the fill colours the ground.
+  const ground = floating && nav ? ({ "--ground": nav === "brand" ? "var(--primary)" : nav === "tint" ? "color-mix(in oklab, var(--primary) 10%, var(--background))" : "transparent" } as React.CSSProperties) : undefined
   const canvas = "md:rounded-[var(--r-panel)] md:overflow-clip md:shadow-[0_0_0_1px_var(--border),0_1px_3px_rgb(0_0_0/0.08)]"
 
   if (theme.nav.layout === "top") {
     if (floating)
       return (
-        <div className="min-h-svh bg-[var(--ground)]">
-          <PreviewAsBanner />
-          <TopNav items={items} floating />
+        <div className="min-h-svh bg-[var(--ground)]" style={ground}>
+          {!editor && <PreviewAsBanner />}
+          <TopNav items={items} floating fill={nav} />
           <div className={cn("relative isolate min-h-[calc(100svh-4.75rem)] md:mx-3 md:mb-3", bg, canvas)}>
             {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
             {content}
           </div>
-          <MobileBar items={items} />
+          <MobileBar items={items} fill={nav} />
         </div>
       )
     return (
       <div className={cn("min-h-svh", bg)}>
-        <PreviewAsBanner />
+        {!editor && <PreviewAsBanner />}
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
-        <TopNav items={items} />
+        <TopNav items={items} fill={nav} />
         {content}
-        <MobileBar items={items} />
+        <MobileBar items={items} fill={nav} />
       </div>
     )
   }
 
   return (
-    <SidebarProvider key={theme.nav.style} defaultOpen={theme.nav.style === "labels"} style={floating ? ({ "--sidebar": "var(--ground)" } as React.CSSProperties) : undefined}>
-      <Sidebar collapsible="icon" variant={floating ? "inset" : "sidebar"} className="max-md:hidden" data-edit="nav">
+    <SidebarProvider key={theme.nav.style} defaultOpen={theme.nav.style === "labels"} style={floating ? ({ "--sidebar": "var(--ground)", ...ground } as React.CSSProperties) : undefined}>
+      <Sidebar collapsible="icon" variant={floating ? "inset" : "sidebar"} className={cn("max-md:hidden", theme.nav.image && "[&_[data-sidebar=sidebar]]:bg-transparent")} data-edit="nav" data-nav-fill={nav} data-nav-marker={theme.nav.marker} style={navImageStyle(theme)}>
         <SidebarHeader className="h-16 justify-center" data-edit="logo">
           <CommunitySwitcher placement="sidebar" />
         </SidebarHeader>
@@ -104,15 +149,25 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter className="p-3">
+          {theme.nav.signOut === "menu" && (
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton tooltip="Log out" render={<Link href={`/site/${coach.slug}/login`} />} className="h-10">
+                  <LogOut />
+                  <span>Log out</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          )}
           <ProfileMenu compact />
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className={cn(bg, floating && canvas)}>
-        <PreviewAsBanner />
+        {!editor && <PreviewAsBanner />}
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur sm:px-6 lg:px-8">
+        <header className={cn("sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 backdrop-blur", pad)}>
           <SidebarTrigger className="max-md:hidden" />
-          <div className="min-w-0 md:hidden" data-edit="logo">
+          <div className="flex min-w-0 md:hidden" data-edit="logo">
             <CommunitySwitcher placement="bar" />
           </div>
           <div className="ml-auto flex items-center gap-1">
@@ -120,7 +175,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         {content}
-        <MobileBar items={items} />
+        <MobileBar items={items} fill={nav} />
       </SidebarInset>
     </SidebarProvider>
   )
@@ -157,14 +212,18 @@ function SideItems({ items }: { items: NavItem[] }) {
   )
 }
 
-function TopNav({ items, floating }: { items: NavItem[]; floating?: boolean }) {
+function TopNav({ items, floating, fill }: { items: NavItem[]; floating?: boolean; fill?: string }) {
   const { theme, base } = useCoach()
   const isActive = useActive(base)
   const centered = theme.nav.logo === "center"
+  const pad = usePad()
+  const tablet = !!useContext(ShellEditorContext)?.tablet
+  // More than five pages don't fit as words on a tablet (768 to 1023px): there they show as icons, named in the tooltip.
+  const tight = theme.nav.style !== "icons" && items.length > 5
   return (
-    <header className={cn("sticky top-0 z-20", floating ? "bg-[var(--ground)]" : "border-b bg-background/85 backdrop-blur")} data-edit="nav">
-      <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-6 px-4 sm:px-6 lg:px-8">
-        <div className={cn("min-w-0", centered && "md:absolute md:left-1/2 md:-translate-x-1/2")} data-edit="logo">
+    <header className={cn("sticky top-0 z-20", floating ? "bg-[var(--ground)]" : "border-b bg-background/85 backdrop-blur")} data-edit="nav" data-nav-fill={fill} data-nav-marker={theme.nav.marker} style={navImageStyle(theme)}>
+      <div className={cn("mx-auto flex h-16 max-w-[1280px] items-center gap-6", pad)}>
+        <div className={cn("flex min-w-0", centered && "md:absolute md:left-1/2 md:-translate-x-1/2")} data-edit="logo">
           <CommunitySwitcher placement="bar" />
         </div>
         <nav className={cn("hidden items-center gap-1 md:flex", centered && "order-first")}>
@@ -175,9 +234,19 @@ function TopNav({ items, floating }: { items: NavItem[]; floating?: boolean }) {
               data-active={isActive(item)}
               data-tour={item.id}
               data-edit={`menu:${item.id}`}
-              className="rounded-[var(--r-menu)] px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
+              title={tight ? item.label : undefined}
+              className="rounded-[var(--r-menu)] px-3 py-2 text-sm whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
             >
-              {theme.nav.style === "icons" ? <item.icon className="size-4" aria-label={item.label} /> : item.label}
+              {theme.nav.style === "icons" ? (
+                <item.icon className="size-4" aria-label={item.label} />
+              ) : tight ? (
+                <>
+                  <item.icon aria-hidden className={cn("size-4", !tablet && "lg:hidden")} />
+                  <span className={tablet ? "sr-only" : "max-lg:sr-only"}>{item.label}</span>
+                </>
+              ) : (
+                item.label
+              )}
             </Link>
           ))}
         </nav>
@@ -190,11 +259,14 @@ function TopNav({ items, floating }: { items: NavItem[]; floating?: boolean }) {
 }
 
 function HeaderActions() {
+  const { theme } = useCoach()
   return (
     <>
-      <Button variant="ghost" size="icon" aria-label="Search">
-        <Search />
-      </Button>
+      {theme.nav.search !== false && (
+        <Button variant="ghost" size="icon" aria-label="Search">
+          <Search />
+        </Button>
+      )}
       <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
         <Bell />
         <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />
@@ -218,7 +290,7 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
           />
         }
       >
-        <Avatar className="size-8">
+        <Avatar className="size-8 max-lg:size-10">
           <AvatarFallback className="bg-highlight text-xs text-highlight-foreground">{DEMO_STUDENT.initials}</AvatarFallback>
         </Avatar>
         {compact && (
@@ -249,15 +321,16 @@ function ProfileMenu({ compact }: { compact?: boolean }) {
 }
 
 /** Phone: both layouts become a bottom bar. Up to five items show; with more, four show and the rest sit under "More". */
-function MobileBar({ items }: { items: NavItem[] }) {
-  const isActive = useActive(useCoach().base)
+function MobileBar({ items, phone, fill }: { items: NavItem[]; fill?: string; /** Shown as a phone in the editor: at the foot of the page, whatever the window's width. */ phone?: boolean }) {
+  const { base, theme } = useCoach()
+  const isActive = useActive(base)
   const [open, setOpen] = useState(false)
   const overflow = items.length > 5
   const shown = overflow ? items.slice(0, 4) : items
   const hidden = overflow ? items.slice(4) : []
-  const itemClass = "flex w-full flex-col items-center gap-1 py-2.5 text-[0.7rem] text-muted-foreground data-[active=true]:text-primary"
+  const itemClass = "flex w-full flex-col items-center gap-1 py-2.5 text-[0.6875rem] text-muted-foreground data-[active=true]:text-brand-text"
   return (
-    <nav data-edit="nav" className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+    <nav data-edit="nav" data-nav-fill={fill} data-nav-marker={theme.nav.marker} style={navImageStyle(theme)} className={cn("inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur", phone ? "sticky" : "fixed md:hidden")}>
       <ul className="grid grid-cols-5">
         {shown.map((item) => (
           <li key={item.id}>
@@ -290,7 +363,7 @@ function MobileBar({ items }: { items: NavItem[] }) {
                     data-active={isActive(item)}
                     data-tour={item.id}
                     onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 rounded-[var(--r-menu)] px-3 py-3 text-sm text-muted-foreground hover:bg-muted data-[active=true]:bg-muted data-[active=true]:text-primary"
+                    className="flex items-center gap-3 rounded-[var(--r-menu)] px-3 py-3 text-sm text-muted-foreground hover:bg-muted data-[active=true]:bg-muted data-[active=true]:text-brand-text"
                   >
                     <item.icon className="size-5" />
                     <span className="truncate">{item.label}</span>

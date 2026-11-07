@@ -20,6 +20,7 @@ import { COUPONS, MONEY, TRANSACTIONS, type Txn } from "@/lib/data/people"
 import { REVENUE_MONTHS } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { Field, Mono, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { SetupTip, useWizardCommunity } from "../setup-checklist"
 import { AccessOverview, PreviewAsMenu } from "./access-overview"
 import { Groups } from "./groups"
 import { SalesPageEditor } from "./sales-page-editor"
@@ -55,6 +56,8 @@ export function SalesAdmin() {
           </>
         }
       />
+      {tab === "tiers" && <SetupTip task="membership" />}
+      {tab === "payouts" && <SetupTip task="payouts" />}
       <Tabs value={tab} onValueChange={setTab} className="gap-5">
         {/* Scrolls sideways on narrow screens instead of widening the page. */}
         <div className="w-0 min-w-full overflow-x-auto [scrollbar-width:none]">
@@ -66,7 +69,7 @@ export function SalesAdmin() {
             <TabsTrigger value="page">Sales page</TabsTrigger>
             <TabsTrigger value="coupons">Coupons</TabsTrigger>
             <TabsTrigger value="transactions">
-              Payments {problems > 0 && <span className="rounded-full bg-[var(--loss)]/20 px-1.5 text-[0.7rem] text-[var(--loss)] tabular-nums">{problems}</span>}
+              Payments {problems > 0 && <span className="rounded-full bg-[var(--loss)]/20 px-1.5 text-[0.6875rem] text-[var(--ts-loss-text)] tabular-nums">{problems}</span>}
             </TabsTrigger>
             <TabsTrigger value="payouts">Payouts</TabsTrigger>
             <TabsTrigger value="affiliates">Affiliates</TabsTrigger>
@@ -372,10 +375,14 @@ function Transactions() {
 // ---------- ADM-41 Payouts
 
 const KYC = ["Country and business type", "About you", "Bank account", "Identity check"]
+const CONNECTED = { step: KYC.length, done: true }
+const NOT_CONNECTED = { step: 0, done: false }
 
 function Payouts() {
   const { coach } = useCoach()
-  const [state, setState] = useCommunityData(coach.slug, "payouts", { step: KYC.length, done: true })
+  // The demo communities have payouts set up; one made in setup only if the coach connected them there.
+  const wizard = useWizardCommunity(coach.slug)
+  const [state, setState] = useCommunityData(coach.slug, "payouts", !wizard || wizard.setup?.payouts === "connected" ? CONNECTED : NOT_CONNECTED)
   const [busy, setBusy] = useState(false)
 
   if (!state.done)

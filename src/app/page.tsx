@@ -1,9 +1,7 @@
-import Link from "next/link"
-import { ArrowRight } from "@/components/icons"
 import { LauncherCards } from "@/components/onboarding/launcher-cards"
 import { LauncherOnboarding } from "@/components/onboarding/launcher-section"
 
-const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.7rem] uppercase tracking-[0.06em]"
+const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] uppercase tracking-[0.06em]"
 
 /** Prototype launcher, in our own TradeStats look. */
 export default function Launcher() {
@@ -25,9 +23,6 @@ export default function Launcher() {
             settings decide everything you see. Open a student platform or its admin area, then use the Prototype
             button to switch template, navigation and mode.
           </p>
-          <Link href="/lab" className={`${mono} flex w-fit items-center gap-1.5 text-white/60 hover:text-white`}>
-            Theme lab: every theme side by side, with a readability check <ArrowRight className="size-3.5" />
-          </Link>
         </header>
 
         <LauncherOnboarding />

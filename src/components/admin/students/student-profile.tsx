@@ -15,9 +15,38 @@ import { Textarea } from "@/components/ui/textarea"
 import { DEMO_ADMIN } from "@/lib/data/account"
 import { GROUPS, TEAM, tierFor, type Student } from "@/lib/data/people"
 import { COURSES, courseProgress } from "@/lib/data/sample"
+import { NO_QUESTIONS, useOnboardingSettings, useStudentStart } from "@/lib/data/student-start"
 import { TRADES, fmtPnl, fmtR } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { HealthDot, Mono, NativeSelect, SettingRow, useCommunityData } from "../kit"
+
+/** The prototype's one student who really goes through onboarding (the others are sample data). */
+const DEMO_STUDENT_ID = "s1"
+
+/** What the student answered in the short profile at the start, with the coach's own questions. */
+function OnboardingAnswers() {
+  const { coach } = useCoach()
+  const { profile: p } = useStudentStart(coach.slug)
+  const settings = useOnboardingSettings(coach.slug)
+  const rows: [string, string][] = [
+    ["How long they've traded", p.experience],
+    ["Markets they trade", p.markets.join(", ")],
+    ["Their goal", p.goal],
+    ...(settings.custom ?? NO_QUESTIONS).map((c): [string, string] => [c.text, p.answers?.[c.id] ?? ""]),
+  ]
+  const answered = rows.filter(([, v]) => v.trim())
+  if (!answered.length) return null
+  return (
+    <div className="grid gap-1 divide-y rounded-lg border bg-card px-3">
+      <span className="py-2.5 text-sm font-medium">Said when they joined</span>
+      {answered.map(([q, a]) => (
+        <SettingRow key={q} label={q}>
+          <span className="text-sm text-muted-foreground">{a}</span>
+        </SettingRow>
+      ))}
+    </div>
+  )
+}
 
 const NO_NOTES: Record<string, Student["notes"]> = {}
 
@@ -92,13 +121,13 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
                   ["Rules kept", s.broker ? `${s.rules}%` : "–"],
                   ["Paid so far", `€${s.paid.toLocaleString("en")}`],
                 ].map(([l, v]) => (
-                  <div key={l} className="grid gap-1 rounded-lg border p-3">
+                  <div key={l} className="grid gap-1 rounded-lg border p-3 bg-card">
                     <span className="text-xs text-muted-foreground">{l}</span>
                     <span className="text-lg tabular-nums">{v}</span>
                   </div>
                 ))}
               </div>
-              <div className="grid gap-1 divide-y rounded-lg border px-3">
+              <div className="grid gap-1 divide-y rounded-lg border px-3 bg-card">
                 <SettingRow label="Broker" text={s.broker ? "Trades sync automatically" : "Not connected yet"}>
                   <Badge variant={s.broker ? "secondary" : "outline"}>{s.broker ? "Connected" : "Not connected"}</Badge>
                 </SettingRow>
@@ -116,6 +145,7 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
                   </NativeSelect>
                 </SettingRow>
               </div>
+              {s.id === DEMO_STUDENT_ID && <OnboardingAnswers />}
             </TabsContent>
 
             <TabsContent value="progress" className="grid gap-4">
@@ -141,7 +171,7 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
                 <>
                   <p className="text-xs text-muted-foreground">Read-only. You see the journal as {s.name.split(" ")[0]} does.</p>
                   {TRADES.map((t) => (
-                    <div key={t.id} className="flex items-center gap-3 rounded-lg border p-3 text-sm">
+                    <div key={t.id} className="flex items-center gap-3 rounded-lg border p-3 text-sm bg-card">
                       <span className="w-24 shrink-0 text-xs text-muted-foreground">{t.date}</span>
                       <span className="w-24 shrink-0 font-medium">
                         {t.symbol} {t.side}
@@ -173,7 +203,7 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
               </div>
               {myNotes.length === 0 && <p className="text-sm text-muted-foreground">No notes yet.</p>}
               {myNotes.map((n, i) => (
-                <div key={i} className="grid gap-1 rounded-lg border p-3 text-sm">
+                <div key={i} className="grid gap-1 rounded-lg border p-3 text-sm bg-card">
                   <span className="text-xs text-muted-foreground">
                     {n.by} · {n.when}
                   </span>
@@ -213,7 +243,7 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
             </TabsContent>
 
             <TabsContent value="billing" className="grid gap-3">
-              <div className="grid gap-1 divide-y rounded-lg border px-3">
+              <div className="grid gap-1 divide-y rounded-lg border px-3 bg-card">
                 <SettingRow label="Plan">
                   <span className="text-sm">
                     {tier.name} · {"price" in tier ? `${tier.price} / ${(tier as { cadence?: string }).cadence ?? "month"}` : ""}

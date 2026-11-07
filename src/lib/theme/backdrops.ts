@@ -1,8 +1,11 @@
 import type { CSSProperties } from "react"
-import type { CoachTheme } from "./types"
+import { widgetSetOf, type CoachTheme } from "./types"
 
 /** The readability minimum: the page colour always covers an image at least this much. */
 export const MIN_DIM = 45
+/** Blended widgets have no card under their text, so the page colour covers an image more. */
+export const BLENDED_MIN_DIM = 65
+export const minDimOf = (t: CoachTheme) => (widgetSetOf(t) === "open" ? BLENDED_MIN_DIM : MIN_DIM)
 
 const svg = (body: string, w = 400, h = 300) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 ${w} ${h}'>${body}</svg>`)}")`
 
@@ -40,12 +43,6 @@ export const BACKDROPS: { id: string; name: string; css: string; size: string }[
   { id: "candles", name: "Candles", css: svg(candleArt()), size: "800px auto" },
   { id: "topo", name: "Contours", css: svg(topoArt()), size: "800px auto" },
   {
-    id: "aurora",
-    name: "Aurora",
-    css: "radial-gradient(60% 50% at 20% 10%, #6b3dff 0%, transparent 70%), radial-gradient(50% 50% at 90% 30%, #00d39a 0%, transparent 70%), radial-gradient(60% 60% at 60% 100%, #ff5500 0%, transparent 70%)",
-    size: "cover",
-  },
-  {
     id: "desk",
     name: "Trading desk",
     css: "repeating-linear-gradient(90deg, rgb(255 255 255 / .05) 0 1px, transparent 1px 48px), repeating-linear-gradient(0deg, rgb(255 255 255 / .05) 0 1px, transparent 1px 48px), linear-gradient(160deg, #0d1b2a, #1b263b 50%, #0b0c10)",
@@ -53,7 +50,15 @@ export const BACKDROPS: { id: string; name: string; css: string; size: string }[
   },
 ]
 
+/** Retired presets and what saved themes show instead: Aurora (a decorative colour wash) became Contours. */
+const RETIRED: Record<string, string> = { "preset:aurora": "preset:topo" }
+
 /** The CSS for the backdrop layer behind the platform, or null when the background is plain or a texture. */
+/** An uploaded picture (a data URL) or a web address, as a CSS url(); anything else is left out. */
+function safeImage(src: string) {
+  return /^(data:image\/[\w.+-]+;base64,[\w+/=]+|https:\/\/[^"'()\s\\]+)$/.test(src) ? `url("${src}")` : "none"
+}
+
 export function backdropStyle(t: CoachTheme): CSSProperties | null {
   if (t.background === "gradient") {
     const a = t.bgAngle ?? 160
@@ -62,11 +67,8 @@ export function backdropStyle(t: CoachTheme): CSSProperties | null {
     }
   }
   if (t.background === "image" && t.bgImage) {
-    const preset = t.bgImage.startsWith("preset:") ? BACKDROPS.find((b) => `preset:${b.id}` === t.bgImage) : null
     return {
-      backgroundImage: preset ? preset.css : `url("${t.bgImage}")`,
-      backgroundSize: preset ? preset.size : "cover",
-      backgroundPosition: "center",
+      ...pictureOf(t.bgImage),
       filter: t.bgBlur ? `blur(${t.bgBlur}px)` : undefined,
       inset: t.bgBlur ? -t.bgBlur * 2 : 0,
     }
@@ -75,4 +77,25 @@ export function backdropStyle(t: CoachTheme): CSSProperties | null {
 }
 
 /** How much page colour sits over the image, never below the readability minimum. */
-export const dimOf = (t: CoachTheme) => Math.max(MIN_DIM, t.bgDim ?? 70)
+export const dimOf = (t: CoachTheme) => Math.max(minDimOf(t), t.bgDim ?? 70)
+
+/** A picture (upload, web address or a library one) as the CSS for a layer: one widget's own background (widget-scope.tsx). */
+export function pictureOf(src: string): CSSProperties {
+  const id = RETIRED[src] ?? src
+  const preset = id.startsWith("preset:") ? BACKDROPS.find((b) => `preset:${b.id}` === id) : null
+  return { backgroundImage: preset ? preset.css : safeImage(src), backgroundSize: preset ? preset.size : "cover", backgroundPosition: "center" }
+}
+
+/** A widget's picture sits under the card colour at least this much: its text is smaller than the page's, so it needs more cover. */
+export const MIN_WIDGET_DIM = 70
+export const widgetDimOf = (dim?: number) => Math.max(MIN_WIDGET_DIM, dim ?? 80)
+
+/** A picture on the menu (side menu, top bar, phone bar): the menu's colour over it, so the labels stay readable. */
+export const NAV_MIN_DIM = 40
+export function navImageStyle(t: CoachTheme): CSSProperties | undefined {
+  if (!t.nav.image) return undefined
+  const pic = pictureOf(t.nav.image)
+  const dim = Math.min(95, Math.max(NAV_MIN_DIM, t.nav.imageDim ?? 80))
+  const cover = `color-mix(in oklab, var(--sidebar, var(--background)) ${dim}%, transparent)`
+  return { backgroundImage: `linear-gradient(${cover}, ${cover}), ${pic.backgroundImage}`, backgroundSize: `cover, ${pic.backgroundSize}`, backgroundPosition: "center" }
+}

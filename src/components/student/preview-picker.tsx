@@ -7,16 +7,23 @@ import { describe, elementsFor, resolve, type PickMessage, type PickTarget } fro
 /** Admin selection colour (TradeStats orange), fixed so it never takes on the coach's theme. */
 const ACCENT = "#ff5500"
 
-type Box = { x: number; y: number; w: number; h: number }
+type Box = { x: number; y: number; w: number; h: number; r?: string }
 const rect = (el: Element): Box => {
   const r = el.getBoundingClientRect()
   return { x: r.left, y: r.top, w: r.width, h: r.height }
+}
+/** The element's box with its own corners, so an outline drawn just outside it follows them (Shape → Corners stays judgeable). */
+const shape = (el: Element): Box => {
+  const s = getComputedStyle(el)
+  return { ...rect(el), r: [s.borderTopLeftRadius, s.borderTopRightRadius, s.borderBottomRightRadius, s.borderBottomLeftRadius].join(" ") }
 }
 
 /**
  * Inside the Design preview frame only: in select mode, hovering outlines the
  * part of the page a setting controls and clicking tells the editor which
  * setting that is. Links, buttons and menus don't react while selecting.
+ * Widgets are edited in Pages only (their place, size, content and style, for
+ * one widget or all of them): clicking a widget here opens it there, selected.
  */
 export function PreviewPicker() {
   const [on, setOn] = useState(false)
@@ -47,16 +54,26 @@ export function PreviewPicker() {
   // Pointer handling in the capture phase, so the page's own handlers never run while selecting.
   useEffect(() => {
     if (!on) return
+    // The picker's own UI (none now; kept for any button it draws) works as buttons.
+    const ours = (e: Event) => e.target instanceof Element && !!e.target.closest("[data-pick-ui]")
     const block = (e: Event) => {
+      if (ours(e)) return
       e.preventDefault()
       e.stopPropagation()
     }
-    const move = (e: PointerEvent) => setHover(resolve(e.target as Element))
+    const move = (e: PointerEvent) => !ours(e) && setHover(resolve(e.target as Element))
     const leave = () => setHover(null)
     const click = (e: MouseEvent) => {
+      if (ours(e)) return
       block(e)
       const hit = resolve(e.target as Element)
       if (!hit) return
+      const id = hit.target === "cards" ? hit.el.closest("[data-widget-id]")?.getAttribute("data-widget-id") : null
+      if (id) {
+        setHover(null)
+        window.parent.postMessage({ type: "design-edit-widget", id, path: window.location.pathname } satisfies PickMessage, window.location.origin)
+        return
+      }
       setPicked(hit)
       window.parent.postMessage({ type: "design-pick", target: hit.target, count: elementsFor([hit.target], 999).length } satisfies PickMessage, window.location.origin)
     }
@@ -91,31 +108,39 @@ export function PreviewPicker() {
   if (!on) return null
   const live = (el?: Element) => el && el.isConnected
   return createPortal(
-    <div aria-hidden style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 2147483647 }}>
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 2147483647 }}>
       {shown.filter(live).map((el, i) => (
-        <Outline key={i} box={rect(el)} tone="soft" />
+        <Outline key={i} box={shape(el)} tone="hint" />
       ))}
       {picked && live(picked.el) && <Outline box={rect(picked.el)} tone="solid" label={describe(picked.target).label} />}
-      {hover && live(hover.el) && hover.el !== picked?.el && <Outline box={rect(hover.el)} tone="dashed" label={describe(hover.target).label} />}
+      {hover && live(hover.el) && hover.el !== picked?.el && (
+        <Outline box={hover.target === "cards" ? shape(hover.el) : rect(hover.el)} tone="dashed" label={hover.target === "cards" ? "Edit this widget in Pages" : describe(hover.target).label} />
+      )}
     </div>,
     document.body,
   )
 }
 
-function Outline({ box, tone, label }: { box: Box; tone: "solid" | "dashed" | "soft"; label?: string }) {
+/**
+ * solid / dashed: the one part picked or hovered. hint: what the setting being edited changes; it sits 3px
+ * outside the element and follows its own corners, thin and half-strength, so the real edges and corners stay
+ * visible while you change them.
+ */
+function Outline({ box, tone, label }: { box: Box; tone: "solid" | "dashed" | "hint"; label?: string }) {
   const inset = box.y < 22
+  const around = tone === "hint"
   return (
     <div
+      aria-hidden
       style={{
         position: "absolute",
         left: box.x,
         top: box.y,
         width: box.w,
         height: box.h,
-        outline: `2px ${tone === "dashed" ? "dashed" : "solid"} ${ACCENT}`,
-        outlineOffset: -1,
-        background: tone === "soft" ? `${ACCENT}14` : undefined,
-        borderRadius: 2,
+        outline: around ? `1.5px solid ${ACCENT}8c` : `2px ${tone === "dashed" ? "dashed" : "solid"} ${ACCENT}`,
+        outlineOffset: around ? 3 : -1,
+        borderRadius: around ? box.r : 2,
       }}
     >
       {label && (

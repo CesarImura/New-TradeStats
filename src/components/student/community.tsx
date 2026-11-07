@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Heart, MessageCircle, Pin } from "@/components/icons"
 import { toast } from "sonner"
 import type { Announcement } from "@/components/admin/community/community-admin"
@@ -8,6 +9,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { useStudentTier } from "@/components/courses/shared"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { DEFAULT_RULES, DEFAULT_SPACES, type Space } from "@/lib/data/community"
 import { ANNOUNCEMENTS } from "@/lib/data/people"
 import { useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
@@ -16,26 +18,63 @@ import { OwnTitle } from "@/components/student/own-title"
 const NO_LIKES: string[] = []
 
 /** STU-30 the community feed: the coach's posts and announcements. Discord has its own page (StudentDiscord). */
-export function StudentCommunity() {
+export function StudentCommunity({ props = {} }: { props?: Record<string, string | boolean> } = {}) {
   const { coach } = useCoach()
   const tier = useStudentTier()
   const list = useStored<Announcement[]>(`${coach.slug}:announcements`, ANNOUNCEMENTS)
   const [liked, setLiked] = useCommunityData(coach.slug, "liked", NO_LIKES)
-  const shown = list.filter((a) => !a.scheduled && (!a.tiers?.length || a.tiers.includes(tier))).sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned))
+  const spaces = useStored<Space[]>(`${coach.slug}:spaces`, DEFAULT_SPACES)
+  const rules = useStored<string[]>(`${coach.slug}:rules`, DEFAULT_RULES).filter((r) => r.trim())
+  const [space, setSpace] = useState("all")
+  const [showRules, setShowRules] = useState(false)
+  const visible = list.filter((a) => !a.scheduled && (!a.tiers?.length || a.tiers.includes(tier)))
+  const showSpaces = props.spaces !== false && spaces.length > 0
+  const showRulesButton = props.rules !== false && rules.length > 0
+  const shown = visible.filter((a) => space === "all" || (a.space ?? "news") === space).sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned))
 
   return (
     <div className="flex flex-col page-gap">
       <OwnTitle>
         <div className="flex flex-col gap-1">
-        <span className="eyebrow">{shown.length} posts · {coach.name}</span>
+        <span className="eyebrow">{visible.length} posts · {coach.name}</span>
         <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.community}</h1>
       </div>
       </OwnTitle>
 
       <div className="grid max-w-3xl gap-4">
+        {(showSpaces || showRulesButton) && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {showSpaces &&
+              [{ id: "all", name: "All" }, ...spaces].map((s) => (
+                <button
+                  key={s.id}
+                  aria-pressed={space === s.id}
+                  onClick={() => setSpace(s.id)}
+                  className={cn("rounded-(--r-chip) border px-3 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground", space === s.id && "border-foreground text-foreground")}
+                >
+                  {s.name}
+                </button>
+              ))}
+            {showRulesButton && (
+              <Button variant="ghost" size="sm" className="ml-auto" aria-expanded={showRules} onClick={() => setShowRules((v) => !v)}>
+                Community rules
+              </Button>
+            )}
+          </div>
+        )}
+        {showRules && showRulesButton && (
+          <Card className="gap-2 px-5">
+            <h2 className="text-base">Community rules</h2>
+            <ol className="grid list-decimal gap-1 pl-4 text-sm text-muted-foreground">
+              {rules.map((r, i) => (
+                <li key={i}>{r}</li>
+              ))}
+            </ol>
+          </Card>
+        )}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xl">From {coach.coachName}</h2>
-          {shown.length === 0 && <p className="rounded-(--radius) border border-dashed p-6 text-center text-sm text-muted-foreground">No announcements yet.</p>}
+          <h2 className="text-xl">{String(props.feedTitle || `From ${coach.coachName}`)}</h2>
+          {shown.length === 0 && <p className="rounded-(--radius) border border-dashed p-6 text-center text-sm text-muted-foreground">{space === "all" ? "No announcements yet." : "Nothing in this space yet."}</p>}
           {shown.map((a) => {
             const on = liked.includes(a.id)
             return (
