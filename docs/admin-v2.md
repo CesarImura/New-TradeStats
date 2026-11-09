@@ -30,6 +30,6 @@ After adding Tailwind classes in new files, restart `next dev` if utilities do n
 - Search in the topbar is hidden below 1280 px.
 
 ## Status 09/11 (final round)
-Rebuilt to Figma: Overview, Students, Journal (stats), Content, Calendar, Downloads, Livestreams, Community, AI, Sales overview, Ranking, Partners (stats + tags). Charts and Settings already match the Figma layout via the v2 layer. Modals and internal screens inherit the v2 look only.
-Tests: tsc ok, next build ok, eslint only the old frame.tsx:92, sweep 15 routes x 1920/1024/390 without overflow (console errors only from blocked external network), 320 px only Journal overflows (50 px).
-Open: Journal 320 px, topbar search hidden below 1280 px, Onboarding flow not redone.
+Rebuilt to Figma: Overview, Students, Journal (stats), Content, Calendar, Downloads, Livestreams, Community, AI, Sales overview, Ranking, Partners. Charts, Settings, Livestream detail and the course builder follow the v2 look. Onboarding wizard (/signup, /setup) keeps its own frame and was not touched.
+Tests (09/11): tsc ok, next build ok, eslint only the old frame.tsx:92. Sweep 15 routes x 1920/1024/390 and 320 px: 0 overflow, console errors only from blocked external hosts (TradingView). Click-through of every visible button/tab on 14 screens at 1440/1024/390: 0 crashes. Drawer opens/closes, 0.3 s transitions, hover and focus ring checked at 3 breakpoints.
+Fixed in the last round: Journal overflow at 320 px, course builder 8 px at 1024 px, search icon in the topbar below 1280 px.
