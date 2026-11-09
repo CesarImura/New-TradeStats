@@ -28,3 +28,8 @@ After adding Tailwind classes in new files, restart `next dev` if utilities do n
 - Areas 02–15 inherit the v2 look through the legacy layer; their layouts are not yet rebuilt screen by screen from Figma.
 - Journal overflows by about 50 px at 320 px; Content > course page overflows 8 px at 1024 px.
 - Search in the topbar is hidden below 1280 px.
+
+## Status 09/11 (final round)
+Rebuilt to Figma: Overview, Students, Journal (stats), Content, Calendar, Downloads, Livestreams, Community, AI, Sales overview, Ranking, Partners (stats + tags). Charts and Settings already match the Figma layout via the v2 layer. Modals and internal screens inherit the v2 look only.
+Tests: tsc ok, next build ok, eslint only the old frame.tsx:92, sweep 15 routes x 1920/1024/390 without overflow (console errors only from blocked external network), 320 px only Journal overflows (50 px).
+Open: Journal 320 px, topbar search hidden below 1280 px, Onboarding flow not redone.
