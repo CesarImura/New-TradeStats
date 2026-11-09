@@ -63,7 +63,7 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
 
   return (
     <Sheet open={!!s} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full gap-0 sm:max-w-2xl">
+      <SheetContent className="w-full gap-0 data-[side=right]:w-full sm:max-w-2xl">
         <SheetHeader className="border-b pb-4">
           <div className="flex items-start gap-3 pr-8">
             <Avatar className="size-12">

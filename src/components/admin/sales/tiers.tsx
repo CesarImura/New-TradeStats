@@ -109,7 +109,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
 
   return (
     <Sheet open={!!tier} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg">
+      <SheetContent className="w-full data-[side=right]:w-full sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>{x?.name || "Tier"}</SheetTitle>
           <SheetDescription>{tier?.members ? `${tier.members} members. Price changes apply to new members only.` : "Not on sale yet."}</SheetDescription>

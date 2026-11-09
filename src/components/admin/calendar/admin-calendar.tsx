@@ -177,7 +177,7 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
 
   return (
     <Sheet open={!!event} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full gap-0 sm:max-w-lg">
+      <SheetContent className="w-full gap-0 data-[side=right]:w-full sm:max-w-lg">
         <SheetHeader className="border-b">
           <SheetTitle>{isNew ? "New event" : "Edit event"}</SheetTitle>
           <SheetDescription>{e?.repeat === "weekly" && !isNew ? "Changes apply to every week of this series." : "Students are reminded automatically."}</SheetDescription>
@@ -186,7 +186,7 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
           <div className="grid gap-5 overflow-y-auto p-4">
             <div className="grid gap-2">
               <Label>Type</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid gap-2 sm:grid-cols-3">
                 {KIND_OPTIONS.map((k) => (
                   <button
                     key={k.value}
@@ -205,7 +205,7 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
               <Label htmlFor="ev-title">Title</Label>
               <Input id="ev-title" autoFocus={isNew} value={e.title} onChange={(x) => set({ title: x.target.value })} placeholder="e.g. Live trading · NY open" />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div className="grid gap-2">
                 <Label htmlFor="ev-date">Date</Label>
                 <Input id="ev-date" type="date" value={e.start.slice(0, 10)} onChange={(x) => set({ start: `${x.target.value}T${e.start.slice(11)}` })} />
@@ -324,7 +324,7 @@ function DetailSheet({ item, onClose }: { item: Item | null; onClose: () => void
   const i = item ?? last
   return (
     <Sheet open={!!item} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full gap-0 sm:max-w-md">
+      <SheetContent className="w-full gap-0 data-[side=right]:w-full sm:max-w-md">
         {i?.booking && <BookingDetail item={i} onClose={onClose} />}
         {i?.news && <NewsEditor news={i.news} onClose={onClose} />}
       </SheetContent>

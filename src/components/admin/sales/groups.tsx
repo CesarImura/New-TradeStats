@@ -94,7 +94,7 @@ function GroupEditor({ group, isNew, onClose }: { group: Group | null; isNew: bo
 
   return (
     <Sheet open={!!group} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg">
+      <SheetContent className="w-full data-[side=right]:w-full sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>{g?.name || "Group"}</SheetTitle>
           <SheetDescription>{isNew ? "A new cohort. Students join it at checkout or you add them." : `${g?.members ?? 0} members.`}</SheetDescription>

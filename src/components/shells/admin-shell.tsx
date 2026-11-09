@@ -196,7 +196,7 @@ function HelpButton() {
       <SheetTrigger render={<Button hierarchy="secondary" />}>
         <LifeBuoy /> Help
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md">
+      <SheetContent className="w-full data-[side=right]:w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Help</SheetTitle>
           <SheetDescription>Watch a short guide, or reach us however you like.</SheetDescription>
