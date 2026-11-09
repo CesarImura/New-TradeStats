@@ -5,7 +5,6 @@ import Link from "next/link"
 import { Handshake, Pencil, Plus, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -15,6 +14,7 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTiers } from "@/lib/data/access"
 import { CATALOGUE, COACH_SHARE, KIND_LABEL, PARTNER_KINDS, fromCatalogue, saveAffiliate, saveOffers, useAffiliate, useOffers, type PartnerKind, type PartnerOffer } from "@/lib/data/partners"
+import { StatPanel, Tag } from "../ui"
 import { Empty, Field, Mono, NativeSelect, Page, PageHeader, SettingRow } from "../kit"
 
 const euro = (n: number) => `€${n.toLocaleString("en")}`
@@ -96,7 +96,14 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
 
   return (
     <div className="grid gap-3">
-      <div className="overflow-x-auto rounded-lg border bg-card">
+      <StatPanel
+        stats={[
+          { label: "Clicks", value: total.clicks.toLocaleString("en"), delta: "Offers that are on" },
+          { label: "Sign-ups", value: total.signups, delta: total.clicks ? `${((total.signups / total.clicks) * 100).toFixed(1)}% of clicks` : undefined },
+          { label: "Earned", value: euro(total.earnings), delta: "From catalogue offers" },
+        ]}
+      />
+      <div className="overflow-x-auto rounded-a-lg border border-a-border bg-a-panel">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -117,7 +124,7 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
                   <div className="grid">
                     <span className="flex items-center gap-2 font-medium">
                       {o.name}
-                      {o.source === "catalogue" && <Badge variant="outline">Our partner</Badge>}
+                      {o.source === "catalogue" && <Tag>Our partner</Tag>}
                     </span>
                     <span className="text-xs text-muted-foreground">{KIND_LABEL[o.kind]}</span>
                   </div>
@@ -196,7 +203,7 @@ function CatalogueDialog({ onClose }: { onClose: () => void }) {
               <div key={c.id} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
                 <div className="grid min-w-0 flex-1 basis-56 gap-0.5">
                   <span className="flex items-center gap-2 text-sm font-medium">
-                    {c.name} <Badge variant="outline">{KIND_LABEL[c.kind]}</Badge>
+                    {c.name} <Tag>{KIND_LABEL[c.kind]}</Tag>
                   </span>
                   <span className="text-xs text-muted-foreground">{c.offer}</span>
                   <span className="text-xs text-muted-foreground">
