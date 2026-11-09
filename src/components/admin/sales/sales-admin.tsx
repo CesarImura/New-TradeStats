@@ -317,38 +317,52 @@ function Coupons() {
 // ---------- ADM-36 Transactions & problems
 
 function Transactions() {
-  const [filter, setFilter] = useState<"all" | "problems">("all")
+  const [filter, setFilter] = useState<"all" | "failed" | "disputed" | "refunded">("all")
+  const [q, setQ] = useState("")
   const [rows, setRows] = useState(TRANSACTIONS)
-  const shown = rows.filter((t) => filter === "all" || ["failed", "retrying", "disputed"].includes(t.status))
+  const count = (st: string) => rows.filter((t) => t.status === st).length
+  const shown = rows.filter((t) => (filter === "all" || t.status === filter) && (!q.trim() || `${t.who} ${t.what}`.toLowerCase().includes(q.trim().toLowerCase())))
   return (
     <div className="grid gap-3">
-      <div className="flex gap-1">
-        {(["all", "problems"] as const).map((f) => (
-          <Button key={f} size="sm" variant={filter === f ? "secondary" : "ghost"} onClick={() => setFilter(f)}>
-            {f === "all" ? "All payments" : "Needs attention"}
-          </Button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <AdminTabs
+          label="Payment status"
+          value={filter}
+          onChange={setFilter}
+          tabs={[
+            { id: "all", label: `All payments ${rows.length}` },
+            { id: "failed", label: `Failed ${count("failed")}` },
+            { id: "disputed", label: `Disputed ${count("disputed")}` },
+            { id: "refunded", label: `Refunded ${count("refunded")}` },
+          ]}
+        />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or e-mail" aria-label="Search payments" className="w-full sm:w-72" />
       </div>
-      <div className="overflow-x-auto rounded-lg border bg-card">
+      <div className="overflow-x-auto rounded-a-lg border border-a-border bg-a-panel">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead>When</TableHead>
               <TableHead>Student</TableHead>
-              <TableHead className="hidden md:table-cell">For</TableHead>
+              <TableHead className="hidden md:table-cell">What</TableHead>
               <TableHead className="text-right">Amount</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="hidden sm:table-cell">When</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
+            {shown.length === 0 && (
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={6} className="py-10 text-center text-a-text-2">No payments match.</TableCell>
+              </TableRow>
+            )}
             {shown.map((t) => (
               <TableRow key={t.id}>
-                <TableCell className="text-muted-foreground">{t.when}</TableCell>
                 <TableCell className="font-medium">{t.who}</TableCell>
                 <TableCell className="hidden text-muted-foreground md:table-cell">{t.what}</TableCell>
                 <TableCell className="text-right tabular-nums">€{t.amount.toLocaleString("en")}</TableCell>
                 <TableCell><Tag tone={TXN_TONE[t.status]} dot>{STATUS[t.status].label}</Tag></TableCell>
+                <TableCell className="hidden text-muted-foreground sm:table-cell">{t.when}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Actions" />}>
