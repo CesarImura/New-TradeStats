@@ -10,6 +10,7 @@ import {
   Gloock,
   IBM_Plex_Mono,
   IBM_Plex_Sans,
+  Inter,
   Instrument_Serif,
   JetBrains_Mono,
   Manrope,
@@ -28,6 +29,8 @@ const archivo = Archivo({ subsets: ["latin"], variable: "--ff-archivo" })
 // IBM Plex is a coach font choice. Our own UI (admin, sign-up, wizard, launcher) uses Geist.
 const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--ff-plex" })
 const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--ff-plex-mono" })
+// Admin v2 text: the web stand-in for Helvetica Neue (not licensed for the web; Figma edits in Inter too).
+const inter = Inter({ subsets: ["latin"], variable: "--ff-inter" })
 const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--ff-space-mono" })
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--ff-fraunces" })
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--ff-dm-sans" })
@@ -45,7 +48,7 @@ const martianMono = Martian_Mono({ subsets: ["latin"], variable: "--ff-martian-m
 const fragmentMono = Fragment_Mono({ subsets: ["latin"], weight: "400", variable: "--ff-fragment-mono" })
 
 export const fontVariables = [
-  geist, geistMono, plex, plexMono, archivo, spaceMono, fraunces, dmSans, sora, manrope, instrumentSerif,
+  geist, geistMono, inter, plex, plexMono, archivo, spaceMono, fraunces, dmSans, sora, manrope, instrumentSerif,
   schibsted, familjen, barlowCondensed, newsreader, gloock, jetbrainsMono, martianMono, fragmentMono,
 ].map((f) => f.variable).join(" ")
 

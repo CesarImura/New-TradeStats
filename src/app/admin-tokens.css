@@ -155,9 +155,9 @@
   --admin-color-text-tertiary: var(--admin-primitive-white-36);
 
   /* font */
-  --admin-font-family-cover: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
-  --admin-font-family-mono: "Space Mono", ui-monospace, monospace;
-  --admin-font-family-primary: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --admin-font-family-cover: var(--ff-inter), "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --admin-font-family-mono: var(--ff-space-mono), "Space Mono", ui-monospace, monospace;
+  --admin-font-family-primary: var(--ff-inter), "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
 
   /* radius */
   --admin-radius-10: var(--admin-primitive-radius-10);

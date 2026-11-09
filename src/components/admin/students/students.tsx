@@ -16,7 +16,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
-import { Empty, Field, HealthDot, NativeSelect, Page, PageHeader } from "../kit"
+import { Empty, Field, NativeSelect, Page, PageHeader } from "../kit"
+import { Metric, Panel, Tag } from "../ui"
 import { SetupTip } from "../setup-checklist"
 import { ImportDialog } from "./import-dialog"
 import { StudentProfile } from "./student-profile"
@@ -76,6 +77,15 @@ export function StudentsPage() {
         }
       />
       <SetupTip task="invite" />
+
+      <Panel className="gap-0 p-0">
+        <div className="grid grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-a-border">
+          <Metric label="Active this week" value={STUDENTS.filter((s) => s.activeDays > 0 && !s.joined.startsWith("invited")).length} delta={`${Math.round((STUDENTS.filter((s) => s.activeDays > 0).length / Math.max(STUDENTS.length, 1)) * 100)}% of all students`} />
+          <Metric label="Need help" value={counts.help} delta="Rules broken or stuck" tone={counts.help ? "danger" : "neutral"} />
+          <Metric label="Payment issues" value={STUDENTS.filter((s) => s.reason?.toLowerCase().includes("payment")).length} delta="Retrying automatically" />
+          <Metric label="Invited" value={counts.invited} delta="Haven't joined yet" />
+        </div>
+      </Panel>
 
       <div className="flex flex-wrap items-center gap-2">
         <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
@@ -206,10 +216,9 @@ export function StudentsPage() {
                     {s.broker ? `${s.trades30} trades · ${s.rules}% rules` : <span className="text-muted-foreground">No broker</span>}
                   </TableCell>
                   <TableCell>
-                    <span className="flex items-center gap-2">
-                      <HealthDot health={s.health} />
-                      <span className={cn("max-w-48 truncate", s.health === "green" && "text-muted-foreground")}>{s.reason ?? "All good"}</span>
-                    </span>
+                    <Tag tone={s.joined.startsWith("invited") ? "neutral" : s.health === "red" ? "danger" : s.health === "amber" ? "warning" : "success"} dot className="max-w-56">
+                      <span className="truncate">{s.reason ?? "All good"}</span>
+                    </Tag>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
@@ -233,6 +242,7 @@ export function StudentsPage() {
               ))}
             </TableBody>
           </Table>
+          <p className="border-t border-a-border-subtle px-4 py-3 t-caption text-a-text-2 tabular-nums">Showing {rows.length} of {STUDENTS.length}</p>
         </div>
       )}
 

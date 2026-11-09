@@ -124,10 +124,7 @@ type Groups = ReturnType<typeof adminNav>
 function SidebarBody({ groups, base, studentBase, isOpen }: { groups: Groups; base: string; studentBase: string; isOpen: (href: string) => boolean }) {
   return (
     <>
-      <div className="flex flex-col gap-4">
-        <TsLogo className="gap-2.5 px-2 [&>span]:text-[1rem] [&>svg]:size-5" />
-        <WorkspaceSwitcher />
-      </div>
+      <TsLogo className="gap-2.5 px-2 [&>span]:text-[1rem] [&>svg]:size-5" />
       <nav aria-label="Admin" className="-mx-1 mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 pb-2">
         {groups.map((g, i) => (
           <div key={g.group} className="flex flex-col gap-0.5">
@@ -141,8 +138,8 @@ function SidebarBody({ groups, base, studentBase, isOpen }: { groups: Groups; ba
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex h-9 items-center gap-3 rounded-a-md px-2 t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
-                    active ? "bg-a-selected text-a-text" : "text-a-text-nav hover:bg-a-hover hover:text-a-text"
+                    "relative flex h-9 items-center gap-3 rounded-a-md px-2 t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
+                    active ? "bg-a-selected text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-a-accent-strong" : "text-a-text-nav hover:bg-a-hover hover:text-a-text"
                   )}
                 >
                   <item.icon className={cn("size-4 shrink-0", active ? "text-a-icon-strong" : "text-a-icon")} />
@@ -155,6 +152,7 @@ function SidebarBody({ groups, base, studentBase, isOpen }: { groups: Groups; ba
       </nav>
       <div className="flex flex-col gap-2 pt-2">
         <InviteCard href={`${base}/settings`} />
+        <WorkspaceSwitcher />
         <Link href={studentBase} className="flex h-9 items-center gap-3 rounded-a-md px-2 t-body-m text-a-text-nav transition-colors duration-300 hover:bg-a-hover hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:outline-none">
           <ExternalLink className="size-4 text-a-icon" />
           View as student
