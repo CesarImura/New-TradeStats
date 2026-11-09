@@ -101,6 +101,9 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
               <kbd className="t-mono-meta rounded-a-xs bg-a-selected px-1.5 py-0.5 text-a-text-2">⌘K</kbd>
             </button>
             <div className="ml-auto flex items-center gap-2">
+              <Button hierarchy="secondary" iconOnly aria-label="Search" className="xl:hidden">
+                <Search />
+              </Button>
               <HelpButton />
               <Button hierarchy="secondary" iconOnly aria-label="Notifications" className="relative">
                 <Bell />

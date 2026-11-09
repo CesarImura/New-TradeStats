@@ -67,7 +67,7 @@ export function JournalAdmin() {
           {waiting.length === 0 ? (
             <Empty icon={Inbox} title="Nothing waiting" text={`When a ${coach.wording.student.toLowerCase()} presses “Please review” on a trade, it lands here.`} />
           ) : (
-            <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
               <RequestList trades={waiting} active={open?.id} onPick={setOpenId} />
               {open && open.review === "waiting" && <Review key={open.id} trade={open} onDone={() => setOpenId(null)} />}
             </div>
@@ -75,7 +75,7 @@ export function JournalAdmin() {
         </TabsContent>
 
         <TabsContent value="answered">
-          <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
             <RequestList trades={answered} active={openId ?? answered[0]?.id} onPick={setOpenId} />
             {(() => {
               const t = answered.find((x) => x.id === openId) ?? answered[0]
@@ -160,7 +160,7 @@ function Review({ trade: t, onDone, readOnly }: { trade: ReturnType<typeof allTr
   }
 
   return (
-    <div className="grid min-w-0 content-start gap-4 rounded-lg border bg-card p-4">
+    <div className="grid min-w-0 grid-cols-1 content-start gap-4 rounded-lg border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="grid gap-1">
           <span className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -182,19 +182,19 @@ function Review({ trade: t, onDone, readOnly }: { trade: ReturnType<typeof allTr
 
       <div className="grid gap-2 text-sm">
         <div className="flex flex-wrap gap-1.5">
-          <Badge variant="outline">{t.setup}</Badge>
+          <Badge variant="outline" className="h-auto max-w-full whitespace-normal">{t.setup}</Badge>
           {t.tags.map((g) => (
-            <Badge key={g} variant="secondary">
+            <Badge key={g} variant="secondary" className="h-auto max-w-full whitespace-normal">
               {g}
             </Badge>
           ))}
           {t.rulesBroken.map((r) => (
-            <Badge key={r} variant="destructive">
+            <Badge key={r} variant="destructive" className="h-auto max-w-full whitespace-normal">
               Broke: {r}
             </Badge>
           ))}
         </div>
-        {t.note && <p className="text-muted-foreground">Note: “{t.note}”</p>}
+        {t.note && <p className="break-words text-muted-foreground">Note: “{t.note}”</p>}
       </div>
 
       <div className="grid gap-3 border-t pt-4">
