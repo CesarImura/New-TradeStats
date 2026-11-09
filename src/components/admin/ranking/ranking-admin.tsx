@@ -5,7 +5,8 @@ import Link from "next/link"
 import { Medal, Plus, Trophy } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { AdminTabs, Panel, PanelHeader, Tag } from "@/components/admin/ui"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -54,51 +55,82 @@ export function RankingAdmin() {
           <TabsTrigger value="points">Points & badges</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="leaderboard" className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <section className="grid content-start gap-1">
-            <h2 className="font-medium">What ranks students</h2>
-            <div className="mt-2 grid gap-2">
-              {RANK_METRICS.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => set({ metric: m.id })}
-                  className={cn("grid gap-0.5 rounded-lg border bg-card px-3 py-2.5 text-left", r.metric === m.id && "border-[var(--ts-interactive)]")}
-                >
-                  <span className="text-sm font-medium">{m.name}</span>
-                  <span className="text-xs text-muted-foreground">{m.text}</span>
-                </button>
-              ))}
+        <TabsContent value="leaderboard" className="grid gap-6">
+          <Panel>
+            <PanelHeader
+              title={`Now · ${RANK_METRICS.find((m) => m.id === r.metric)?.name}`}
+              description="Ranks by points: lessons, journal entries and rules kept. Students can opt out."
+              actions={
+                <AdminTabs
+                  label="Period"
+                  value={r.period as "week" | "month" | "all"}
+                  onChange={(v) => set({ period: v })}
+                  tabs={[
+                    { id: "week", label: "This week" },
+                    { id: "month", label: "This month" },
+                    { id: "all", label: "All time" },
+                  ]}
+                />
+              }
+            />
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-16">Rank</TableHead>
+                    <TableHead>Student</TableHead>
+                    <TableHead className="text-right">Score</TableHead>
+                    <TableHead className="text-right">Move</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {LEADERBOARD.filter((l) => !l.me).map((l) => (
+                    <TableRow key={l.rank}>
+                      <TableCell className={cn("tabular-nums", l.rank <= 3 && "text-a-accent-strong")}>{l.rank}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="size-6">
+                            <AvatarFallback className="text-[10px]">{l.initials}</AvatarFallback>
+                          </Avatar>
+                          {r.nicknames ? l.name : l.name.replace(".", "")}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{l.score}</TableCell>
+                      <TableCell className="text-right">
+                        {l.change === 0 ? <Tag>–</Tag> : <Tag tone={l.change > 0 ? "success" : "danger"}>{l.change > 0 ? `+${l.change}` : l.change}</Tag>}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-            <div className="mt-4 divide-y rounded-lg border bg-card px-3">
-              <SettingRow label="Period">
-                <NativeSelect value={r.period} onChange={(e) => set({ period: e.target.value })}>
-                  <option value="week">This week</option>
-                  <option value="month">This month</option>
-                  <option value="all">All time</option>
-                </NativeSelect>
-              </SettingRow>
+          </Panel>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Panel className="grid content-start gap-2 p-4">
+              <h2 className="t-heading-m">What ranks students</h2>
+              <div className="mt-1 grid gap-2">
+                {RANK_METRICS.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => set({ metric: m.id })}
+                    aria-pressed={r.metric === m.id}
+                    className={cn("grid gap-0.5 rounded-a-md border border-a-border-subtle px-3 py-2.5 text-left transition-colors duration-300 hover:bg-a-hover", r.metric === m.id && "border-a-border-strong bg-a-selected")}
+                  >
+                    <span className="t-body-m">{m.name}</span>
+                    <span className="t-caption text-a-text-2">{m.text}</span>
+                  </button>
+                ))}
+              </div>
+            </Panel>
+            <Panel className="divide-y divide-a-border-subtle self-start px-4">
               <SettingRow label="Nicknames instead of real names">
                 <Switch checked={r.nicknames} onCheckedChange={(v) => set({ nicknames: v })} />
               </SettingRow>
               <SettingRow label="Students can opt out" text="They still see their own position">
                 <Switch checked={r.optOut} onCheckedChange={(v) => set({ optOut: v })} />
               </SettingRow>
-            </div>
-          </section>
-          <section className="grid content-start gap-2">
-            <h2 className="font-medium">
-              Now · {RANK_METRICS.find((m) => m.id === r.metric)?.name}
-            </h2>
-            <div className="divide-y rounded-lg border bg-card">
-              {LEADERBOARD.filter((l) => !l.me).map((l) => (
-                <div key={l.rank} className="flex items-center gap-3 px-3 py-2.5 text-sm">
-                  <span className={cn("w-6 text-center tabular-nums", l.rank <= 3 && "text-[var(--ts-cta)]")}>{l.rank}</span>
-                  <span className="flex-1">{r.nicknames ? l.name : l.name.replace(".", "")}</span>
-                  <span className="tabular-nums">{l.score}</span>
-                </div>
-              ))}
-            </div>
-          </section>
+            </Panel>
+          </div>
         </TabsContent>
 
         <TabsContent value="competitions">
@@ -119,9 +151,9 @@ export function RankingAdmin() {
                     <TableCell>
                       <div className="flex items-center gap-2 font-medium">
                         {c.name}
-                        <Badge variant={c.status === "running" ? "secondary" : "outline"} className="font-normal capitalize">
+                        <Tag tone={c.status === "running" ? "success" : "neutral"} className="capitalize">
                           {c.status}
-                        </Badge>
+                        </Tag>
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{RANK_METRICS.find((m) => m.id === c.metric)?.name}</TableCell>
