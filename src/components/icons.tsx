@@ -73,6 +73,7 @@ import {
   MagicWand as CMagicWand,
   Maximize as CMaximize,
   Meter as CMeter,
+  Menu as CMenu,
   Microphone as CMicrophone,
   Mobile as CMobile,
   Notebook as CNotebook,
@@ -237,6 +238,7 @@ export const MessageCircle = i(CChat, "MessageCircle")
 export const MessageSquareReply = i(CReply, "MessageSquareReply")
 export const MessageSquareText = i(CChat, "MessageSquareText")
 export const MessagesSquare = i(CForum, "MessagesSquare")
+export const Menu = i(CMenu, "Menu")
 export const Mic = i(CMicrophone, "Mic")
 export const Minus = i(CSubtract, "Minus")
 export const Monitor = i(CScreen, "Monitor")

@@ -257,8 +257,8 @@ ${ui("[data-slot=sidebar][data-collapsible=icon] [data-slot=sidebar-group-label]
  * Components can use the tokens directly: --adm-ground, --adm-canvas,
  * --adm-surface, --adm-raised, --adm-hover, --adm-line.
  */
-const A = ":root:has(.ts-admin)"
-const adm = (sel: string) => `${A} ${sel}:not(${COACH}, ${COACH} *)`
+export const A = ":root:has(.ts-admin)"
+export const adm = (sel: string) => `${A} ${sel}:not(${COACH}, ${COACH} *)`
 /** A border that carries a state or a brand colour (selected, error, accent): panel strokes never replace it. A transparent one is not. */
 const STATE_BORDER = CUSTOM_BORDER.replace('[class*="border-transparent"], ', "")
 /** A box that is itself a link or button. */

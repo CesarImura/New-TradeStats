@@ -13,18 +13,21 @@ import {
   PlayCircle,
   Search,
   Bell,
+  Menu,
   Wand2,
   UserPlus,
   X,
 } from "@/components/icons"
 import { TS_ADMIN_CSS, TS_SYSTEM_CSS } from "@/lib/theme/ts-system"
+import { TS_ADMIN_V2_CSS } from "@/lib/theme/admin-v2"
+import { cn } from "@/lib/utils"
+import { AdminButton as Button } from "@/components/admin/ui"
 import { useCoach } from "@/components/coach/coach-provider"
 import { WorkspaceSwitcher } from "@/components/admin/workspace-switcher"
 import { TsLogo } from "@/components/onboarding/frame"
 import { DEMO_ADMIN } from "@/lib/data/account"
 import { adminNav } from "@/components/coach/nav"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import {
   Sheet,
   SheetContent,
@@ -33,25 +36,16 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
+import { SidebarProvider } from "@/components/ui/sidebar"
 
 /**
- * The admin area. Identical in every community: same layout, same colours,
- * same words, so people who run several communities always know where things
- * are. Only the switcher at the top says which community is open.
+ * The admin area, Admin v2 (Figma "Admin / Sidebar" + "Admin / Topbar").
+ * Identical in every community: same layout, same colours, same words, so people
+ * who run several communities always know where things are. Only the switcher at
+ * the top says which community is open.
+ *
+ * Desktop (lg and up): a floating 255px sidebar card and a 56px topbar.
+ * Tablet and phone: the sidebar becomes a drawer opened from the topbar.
  */
 export function AdminShell({ studentBase, children }: { studentBase: string; children: React.ReactNode }) {
   const { coach, base } = useCoach()
@@ -59,6 +53,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
   const groups = adminNav(coach, base)
   const isOpen = (href: string) => (href === base ? path === base : path.startsWith(href))
   const current = groups.flatMap((g) => g.items).find((i) => isOpen(i.href))
+  const [drawer, setDrawer] = useState(false)
 
   useLayoutEffect(() => {
     const html = document.documentElement
@@ -69,73 +64,103 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
     }
   }, [])
 
+  const menu = <SidebarBody groups={groups} base={base} studentBase={studentBase} isOpen={isOpen} />
+
   return (
-    <SidebarProvider className="ts-ui ts-admin" style={{ "--sidebar-width": "16rem" } as React.CSSProperties}>
-      {/* Our own look, with the admin's calmer, roomier layer on top: see src/lib/theme/ts-system.ts. */}
-      <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS + TS_ADMIN_CSS }} />
-      <Sidebar variant="inset" collapsible="icon">
-        <SidebarHeader className="gap-3 px-2 pt-0 pb-2 group-data-[collapsible=icon]:px-0">
-          <div className="flex h-14 items-center px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-            <TsLogo className="gap-2.5 [&>span]:text-[1rem] [&>span]:group-data-[collapsible=icon]:hidden [&>svg]:size-5" />
-          </div>
-          <WorkspaceSwitcher />
-        </SidebarHeader>
-        <SidebarContent>
-          {groups.map((g, i) => (
-            <SidebarGroup key={g.group}>
-              {/* The first page (Overview) sits on its own at the top, like a home link. */}
-              {i > 0 && <SidebarGroupLabel>{g.group}</SidebarGroupLabel>}
-              <SidebarMenu>
-                {g.items.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      isActive={isOpen(item.href)}
-                      tooltip={item.label}
-                      render={<Link href={item.href} />}
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroup>
-          ))}
-        </SidebarContent>
-        <SidebarFooter className="gap-2 px-2 pb-2 group-data-[collapsible=icon]:px-0">
-          <InviteCard href={`${base}/settings`} />
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="View as student" render={<Link href={studentBase} />}>
-                <ExternalLink />
-                <span>View as student</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset className="min-w-0">
-        <header className="ts-admin-bar sticky top-0 z-20 flex h-14 items-center gap-3 rounded-t-xl px-4 backdrop-blur-md md:px-6">
-          <SidebarTrigger className="text-muted-foreground" />
-          <span className="truncate text-[0.875rem] font-medium">{current?.label}</span>
-          <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" className="hidden w-56 justify-start text-muted-foreground sm:inline-flex" aria-label="Search">
-              <Search /> <span className="font-normal">Search</span>
-              <kbd className="ml-auto rounded-[5px] bg-white/[0.06] px-1.5 text-[0.6875rem]">⌘K</kbd>
+    <SidebarProvider className="ts-ui ts-admin ts-admin-v2 bg-a-page font-a-sans text-a-text" style={{ "--sidebar-width": "255px" } as React.CSSProperties}>
+      <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS + TS_ADMIN_CSS + TS_ADMIN_V2_CSS }} />
+      <div className="flex min-h-svh w-full">
+        <aside className="sticky top-0 hidden h-svh w-[271px] shrink-0 p-2 lg:block" aria-label="Main menu">
+          <div className="flex h-full flex-col rounded-a-xl border border-a-border bg-a-page pt-5 pr-4 pb-4 pl-4">{menu}</div>
+        </aside>
+        <Sheet open={drawer} onOpenChange={setDrawer}>
+          <SheetContent side="left" showCloseButton={false} className="w-[min(320px,calc(100vw-48px))] gap-0 border-a-border bg-a-page p-0 sm:max-w-none">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Menu</SheetTitle>
+              <SheetDescription>Admin navigation</SheetDescription>
+            </SheetHeader>
+            {/* A tap on a link closes the drawer. */}
+            <div className="flex h-full flex-col pt-5 pr-4 pb-4 pl-4" onClickCapture={(e) => (e.target as HTMLElement).closest("a") && setDrawer(false)}>
+              {menu}
+            </div>
+          </SheetContent>
+        </Sheet>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="ts-admin-bar sticky top-0 z-20 flex h-14 items-center gap-2 px-4 backdrop-blur-md md:px-8">
+            <Button hierarchy="ghost" iconOnly aria-label="Open menu" className="lg:hidden" onClick={() => setDrawer(true)}>
+              <Menu />
             </Button>
-            <HelpButton />
-            <Button variant="outline" size="icon" aria-label="Notifications" className="relative">
-              <Bell />
-              <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-[var(--ts-interactive)]" />
-            </Button>
-            <Avatar className="ml-1 size-8">
-              <AvatarFallback className="text-xs">{DEMO_ADMIN.initials}</AvatarFallback>
-            </Avatar>
-          </div>
-        </header>
-        <main className="flex-1 px-4 pt-6 pb-10 md:px-10 md:pt-8">{children}</main>
-      </SidebarInset>
+            <span className="t-body-l-medium truncate lg:hidden">{current?.label}</span>
+            <button
+              type="button"
+              className="hidden h-11 w-80 max-w-full items-center gap-2 rounded-a-md border border-a-border-subtle bg-a-field px-3 text-left text-a-text-3 t-body-l transition-colors duration-300 hover:border-a-border-strong focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:outline-none lg:flex"
+              aria-label="Search"
+            >
+              <Search className="size-4 text-a-icon" />
+              <span className="flex-1">Search</span>
+              <kbd className="t-mono-meta rounded-a-xs bg-a-selected px-1.5 py-0.5 text-a-text-2">⌘K</kbd>
+            </button>
+            <div className="ml-auto flex items-center gap-2">
+              <HelpButton />
+              <Button hierarchy="secondary" iconOnly aria-label="Notifications" className="relative">
+                <Bell />
+                <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-a-accent-strong" />
+              </Button>
+              <Avatar className="ml-1 size-8">
+                <AvatarFallback className="text-xs">{DEMO_ADMIN.initials}</AvatarFallback>
+              </Avatar>
+            </div>
+          </header>
+          <main className="mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10 xl:pt-12">{children}</main>
+        </div>
+      </div>
     </SidebarProvider>
+  )
+}
+
+type Groups = ReturnType<typeof adminNav>
+
+/** Sidebar content, shared by the desktop card and the drawer. Nav item: 36px, radius md, 16px icon. */
+function SidebarBody({ groups, base, studentBase, isOpen }: { groups: Groups; base: string; studentBase: string; isOpen: (href: string) => boolean }) {
+  return (
+    <>
+      <div className="flex flex-col gap-4">
+        <TsLogo className="gap-2.5 px-2 [&>span]:text-[1rem] [&>svg]:size-5" />
+        <WorkspaceSwitcher />
+      </div>
+      <nav aria-label="Admin" className="-mx-1 mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 pb-2">
+        {groups.map((g, i) => (
+          <div key={g.group} className="flex flex-col gap-0.5">
+            {/* The first page (Overview) sits on its own at the top, like a home link. */}
+            {i > 0 ? <span className="t-mono-label-s px-2 pt-5 pb-2 text-a-text-3">{g.group}</span> : <span className="h-2" />}
+            {g.items.map((item) => {
+              const active = isOpen(item.href)
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex h-9 items-center gap-3 rounded-a-md px-2 t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
+                    active ? "bg-a-selected text-a-text" : "text-a-text-nav hover:bg-a-hover hover:text-a-text"
+                  )}
+                >
+                  <item.icon className={cn("size-4 shrink-0", active ? "text-a-icon-strong" : "text-a-icon")} />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              )
+            })}
+          </div>
+        ))}
+      </nav>
+      <div className="flex flex-col gap-2 pt-2">
+        <InviteCard href={`${base}/settings`} />
+        <Link href={studentBase} className="flex h-9 items-center gap-3 rounded-a-md px-2 t-body-m text-a-text-nav transition-colors duration-300 hover:bg-a-hover hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:outline-none">
+          <ExternalLink className="size-4 text-a-icon" />
+          View as student
+        </Link>
+      </div>
+    </>
   )
 }
 
@@ -167,7 +192,7 @@ function HelpButton() {
   ]
   return (
     <Sheet>
-      <SheetTrigger render={<Button variant="outline" />}>
+      <SheetTrigger render={<Button hierarchy="secondary" />}>
         <LifeBuoy /> Help
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md">
@@ -198,7 +223,7 @@ function HelpButton() {
             <p className="mt-1 text-sm text-muted-foreground">
               We build your whole platform on a call: design, tiers, first course. Included on Scale and Enterprise.
             </p>
-            <Button className="mt-3" size="sm">Order a setup</Button>
+            <Button className="mt-3" size="md">Order a setup</Button>
           </div>
         </div>
       </SheetContent>
