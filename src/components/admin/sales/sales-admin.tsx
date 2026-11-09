@@ -491,58 +491,68 @@ function Payouts() {
       </div>
     )
 
+  const payouts = [
+    { d: "Mon 12 Oct", a: 4380 },
+    { d: "Mon 5 Oct", a: 3920 },
+    { d: "Mon 28 Sep", a: 4105 },
+    { d: "Mon 21 Sep", a: 3790 },
+  ]
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span className="grid size-7 place-items-center bg-[var(--ts-cta)] text-[#0a0a0a]">
-              <Check className="size-4" strokeWidth={3} />
-            </span>
-            Payouts connected
-          </CardTitle>
-          <CardDescription>Every Monday, no minimum</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-1 divide-y text-sm">
-          <SettingRow label="Bank account">
-            <span className="flex items-center gap-1.5 font-mono text-muted-foreground">
-              <Landmark className="size-3.5" /> CH93 ···· 5295 7
-            </span>
-          </SettingRow>
-          <SettingRow label="Next payout">
-            <span className="tabular-nums">
-              €{MONEY.nextPayout.amount.toLocaleString("en")} · {MONEY.nextPayout.date}
-            </span>
-          </SettingRow>
-          <SettingRow label="Payout day">
-            <NativeSelect defaultValue="mon">
-              <option value="mon">Every Monday</option>
-              <option value="month">Once a month</option>
-            </NativeSelect>
-          </SettingRow>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent payouts</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-2 text-sm">
-          {[
-            ["Mon 12 Oct", 4380],
-            ["Mon 5 Oct", 3920],
-            ["Mon 28 Sep", 4105],
-            ["Mon 21 Sep", 3790],
-          ].map(([d, a]) => (
-            <div key={d} className="flex justify-between">
-              <span className="text-muted-foreground">{d}</span>
-              <span className="tabular-nums">€{Number(a).toLocaleString("en")}</span>
-            </div>
-          ))}
-          <Button variant="ghost" size="sm" className="justify-self-start" onClick={() => setState({ step: 0, done: false })}>
+    <div className="grid gap-4">
+      <StatPanel
+        stats={[
+          { label: "Next payout", value: `€${MONEY.nextPayout.amount.toLocaleString("en")}`, delta: MONEY.nextPayout.date },
+          { label: "Paid out to you · this month", value: `€${(MONEY.month - MONEY.fees.amount).toLocaleString("en")}`, delta: "In full, every Monday" },
+          { label: "Card and payment fees", value: `€${MONEY.fees.amount.toLocaleString("en")}`, delta: `${((MONEY.fees.amount / MONEY.month) * 100).toFixed(1)}% of revenue` },
+          { label: "Payouts", value: "Connected", tone: "success", delta: "Every Monday, no minimum" },
+        ]}
+      />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel className="grid content-start gap-3 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="t-heading-m">Where your money goes every week</h2>
+            <Tag tone="success" dot>Payouts connected</Tag>
+          </div>
+          <div className="divide-y divide-a-border-subtle">
+            <SettingRow label="Bank account">
+              <span className="flex items-center gap-1.5 font-a-mono t-mono-meta text-a-text-2">
+                <Landmark className="size-3.5" /> CH93 ···· 5295 7
+              </span>
+            </SettingRow>
+            <SettingRow label="Payout day">
+              <NativeSelect defaultValue="mon">
+                <option value="mon">Every Monday</option>
+                <option value="month">Once a month</option>
+              </NativeSelect>
+            </SettingRow>
+          </div>
+          <Button variant="outline" size="sm" className="justify-self-start" onClick={() => setState({ step: 0, done: false })}>
             Change bank account
           </Button>
-        </CardContent>
-      </Card>
+        </Panel>
+        <Panel>
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Date</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {payouts.map((p) => (
+                <TableRow key={p.d}>
+                  <TableCell>{p.d}</TableCell>
+                  <TableCell className="text-right tabular-nums">€{p.a.toLocaleString("en")}</TableCell>
+                  <TableCell>
+                    <Tag tone="success" dot>Paid</Tag>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Panel>
+      </div>
     </div>
   )
 }
