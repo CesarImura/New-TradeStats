@@ -169,7 +169,7 @@ function InviteCard({ href }: { href: string }) {
   const [open, setOpen] = useState(true)
   if (!open) return null
   return (
-    <div className="relative rounded-xl bg-white/[0.04] p-3 group-data-[collapsible=icon]:hidden">
+    <div className="relative rounded-a-lg bg-a-subtle p-3 [@media(max-height:820px)]:hidden">
       <button onClick={() => setOpen(false)} aria-label="Dismiss" className="absolute top-2 right-2 text-muted-foreground after:absolute after:-inset-[5px] after:content-[''] hover:text-foreground">
         <X className="size-3.5" />
       </button>

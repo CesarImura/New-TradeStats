@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { PageHeader } from "../kit"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -77,15 +78,15 @@ export function AdminCalendar() {
 
   return (
     <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl leading-7 font-medium tracking-[-0.01em]">Calendar</h1>
-          <p className="text-sm text-muted-foreground">Lives, calls, workshops, 1:1s and market news. Students see it in their own time zone.</p>
-        </div>
-        <Button onClick={() => newEvent(new Date(2026, 9, 13, 15, 30))}>
-          <Plus /> New event
-        </Button>
-      </div>
+      <PageHeader
+        title="Calendar"
+        text="Lives, calls, workshops, 1:1s and market news. Students see it in their own time zone."
+        actions={
+          <Button onClick={() => newEvent(new Date(2026, 9, 13, 15, 30))}>
+            <Plus /> New event
+          </Button>
+        }
+      />
       <SetupTip task="live" />
       <SampleNotice show={schedule.events.some((e) => sample(e))}>
         Events and 1:1 bookings marked Sample are examples, so you can see how your calendar looks. Replace or delete them before you invite students.

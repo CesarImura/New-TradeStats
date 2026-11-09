@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
+import { PageHeader } from "../kit"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
@@ -103,22 +104,20 @@ export function ContentBoard() {
 
   return (
     <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl leading-7 font-medium tracking-[-0.01em]">Content</h1>
-          <p className="text-sm text-muted-foreground">
-            Your courses. Students see what&apos;s published, in your words: “{coach.wording.courses}”.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setBulk(true)}>
-            <FolderUp /> Bulk upload
-          </Button>
-          <Button onClick={() => setCreating(true)}>
-            <Plus /> New course
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Content"
+        text={<>Your courses. Students see what&apos;s published, in your words: “{coach.wording.courses}”.</>}
+        actions={
+          <>
+            <Button variant="outline" onClick={() => setBulk(true)}>
+              <FolderUp /> Bulk upload
+            </Button>
+            <Button onClick={() => setCreating(true)}>
+              <Plus /> New course
+            </Button>
+          </>
+        }
+      />
       <SetupTip task="course" />
       <SampleNotice show={catalog.courses.some((c) => sample(c.id))}>
         Courses marked Sample are examples, so you can see how your courses look. Replace or delete them before you invite students.
