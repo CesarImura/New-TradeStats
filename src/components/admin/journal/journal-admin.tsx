@@ -38,7 +38,7 @@ export function JournalAdmin() {
   const open = trades.find((t) => t.id === openId) ?? waiting[0] ?? null
 
   return (
-    <Page wide>
+    <Page>
       <PageHeader
         title="Journal & feedback"
         text={`Trades your ${coach.wording.students.toLowerCase()} want you to look at, oldest first, and the rules their journal checks.`}

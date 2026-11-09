@@ -15,7 +15,7 @@ import { AccessOverview, PreviewAsMenu } from "./access-overview"
 import { Groups } from "./groups"
 import { SalesPageEditor } from "./sales-page-editor"
 import { Coupons } from "./coupons"
-import { Overview } from "./overview"
+import { RevenueOverview } from "./revenue"
 import { Payouts } from "./payouts"
 import { Tiers } from "./tiers"
 import { Transactions } from "./transactions"
@@ -27,7 +27,7 @@ export function SalesAdmin() {
   const problems = TRANSACTIONS.filter((t) => ["failed", "retrying", "disputed"].includes(t.status)).length
 
   return (
-    <Page wide>
+    <Page>
       <PageHeader
         title="Sales & payments"
         text="What students pay for, what they get, what came in, and where the money goes. Our fees are shown openly."
@@ -61,7 +61,7 @@ export function SalesAdmin() {
           </TabsList>
         </div>
         <TabsContent value="overview">
-          <Overview onProblems={() => setTab("transactions")} />
+          <RevenueOverview onProblems={() => setTab("transactions")} />
         </TabsContent>
         <TabsContent value="tiers">
           <Tiers />

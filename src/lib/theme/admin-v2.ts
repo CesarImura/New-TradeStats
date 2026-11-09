@@ -37,10 +37,8 @@ ${A} {
 }
 ${A} body { background: ${T("color-bg-page")}; font-family: ${T("font-family-primary")}; color: ${T("color-text-primary")}; }
 ${adm(":is(h1, h2, h3)")} { letter-spacing: 0; }
-${adm(".font-mono, kbd, code")} { font-family: ${T("font-family-mono")}; }
+${adm(":is(.font-mono, kbd, code)")} { font-family: ${T("font-family-mono")}; }
 
-/* No floating sheet: the page is the ground; panels are flat ink with a hairline. */
-${adm("[data-slot=sidebar-inset]")} { background: transparent; box-shadow: none; }
 ${adm(".ts-admin-bar")} { background: color-mix(in srgb, ${T("color-bg-page")} 88%, transparent); }
 
 ${adm(".text-sm")} { font-size: 0.8125rem; line-height: 1.25rem; }
@@ -53,7 +51,7 @@ ${adm("[data-slot=button]:is(.h-8, .h-9)")} { height: 2.25rem; }
 ${adm("[data-slot=button]:is(.size-8, .size-9)")} { width: 2.25rem; height: 2.25rem; }
 ${adm("[data-slot=button].h-7")} { height: 1.75rem; font-size: 0.75rem; border-radius: ${T("component-button-radius-sm")}; }
 ${adm("[data-slot=button].size-7")} { width: 1.75rem; height: 1.75rem; border-radius: ${T("component-button-radius-sm")}; }
-${adm("[data-slot=button]:is(.size-7, .size-8, .size-9)")} { width: 2.25rem; height: 2.25rem; }
+${adm("[data-slot=button]:is(.size-8, .size-9)")} { width: 2.25rem; height: 2.25rem; }
 ${adm("[data-slot=button].bg-primary")} { background: ${T("component-button-primary-bg-default")}; color: ${T("component-button-primary-content")}; box-shadow: none; }
 ${adm("[data-slot=button].bg-primary:hover")} { background: ${T("component-button-primary-bg-hover")}; }
 ${adm(":is([data-slot=button].bg-secondary, [data-slot=button][class*='border-border'])")} {

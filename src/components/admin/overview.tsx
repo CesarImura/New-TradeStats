@@ -394,7 +394,8 @@ export function AdminOverview() {
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <div className="t-body-m-medium flex items-center gap-2">
-                      <span className={cn("size-1.5 shrink-0 rounded-full", s.health === "red" ? "bg-a-danger-fill" : "bg-a-warning-fill")} aria-label={s.health === "red" ? "Urgent" : "Warning"} />
+                      <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", s.health === "red" ? "bg-a-danger-fill" : "bg-a-warning-fill")} />
+                      <span className="sr-only">{s.health === "red" ? "Urgent" : "Warning"}</span>
                       <span className="truncate">{s.name}</span>
                     </div>
                     <div className="t-caption truncate text-a-text-2">{s.reason} · {s.tier}</div>

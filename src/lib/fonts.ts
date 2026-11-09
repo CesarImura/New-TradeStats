@@ -30,7 +30,7 @@ const archivo = Archivo({ subsets: ["latin"], variable: "--ff-archivo" })
 const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--ff-plex" })
 const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--ff-plex-mono" })
 // Admin v2 text: the web stand-in for Helvetica Neue (not licensed for the web; Figma edits in Inter too).
-const inter = Inter({ subsets: ["latin"], variable: "--ff-inter" })
+const inter = Inter({ subsets: ["latin"], variable: "--ff-inter", preload: false })
 const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--ff-space-mono" })
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--ff-fraunces" })
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--ff-dm-sans" })

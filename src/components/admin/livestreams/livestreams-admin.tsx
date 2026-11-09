@@ -115,7 +115,7 @@ function Streams({ live, upcoming, past, base, tiers }: { live: Livestream[]; up
             {list.map((s) => (
               <TableRow key={s.id} className="cursor-pointer" onClick={() => router.push(`${base}/livestreams/${s.id}`)}>
                 <TableCell className="max-w-72 pl-5">
-                  <Link href={`${base}/livestreams/${s.id}`} className="block truncate font-medium">{s.title}</Link>
+                  <Link href={`${base}/livestreams/${s.id}`} onClick={(e) => e.stopPropagation()} className="block truncate font-medium">{s.title}</Link>
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-a-text-2">{whenLabel(s.startsAt)}</TableCell>
                 <TableCell className="hidden text-a-text-2 md:table-cell">{who(s)}</TableCell>

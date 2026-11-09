@@ -38,13 +38,15 @@ import {
 } from "@/components/ui/sheet"
 import { SidebarProvider } from "@/components/ui/sidebar"
 
+const ADMIN_CSS = TS_SYSTEM_CSS + TS_ADMIN_CSS + TS_ADMIN_V2_CSS
+
 /**
  * The admin area, Admin v2 (Figma "Admin / Sidebar" + "Admin / Topbar").
  * Identical in every community: same layout, same colours, same words, so people
  * who run several communities always know where things are. Only the switcher at
  * the top says which community is open.
  *
- * Desktop (lg and up): a floating 255px sidebar card and a 56px topbar.
+ * Desktop (xl, 1280px and up): a floating 255px sidebar card and a 56px topbar.
  * Tablet and phone: the sidebar becomes a drawer opened from the topbar.
  */
 export function AdminShell({ studentBase, children }: { studentBase: string; children: React.ReactNode }) {
@@ -54,6 +56,8 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
   const isOpen = (href: string) => (href === base ? path === base : path.startsWith(href))
   const current = groups.flatMap((g) => g.items).find((i) => isOpen(i.href))
   const [drawer, setDrawer] = useState(false)
+  // Lifted here so the sidebar and the drawer share one dismissal.
+  const [invite, setInvite] = useState(true)
 
   useLayoutEffect(() => {
     const html = document.documentElement
@@ -64,11 +68,11 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
     }
   }, [])
 
-  const menu = <SidebarBody groups={groups} base={base} studentBase={studentBase} isOpen={isOpen} />
+  const menu = <SidebarBody groups={groups} base={base} studentBase={studentBase} isOpen={isOpen} invite={invite} onDismissInvite={() => setInvite(false)} />
 
   return (
-    <SidebarProvider className="ts-ui ts-admin ts-admin-v2 bg-a-page font-a-sans text-a-text" style={{ "--sidebar-width": "255px" } as React.CSSProperties}>
-      <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS + TS_ADMIN_CSS + TS_ADMIN_V2_CSS }} />
+    <SidebarProvider className="dark ts-ui ts-admin ts-admin-v2 bg-a-page font-a-sans text-a-text" style={{ "--sidebar-width": "255px" } as React.CSSProperties}>
+      <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
       <div className="flex min-h-svh w-full">
         <aside className="sticky top-0 hidden h-svh w-[271px] shrink-0 p-2 xl:block" aria-label="Main menu">
           <div className="flex h-full flex-col rounded-a-xl border border-a-border bg-a-page pt-5 pr-4 pb-4 pl-4">{menu}</div>
@@ -124,7 +128,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
 type Groups = ReturnType<typeof adminNav>
 
 /** Sidebar content, shared by the desktop card and the drawer. Nav item: 36px, radius md, 16px icon. */
-function SidebarBody({ groups, base, studentBase, isOpen }: { groups: Groups; base: string; studentBase: string; isOpen: (href: string) => boolean }) {
+function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvite }: { groups: Groups; base: string; studentBase: string; isOpen: (href: string) => boolean; invite: boolean; onDismissInvite: () => void }) {
   return (
     <>
       <TsLogo className="gap-2.5 px-2 [&>span]:text-[1rem] [&>svg]:size-5" />
@@ -154,7 +158,7 @@ function SidebarBody({ groups, base, studentBase, isOpen }: { groups: Groups; ba
         ))}
       </nav>
       <div className="flex flex-col gap-2 pt-2">
-        <InviteCard href={`${base}/settings`} />
+        {invite && <InviteCard href={`${base}/settings?tab=team`} onDismiss={onDismissInvite} />}
         <WorkspaceSwitcher />
         <Link href={studentBase} className="flex h-9 items-center gap-3 rounded-a-md px-2 t-body-m text-a-text-nav transition-colors duration-300 hover:bg-a-hover hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:outline-none">
           <ExternalLink className="size-4 text-a-icon" />
@@ -166,12 +170,10 @@ function SidebarBody({ groups, base, studentBase, isOpen }: { groups: Groups; ba
 }
 
 /** A quiet card above the footer links, as in ElevenLabs. Dismissed for this visit only. */
-function InviteCard({ href }: { href: string }) {
-  const [open, setOpen] = useState(true)
-  if (!open) return null
+function InviteCard({ href, onDismiss }: { href: string; onDismiss: () => void }) {
   return (
     <div className="relative rounded-a-lg bg-a-subtle p-3 [@media(max-height:820px)]:hidden">
-      <button onClick={() => setOpen(false)} aria-label="Dismiss" className="absolute top-2 right-2 text-muted-foreground after:absolute after:-inset-[5px] after:content-[''] hover:text-foreground">
+      <button type="button" onClick={onDismiss} aria-label="Dismiss" className="absolute top-2 right-2 text-muted-foreground after:absolute after:-inset-[5px] after:content-[''] hover:text-foreground">
         <X className="size-3.5" />
       </button>
       <span className="grid size-7 place-items-center rounded-full bg-white/[0.07]">

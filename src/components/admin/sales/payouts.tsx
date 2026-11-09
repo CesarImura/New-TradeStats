@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Landmark, Loader2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
@@ -25,6 +25,8 @@ export function Payouts() {
   const wizard = useWizardCommunity(coach.slug)
   const [state, setState] = useCommunityData(coach.slug, "payouts", !wizard || wizard.setup?.payouts === "connected" ? CONNECTED : NOT_CONNECTED)
   const [busy, setBusy] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  useEffect(() => () => clearTimeout(timer.current), [])
 
   if (!state.done)
     return (
@@ -83,7 +85,7 @@ export function Payouts() {
             onClick={() => {
               if (state.step < KYC.length - 1) return setState({ step: state.step + 1, done: false })
               setBusy(true)
-              setTimeout(() => {
+              timer.current = setTimeout(() => {
                 setState({ step: KYC.length, done: true })
                 setBusy(false)
                 toast("Payouts connected")
@@ -107,8 +109,8 @@ export function Payouts() {
       <StatPanel
         stats={[
           { label: "Next payout", value: `€${MONEY.nextPayout.amount.toLocaleString("en")}`, delta: MONEY.nextPayout.date },
-          { label: "Paid out to you · this month", value: `€${(MONEY.month - MONEY.fees.amount).toLocaleString("en")}`, delta: "In full, every Monday" },
-          { label: "Card and payment fees", value: `€${MONEY.fees.amount.toLocaleString("en")}`, delta: `${((MONEY.fees.amount / MONEY.month) * 100).toFixed(1)}% of revenue` },
+          { label: "Paid out to you · this month", value: `€${MONEY.month.toLocaleString("en")}`, delta: "After fees, every Monday" },
+          { label: "Card and payment fees", value: `€${MONEY.fees.amount.toLocaleString("en")}`, delta: `${((MONEY.fees.amount / (MONEY.month + MONEY.fees.amount)) * 100).toFixed(1)}% of revenue` },
           { label: "Payouts", value: "Connected", tone: "success", delta: "Every Monday, no minimum" },
         ]}
       />

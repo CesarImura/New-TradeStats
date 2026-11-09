@@ -41,7 +41,7 @@ export function ChartsAdmin() {
   }
 
   return (
-    <Page wide>
+    <Page>
       <PageHeader
         title="Charts"
         text={`Full TradingView charts for your ${coach.wording.students.toLowerCase()}, with your watchlist first and the charts you marked up. Students see it as “${coach.wording.charts}”.`}

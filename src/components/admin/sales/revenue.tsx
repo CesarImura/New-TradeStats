@@ -12,7 +12,7 @@ import { AdminTabs, Panel, PanelHeader, StatPanel, Tag } from "../ui"
 
 // ---------- ADM-35 Revenue
 
-export function Overview({ onProblems }: { onProblems: () => void }) {
+export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
   const { coach } = useCoach()
   const attention = TRANSACTIONS.filter((t) => ["failed", "retrying", "disputed"].includes(t.status))
   const members = coach.tiers.reduce((n, t) => n + t.members, 0)

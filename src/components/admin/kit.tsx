@@ -35,8 +35,9 @@ export function PageHeader({ title, text, actions, guide }: { title: string; tex
 }
 
 /** The admin's page column. */
-export function Page({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
-  return <div className={cn("mx-auto flex w-full flex-col gap-8", wide ? "max-w-[1400px]" : "max-w-[1200px]")}>{children}</div>
+/** Admin v2 content is 1200 px wide (Figma "Stack"), capped by the shell. */
+export function Page({ children }: { children: React.ReactNode }) {
+  return <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8">{children}</div>
 }
 
 /** The admin's dropdown: the app's own (ui/select), with a native select's props and <option>s. Works in dialogs. */

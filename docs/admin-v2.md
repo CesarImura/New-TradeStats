@@ -18,7 +18,7 @@ The Admin follows the Figma file Tradehub (XWHeEdjEiY6gWmrsg0vFIZ), collection `
 ## Rules
 - Dark only. UI text in English. No gradients except media fades. States: Default / Hover / Disabled (opacity 0.4); hover transitions 0.3 s ease-out.
 - Editor (`admin/design`), Terminal and the student area are not touched by v2.
-- Helvetica Neue only renders on Apple devices; others fall back to Arial.
+- Inter is first in the font stack on every device (substitute for Helvetica Neue, which the web cannot ship); mono is Space Mono.
 
 ## Checks
 `npx tsc --noEmit`, `npx eslint src`, `npx next build`; screenshots at 1920 / 1024 / 390 (and 320 for overflow).
@@ -34,3 +34,7 @@ Rebuilt to Figma: Overview, Students, Journal (stats), Content, Calendar, Downlo
 Tests (09/11): tsc ok, next build ok, eslint only the old frame.tsx:92. Sweep 15 routes x 1920/1024/390 and 320 px: 0 overflow, console errors only from blocked external hosts (TradingView). Click-through of every visible button/tab on 14 screens at 1440/1024/390: 0 crashes. Drawer opens/closes, 0.3 s transitions, hover and focus ring checked at 3 breakpoints.
 Fixed in the last round: Journal overflow at 320 px, course builder 8 px at 1024 px, search icon in the topbar below 1280 px.
 Later 09/11: side sheets (calendar event, student profile, tiers, groups, help) are full width on phones (`data-[side=right]:w-full`, the shared Sheet has `w-3/4` that wins over `w-full`). Calendar event form stacks on narrow screens. Dialogs and sheets of Students, Calendar, Content, Downloads, Sales checked at 1440/1024/390 with no clipping. Onboarding wizard (/signup/*, /setup/*, 8 routes) checked at 3 widths: 0 overflow, 0 errors.
+
+## Code review 09/11 (applied)
+Page is always 1200 px (Figma Stack; `wide` removed). Mono rule scoped with `:is()`, icon button size rule fixed, dead sidebar-inset rule removed. Admin CSS string hoisted to a module constant, Inter no longer preloaded globally, admin wrapper renders `dark` on the server (no light flash), invite card dismissal shared between sidebar and drawer. AdminTabs: Home/End, fallback roving index, sr-only status text. Payouts timer cleaned on unmount; Sales money figures consistent. Ranking criteria are a radiogroup. Sales split per tab (revenue, tiers, groups, access, coupons, transactions, payouts).
+Not done (backlog): split overview.tsx (data, banner, chart), one shared highlight bar chart for Overview and Sales revenue (hover state re-renders the whole tab), one Empty component, tabpanel roles for AdminTabs callers, kit files as const arrows.

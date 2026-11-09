@@ -60,7 +60,7 @@ export function StudentsPage() {
   const selected = STUDENTS.filter((s) => picked.includes(s.id))
 
   return (
-    <Page wide>
+    <Page>
       <PageHeader
         title="Students"
         text={`Everyone in ${coach.name}. Students who need you come first: failed payments, broken rules, nobody heard from them.`}

@@ -108,12 +108,14 @@ export function RankingAdmin() {
           <div className="grid gap-6 lg:grid-cols-2">
             <Panel className="grid content-start gap-2 p-4">
               <h2 className="t-heading-m">What ranks students</h2>
-              <div className="mt-1 grid gap-2">
+              <div role="radiogroup" aria-label="What ranks students" className="mt-1 grid gap-2">
                 {RANK_METRICS.map((m) => (
                   <button
                     key={m.id}
                     onClick={() => set({ metric: m.id })}
-                    aria-pressed={r.metric === m.id}
+                    role="radio"
+                    aria-checked={r.metric === m.id}
+                    type="button"
                     className={cn("grid gap-0.5 rounded-a-md border border-a-border-subtle px-3 py-2.5 text-left transition-colors duration-300 hover:bg-a-hover", r.metric === m.id && "border-a-border-strong bg-a-selected")}
                   >
                     <span className="t-body-m">{m.name}</span>

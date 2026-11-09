@@ -7,18 +7,24 @@ export function AdminTabs<T extends string>({ tabs, value, onChange, label, clas
   return (
     <div role="tablist" aria-label={label} className={cn("flex max-w-full gap-1 overflow-x-auto", className)}
       onKeyDown={(e) => {
-        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return
-        const i = tabs.findIndex((t) => t.id === value)
-        const next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length]
+        if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(e.key)) return
+        e.preventDefault()
+        const i = Math.max(0, tabs.findIndex((t) => t.id === value))
+        const next = e.key === "Home" ? tabs[0] : e.key === "End" ? tabs[tabs.length - 1] : tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length]
         onChange(next.id)
         ;(e.currentTarget.querySelector(`[data-tab="${next.id}"]`) as HTMLElement | null)?.focus()
       }}>
       {tabs.map((t) => (
-        <button key={t.id} role="tab" data-tab={t.id} aria-selected={t.id === value} tabIndex={t.id === value ? 0 : -1} onClick={() => onChange(t.id)}
+        <button key={t.id} type="button" role="tab" data-tab={t.id} aria-selected={t.id === value} tabIndex={t.id === (tabs.some((x) => x.id === value) ? value : tabs[0]?.id) ? 0 : -1} onClick={() => onChange(t.id)}
           className={cn("relative inline-flex h-[26px] shrink-0 items-center gap-1.5 rounded-a-sm px-2.5 t-caption outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
             t.id === value ? "bg-a-selected text-a-text" : "text-a-text-2 hover:bg-a-hover hover:text-a-text")}>
           {t.label}
-          {t.dot && <span aria-label="needs attention" className="size-1.5 rounded-full bg-a-accent-strong" />}
+          {t.dot && (
+            <>
+              <span aria-hidden className="size-1.5 rounded-full bg-a-accent-strong" />
+              <span className="sr-only">needs attention</span>
+            </>
+          )}
         </button>
       ))}
     </div>
