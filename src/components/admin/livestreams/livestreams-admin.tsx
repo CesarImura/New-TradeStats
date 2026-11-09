@@ -3,17 +3,18 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, Radio, Video } from "@/components/icons"
+import { ArrowRight, Plus, Radio, Video } from "@/components/icons"
+import { toast } from "sonner"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { newStreamKey, saveLivestreams, useLivestreams, whenLabel, type Livestream } from "@/lib/data/livestreams"
 import { uid } from "@/lib/data/learning"
-import { cn } from "@/lib/utils"
 import { Empty, Field, Page, PageHeader } from "../kit"
+import { AdminButton, AdminTabs, Panel, Tag } from "../ui"
 
 /** Livestreams: what is live, what is next, and what was recorded. One button to schedule, one place to open each. */
 export function LivestreamsAdmin() {
@@ -37,9 +38,7 @@ export function LivestreamsAdmin() {
         }
       />
       {streams.length === 0 && <Empty icon={Radio} title="No livestreams yet" text="Schedule your first one. You will get the OBS settings on the next screen." action={<Button onClick={() => setCreating(true)}>Schedule a livestream</Button>} />}
-      <Group title="Live now" list={live} href={(s) => `${base}/livestreams/${s.id}`} />
-      <Group title="Coming up" list={upcoming} href={(s) => `${base}/livestreams/${s.id}`} />
-      <Group title="Recordings" list={past} href={(s) => `${base}/livestreams/${s.id}`} />
+      {streams.length > 0 && <Streams live={live} upcoming={upcoming} past={past} base={base} tiers={coach.tiers} />}
       <NewStream
         open={creating}
         onClose={() => setCreating(false)}
@@ -52,38 +51,90 @@ export function LivestreamsAdmin() {
   )
 }
 
-function Group({ title, list, href }: { title: string; list: Livestream[]; href: (s: Livestream) => string }) {
-  if (list.length === 0) return null
+function Streams({ live, upcoming, past, base, tiers }: { live: Livestream[]; upcoming: Livestream[]; past: Livestream[]; base: string; tiers: { id: string; name: string }[] }) {
+  const router = useRouter()
+  const [tab, setTab] = useState<"upcoming" | "live" | "past">(live.length ? "live" : upcoming.length ? "upcoming" : "past")
+  const [q, setQ] = useState("")
+  const next = live[0] ?? upcoming[0]
+  const list = (tab === "upcoming" ? upcoming : tab === "live" ? live : past).filter((s) => !q || s.title.toLowerCase().includes(q.toLowerCase()))
+  const who = (s: Livestream) => (s.tiers.length === 0 ? "Everyone" : s.tiers.map((id) => tiers.find((t) => t.id === id)?.name ?? id).join(", "))
   return (
-    <section className="grid gap-3">
-      <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
-      <div className="grid gap-3 md:grid-cols-2">
-        {list.map((s) => (
-          <Link key={s.id} href={href(s)} className="grid gap-3 rounded-xl border bg-card p-4 transition-colors hover:bg-muted/40">
-            <div className="flex items-center gap-2">
-              <StateBadge state={s.state} />
-              <span className="text-xs text-muted-foreground">{whenLabel(s.startsAt)}</span>
+    <>
+      {next && (
+        <Panel className="flex-col gap-0 overflow-hidden p-0 md:flex-row">
+          <div aria-hidden className="h-28 shrink-0 bg-a-raised md:h-auto md:w-72" />
+          <div className="flex min-w-0 flex-1 flex-col gap-4 p-5 md:p-6">
+            <div className="flex flex-col gap-1.5">
+              <span className="t-mono-label text-a-text-accent">{next.state === "live" ? "Live now" : "Next live"}</span>
+              <h2 className="t-heading-xl [overflow-wrap:anywhere]">{next.title}</h2>
+              <p className="t-body-m text-a-text-2">{whenLabel(next.startsAt)} · {who(next)}</p>
             </div>
-            <span className="grid gap-1">
-              <span className="font-medium">{s.title}</span>
-              {s.description && <span className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{s.description}</span>}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {s.state === "ended" ? `${s.minutes} min · ${s.peak} watched at once${s.recording === "ready" ? " · recording ready" : ""}` : s.state === "live" ? `${s.viewers} watching now` : "Open the studio to connect OBS"}
-            </span>
-          </Link>
-        ))}
+            <dl className="flex flex-wrap gap-x-10 gap-y-3">
+              <div className="flex flex-col gap-1">
+                <dt className="t-mono-label-s text-a-text-2">{next.state === "live" ? "Watching now" : "Said they'll join"}</dt>
+                <dd className="t-data-m tabular-nums">{next.state === "live" ? next.viewers : 41}</dd>
+              </div>
+              <div className="flex flex-col gap-1">
+                <dt className="t-mono-label-s text-a-text-2">Last live</dt>
+                <dd className="t-data-m tabular-nums">{past[0] ? `${past[0].peak} watching` : "None yet"}</dd>
+              </div>
+            </dl>
+            <div className="flex flex-wrap gap-2">
+              <AdminButton nativeButton={false} render={<Link href={`${base}/livestreams/${next.id}`} />}>
+                Open studio <ArrowRight />
+              </AdminButton>
+              <AdminButton hierarchy="secondary" onClick={() => toast("Link copied")}>Copy the link</AdminButton>
+            </div>
+          </div>
+        </Panel>
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <AdminTabs
+          label="Livestreams"
+          value={tab}
+          onChange={setTab}
+          tabs={[
+            { id: "upcoming", label: `Coming up ${upcoming.length}` },
+            { id: "live", label: `Live now ${live.length}` },
+            { id: "past", label: `Recordings ${past.length}` },
+          ]}
+        />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search livestreams" aria-label="Search livestreams" className="w-full sm:w-64" />
       </div>
-    </section>
+      <div className="overflow-x-auto rounded-a-lg border border-a-border bg-a-panel">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-5">Livestream</TableHead>
+              <TableHead>Starts</TableHead>
+              <TableHead className="hidden md:table-cell">Who can watch</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {list.map((s) => (
+              <TableRow key={s.id} className="cursor-pointer" onClick={() => router.push(`${base}/livestreams/${s.id}`)}>
+                <TableCell className="max-w-72 pl-5">
+                  <Link href={`${base}/livestreams/${s.id}`} className="block truncate font-medium">{s.title}</Link>
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-a-text-2">{whenLabel(s.startsAt)}</TableCell>
+                <TableCell className="hidden text-a-text-2 md:table-cell">{who(s)}</TableCell>
+                <TableCell><StateBadge state={s.state} /></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        {list.length === 0 && <p className="px-4 py-8 text-center t-body-m text-a-text-2">{q ? "No livestreams match." : tab === "live" ? "Nothing live right now." : "Nothing here yet."}</p>}
+      </div>
+    </>
   )
 }
 
 export function StateBadge({ state }: { state: Livestream["state"] }) {
   return (
-    <Badge variant="outline" className="gap-1.5 font-normal text-muted-foreground">
-      <span className={cn("size-1.5 rounded-full", state === "live" ? "animate-pulse bg-red-500" : state === "scheduled" ? "bg-amber-500" : "bg-muted-foreground/50")} />
+    <Tag tone={state === "live" ? "danger" : state === "scheduled" ? "accent" : "neutral"} dot>
       {state === "live" ? "Live now" : state === "scheduled" ? "Scheduled" : "Ended"}
-    </Badge>
+    </Tag>
   )
 }
 
