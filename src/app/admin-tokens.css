@@ -344,26 +344,26 @@
 }
 
 /* Admin text styles (Figma text styles Admin/*). Use these classes, never ad-hoc text-[13px]. */
-.t-display { font: 400 40px/1 var(--admin-font-family-primary); letter-spacing: -0.045em; }
-.t-title-l { font: 400 32px/1 var(--admin-font-family-primary); letter-spacing: -0.045em; }
-.t-title { font: 400 28px/1 var(--admin-font-family-primary); letter-spacing: -0.045em; }
-.t-heading-xl { font: 400 24px/28px var(--admin-font-family-primary); letter-spacing: -0.03em; }
-.t-heading-l { font: 400 22px/24px var(--admin-font-family-primary); letter-spacing: -0.03em; }
-.t-heading-m { font: 400 18px/24px var(--admin-font-family-primary); letter-spacing: -0.01em; }
-.t-heading-s { font: 400 16px/22px var(--admin-font-family-primary); letter-spacing: -0.01em; }
-.t-data-m { font: 400 20px/24px var(--admin-font-family-primary); letter-spacing: -0.02em; }
-.t-data-m-medium { font: 500 20px/24px var(--admin-font-family-primary); letter-spacing: -0.02em; }
-.t-data-s { font: 400 18px/22px var(--admin-font-family-primary); letter-spacing: -0.01em; }
-.t-body-xl { font: 400 16px/22px var(--admin-font-family-primary); letter-spacing: -0.01em; }
-.t-body-l { font: 400 14px/20px var(--admin-font-family-primary); letter-spacing: -0.01em; }
-.t-body-l-medium { font: 500 14px/20px var(--admin-font-family-primary); letter-spacing: -0.01em; }
-.t-body-m { font: 400 13px/18px var(--admin-font-family-primary); }
-.t-body-m-medium { font: 500 13px/18px var(--admin-font-family-primary); }
-.t-caption { font: 400 12px/16px var(--admin-font-family-primary); }
-.t-caption-medium { font: 500 12px/16px var(--admin-font-family-primary); }
-.t-micro { font: 400 11px/14px var(--admin-font-family-primary); }
-.t-micro-medium { font: 500 11px/14px var(--admin-font-family-primary); }
-.t-mono-label { font: 400 11px/14px var(--admin-font-family-mono); letter-spacing: 0.06em; text-transform: uppercase; }
-.t-mono-label-s { font: 400 10px/12px var(--admin-font-family-mono); letter-spacing: 0.06em; text-transform: uppercase; }
-.t-mono-data { font: 400 12px/16px var(--admin-font-family-mono); }
-.t-mono-meta { font: 400 10px/12px var(--admin-font-family-mono); letter-spacing: 0.02em; }
+@utility t-display { font: 400 40px/1 var(--admin-font-family-primary); letter-spacing: -0.045em; }
+@utility t-title-l { font: 400 32px/1 var(--admin-font-family-primary); letter-spacing: -0.045em; }
+@utility t-title { font: 400 28px/1 var(--admin-font-family-primary); letter-spacing: -0.045em; }
+@utility t-heading-xl { font: 400 24px/28px var(--admin-font-family-primary); letter-spacing: -0.03em; }
+@utility t-heading-l { font: 400 22px/24px var(--admin-font-family-primary); letter-spacing: -0.03em; }
+@utility t-heading-m { font: 400 18px/24px var(--admin-font-family-primary); letter-spacing: -0.01em; }
+@utility t-heading-s { font: 400 16px/22px var(--admin-font-family-primary); letter-spacing: -0.01em; }
+@utility t-data-m { font: 400 20px/24px var(--admin-font-family-primary); letter-spacing: -0.02em; }
+@utility t-data-m-medium { font: 500 20px/24px var(--admin-font-family-primary); letter-spacing: -0.02em; }
+@utility t-data-s { font: 400 18px/22px var(--admin-font-family-primary); letter-spacing: -0.01em; }
+@utility t-body-xl { font: 400 16px/22px var(--admin-font-family-primary); letter-spacing: -0.01em; }
+@utility t-body-l { font: 400 14px/20px var(--admin-font-family-primary); letter-spacing: -0.01em; }
+@utility t-body-l-medium { font: 500 14px/20px var(--admin-font-family-primary); letter-spacing: -0.01em; }
+@utility t-body-m { font: 400 13px/18px var(--admin-font-family-primary); }
+@utility t-body-m-medium { font: 500 13px/18px var(--admin-font-family-primary); }
+@utility t-caption { font: 400 12px/16px var(--admin-font-family-primary); }
+@utility t-caption-medium { font: 500 12px/16px var(--admin-font-family-primary); }
+@utility t-micro { font: 400 11px/14px var(--admin-font-family-primary); }
+@utility t-micro-medium { font: 500 11px/14px var(--admin-font-family-primary); }
+@utility t-mono-label { font: 400 11px/14px var(--admin-font-family-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+@utility t-mono-label-s { font: 400 10px/12px var(--admin-font-family-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+@utility t-mono-data { font: 400 12px/16px var(--admin-font-family-mono); }
+@utility t-mono-meta { font: 400 10px/12px var(--admin-font-family-mono); letter-spacing: 0.02em; }

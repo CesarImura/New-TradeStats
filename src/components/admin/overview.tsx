@@ -3,13 +3,11 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { Area, AreaChart, CartesianGrid, YAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, YAxis } from "recharts"
 import { ArrowRight, ArrowUpRight, ChevronDown, Download, Video } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
+import { AdminButton as Button, AdminPageHeader, AdminTabs, Metric as MetricCard, Panel, PanelHeader, Tag } from "@/components/admin/ui"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import {
   DropdownMenu,
@@ -18,8 +16,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ADMIN_STUDENTS, COURSES, EVENTS, FEEDBACK_REQUESTS, courseProgress } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { DEMO_ADMIN } from "@/lib/data/account"
@@ -111,10 +107,10 @@ function format(m: Metric, v: number) {
 function FilterChip<T extends string>({ name, value, options, onChange }: { name: string; value: T; options: Record<T, string>; onChange: (v: T) => void }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="gap-0 px-0" />}>
-        <span className="border-r border-white/[0.08] px-2.5 font-normal text-muted-foreground">{name}</span>
+      <DropdownMenuTrigger render={<Button hierarchy="secondary" size="md" className="gap-0 px-0" aria-label={`${name}: ${options[value]}`} />}>
+        <span className="border-r border-a-border px-2.5 text-a-text-2">{name}</span>
         <span className="flex items-center gap-1 px-2.5">
-          {options[value]} <ChevronDown className="size-3.5 text-muted-foreground" />
+          {options[value]} <ChevronDown className="size-3.5 text-a-text-2" />
         </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-44">
@@ -130,7 +126,53 @@ function FilterChip<T extends string>({ name, value, options, onChange }: { name
   )
 }
 
-/** ADM-01. Answers "how is it going, and what needs me today". */
+/** "In 6 h 30 min", "in 2 days": how far away the next live is. */
+function inText(min: number) {
+  if (min < 60) return `${min} min`
+  if (min < 2880) return `${Math.floor(min / 60)} h ${min % 60 ? `${min % 60} min` : ""}`.trim()
+  return `${Math.round(min / 1440)} days`
+}
+
+/** The next live, on the highlight surface: the one warm block on the page. */
+function NextLiveBanner({ base }: { base: string }) {
+  const next = EVENTS.find((e) => e.kind === "live")
+  if (!next) return null
+  const stats = [
+    { label: "Starts in", value: inText(next.inMinutes ?? 0) },
+    { label: "Signed up", value: next.seats?.split(" ")[0] ?? "0" },
+    { label: "Reminders", value: "On" },
+  ]
+  return (
+    <section aria-label="Next live" className="flex flex-col gap-6 rounded-a-lg bg-[var(--admin-color-highlight-base)] p-5 text-a-on-highlight md:flex-row md:items-stretch md:justify-between md:p-6">
+      <div className="flex min-w-0 flex-col justify-between gap-6">
+        <div className="flex flex-col gap-2">
+          <span className="t-mono-label opacity-70">Next live · {next.day} {next.date} · {next.time}</span>
+          <h2 className="t-title md:t-display [overflow-wrap:anywhere]">{next.title}</h2>
+        </div>
+        <dl className="flex flex-wrap gap-x-8 gap-y-3">
+          {stats.map((st) => (
+            <div key={st.label} className="flex flex-col gap-1">
+              <dt className="t-mono-label-s opacity-70">{st.label}</dt>
+              <dd className="t-data-m tabular-nums">{st.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      <div className="flex w-full shrink-0 flex-col justify-between gap-4 rounded-a-md bg-a-page p-4 text-a-text md:w-60">
+        <div className="flex flex-col gap-1">
+          <span className="t-mono-label-s text-a-text-3">Studio</span>
+          <span className="t-body-l-medium">Stream room is ready</span>
+          <span className="t-body-m text-a-text-2">Camera, mic and chat checked.</span>
+        </div>
+        <Button hierarchy="highlight" size="md" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
+          Open studio <ArrowRight />
+        </Button>
+      </div>
+    </section>
+  )
+}
+
+/** ADM-01. Answers "how is it going, and what needs me today". Figma: Admin · 02 Overview 01. */
 export function AdminOverview() {
   const { coach, base } = useCoach()
   const needsHelp = ADMIN_STUDENTS.filter((s) => s.health !== "green")
@@ -144,6 +186,7 @@ export function AdminOverview() {
   const metrics = VIEWS.find((v) => v.id === view)!.metrics
   const [picked, setPicked] = useState<Record<string, string>>({})
   const metric = metrics.find((m) => m.id === picked[view]) ?? metrics[0]
+  const [lower, setLower] = useState<"courses" | "week">("courses")
 
   const strip = useMemo(
     () =>
@@ -155,210 +198,248 @@ export function AdminOverview() {
     [metrics, range, share],
   )
   const open = strip.find((s) => s.m.id === metric.id)!
-  const config = { value: { label: metric.label, color: "var(--chart-1)" } } satisfies ChartConfig
+  const config = { value: { label: metric.label, color: "var(--admin-color-accent-strong)" } } satisfies ChartConfig
+  // Daily counts read best as bars; levels (students, open requests) and long ranges as a line.
+  const bars = Boolean(metric.sum) && Number(range) <= 30
+  const [hover, setHover] = useState<number | null>(null)
+  const activeBar = hover ?? open.data.length - 1
+
+  const headline = useMemo(
+    () => VIEWS[0].metrics.slice(0, 4).map((m) => {
+      const data = series(m, 30, 1)
+      const value = m.sum ? data.reduce((n, d) => n + d.value, 0) : data[data.length - 1].value
+      return { m, value }
+    }),
+    [],
+  )
 
   return (
-    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="inline-flex h-9 items-center gap-2.5 rounded-full bg-white/[0.04] px-4 text-sm">
-          <span className="relative flex size-2">
-            <span className="absolute inset-0 animate-ping rounded-full bg-[var(--profit)] opacity-60" />
-            <span className="size-2 rounded-full bg-[var(--profit)]" />
-          </span>
-          Students online: <span className="font-medium tabular-nums">23</span>
-        </span>
-        <Button>
-          <Video /> Go live
-        </Button>
-      </div>
+    <div className="flex w-full flex-col gap-8">
+      <NextLiveBanner base={base} />
 
-      <div className="grid gap-1">
-        <p className="text-sm text-muted-foreground">{coach.name} · Monday, 12 October</p>
-        <h1 className="text-[2rem] leading-10 font-semibold tracking-[-0.025em]">Good morning, {DEMO_ADMIN.name.split(" ")[0]}</h1>
-      </div>
+      <AdminPageHeader
+        title="Overview"
+        subtitle={`${coach.name} · Monday, 12 October · Good morning, ${DEMO_ADMIN.name.split(" ")[0]}`}
+        actions={
+          <>
+            <span className="inline-flex h-9 items-center gap-2.5 rounded-full bg-a-selected px-4 t-body-m">
+              <span className="relative flex size-2">
+                <span className="absolute inset-0 animate-ping rounded-full bg-a-success-fill opacity-60 motion-reduce:animate-none" />
+                <span className="size-2 rounded-full bg-a-success-fill" />
+              </span>
+              Students online: <span className="t-body-m-medium tabular-nums">23</span>
+            </span>
+            <Button size="lg" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
+              <Video /> Go live <ArrowRight />
+            </Button>
+          </>
+        }
+      />
 
       {/* First, so a coach fresh from setup sees what's left; once it's all done it folds to one line. */}
       <SetupChecklist />
 
-      <div className="flex flex-col gap-4">
-        <SampleNotice>The numbers and lists on this page are examples, so you can see how the Overview works. They become yours as students join.</SampleNotice>
-        <Tabs value={view} onValueChange={(v) => setView(v as string)}>
-          <TabsList className="w-full justify-start">
-            {VIEWS.map((v) => (
-              <TabsTrigger key={v.id} value={v.id}>
-                {v.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+      <Panel className="gap-0 p-0">
+        <div className="grid grid-cols-2 divide-a-border lg:grid-cols-4 lg:divide-x">
+          {headline.map(({ m, value }, i) => (
+            <Link key={m.id} href={`${base}/${m.href}`} className={cn("outline-none transition-colors duration-300 hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:ring-inset", i < 2 && "max-lg:border-b max-lg:border-a-border", i % 2 === 0 && "max-lg:border-r max-lg:border-a-border", i === 0 && "rounded-tl-a-lg", i === 1 && "max-lg:rounded-tr-a-lg", i === 2 && "max-lg:rounded-bl-a-lg lg:rounded-none", i === 3 && "rounded-br-a-lg max-lg:rounded-br-a-lg lg:rounded-r-a-lg")}>
+              <MetricCard label={m.label} value={format(m, value)} delta={`${m.trend >= 0 ? "+" : "−"}${Math.round(Math.abs(m.trend) * 100)}% vs last month`} tone={m.id === "feedback" ? (m.trend < 0 ? "success" : "danger") : m.trend >= 0 ? "success" : "danger"} />
+            </Link>
+          ))}
+        </div>
+      </Panel>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterChip name="Date range" value={range} options={RANGES} onChange={setRange} />
-          <FilterChip name="Tier" value={tier} options={tiers} onChange={setTier} />
+      <SampleNotice>The numbers and lists on this page are examples, so you can see how the Overview works. They become yours as students join.</SampleNotice>
+
+      <Panel>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <AdminTabs label="Overview view" tabs={VIEWS.map((v) => ({ id: v.id, label: v.label }))} value={view} onChange={setView} />
+          <div className="flex flex-wrap items-center gap-2">
+            <FilterChip name="Date range" value={range} options={RANGES} onChange={setRange} />
+            <FilterChip name="Tier" value={tier} options={tiers} onChange={setTier} />
+          </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border bg-card">
-          <div className="grid grid-cols-2 gap-1 p-1.5 sm:grid-cols-3 lg:grid-flow-col lg:auto-cols-fr lg:grid-cols-none">
-            {strip.map(({ m, value }) => {
-              const on = m.id === metric.id
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => setPicked((p) => ({ ...p, [view]: m.id }))}
-                  className={cn(
-                    "flex flex-col gap-1.5 rounded-[10px] px-4 py-3.5 text-left outline-none transition-[background-color,scale] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98] motion-reduce:active:scale-100",
-                    on ? "bg-white/[0.07]" : "hover:bg-white/[0.04]",
-                  )}
-                >
-                  <span className={cn("text-sm", on ? "text-foreground" : "text-muted-foreground")}>{m.label}</span>
-                  <span className={cn("text-[1.375rem] leading-7 tabular-nums", on ? "text-foreground" : "text-muted-foreground")}>
-                    {format(m, value)}
-                    {m.unit && <span className="ml-1 text-sm text-muted-foreground">{m.unit}</span>}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-          <div className="px-5 pt-6 pb-5">
-            <ChartContainer config={config} className="aspect-auto h-72 w-full">
-              <AreaChart data={open.data} margin={{ left: 0, right: 8, top: 8 }}>
-                <defs>
-                  <linearGradient id="ov-fill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-value)" stopOpacity={0.18} />
-                    <stop offset="100%" stopColor="var(--color-value)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} />
-                <YAxis tickLine={false} axisLine={false} width={44} tickFormatter={(v) => format(metric, v)} />
-                <ChartTooltip
-                  cursor={{ stroke: "var(--border)" }}
-                  content={
-                    <ChartTooltipContent
-                      hideLabel
-                      formatter={(v, _n, item) => (
-                        <span className="flex w-full items-center justify-between gap-4">
-                          <span className="text-muted-foreground">{item.payload?.date}</span>
-                          <span className="font-medium text-foreground tabular-nums">{format(metric, Number(v))}</span>
-                        </span>
-                      )}
-                    />
-                  }
-                />
-                <Area dataKey="value" type="monotoneX" stroke="var(--color-value)" strokeWidth={1.75} fill="url(#ov-fill)" />
-              </AreaChart>
-            </ChartContainer>
-            <div className="mt-1 flex justify-between pl-11 text-xs text-muted-foreground tabular-nums">
-              <span>{open.data[0].date}</span>
-              <span>{open.data[open.data.length - 1].date}</span>
-            </div>
-            <div className="mt-5 flex items-center justify-between gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Download as CSV"
-                onClick={() => toast(`${metric.label} · ${RANGES[range].toLowerCase()}`, { description: "Downloads as a CSV in the real product." })}
+        <div role="group" aria-label="Metric shown in the chart" className="flex flex-wrap gap-2">
+          {strip.map(({ m, value }) => {
+            const on = m.id === metric.id
+            return (
+              <button
+                key={m.id}
+                aria-pressed={on}
+                onClick={() => setPicked((p) => ({ ...p, [view]: m.id }))}
+                className={cn(
+                  "inline-flex min-w-0 items-center gap-2 rounded-a-sm px-2.5 py-1.5 text-left outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
+                  on ? "bg-a-selected text-a-text" : "text-a-text-2 hover:bg-a-hover hover:text-a-text",
+                )}
               >
-                <Download />
-              </Button>
-              <Button variant="outline" nativeButton={false} render={<Link href={`${base}/${metric.href}`} />}>
-                Open {metric.href === "journal" ? "Journal & feedback" : metric.href} <ArrowUpRight />
-              </Button>
-            </div>
+                <span className="t-caption truncate">{m.label}</span>
+                <span className="t-caption-medium tabular-nums">
+                  {format(m, value)}
+                  {m.unit && <span className="ml-1 text-a-text-3">{m.unit}</span>}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="rounded-a-md bg-a-sunk p-3 md:p-4">
+          <ChartContainer config={config} className="aspect-auto h-64 w-full md:h-72">
+            {bars ? (
+              <BarChart data={open.data} margin={{ left: 0, right: 4, top: 8 }} barCategoryGap="22%" onMouseMove={(st) => setHover(typeof st.activeTooltipIndex === "number" ? st.activeTooltipIndex : null)} onMouseLeave={() => setHover(null)}>
+                <CartesianGrid vertical={false} stroke="var(--admin-color-chart-grid)" />
+                <YAxis tickLine={false} axisLine={false} width={44} tickFormatter={(v) => format(metric, v)} />
+                <ChartTooltip cursor={false} content={<OverviewTooltip metric={metric} />} />
+                <Bar dataKey="value" radius={[3, 3, 0, 0]} isAnimationActive={false}>
+                  {open.data.map((d, i) => (
+                    <Cell key={d.date} fill={i === activeBar ? "var(--admin-color-accent-strong)" : "var(--admin-color-bg-track)"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            ) : (
+              <LineChart data={open.data} margin={{ left: 0, right: 8, top: 8 }}>
+                <CartesianGrid vertical={false} stroke="var(--admin-color-chart-grid)" />
+                <YAxis domain={["auto", "auto"]} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => format(metric, v)} />
+                <ChartTooltip cursor={{ stroke: "var(--admin-color-border-strong)" }} content={<OverviewTooltip metric={metric} />} />
+                <Line dataKey="value" type="monotoneX" stroke="var(--admin-color-accent-strong)" strokeWidth={1.75} dot={false} />
+              </LineChart>
+            )}
+          </ChartContainer>
+          <div className="mt-1 flex justify-between pl-11 t-caption text-a-text-3 tabular-nums">
+            <span>{open.data[0].date}</span>
+            <span>{open.data[open.data.length - 1].date}</span>
           </div>
         </div>
-      </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Needs your help</CardTitle>
-            <CardDescription>{needsHelp.length} students, most urgent first</CardDescription>
-            <CardAction>
-              <Link href={`${base}/students`} className="inline-flex items-center gap-1 text-sm text-primary">
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            hierarchy="secondary"
+            iconOnly
+            aria-label="Download as CSV"
+            onClick={() => toast(`${metric.label} · ${RANGES[range].toLowerCase()}`, { description: "Downloads as a CSV in the real product." })}
+          >
+            <Download />
+          </Button>
+          <Button hierarchy="secondary" nativeButton={false} render={<Link href={`${base}/${metric.href}`} />}>
+            Open {metric.href === "journal" ? "Journal & feedback" : metric.href} <ArrowUpRight />
+          </Button>
+        </div>
+      </Panel>
+
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <Panel>
+          <PanelHeader
+            title={lower === "courses" ? "Content" : "This week"}
+            description={lower === "courses" ? "Average progress across students with access" : "Lives, calls and news"}
+            actions={<AdminTabs label="Content view" tabs={[{ id: "courses", label: "Courses" }, { id: "week", label: "This week" }]} value={lower} onChange={setLower} />}
+          />
+          {lower === "courses" ? (
+            COURSES.length === 0 ? (
+              <EmptyLine>No courses yet. Add your first one in Content.</EmptyLine>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+                {COURSES.map((c) => {
+                  const pct = Math.min(100, courseProgress(c) + 9)
+                  return (
+                    <Link key={c.id} href={`${base}/content`} className="flex min-w-0 flex-col gap-3 rounded-a-md border border-a-border-subtle bg-a-raised p-4 outline-none transition-colors duration-300 hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus">
+                      <div className="flex min-w-0 flex-col gap-0.5">
+                        <span className="t-mono-label-s text-a-text-3">{c.area}</span>
+                        <span className="t-body-l-medium truncate">{c.title}</span>
+                      </div>
+                      <div className="flex items-end justify-between gap-2">
+                        <span className="t-data-m tabular-nums">{pct}%</span>
+                        <span className="t-caption text-a-text-2">{c.modules.length} {c.modules.length === 1 ? "module" : "modules"}</span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-a-track" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${c.title} progress`}>
+                        <div className="h-full rounded-full bg-a-accent-strong" style={{ width: `${pct}%` }} />
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            )
+          ) : EVENTS.length === 0 ? (
+            <EmptyLine>Nothing scheduled this week.</EmptyLine>
+          ) : (
+            <ul className="flex flex-col divide-y divide-a-border-subtle">
+              {EVENTS.slice(0, 5).map((e) => (
+                <li key={e.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <span className="w-24 shrink-0 t-mono-data text-a-text-2 tabular-nums">{e.day} {e.time}</span>
+                  <span className="t-body-m min-w-0 flex-1 truncate">{e.title}</span>
+                  {e.noTrade && <Tag tone="danger">No trade</Tag>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel>
+          <PanelHeader
+            title="Needs you today"
+            description={`${needsHelp.length + FEEDBACK_REQUESTS.length} things, most urgent first`}
+            actions={
+              <Link href={`${base}/students`} className="inline-flex items-center gap-1 t-body-m text-a-text-accent hover:underline">
                 All students <ArrowRight className="size-4" />
               </Link>
-            </CardAction>
-          </CardHeader>
-          <CardContent className="flex flex-col divide-y">
-            {needsHelp.map((s) => (
-              <div key={s.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                <span className={cn("size-2 shrink-0 rounded-full", s.health === "red" ? "bg-red-500" : "bg-amber-400")} />
-                <Avatar className="size-8">
-                  <AvatarFallback className="text-xs">{s.initials}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{s.name}</div>
-                  <div className="truncate text-xs text-muted-foreground">
-                    {s.reason} · {s.tier}
-                  </div>
-                </div>
-                <Button variant="outline" size="sm">Open</Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Feedback requests</CardTitle>
-            <CardDescription>Trades waiting for your review, oldest first</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {FEEDBACK_REQUESTS.map((f) => (
-              <div key={f.id} className="flex flex-col gap-1.5 rounded-lg border p-3 bg-card">
-                <div className="flex items-center gap-2">
-                  <Avatar className="size-6">
-                    <AvatarFallback className="text-[0.6875rem]">{f.initials}</AvatarFallback>
+            }
+          />
+          {needsHelp.length + FEEDBACK_REQUESTS.length === 0 ? (
+            <EmptyLine>All clear. Nothing needs you right now.</EmptyLine>
+          ) : (
+            <ul className="flex flex-col divide-y divide-a-border-subtle">
+              {needsHelp.map((s) => (
+                <li key={s.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <Avatar className="size-8 shrink-0">
+                    <AvatarFallback className="text-xs">{s.initials}</AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium">{f.student}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">{f.waiting}</span>
-                </div>
-                <div className="text-sm">
-                  <Badge variant="secondary" className="mr-2 font-mono">{f.trade}</Badge>
-                  <span className="text-muted-foreground">“{f.note}”</span>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>This week</CardTitle>
-            <CardDescription>Lives, calls and news</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {EVENTS.slice(0, 5).map((e) => (
-              <div key={e.id} className="flex items-center gap-3 text-sm">
-                <span className="w-20 shrink-0 text-muted-foreground tabular-nums">
-                  {e.day} {e.time}
-                </span>
-                <span className="flex-1 truncate">{e.title}</span>
-                {e.noTrade && <Badge variant="destructive">No trade</Badge>}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Course progress</CardTitle>
-            <CardDescription>Average across students with access</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {COURSES.map((c) => (
-              <div key={c.id} className="flex flex-col gap-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span>{c.title}</span>
-                  <span className="text-muted-foreground tabular-nums">{courseProgress(c) + 9}%</span>
-                </div>
-                <Progress value={courseProgress(c) + 9} />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+                  <div className="min-w-0 flex-1">
+                    <div className="t-body-m-medium flex items-center gap-2">
+                      <span className={cn("size-1.5 shrink-0 rounded-full", s.health === "red" ? "bg-a-danger-fill" : "bg-a-warning-fill")} aria-label={s.health === "red" ? "Urgent" : "Warning"} />
+                      <span className="truncate">{s.name}</span>
+                    </div>
+                    <div className="t-caption truncate text-a-text-2">{s.reason} · {s.tier}</div>
+                  </div>
+                  <Button hierarchy="secondary" size="sm" nativeButton={false} render={<Link href={`${base}/students`} />}>Open</Button>
+                </li>
+              ))}
+              {FEEDBACK_REQUESTS.map((f) => (
+                <li key={f.id} className="flex items-center gap-3 py-3 last:pb-0">
+                  <Avatar className="size-8 shrink-0">
+                    <AvatarFallback className="text-xs">{f.initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="t-body-m-medium flex items-center gap-2">
+                      <span className="truncate">{f.student}</span>
+                      <Tag className="shrink-0">{f.trade}</Tag>
+                    </div>
+                    <div className="t-caption truncate text-a-text-2">“{f.note}” · {f.waiting}</div>
+                  </div>
+                  <Button hierarchy="secondary" size="sm" nativeButton={false} render={<Link href={`${base}/journal`} />}>Review</Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
       </div>
     </div>
+  )
+}
+
+function EmptyLine({ children }: { children: React.ReactNode }) {
+  return <p className="rounded-a-md border border-dashed border-a-border-strong px-4 py-8 text-center t-body-m text-a-text-2">{children}</p>
+}
+
+function OverviewTooltip({ metric, ...props }: { metric: Metric } & React.ComponentProps<typeof ChartTooltipContent>) {
+  return (
+    <ChartTooltipContent
+      {...props}
+      hideLabel
+      formatter={(v, _n, item) => (
+        <span className="flex w-full items-center justify-between gap-4">
+          <span className="text-a-text-2">{item.payload?.date}</span>
+          <span className="t-body-m-medium text-a-text tabular-nums">{format(metric, Number(v))}</span>
+        </span>
+      )}
+    />
   )
 }

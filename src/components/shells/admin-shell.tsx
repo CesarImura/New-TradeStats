@@ -70,7 +70,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
     <SidebarProvider className="ts-ui ts-admin ts-admin-v2 bg-a-page font-a-sans text-a-text" style={{ "--sidebar-width": "255px" } as React.CSSProperties}>
       <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS + TS_ADMIN_CSS + TS_ADMIN_V2_CSS }} />
       <div className="flex min-h-svh w-full">
-        <aside className="sticky top-0 hidden h-svh w-[271px] shrink-0 p-2 lg:block" aria-label="Main menu">
+        <aside className="sticky top-0 hidden h-svh w-[271px] shrink-0 p-2 xl:block" aria-label="Main menu">
           <div className="flex h-full flex-col rounded-a-xl border border-a-border bg-a-page pt-5 pr-4 pb-4 pl-4">{menu}</div>
         </aside>
         <Sheet open={drawer} onOpenChange={setDrawer}>
@@ -87,13 +87,13 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
         </Sheet>
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="ts-admin-bar sticky top-0 z-20 flex h-14 items-center gap-2 px-4 backdrop-blur-md md:px-8">
-            <Button hierarchy="ghost" iconOnly aria-label="Open menu" className="lg:hidden" onClick={() => setDrawer(true)}>
+            <Button hierarchy="ghost" iconOnly aria-label="Open menu" className="xl:hidden" onClick={() => setDrawer(true)}>
               <Menu />
             </Button>
-            <span className="t-body-l-medium truncate lg:hidden">{current?.label}</span>
+            <span className="t-body-l-medium truncate xl:hidden">{current?.label}</span>
             <button
               type="button"
-              className="hidden h-11 w-80 max-w-full items-center gap-2 rounded-a-md border border-a-border-subtle bg-a-field px-3 text-left text-a-text-3 t-body-l transition-colors duration-300 hover:border-a-border-strong focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:outline-none lg:flex"
+              className="hidden h-11 w-80 max-w-full items-center gap-2 rounded-a-md border border-a-border-subtle bg-a-field px-3 text-left text-a-text-3 t-body-l transition-colors duration-300 hover:border-a-border-strong focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:outline-none xl:flex"
               aria-label="Search"
             >
               <Search className="size-4 text-a-icon" />
