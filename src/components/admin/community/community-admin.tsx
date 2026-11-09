@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, CalendarClock, Check, Hash, Megaphone, Pin, Plus, RefreshCw, Send, Trash2, Unplug } from "@/components/icons"
+import { Bell, CalendarClock, Check, Hash, Pin, Plus, RefreshCw, Send, Trash2, Unplug } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
@@ -17,6 +18,7 @@ import { DISCORD } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { Field, Mono, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
 import { SetupTip, useWizardCommunity } from "../setup-checklist"
+import { AdminButton, Panel, PanelHeader, Tag } from "../ui"
 
 export type Announcement = (typeof ANNOUNCEMENTS)[number] & { tiers?: string[]; scheduled?: string; space?: string }
 type DiscordSetup = { connected: boolean; roles: Record<string, string>; posts: Record<string, boolean>; removeOnCancel: boolean }
@@ -41,6 +43,7 @@ export function CommunityAdmin() {
   const [list, setList] = useCommunityData<Announcement[]>(coach.slug, "announcements", ANNOUNCEMENTS)
   const [spaces, setSpaces] = useCommunityData<Space[]>(coach.slug, "spaces", DEFAULT_SPACES)
   const [rules, setRules] = useCommunityData<string[]>(coach.slug, "rules", DEFAULT_RULES)
+  const [composing, setComposing] = useState(false)
   const [d, setD] = useCommunityData(coach.slug, "discord", useWizardCommunity(coach.slug) ? NO_DISCORD : DEFAULT_DISCORD)
 
   return (
@@ -59,42 +62,67 @@ export function CommunityAdmin() {
           <TabsTrigger value="discord">Discord</TabsTrigger>
         </TabsList>
         <TabsContent value="announcements">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <Composer spaces={spaces} onPost={(a) => setList((l) => [a, ...l])} />
-            <div className="grid content-start gap-3">
-              <h2 className="font-medium">Sent</h2>
-              {list.map((a) => (
-                <article key={a.id} className="grid gap-3 rounded-lg border bg-card p-4">
-                  <div className="flex items-start gap-3">
-                    {a.pinned && <Pin className="mt-0.5 size-3.5 shrink-0 text-[var(--ts-interactive)]" />}
-                    <span className="flex-1 font-medium">{a.title}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">{a.scheduled ? `Scheduled · ${a.scheduled}` : a.when}</span>
-                  </div>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{a.body}</p>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {a.space && spaces.find((x) => x.id === a.space) && (
-                      <Badge variant="secondary" className="font-normal">
-                        {spaces.find((x) => x.id === a.space)?.name}
-                      </Badge>
-                    )}
-                    {a.channels.map((c) => (
-                      <Badge key={c} variant="outline" className="font-normal">
-                        {CHANNELS.find((x) => x.id === c)?.label}
-                      </Badge>
-                    ))}
-                    <span className="ml-auto text-xs text-muted-foreground tabular-nums">{a.scheduled ? "Not sent yet" : `Read by ${a.reads}`}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      aria-label={a.pinned ? "Unpin" : "Pin"}
-                      onClick={() => setList((l) => l.map((x) => (x.id === a.id ? { ...x, pinned: !x.pinned } : x)))}
-                    >
-                      <Pin />
-                    </Button>
-                  </div>
-                </article>
-              ))}
+          <div className="grid gap-4">
+            <div className="flex justify-end">
+              <AdminButton onClick={() => setComposing(true)}>
+                <Plus /> New announcement
+              </AdminButton>
             </div>
+            <div className="overflow-x-auto rounded-a-lg border border-a-border bg-a-panel">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-5">Announcement</TableHead>
+                    <TableHead className="hidden md:table-cell">Sent to</TableHead>
+                    <TableHead>When</TableHead>
+                    <TableHead className="w-12" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {list.map((a) => (
+                    <TableRow key={a.id}>
+                      <TableCell className="max-w-80 pl-5">
+                        <div className="flex items-center gap-2.5">
+                          {a.pinned && <Tag tone="accent" dot>Pinned</Tag>}
+                          <div className="grid min-w-0">
+                            <span className="truncate font-medium">{a.title}</span>
+                            <span className="truncate text-xs text-a-text-2">{a.body}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden text-a-text-2 md:table-cell">{a.channels.map((c) => CHANNELS.find((x) => x.id === c)?.label).join(", ")}</TableCell>
+                      <TableCell className={cn("whitespace-nowrap", a.scheduled ? "text-a-text-accent" : "text-a-text-2")}>{a.scheduled ? `Scheduled · ${a.scheduled}` : `${a.when} · read by ${a.reads}`}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon-sm" aria-label={a.pinned ? `Unpin ${a.title}` : `Pin ${a.title}`} onClick={() => setList((l) => l.map((x) => (x.id === a.id ? { ...x, pinned: !x.pinned } : x)))}>
+                          <Pin />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {list.length === 0 && <p className="px-4 py-8 text-center t-body-m text-a-text-2">No announcements yet.</p>}
+              <p className="border-t border-a-border-subtle px-5 py-3 t-caption text-a-text-2">Also shows as the Announcement widget on Home</p>
+            </div>
+            <Panel>
+              <PanelHeader title="Automatic announcements" />
+              <div className="grid divide-y divide-a-border-subtle">
+                {([["lesson", "New lesson published"], ["live", "A live session starts"], ["chart", "A new marked-up chart"]] as const).map(([id, label]) => (
+                  <SettingRow key={id} label={label}>
+                    <Switch checked={!!d.posts[id]} onCheckedChange={(v) => setD((x) => ({ ...x, posts: { ...x.posts, [id]: v } }))} />
+                  </SettingRow>
+                ))}
+              </div>
+            </Panel>
+            <Dialog open={composing} onOpenChange={setComposing}>
+              <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-xl">
+                <DialogHeader>
+                  <DialogTitle>New announcement</DialogTitle>
+                  <DialogDescription>Choose where it goes and who gets it.</DialogDescription>
+                </DialogHeader>
+                <Composer spaces={spaces} onPost={(a) => { setList((l) => [a, ...l]); setComposing(false) }} />
+              </DialogContent>
+            </Dialog>
           </div>
         </TabsContent>
 
@@ -202,10 +230,7 @@ function Composer({ spaces, onPost }: { spaces: Space[]; onPost: (a: Announcemen
   const [when, setWhen] = useState("Tue 13 Oct, 08:00")
 
   return (
-    <div className="grid content-start gap-3 rounded-lg border bg-card p-4">
-      <h2 className="flex items-center gap-2 font-medium">
-        <Megaphone className="size-4" /> New announcement
-      </h2>
+    <div className="grid content-start gap-3">
       <Field label="Title">
         <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="New module is live" />
       </Field>
