@@ -20,16 +20,15 @@ import { setStored } from "@/lib/prototype-store"
 import { EMAIL_TEMPLATES, LEGAL, ROLES, TEAM } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Field, Mono, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { Tag } from "../ui"
 
-const TABS = [
-  ["general", "General"],
-  ["domain", "Domain"],
-  ["email", "E-mails"],
-  ["legal", "Legal pages"],
-  ["onboarding", "Student onboarding"],
-  ["tax", "Tax & invoices"],
-  ["team", "Team & roles"],
-  ["plan", "Our subscription"],
+/** Sub-navigation groups, as in Figma (mono label, then the pages). */
+const GROUPS = [
+  { label: "Your business", tabs: [["general", "General"], ["domain", "Web address"], ["email", "E-mails"], ["legal", "Legal pages"]] },
+  { label: "Students", tabs: [["onboarding", "Onboarding questions"]] },
+  { label: "Money", tabs: [["tax", "Invoices and VAT"]] },
+  { label: "Team", tabs: [["team", "Team and roles"]] },
+  { label: "Your plan", tabs: [["plan", "Plan and invoices"]] },
 ] as const
 
 /** ADM-45 to ADM-52. */
@@ -39,11 +38,16 @@ export function SettingsAdmin() {
     <Page>
       <PageHeader title="Settings" text="Your platform's name, address, e-mails, legal pages and team." guide="Your own domain · 2 min" />
       <Tabs defaultValue={tab} orientation="vertical" className="gap-6 max-md:flex-col!">
-        <TabsList variant="line" className="h-fit shrink-0 items-stretch max-md:w-full max-md:flex-row! max-md:overflow-x-auto max-md:[scrollbar-width:none] md:w-48">
-          {TABS.map(([id, label]) => (
-            <TabsTrigger key={id} value={id} className="justify-start">
-              {label}
-            </TabsTrigger>
+        <TabsList variant="line" className="h-fit shrink-0 items-stretch max-md:w-full max-md:flex-row! max-md:overflow-x-auto max-md:[scrollbar-width:none] md:w-56">
+          {GROUPS.map((g) => (
+            <div key={g.label} className="flex flex-col gap-0.5 max-md:flex-row max-md:items-center">
+              <span className="t-mono-label-s px-2 pt-4 pb-1 text-a-text-3 max-md:hidden">{g.label}</span>
+              {g.tabs.map(([id, label]) => (
+                <TabsTrigger key={id} value={id} className="justify-start">
+                  {label}
+                </TabsTrigger>
+              ))}
+            </div>
           ))}
         </TabsList>
         <div className="min-w-0 flex-1">
@@ -522,7 +526,7 @@ function Team() {
                   </TableCell>
                   <TableCell>
                     {m.role === "Owner" ? (
-                      <Badge variant="secondary">Owner</Badge>
+                      <Tag tone="accent" dot>Owner</Tag>
                     ) : (
                       <NativeSelect
                         aria-label={`Role of ${m.name}`}
