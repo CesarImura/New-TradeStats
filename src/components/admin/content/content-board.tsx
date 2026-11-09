@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "../kit"
+import { StatPanel } from "../ui"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
@@ -117,6 +118,14 @@ export function ContentBoard() {
             </Button>
           </>
         }
+      />
+      <StatPanel
+        stats={[
+          { label: "Students with access", value: coach.tiers.reduce((n, t) => n + t.members, 0).toLocaleString("en"), delta: `${catalog.courses.length} ${catalog.courses.length === 1 ? "course" : "courses"}` },
+          { label: "Active this week", value: 86, delta: "Watched a lesson", tone: "success" },
+          { label: "Average completion", value: "44%", delta: "Across published courses" },
+          { label: "Most watched", value: "Lesson 2", delta: "Entries that don't chase" },
+        ]}
       />
       <SetupTip task="course" />
       <SampleNotice show={catalog.courses.some((c) => sample(c.id))}>

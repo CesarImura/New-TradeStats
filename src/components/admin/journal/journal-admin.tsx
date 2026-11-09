@@ -17,6 +17,7 @@ import { STUDENTS, tierFor } from "@/lib/data/people"
 import { STRATEGIES, TAGS, fmtPnl, fmtR } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { Empty, Mono, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { StatPanel } from "../ui"
 
 /** Who sent which sample trade. In the prototype every student shares the same sample journal. */
 const OWNER: Record<string, string> = { t1: "s2", t2: "s5", t3: "s4", t4: "s1", t5: "s6", t6: "s7", t7: "s1" }
@@ -42,6 +43,14 @@ export function JournalAdmin() {
         title="Journal & feedback"
         text={`Trades your ${coach.wording.students.toLowerCase()} want you to look at, oldest first, and the rules their journal checks.`}
         guide="Giving feedback · 2 min"
+      />
+      <StatPanel
+        stats={[
+          { label: "Waiting for you", value: waiting.length, delta: waiting.length ? "Oldest first" : "Nothing waiting" },
+          { label: "Answered this week", value: answered.length, delta: "Median reply 6 h" },
+          { label: "Rules kept", value: "84%", delta: "+3 pp vs last 30 days", tone: "success" },
+          { label: "Journaling students", value: 121, delta: "60% of active students" },
+        ]}
       />
       <Tabs value={tab} onValueChange={setTab} className="gap-5">
         <TabsList>

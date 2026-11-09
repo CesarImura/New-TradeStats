@@ -16,6 +16,7 @@ import { useTiers } from "@/lib/data/access"
 import { DOWNLOAD_CATEGORIES, categoryLabel, saveDownloads, shortDate, useDownloads, type DownloadCategory, type DownloadFile, type DownloadItem } from "@/lib/data/downloads"
 import { cn } from "@/lib/utils"
 import { Empty, Field, NativeSelect, Page, PageHeader } from "../kit"
+import { AdminTabs, FileIcon, Tag } from "../ui"
 
 const TYPES: Record<string, string> = {
   pdf: "PDF",
@@ -42,6 +43,9 @@ const fileOf = (f: File): DownloadFile => ({ name: f.name, size: sizeOf(f.size),
 export function DownloadsAdmin() {
   const { coach, base } = useCoach()
   const items = useDownloads(coach)
+  const [cat, setCat] = useState<string>("all")
+  const [q, setQ] = useState("")
+  const shown = items.filter((d) => (cat === "all" || d.category === cat) && (!q || `${d.title} ${d.file.name}`.toLowerCase().includes(q.toLowerCase())))
   const tiers = useTiers(coach)
   const [editing, setEditing] = useState<DownloadItem | "new" | null>(null)
   const tierName = (d: DownloadItem) => (d.tiers.length === 0 ? "Everyone" : d.tiers.map((id) => tiers.find((t) => t.id === id)?.name ?? id).join(", "))
@@ -75,6 +79,11 @@ export function DownloadsAdmin() {
       {items.length === 0 ? (
         <Empty icon={Download} title="No files yet" text="Upload an indicator, a template or a checklist and students find it under Downloads." action={<Button onClick={() => setEditing("new")}><Plus /> Upload a file</Button>} />
       ) : (
+        <>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <AdminTabs label="Category" tabs={[{ id: "all", label: "All" }, ...DOWNLOAD_CATEGORIES.map((c) => ({ id: c.id, label: c.label }))]} value={cat} onChange={setCat} />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search files" aria-label="Search files" className="w-full sm:w-64" />
+        </div>
         <div className="overflow-x-auto rounded-lg border bg-card">
           <Table>
             <TableHeader>
@@ -88,17 +97,20 @@ export function DownloadsAdmin() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((d) => (
+              {shown.map((d) => (
                 <TableRow key={d.id}>
                   <TableCell className="max-w-72">
-                    <div className="grid">
-                      <span className="truncate font-medium">{d.title}</span>
-                      <span className="truncate text-xs text-muted-foreground">
-                        {d.file.name} · {d.file.size}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <FileIcon name={d.file.name} />
+                      <div className="grid min-w-0">
+                        <span className="truncate font-medium">{d.title}</span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {d.file.name} · {d.file.size}
+                        </span>
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">{categoryLabel(d.category)}</TableCell>
+                  <TableCell className="hidden sm:table-cell"><Tag>{categoryLabel(d.category)}</Tag></TableCell>
                   <TableCell className="tabular-nums">v{d.version}</TableCell>
                   <TableCell className="hidden text-muted-foreground md:table-cell">{tierName(d)}</TableCell>
                   <TableCell className="hidden text-muted-foreground sm:table-cell">{shortDate(d.updated)}</TableCell>
@@ -116,7 +128,9 @@ export function DownloadsAdmin() {
               ))}
             </TableBody>
           </Table>
+          {shown.length === 0 && <p className="px-4 py-8 text-center t-body-m text-a-text-2">No files match.</p>}
         </div>
+        </>
       )}
       <p className="text-xs text-muted-foreground">For invite-only TradingView scripts, add the student&apos;s username under Settings later.</p>
 

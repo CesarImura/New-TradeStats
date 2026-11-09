@@ -63,13 +63,6 @@ export function AdminCalendar() {
   const sample = (e?: CalEvent) => !!wizard && !!e && isSampleEvent(coach, e.id)
   const sampleBooking = (b?: Booking) => !!wizard && !!b && isSampleBooking(coach, b.id)
   const items = itemsBetween(schedule, RANGE.from, RANGE.to, { bookings: "all" }).map((i) => (sample(i.event) || sampleBooking(i.booking) ? { ...i, title: `Sample · ${i.title}` } : i))
-  const week = items.filter((i) => i.start >= NOW && i.start < addDays(NOW, 7))
-  const stats = [
-    { label: "Lives this week", value: week.filter((i) => i.kind === "live").length },
-    { label: "Workshop sign-ups", value: week.filter((i) => i.kind === "workshop").reduce((n, i) => n + (i.event?.signedUp ?? 0), 0) },
-    { label: "1:1 calls booked", value: week.filter((i) => i.kind === "one-on-one").length },
-    { label: "No-trade events", value: week.filter((i) => i.news?.noTrade).length },
-  ]
 
   const newEvent = (start: Date) => {
     setIsNew(true)
@@ -91,17 +84,6 @@ export function AdminCalendar() {
       <SampleNotice show={schedule.events.some((e) => sample(e))}>
         Events and 1:1 bookings marked Sample are examples, so you can see how your calendar looks. Replace or delete them before you invite students.
       </SampleNotice>
-
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map((s) => (
-          <Card key={s.label} size="sm">
-            <CardHeader>
-              <CardDescription>{s.label}</CardDescription>
-              <CardTitle className="text-2xl tabular-nums">{s.value}</CardTitle>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
 
       <Tabs defaultValue="calendar" className="gap-5">
         <TabsList>

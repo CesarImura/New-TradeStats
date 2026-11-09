@@ -17,6 +17,7 @@ import { DEFAULT_AI, aiAnswer, type AiReply, type AiSetup } from "@/lib/data/ai"
 import { AI_FEATURES, AI_KNOWLEDGE, AI_QUESTIONS, AI_USAGE } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Field, Mono, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { StatPanel } from "../ui"
 
 /** ADM-24 features and quotas, ADM-25 knowledge, ADM-26 personality, ADM-27 test and correct, ADM-28 questions asked. */
 export function AiAdmin() {
@@ -32,6 +33,14 @@ export function AiAdmin() {
         title="AI assistant"
         text={`Answers your ${coach.wording.students.toLowerCase()}' questions from your own lessons, in your way of trading. Students see it as “${coach.wording.ai}”. Everything it writes is marked as AI.`}
         guide="Training your AI · 3 min"
+      />
+      <StatPanel
+        stats={[
+          { label: "Questions this month", value: "1,412", delta: "+18% vs last month", tone: "success" },
+          { label: "Answered by AI", value: "91%", delta: "9% sent to you" },
+          { label: "Corrections", value: 14, delta: "Taught in the last 30 days" },
+          { label: "Top topic", value: "Stops on ORB", delta: "212 questions" },
+        ]}
       />
       <Tabs defaultValue="personality" className="gap-5">
         <TabsList className="flex-wrap">

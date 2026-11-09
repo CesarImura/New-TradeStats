@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Empty, Field, NativeSelect, Page, PageHeader } from "../kit"
-import { Metric, Panel, Tag } from "../ui"
+import { StatPanel, Tag } from "../ui"
 import { SetupTip } from "../setup-checklist"
 import { ImportDialog } from "./import-dialog"
 import { StudentProfile } from "./student-profile"
@@ -78,14 +78,14 @@ export function StudentsPage() {
       />
       <SetupTip task="invite" />
 
-      <Panel className="gap-0 p-0">
-        <div className="grid grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-a-border">
-          <Metric label="Active this week" value={STUDENTS.filter((s) => s.activeDays > 0 && !s.joined.startsWith("invited")).length} delta={`${Math.round((STUDENTS.filter((s) => s.activeDays > 0).length / Math.max(STUDENTS.length, 1)) * 100)}% of all students`} />
-          <Metric label="Need help" value={counts.help} delta="Rules broken or stuck" tone={counts.help ? "danger" : "neutral"} />
-          <Metric label="Payment issues" value={STUDENTS.filter((s) => s.reason?.toLowerCase().includes("payment")).length} delta="Retrying automatically" />
-          <Metric label="Invited" value={counts.invited} delta="Haven't joined yet" />
-        </div>
-      </Panel>
+      <StatPanel
+        stats={[
+          { label: "Active this week", value: STUDENTS.filter((s) => s.activeDays > 0 && !s.joined.startsWith("invited")).length, delta: `${Math.round((STUDENTS.filter((s) => s.activeDays > 0).length / Math.max(STUDENTS.length, 1)) * 100)}% of all students` },
+          { label: "Need help", value: counts.help, delta: "Rules broken or stuck", tone: counts.help ? "danger" : "neutral" },
+          { label: "Payment issues", value: STUDENTS.filter((s) => s.reason?.toLowerCase().includes("payment")).length, delta: "Retrying automatically" },
+          { label: "Invited", value: counts.invited, delta: "Haven't joined yet" },
+        ]}
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
