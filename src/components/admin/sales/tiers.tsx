@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, MoreHorizontal, Plus, Star, X } from "@/components/icons"
+import { Check, Eye, Plus, X } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +15,7 @@ import { addTier, amount, per, saveTier, setPreviewAs, useTiers, type TierExtra,
 import { saveCatalog, useCatalog } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
 import { Field, NativeSelect, SettingRow } from "../kit"
+import { Panel, Tag } from "../ui"
 
 /** ADM-29 Tiers & prices and ADM-30 tier editor. */
 export function Tiers() {
@@ -31,48 +32,40 @@ export function Tiers() {
           <Plus /> New tier
         </Button>
       </div>
-      <div className="overflow-x-auto rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>Tier</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead className="hidden md:table-cell">Trial</TableHead>
-              <TableHead>Members</TableHead>
-              <TableHead className="hidden md:table-cell">Visible</TableHead>
-              <TableHead className="w-10" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tiers.map((t) => (
-              <TableRow key={t.id} className="cursor-pointer" onClick={() => setOpen(t.id)}>
-                <TableCell className="font-medium">
-                  <span className="flex items-center gap-2">
-                    {t.name}
-                    {t.featured && <Star className="size-3.5 fill-[var(--ts-cta)] text-[var(--ts-cta)]" aria-label="Most popular" />}
-                  </span>
-                </TableCell>
-                <TableCell className="tabular-nums">
-                  {t.price}
-                  <span className="text-muted-foreground"> {per(t.cadence)}</span>
-                  {t.yearly && <span className="block text-xs text-muted-foreground">or {t.yearly} / year</span>}
-                </TableCell>
-                <TableCell className="hidden text-muted-foreground md:table-cell">{t.trial ? `${t.trial} days` : "–"}</TableCell>
-                <TableCell className="tabular-nums">{t.members.toLocaleString("en")}</TableCell>
-                <TableCell className="hidden md:table-cell">
-                  <Badge variant="outline" className="font-normal">
-                    {t.hidden ? "Hidden · link only" : "On sales page"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="icon-sm" aria-label={`Edit ${t.name}`}>
-                    <MoreHorizontal />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {tiers.map((t) => (
+          <Panel key={t.id} className={cn("flex flex-col gap-0 p-0", t.featured && "border-a-accent-strong/60")}>
+            <button type="button" onClick={() => setOpen(t.id)} className="flex flex-1 flex-col gap-4 p-5 text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="t-heading-l">{t.name}</span>
+                {t.featured && <Tag tone="accent" dot>Most popular</Tag>}
+                {t.hidden && <Tag>Hidden · link only</Tag>}
+              </span>
+              <span className="flex flex-col gap-1">
+                <span className="flex items-baseline gap-2">
+                  <span className="t-display tabular-nums">{t.price}</span>
+                  <span className="t-body-m text-a-text-2">{per(t.cadence)}</span>
+                </span>
+                <span className="t-caption text-a-text-3">{t.yearly ? `${t.yearly} / year` : t.trial ? `${t.trial}-day free trial` : "No trial"}</span>
+              </span>
+              <span className="h-px bg-a-border" />
+              <ul className="grid gap-2">
+                {t.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 t-body-m">
+                    <Check className="mt-0.5 size-4 shrink-0 text-a-success" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </button>
+            <div className="flex items-center justify-between border-t border-a-border px-5 py-3">
+              <span className="t-caption text-a-text-2 tabular-nums">{t.members.toLocaleString("en")} members</span>
+              <Button variant="outline" size="sm" onClick={() => setOpen(t.id)} aria-label={`Edit ${t.name}`}>
+                Edit
+              </Button>
+            </div>
+          </Panel>
+        ))}
       </div>
       <p className="text-xs text-muted-foreground">Upgrades start straight away with the price difference. Downgrades start at the end of the period. Nothing is deleted when someone cancels.</p>
       <TierEditor tier={tier} index={tiers.findIndex((t) => t.id === open)} onClose={() => setOpen(null)} />
