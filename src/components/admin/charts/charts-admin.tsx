@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { COACH_CHARTS, chartDefaults, INDICATORS, INTERVALS, MARKETS, fmtPrice, type ChartSettings, type Market, type CoachChart } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { Empty, Field, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { Tag } from "../ui"
 
 export const LEVEL_COLOR = { support: "var(--profit)", resistance: "var(--loss)", target: "var(--highlight, #f8ff9e)" } as const
 
@@ -44,8 +45,7 @@ export function ChartsAdmin() {
     <Page>
       <PageHeader
         title="Charts"
-        text={`Full TradingView charts for your ${coach.wording.students.toLowerCase()}, with your watchlist first and the charts you marked up. Students see it as “${coach.wording.charts}”.`}
-        guide="Setting up charts · 2 min"
+        text="Charts, watchlist and your charts"
         actions={
           <Button onClick={() => setCreating(true)}>
             <Plus /> Mark up a chart
@@ -242,7 +242,7 @@ export function ChartsAdmin() {
 }
 
 /** A shared chart: TradingView's chart of the symbol, the coach's levels and note, and their TradingView layout link. */
-export function ChartCard({ chart: c, actions, onOpen, tierNames, dark = true }: { chart: CoachChart; actions?: React.ReactNode; onOpen?: () => void; tierNames?: string; dark?: boolean }) {
+export function ChartCard({ chart: c, actions, onOpen, dark = true }: { chart: CoachChart; actions?: React.ReactNode; onOpen?: () => void; dark?: boolean }) {
   const { coach } = useCoach()
   const who = c.tiers.length ? c.tiers.map((id) => coach.tiers.find((t) => t.id === id)?.name ?? id).join(", ") : "Everyone"
   return (
@@ -258,26 +258,15 @@ export function ChartCard({ chart: c, actions, onOpen, tierNames, dark = true }:
               {c.pinned && <Pin className="size-3.5 shrink-0 text-[var(--ts-interactive,var(--primary))]" />}
               <span className="truncate font-medium">{c.title}</span>
             </span>
-            <span className="text-xs text-muted-foreground">
-              {c.symbol.name} · {c.when}
-              {(tierNames ?? who) ? ` · ${tierNames ?? who}` : ""}
-            </span>
           </div>
           {actions && <div className="flex shrink-0">{actions}</div>}
         </div>
-        <p className="text-sm leading-relaxed text-muted-foreground">{c.note}</p>
-        {c.link && (
-          <a href={c.link} target="_blank" rel="noreferrer" className="flex w-fit items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
-            <ExternalLink className="size-3.5" /> {coach.coachName}&apos;s layout on TradingView
-          </a>
-        )}
-        <div className="flex flex-wrap gap-1.5">
-          {c.levels.map((l) => (
-            <Badge key={l.label} variant="outline" className="gap-1.5 font-normal">
-              <span className="size-1.5 rounded-full" style={{ background: LEVEL_COLOR[l.kind] }} />
-              {l.label} {fmtPrice(l.at)}
-            </Badge>
-          ))}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-1.5">
+            <Tag>{c.symbol.name}</Tag>
+            <Tag>{c.levels.length} levels</Tag>
+          </div>
+          <span className="t-caption text-a-text-2">{who}</span>
         </div>
       </div>
     </article>
