@@ -63,8 +63,7 @@ export function StudentsPage() {
     <Page>
       <PageHeader
         title="Students"
-        text={`Everyone in ${coach.name}. Students who need you come first: failed payments, broken rules, nobody heard from them.`}
-        guide="Managing students · 2 min"
+        text={`${coach.name} · ${STUDENTS.length} students · ${counts.new} joined this month`}
         actions={
           <>
             <Button variant="outline" onClick={() => toast("Export started", { description: "students.csv with the columns you see." })}>
@@ -170,10 +169,10 @@ export function StudentsPage() {
                 </TableHead>
                 <TableHead>Student</TableHead>
                 <TableHead>Tier and group</TableHead>
-                <TableHead className="hidden lg:table-cell">Progress</TableHead>
-                <TableHead className="hidden md:table-cell">Active</TableHead>
-                <TableHead className="hidden xl:table-cell">Journal</TableHead>
+                <TableHead className="hidden lg:table-cell">Course progress</TableHead>
+                <TableHead className="hidden text-right xl:table-cell">Rules kept</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="hidden text-right md:table-cell">Last active</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
@@ -206,20 +205,15 @@ export function StudentsPage() {
                       <span className="w-8 text-right text-xs text-muted-foreground tabular-nums">{s.progress}%</span>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="grid">
-                      <span>{s.lastActive}</span>
-                      <ActivityDots days={s.activeDays} />
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden text-muted-foreground xl:table-cell">
-                    {s.broker ? `${s.trades30} trades · ${s.rules}% rules` : <span className="text-muted-foreground">No broker</span>}
+                  <TableCell className="hidden text-right tabular-nums xl:table-cell">
+                    {s.broker ? `${s.rules}%` : <span className="text-a-text-3">—</span>}
                   </TableCell>
                   <TableCell>
                     <Tag tone={s.joined.startsWith("invited") ? "neutral" : s.health === "red" ? "danger" : s.health === "amber" ? "warning" : "success"} dot className="max-w-56">
                       <span className="truncate">{s.reason ?? "All good"}</span>
                     </Tag>
                   </TableCell>
+                  <TableCell className="hidden text-right text-a-text-2 md:table-cell">{s.lastActive}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={`Actions for ${s.name}`} />}>
@@ -254,17 +248,6 @@ export function StudentsPage() {
 }
 
 const rank = (s: Student) => (s.health === "red" ? 0 : s.health === "amber" ? 1 : 2)
-
-/** Last 14 days, one dot per day the student was active. */
-function ActivityDots({ days }: { days: number }) {
-  return (
-    <span className="mt-1 flex gap-0.5" aria-label={`Active ${days} of the last 14 days`}>
-      {Array.from({ length: 14 }, (_, i) => (
-        <span key={i} className={cn("h-1.5 w-1 rounded-[1px] bg-white/10", i >= 14 - days && "bg-[var(--ts-cta)]/80")} />
-      ))}
-    </span>
-  )
-}
 
 /** ADM-55. One student or a selection, by e-mail and in the platform. */
 export function MessageDialog({ to, onClose }: { to: Student[] | null; onClose: () => void }) {
