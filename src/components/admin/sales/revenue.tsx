@@ -29,7 +29,7 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
       <StatPanel
         stats={[
           { label: "Revenue · October", value: `€${MONEY.mrr.toLocaleString("en")}`, delta: `+${MONEY.mrrChange}% · €${Math.round((MONEY.mrr * MONEY.mrrChange) / 100).toLocaleString("en")} more`, tone: "success" },
-          { label: "Active members", value: members.toLocaleString("en"), delta: "+14 this month" },
+          { label: "Active members", value: coach.tiers.filter((t) => t.price !== "€0").reduce((n, t) => n + t.members, 0).toLocaleString("en"), delta: "+14 this month" },
           { label: "Next payout", value: `€${MONEY.nextPayout.amount.toLocaleString("en")}`, delta: `${MONEY.nextPayout.date} · Bank ••7` },
           { label: "Needs attention", value: attention.length, delta: `${attention.filter((t) => t.status !== "disputed").length} failed · ${attention.filter((t) => t.status === "disputed").length} disputed` },
         ]}

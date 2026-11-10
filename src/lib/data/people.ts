@@ -94,13 +94,13 @@ export const COUPONS = [
 
 export type Txn = { id: string; when: string; who: string; what: string; amount: number; status: "paid" | "failed" | "refunded" | "retrying" | "disputed" }
 export const TRANSACTIONS: Txn[] = [
-  { id: "x1", when: "Today 07:12", who: "Alex Moreau", what: "Core · monthly", amount: 149, status: "failed" },
+  { id: "x1", when: "Today 07:12", who: "Alex Moreau", what: "Inner Circle · monthly", amount: 49, status: "retrying" },
   { id: "x2", when: "Today 06:40", who: "Noah Fischer", what: "Trading Desk · monthly", amount: 390, status: "paid" },
   { id: "x3", when: "Sun 11 Oct", who: "Sara Kowalski", what: "Trading Desk · monthly", amount: 390, status: "paid" },
-  { id: "x4", when: "Sat 10 Oct", who: "Ben Okafor", what: "Core · monthly", amount: 149, status: "retrying" },
+  { id: "x4", when: "Sat 10 Oct", who: "Tom Okafor", what: "Trading Desk · monthly", amount: 129, status: "failed" },
   { id: "x5", when: "Fri 9 Oct", who: "Lucía Gómez", what: "Core · monthly", amount: 149, status: "refunded" },
   { id: "x6", when: "Thu 8 Oct", who: "Jonas Pereira", what: "1:1 VIP · quarterly", amount: 2400, status: "paid" },
-  { id: "x7", when: "Wed 7 Oct", who: "Kim Ahn", what: "Core · monthly", amount: 149, status: "disputed" },
+  { id: "x7", when: "Wed 7 Oct", who: "Jonas Weber", what: "1:1 VIP · monthly", amount: 390, status: "disputed" },
   { id: "x8", when: "Wed 7 Oct", who: "Tariq Bello", what: "Core · monthly", amount: 149, status: "paid" },
 ]
 
@@ -109,7 +109,7 @@ export const MONEY = {
   mrrChange: 6.2,
   month: 17940,
   fees: { label: "Our share (5%) and card fees", amount: 1420 },
-  nextPayout: { amount: 4210, date: "Mon 19 Oct" },
+  nextPayout: { amount: 8412, date: "Mon 17 Nov" },
   churn: 3.1,
   trials: 14,
 }
