@@ -20,6 +20,7 @@ import {
   Upload,
 } from "@/components/icons"
 import { toast } from "sonner"
+import { NewCourseWizard } from "./new-course-wizard"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "../kit"
@@ -275,7 +276,7 @@ export function ContentBoard() {
         )}
       </div>
 
-      <NewCourseDialog
+      <NewCourseWizard
         open={creating}
         area={catalog.areas[0] ?? "Core"}
         onClose={() => setCreating(false)}
@@ -294,49 +295,6 @@ export function ContentBoard() {
         }}
       />
     </div>
-  )
-}
-
-function NewCourseDialog({ open, area, onClose, onCreate }: { open: boolean; area: string; onClose: () => void; onCreate: (c: Course) => void }) {
-  const [title, setTitle] = useState("")
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>New course</DialogTitle>
-          <DialogDescription>It starts as a draft. Students see it once you publish.</DialogDescription>
-        </DialogHeader>
-        <form
-          className="grid gap-4"
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (!title.trim()) return
-            onCreate({
-              id: uid("c"),
-              title: title.trim(),
-              tagline: "",
-              area,
-              status: "draft",
-              tiers: [],
-              color: Math.floor(Math.random() * 5),
-              modules: [{ id: uid("m"), title: "Module 1", lessons: [{ id: uid("l"), title: "First lesson", minutes: 0, status: "draft", chapters: [], downloads: [] }] }],
-            })
-            setTitle("")
-            onClose()
-          }}
-        >
-          <div className="grid gap-2">
-            <Label htmlFor="nc-title">Title</Label>
-            <Input id="nc-title" autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Order flow basics" />
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={!title.trim()}>
-              Create and open
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   )
 }
 
