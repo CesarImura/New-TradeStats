@@ -33,11 +33,11 @@ export function SalesAdmin() {
         text="Tiers, sales page, coupons and payouts"
         actions={
           <>
-            <PreviewAsMenu size="sm" />
-            <Button size="sm" variant="outline" nativeButton={false} render={<a href={`/site/${coach.slug}`} target="_blank" rel="noreferrer" />}>
+            <PreviewAsMenu />
+            <Button variant="outline" nativeButton={false} render={<a href={`/site/${coach.slug}`} target="_blank" rel="noreferrer" />}>
               <ExternalLink /> Sales page
             </Button>
-            <Button size="sm" onClick={() => setTab("tiers")}>
+            <Button onClick={() => setTab("tiers")}>
               <Plus /> New tier
             </Button>
           </>

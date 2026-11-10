@@ -17,12 +17,13 @@ import {
   Plus,
   Sparkles,
   Trash2,
+  Search,
   Upload,
 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
-import { PageHeader } from "../kit"
+import { NativeSelect, PageHeader } from "../kit"
 import { StatPanel } from "../ui"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -64,7 +65,7 @@ export function StatusBadge({ status, when }: { status: Status; when?: string })
 /** Thumbnail tints for the admin, which keeps its own neutral look. */
 export { COVER_TINTS as THUMB } from "./thumbs"
 
-type Filter = "all" | Status
+type Filter = "all" | "attention" | Status
 
 /** ADM-08: areas and courses as a board; drafts, scheduled and archived. */
 export function ContentBoard() {
@@ -79,8 +80,15 @@ export function ContentBoard() {
   const [bulk, setBulk] = useState(false)
 
   const edit = (fn: (c: Catalog) => Catalog) => saveCatalog(coach, fn)
-  const count = (s: Filter) => catalog.courses.filter((c) => (s === "all" ? c.status !== "archived" : c.status === s)).length
-  const list = catalog.courses.filter((c) => (filter === "all" ? c.status !== "archived" : c.status === filter))
+  const [q, setQ] = useState("")
+  const [tierId, setTierId] = useState("all")
+  const [sort, setSort] = useState("edited")
+  // "Needs attention": courses that are not live yet (draft or scheduled).
+  const inFilter = (c: Course, s: Filter) => (s === "all" ? c.status !== "archived" : s === "attention" ? c.status === "draft" || c.status === "scheduled" : c.status === s)
+  const count = (s: Filter) => catalog.courses.filter((c) => inFilter(c, s)).length
+  const list = catalog.courses
+    .filter((c) => inFilter(c, filter) && c.title.toLowerCase().includes(q.toLowerCase()) && (tierId === "all" || c.tiers.length === 0 || c.tiers.includes(tierId)))
+    .sort((a, b) => (sort === "title" ? a.title.localeCompare(b.title) : 0))
 
   const setStatus = (id: string, status: Status) => {
     edit((c) => ({ ...c, courses: c.courses.map((x) => (x.id === id ? { ...x, status } : x)) }))
@@ -133,14 +141,35 @@ export function ContentBoard() {
       </SampleNotice>
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
-        <TabsList>
-          {(["all", "published", "draft", "scheduled", "archived"] as Filter[]).map((f) => (
-            <TabsTrigger key={f} value={f}>
-              {f === "all" ? "All" : STATUS_LABEL[f as Status]}
-              <span className="text-muted-foreground tabular-nums">{count(f)}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <TabsList>
+            {(["all", "attention", "published", "scheduled", "draft", "archived"] as Filter[]).map((f) => (
+              <TabsTrigger key={f} value={f}>
+                {f === "attention" && <span aria-hidden className="size-1.5 rounded-full bg-a-warning" />}
+                {f === "all" ? "All" : f === "attention" ? "Needs attention" : STATUS_LABEL[f as Status]}
+                <span className="text-muted-foreground tabular-nums">{count(f)}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-a-text-3" />
+              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search courses" aria-label="Search courses" className="w-56 pl-8" />
+            </div>
+            <NativeSelect value={tierId} onChange={(e) => setTierId(e.target.value)} aria-label="Tier">
+              <option value="all">All tiers</option>
+              {coach.tiers.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </NativeSelect>
+            <NativeSelect value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
+              <option value="edited">Last edited</option>
+              <option value="title">Title A–Z</option>
+            </NativeSelect>
+          </div>
+        </div>
       </Tabs>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

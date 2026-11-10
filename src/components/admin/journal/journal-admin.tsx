@@ -36,6 +36,9 @@ export function JournalAdmin() {
   const waiting = trades.filter((t) => t.review === "waiting").sort((a, b) => a.id.localeCompare(b.id))
   const answered = trades.filter((t) => t.review === "answered")
   const [tab, setTab] = useState("requests")
+  const [q, setQ] = useState("")
+  const [tier, setTier] = useState("all")
+  const [sort, setSort] = useState("oldest")
   const [openId, setOpenId] = useState<string | null>(null)
   const open = trades.find((t) => t.id === openId) ?? null
 
@@ -59,6 +62,7 @@ export function JournalAdmin() {
         ]}
       />
       <Tabs value={tab} onValueChange={setTab} className="gap-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
         <TabsList>
           <TabsTrigger value="requests">
             Requests <span className="text-muted-foreground tabular-nums">{waiting.length}</span>
@@ -68,17 +72,38 @@ export function JournalAdmin() {
           </TabsTrigger>
           <TabsTrigger value="rules">Rules</TabsTrigger>
         </TabsList>
+        {tab !== "rules" && (
+      <div className="flex flex-wrap items-center justify-end sm:ml-auto gap-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-a-text-3" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search requests" aria-label="Search requests" className="w-56 pl-8" />
+        </div>
+        <NativeSelect value={tier} onChange={(e) => setTier(e.target.value)} aria-label="Tier">
+          <option value="all">All tiers</option>
+          {coach.tiers.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </NativeSelect>
+        <NativeSelect value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
+          <option value="oldest">Oldest first</option>
+          <option value="newest">Newest first</option>
+        </NativeSelect>
+      </div>
+        )}
+        </div>
 
         <TabsContent value="requests">
           {waiting.length === 0 ? (
             <Empty icon={Inbox} title="Nothing waiting" text={`When a ${coach.wording.student.toLowerCase()} presses “Please review” on a trade, it lands here.`} />
           ) : (
-            <RequestsTable trades={waiting} onOpen={setOpenId} />
+            <RequestsTable trades={waiting} onOpen={setOpenId} q={q} tier={tier} sort={sort} />
           )}
         </TabsContent>
 
         <TabsContent value="answered">
-          {answered.length === 0 ? <Empty icon={Inbox} title="Nothing answered yet" text="Feedback you send shows up here." /> : <RequestsTable trades={answered} onOpen={setOpenId} answered />}
+          {answered.length === 0 ? <Empty icon={Inbox} title="Nothing answered yet" text="Feedback you send shows up here." /> : <RequestsTable trades={answered} onOpen={setOpenId} answered q={q} tier={tier} sort={sort} />}
         </TabsContent>
 
         <TabsContent value="rules">
@@ -100,11 +125,8 @@ export function JournalAdmin() {
 }
 
 /** Figma 525:7153. One row per request: who, what they asked, the trade, rules, how long it has waited. */
-function RequestsTable({ trades, onOpen, answered }: { trades: ReturnType<typeof allTrades>; onOpen: (id: string) => void; answered?: boolean }) {
+function RequestsTable({ trades, onOpen, answered, q, tier, sort }: { trades: ReturnType<typeof allTrades>; onOpen: (id: string) => void; answered?: boolean; q: string; tier: string; sort: string }) {
   const { coach } = useCoach()
-  const [q, setQ] = useState("")
-  const [tier, setTier] = useState("all")
-  const [sort, setSort] = useState("oldest")
   const rows = trades
     .map((t) => {
       const s = STUDENTS.find((x) => x.id === OWNER[t.id])!
@@ -115,24 +137,6 @@ function RequestsTable({ trades, onOpen, answered }: { trades: ReturnType<typeof
 
   return (
     <div className="grid gap-4">
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-a-text-3" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search requests" aria-label="Search requests" className="w-56 pl-8" />
-        </div>
-        <NativeSelect value={tier} onChange={(e) => setTier(e.target.value)} aria-label="Tier">
-          <option value="all">All tiers</option>
-          {coach.tiers.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
-          <option value="oldest">Oldest first</option>
-          <option value="newest">Newest first</option>
-        </NativeSelect>
-      </div>
       {rows.length === 0 ? (
         <Empty icon={Inbox} title="No requests match" text="Clear the search or the filters." />
       ) : (

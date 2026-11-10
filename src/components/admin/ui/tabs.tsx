@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 /** Admin / Tab (580:459): caption text, soft pill when Active. Controlled; arrow keys move between tabs. */
 export function AdminTabs<T extends string>({ tabs, value, onChange, label, className }: { tabs: readonly { id: T; label: string; dot?: boolean }[]; value: T; onChange: (id: T) => void; label: string; className?: string }) {
   return (
-    <div role="tablist" aria-label={label} className={cn("flex max-w-full gap-1 overflow-x-auto", className)}
+    <div role="tablist" aria-label={label} className={cn("flex h-8 w-fit max-w-full overflow-x-auto rounded-a-md border border-a-border p-0.5", className)}
       onKeyDown={(e) => {
         if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(e.key)) return
         e.preventDefault()

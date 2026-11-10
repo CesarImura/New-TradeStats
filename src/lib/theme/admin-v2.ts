@@ -97,9 +97,9 @@ ${adm("[data-slot=badge][class*='border-border']")} { border-color: transparent;
 ${adm("[data-slot=badge].text-destructive")} { color: ${T("color-status-danger")}; }
 
 /* Tabs: Admin / Tab. Plain words, the open one is a soft pill. */
-${adm("[data-slot=tabs-list][data-variant=default]")} { background: transparent; height: 2.5rem !important; gap: 0.25rem; box-shadow: inset 0 -1px 0 ${T("color-border-subtle")}; }
-${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger]")} { padding: 0 0.625rem; font-size: 0.75rem; color: ${T("color-text-secondary")}; border-radius: ${T("radius-sm")}; }
-${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger][data-active]")} { background: ${T("color-bg-selected")}; color: ${T("color-text-primary")}; box-shadow: none !important; }
+${adm("[data-slot=tabs-list][data-variant=default]")} { background: transparent; height: 2rem !important; padding: 2px; gap: 0; border: 1px solid ${T("color-border-default")}; border-radius: ${T("radius-md")}; justify-content: flex-start; }
+${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger]")} { height: 1.625rem; padding: 0 0.625rem; font-size: 0.75rem; font-weight: 400; color: ${T("color-text-secondary")}; border: 0; border-radius: ${T("radius-sm")}; flex: 0 0 auto; background: transparent !important; box-shadow: none !important; }
+${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger][data-active]")} { background: ${T("color-bg-selected")} !important; color: ${T("color-text-primary")}; box-shadow: none !important; }
 ${adm("[data-slot=tabs-list][data-variant=line] [data-slot=tabs-trigger]::after")} { background: ${T("color-accent-default")}; }
 
 /* Tables: no frame, mono header, hairlines. */
