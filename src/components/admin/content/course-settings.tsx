@@ -19,11 +19,6 @@ export function CourseSettings({ course, edit }: { course: Course; edit: (fn: (c
 
   return (
     <div className="grid gap-8">
-      <div>
-        <h2 className="text-xl font-semibold">Course settings</h2>
-        <p className="text-sm text-muted-foreground">Pick a lesson on the left to edit its video, chapters and quiz.</p>
-      </div>
-
       <section className="grid gap-4">
         <Field label="Title">
           <Input value={course.title} onChange={(e) => set({ title: e.target.value })} />

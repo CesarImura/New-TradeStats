@@ -33,13 +33,12 @@ export function LessonEditor({ course, lesson, onChange }: { course: Course; les
   return (
     <div className="grid gap-6">
       <Tabs defaultValue="content" className="gap-5">
-        <TabsList>
-          <TabsTrigger value="content">Lesson</TabsTrigger>
-          <TabsTrigger value="chapters">
-            Chapters <span className="text-muted-foreground tabular-nums">{lesson.chapters.length || ""}</span>
-          </TabsTrigger>
-          <TabsTrigger value="quiz">Quiz {lesson.quiz && <span className="size-1.5 rounded-full bg-primary" />}</TabsTrigger>
-          <TabsTrigger value="publish">Access and publishing</TabsTrigger>
+        <TabsList className="!h-auto w-full justify-start !gap-6 !rounded-none !border-0 !border-b !border-solid !border-a-border !bg-transparent !p-0">
+          {([["content", "Lesson"], ["chapters", `Chapters${lesson.chapters.length ? ` ${lesson.chapters.length}` : ""}`], ["quiz", `Quiz${lesson.quiz ? ` ${lesson.quiz.questions.length}` : ""}`], ["files", `Files${lesson.downloads.length ? ` ${lesson.downloads.length}` : ""}`], ["publish", "Visibility"]] as const).map(([v, label]) => (
+            <TabsTrigger key={v} value={v} className="!h-8 !flex-none !rounded-none !border-0 !border-b-2 !border-solid !border-transparent !px-0 pb-2 !text-[0.8125rem] data-[active]:!border-[var(--admin-color-control-on)] data-[active]:!text-a-text">
+              {label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="content" className="grid gap-6">
@@ -103,6 +102,9 @@ export function LessonEditor({ course, lesson, onChange }: { course: Course; les
             <Label>Task for students</Label>
             <Textarea value={lesson.text ?? ""} onChange={(e) => onChange({ text: e.target.value })} placeholder="Optional homework, shown under the video." />
           </div>
+        </TabsContent>
+
+        <TabsContent value="files" className="grid gap-6">
           <div className="grid gap-2">
             <Label>Downloads</Label>
             {lesson.downloads.map((d) => (
