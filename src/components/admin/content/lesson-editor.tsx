@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from "react"
 import { CircleHelp, FileDown, FileVideo, Plus, Sparkles, Trash2, Upload } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { AdminButton, Tag } from "@/components/admin/ui"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Switch } from "@/components/ui/switch"
@@ -247,17 +247,6 @@ function ChaptersEditor({ lesson, onChange }: { lesson: Lesson; onChange: (p: Pa
 
   return (
     <div className="grid gap-5">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">Students use chapters to jump around the video and in search.</p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => (set(AI_CHAPTERS.map((title, i) => ({ at: Math.round((duration / AI_CHAPTERS.length) * i), title, ai: true }))), toast("AI suggested chapters from the transcript."))}
-        >
-          <Sparkles /> Suggest with AI
-        </Button>
-      </div>
-
       <div className="grid gap-2 rounded-xl border p-4 bg-card">
         <div
           ref={bar}
@@ -297,38 +286,43 @@ function ChaptersEditor({ lesson, onChange }: { lesson: Lesson; onChange: (p: Pa
         </div>
       </div>
 
-      <div className="grid gap-2">
-        {lesson.chapters.map((c, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Input
-              defaultValue={fmtTime(c.at)}
-              key={`${i}-${c.at}`}
-              onBlur={(e) => set(lesson.chapters.map((x, j) => (j === i ? { ...x, at: Math.min(duration, parseTime(e.target.value)), ai: false } : x)))}
-              className="w-20 tabular-nums"
-              aria-label="Start time"
-            />
-            <Input value={c.title} onChange={(e) => update(i, { title: e.target.value })} aria-label="Chapter title" />
-            {c.ai && (
-              <Badge variant="secondary" className="shrink-0 gap-1">
-                <Sparkles className="size-3" /> AI
-              </Badge>
-            )}
-            <Button variant="ghost" size="icon" aria-label="Delete chapter" onClick={() => set(lesson.chapters.filter((_, j) => j !== i))}>
-              <Trash2 />
-            </Button>
-          </div>
-        ))}
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-fit"
+      <div className="flex flex-wrap items-center gap-2">
+        <AdminButton
+          hierarchy="secondary"
           onClick={() => {
             const last = lesson.chapters.at(-1)?.at ?? -60
             set([...lesson.chapters, { at: Math.min(duration - 10, last + 60), title: "New chapter" }])
           }}
         >
           <Plus /> Add chapter
-        </Button>
+        </AdminButton>
+        <AdminButton
+          hierarchy="ghost"
+          onClick={() => (set(AI_CHAPTERS.map((title, i) => ({ at: Math.round((duration / AI_CHAPTERS.length) * i), title, ai: true }))), toast("AI suggested chapters from the transcript."))}
+        >
+          <Sparkles /> Redo with AI
+        </AdminButton>
+        <span className="flex-1" />
+        <span className="t-caption text-a-text-3">AI chapters stay marked until you edit them.</span>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        {lesson.chapters.map((c, i) => (
+          <div key={i} className="flex h-[46px] items-center gap-3 rounded-a-md border border-a-border bg-a-panel px-3">
+            <input
+              defaultValue={fmtTime(c.at)}
+              key={`${i}-${c.at}`}
+              onBlur={(e) => set(lesson.chapters.map((x, j) => (j === i ? { ...x, at: Math.min(duration, parseTime(e.target.value)), ai: false } : x)))}
+              className="t-caption w-12 bg-transparent font-mono text-a-text-2 tabular-nums outline-none focus:text-a-text"
+              aria-label="Start time"
+            />
+            <input value={c.title} onChange={(e) => update(i, { title: e.target.value })} aria-label="Chapter title" className="t-body-m min-w-0 flex-1 bg-transparent text-a-text outline-none" />
+            {c.ai && <Tag tone="accent"><Sparkles className="size-3" /> AI</Tag>}
+            <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Delete chapter" onClick={() => set(lesson.chapters.filter((_, j) => j !== i))}>
+              <Trash2 />
+            </AdminButton>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -372,78 +366,77 @@ function QuizEditor({ lesson, onChange }: { lesson: Lesson; onChange: (p: Partia
 
   const updateQ = (id: string, patch: Partial<Quiz["questions"][number]>) => set({ questions: quiz.questions.map((q) => (q.id === id ? { ...q, ...patch } : q)) })
 
+  const addQuestion = () => set({ questions: [...quiz.questions, { id: uid("q"), q: "", options: ["", ""], answer: 0 }] })
   return (
-    <div className="grid gap-5">
-      {quiz.ai && (
-        <div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2 text-sm">
-          <Sparkles className="size-4 text-primary" /> Drafted by AI from the transcript. Check the answers before you publish.
+    <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="flex min-w-0 flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <AdminButton hierarchy="secondary" onClick={addQuestion}><Plus /> Add question</AdminButton>
+          <span className="flex-1" />
+          <span className="t-caption text-a-text-3">{quiz.questions.length} {quiz.questions.length === 1 ? "question" : "questions"}</span>
         </div>
-      )}
-      {quiz.questions.map((q, qi) => (
-        <div key={q.id} className="grid gap-3 rounded-xl border p-4 bg-card">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground tabular-nums">{qi + 1}.</span>
-            <Input value={q.q} onChange={(e) => updateQ(q.id, { q: e.target.value })} placeholder="Question" />
-            <Button variant="ghost" size="icon" aria-label="Delete question" onClick={() => set({ questions: quiz.questions.filter((x) => x.id !== q.id), passMark: Math.min(quiz.passMark, quiz.questions.length - 1) })}>
-              <Trash2 />
-            </Button>
+        {quiz.questions.map((q, qi) => (
+          <div key={q.id} className="flex flex-col gap-3 rounded-a-lg border border-a-border bg-a-panel p-4">
+            <div className="flex items-center gap-2">
+              <span className="t-caption w-4 text-a-text-3 tabular-nums">{qi + 1}</span>
+              <input value={q.q} onChange={(e) => updateQ(q.id, { q: e.target.value })} placeholder="Question" aria-label="Question" className="t-body-m-medium min-w-0 flex-1 bg-transparent text-a-text outline-none placeholder:text-a-text-3" />
+              <span className="t-caption text-a-text-3">{q.options.length} answers</span>
+              <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Delete question" onClick={() => set({ questions: quiz.questions.filter((x) => x.id !== q.id), passMark: Math.max(1, Math.min(quiz.passMark, quiz.questions.length - 1)) })}>
+                <Trash2 />
+              </AdminButton>
+            </div>
+            <div className="flex flex-col gap-2 pl-6">
+              {q.options.map((o, oi) => (
+                <div key={oi} className="flex items-center gap-2.5">
+                  <button
+                    onClick={() => updateQ(q.id, { answer: oi })}
+                    className={cn("grid size-4 shrink-0 place-items-center rounded-full border border-a-border-strong", q.answer === oi && "border-a-success-fill bg-a-success-fill")}
+                    aria-label={q.answer === oi ? "Correct answer" : "Mark as correct"}
+                    title={q.answer === oi ? "Correct answer" : "Mark as correct"}
+                  >
+                    {q.answer === oi && <span className="size-1.5 rounded-full bg-black" />}
+                  </button>
+                  <Input value={o} onChange={(e) => updateQ(q.id, { options: q.options.map((x, j) => (j === oi ? e.target.value : x)) })} placeholder={`Answer ${oi + 1}`} className="h-8" />
+                  {q.answer === oi && <Tag tone="success">Correct</Tag>}
+                  {q.options.length > 2 && (
+                    <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Remove answer" onClick={() => updateQ(q.id, { options: q.options.filter((_, j) => j !== oi), answer: q.answer >= oi && q.answer > 0 ? q.answer - 1 : q.answer })}>
+                      <Trash2 />
+                    </AdminButton>
+                  )}
+                </div>
+              ))}
+              {q.options.length < 5 && (
+                <AdminButton hierarchy="ghost" size="sm" className="w-fit" onClick={() => updateQ(q.id, { options: [...q.options, ""] })}><Plus /> Add answer</AdminButton>
+              )}
+            </div>
           </div>
-          <div className="grid gap-2 pl-6">
-            {q.options.map((o, oi) => (
-              <div key={oi} className="flex items-center gap-2">
-                <button
-                  onClick={() => updateQ(q.id, { answer: oi })}
-                  className={cn("grid size-5 shrink-0 place-items-center rounded-full border", q.answer === oi && "border-emerald-500 bg-emerald-500 text-white")}
-                  aria-label={q.answer === oi ? "Correct answer" : "Mark as correct"}
-                  title={q.answer === oi ? "Correct answer" : "Mark as correct"}
-                >
-                  {q.answer === oi && <span className="size-1.5 rounded-full bg-current" />}
-                </button>
-                <Input value={o} onChange={(e) => updateQ(q.id, { options: q.options.map((x, j) => (j === oi ? e.target.value : x)) })} placeholder={`Answer ${oi + 1}`} className="h-8" />
-                {q.options.length > 2 && (
-                  <Button variant="ghost" size="icon-xs" aria-label="Remove answer" onClick={() => updateQ(q.id, { options: q.options.filter((_, j) => j !== oi), answer: q.answer >= oi && q.answer > 0 ? q.answer - 1 : q.answer })}>
-                    <Trash2 />
-                  </Button>
-                )}
-              </div>
-            ))}
-            {q.options.length < 5 && (
-              <Button variant="ghost" size="xs" className="w-fit" onClick={() => updateQ(q.id, { options: [...q.options, ""] })}>
-                <Plus /> Add answer
-              </Button>
-            )}
-          </div>
-        </div>
-      ))}
-      <Button variant="outline" size="sm" className="w-fit" onClick={() => set({ questions: [...quiz.questions, { id: uid("q"), q: "", options: ["", ""], answer: 0 }] })}>
-        <Plus /> Add question
-      </Button>
+        ))}
+      </div>
 
-      <div className="grid gap-4 rounded-xl border p-4 bg-card">
-        <div className="flex items-center justify-between gap-4">
-          <div className="grid">
-            <Label>Pass mark</Label>
-            <span className="text-xs text-muted-foreground">Right answers needed to pass</span>
-          </div>
+      <aside className="flex flex-col gap-4 rounded-a-lg border border-a-border bg-a-panel p-5">
+        <h3 className="t-heading-m text-a-text">Quiz rules</h3>
+        <div className="grid gap-1.5">
+          <Label>Pass mark</Label>
           <SelectOptions value={quiz.passMark} onChange={(e) => set({ passMark: Number(e.target.value) })} className="h-9 rounded-lg border bg-background px-2 text-sm">
             {quiz.questions.map((_, i) => (
               <option key={i} value={i + 1}>
-                {i + 1} of {quiz.questions.length}
+                {i + 1} of {quiz.questions.length} right
               </option>
             ))}
           </SelectOptions>
         </div>
         <label className="flex items-center justify-between gap-4">
-          <span className="grid">
-            <span className="text-sm font-medium">Must pass to open the next lesson</span>
-            <span className="text-xs text-muted-foreground">Students see the next lesson locked until they pass.</span>
+          <span className="grid gap-0.5">
+            <span className="t-body-m text-a-text">Must pass to open the next lesson</span>
+            <span className="t-caption text-a-text-2">Students see the next lesson locked until they pass.</span>
           </span>
           <Switch checked={quiz.gate} onCheckedChange={(v) => set({ gate: v })} />
         </label>
-      </div>
-      <Button variant="ghost" className="w-fit text-destructive hover:text-destructive" onClick={() => onChange({ quiz: undefined })}>
-        <Trash2 /> Remove quiz
-      </Button>
+        <div className="h-px bg-a-border" />
+        <AdminButton hierarchy="secondary" className="w-fit" onClick={draft}><Sparkles /> Write with AI</AdminButton>
+        <p className="t-caption text-a-text-2">Questions come from the transcript. Check the answers before you publish.</p>
+        <AdminButton hierarchy="danger" className="w-fit" onClick={() => onChange({ quiz: undefined })}><Trash2 /> Remove quiz</AdminButton>
+      </aside>
     </div>
   )
 }
