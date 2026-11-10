@@ -284,7 +284,7 @@ function Cell({ state, inherited, label, onClick }: { state: "on" | "off" | "som
         "mx-auto my-1 grid size-6 place-items-center rounded-[5px] border transition-colors",
         state === "off" && "border-input hover:border-foreground/40",
         state === "some" && "border-[var(--ts-cta)]/60 text-[var(--ts-cta)]",
-        state === "on" && !inherited && "border-[var(--ts-cta)] bg-[var(--ts-cta)] text-[#0a0a0a]",
+        state === "on" && !inherited && "border-[var(--ts-cta)] bg-[var(--ts-cta)] text-a-on-highlight",
         state === "on" && inherited && "border-[var(--ts-cta)]/40 text-[var(--ts-cta)]/80",
         !onClick && "pointer-events-none",
       )}

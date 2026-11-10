@@ -67,7 +67,7 @@ export function Groups() {
               </div>
               <Progress value={(g.members / Math.max(1, g.seats)) * 100} />
               {isFull(g) ? (
-                <span className="text-xs text-amber-400">Full{g.waitlist ? ` · ${g.waiting} on the waiting list` : " · sign-ups closed"}</span>
+                <span className="text-xs text-a-warning">Full{g.waitlist ? ` · ${g.waiting} on the waiting list` : " · sign-ups closed"}</span>
               ) : (
                 <span className="text-xs text-muted-foreground">{g.seats - g.members} seats left</span>
               )}

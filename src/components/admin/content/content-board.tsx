@@ -46,10 +46,10 @@ import { videoFrames } from "@/lib/video-frames"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 
 export const STATUS_DOT: Record<Status, string> = {
-  published: "bg-emerald-500",
-  draft: "bg-muted-foreground/50",
-  scheduled: "bg-amber-500",
-  archived: "bg-muted-foreground/25",
+  published: "bg-a-success-fill",
+  draft: "bg-a-text-3",
+  scheduled: "bg-a-warning-fill",
+  archived: "bg-a-border-strong",
 }
 
 export function StatusBadge({ status, when }: { status: Status; when?: string }) {

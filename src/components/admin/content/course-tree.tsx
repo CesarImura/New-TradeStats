@@ -192,7 +192,7 @@ export function Tree({ course, sel, onSelect, edit, hideSettings }: { course: Co
                         </span>
                       )}
                       {l.quiz && <CircleHelp className="size-3 text-muted-foreground" />}
-                      {!l.video && <span className="text-[0.6875rem] text-amber-600">no video</span>}
+                      {!l.video && <span className="text-[0.6875rem] text-a-warning">no video</span>}
                       <span className="text-xs text-muted-foreground tabular-nums">{l.minutes ? `${l.minutes}′` : ""}</span>
                     </ContextMenuTrigger>
                     <ContextMenuContent className="w-44">

@@ -44,7 +44,8 @@ import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 
-const COLORS: Record<ItemKind, string> = { live: "#f97316", call: "#0ea5e9", workshop: "#8b5cf6", "one-on-one": "#10b981", news: "#e11d48" }
+/** Event colours are Admin tokens (Figma Calendar event: Live = accent, Call = success, News = danger). */
+const COLORS: Record<ItemKind, string> = { live: "var(--admin-color-accent-strong)", call: "var(--admin-color-status-success)", workshop: "var(--admin-color-status-info)", "one-on-one": "var(--admin-color-status-success)", news: "var(--admin-color-status-danger)" }
 const RANGE = { from: addDays(NOW, -45), to: addDays(NOW, 75) }
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -502,7 +503,7 @@ function NewsNotes({ onOpen, impact }: { onOpen: (n: NewsItem) => void; impact: 
                 <TableCell>
                   <span className="flex gap-0.5" title={`${n.impact} impact`}>
                     {[1, 2, 3].map((d) => (
-                      <i key={d} className={cn("size-1.5 rounded-full", d <= { high: 3, medium: 2, low: 1 }[n.impact] ? "bg-rose-500" : "bg-muted")} />
+                      <i key={d} className={cn("size-1.5 rounded-full", d <= { high: 3, medium: 2, low: 1 }[n.impact] ? "bg-a-danger-fill" : "bg-a-selected")} />
                     ))}
                   </span>
                 </TableCell>

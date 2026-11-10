@@ -125,7 +125,7 @@ function Before({ s, patch }: { s: Livestream; patch: (p: Partial<Livestream>) =
                 {conn === "checking" ? "Checking…" : "Check the connection"}
               </Button>
               <span className={cn("flex items-center gap-2 text-sm", conn === "ok" ? "text-foreground" : "text-muted-foreground")} role="status">
-                <span className={cn("size-2 rounded-full", conn === "ok" ? "bg-emerald-500" : conn === "checking" ? "animate-pulse bg-amber-500" : "bg-muted-foreground/50")} />
+                <span className={cn("size-2 rounded-full", conn === "ok" ? "bg-a-success-fill" : conn === "checking" ? "animate-pulse bg-a-warning-fill" : "bg-muted-foreground/50")} />
                 {conn === "ok" ? "OBS is sending video" : conn === "checking" ? "Looking for OBS…" : "Waiting for OBS"}
               </span>
             </div>
@@ -223,9 +223,9 @@ function Live({ s, patch }: { s: Livestream; patch: (p: Partial<Livestream>) => 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
       <section className="grid content-start gap-3">
-        <div className="relative grid aspect-video place-items-center overflow-hidden rounded-xl bg-neutral-950 text-white">
+        <div className="relative grid aspect-video place-items-center overflow-hidden rounded-xl bg-a-page text-white">
           <Video className="size-10 opacity-30" />
-          <span className="absolute top-3 left-3 flex items-center gap-1.5 rounded bg-red-600 px-2 py-0.5 text-xs font-semibold">
+          <span className="absolute top-3 left-3 flex items-center gap-1.5 rounded bg-a-danger-fill px-2 py-0.5 text-xs font-semibold">
             <span className="size-1.5 animate-pulse rounded-full bg-white" /> LIVE
           </span>
           <span className="absolute top-3 right-3 rounded bg-black/60 px-2 py-0.5 text-xs tabular-nums">{clock}</span>
@@ -299,11 +299,11 @@ function After({ s }: { s: Livestream }) {
           <h2 className="font-medium">Recording</h2>
           {s.recording === "processing" ? (
             <p className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
-              <span className="size-2 animate-pulse rounded-full bg-amber-500" /> Making the recording. This takes a minute or two.
+              <span className="size-2 animate-pulse rounded-full bg-a-warning-fill" /> Making the recording. This takes a minute or two.
             </p>
           ) : (
             <>
-              <div className="relative grid aspect-video max-w-xl place-items-center overflow-hidden rounded-lg bg-neutral-900 text-white">
+              <div className="relative grid aspect-video max-w-xl place-items-center overflow-hidden rounded-lg bg-a-sunk text-white">
                 <span className="grid size-12 place-items-center rounded-full bg-black/50">
                   <Play />
                 </span>
