@@ -7,7 +7,7 @@ import { TradeChart } from "@/components/charts/trade-chart"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
@@ -286,12 +286,10 @@ function Review({ trade: t, onDone, readOnly }: { trade: ReturnType<typeof allTr
             <div className="flex items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-3 py-3 text-sm">
               <span className="size-2 animate-pulse rounded-full bg-[var(--ts-interactive)]" />
               Recording {recording === "voice" ? "a voice note" : "your screen and camera"} · 0:{String(secs).padStart(2, "0")}
-              <Button size="sm" className="ml-auto" onClick={() => record(recording)}>
+              <AdminButton hierarchy="primary" size="md" className="ml-auto" onClick={() => record(recording)}>
                 <Square /> Stop and send
-              </Button>
-              <Button
-                size="icon-sm"
-                variant="ghost"
+              </AdminButton>
+              <AdminButton hierarchy="ghost" size="md" iconOnly
                 aria-label="Cancel recording"
                 onClick={() => {
                   if (timer.current) clearInterval(timer.current)
@@ -300,7 +298,7 @@ function Review({ trade: t, onDone, readOnly }: { trade: ReturnType<typeof allTr
                 }}
               >
                 <X />
-              </Button>
+              </AdminButton>
             </div>
           ) : snapshot !== null ? (
             <form
@@ -312,32 +310,31 @@ function Review({ trade: t, onDone, readOnly }: { trade: ReturnType<typeof allTr
               }}
             >
               <Input autoFocus value={snapshot} onChange={(e) => setSnapshot(e.target.value)} placeholder="https://www.tradingview.com/x/…" aria-label="TradingView snapshot link" />
-              <Button type="submit" size="sm">
+              <AdminButton hierarchy="primary" size="md" type="submit">
                 Share
-              </Button>
+              </AdminButton>
             </form>
           ) : (
             <Textarea rows={3} aria-label="Your answer" value={text} onChange={(e) => setText(e.target.value)} placeholder={`Answer ${s.name.split(" ")[0]}…`} />
           )}
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setText(AI_DRAFT[t.id] ?? "Solid execution. The entry matched the setup; the exit came early. Write down what made you close.")}>
+            <AdminButton hierarchy="secondary" size="md" onClick={() => setText(AI_DRAFT[t.id] ?? "Solid execution. The entry matched the setup; the exit came early. Write down what made you close.")}>
               <Sparkles /> AI first draft
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => record("voice")} disabled={!!recording}>
+            </AdminButton>
+            <AdminButton hierarchy="secondary" size="md" onClick={() => record("voice")} disabled={!!recording}>
               <Mic /> Voice note
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => record("video")} disabled={!!recording}>
+            </AdminButton>
+            <AdminButton hierarchy="secondary" size="md" onClick={() => record("video")} disabled={!!recording}>
               <Video /> Short video
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setSnapshot(snapshot === null ? "" : null)} disabled={!!recording}>
+            </AdminButton>
+            <AdminButton hierarchy="secondary" size="md" onClick={() => setSnapshot(snapshot === null ? "" : null)} disabled={!!recording}>
               <ChartCandlestick /> TradingView snapshot
-            </Button>
+            </AdminButton>
             <div className="ml-auto flex gap-2">
-              <Button variant="outline" size="sm" disabled={!text.trim()} onClick={send}>
+              <AdminButton hierarchy="secondary" size="md" disabled={!text.trim()} onClick={send}>
                 <Send /> Send
-              </Button>
-              <Button
-                size="sm"
+              </AdminButton>
+              <AdminButton hierarchy="primary" size="md"
                 onClick={() => {
                   if (text.trim()) send()
                   addFeedback(coach.slug, t.id, { done: true })
@@ -346,7 +343,7 @@ function Review({ trade: t, onDone, readOnly }: { trade: ReturnType<typeof allTr
                 }}
               >
                 <Check /> {text.trim() ? "Send and mark done" : "Mark done"}
-              </Button>
+              </AdminButton>
             </div>
           </div>
         </div>
@@ -385,22 +382,20 @@ function JournalRules() {
             <h2 className="font-medium">Strategies and their rules</h2>
             <p className="text-sm text-muted-foreground">Students pick one per trade. The journal shows how well each rule is kept.</p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
+          <AdminButton hierarchy="secondary" size="md"
             onClick={() => setR((x) => ({ ...x, strategies: [...x.strategies, { id: `s${Date.now()}`, name: "New strategy", rules: ["First rule"], trades: 0 }] }))}
           >
             <Plus /> Strategy
-          </Button>
+          </AdminButton>
         </div>
         {r.strategies.map((s, i) => (
           <div key={s.id} className="grid gap-2 rounded-lg border bg-card p-3">
             <div className="flex items-center gap-2">
               <Input value={s.name} onChange={(e) => editStrategy(i, { name: e.target.value })} className="h-8 font-medium" aria-label="Strategy name" />
               <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{s.trades} trades</span>
-              <Button variant="ghost" size="icon-sm" aria-label={`Delete ${s.name}`} onClick={() => setR((x) => ({ ...x, strategies: x.strategies.filter((_, j) => j !== i) }))}>
+              <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Delete ${s.name}`} onClick={() => setR((x) => ({ ...x, strategies: x.strategies.filter((_, j) => j !== i) }))}>
                 <Trash2 />
-              </Button>
+              </AdminButton>
             </div>
             <div className="grid gap-1.5 pl-1">
               {s.rules.map((rule, k) => (
@@ -412,9 +407,9 @@ function JournalRules() {
                     className="h-7 text-sm"
                     aria-label={`Rule ${k + 1}`}
                   />
-                  <Button variant="ghost" size="icon-xs" aria-label="Remove rule" onClick={() => editStrategy(i, { rules: s.rules.filter((_, j) => j !== k) })}>
+                  <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Remove rule" onClick={() => editStrategy(i, { rules: s.rules.filter((_, j) => j !== k) })}>
                     <X />
-                  </Button>
+                  </AdminButton>
                 </div>
               ))}
               <button onClick={() => editStrategy(i, { rules: [...s.rules, ""] })} className="justify-self-start pl-7 text-xs text-muted-foreground hover:text-foreground">
@@ -458,9 +453,9 @@ function JournalRules() {
             }}
           >
             <Input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="New tag" className="h-8" />
-            <Button size="sm" variant="outline" type="submit">
+            <AdminButton hierarchy="secondary" size="md" type="submit">
               Add
-            </Button>
+            </AdminButton>
           </form>
         </div>
 

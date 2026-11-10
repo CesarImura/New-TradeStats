@@ -4,14 +4,14 @@ import { useEffect, useRef, useState } from "react"
 import { Landmark, Loader2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { MONEY } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Field, Mono, NativeSelect, SettingRow, useCommunityData } from "../kit"
 import { useWizardCommunity } from "../setup-checklist"
-import { Panel, StatPanel, Tag } from "../ui"
+import { Panel, StatPanel, Tag, AdminButton } from "../ui"
 
 // ---------- ADM-41 Payouts
 
@@ -76,11 +76,11 @@ export function Payouts() {
         {state.step === 3 && <p className="text-sm text-muted-foreground">Our payment partner opens a short check: a photo of your ID and a selfie. About 2 minutes.</p>}
         <div className="flex gap-2">
           {state.step > 0 && (
-            <Button variant="ghost" onClick={() => setState({ step: state.step - 1, done: false })}>
+            <AdminButton hierarchy="ghost" onClick={() => setState({ step: state.step - 1, done: false })}>
               Back
-            </Button>
+            </AdminButton>
           )}
-          <Button
+          <AdminButton hierarchy="primary"
             disabled={busy}
             onClick={() => {
               if (state.step < KYC.length - 1) return setState({ step: state.step + 1, done: false })
@@ -93,7 +93,7 @@ export function Payouts() {
             }}
           >
             {busy ? <Loader2 className="animate-spin" /> : null} {state.step < KYC.length - 1 ? "Continue" : "Start identity check"}
-          </Button>
+          </AdminButton>
         </div>
       </div>
     )
@@ -133,9 +133,9 @@ export function Payouts() {
               </NativeSelect>
             </SettingRow>
           </div>
-          <Button variant="outline" size="sm" className="justify-self-start" onClick={() => setState({ step: 0, done: false })}>
+          <AdminButton hierarchy="secondary" size="md" className="justify-self-start" onClick={() => setState({ step: 0, done: false })}>
             Change bank account
-          </Button>
+          </AdminButton>
         </Panel>
         <Panel>
           <Table>

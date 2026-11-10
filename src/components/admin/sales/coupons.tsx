@@ -1,10 +1,11 @@
 "use client"
 
+import { AdminButton } from "@/components/admin/ui"
 import { useState } from "react"
 import { Copy, Plus } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -27,9 +28,9 @@ export function Coupons() {
   return (
     <div className="grid gap-3">
       <div className="flex justify-end">
-        <Button onClick={() => setOpen(true)}>
+        <AdminButton hierarchy="primary" onClick={() => setOpen(true)}>
           <Plus /> New coupon
-        </Button>
+        </AdminButton>
       </div>
       <div className="overflow-x-auto rounded-lg border bg-card">
         <Table>
@@ -98,7 +99,7 @@ export function Coupons() {
             </Field>
           </div>
           <DialogFooter>
-            <Button
+            <AdminButton hierarchy="primary"
               disabled={!code}
               onClick={() => {
                 const discount = kind === "trial" ? `${amount}-day free trial` : `${kind === "percent" ? `${amount}%` : `€${amount}`} off ${months === "1" ? "first payment" : months === "forever" ? "forever" : `for ${months} months`}`
@@ -109,7 +110,7 @@ export function Coupons() {
               }}
             >
               Create coupon
-            </Button>
+            </AdminButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

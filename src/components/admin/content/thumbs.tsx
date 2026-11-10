@@ -1,9 +1,10 @@
 "use client"
 
+import { AdminButton } from "@/components/admin/ui"
 import { useRef } from "react"
 import { ImagePlus, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
+
 import { pictureFrom } from "@/lib/images"
 import { cn } from "@/lib/utils"
 
@@ -42,13 +43,13 @@ export function PictureField({ value, color, onChange, label, empty, className }
       <div className="grid min-w-0 flex-1 gap-2">
         <span className="text-xs text-muted-foreground">{value ? `Your ${label.toLowerCase()} picture.` : empty}</span>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => input.current?.click()}>
+          <AdminButton hierarchy="secondary" size="md" onClick={() => input.current?.click()}>
             <ImagePlus /> {value ? "Change" : "Add a picture"}
-          </Button>
+          </AdminButton>
           {value && (
-            <Button variant="ghost" size="sm" onClick={() => onChange(undefined)}>
+            <AdminButton hierarchy="ghost" size="md" onClick={() => onChange(undefined)}>
               <Trash2 /> Remove
-            </Button>
+            </AdminButton>
           )}
         </div>
       </div>

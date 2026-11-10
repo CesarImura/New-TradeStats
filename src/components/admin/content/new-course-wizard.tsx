@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, FolderUp, Plus, X } from "@/components/icons"
+import { FolderUp, Plus, X } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { AdminButton, OptionCard, StepIndicator } from "@/components/admin/ui"
 import { Checkbox } from "@/components/ui/checkbox"

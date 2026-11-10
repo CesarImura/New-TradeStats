@@ -230,7 +230,7 @@ function HelpButton() {
             <p className="mt-1 text-sm text-muted-foreground">
               We build your whole platform on a call: design, tiers, first course. Included on Scale and Enterprise.
             </p>
-            <Button className="mt-3" size="md">Order a setup</Button>
+            <Button className="mt-3" size="lg">Order a setup</Button>
           </div>
         </div>
       </SheetContent>

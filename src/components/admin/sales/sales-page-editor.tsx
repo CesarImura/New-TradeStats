@@ -1,10 +1,11 @@
 "use client"
 
+import { AdminButton } from "@/components/admin/ui"
 import { useEffect, useRef, useState } from "react"
 import { ArrowDown, ArrowUp, ExternalLink, Plus, RotateCcw, X } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
@@ -39,16 +40,14 @@ export function SalesPageEditor() {
       <div className="grid content-start gap-4">
         <div className="flex items-center justify-between">
           <Mono className="text-muted-foreground">Blocks · top to bottom</Mono>
-          <Button
-            variant="ghost"
-            size="sm"
+          <AdminButton hierarchy="ghost" size="md"
             onClick={() => {
               resetSalesPage(coach)
               toast("Sales page reset to the template")
             }}
           >
             <RotateCcw /> Reset
-          </Button>
+          </AdminButton>
         </div>
         <ol className="grid gap-1">
           {blocks.map((b, i) => (
@@ -64,12 +63,12 @@ export function SalesPageEditor() {
                   <span className="truncate text-sm font-medium">{BLOCK_INFO[b.type].name}</span>
                   <span className="truncate text-xs text-muted-foreground">{BLOCK_INFO[b.type].hint}</span>
                 </button>
-                <Button variant="ghost" size="icon-sm" aria-label="Move up" disabled={i === 0} onClick={() => move(b.id, -1)}>
+                <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Move up" disabled={i === 0} onClick={() => move(b.id, -1)}>
                   <ArrowUp />
-                </Button>
-                <Button variant="ghost" size="icon-sm" aria-label="Move down" disabled={i === blocks.length - 1} onClick={() => move(b.id, 1)}>
+                </AdminButton>
+                <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Move down" disabled={i === blocks.length - 1} onClick={() => move(b.id, 1)}>
                   <ArrowDown />
-                </Button>
+                </AdminButton>
                 <Switch checked={b.on} onCheckedChange={(v) => update(b.id, { on: v })} aria-label={`Show ${BLOCK_INFO[b.type].name}`} />
               </div>
             </li>
@@ -98,9 +97,9 @@ export function SalesPageEditor() {
                         placeholder={block.type === "faq" ? "Question" : "Name · detail"}
                         className="h-8"
                       />
-                      <Button variant="ghost" size="icon-sm" aria-label="Remove" onClick={() => update(block.id, { items: block.items!.filter((_, j) => j !== i) })}>
+                      <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Remove" onClick={() => update(block.id, { items: block.items!.filter((_, j) => j !== i) })}>
                         <X />
-                      </Button>
+                      </AdminButton>
                     </div>
                     <Textarea
                       rows={2}
@@ -110,14 +109,12 @@ export function SalesPageEditor() {
                     />
                   </div>
                 ))}
-                <Button
-                  variant="outline"
-                  size="sm"
+                <AdminButton hierarchy="secondary" size="md"
                   className="justify-self-start"
                   onClick={() => update(block.id, { items: [...block.items!, block.type === "faq" ? { q: "", a: "" } : { q: "", a: "", who: "" }] })}
                 >
                   <Plus /> {block.type === "faq" ? "Question" : "Quote"}
-                </Button>
+                </AdminButton>
               </div>
             )}
             {(block.type === "tiers" || block.type === "curriculum" || block.type === "groups") && (
@@ -132,9 +129,9 @@ export function SalesPageEditor() {
       <div className="grid content-start gap-2">
         <div className="flex items-center justify-between gap-2">
           <Mono className="text-muted-foreground">{coach.slug}.tradestats.app · live</Mono>
-          <Button variant="ghost" size="sm" nativeButton={false} render={<a href={url} target="_blank" rel="noreferrer" />}>
+          <AdminButton hierarchy="ghost" size="md" nativeButton={false} render={<a href={url} target="_blank" rel="noreferrer" />}>
             <ExternalLink /> Open
-          </Button>
+          </AdminButton>
         </div>
         <div className="overflow-hidden rounded-lg border bg-background">
           <iframe ref={frame} key={coach.slug} src={`${url}?preview=draft`} title="Sales page preview" className="h-[72vh] w-full" />

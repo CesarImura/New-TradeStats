@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { STATUS_LABEL, type Course } from "@/lib/data/learning"
 import { pictureFrom } from "@/lib/images"
-import { cn } from "@/lib/utils"
 import { Tile } from "./thumbs"
 
 const TONE = { published: "success", draft: "neutral", scheduled: "warning", archived: "neutral" } as const

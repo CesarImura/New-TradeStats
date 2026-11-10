@@ -1,9 +1,10 @@
 "use client"
 
+import { AdminButton } from "@/components/admin/ui"
 import { useState } from "react"
 import { ChevronDown, CircleHelp, Copy, GripVertical, Pencil, Plus, Settings2, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
+
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { STATUS_LABEL, allLessons, uid, type Course, type Lesson, type Module, type Status } from "@/lib/data/learning"
 import { dropLine } from "@/components/kit/drop-line"
@@ -134,9 +135,9 @@ export function Tree({ course, sel, onSelect, edit, hideSettings }: { course: Co
                   </span>
                 )}
                 <span className="text-xs text-muted-foreground tabular-nums">{m.lessons.length}</span>
-                <Button variant="ghost" size="icon-xs" className="opacity-0 group-hover:opacity-100" aria-label={`Add lesson to ${m.title}`} onClick={() => addLesson(m.id)}>
+                <AdminButton hierarchy="ghost" size="sm" iconOnly className="opacity-0 group-hover:opacity-100" aria-label={`Add lesson to ${m.title}`} onClick={() => addLesson(m.id)}>
                   <Plus />
-                </Button>
+                </AdminButton>
               </ContextMenuTrigger>
               <ContextMenuContent className="w-44">
                 <ContextMenuItem onClick={() => setRenaming(m.id)}>
@@ -226,9 +227,9 @@ export function Tree({ course, sel, onSelect, edit, hideSettings }: { course: Co
         )
       })}
 
-      <Button variant="ghost" size="sm" className="mt-1 justify-start text-muted-foreground" onClick={addModule}>
+      <AdminButton hierarchy="ghost" size="md" className="mt-1 justify-start text-muted-foreground" onClick={addModule}>
         <Plus /> Add module
-      </Button>
+      </AdminButton>
       <p className="mt-2 px-2 text-xs text-muted-foreground">Double-click to rename. Right-click for more.</p>
     </div>
   )

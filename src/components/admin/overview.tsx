@@ -105,7 +105,7 @@ function format(m: Metric, v: number) {
 function FilterChip<T extends string>({ name, value, options, onChange }: { name: string; value: T; options: Record<T, string>; onChange: (v: T) => void }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button hierarchy="secondary" size="md" className="gap-0 px-0" aria-label={name ? `${name}: ${options[value]}` : options[value]} />}>
+      <DropdownMenuTrigger render={<Button hierarchy="secondary" size="lg" className="gap-0 px-0" aria-label={name ? `${name}: ${options[value]}` : options[value]} />}>
         {name && <span className="border-r border-a-border px-2.5 text-a-text-2">{name}</span>}
         <span className="flex items-center gap-1 px-2.5">
           {!name && <CalendarDays className="size-3.5 text-a-text-2" />}{options[value]} <ChevronDown className="size-3.5 text-a-text-2" />
@@ -162,10 +162,10 @@ function NextLiveBanner({ base }: { base: string }) {
           <span className="t-body-m text-a-text-2">Camera, screen and chat are ready. {next.seats?.split(" ")[0] ?? "0"} students said they will join.</span>
         </div>
         <div className="flex gap-2">
-          <Button hierarchy="highlight" size="md" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
+          <Button hierarchy="highlight" size="lg" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
             Open studio
           </Button>
-          <Button hierarchy="secondary" size="md" onClick={() => toast("Reminder sent", { description: "Signed-up students get a nudge." })}>
+          <Button hierarchy="secondary" size="lg" onClick={() => toast("Reminder sent", { description: "Signed-up students get a nudge." })}>
             Remind
           </Button>
         </div>
@@ -242,10 +242,10 @@ export function AdminOverview() {
               <span className="t-body-m-medium tabular-nums">23</span> Online
             </span>
             <div className="inline-flex">
-              <Button size="lg" className="rounded-r-none" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
+              <Button size="xl" className="rounded-r-none" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
                 <Video /> Go live
               </Button>
-              <Button size="lg" iconOnly aria-label="Live options" className="rounded-l-none border-l border-white/20" nativeButton={false} render={<Link href={`${base}/calendar`} />}>
+              <Button size="xl" iconOnly aria-label="Live options" className="rounded-l-none border-l border-white/20" nativeButton={false} render={<Link href={`${base}/calendar`} />}>
                 <ArrowRight />
               </Button>
             </div>
@@ -375,7 +375,7 @@ export function AdminOverview() {
                 <span className="sr-only">{u.tone === "danger" ? "Urgent" : "Warning"}</span>
                 <span className="t-body-m-medium w-36 shrink-0 truncate">{u.name}</span>
                 <span className="t-body-m min-w-0 flex-1 truncate text-a-text-2">{u.reason}</span>
-                <Button hierarchy="secondary" size="sm" nativeButton={false} render={<Link href={`${base}/${u.href}`} />}>{u.action}</Button>
+                <Button hierarchy="secondary" size="md" nativeButton={false} render={<Link href={`${base}/${u.href}`} />}>{u.action}</Button>
               </li>
             ))}
           </ul>

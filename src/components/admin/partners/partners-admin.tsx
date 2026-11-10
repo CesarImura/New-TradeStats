@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Handshake, Pencil, Plus, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTiers } from "@/lib/data/access"
 import { CATALOGUE, COACH_SHARE, KIND_LABEL, PARTNER_KINDS, fromCatalogue, saveAffiliate, saveOffers, useAffiliate, useOffers, type PartnerKind, type PartnerOffer } from "@/lib/data/partners"
-import { Tag } from "../ui"
+import { Tag, AdminButton } from "../ui"
 import { Empty, Field, Mono, NativeSelect, Page, PageHeader, SettingRow } from "../kit"
 
 const euro = (n: number) => `€${n.toLocaleString("en")}`
@@ -30,12 +30,12 @@ export function PartnersAdmin() {
         text="Offers from our partners and students who bring students"
         actions={
           <>
-            <Button variant="outline" onClick={() => setAdding("own")}>
+            <AdminButton hierarchy="secondary" onClick={() => setAdding("own")}>
               Add my own link
-            </Button>
-            <Button onClick={() => setAdding("catalogue")}>
+            </AdminButton>
+            <AdminButton hierarchy="primary" onClick={() => setAdding("catalogue")}>
               <Plus /> Add from catalogue
-            </Button>
+            </AdminButton>
           </>
         }
       />
@@ -43,9 +43,9 @@ export function PartnersAdmin() {
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
           <Handshake className="size-4 text-[var(--ts-interactive)]" />
           <span className="flex-1">Partners is switched off, so students don&apos;t see it yet.</span>
-          <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`${base}/design`} />}>
+          <AdminButton hierarchy="secondary" size="md" nativeButton={false} render={<Link href={`${base}/design`} />}>
             Switch on in Design
-          </Button>
+          </AdminButton>
         </div>
       )}
       <Tabs defaultValue="offers" className="gap-5">
@@ -85,10 +85,10 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
         text="Add an offer from our catalogue or your own affiliate link. Students see them labelled as partner offers."
         action={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onAdd("catalogue")}>
+            <AdminButton hierarchy="secondary" onClick={() => onAdd("catalogue")}>
               Add from catalogue
-            </Button>
-            <Button onClick={() => onAdd("own")}>Add my own link</Button>
+            </AdminButton>
+            <AdminButton hierarchy="primary" onClick={() => onAdd("own")}>Add my own link</AdminButton>
           </div>
         }
       />
@@ -114,12 +114,10 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
               <span className="min-w-0 t-caption text-a-text-2 tabular-nums">{o.clicks} clicks{o.signups ? ` · ${o.signups} sign-ups` : ""}</span>
             </div>
             <div className="flex justify-end gap-0.5 border-t border-a-border-subtle pt-2">
-              <Button size="icon-sm" variant="ghost" aria-label={`Edit ${o.name}`} onClick={() => setEditing(o)}>
+              <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Edit ${o.name}`} onClick={() => setEditing(o)}>
                 <Pencil />
-              </Button>
-              <Button
-                size="icon-sm"
-                variant="ghost"
+              </AdminButton>
+              <AdminButton hierarchy="ghost" size="md" iconOnly
                 aria-label={`Remove ${o.name}`}
                 onClick={() => {
                   saveOffers(coach, (l) => l.filter((x) => x.id !== o.id))
@@ -127,7 +125,7 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
                 }}
               >
                 <Trash2 />
-              </Button>
+              </AdminButton>
             </div>
           </article>
         ))}
@@ -164,24 +162,22 @@ function CatalogueDialog({ onClose }: { onClose: () => void }) {
                     Commission {c.commission} · You earn {COACH_SHARE}% of the commission
                   </span>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
+                <AdminButton hierarchy="secondary" size="md"
                   onClick={() => {
                     saveOffers(coach, (l) => [...l, fromCatalogue(coach, c)])
                     toast(`${c.name} added`, { description: "Students see it as a partner offer." })
                   }}
                 >
                   <Plus /> Add
-                </Button>
+                </AdminButton>
               </div>
             ))}
           </div>
         )}
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <AdminButton hierarchy="secondary" onClick={onClose}>
             Done
-          </Button>
+          </AdminButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -268,12 +264,12 @@ function OwnDialog({ item, onClose }: { item?: PartnerOffer; onClose: () => void
           </Field>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <AdminButton hierarchy="secondary" onClick={onClose}>
             Cancel
-          </Button>
-          <Button disabled={!ok} onClick={save}>
+          </AdminButton>
+          <AdminButton hierarchy="primary" disabled={!ok} onClick={save}>
             {item ? "Save" : "Add"}
-          </Button>
+          </AdminButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

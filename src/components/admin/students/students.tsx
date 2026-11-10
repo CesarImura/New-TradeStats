@@ -5,7 +5,7 @@ import { Download, Mail, MoreHorizontal, Plus, Send, Users } from "@/components/
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
+
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
 import { Empty, Field, Page, PageHeader } from "../kit"
-import { AdminFilter, AdminSearch, AdminTabs, AdminToolbar } from "../ui"
+import { AdminFilter, AdminSearch, AdminTabs, AdminToolbar, AdminButton } from "../ui"
 import { StatPanel, Tag } from "../ui"
 import { SetupTip } from "../setup-checklist"
 import { ImportDialog } from "./import-dialog"
@@ -68,12 +68,12 @@ export function StudentsPage() {
         text={`${coach.name} · ${STUDENTS.length} students · ${joinedThisMonth} joined this month`}
         actions={
           <>
-            <Button variant="outline" onClick={() => toast("Export started", { description: "students.csv with the columns you see." })}>
+            <AdminButton hierarchy="secondary" onClick={() => toast("Export started", { description: "students.csv with the columns you see." })}>
               <Download /> Export
-            </Button>
-            <Button onClick={() => setImporting(true)}>
+            </AdminButton>
+            <AdminButton hierarchy="primary" onClick={() => setImporting(true)}>
               <Plus /> Import or invite
-            </Button>
+            </AdminButton>
           </>
         }
       />
@@ -109,11 +109,11 @@ export function StudentsPage() {
       {picked.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--ts-cta)]/30 bg-[var(--ts-cta)]/6 px-3 py-2 text-sm">
           <span className="tabular-nums">{picked.length} selected</span>
-          <Button size="sm" variant="outline" onClick={() => setMessage(selected)}>
+          <AdminButton hierarchy="secondary" size="md" onClick={() => setMessage(selected)}>
             <Mail /> Message
-          </Button>
+          </AdminButton>
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>Move to tier</DropdownMenuTrigger>
+            <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Move to tier</DropdownMenuTrigger>
             <DropdownMenuContent>
               {coach.tiers.map((t) => (
                 <DropdownMenuItem key={t.id} onClick={() => toast(`${picked.length} students move to ${t.name}`, { description: "Upgrades start now, downgrades at the end of the period." })}>
@@ -123,7 +123,7 @@ export function StudentsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>Add to group</DropdownMenuTrigger>
+            <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Add to group</DropdownMenuTrigger>
             <DropdownMenuContent>
               {GROUPS.map((g) => (
                 <DropdownMenuItem key={g.id} onClick={() => toast(`${picked.length} students added to ${g.name}`)}>
@@ -132,9 +132,9 @@ export function StudentsPage() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setPicked([])}>
+          <AdminButton hierarchy="ghost" size="md" className="ml-auto" onClick={() => setPicked([])}>
             Clear
-          </Button>
+          </AdminButton>
         </div>
       )}
 
@@ -197,7 +197,7 @@ export function StudentsPage() {
                   <TableCell className="hidden text-right text-a-text-2 md:table-cell">{s.lastActive}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={`Actions for ${s.name}`} />}>
+                      <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Actions for ${s.name}`} />}>
                         <MoreHorizontal />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -256,10 +256,10 @@ export function MessageDialog({ to, onClose }: { to: Student[] | null; onClose: 
           </label>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
+          <AdminButton hierarchy="ghost" onClick={onClose}>
             Cancel
-          </Button>
-          <Button
+          </AdminButton>
+          <AdminButton hierarchy="primary"
             disabled={!body.trim()}
             onClick={() => {
               toast(`Message sent to ${to?.length === 1 ? to[0].name : `${to?.length} students`}`)
@@ -269,7 +269,7 @@ export function MessageDialog({ to, onClose }: { to: Student[] | null; onClose: 
             }}
           >
             <Send /> Send
-          </Button>
+          </AdminButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

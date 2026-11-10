@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Bell, CalendarClock, Check, Hash, Pin, Plus, RefreshCw, Send, Trash2, Unplug } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -91,9 +91,9 @@ export function CommunityAdmin() {
                       <TableCell className="hidden text-a-text-2 md:table-cell">{a.channels.map((c) => CHANNELS.find((x) => x.id === c)?.label).join(", ")}</TableCell>
                       <TableCell className={cn("whitespace-nowrap", a.scheduled ? "text-a-text-accent" : "text-a-text-2")}>{a.scheduled ? `Scheduled · ${a.scheduled}` : `Sent · ${a.when}`}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon-sm" aria-label={a.pinned ? `Unpin ${a.title}` : `Pin ${a.title}`} onClick={() => setList((l) => l.map((x) => (x.id === a.id ? { ...x, pinned: !x.pinned } : x)))}>
+                        <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={a.pinned ? `Unpin ${a.title}` : `Pin ${a.title}`} onClick={() => setList((l) => l.map((x) => (x.id === a.id ? { ...x, pinned: !x.pinned } : x)))}>
                           <Pin />
-                        </Button>
+                        </AdminButton>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -135,22 +135,22 @@ export function CommunityAdmin() {
             </div>
             {d.connected ? (
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => toast("Roles checked", { description: "3 members got their role, 1 lost it (cancelled)." })}>
+                <AdminButton hierarchy="secondary" size="md" onClick={() => toast("Roles checked", { description: "3 members got their role, 1 lost it (cancelled)." })}>
                   <RefreshCw /> Check roles now
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setD((x) => ({ ...x, connected: false }))}>
+                </AdminButton>
+                <AdminButton hierarchy="ghost" size="md" onClick={() => setD((x) => ({ ...x, connected: false }))}>
                   <Unplug /> Disconnect
-                </Button>
+                </AdminButton>
               </div>
             ) : (
-              <Button
+              <AdminButton hierarchy="primary"
                 onClick={() => {
                   setD((x) => ({ ...x, connected: true }))
                   toast("Discord connected", { description: "Opens Discord to add our bot to your server." })
                 }}
               >
                 Connect Discord
-              </Button>
+              </AdminButton>
             )}
           </div>
 
@@ -284,7 +284,7 @@ function Composer({ spaces, onPost }: { spaces: Space[]; onPost: (a: Announcemen
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Bell className="size-3.5" /> Students get a notification
         </span>
-        <Button
+        <AdminButton hierarchy="primary"
           className="ml-auto"
           disabled={!title.trim() || !body.trim() || channels.length === 0}
           onClick={() => {
@@ -296,7 +296,7 @@ function Composer({ spaces, onPost }: { spaces: Space[]; onPost: (a: Announcemen
           }}
         >
           <Send /> {later ? "Schedule" : "Send now"}
-        </Button>
+        </AdminButton>
       </div>
     </div>
   )
@@ -314,14 +314,14 @@ function SpacesTab({ spaces, setSpaces }: { spaces: Space[]; setSpaces: (n: Spac
             <Hash className="size-4 shrink-0 text-muted-foreground" />
             <Input aria-label="Space name" value={s.name} onChange={(e) => edit(s.id, { name: e.target.value })} className="h-8 w-44" />
             <Input aria-label="Short description" value={s.text} onChange={(e) => edit(s.id, { text: e.target.value })} className="h-8 flex-1" placeholder="What is it for?" />
-            <Button variant="ghost" size="icon-xs" aria-label={`Delete ${s.name}`} onClick={() => setSpaces((l) => l.filter((x) => x.id !== s.id))}>
+            <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label={`Delete ${s.name}`} onClick={() => setSpaces((l) => l.filter((x) => x.id !== s.id))}>
               <Trash2 />
-            </Button>
+            </AdminButton>
           </div>
         ))}
-        <Button variant="outline" size="sm" className="justify-self-start" onClick={() => setSpaces((l) => [...l, { id: `s${Date.now()}`, name: "New space", text: "" }])}>
+        <AdminButton hierarchy="secondary" size="md" className="justify-self-start" onClick={() => setSpaces((l) => [...l, { id: `s${Date.now()}`, name: "New space", text: "" }])}>
           <Plus /> Add a space
-        </Button>
+        </AdminButton>
       </div>
     </section>
   )
@@ -337,14 +337,14 @@ function RulesTab({ rules, setRules }: { rules: string[]; setRules: (n: string[]
           <div key={i} className="flex items-center gap-2 rounded-lg border bg-card p-2.5">
             <span className="w-5 text-center text-xs text-muted-foreground tabular-nums">{i + 1}</span>
             <Input aria-label={`Rule ${i + 1}`} value={r} onChange={(e) => setRules((l) => l.map((x, j) => (j === i ? e.target.value : x)))} className="h-8 flex-1" />
-            <Button variant="ghost" size="icon-xs" aria-label={`Delete rule ${i + 1}`} onClick={() => setRules((l) => l.filter((_, j) => j !== i))}>
+            <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label={`Delete rule ${i + 1}`} onClick={() => setRules((l) => l.filter((_, j) => j !== i))}>
               <Trash2 />
-            </Button>
+            </AdminButton>
           </div>
         ))}
-        <Button variant="outline" size="sm" className="justify-self-start" onClick={() => setRules((l) => [...l, ""])}>
+        <AdminButton hierarchy="secondary" size="md" className="justify-self-start" onClick={() => setRules((l) => [...l, ""])}>
           <Plus /> Add a rule
-        </Button>
+        </AdminButton>
       </div>
     </section>
   )

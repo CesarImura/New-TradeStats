@@ -1,10 +1,11 @@
 "use client"
 
+import { AdminButton } from "@/components/admin/ui"
 import { useState } from "react"
 import { Check, FileSpreadsheet, Link2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -94,9 +95,9 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
               <div className="grid gap-2">
                 <div className="flex gap-2">
                   <Input readOnly value={`https://${coach.slug}.tradestats.app/join/${coach.tiers[0]?.id ?? "free"}-x8k2`} />
-                  <Button variant="outline" onClick={() => toast("Link copied")}>
+                  <AdminButton hierarchy="secondary" onClick={() => toast("Link copied")}>
                     <Link2 /> Copy
-                  </Button>
+                  </AdminButton>
                 </div>
                 <p className="text-xs text-muted-foreground">Share it in Discord or on socials. People who join get the tier you pick next.</p>
               </div>
@@ -187,25 +188,25 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
 
         <DialogFooter>
           {step !== "source" && (
-            <Button variant="ghost" onClick={() => setStep(step === "access" ? (mode === "csv" ? "map" : "source") : "source")}>
+            <AdminButton hierarchy="ghost" onClick={() => setStep(step === "access" ? (mode === "csv" ? "map" : "source") : "source")}>
               Back
-            </Button>
+            </AdminButton>
           )}
           {step === "source" && mode === "link" ? (
-            <Button onClick={close}>Done</Button>
+            <AdminButton hierarchy="primary" onClick={close}>Done</AdminButton>
           ) : step !== "access" ? (
-            <Button disabled={step === "source" && count === 0} onClick={() => setStep(step === "source" && mode === "csv" ? "map" : "access")}>
+            <AdminButton hierarchy="primary" disabled={step === "source" && count === 0} onClick={() => setStep(step === "source" && mode === "csv" ? "map" : "access")}>
               Continue
-            </Button>
+            </AdminButton>
           ) : (
-            <Button
+            <AdminButton hierarchy="primary"
               onClick={() => {
                 toast(`${count} students imported`, { description: invite ? "Invite e-mails are on their way." : "They're waiting as “Invited”." })
                 close()
               }}
             >
               <Check /> Import {count}
-            </Button>
+            </AdminButton>
           )}
         </DialogFooter>
       </DialogContent>

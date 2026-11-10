@@ -8,8 +8,8 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "../kit"
-import { AdminFilter, AdminTabs, AdminToolbar, ChoiceChip } from "../ui"
-import { Button } from "@/components/ui/button"
+import { AdminFilter, AdminTabs, AdminToolbar, ChoiceChip, AdminButton } from "../ui"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -79,12 +79,12 @@ export function AdminCalendar() {
         text={`Lives, calls and news · ${schedule.events.length} events this week`}
         actions={
           <>
-            <Button variant="outline" onClick={() => setTab("availability")}>
+            <AdminButton hierarchy="secondary" onClick={() => setTab("availability")}>
               <Settings /> Call settings
-            </Button>
-            <Button onClick={() => newEvent(new Date(2026, 9, 13, 15, 30))}>
+            </AdminButton>
+            <AdminButton hierarchy="primary" onClick={() => newEvent(new Date(2026, 9, 13, 15, 30))}>
               <Plus /> New event
-            </Button>
+            </AdminButton>
           </>
         }
       />
@@ -324,15 +324,15 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
         )}
         <SheetFooter className="border-t sm:flex-row sm:justify-between">
           {!isNew ? (
-            <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={remove}>
+            <AdminButton hierarchy="ghost" className="text-destructive hover:text-destructive" onClick={remove}>
               <Trash2 /> Cancel event
-            </Button>
+            </AdminButton>
           ) : (
             <span />
           )}
-          <Button onClick={save} disabled={!e?.title.trim()}>
+          <AdminButton hierarchy="primary" onClick={save} disabled={!e?.title.trim()}>
             {isNew ? "Schedule" : "Save changes"}
-          </Button>
+          </AdminButton>
         </SheetFooter>
       </SheetContent>
     </Sheet>
@@ -399,9 +399,8 @@ function BookingDetail({ item, onClose }: { item: Item; onClose: () => void }) {
         </div>
       </div>
       <SheetFooter className="border-t">
-        <Button onClick={() => toast("The video call would open here.")}>Start call</Button>
-        <Button
-          variant="ghost"
+        <AdminButton hierarchy="primary" onClick={() => toast("The video call would open here.")}>Start call</AdminButton>
+        <AdminButton hierarchy="ghost"
           className="text-destructive hover:text-destructive"
           onClick={() => {
             saveSchedule(coach, (s) => ({ ...s, bookings: s.bookings.filter((x) => x.id !== b.id) }))
@@ -410,7 +409,7 @@ function BookingDetail({ item, onClose }: { item: Item; onClose: () => void }) {
           }}
         >
           Cancel call
-        </Button>
+        </AdminButton>
       </SheetFooter>
     </>
   )
@@ -455,7 +454,7 @@ function NewsEditor({ news, onClose }: { news: NewsItem; onClose: () => void }) 
         </div>
       </div>
       <SheetFooter className="border-t">
-        <Button
+        <AdminButton hierarchy="primary"
           onClick={() => {
             saveSchedule(coach, (s) => ({ ...s, news: s.news.map((n) => (n.id === news.id ? { ...n, noTrade, comment: comment.trim() || undefined } : n)) }))
             toast.success("Saved. Students see your note on the event.")
@@ -463,7 +462,7 @@ function NewsEditor({ news, onClose }: { news: NewsItem; onClose: () => void }) 
           }}
         >
           Save
-        </Button>
+        </AdminButton>
       </SheetFooter>
     </>
   )
@@ -558,15 +557,15 @@ function AvailabilityEditor() {
                       <span className="text-xs text-muted-foreground">
                         {Math.max(0, Math.floor((toMin(w.to) - toMin(w.from) + a.buffer) / (a.length + a.buffer)))} calls
                       </span>
-                      <Button variant="ghost" size="icon-xs" aria-label="Remove window" onClick={() => setDay(d, windows.filter((_, j) => j !== wi))}>
+                      <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Remove window" onClick={() => setDay(d, windows.filter((_, j) => j !== wi))}>
                         <Trash2 />
-                      </Button>
+                      </AdminButton>
                     </div>
                   ))}
                   {windows.length > 0 && (
-                    <Button variant="ghost" size="xs" className="w-fit" onClick={() => setDay(d, [...windows, { from: "15:00", to: "17:00" }])}>
+                    <AdminButton hierarchy="ghost" size="sm" className="w-fit" onClick={() => setDay(d, [...windows, { from: "15:00", to: "17:00" }])}>
                       <Plus /> Add a window
-                    </Button>
+                    </AdminButton>
                   )}
                 </div>
               </div>

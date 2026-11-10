@@ -1,12 +1,13 @@
 "use client"
 
+import { AdminButton } from "@/components/admin/ui"
 import { useState } from "react"
 import { Eye, Mail, MessageSquareText, Sparkles } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+
 import { Progress } from "@/components/ui/progress"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
@@ -81,15 +82,15 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
             </div>
           </div>
           <div className="flex flex-wrap gap-2 pt-2">
-            <Button size="sm" variant="outline" onClick={() => onMessage(s)}>
+            <AdminButton hierarchy="secondary" size="md" onClick={() => onMessage(s)}>
               <Mail /> Message
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setBriefing((b) => !b)}>
+            </AdminButton>
+            <AdminButton hierarchy="secondary" size="md" onClick={() => setBriefing((b) => !b)}>
               <Sparkles /> Briefing for a call
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => toast(`Viewing the platform as ${s.name}`, { description: `${tier.name}${s.group ? `, ${s.group}` : ""}` })}>
+            </AdminButton>
+            <AdminButton hierarchy="secondary" size="md" onClick={() => toast(`Viewing the platform as ${s.name}`, { description: `${tier.name}${s.group ? `, ${s.group}` : ""}` })}>
               <Eye /> View as {s.name.split(" ")[0]}
-            </Button>
+            </AdminButton>
           </div>
           {briefing && (
             <div className="mt-3 grid gap-2 rounded-lg border border-[var(--ts-cta)]/25 bg-[var(--ts-cta)]/5 p-3 text-sm">
@@ -189,8 +190,7 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
             <TabsContent value="notes" className="grid gap-3">
               <div className="grid gap-2">
                 <Textarea rows={3} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Private note. Only your team sees it." />
-                <Button
-                  size="sm"
+                <AdminButton hierarchy="primary" size="md"
                   className="justify-self-end"
                   disabled={!draft.trim()}
                   onClick={() => {
@@ -199,7 +199,7 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
                   }}
                 >
                   <MessageSquareText /> Add note
-                </Button>
+                </AdminButton>
               </div>
               {myNotes.length === 0 && <p className="text-sm text-muted-foreground">No notes yet.</p>}
               {myNotes.map((n, i) => (
@@ -233,9 +233,9 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
                 </NativeSelect>
               </SettingRow>
               <SettingRow label="Extra access" text="Give one course for free, on top of the tier">
-                <Button size="sm" variant="outline" onClick={() => toast("Pick a course to unlock for this student")}>
+                <AdminButton hierarchy="secondary" size="md" onClick={() => toast("Pick a course to unlock for this student")}>
                   Add a course
-                </Button>
+                </AdminButton>
               </SettingRow>
               <SettingRow label="Pause access" text="Keeps the account and the journal. Nothing is deleted.">
                 <Switch onCheckedChange={(v) => toast(v ? "Access paused" : "Access back on")} />
@@ -257,15 +257,15 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
                 </SettingRow>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => toast("Payment link sent", { description: `${s.name} gets an e-mail to update the card.` })}>
+                <AdminButton hierarchy="secondary" size="md" onClick={() => toast("Payment link sent", { description: `${s.name} gets an e-mail to update the card.` })}>
                   Send payment link
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => toast("Refund the last payment?", { description: "In the real product this asks to confirm." })}>
+                </AdminButton>
+                <AdminButton hierarchy="secondary" size="md" onClick={() => toast("Refund the last payment?", { description: "In the real product this asks to confirm." })}>
                   Refund last payment
-                </Button>
-                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => toast("Cancel at the end of the period?", { description: "In the real product this asks to confirm." })}>
+                </AdminButton>
+                <AdminButton hierarchy="ghost" size="md" className="text-destructive" onClick={() => toast("Cancel at the end of the period?", { description: "In the real product this asks to confirm." })}>
                   Cancel membership
-                </Button>
+                </AdminButton>
               </div>
             </TabsContent>
 

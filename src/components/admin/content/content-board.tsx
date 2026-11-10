@@ -24,8 +24,8 @@ import { NewCourseWizard } from "./new-course-wizard"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "../kit"
-import { AdminFilter, AdminSearch, AdminTabs, AdminToolbar, AdminViewToggle, StatPanel } from "../ui"
-import { Button } from "@/components/ui/button"
+import { AdminFilter, AdminSearch, AdminTabs, AdminToolbar, AdminViewToggle, StatPanel, AdminButton } from "../ui"
+
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   DropdownMenu,
@@ -121,12 +121,12 @@ export function ContentBoard() {
         text={`${catalog.courses.length} ${catalog.courses.length === 1 ? "course" : "courses"} · ${catalog.courses.reduce((n, c) => n + allLessons(c).length, 0)} lessons`}
         actions={
           <>
-            <Button variant="outline" onClick={() => setBulk(true)}>
+            <AdminButton hierarchy="secondary" onClick={() => setBulk(true)}>
               <FolderUp /> Bulk upload
-            </Button>
-            <Button onClick={() => setCreating(true)}>
+            </AdminButton>
+            <AdminButton hierarchy="primary" onClick={() => setCreating(true)}>
               <Plus /> New course
-            </Button>
+            </AdminButton>
           </>
         }
       />
@@ -232,7 +232,7 @@ export function ContentBoard() {
                 </dl>
               </Link>
                     <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="secondary" size="icon-xs" className="absolute top-2.5 right-2.5" aria-label={`Actions for ${c.title}`} />}>
+                      <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="sm" iconOnly className="absolute top-2.5 right-2.5" aria-label={`Actions for ${c.title}`} />}>
                         <MoreHorizontal />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
@@ -405,14 +405,13 @@ function BulkUpload({ open, onOpenChange, area, onCreate }: { open: boolean; onO
                 <Link2 className="size-3.5" /> Or import links
               </Label>
               <Textarea id="bu-links" value={links} onChange={(e) => setLinks(e.target.value)} placeholder="One per line: YouTube, Vimeo, Google Drive or Dropbox" className="min-h-20" />
-              <Button
-                variant="outline"
+              <AdminButton hierarchy="secondary"
                 className="w-fit"
                 disabled={!links.trim()}
                 onClick={() => start(links.split("\n").filter(Boolean).map((l, i) => ({ name: `${String(i + 1).padStart(2, "0")} ${l.replace(/^https?:\/\/(www\.)?/, "").slice(0, 40)}.mp4`, size: "link", minutes: 12 + i })))}
               >
                 Import {links.split("\n").filter(Boolean).length || ""} links
-              </Button>
+              </AdminButton>
             </div>
           </div>
         ) : (
@@ -467,10 +466,10 @@ function BulkUpload({ open, onOpenChange, area, onCreate }: { open: boolean; onO
 
         {files.length > 0 && (
           <DialogFooter className="sm:justify-between">
-            <Button variant="ghost" onClick={reset}>
+            <AdminButton hierarchy="ghost" onClick={reset}>
               Start over
-            </Button>
-            <Button
+            </AdminButton>
+            <AdminButton hierarchy="primary"
               onClick={() => {
                 const groups = files === SAMPLE_FOLDER ? AI_MODULES : [{ title: "Module 1", files: files.map((_, i) => i) }]
                 onCreate({
@@ -493,7 +492,7 @@ function BulkUpload({ open, onOpenChange, area, onCreate }: { open: boolean; onO
               }}
             >
               Accept and open the course
-            </Button>
+            </AdminButton>
           </DialogFooter>
         )}
       </DialogContent>

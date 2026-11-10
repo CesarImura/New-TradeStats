@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Check, Eye, Plus, X } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -13,7 +13,7 @@ import { addTier, amount, per, saveTier, setPreviewAs, useTiers, type TierExtra,
 import { saveCatalog, useCatalog } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
 import { Field, NativeSelect, SettingRow } from "../kit"
-import { Panel, Tag } from "../ui"
+import { Panel, Tag, AdminButton } from "../ui"
 
 /** ADM-29 Tiers & prices and ADM-30 tier editor. */
 export function Tiers() {
@@ -26,9 +26,9 @@ export function Tiers() {
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">No fixed tiers: make as many as you need. Each one has its own price and its own access.</p>
-        <Button onClick={() => setOpen(addTier(coach.slug).id)}>
+        <AdminButton hierarchy="primary" onClick={() => setOpen(addTier(coach.slug).id)}>
           <Plus /> New tier
-        </Button>
+        </AdminButton>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {tiers.map((t) => (
@@ -58,9 +58,9 @@ export function Tiers() {
             </button>
             <div className="flex items-center justify-between border-t border-a-border px-5 py-3">
               <span className="t-caption text-a-text-2 tabular-nums">{t.members.toLocaleString("en")} members</span>
-              <Button variant="outline" size="sm" onClick={() => setOpen(t.id)} aria-label={`Edit ${t.name}`}>
+              <AdminButton hierarchy="secondary" size="md" onClick={() => setOpen(t.id)} aria-label={`Edit ${t.name}`}>
                 Edit
-              </Button>
+              </AdminButton>
             </div>
           </Panel>
         ))}
@@ -157,9 +157,9 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
                 {x.features.map((f, i) => (
                   <li key={i} className="flex items-center gap-2">
                     <Input value={f} onChange={(e) => set({ features: x.features.map((y, j) => (j === i ? e.target.value : y)) })} className="h-8" />
-                    <Button variant="ghost" size="icon-sm" aria-label="Remove" onClick={() => set({ features: x.features.filter((_, j) => j !== i) })}>
+                    <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Remove" onClick={() => set({ features: x.features.filter((_, j) => j !== i) })}>
                       <X />
-                    </Button>
+                    </AdminButton>
                   </li>
                 ))}
               </ul>
@@ -173,9 +173,9 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
                 }}
               >
                 <Input value={feature} onChange={(e) => setFeature(e.target.value)} placeholder="Add a line, e.g. Weekly group call" className="h-8" />
-                <Button type="submit" variant="outline" size="sm">
+                <AdminButton hierarchy="secondary" size="md" type="submit">
                   Add
-                </Button>
+                </AdminButton>
               </form>
             </div>
 
@@ -203,8 +203,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
           </div>
         )}
         <SheetFooter className="flex-row">
-          <Button
-            variant="outline"
+          <AdminButton hierarchy="secondary"
             onClick={() => {
               if (!tier) return
               setPreviewAs(coach.slug, { kind: "tier", id: tier.id, label: x?.name ?? tier.name })
@@ -212,8 +211,8 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
             }}
           >
             <Eye /> Preview as
-          </Button>
-          <Button
+          </AdminButton>
+          <AdminButton hierarchy="primary"
             className="flex-1"
             onClick={() => {
               if (x && tier) saveTier(coach.slug, tier.id, index, x)
@@ -222,7 +221,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
             }}
           >
             Save tier
-          </Button>
+          </AdminButton>
         </SheetFooter>
       </SheetContent>
     </Sheet>

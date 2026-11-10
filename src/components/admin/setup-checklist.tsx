@@ -1,11 +1,12 @@
 "use client"
 
+import { AdminButton } from "@/components/admin/ui"
 import { useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Check, CircleDashed, Info, Lightbulb, X } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { useTiers } from "@/lib/data/access"
@@ -160,9 +161,9 @@ export function SetupChecklist() {
           </CardTitle>
           <CardDescription>All {tasks.length} steps are complete.</CardDescription>
           <CardAction>
-            <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
+            <AdminButton hierarchy="ghost" size="md" onClick={() => setOpen(true)}>
               Show the list
-            </Button>
+            </AdminButton>
           </CardAction>
         </CardHeader>
       </Card>
@@ -235,19 +236,17 @@ export function SetupTip({ task }: { task: TaskId }) {
           ))}
         </ol>
         {tip.action && (
-          <Button size="sm" variant="outline" className="mt-1 w-fit" nativeButton={false} render={<Link href={t.href} />}>
+          <AdminButton hierarchy="secondary" size="md" className="mt-1 w-fit" nativeButton={false} render={<Link href={t.href} />}>
             {tip.action} <ArrowRight />
-          </Button>
+          </AdminButton>
         )}
       </div>
-      <Button
-        size="icon-sm"
-        variant="ghost"
+      <AdminButton hierarchy="ghost" size="md" iconOnly
         aria-label="Close this how-to"
         onClick={() => setStored<TaskId[]>(`${coach.slug}:setup-tips-closed`, (c) => [...c, task], NO_TIPS)}
       >
         <X />
-      </Button>
+      </AdminButton>
     </aside>
   )
 }

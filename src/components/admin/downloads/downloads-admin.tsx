@@ -1,12 +1,12 @@
 "use client"
 
-import { Dropzone } from "@/components/admin/ui"
+import { Dropzone, AdminButton } from "@/components/admin/ui"
 import { useRef, useState } from "react"
 import Link from "next/link"
 import { Download, FileUp, Pencil, Plus, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -62,23 +62,23 @@ export function DownloadsAdmin() {
         title="Downloads"
         text={`Files students can download · ${items.length} files · ${(items.length * 143).toLocaleString("en")} downloads this month`}
         actions={
-          <Button onClick={() => setEditing("new")}>
+          <AdminButton hierarchy="primary" onClick={() => setEditing("new")}>
             <Plus /> Upload a file
-          </Button>
+          </AdminButton>
         }
       />
       {!coach.modules.downloads && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
           <Download className="size-4 text-[var(--ts-interactive)]" />
           <span className="flex-1">Downloads is switched off, so students don&apos;t see it yet.</span>
-          <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`${base}/design`} />}>
+          <AdminButton hierarchy="secondary" size="md" nativeButton={false} render={<Link href={`${base}/design`} />}>
             Switch on in Design
-          </Button>
+          </AdminButton>
         </div>
       )}
 
       {items.length === 0 ? (
-        <Empty icon={Download} title="No files yet" text="Upload an indicator, a template or a checklist and students find it under Downloads." action={<Button onClick={() => setEditing("new")}><Plus /> Upload a file</Button>} />
+        <Empty icon={Download} title="No files yet" text="Upload an indicator, a template or a checklist and students find it under Downloads." action={<AdminButton hierarchy="primary" onClick={() => setEditing("new")}><Plus /> Upload a file</AdminButton>} />
       ) : (
         <>
         <AdminToolbar>
@@ -126,12 +126,12 @@ export function DownloadsAdmin() {
                   <TableCell className="hidden text-right tabular-nums md:table-cell">{[...d.id].reduce((n, c) => n + c.charCodeAt(0), 0) * 7 % 400 + 14}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-0.5">
-                      <Button size="icon-sm" variant="ghost" aria-label={`Edit ${d.title}`} onClick={() => setEditing(d)}>
+                      <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Edit ${d.title}`} onClick={() => setEditing(d)}>
                         <Pencil />
-                      </Button>
-                      <Button size="icon-sm" variant="ghost" aria-label={`Delete ${d.title}`} onClick={() => remove(d)}>
+                      </AdminButton>
+                      <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Delete ${d.title}`} onClick={() => remove(d)}>
                         <Trash2 />
-                      </Button>
+                      </AdminButton>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -266,12 +266,12 @@ function UploadDialog({ item, onClose }: { item?: DownloadItem; onClose: () => v
           </label>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <AdminButton hierarchy="secondary" onClick={onClose}>
             Cancel
-          </Button>
-          <Button disabled={!ok} onClick={save}>
+          </AdminButton>
+          <AdminButton hierarchy="primary" disabled={!ok} onClick={save}>
             {item ? "Save" : "Upload"}
-          </Button>
+          </AdminButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

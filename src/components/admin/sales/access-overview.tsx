@@ -1,9 +1,10 @@
 "use client"
 
+import { AdminButton } from "@/components/admin/ui"
 import { Fragment, useState } from "react"
 import { Check, ChevronRight, Eye, Minus, RotateCcw } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   GROUP_RULES,
@@ -305,7 +306,7 @@ export function PreviewAsMenu({ size = "default" }: { size?: "default" | "sm" })
   }
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" size={size} />}>
+      <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size={size === "sm" ? "md" : "xl"} />}>
         <Eye /> Preview as
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">

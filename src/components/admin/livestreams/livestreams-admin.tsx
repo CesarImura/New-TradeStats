@@ -7,7 +7,7 @@ import { ArrowRight, Plus, Radio, Video } from "@/components/icons"
 import { toast } from "sonner"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -44,7 +44,7 @@ export function LivestreamsAdmin() {
           </>
         }
       />
-      {streams.length === 0 && <Empty icon={Radio} title="No livestreams yet" text="Schedule your first one. You will get the OBS settings on the next screen." action={<Button onClick={() => setCreating(true)}>Schedule a livestream</Button>} />}
+      {streams.length === 0 && <Empty icon={Radio} title="No livestreams yet" text="Schedule your first one. You will get the OBS settings on the next screen." action={<AdminButton hierarchy="primary" onClick={() => setCreating(true)}>Schedule a livestream</AdminButton>} />}
       {streams.length > 0 && <Streams live={live} upcoming={upcoming} past={past} base={base} tiers={coach.tiers} />}
       <NewStream
         open={creating}
@@ -178,9 +178,9 @@ function NewStream({ open, onClose, onCreate }: { open: boolean; onClose: () => 
             <Textarea value={text} onChange={(e) => setText(e.target.value)} className="min-h-16" />
           </Field>
           <DialogFooter>
-            <Button type="submit" disabled={!title.trim()}>
+            <AdminButton hierarchy="primary" type="submit" disabled={!title.trim()}>
               <Video /> Create and open
-            </Button>
+            </AdminButton>
           </DialogFooter>
         </form>
       </DialogContent>

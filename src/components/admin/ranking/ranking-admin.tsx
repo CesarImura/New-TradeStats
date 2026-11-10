@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { AdminButton, Panel, PanelHeader, Tag } from "@/components/admin/ui"
-import { Button } from "@/components/ui/button"
+
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -44,18 +44,18 @@ export function RankingAdmin() {
         title="Ranking"
         text="Leaderboard, competitions, points and badges"
         actions={
-          <Button onClick={() => setCreating(true)}>
+          <AdminButton hierarchy="primary" onClick={() => setCreating(true)}>
             <Plus /> New competition
-          </Button>
+          </AdminButton>
         }
       />
       {!coach.modules.ranking && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
           <Trophy className="size-4 text-[var(--ts-interactive)]" />
           <span className="flex-1">Ranking is switched off, so students don&apos;t see it yet.</span>
-          <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`${base}/design`} />}>
+          <AdminButton hierarchy="secondary" size="md" nativeButton={false} render={<Link href={`${base}/design`} />}>
             Switch on in Design
-          </Button>
+          </AdminButton>
         </div>
       )}
       <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className="gap-5">
@@ -281,7 +281,7 @@ function NewCompetition({ open, onOpenChange, onCreate }: { open: boolean; onOpe
           </Field>
         </div>
         <DialogFooter>
-          <Button
+          <AdminButton hierarchy="primary"
             disabled={!name.trim()}
             onClick={() => {
               onCreate({ id: `c${Date.now()}`, name: name.trim(), metric, start, end, prize: prize || "Bragging rights", entrants: 0, status: "scheduled" })
@@ -290,7 +290,7 @@ function NewCompetition({ open, onOpenChange, onCreate }: { open: boolean; onOpe
             }}
           >
             Create
-          </Button>
+          </AdminButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

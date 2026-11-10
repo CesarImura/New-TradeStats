@@ -1,10 +1,11 @@
 "use client"
 
+import { AdminButton } from "@/components/admin/ui"
 import { useState } from "react"
 import { CalendarRange, Eye, Plus, Users } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -26,8 +27,7 @@ export function Groups() {
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">Cohorts that start together. What a group unlocks can start on its start date, then week by week.</p>
-        <Button
-          variant="outline"
+        <AdminButton hierarchy="secondary"
           onClick={() =>
             setOpen({
               id: `g${Date.now()}`,
@@ -45,7 +45,7 @@ export function Groups() {
           }
         >
           <Plus /> New group
-        </Button>
+        </AdminButton>
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {groups.map((g) => (
@@ -142,17 +142,16 @@ function GroupEditor({ group, isNew, onClose }: { group: Group | null; isNew: bo
         )}
         <SheetFooter className="flex-row">
           {!isNew && g && (
-            <Button
-              variant="outline"
+            <AdminButton hierarchy="secondary"
               onClick={() => {
                 setPreviewAs(coach.slug, { kind: "group", id: g.id, label: g.name })
                 window.open(`/c/${coach.slug}/courses`, "_blank")
               }}
             >
               <Eye /> Preview as
-            </Button>
+            </AdminButton>
           )}
-          <Button
+          <AdminButton hierarchy="primary"
             className="flex-1"
             disabled={!g?.name || !g.tiers.length}
             onClick={() => {
@@ -163,7 +162,7 @@ function GroupEditor({ group, isNew, onClose }: { group: Group | null; isNew: bo
             }}
           >
             {isNew ? "Create group" : "Save group"}
-          </Button>
+          </AdminButton>
         </SheetFooter>
       </SheetContent>
     </Sheet>

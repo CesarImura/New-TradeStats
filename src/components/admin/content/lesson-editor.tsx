@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { CircleHelp, FileDown, FileVideo, Plus, Sparkles, Trash2, Upload } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { AdminButton, Tag } from "@/components/admin/ui"
@@ -67,9 +67,7 @@ export function LessonEditor({ course, lesson, onChange }: { course: Course; les
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label>Summary</Label>
-              <Button
-                variant="ghost"
-                size="xs"
+              <AdminButton hierarchy="ghost" size="sm"
                 onClick={() =>
                   onChange({
                     summary: `In this ${coach.wording.lesson.toLowerCase()} you'll learn ${lesson.title.toLowerCase()}, why it matters for your trading, and how to apply it on your next session.`,
@@ -79,7 +77,7 @@ export function LessonEditor({ course, lesson, onChange }: { course: Course; les
                 }
               >
                 <Sparkles /> {lesson.summary ? "Rewrite with AI" : "Write with AI"}
-              </Button>
+              </AdminButton>
             </div>
             <Textarea value={lesson.summary ?? ""} onChange={(e) => onChange({ summary: e.target.value, aiSummary: false })} placeholder="Two or three sentences on what students take away." className="min-h-24" />
             {lesson.aiSummary && <span className="text-xs text-muted-foreground">Written by AI from the transcript. Students see an AI label until you edit it.</span>}
@@ -89,14 +87,14 @@ export function LessonEditor({ course, lesson, onChange }: { course: Course; les
             {(lesson.takeaways ?? []).map((t, i) => (
               <div key={i} className="flex gap-2">
                 <Input value={t} onChange={(e) => onChange({ takeaways: (lesson.takeaways ?? []).map((x, j) => (j === i ? e.target.value : x)) })} />
-                <Button variant="ghost" size="icon" aria-label="Remove takeaway" onClick={() => onChange({ takeaways: (lesson.takeaways ?? []).filter((_, j) => j !== i) })}>
+                <AdminButton hierarchy="ghost" iconOnly aria-label="Remove takeaway" onClick={() => onChange({ takeaways: (lesson.takeaways ?? []).filter((_, j) => j !== i) })}>
                   <Trash2 />
-                </Button>
+                </AdminButton>
               </div>
             ))}
-            <Button variant="outline" size="sm" className="w-fit" onClick={() => onChange({ takeaways: [...(lesson.takeaways ?? []), ""] })}>
+            <AdminButton hierarchy="secondary" size="md" className="w-fit" onClick={() => onChange({ takeaways: [...(lesson.takeaways ?? []), ""] })}>
               <Plus /> Add takeaway
-            </Button>
+            </AdminButton>
           </div>
           <div className="grid gap-2">
             <Label>Task for students</Label>
@@ -112,14 +110,14 @@ export function LessonEditor({ course, lesson, onChange }: { course: Course; les
                 <FileDown className="size-4 text-muted-foreground" />
                 <span className="flex-1 truncate">{d.name}</span>
                 <span className="text-xs text-muted-foreground">{d.size}</span>
-                <Button variant="ghost" size="icon-xs" aria-label={`Remove ${d.name}`} onClick={() => onChange({ downloads: lesson.downloads.filter((x) => x.name !== d.name) })}>
+                <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label={`Remove ${d.name}`} onClick={() => onChange({ downloads: lesson.downloads.filter((x) => x.name !== d.name) })}>
                   <Trash2 />
-                </Button>
+                </AdminButton>
               </div>
             ))}
-            <Button variant="outline" size="sm" className="w-fit" onClick={() => onChange({ downloads: [...lesson.downloads, { name: `Worksheet ${lesson.downloads.length + 1}.pdf`, size: "96 KB" }] })}>
+            <AdminButton hierarchy="secondary" size="md" className="w-fit" onClick={() => onChange({ downloads: [...lesson.downloads, { name: `Worksheet ${lesson.downloads.length + 1}.pdf`, size: "96 KB" }] })}>
               <Upload /> Add a file
-            </Button>
+            </AdminButton>
           </div>
         </TabsContent>
 
@@ -213,9 +211,9 @@ function VideoField({ lesson, onChange, onFrames }: { lesson: Lesson; onChange: 
             {lesson.minutes} min · {lesson.chapters.length} chapters{lesson.transcript ? " · transcript" : ""}
           </span>
         </div>
-        <Button variant="outline" size="sm" onClick={() => input.current?.click()}>
+        <AdminButton hierarchy="secondary" size="md" onClick={() => input.current?.click()}>
           Replace
-        </Button>
+        </AdminButton>
         {picker}
       </div>
     )
@@ -355,12 +353,12 @@ function QuizEditor({ lesson, onChange }: { lesson: Lesson; onChange: (p: Partia
         <p className="font-medium">No quiz on this lesson</p>
         <p className="max-w-sm text-sm text-muted-foreground">A few questions at the end help students check they got it. You can make passing a condition for the next lesson.</p>
         <div className="flex gap-2">
-          <Button onClick={draft}>
+          <AdminButton hierarchy="primary" onClick={draft}>
             <Sparkles /> Draft with AI
-          </Button>
-          <Button variant="outline" onClick={() => onChange({ quiz: { passMark: 1, gate: false, questions: [{ id: uid("q"), q: "", options: ["", ""], answer: 0 }] } })}>
+          </AdminButton>
+          <AdminButton hierarchy="secondary" onClick={() => onChange({ quiz: { passMark: 1, gate: false, questions: [{ id: uid("q"), q: "", options: ["", ""], answer: 0 }] } })}>
             Start empty
-          </Button>
+          </AdminButton>
         </div>
       </div>
     )

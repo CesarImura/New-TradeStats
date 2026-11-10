@@ -1,11 +1,12 @@
 "use client"
 
+import { AdminButton } from "@/components/admin/ui"
 import { useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { ExternalLink, Plus } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Page, PageHeader } from "../kit"
@@ -32,12 +33,12 @@ export function SalesAdmin() {
         actions={
           <>
             <PreviewAsMenu />
-            <Button variant="outline" nativeButton={false} render={<a href={`/site/${coach.slug}`} target="_blank" rel="noreferrer" />}>
+            <AdminButton hierarchy="secondary" nativeButton={false} render={<a href={`/site/${coach.slug}`} target="_blank" rel="noreferrer" />}>
               <ExternalLink /> Sales page
-            </Button>
-            <Button onClick={() => setTab("tiers")}>
+            </AdminButton>
+            <AdminButton hierarchy="primary" onClick={() => setTab("tiers")}>
               <Plus /> New tier
-            </Button>
+            </AdminButton>
           </>
         }
       />
@@ -102,9 +103,9 @@ function Affiliates() {
         <CardDescription>The affiliate program, your partner offers and what they earn are now in one place.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Button variant="outline" nativeButton={false} render={<Link href={`${base}/partners`} />}>
+        <AdminButton hierarchy="secondary" nativeButton={false} render={<Link href={`${base}/partners`} />}>
           Open Partners
-        </Button>
+        </AdminButton>
       </CardContent>
     </Card>
   )

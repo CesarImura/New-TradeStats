@@ -3,12 +3,12 @@
 import { useState } from "react"
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from "recharts"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { MONEY, TRANSACTIONS } from "@/lib/data/people"
 import { REVENUE_MONTHS } from "@/lib/data/sample"
-import { AdminTabs, Panel, PanelHeader, StatPanel, Tag } from "../ui"
+import { AdminTabs, Panel, PanelHeader, StatPanel, Tag, AdminButton } from "../ui"
 
 // ---------- ADM-35 Revenue
 
@@ -68,7 +68,7 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
                     <div className="t-caption truncate text-a-text-2">{t.status === "disputed" ? "Disputed" : "Payment failed"} · {t.what.split(" · ")[0]} €{t.amount}</div>
                   </div>
                   {t.status === "disputed" ? (
-                    <Button size="sm" variant="outline" onClick={onProblems}>Answer the dispute</Button>
+                    <AdminButton hierarchy="secondary" size="md" onClick={onProblems}>Answer the dispute</AdminButton>
                   ) : (
                     <Tag tone={toneOf[t.status as keyof typeof toneOf]} dot>{t.status === "retrying" ? "Retrying" : "Failed"}</Tag>
                   )}

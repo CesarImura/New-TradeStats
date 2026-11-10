@@ -6,7 +6,7 @@ import { Archive, ArrowDown, ArrowUp, ChartCandlestick, Pin, PinOff, Plus, X } f
 import { toast } from "sonner"
 import { TradingViewChart, TradingViewMini } from "@/components/charts/tradingview"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { COACH_CHARTS, chartDefaults, INDICATORS, INTERVALS, MARKETS, type ChartSettings, type Market, type CoachChart } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { Empty, Field, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
-import { AdminSearch, Tag } from "../ui"
+import { AdminSearch, Tag, AdminButton } from "../ui"
 
 export const LEVEL_COLOR = { support: "var(--profit)", resistance: "var(--loss)", target: "var(--highlight, #f8ff9e)" } as const
 
@@ -48,9 +48,9 @@ export function ChartsAdmin() {
         title="Charts"
         text="Charts, watchlist and your charts"
         actions={
-          <Button onClick={() => setCreating(true)}>
+          <AdminButton hierarchy="primary" onClick={() => setCreating(true)}>
             <Plus /> Mark up a chart
-          </Button>
+          </AdminButton>
         }
       />
 
@@ -58,9 +58,9 @@ export function ChartsAdmin() {
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
           <ChartCandlestick className="size-4 text-[var(--ts-interactive)]" />
           <span className="flex-1">Charts is switched off, so students don&apos;t see it in the menu yet.</span>
-          <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`${base}/design`} />}>
+          <AdminButton hierarchy="secondary" size="md" nativeButton={false} render={<Link href={`${base}/design`} />}>
             Switch on in Design
-          </Button>
+          </AdminButton>
         </div>
       )}
 
@@ -82,7 +82,7 @@ export function ChartsAdmin() {
 
         <TabsContent value="charts">
           {charts.filter((c) => !c.archived).length === 0 ? (
-            <Empty icon={ChartCandlestick} title="No marked-up charts yet" text="Draw your levels for the week and share them. Students open them with your lines on top." action={<Button onClick={() => setCreating(true)}>Mark up a chart</Button>} />
+            <Empty icon={ChartCandlestick} title="No marked-up charts yet" text="Draw your levels for the week and share them. Students open them with your lines on top." action={<AdminButton hierarchy="primary" onClick={() => setCreating(true)}>Mark up a chart</AdminButton>} />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {[...charts.filter((c) => !c.archived && c.title.toLowerCase().includes(q.toLowerCase()))]
@@ -93,12 +93,10 @@ export function ChartsAdmin() {
                     chart={c}
                     actions={
                       <>
-                        <Button variant="ghost" size="icon-sm" aria-label={c.pinned ? "Unpin" : "Pin"} onClick={() => setCharts((l) => l.map((x) => (x.id === c.id ? { ...x, pinned: !x.pinned } : x)))}>
+                        <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={c.pinned ? "Unpin" : "Pin"} onClick={() => setCharts((l) => l.map((x) => (x.id === c.id ? { ...x, pinned: !x.pinned } : x)))}>
                           {c.pinned ? <PinOff /> : <Pin />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
+                        </AdminButton>
+                        <AdminButton hierarchy="ghost" size="md" iconOnly
                           aria-label="Archive"
                           onClick={() => {
                             setCharts((l) => l.map((x) => (x.id === c.id ? { ...x, archived: true } : x)))
@@ -106,7 +104,7 @@ export function ChartsAdmin() {
                           }}
                         >
                           <Archive />
-                        </Button>
+                        </AdminButton>
                       </>
                     }
                   />
@@ -144,15 +142,15 @@ export function ChartsAdmin() {
                       <button onClick={() => setPreview(w.tv)} className={cn("flex-1 text-left text-sm", preview === w.tv && "text-[var(--ts-cta)]")}>
                         {w.name} <span className="text-xs text-muted-foreground">{w.tv}</span>
                       </button>
-                      <Button variant="ghost" size="icon-xs" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move ${w.name} up`}>
+                      <AdminButton hierarchy="ghost" size="sm" iconOnly disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move ${w.name} up`}>
                         <ArrowUp />
-                      </Button>
-                      <Button variant="ghost" size="icon-xs" disabled={i === s.watchlist.length - 1} onClick={() => move(i, 1)} aria-label={`Move ${w.name} down`}>
+                      </AdminButton>
+                      <AdminButton hierarchy="ghost" size="sm" iconOnly disabled={i === s.watchlist.length - 1} onClick={() => move(i, 1)} aria-label={`Move ${w.name} down`}>
                         <ArrowDown />
-                      </Button>
-                      <Button variant="ghost" size="icon-xs" onClick={() => set({ watchlist: s.watchlist.filter((x) => x.tv !== w.tv) })} aria-label={`Remove ${w.name}`}>
+                      </AdminButton>
+                      <AdminButton hierarchy="ghost" size="sm" iconOnly onClick={() => set({ watchlist: s.watchlist.filter((x) => x.tv !== w.tv) })} aria-label={`Remove ${w.name}`}>
                         <X />
-                      </Button>
+                      </AdminButton>
                     </div>
                   ))}
                 </div>
@@ -333,9 +331,9 @@ function NewChart({ open, onOpenChange, onSave, symbols }: { open: boolean; onOp
                   <option value="support">Support</option>
                   <option value="target">Target</option>
                 </NativeSelect>
-                <Button variant="ghost" size="icon-sm" aria-label="Remove level" onClick={() => setLevels((x) => x.filter((_, j) => j !== i))}>
+                <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Remove level" onClick={() => setLevels((x) => x.filter((_, j) => j !== i))}>
                   <X />
-                </Button>
+                </AdminButton>
               </div>
             ))}
             <button onClick={() => setLevels((x) => [...x, { label: "Level", at: 0, kind: "target" }])} className="justify-self-start text-xs text-muted-foreground hover:text-foreground">
@@ -362,10 +360,10 @@ function NewChart({ open, onOpenChange, onSave, symbols }: { open: boolean; onOp
           </label>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          <AdminButton hierarchy="ghost" onClick={() => onOpenChange(false)}>
             Cancel
-          </Button>
-          <Button
+          </AdminButton>
+          <AdminButton hierarchy="primary"
             disabled={!title.trim()}
             onClick={() => {
               onSave({
@@ -386,7 +384,7 @@ function NewChart({ open, onOpenChange, onSave, symbols }: { open: boolean; onOp
             }}
           >
             Share chart
-          </Button>
+          </AdminButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

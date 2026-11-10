@@ -6,7 +6,7 @@ import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { Switch } from "@/components/ui/switch"
@@ -134,9 +134,9 @@ export function AiAdmin() {
         <TabsContent value="knowledge" className="grid gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-muted-foreground">What your AI learns from. New lessons and recordings are added automatically.</p>
-            <Button variant="outline" onClick={() => toast("Add PDFs, docs or a list of questions and answers")}>
+            <AdminButton hierarchy="secondary" onClick={() => toast("Add PDFs, docs or a list of questions and answers")}>
               <FileUp /> Add documents
-            </Button>
+            </AdminButton>
           </div>
           <div className="divide-y rounded-lg border bg-card px-3">
             {AI_KNOWLEDGE.map((k) => (
@@ -286,8 +286,7 @@ function TestChat({ onCorrect }: { onCorrect: (c: { q: string; a: string }) => v
               {editing === i ? (
                 <div className="grid gap-2 pt-1">
                   <Textarea rows={3} value={fix} onChange={(e) => setFix(e.target.value)} />
-                  <Button
-                    size="sm"
+                  <AdminButton hierarchy="primary" size="md"
                     className="justify-self-end"
                     onClick={() => {
                       setLog((l) => l.map((x, j) => (j === i ? { ...x, fixed: fix } : x)))
@@ -297,7 +296,7 @@ function TestChat({ onCorrect }: { onCorrect: (c: { q: string; a: string }) => v
                     }}
                   >
                     <Check /> Save correction
-                  </Button>
+                  </AdminButton>
                 </div>
               ) : (
                 !m.fixed && (
@@ -326,9 +325,9 @@ function TestChat({ onCorrect }: { onCorrect: (c: { q: string; a: string }) => v
         }}
       >
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask your AI…" />
-        <Button type="submit">
+        <AdminButton hierarchy="primary" type="submit">
           <Send /> Ask
-        </Button>
+        </AdminButton>
       </form>
     </div>
   )
