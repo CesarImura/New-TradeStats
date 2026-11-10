@@ -25,7 +25,6 @@ import { cn } from "@/lib/utils"
 import { AdminButton as Button } from "@/components/admin/ui"
 import { useCoach } from "@/components/coach/coach-provider"
 import { WorkspaceSwitcher } from "@/components/admin/workspace-switcher"
-import { TsLogo } from "@/components/onboarding/frame"
 import { DEMO_ADMIN } from "@/lib/data/account"
 import { adminNav } from "@/components/coach/nav"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -74,6 +73,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
   return (
     <SidebarProvider className="dark ts-ui ts-admin ts-admin-v2 bg-a-page font-a-sans text-a-text" style={{ "--sidebar-width": "255px" } as React.CSSProperties}>
       <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
+      <BrandGradients />
       <div className="flex min-h-svh w-full">
         <aside className="sticky top-0 hidden h-svh w-[271px] shrink-0 p-2 xl:block" aria-label="Main menu">
           <div className="flex h-full flex-col rounded-a-xl border border-a-border bg-a-page pt-5 pr-4 pb-4 pl-4">{menu}</div>
@@ -128,12 +128,51 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
 
 type Groups = ReturnType<typeof adminNav>
 
+/**
+ * Brand gradient (Figma: brand gradient start to end, top to bottom). One hidden <svg> holds the gradients so the
+ * logo and the active nav icon can paint with url(#…) from both the sidebar and the drawer. It is not display:none,
+ * because a gradient inside a hidden svg does not render.
+ */
+function BrandGradients() {
+  const stops = (
+    <>
+      <stop style={{ stopColor: "var(--admin-color-brand-gradient-start)" }} />
+      <stop offset="1" style={{ stopColor: "var(--admin-color-brand-gradient-end)" }} />
+    </>
+  )
+  return (
+    <svg aria-hidden width="0" height="0" className="pointer-events-none absolute size-0">
+      <defs>
+        <linearGradient id="admin-logo-grad" gradientUnits="userSpaceOnUse" x1="11.5" y1="0" x2="11.5" y2="24.5333">
+          {stops}
+        </linearGradient>
+        {/* Carbon icons draw on a 32 grid; their shapes span roughly 2 to 30. */}
+        <linearGradient id="admin-icon-grad" gradientUnits="userSpaceOnUse" x1="16" y1="2" x2="16" y2="30">
+          {stops}
+        </linearGradient>
+      </defs>
+    </svg>
+  )
+}
+
+/** Admin / Logo: gradient mark (23 x 24.5) and the wordmark. */
+function AdminLogo() {
+  return (
+    <Link href="/" aria-label="Traderhub" className="flex items-center gap-2.5 px-2">
+      <svg width="23" height="25" viewBox="0 0 23 25" fill="none" aria-hidden className="shrink-0">
+        <path d="M15.264 0V8.02976L7.63283 0H0V8.25179H15.0558L7.5279 16.6155V24.5333H15.264V8.25179H23V0H15.264Z" fill="url(#admin-logo-grad)" />
+      </svg>
+      <span className="t-heading-m text-a-text">Traderhub</span>
+    </Link>
+  )
+}
+
 /** Sidebar content, shared by the desktop card and the drawer. Nav item: 36px, radius md, 16px icon. */
 function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvite }: { groups: Groups; base: string; studentBase: string; isOpen: (href: string) => boolean; invite: boolean; onDismissInvite: () => void }) {
   return (
     <>
       <div className="flex items-center justify-between pr-1">
-        <TsLogo name="Traderhub" className="gap-2.5 px-2 [&>span]:text-[1rem] [&>svg]:size-5" />
+        <AdminLogo />
         <PanelLeftIcon aria-hidden className="size-4 text-a-icon" />
       </div>
       <nav aria-label="Admin" className="-mx-1 mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 pb-2">
@@ -150,10 +189,10 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "relative flex h-9 items-center gap-3 rounded-a-md border px-2 t-body-l outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
-                    active ? "border-a-border bg-a-panel text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-a-accent-strong" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text"
+                    active ? "border-a-border bg-a-panel text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-[var(--admin-component-nav-indicator)]" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text"
                   )}
                 >
-                  <item.icon className={cn("size-4 shrink-0", active ? "text-a-accent-strong" : "text-a-icon")} />
+                  <item.icon className={cn("size-4 shrink-0", active ? "fill-[url(#admin-icon-grad)]" : "text-a-icon")} />
                   <span className="truncate">{item.label}</span>
                 </Link>
               )
