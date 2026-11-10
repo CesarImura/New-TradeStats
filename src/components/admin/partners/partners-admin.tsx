@@ -27,14 +27,14 @@ export function PartnersAdmin() {
     <Page>
       <PageHeader
         title="Partners"
-        text="Offers students see under the page's name, clearly labelled, and the affiliate program that lets them bring friends."
+        text="Offers from our partners and students who bring students"
         actions={
           <>
-            <Button variant="outline" onClick={() => setAdding("catalogue")}>
-              <Plus /> Add from catalogue
+            <Button variant="outline" onClick={() => setAdding("own")}>
+              Add my own link
             </Button>
-            <Button onClick={() => setAdding("own")}>
-              <Plus /> Add my own link
+            <Button onClick={() => setAdding("catalogue")}>
+              <Plus /> Add from catalogue
             </Button>
           </>
         }

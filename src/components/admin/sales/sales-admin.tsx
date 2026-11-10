@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { ExternalLink } from "@/components/icons"
+import { ExternalLink, Plus } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,13 +30,15 @@ export function SalesAdmin() {
     <Page>
       <PageHeader
         title="Sales & payments"
-        text="What students pay for, what they get, what came in, and where the money goes. Our fees are shown openly."
-        guide="Tiers and prices · 3 min"
+        text="Tiers, sales page, coupons and payouts"
         actions={
           <>
             <PreviewAsMenu size="sm" />
             <Button size="sm" variant="outline" nativeButton={false} render={<a href={`/site/${coach.slug}`} target="_blank" rel="noreferrer" />}>
               <ExternalLink /> Sales page
+            </Button>
+            <Button size="sm" onClick={() => setTab("tiers")}>
+              <Plus /> New tier
             </Button>
           </>
         }
