@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ChartCandlestick, Check, Inbox, Mic, Plus, Send, Sparkles, Square, Trash2, Video, X } from "@/components/icons"
+import { ChartCandlestick, Check, Inbox, Mic, Plus, Search, Send, Settings, Sparkles, Square, Trash2, Video, X } from "@/components/icons"
 import { toast } from "sonner"
 import { TradeChart } from "@/components/charts/trade-chart"
 import { useCoach } from "@/components/coach/coach-provider"
@@ -9,15 +9,17 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { addFeedback, allTrades, useFeedback } from "@/lib/data/feedback"
 import { STUDENTS, tierFor } from "@/lib/data/people"
 import { STRATEGIES, TAGS, fmtPnl, fmtR } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
-import { Empty, Mono, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
-import { StatPanel } from "../ui"
+import { Empty, Mono, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { AdminButton, StatPanel, Tag } from "../ui"
 
 /** Who sent which sample trade. In the prototype every student shares the same sample journal. */
 const OWNER: Record<string, string> = { t1: "s2", t2: "s5", t3: "s4", t4: "s1", t5: "s6", t6: "s7", t7: "s1" }
@@ -35,18 +37,22 @@ export function JournalAdmin() {
   const answered = trades.filter((t) => t.review === "answered")
   const [tab, setTab] = useState("requests")
   const [openId, setOpenId] = useState<string | null>(null)
-  const open = trades.find((t) => t.id === openId) ?? waiting[0] ?? null
+  const open = trades.find((t) => t.id === openId) ?? null
 
   return (
     <Page>
       <PageHeader
         title="Journal & feedback"
-        text={`Trades your ${coach.wording.students.toLowerCase()} want you to look at, oldest first, and the rules their journal checks.`}
-        guide="Giving feedback · 2 min"
+        text="Journal, rules and feedback requests · 312 entries in the last 30 days"
+        actions={
+          <AdminButton hierarchy="secondary" onClick={() => setTab("rules")}>
+            <Settings /> Journal rules
+          </AdminButton>
+        }
       />
       <StatPanel
         stats={[
-          { label: "Waiting for you", value: waiting.length, delta: waiting.length ? "Oldest first" : "Nothing waiting" },
+          { label: "Waiting for you", value: waiting.length, delta: waiting.length ? "Oldest 2 days" : "Nothing waiting" },
           { label: "Answered this week", value: answered.length, delta: "Median reply 6 h" },
           { label: "Rules kept", value: "84%", delta: "+3 pp vs last 30 days", tone: "success" },
           { label: "Journaling students", value: 121, delta: "60% of active students" },
@@ -55,74 +61,132 @@ export function JournalAdmin() {
       <Tabs value={tab} onValueChange={setTab} className="gap-5">
         <TabsList>
           <TabsTrigger value="requests">
-            Waiting for you <span className="text-muted-foreground tabular-nums">{waiting.length}</span>
+            Requests <span className="text-muted-foreground tabular-nums">{waiting.length}</span>
           </TabsTrigger>
           <TabsTrigger value="answered">
             Answered <span className="text-muted-foreground tabular-nums">{answered.length}</span>
           </TabsTrigger>
-          <TabsTrigger value="rules">Journal rules</TabsTrigger>
+          <TabsTrigger value="rules">Rules</TabsTrigger>
         </TabsList>
 
         <TabsContent value="requests">
           {waiting.length === 0 ? (
             <Empty icon={Inbox} title="Nothing waiting" text={`When a ${coach.wording.student.toLowerCase()} presses “Please review” on a trade, it lands here.`} />
           ) : (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-              <RequestList trades={waiting} active={open?.id} onPick={setOpenId} />
-              {open && open.review === "waiting" && <Review key={open.id} trade={open} onDone={() => setOpenId(null)} />}
-            </div>
+            <RequestsTable trades={waiting} onOpen={setOpenId} />
           )}
         </TabsContent>
 
         <TabsContent value="answered">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-            <RequestList trades={answered} active={openId ?? answered[0]?.id} onPick={setOpenId} />
-            {(() => {
-              const t = answered.find((x) => x.id === openId) ?? answered[0]
-              return t ? <Review key={t.id} trade={t} readOnly /> : null
-            })()}
-          </div>
+          {answered.length === 0 ? <Empty icon={Inbox} title="Nothing answered yet" text="Feedback you send shows up here." /> : <RequestsTable trades={answered} onOpen={setOpenId} answered />}
         </TabsContent>
 
         <TabsContent value="rules">
           <JournalRules />
         </TabsContent>
       </Tabs>
+
+      <Sheet open={!!openId} onOpenChange={(o) => !o && setOpenId(null)}>
+        <SheetContent className="w-full data-[side=right]:w-full overflow-y-auto sm:max-w-3xl">
+          <SheetHeader>
+            <SheetTitle>Feedback</SheetTitle>
+            <SheetDescription>Look at the trade, answer, then mark it done.</SheetDescription>
+          </SheetHeader>
+          <div className="px-4 pb-4">{open && <Review key={open.id} trade={open} readOnly={open.review !== "waiting"} onDone={() => setOpenId(null)} />}</div>
+        </SheetContent>
+      </Sheet>
     </Page>
   )
 }
 
-function RequestList({ trades, active, onPick }: { trades: ReturnType<typeof allTrades>; active?: string; onPick: (id: string) => void }) {
+/** Figma 525:7153. One row per request: who, what they asked, the trade, rules, how long it has waited. */
+function RequestsTable({ trades, onOpen, answered }: { trades: ReturnType<typeof allTrades>; onOpen: (id: string) => void; answered?: boolean }) {
   const { coach } = useCoach()
+  const [q, setQ] = useState("")
+  const [tier, setTier] = useState("all")
+  const [sort, setSort] = useState("oldest")
+  const rows = trades
+    .map((t) => {
+      const s = STUDENTS.find((x) => x.id === OWNER[t.id])!
+      return { t, s, ask: t.thread.find((m) => m.from === "student") }
+    })
+    .filter(({ s, ask }) => (tier === "all" || s.tier === tier) && `${s.name} ${ask?.text ?? ""}`.toLowerCase().includes(q.toLowerCase()))
+  if (sort === "newest") rows.reverse()
+
   return (
-    <div className="grid content-start gap-2">
-      {trades.map((t) => {
-        const s = STUDENTS.find((x) => x.id === OWNER[t.id])!
-        const ask = t.thread.find((m) => m.from === "student")
-        return (
-          <button
-            key={t.id}
-            onClick={() => onPick(t.id)}
-            className={cn("grid gap-2 rounded-lg border bg-card p-3 text-left hover:border-white/20", active === t.id && "border-[var(--ts-interactive)] hover:border-[var(--ts-interactive)]")}
-          >
-            <span className="flex items-center gap-2">
-              <Avatar className="size-6">
-                <AvatarFallback className="text-[0.6875rem]">{s.initials}</AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium">{s.name}</span>
-              <span className="ml-auto text-xs text-muted-foreground">{ask?.when}</span>
-            </span>
-            <span className="flex items-center gap-2 text-sm">
-              <Badge variant="secondary" className="font-mono">
-                {t.symbol} {t.side}
-              </Badge>
-              <span className={cn("tabular-nums", t.r >= 0 ? "text-[var(--profit)]" : "text-[var(--loss)]")}>{fmtR(t.r)}</span>
-              <span className="truncate text-xs text-muted-foreground">{tierFor(coach, s.tier).name}</span>
-            </span>
-            {ask && <span className="line-clamp-2 text-sm text-muted-foreground">“{ask.text}”</span>}
-          </button>
-        )
-      })}
+    <div className="grid gap-4">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-a-text-3" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search requests" aria-label="Search requests" className="w-56 pl-8" />
+        </div>
+        <NativeSelect value={tier} onChange={(e) => setTier(e.target.value)} aria-label="Tier">
+          <option value="all">All tiers</option>
+          {coach.tiers.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </NativeSelect>
+        <NativeSelect value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
+          <option value="oldest">Oldest first</option>
+          <option value="newest">Newest first</option>
+        </NativeSelect>
+      </div>
+      {rows.length === 0 ? (
+        <Empty icon={Inbox} title="No requests match" text="Clear the search or the filters." />
+      ) : (
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Student</TableHead>
+                  <TableHead>Question</TableHead>
+                  <TableHead>Trade</TableHead>
+                  <TableHead className="hidden lg:table-cell">Rules</TableHead>
+                  <TableHead className="text-right">{answered ? "Answered" : "Waiting"}</TableHead>
+                  <TableHead className="w-24" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map(({ t, s, ask }) => (
+                  <TableRow key={t.id}>
+                    <TableCell>
+                      <div className="flex min-w-40 items-center gap-2.5">
+                        <Avatar className="size-8">
+                          <AvatarFallback className="text-xs">{s.initials}</AvatarFallback>
+                        </Avatar>
+                        <div className="grid min-w-0">
+                          <span className="truncate font-medium">{s.name}</span>
+                          <span className="truncate text-xs text-muted-foreground">{tierFor(coach, s.tier).name}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="max-w-72 whitespace-normal">{ask ? `“${ask.text}”` : "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <span className="t-mono-data">{t.symbol} · {t.side}</span>{" "}
+                      <span className={cn("tabular-nums", t.r >= 0 ? "text-[var(--profit)]" : "text-[var(--loss)]")}>{fmtR(t.r)}</span>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {t.rulesBroken.length ? <Tag tone="danger" dot className="max-w-48"><span className="truncate">Broke {t.rulesBroken[0]}</span></Tag> : t.r >= 0 ? <Tag tone="success" dot>All rules kept</Tag> : <span className="text-a-text-3">—</span>}
+                    </TableCell>
+                    <TableCell className="text-right whitespace-nowrap text-muted-foreground">{ask?.when}</TableCell>
+                    <TableCell className="text-right">
+                      <AdminButton hierarchy="secondary" size="sm" onClick={() => onOpen(t.id)}>
+                        {answered ? "Open" : "Answer"}
+                      </AdminButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <p className="border-t border-a-border-subtle px-4 py-3 t-caption text-a-text-2">
+            {rows.length} {rows.length === 1 ? "request" : "requests"} · students get a notification and an e-mail when you answer
+          </p>
+        </div>
+      )}
     </div>
   )
 }
