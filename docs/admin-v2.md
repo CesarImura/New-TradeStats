@@ -38,3 +38,13 @@ Later 09/11: side sheets (calendar event, student profile, tiers, groups, help) 
 ## Code review 09/11 (applied)
 Page is always 1200 px (Figma Stack; `wide` removed). Mono rule scoped with `:is()`, icon button size rule fixed, dead sidebar-inset rule removed. Admin CSS string hoisted to a module constant, Inter no longer preloaded globally, admin wrapper renders `dark` on the server (no light flash), invite card dismissal shared between sidebar and drawer. AdminTabs: Home/End, fallback roving index, sr-only status text. Payouts timer cleaned on unmount; Sales money figures consistent. Ranking criteria are a radiogroup. Sales split per tab (revenue, tiers, groups, access, coupons, transactions, payouts).
 Not done (backlog): split overview.tsx (data, banner, chart), one shared highlight bar chart for Overview and Sales revenue (hover state re-renders the whole tab), one Empty component, tabpanel roles for AdminTabs callers, kit files as const arrows.
+
+## Passe 1:1 com o Figma (10/11)
+
+Ordem de trabalho: shell, Overview, Students, Journal, Content, Downloads, Calendar, Charts, Community, AI, Sales, Partners, Ranking, Settings.
+
+- Shell: texto do menu 14 px, item ativo com borda + ícone laranja, ícone de recolher ao lado do logo, ícone do convite, papel "Owner".
+- Overview: banner em gradiente, chip "23 Online" e Go live dividido, 4 métricas do Figma, gráfico combo (barras + linha) com legenda, conteúdo em 3 colunas com queda por aula, "Needs you today" com botões de ação. Checklist de setup e aviso de amostra saíram desta tela.
+- Journal: tabela de pedidos (Student, Question, Trade, Rules, Waiting, Answer). A resposta abre numa sheet com o mesmo editor de antes.
+- Students, Content, Downloads, Calendar, Charts, Community, AI, Sales, Partners, Ranking, Settings: subtítulos, rótulos, colunas e botões do Figma.
+- Diferenças que ficaram de propósito: nome "TradeStats" no logo (Figma diz "Traderhub"), "View as student" no menu, botão "Bulk upload" em Content, aba "Affiliates" em Sales, Partners e Livestreams em tabela, Personality da AI em layout de formulário (Figma tem dois cartões).
