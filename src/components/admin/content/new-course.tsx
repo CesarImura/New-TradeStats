@@ -239,7 +239,7 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
             )}
           </div>
 
-          <div className="flex items-center gap-2 border-t border-a-border-subtle px-6 py-4">
+          <div className="flex flex-wrap items-center gap-2 border-t border-a-border-subtle px-4 py-4 sm:px-6">
             <AdminButton hierarchy="ghost" onClick={() => finish(true)}>Save as draft</AdminButton>
             <span className="flex-1" />
             {idx === 0 ? <AdminButton hierarchy="secondary" onClick={() => onOpenChange(false)}>Cancel</AdminButton> : <AdminButton hierarchy="secondary" onClick={() => setStep(STEPS[idx - 1].id)}>Back</AdminButton>}
