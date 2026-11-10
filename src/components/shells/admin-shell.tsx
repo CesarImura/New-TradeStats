@@ -17,6 +17,7 @@ import {
   Wand2,
   UserPlus,
   X,
+  PanelLeftIcon,
 } from "@/components/icons"
 import { TS_ADMIN_CSS, TS_SYSTEM_CSS } from "@/lib/theme/ts-system"
 import { TS_ADMIN_V2_CSS } from "@/lib/theme/admin-v2"
@@ -131,7 +132,10 @@ type Groups = ReturnType<typeof adminNav>
 function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvite }: { groups: Groups; base: string; studentBase: string; isOpen: (href: string) => boolean; invite: boolean; onDismissInvite: () => void }) {
   return (
     <>
-      <TsLogo className="gap-2.5 px-2 [&>span]:text-[1rem] [&>svg]:size-5" />
+      <div className="flex items-center justify-between pr-1">
+        <TsLogo className="gap-2.5 px-2 [&>span]:text-[1rem] [&>svg]:size-5" />
+        <PanelLeftIcon aria-hidden className="size-4 text-a-icon" />
+      </div>
       <nav aria-label="Admin" className="-mx-1 mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 pb-2">
         {groups.map((g, i) => (
           <div key={g.group} className="flex flex-col gap-0.5">
@@ -145,11 +149,11 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative flex h-9 items-center gap-3 rounded-a-md px-2 t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
-                    active ? "bg-a-selected text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-a-accent-strong" : "text-a-text-nav hover:bg-a-hover hover:text-a-text"
+                    "relative flex h-9 items-center gap-3 rounded-a-md border px-2 t-body-l outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
+                    active ? "border-a-border bg-a-selected text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-a-accent-strong" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text"
                   )}
                 >
-                  <item.icon className={cn("size-4 shrink-0", active ? "text-a-icon-strong" : "text-a-icon")} />
+                  <item.icon className={cn("size-4 shrink-0", active ? "text-a-accent-strong" : "text-a-icon")} />
                   <span className="truncate">{item.label}</span>
                 </Link>
               )
@@ -176,7 +180,7 @@ function InviteCard({ href, onDismiss }: { href: string; onDismiss: () => void }
       <button type="button" onClick={onDismiss} aria-label="Dismiss" className="absolute top-2 right-2 text-muted-foreground after:absolute after:-inset-[5px] after:content-[''] hover:text-foreground">
         <X className="size-3.5" />
       </button>
-      <span className="grid size-7 place-items-center rounded-full bg-white/[0.07]">
+      <span className="grid size-7 place-items-center rounded-a-md bg-a-accent-strong/15 text-a-accent-strong">
         <UserPlus className="size-3.5" />
       </span>
       <Link href={href} className="mt-2.5 block text-sm font-medium hover:underline">Invite your team</Link>

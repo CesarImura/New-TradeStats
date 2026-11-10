@@ -4,6 +4,9 @@ import {
   CalendarDays,
   ChartCandlestick,
   CreditCard,
+  Currency,
+  LineChart,
+  Video,
   GraduationCap,
   Download,
   Handshake,
@@ -77,8 +80,8 @@ export function adminNav(_coach: Coach, base: string): { group: string; items: N
         { id: "content", label: "Content", href: `${base}/content`, icon: GraduationCap, screens: "ADM-08 to ADM-15" },
         { id: "downloads", label: "Downloads", href: `${base}/downloads`, icon: Download, screens: "ADM-59" },
         { id: "calendar", label: "Calendar", href: `${base}/calendar`, icon: CalendarDays, screens: "ADM-19 to ADM-23" },
-        { id: "livestreams", label: "Livestreams", href: `${base}/livestreams`, icon: Radio, screens: "ADM-61" },
-        { id: "charts", label: "Charts", href: `${base}/charts`, icon: ChartCandlestick, screens: "ADM-57, ADM-58" },
+        { id: "livestreams", label: "Livestreams", href: `${base}/livestreams`, icon: Video, screens: "ADM-61" },
+        { id: "charts", label: "Charts", href: `${base}/charts`, icon: LineChart, screens: "ADM-57, ADM-58" },
         { id: "community", label: "Community", href: `${base}/community`, icon: MessagesSquare, screens: "ADM-17, ADM-18" },
         { id: "ai", label: "AI assistant", href: `${base}/ai`, icon: Sparkles, screens: "ADM-24 to ADM-28" },
       ],
@@ -86,9 +89,9 @@ export function adminNav(_coach: Coach, base: string): { group: string; items: N
     {
       group: "Business",
       items: [
-        { id: "sales", label: "Sales & payments", href: `${base}/sales`, icon: CreditCard, screens: "ADM-29 to ADM-36, ADM-41" },
+        { id: "sales", label: "Sales & payments", href: `${base}/sales`, icon: Currency, screens: "ADM-29 to ADM-36, ADM-41" },
         { id: "partners", label: "Partners", href: `${base}/partners`, icon: Handshake, screens: "ADM-60" },
-        { id: "ranking", label: "Ranking", href: `${base}/ranking`, icon: BarChart3, screens: "ADM-53, ADM-54" },
+        { id: "ranking", label: "Ranking", href: `${base}/ranking`, icon: Trophy, screens: "ADM-53, ADM-54" },
       ],
     },
     {

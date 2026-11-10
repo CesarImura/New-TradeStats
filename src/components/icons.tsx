@@ -127,6 +127,7 @@ import {
   ChartColumn as CChartColumn,
   Home as CHome,
   ColorPalette as CColorPalette,
+  Currency as CCurrency,
   ClosedCaption as CClosedCaption,
   PauseFilled as CPauseFilled,
   RotateClockwise as CRotateClockwise,
@@ -283,6 +284,7 @@ export const Upload = i(CUpload, "Upload")
 export const User = i(CUser, "User")
 export const Users = i(CUserMultiple, "Users")
 export const UserPlus = i(CUserFollow, "UserPlus")
+export const Currency = i(CCurrency, "Currency")
 export const Video = i(CVideo, "Video")
 export const Wallet = i(CWallet, "Wallet")
 export const Wand2 = i(CMagicWand, "Wand2")
