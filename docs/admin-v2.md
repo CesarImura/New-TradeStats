@@ -55,3 +55,11 @@ Ordem de trabalho: shell, Overview, Students, Journal, Content, Downloads, Calen
 - Tab sets now as Figma: Students All / Needs help / Invited / Paused; Content All / Needs attention / Published / Scheduled / Draft / Archived (+ grid/list); Community Announcements / Spaces & rules / Discord; Sales "Transactions".
 - Buttons: Calendar Today, ‹ ›, Week, Month in the tabs row (admin only; List stays on the student side); Ranking period buttons in the toolbar; AI "Test it" and "Publish changes"; Livestreams "Open studio"; Journal Rules "Preview as student"; Transactions "Invoice" / "Answer the dispute"; Community "New announcement" in the header; Students "Import or invite" with plus.
 - Left as is: Group filter in Ranking (no data), Type / date filters in Journal Answered, month filter in Transactions, card cover art in Content (the sample covers carry their own text).
+
+## Components and tokens pass (10/11)
+- Tokens: the 271 variables of the Figma Admin collection (541:2) match `admin-tokens.css` one to one; text styles match the `t-*` classes. Figma has no effect styles, so shadows live in the components: Menu `0 16 40 @50%`, Modal and Drawer `0 30 60 @60%` (border strong), set in `admin-v2.ts`.
+- `AdminButton` sizes follow Figma `_Base Button`: sm 24, md 28, lg 32, xl 36 (default). All Admin screens use it; the legacy `Button` is gone from `components/admin` (except the Design editor).
+- Fields: padding 12, label 12 regular. Menus: padding 6, items 32 px, padding 10, gap 10, min width 220. Toggle 32 × 18 with a 14 px knob. Checkbox hover = selected fill. Active nav item = panel fill + default border.
+- New in `components/admin/ui/`: `Callout`, `EmptyState`, `Dropzone`, `OptionCard`, `AdminSegmented`, `StepIndicator`, `ChoiceChip` (Time slot / Day chip). Use them instead of hand-built boxes.
+- Calendar event colours and status dots use tokens (Live = accent, Call = success, News = danger).
+- Still on the legacy remap layer (works, but not yet components): Table, Card, Badge, Progress and `text-sm` / `text-xs` / `text-muted-foreground` classes in older screens.
