@@ -1,22 +1,20 @@
 "use client"
 
-import { Dropzone, AdminButton } from "@/components/admin/ui"
 import { useRef, useState } from "react"
 import Link from "next/link"
 import { Download, FileUp, Pencil, Plus, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { useTiers } from "@/lib/data/access"
 import { DOWNLOAD_CATEGORIES, categoryLabel, saveDownloads, shortDate, useDownloads, type DownloadCategory, type DownloadFile, type DownloadItem } from "@/lib/data/downloads"
-import { Empty, Field, NativeSelect, Page, PageHeader } from "../kit"
-import { AdminFilter, AdminSearch, AdminTabs, AdminToolbar, FileIcon, Tag } from "../ui"
+import { cn } from "@/lib/utils"
+import { EmptyState, Field, NativeSelect, Page, PageHeader } from "../kit"
+import { AdminButton, AdminFilter, AdminModal, AdminSearch, AdminTabs, AdminToolbar, FileIcon, Tag } from "../ui"
 
 const TYPES: Record<string, string> = {
   pdf: "PDF",
@@ -62,7 +60,7 @@ export function DownloadsAdmin() {
         title="Downloads"
         text={`Files students can download · ${items.length} files · ${(items.length * 143).toLocaleString("en")} downloads this month`}
         actions={
-          <AdminButton hierarchy="primary" onClick={() => setEditing("new")}>
+          <AdminButton onClick={() => setEditing("new")}>
             <Plus /> Upload a file
           </AdminButton>
         }
@@ -71,14 +69,14 @@ export function DownloadsAdmin() {
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
           <Download className="size-4 text-[var(--ts-interactive)]" />
           <span className="flex-1">Downloads is switched off, so students don&apos;t see it yet.</span>
-          <AdminButton hierarchy="secondary" size="md" nativeButton={false} render={<Link href={`${base}/design`} />}>
+          <AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="lg">
             Switch on in Design
           </AdminButton>
         </div>
       )}
 
       {items.length === 0 ? (
-        <Empty icon={Download} title="No files yet" text="Upload an indicator, a template or a checklist and students find it under Downloads." action={<AdminButton hierarchy="primary" onClick={() => setEditing("new")}><Plus /> Upload a file</AdminButton>} />
+        <EmptyState icon={Download} title="No files yet" description="Upload an indicator, a template or a checklist and students find it under Downloads." actions={<AdminButton onClick={() => setEditing("new")}><Plus /> Upload a file</AdminButton>} />
       ) : (
         <>
         <AdminToolbar>
@@ -126,10 +124,10 @@ export function DownloadsAdmin() {
                   <TableCell className="hidden text-right tabular-nums md:table-cell">{[...d.id].reduce((n, c) => n + c.charCodeAt(0), 0) * 7 % 400 + 14}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-0.5">
-                      <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Edit ${d.title}`} onClick={() => setEditing(d)}>
+                      <AdminButton aria-label={`Edit ${d.title}`} onClick={() => setEditing(d)} hierarchy="ghost" size="md" iconOnly>
                         <Pencil />
                       </AdminButton>
-                      <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Delete ${d.title}`} onClick={() => remove(d)}>
+                      <AdminButton aria-label={`Delete ${d.title}`} onClick={() => remove(d)} hierarchy="ghost" size="md" iconOnly>
                         <Trash2 />
                       </AdminButton>
                     </div>
@@ -189,15 +187,16 @@ function UploadDialog({ item, onClose }: { item?: DownloadItem; onClose: () => v
   }
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{item ? "Edit file" : "Upload a file"}</DialogTitle>
-          <DialogDescription>Students find it under {coach.wording.downloads}. Replace the file to publish a new version.</DialogDescription>
-        </DialogHeader>
+    <AdminModal open={true} onOpenChange={(o) => !o && onClose()} title={<>{item ? "Edit file" : "Upload a file"}</>} subtitle={<>Students find it under {coach.wording.downloads}. Replace the file to publish a new version.</>} footer={<><AdminButton onClick={onClose} hierarchy="secondary">
+            Cancel
+          </AdminButton>
+          <AdminButton disabled={!ok} onClick={save}>
+            {item ? "Save" : "Upload"}
+          </AdminButton></>}>
+        
         <div className="grid gap-3">
-          <Dropzone
-            over={over}
+          <button
+            type="button"
             onClick={() => input.current?.click()}
             onDragOver={(e) => {
               e.preventDefault()
@@ -209,22 +208,23 @@ function UploadDialog({ item, onClose }: { item?: DownloadItem; onClose: () => v
               setOver(false)
               take(e.dataTransfer.files[0])
             }}
+            className={cn("grid place-items-center gap-1 rounded-lg border border-dashed border-a-border-strong px-4 py-6 text-center text-sm", over && "border-[var(--ts-interactive)] bg-[var(--ts-interactive)]/8")}
           >
-            <FileUp className="size-[22px] text-a-icon" />
+            <FileUp className="size-5 text-muted-foreground" />
             {file ? (
               <>
-                <span className="t-body-m-medium text-a-text">{file.name}</span>
-                <span className="t-caption text-a-text-3">
+                <span className="font-medium">{file.name}</span>
+                <span className="text-xs text-muted-foreground">
                   {file.type} · {file.size} · click to replace
                 </span>
               </>
             ) : (
               <>
-                <span className="t-body-m text-a-text">Drop a file here, or click to choose</span>
-                <span className="t-caption text-a-text-3">Only the name and size are kept in this prototype.</span>
+                <span className="font-medium">Drop a file here, or click to choose</span>
+                <span className="text-xs text-muted-foreground">Only the name and size are kept in this prototype.</span>
               </>
             )}
-          </Dropzone>
+          </button>
           <input ref={input} type="file" className="hidden" onChange={(e) => take(e.target.files?.[0])} />
           <Field label="Title">
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Session levels indicator (TradingView)" />
@@ -265,15 +265,8 @@ function UploadDialog({ item, onClose }: { item?: DownloadItem; onClose: () => v
             <Switch checked={notify} onCheckedChange={setNotify} />
           </label>
         </div>
-        <DialogFooter>
-          <AdminButton hierarchy="secondary" onClick={onClose}>
-            Cancel
-          </AdminButton>
-          <AdminButton hierarchy="primary" disabled={!ok} onClick={save}>
-            {item ? "Save" : "Upload"}
-          </AdminButton>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        
+      
+</AdminModal>
   )
 }

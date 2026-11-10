@@ -6,17 +6,15 @@ import { Archive, ArrowDown, ArrowUp, ChartCandlestick, Pin, PinOff, Plus, X } f
 import { toast } from "sonner"
 import { TradingViewChart, TradingViewMini } from "@/components/charts/tradingview"
 import { useCoach } from "@/components/coach/coach-provider"
-
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { COACH_CHARTS, chartDefaults, INDICATORS, INTERVALS, MARKETS, type ChartSettings, type Market, type CoachChart } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
-import { Empty, Field, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
-import { AdminSearch, Tag, AdminButton } from "../ui"
+import { EmptyState, Field, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { AdminButton, AdminModal, AdminSearch, Tag } from "../ui"
 
 
 /** ADM-57 chart settings and ADM-58 the coach's marked-up charts. */
@@ -47,7 +45,7 @@ export function ChartsAdmin() {
         title="Charts"
         text="Charts, watchlist and your charts"
         actions={
-          <AdminButton hierarchy="primary" onClick={() => setCreating(true)}>
+          <AdminButton onClick={() => setCreating(true)}>
             <Plus /> Mark up a chart
           </AdminButton>
         }
@@ -57,7 +55,7 @@ export function ChartsAdmin() {
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
           <ChartCandlestick className="size-4 text-[var(--ts-interactive)]" />
           <span className="flex-1">Charts is switched off, so students don&apos;t see it in the menu yet.</span>
-          <AdminButton hierarchy="secondary" size="md" nativeButton={false} render={<Link href={`${base}/design`} />}>
+          <AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="lg">
             Switch on in Design
           </AdminButton>
         </div>
@@ -81,7 +79,7 @@ export function ChartsAdmin() {
 
         <TabsContent value="charts">
           {charts.filter((c) => !c.archived).length === 0 ? (
-            <Empty icon={ChartCandlestick} title="No marked-up charts yet" text="Draw your levels for the week and share them. Students open them with your lines on top." action={<AdminButton hierarchy="primary" onClick={() => setCreating(true)}>Mark up a chart</AdminButton>} />
+            <EmptyState icon={ChartCandlestick} title="No marked-up charts yet" description="Draw your levels for the week and share them. Students open them with your lines on top." actions={<AdminButton onClick={() => setCreating(true)}>Mark up a chart</AdminButton>} />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {[...charts.filter((c) => !c.archived && c.title.toLowerCase().includes(q.toLowerCase()))]
@@ -92,16 +90,17 @@ export function ChartsAdmin() {
                     chart={c}
                     actions={
                       <>
-                        <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={c.pinned ? "Unpin" : "Pin"} onClick={() => setCharts((l) => l.map((x) => (x.id === c.id ? { ...x, pinned: !x.pinned } : x)))}>
+                        <AdminButton aria-label={c.pinned ? "Unpin" : "Pin"} onClick={() => setCharts((l) => l.map((x) => (x.id === c.id ? { ...x, pinned: !x.pinned } : x)))} hierarchy="ghost" size="md" iconOnly>
                           {c.pinned ? <PinOff /> : <Pin />}
                         </AdminButton>
-                        <AdminButton hierarchy="ghost" size="md" iconOnly
+                        <AdminButton
+                          
+                          
                           aria-label="Archive"
                           onClick={() => {
                             setCharts((l) => l.map((x) => (x.id === c.id ? { ...x, archived: true } : x)))
                             toast("Chart archived", { description: "Students don't see it any more." })
-                          }}
-                        >
+                          }} hierarchy="ghost" size="md" iconOnly>
                           <Archive />
                         </AdminButton>
                       </>
@@ -141,13 +140,13 @@ export function ChartsAdmin() {
                       <button onClick={() => setPreview(w.tv)} className={cn("flex-1 text-left text-sm", preview === w.tv && "text-[var(--ts-cta)]")}>
                         {w.name} <span className="text-xs text-muted-foreground">{w.tv}</span>
                       </button>
-                      <AdminButton hierarchy="ghost" size="sm" iconOnly disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move ${w.name} up`}>
+                      <AdminButton disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move ${w.name} up`} hierarchy="ghost" size="md" iconOnly>
                         <ArrowUp />
                       </AdminButton>
-                      <AdminButton hierarchy="ghost" size="sm" iconOnly disabled={i === s.watchlist.length - 1} onClick={() => move(i, 1)} aria-label={`Move ${w.name} down`}>
+                      <AdminButton disabled={i === s.watchlist.length - 1} onClick={() => move(i, 1)} aria-label={`Move ${w.name} down`} hierarchy="ghost" size="md" iconOnly>
                         <ArrowDown />
                       </AdminButton>
-                      <AdminButton hierarchy="ghost" size="sm" iconOnly onClick={() => set({ watchlist: s.watchlist.filter((x) => x.tv !== w.tv) })} aria-label={`Remove ${w.name}`}>
+                      <AdminButton onClick={() => set({ watchlist: s.watchlist.filter((x) => x.tv !== w.tv) })} aria-label={`Remove ${w.name}`} hierarchy="ghost" size="md" iconOnly>
                         <X />
                       </AdminButton>
                     </div>
@@ -157,7 +156,7 @@ export function ChartsAdmin() {
                   {available
                     .filter((a) => !s.watchlist.some((w) => w.tv === a.tv))
                     .map((a) => (
-                      <button key={a.tv} onClick={() => set({ watchlist: [...s.watchlist, a] })} className="rounded-md border border-dashed px-2 py-1 text-xs text-muted-foreground hover:border-solid hover:text-foreground">
+                      <button key={a.tv} onClick={() => set({ watchlist: [...s.watchlist, a] })} className="rounded-md border border-dashed border-a-border-strong px-2 py-1 text-xs text-muted-foreground hover:border-solid hover:text-foreground">
                         + {a.name}
                       </button>
                     ))}
@@ -291,12 +290,31 @@ function NewChart({ open, onOpenChange, onSave, symbols }: { open: boolean; onOp
   const [link, setLink] = useState("")
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Mark up a chart</DialogTitle>
-          <DialogDescription>Your levels on top of the chart. Students open it and can copy it into their own layout.</DialogDescription>
-        </DialogHeader>
+    <AdminModal open={open} onOpenChange={onOpenChange} title="Mark up a chart" subtitle="Your levels on top of the chart. Students open it and can copy it into their own layout." className="sm:max-w-xl" footer={<><AdminButton onClick={() => onOpenChange(false)} hierarchy="ghost">
+            Cancel
+          </AdminButton>
+          <AdminButton
+            disabled={!title.trim()}
+            onClick={() => {
+              onSave({
+                id: `c${Date.now()}`,
+                title: title.trim(),
+                symbol: sym,
+                note: note.trim(),
+                when: "just now",
+                tiers: tiers.length === coach.tiers.length ? [] : tiers,
+                levels: levels.filter((l) => l.at > 0),
+                link: link.trim() || undefined,
+              })
+              toast("Chart shared", { description: notify ? "A notice is posted in the community." : undefined })
+              onOpenChange(false)
+              setTitle("")
+              setNote("")
+              setLink("")
+            }}>
+            Share chart
+          </AdminButton></>}>
+        
         <div className="grid gap-3">
           <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
             <Field label="Title">
@@ -330,7 +348,7 @@ function NewChart({ open, onOpenChange, onSave, symbols }: { open: boolean; onOp
                   <option value="support">Support</option>
                   <option value="target">Target</option>
                 </NativeSelect>
-                <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Remove level" onClick={() => setLevels((x) => x.filter((_, j) => j !== i))}>
+                <AdminButton aria-label="Remove level" onClick={() => setLevels((x) => x.filter((_, j) => j !== i))} hierarchy="ghost" size="md" iconOnly>
                   <X />
                 </AdminButton>
               </div>
@@ -358,34 +376,8 @@ function NewChart({ open, onOpenChange, onSave, symbols }: { open: boolean; onOp
             <Checkbox checked={notify} onCheckedChange={(v) => setNotify(!!v)} /> Post a notice in the community
           </label>
         </div>
-        <DialogFooter>
-          <AdminButton hierarchy="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
-          </AdminButton>
-          <AdminButton hierarchy="primary"
-            disabled={!title.trim()}
-            onClick={() => {
-              onSave({
-                id: `c${Date.now()}`,
-                title: title.trim(),
-                symbol: sym,
-                note: note.trim(),
-                when: "just now",
-                tiers: tiers.length === coach.tiers.length ? [] : tiers,
-                levels: levels.filter((l) => l.at > 0),
-                link: link.trim() || undefined,
-              })
-              toast("Chart shared", { description: notify ? "A notice is posted in the community." : undefined })
-              onOpenChange(false)
-              setTitle("")
-              setNote("")
-              setLink("")
-            }}
-          >
-            Share chart
-          </AdminButton>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        
+      
+</AdminModal>
   )
 }

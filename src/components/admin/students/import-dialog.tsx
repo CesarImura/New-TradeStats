@@ -1,19 +1,17 @@
 "use client"
 
-import { AdminButton } from "@/components/admin/ui"
 import { useState } from "react"
 import { Check, FileSpreadsheet, Link2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { GROUPS } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Field, Mono, NativeSelect } from "../kit"
+import { AdminButton, AdminModal } from "@/components/admin/ui"
 
 const SAMPLE = [
   ["Full name", "E-mail", "Plan", "Joined"],
@@ -44,16 +42,29 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Import or invite students</DialogTitle>
-          <DialogDescription>
-            {step === "source" && "From a file, a list of e-mails, or a link to share."}
+    <AdminModal open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())} title="Import or invite students" subtitle={<>{step === "source" && "From a file, a list of e-mails, or a link to share."}
             {step === "map" && "We matched the columns. Check they're right."}
-            {step === "access" && `What ${count} students get.`}
-          </DialogDescription>
-        </DialogHeader>
+            {step === "access" && `What ${count} students get.`}</>} className="sm:max-w-2xl" footer={<>{step !== "source" && (
+            <AdminButton onClick={() => setStep(step === "access" ? (mode === "csv" ? "map" : "source") : "source")} hierarchy="ghost">
+              Back
+            </AdminButton>
+          )}
+          {step === "source" && mode === "link" ? (
+            <AdminButton onClick={close}>Done</AdminButton>
+          ) : step !== "access" ? (
+            <AdminButton disabled={step === "source" && count === 0} onClick={() => setStep(step === "source" && mode === "csv" ? "map" : "access")}>
+              Continue
+            </AdminButton>
+          ) : (
+            <AdminButton
+              onClick={() => {
+                toast(`${count} students imported`, { description: invite ? "Invite e-mails are on their way." : "They're waiting as “Invited”." })
+                close()
+              }}>
+              <Check /> Import {count}
+            </AdminButton>
+          )}</>}>
+        
 
         <div className="flex gap-1">
           {["source", "map", "access"].map((s, i) => (
@@ -84,7 +95,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
               ))}
             </div>
             {mode === "csv" && (
-              <div className="grid place-items-center gap-2 rounded-lg border border-dashed px-6 py-8 text-center">
+              <div className="grid place-items-center gap-2 rounded-lg border border-dashed border-a-border-strong px-6 py-8 text-center">
                 <FileSpreadsheet className="size-7 text-muted-foreground" />
                 <p className="text-sm">Drop your file here</p>
                 <p className="text-xs text-muted-foreground">Prototype: a sample file with 4 students is used.</p>
@@ -95,7 +106,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
               <div className="grid gap-2">
                 <div className="flex gap-2">
                   <Input readOnly value={`https://${coach.slug}.tradestats.app/join/${coach.tiers[0]?.id ?? "free"}-x8k2`} />
-                  <AdminButton hierarchy="secondary" onClick={() => toast("Link copied")}>
+                  <AdminButton onClick={() => toast("Link copied")} hierarchy="secondary">
                     <Link2 /> Copy
                   </AdminButton>
                 </div>
@@ -186,30 +197,8 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
           </div>
         )}
 
-        <DialogFooter>
-          {step !== "source" && (
-            <AdminButton hierarchy="ghost" onClick={() => setStep(step === "access" ? (mode === "csv" ? "map" : "source") : "source")}>
-              Back
-            </AdminButton>
-          )}
-          {step === "source" && mode === "link" ? (
-            <AdminButton hierarchy="primary" onClick={close}>Done</AdminButton>
-          ) : step !== "access" ? (
-            <AdminButton hierarchy="primary" disabled={step === "source" && count === 0} onClick={() => setStep(step === "source" && mode === "csv" ? "map" : "access")}>
-              Continue
-            </AdminButton>
-          ) : (
-            <AdminButton hierarchy="primary"
-              onClick={() => {
-                toast(`${count} students imported`, { description: invite ? "Invite e-mails are on their way." : "They're waiting as “Invited”." })
-                close()
-              }}
-            >
-              <Check /> Import {count}
-            </AdminButton>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        
+      
+</AdminModal>
   )
 }

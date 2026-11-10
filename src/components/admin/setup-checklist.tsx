@@ -1,6 +1,5 @@
 "use client"
 
-import { AdminButton } from "@/components/admin/ui"
 import Link from "next/link"
 import { ArrowRight, Info, Lightbulb, X } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
@@ -10,6 +9,7 @@ import { allLessons, isSampleCourse, useCatalog, type Catalog } from "@/lib/data
 import { isSampleEvent, useSchedule } from "@/lib/data/schedule"
 import { useCustomCommunities } from "@/lib/data/use-communities"
 import { setStored, useHistory, useStored } from "@/lib/prototype-store"
+import { AdminButton } from "@/components/admin/ui"
 
 /**
  * The getting-started checklist on the Overview, and the short how-to at the top of each screen it
@@ -145,15 +145,16 @@ export function SetupTip({ task }: { task: TaskId }) {
           ))}
         </ol>
         {tip.action && (
-          <AdminButton hierarchy="secondary" size="md" className="mt-1 w-fit" nativeButton={false} render={<Link href={t.href} />}>
+          <AdminButton className="mt-1 w-fit" nativeButton={false} render={<Link href={t.href} />} hierarchy="secondary" size="lg">
             {tip.action} <ArrowRight />
           </AdminButton>
         )}
       </div>
-      <AdminButton hierarchy="ghost" size="md" iconOnly
+      <AdminButton
+        
+        
         aria-label="Close this how-to"
-        onClick={() => setStored<TaskId[]>(`${coach.slug}:setup-tips-closed`, (c) => [...c, task], NO_TIPS)}
-      >
+        onClick={() => setStored<TaskId[]>(`${coach.slug}:setup-tips-closed`, (c) => [...c, task], NO_TIPS)} hierarchy="ghost" size="md" iconOnly>
         <X />
       </AdminButton>
     </aside>
@@ -169,7 +170,7 @@ export function SampleNotice({ show = true, children }: { show?: boolean; childr
   const wizard = useWizardCommunity(coach.slug)
   if (!show || !wizard) return null
   return (
-    <p className="flex items-start gap-2 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
+    <p className="flex items-start gap-2 rounded-lg border border-dashed border-a-border-strong px-3 py-2 text-xs text-muted-foreground">
       <Info className="mt-px size-3.5 shrink-0" aria-hidden />
       <span>{children}</span>
     </p>

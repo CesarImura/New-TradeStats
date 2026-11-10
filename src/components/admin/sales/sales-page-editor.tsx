@@ -1,17 +1,16 @@
 "use client"
 
-import { AdminButton } from "@/components/admin/ui"
 import { useEffect, useRef, useState } from "react"
 import { ArrowDown, ArrowUp, ExternalLink, Plus, RotateCcw, X } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { BLOCK_INFO, resetSalesPage, saveSalesPage, useSalesPage, type Block } from "@/lib/data/sales-page"
 import { cn } from "@/lib/utils"
 import { Field, Mono } from "../kit"
+import { AdminButton } from "@/components/admin/ui"
 
 /** ADM-40: the sales page from blocks. Order, switch on or off, edit the words; the page beside it updates live. */
 export function SalesPageEditor() {
@@ -40,12 +39,13 @@ export function SalesPageEditor() {
       <div className="grid content-start gap-4">
         <div className="flex items-center justify-between">
           <Mono className="text-muted-foreground">Blocks · top to bottom</Mono>
-          <AdminButton hierarchy="ghost" size="md"
+          <AdminButton
+            
+            
             onClick={() => {
               resetSalesPage(coach)
               toast("Sales page reset to the template")
-            }}
-          >
+            }} hierarchy="ghost" size="md">
             <RotateCcw /> Reset
           </AdminButton>
         </div>
@@ -63,10 +63,10 @@ export function SalesPageEditor() {
                   <span className="truncate text-sm font-medium">{BLOCK_INFO[b.type].name}</span>
                   <span className="truncate text-xs text-muted-foreground">{BLOCK_INFO[b.type].hint}</span>
                 </button>
-                <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Move up" disabled={i === 0} onClick={() => move(b.id, -1)}>
+                <AdminButton aria-label="Move up" disabled={i === 0} onClick={() => move(b.id, -1)} hierarchy="ghost" size="md" iconOnly>
                   <ArrowUp />
                 </AdminButton>
-                <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Move down" disabled={i === blocks.length - 1} onClick={() => move(b.id, 1)}>
+                <AdminButton aria-label="Move down" disabled={i === blocks.length - 1} onClick={() => move(b.id, 1)} hierarchy="ghost" size="md" iconOnly>
                   <ArrowDown />
                 </AdminButton>
                 <Switch checked={b.on} onCheckedChange={(v) => update(b.id, { on: v })} aria-label={`Show ${BLOCK_INFO[b.type].name}`} />
@@ -97,7 +97,7 @@ export function SalesPageEditor() {
                         placeholder={block.type === "faq" ? "Question" : "Name · detail"}
                         className="h-8"
                       />
-                      <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Remove" onClick={() => update(block.id, { items: block.items!.filter((_, j) => j !== i) })}>
+                      <AdminButton aria-label="Remove" onClick={() => update(block.id, { items: block.items!.filter((_, j) => j !== i) })} hierarchy="ghost" size="md" iconOnly>
                         <X />
                       </AdminButton>
                     </div>
@@ -109,10 +109,11 @@ export function SalesPageEditor() {
                     />
                   </div>
                 ))}
-                <AdminButton hierarchy="secondary" size="md"
+                <AdminButton
+                  
+                  
                   className="justify-self-start"
-                  onClick={() => update(block.id, { items: [...block.items!, block.type === "faq" ? { q: "", a: "" } : { q: "", a: "", who: "" }] })}
-                >
+                  onClick={() => update(block.id, { items: [...block.items!, block.type === "faq" ? { q: "", a: "" } : { q: "", a: "", who: "" }] })} hierarchy="secondary" size="md">
                   <Plus /> {block.type === "faq" ? "Question" : "Quote"}
                 </AdminButton>
               </div>
@@ -129,7 +130,7 @@ export function SalesPageEditor() {
       <div className="grid content-start gap-2">
         <div className="flex items-center justify-between gap-2">
           <Mono className="text-muted-foreground">{coach.slug}.tradestats.app · live</Mono>
-          <AdminButton hierarchy="ghost" size="md" nativeButton={false} render={<a href={url} target="_blank" rel="noreferrer" />}>
+          <AdminButton nativeButton={false} render={<a href={url} target="_blank" rel="noreferrer" />} hierarchy="ghost" size="lg">
             <ExternalLink /> Open
           </AdminButton>
         </div>

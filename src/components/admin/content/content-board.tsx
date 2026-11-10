@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -9,24 +9,19 @@ import {
   BookOpen,
   Copy,
   Eye,
-  FileVideo,
-  FolderUp,
-  Link2,
   MoreHorizontal,
   Pencil,
+  Play,
   Plus,
-  Sparkles,
   Trash2,
   Upload,
 } from "@/components/icons"
 import { toast } from "sonner"
-import { NewCourseWizard } from "./new-course-wizard"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { PageHeader } from "../kit"
-import { AdminFilter, AdminSearch, AdminTabs, AdminToolbar, AdminViewToggle, StatPanel, AdminButton } from "../ui"
-
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AdminButton, AdminFilter, AdminSearch, AdminTabs, AdminToolbar, AdminViewToggle, EmptyState, MediaCard, StatPanel, Tag } from "../ui"
+import { CourseCover } from "./course-parts"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,33 +29,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Textarea } from "@/components/ui/textarea"
 import { STATUS_LABEL, allLessons, isSampleCourse, saveCatalog, uid, useCatalog, type Catalog, type Course, type Status } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
-import { Tile } from "./thumbs"
-import { videoFrames } from "@/lib/video-frames"
+import { NewCourse } from "./new-course"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
-
-export const STATUS_DOT: Record<Status, string> = {
-  published: "bg-a-success-fill",
-  draft: "bg-a-text-3",
-  scheduled: "bg-a-warning-fill",
-  archived: "bg-a-border-strong",
-}
-
-export function StatusBadge({ status, when }: { status: Status; when?: string }) {
-  return (
-    <Badge variant="outline" className="gap-1.5 font-normal text-muted-foreground">
-      <span className={cn("size-1.5 rounded-full", STATUS_DOT[status])} />
-      {STATUS_LABEL[status]}
-      {status === "scheduled" && when ? ` · ${when}` : ""}
-    </Badge>
-  )
-}
 
 /** Thumbnail tints for the admin, which keeps its own neutral look. */
 export { COVER_TINTS as THUMB } from "./thumbs"
@@ -69,6 +42,21 @@ type Filter = "all" | "attention" | Status
 
 /** Published and still holding a lesson that is not ready for students. */
 const needsAttention = (c: Course) => c.status === "published" && allLessons(c).some((l) => l.status === "draft")
+
+/** What the card says is out of the ordinary, if anything. */
+const attentionOf = (c: Course): { tone: "warning" | "muted"; text: string; action: string } | null => {
+  if (c.status === "draft") return { tone: "muted", text: "No one can see this course", action: "Publish" }
+  const waiting = allLessons(c).filter((l) => l.status === "draft" || !l.video).length
+  return c.status === "published" && waiting ? { tone: "warning", text: `${waiting} ${waiting === 1 ? "lesson isn't" : "lessons aren't"} ready`, action: "Review" } : null
+}
+const accessOf = (c: Course, tiers: { id: string; name: string }[]) => (c.soldSeparately ? "Sold on its own" : c.tiers.length ? tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers")
+const statusTone = (s: Status) => (s === "published" ? "success" : s === "scheduled" ? "warning" : "neutral")
+const StatusTag = ({ course }: { course: Course }) => (
+  <Tag tone={statusTone(course.status)} dot>
+    {STATUS_LABEL[course.status]}
+    {course.status === "scheduled" && course.scheduledFor ? ` · ${course.scheduledFor}` : ""}
+  </Tag>
+)
 
 /** ADM-08: areas and courses as a board; drafts, scheduled and archived. */
 export function ContentBoard() {
@@ -80,7 +68,9 @@ export function ContentBoard() {
   const router = useRouter()
   const [filter, setFilter] = useState<Filter>("all")
   const [creating, setCreating] = useState(false)
-  const [bulk, setBulk] = useState(false)
+  const [method, setMethod] = useState<"blank" | "folder">("blank")
+  const [picked, setPicked] = useState<string[]>([])
+  const openWizard = (m: "blank" | "folder") => (setMethod(m), setCreating(true))
   const [q, setQ] = useState("")
   const [tierSel, setTierSel] = useState("all")
   const [sort, setSort] = useState("edited")
@@ -114,22 +104,59 @@ export function ContentBoard() {
     toast(`${course.title} deleted.`, { action: { label: "Undo", onClick: () => edit(() => before) } })
   }
 
+  const menu = (c: Course, hierarchy: "ghost" | "secondary") => (
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<AdminButton hierarchy={hierarchy} size="md" iconOnly aria-label={`Actions for ${c.title}`} />}>
+        <MoreHorizontal />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem onClick={() => router.push(`${base}/content/${c.id}`)}>
+          <Pencil /> Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => window.open(`/c/${coach.slug}/courses/${c.id}`, "_blank")} disabled={c.status !== "published"}>
+          <Eye /> Preview as student
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => duplicate(c)}>
+          <Copy /> Duplicate
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {c.status !== "published" && c.status !== "archived" && (
+          <DropdownMenuItem onClick={() => setStatus(c.id, "published")}>
+            <Upload /> Publish now
+          </DropdownMenuItem>
+        )}
+        {c.status === "archived" ? (
+          <DropdownMenuItem onClick={() => setStatus(c.id, "draft")}>
+            <ArchiveRestore /> Restore as draft
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onClick={() => setStatus(c.id, "archived")}>
+            <Archive /> Archive
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem variant="destructive" onClick={() => remove(c)}>
+          <Trash2 /> Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
   return (
     <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
       <PageHeader
         title="Content"
-        text={`${catalog.courses.length} ${catalog.courses.length === 1 ? "course" : "courses"} · ${catalog.courses.reduce((n, c) => n + allLessons(c).length, 0)} lessons`}
+        text={catalog.courses.length === 0 ? "No courses yet" : `${catalog.courses.length} ${catalog.courses.length === 1 ? "course" : "courses"} · ${catalog.courses.reduce((n, c) => n + allLessons(c).length, 0)} lessons`}
         actions={
-          <>
-            <AdminButton hierarchy="secondary" onClick={() => setBulk(true)}>
-              <FolderUp /> Bulk upload
-            </AdminButton>
-            <AdminButton hierarchy="primary" onClick={() => setCreating(true)}>
-              <Plus /> New course
-            </AdminButton>
-          </>
+          <AdminButton onClick={() => openWizard("blank")}>
+            <Plus /> New course
+          </AdminButton>
         }
       />
+      {catalog.courses.length === 0 ? (
+        <EmptyState icon={Play} title="Create your first course" description="Start blank, upload a folder of videos or import links. Videos keep uploading while you work."
+          actions={<><AdminButton onClick={() => openWizard("blank")}><Plus /> New course</AdminButton><AdminButton hierarchy="secondary" onClick={() => openWizard("folder")}><Upload /> Upload a folder</AdminButton></>} className="py-14" />
+      ) : (
+        <>
       <StatPanel
         stats={[
           { label: "Enrolled students", value: "201", delta: "+12 vs last 30 days" },
@@ -156,7 +183,7 @@ export function ContentBoard() {
           }))}
         />
         <div className="flex-1" />
-        <AdminSearch value={q} onChange={setQ} placeholder="Search courses and lessons" hint="⌘K" className="w-[280px]" />
+        <AdminSearch value={q} onChange={setQ} placeholder="Search courses and lessons" hint="⌘K" className="w-[240px]" />
         <AdminFilter ariaLabel="Tier" value={tierSel} onValueChange={setTierSel} options={[{ value: "all", label: "All tiers" }, ...coach.tiers.map((t) => ({ value: t.id, label: t.name }))]} />
         <AdminFilter ariaLabel="Sort" value={sort} onValueChange={setSort} options={[{ value: "edited", label: "Last edited" }, { value: "name", label: "Name" }]} />
         <AdminViewToggle value={view} onChange={setView} />
@@ -167,30 +194,60 @@ export function ContentBoard() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
+                <TableHead className="w-10"><Checkbox aria-label="Select all courses" checked={picked.length > 0 && picked.length === list.length} onCheckedChange={(v) => setPicked(v ? list.map((c) => c.id) : [])} /></TableHead>
                 <TableHead>Course</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Tiers</TableHead>
+                <TableHead>Attention</TableHead>
+                <TableHead>Access</TableHead>
                 <TableHead className="text-right">Lessons</TableHead>
+                <TableHead className="text-right">Students</TableHead>
+                <TableHead className="text-right">Done</TableHead>
+                <TableHead className="text-right">Edited</TableHead>
+                <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {list.map((c) => (
-                <TableRow key={c.id} className="cursor-pointer" onClick={() => router.push(`${base}/content/${c.id}`)}>
-                  <TableCell>
-                    <div className="grid min-w-0">
-                      <span className="truncate font-medium">{c.title}</span>
-                      <span className="truncate text-xs text-muted-foreground">{c.tagline}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={c.status} when={c.scheduledFor} />
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{c.tiers.length ? coach.tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers"}</TableCell>
-                  <TableCell className="text-right tabular-nums">{allLessons(c).length}</TableCell>
-                </TableRow>
-              ))}
+              {list.map((c) => {
+                const live = c.status === "published"
+                const seed = [...c.id].reduce((n, ch) => n + ch.charCodeAt(0), 0)
+                const att = attentionOf(c)
+                return (
+                  <TableRow key={c.id} className="cursor-pointer" data-state={picked.includes(c.id) ? "selected" : undefined} onClick={() => router.push(`${base}/content/${c.id}`)}>
+                    <TableCell onClick={(e) => e.stopPropagation()}><Checkbox aria-label={`Select ${c.title}`} checked={picked.includes(c.id)} onCheckedChange={(v) => setPicked((p) => (v ? [...p, c.id] : p.filter((x) => x !== c.id)))} /></TableCell>
+                    <TableCell>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <CourseCover course={c} className="h-8 w-12 shrink-0 rounded-a-xs border border-a-border" />
+                        <div className="grid min-w-0">
+                          <span className="truncate t-body-m text-a-text">{c.title}</span>
+                          <span className="truncate t-caption text-a-text-2">{c.tagline}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell><StatusTag course={c} /></TableCell>
+                    <TableCell>{att ? <span className="flex items-center gap-2 t-body-m text-a-text-2"><span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", att.tone === "warning" ? "bg-a-warning-fill" : "bg-a-text-3")} />{att.text}</span> : <span className="text-a-text-3">—</span>}</TableCell>
+                    <TableCell className="t-body-m text-a-text">{accessOf(c, coach.tiers)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{allLessons(c).length}</TableCell>
+                    <TableCell className="text-right tabular-nums">{live ? 80 + ((seed * 37) % 120) : "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums">{live ? `${20 + ((seed * 13) % 60)}%` : "—"}</TableCell>
+                    <TableCell className="text-right whitespace-nowrap text-a-text-3">{c.edited ?? "—"}</TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>{menu(c, "ghost")}</TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
+          <div className="flex min-h-11 items-center gap-2 border-t border-a-border-subtle px-5 py-2 t-body-m text-a-text-2">
+            {picked.length === 0 ? (
+              <span>{list.length} {list.length === 1 ? "course" : "courses"} · select rows to publish or archive several</span>
+            ) : (
+              <>
+                <span className="flex-1 text-a-text">{picked.length} selected</span>
+                <AdminButton hierarchy="secondary" size="md" onClick={() => (picked.forEach((id) => setStatus(id, "published")), setPicked([]))}>Publish</AdminButton>
+                <AdminButton hierarchy="secondary" size="md" onClick={() => (picked.forEach((id) => setStatus(id, "archived")), setPicked([]))}>Archive</AdminButton>
+                <AdminButton hierarchy="ghost" size="md" onClick={() => setPicked([])}>Clear</AdminButton>
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -199,303 +256,50 @@ export function ContentBoard() {
           const lessons = allLessons(c)
           const live = c.status === "published"
           const seed = [...c.id].reduce((n, ch) => n + ch.charCodeAt(0), 0)
-          const tiers = c.tiers.length ? coach.tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers"
+          const att = attentionOf(c)
           return (
-            <div key={c.id} data-interactive className={cn("group relative overflow-hidden rounded-xl border bg-card", c.status === "archived" && "opacity-70")}>
-              <Link href={`${base}/content/${c.id}`} className="block">
-                <div data-media>
-                  <Tile src={c.cover} color={c.color} className="aspect-[16/7]">
-                    <span className="absolute top-2.5 left-2.5"><StatusBadge status={c.status} when={c.scheduledFor} /></span>
-                  </Tile>
-                </div>
-                <div className="grid gap-3 px-4 pt-4">
-                  <div className="grid gap-0.5">
-                    <span className="text-sm leading-tight font-medium">{c.title}</span>
-                    <span className="line-clamp-1 text-xs text-muted-foreground">{c.tagline}</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {sample(c.id) && <Badge variant="outline">Sample</Badge>}
-                    <span className="truncate text-xs text-muted-foreground">{tiers}</span>
-                  </div>
-                </div>
-                <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-a-border-subtle px-4 py-3">
-                  {[
-                    [String(lessons.length), "Lessons"],
-                    [live ? String(80 + ((seed * 37) % 120)) : "—", "Students"],
-                    [live ? `${20 + ((seed * 13) % 60)}%` : "—", "Completed"],
-                  ].map(([v, l]) => (
-                    <div key={l} className="grid gap-0.5">
-                      <dd className="text-sm font-medium tabular-nums">{v}</dd>
-                      <dt className="t-caption text-a-text-2">{l}</dt>
-                    </div>
-                  ))}
-                </dl>
-              </Link>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="sm" iconOnly className="absolute top-2.5 right-2.5" aria-label={`Actions for ${c.title}`} />}>
-                        <MoreHorizontal />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={() => router.push(`${base}/content/${c.id}`)}>
-                          <Pencil /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => window.open(`/c/${coach.slug}/courses/${c.id}`, "_blank")} disabled={c.status !== "published"}>
-                          <Eye /> Preview as student
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => duplicate(c)}>
-                          <Copy /> Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {c.status !== "published" && c.status !== "archived" && (
-                          <DropdownMenuItem onClick={() => setStatus(c.id, "published")}>
-                            <Upload /> Publish now
-                          </DropdownMenuItem>
-                        )}
-                        {c.status === "archived" ? (
-                          <DropdownMenuItem onClick={() => setStatus(c.id, "draft")}>
-                            <ArchiveRestore /> Restore as draft
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => setStatus(c.id, "archived")}>
-                            <Archive /> Archive
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem variant="destructive" onClick={() => remove(c)}>
-                          <Trash2 /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-            </div>
+            <MediaCard key={c.id} data-interactive className={cn(c.status === "archived" && "opacity-70")}
+              cover={
+                <>
+                  <Link href={`${base}/content/${c.id}`} aria-label={c.title} className="absolute inset-0 z-10 outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus" />
+                  <CourseCover course={c} className="aspect-[2.3] w-full">
+                    <span className="absolute top-3 left-3"><StatusTag course={c} /></span>
+                    {att && (
+                      <span className="absolute inset-x-3 bottom-3 flex items-center gap-2 rounded-a-md bg-a-page/80 px-3 py-2 t-body-m text-a-text backdrop-blur-sm">
+                        <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", att.tone === "warning" ? "bg-a-warning-fill" : "bg-a-text-3")} />
+                        <span className="min-w-0 flex-1 truncate">{att.text}</span>
+                        <span className="shrink-0 text-a-text-2">{att.action}</span>
+                      </span>
+                    )}
+                  </CourseCover>
+                  <span className="absolute top-2.5 right-2.5 z-20">{menu(c, "ghost")}</span>
+                </>
+              }
+              title={c.title} subtitle={c.tagline}
+              meta={<>{sample(c.id) && <Tag>Sample</Tag>}<span className="min-w-0 flex-1 truncate text-a-text-2">{accessOf(c, coach.tiers)}</span>{c.edited && <span className="shrink-0 text-a-text-3">Edited {c.edited}</span>}</>}
+              stats={[[String(lessons.length), "Lessons"], [live ? String(80 + ((seed * 37) % 120)) : "—", "Students"], [live ? `${20 + ((seed * 13) % 60)}%` : "—", "Completed"]]} />
           )
         })}
         {list.length === 0 && (
-          <button onClick={() => setCreating(true)} className="grid place-items-center gap-1 rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground hover:bg-muted/50 sm:col-span-2 xl:col-span-3">
+          <button onClick={() => openWizard("blank")} className="grid place-items-center gap-1 rounded-a-lg border border-dashed border-a-border-strong p-10 text-center t-body-m text-a-text-2 outline-none transition-colors duration-300 hover:bg-a-hover sm:col-span-2 xl:col-span-3">
             <BookOpen className="size-5" />
             {filter === "all" ? "No courses yet. Add your first one." : filter === "attention" ? "Nothing needs attention." : `Nothing ${STATUS_LABEL[filter as Status].toLowerCase()} here.`}
           </button>
         )}
       </div>
+        </>
+      )}
 
-      <NewCourseWizard
+      <NewCourse
         open={creating}
+        onOpenChange={setCreating}
         area={catalog.areas[0] ?? "Core"}
-        onClose={() => setCreating(false)}
-        onCreate={(course) => {
+        initialMethod={method}
+        onCreate={(course, o) => {
           edit((c) => ({ ...c, courses: [...c.courses, course] }))
-          router.push(`${base}/content/${course.id}`)
-        }}
-      />
-      <BulkUpload
-        open={bulk}
-        onOpenChange={setBulk}
-        area={catalog.areas[0] ?? "Core"}
-        onCreate={(course) => {
-          edit((c) => ({ ...c, courses: [...c.courses, course] }))
-          router.push(`${base}/content/${course.id}`)
+          if (o.open) router.push(`${base}/content/${course.id}`)
         }}
       />
     </div>
-  )
-}
-
-// ---------- ADM-10 bulk upload
-
-const SAMPLE_FOLDER = [
-  { name: "01 Intro - what order flow is.mp4", size: "412 MB", minutes: 11 },
-  { name: "02 Reading the tape.mp4", size: "688 MB", minutes: 18 },
-  { name: "03 Footprint charts.mp4", size: "903 MB", minutes: 24 },
-  { name: "04 Absorption.mp4", size: "541 MB", minutes: 15 },
-  { name: "05 Exhaustion.mp4", size: "498 MB", minutes: 14 },
-  { name: "06 Live example ES.mp4", size: "1.2 GB", minutes: 32 },
-  { name: "07 Live example NQ.mp4", size: "1.1 GB", minutes: 29 },
-]
-type Entry = { name: string; size: string; minutes: number; thumb?: string }
-const sizeOf = (bytes: number) => (bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.max(1, Math.round(bytes / 1e6))} MB`)
-const AI_MODULES = [
-  { title: "Basics", files: [0, 1] },
-  { title: "Reading the footprint", files: [2, 3, 4] },
-  { title: "Live examples", files: [5, 6] },
-]
-const cleanName = (f: string) => f.replace(/^\d+\s*/, "").replace(/\.(mp4|mov|mkv|webm|m4v)$/i, "").replace(/ - /, ": ").replace(/^./, (c) => c.toUpperCase())
-
-/** ADM-10: drop a folder or paste links; uploads run in the background while AI proposes the structure. */
-function BulkUpload({ open, onOpenChange, area, onCreate }: { open: boolean; onOpenChange: (o: boolean) => void; area: string; onCreate: (c: Course) => void }) {
-  const [files, setFiles] = useState<Entry[]>([])
-  const [reading, setReading] = useState(false)
-  const input = useRef<HTMLInputElement>(null)
-  const [pct, setPct] = useState<number[]>([])
-  const [links, setLinks] = useState("")
-  const [title, setTitle] = useState("Order flow")
-  const [over, setOver] = useState(false)
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  /** Real videos the coach dropped or picked: each gets its real length and a thumbnail from the middle of the video. */
-  const startWith = async (picked: File[]) => {
-    const videos = picked.filter((f) => f.type.startsWith("video/")).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
-    // Nothing readable (a folder dropped, say): the sample folder keeps the demo working.
-    if (!videos.length) return start()
-    setReading(true)
-    const list = await Promise.all(
-      videos.map(async (f): Promise<Entry> => {
-        try {
-          const { frames, seconds } = await videoFrames(f, { count: 1, width: 480 })
-          return { name: f.name, size: sizeOf(f.size), minutes: Math.max(1, Math.round(seconds / 60)), thumb: frames[0] }
-        } catch {
-          // A video this browser can't read is still added, with the course cover as its thumbnail.
-          return { name: f.name, size: sizeOf(f.size), minutes: 10 }
-        }
-      }),
-    )
-    setReading(false)
-    start(list)
-  }
-  const start = (list: Entry[] = SAMPLE_FOLDER) => {
-    setFiles(list)
-    setPct(list.map(() => 0))
-    if (timer.current) clearInterval(timer.current)
-    timer.current = setInterval(() => {
-      setPct((p) => {
-        const next = p.map((v, i) => Math.min(100, v + (8 + ((i * 7) % 11)) * (i < 3 ? 1.4 : 1)))
-        if (next.every((v) => v >= 100) && timer.current) clearInterval(timer.current)
-        return next
-      })
-    }, 300)
-  }
-  useEffect(() => () => void (timer.current && clearInterval(timer.current)), [])
-
-  const doneCount = pct.filter((v) => v >= 100).length
-  const ready = files.length > 0 && doneCount === files.length
-
-  const reset = () => {
-    setFiles([])
-    setPct([])
-    setLinks("")
-  }
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        onOpenChange(o)
-        if (!o && !files.length) reset()
-      }}
-    >
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Bulk upload</DialogTitle>
-          <DialogDescription>Drop a folder of videos or paste links. Uploads keep going in the background, and AI suggests modules and lessons for you to accept or change.</DialogDescription>
-        </DialogHeader>
-
-        {files.length === 0 ? (
-          <div className="grid gap-4">
-            <button
-              onDragOver={(e) => (e.preventDefault(), setOver(true))}
-              onDragLeave={() => setOver(false)}
-              onDrop={(e) => (e.preventDefault(), setOver(false), void startWith([...e.dataTransfer.files]))}
-              onClick={() => input.current?.click()}
-              className={cn("grid place-items-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors hover:bg-muted/50", over && "border-primary bg-primary/5")}
-            >
-              <FolderUp className="size-8 text-muted-foreground" />
-              <span className="font-medium">{reading ? "Reading your videos…" : "Drop your videos here, or click to pick them"}</span>
-              <span className="text-sm text-muted-foreground">MP4, MOV or WebM. Numbered file names keep their order, and each lesson gets a thumbnail from its video.</span>
-            </button>
-            <input ref={input} type="file" accept="video/*" multiple aria-label="Videos" className="sr-only" onChange={(e) => (void startWith([...(e.target.files ?? [])]), (e.target.value = ""))} />
-            <div className="grid gap-2">
-              <Label htmlFor="bu-links" className="flex items-center gap-1.5">
-                <Link2 className="size-3.5" /> Or import links
-              </Label>
-              <Textarea id="bu-links" value={links} onChange={(e) => setLinks(e.target.value)} placeholder="One per line: YouTube, Vimeo, Google Drive or Dropbox" className="min-h-20" />
-              <AdminButton hierarchy="secondary"
-                className="w-fit"
-                disabled={!links.trim()}
-                onClick={() => start(links.split("\n").filter(Boolean).map((l, i) => ({ name: `${String(i + 1).padStart(2, "0")} ${l.replace(/^https?:\/\/(www\.)?/, "").slice(0, 40)}.mp4`, size: "link", minutes: 12 + i })))}
-              >
-                Import {links.split("\n").filter(Boolean).length || ""} links
-              </AdminButton>
-            </div>
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid content-start gap-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Uploading</span>
-                <span className="text-muted-foreground tabular-nums">
-                  {doneCount} of {files.length}
-                </span>
-              </div>
-              <div className="grid max-h-72 gap-2 overflow-y-auto pr-1">
-                {files.map((f, i) => (
-                  <div key={f.name} className="grid gap-1 rounded-lg border p-2 bg-card">
-                    <div className="flex items-center gap-2 text-xs">
-                      <FileVideo className="size-3.5 shrink-0 text-muted-foreground" />
-                      <span className="flex-1 truncate">{f.name}</span>
-                      <span className="text-muted-foreground tabular-nums">{pct[i] >= 100 ? "Done" : `${Math.round(pct[i])}%`}</span>
-                    </div>
-                    <Progress value={pct[i]} className="h-1" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="grid content-start gap-3">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                Suggested structure
-                <Badge variant="secondary" className="gap-1">
-                  <Sparkles className="size-3" /> AI
-                </Badge>
-              </div>
-              <div className="grid gap-2">
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Course title" />
-              </div>
-              <div className="grid gap-2 rounded-lg border p-3 text-sm bg-card">
-                {(files === SAMPLE_FOLDER ? AI_MODULES : [{ title: "Module 1", files: files.map((_, i) => i) }]).map((m) => (
-                  <div key={m.title} className="grid gap-1">
-                    <span className="font-medium">{m.title}</span>
-                    {m.files.map((i) => (
-                      <span key={i} className="flex items-center gap-2 pl-3 text-muted-foreground">
-                        <span className="size-1 rounded-full bg-current" /> {cleanName(files[i].name)}
-                        <span className="ml-auto text-xs tabular-nums">{files[i].minutes}′</span>
-                      </span>
-                    ))}
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">You can rearrange everything in the course builder. Transcripts and chapters follow when each video is processed.</p>
-            </div>
-          </div>
-        )}
-
-        {files.length > 0 && (
-          <DialogFooter className="sm:justify-between">
-            <AdminButton hierarchy="ghost" onClick={reset}>
-              Start over
-            </AdminButton>
-            <AdminButton hierarchy="primary"
-              onClick={() => {
-                const groups = files === SAMPLE_FOLDER ? AI_MODULES : [{ title: "Module 1", files: files.map((_, i) => i) }]
-                onCreate({
-                  id: uid("c"),
-                  title: title || "New course",
-                  tagline: "",
-                  area,
-                  status: "draft",
-                  tiers: [],
-                  color: 3,
-                  modules: groups.map((g) => ({
-                    id: uid("m"),
-                    title: g.title,
-                    lessons: g.files.map((i) => ({ id: uid("l"), title: cleanName(files[i].name), minutes: files[i].minutes, status: "draft" as const, video: files[i].name, thumbnail: files[i].thumb, chapters: [], downloads: [] })),
-                  })),
-                })
-                toast.success(ready ? "Course created as a draft." : "Course created. Uploads continue in the background.")
-                reset()
-                onOpenChange(false)
-              }}
-            >
-              Accept and open the course
-            </AdminButton>
-          </DialogFooter>
-        )}
-      </DialogContent>
-    </Dialog>
   )
 }

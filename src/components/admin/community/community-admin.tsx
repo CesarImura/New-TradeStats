@@ -4,9 +4,7 @@ import { useState } from "react"
 import { Bell, CalendarClock, Check, Hash, Pin, Plus, RefreshCw, Send, Trash2, Unplug } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Switch } from "@/components/ui/switch"
@@ -18,7 +16,7 @@ import { DISCORD } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { Field, Mono, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
 import { SetupTip, useWizardCommunity } from "../setup-checklist"
-import { AdminButton, Panel, PanelHeader, Tag } from "../ui"
+import { AdminButton, AdminModal, Panel, PanelHeader, Tag } from "../ui"
 
 export type Announcement = (typeof ANNOUNCEMENTS)[number] & { tiers?: string[]; scheduled?: string; space?: string }
 type DiscordSetup = { connected: boolean; roles: Record<string, string>; posts: Record<string, boolean>; removeOnCancel: boolean }
@@ -91,7 +89,7 @@ export function CommunityAdmin() {
                       <TableCell className="hidden text-a-text-2 md:table-cell">{a.channels.map((c) => CHANNELS.find((x) => x.id === c)?.label).join(", ")}</TableCell>
                       <TableCell className={cn("whitespace-nowrap", a.scheduled ? "text-a-text-accent" : "text-a-text-2")}>{a.scheduled ? `Scheduled · ${a.scheduled}` : `Sent · ${a.when}`}</TableCell>
                       <TableCell>
-                        <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={a.pinned ? `Unpin ${a.title}` : `Pin ${a.title}`} onClick={() => setList((l) => l.map((x) => (x.id === a.id ? { ...x, pinned: !x.pinned } : x)))}>
+                        <AdminButton aria-label={a.pinned ? `Unpin ${a.title}` : `Pin ${a.title}`} onClick={() => setList((l) => l.map((x) => (x.id === a.id ? { ...x, pinned: !x.pinned } : x)))} hierarchy="ghost" size="md" iconOnly>
                           <Pin />
                         </AdminButton>
                       </TableCell>
@@ -135,20 +133,19 @@ export function CommunityAdmin() {
             </div>
             {d.connected ? (
               <div className="flex gap-2">
-                <AdminButton hierarchy="secondary" size="md" onClick={() => toast("Roles checked", { description: "3 members got their role, 1 lost it (cancelled)." })}>
+                <AdminButton onClick={() => toast("Roles checked", { description: "3 members got their role, 1 lost it (cancelled)." })} hierarchy="secondary" size="lg">
                   <RefreshCw /> Check roles now
                 </AdminButton>
-                <AdminButton hierarchy="ghost" size="md" onClick={() => setD((x) => ({ ...x, connected: false }))}>
+                <AdminButton onClick={() => setD((x) => ({ ...x, connected: false }))} hierarchy="ghost" size="lg">
                   <Unplug /> Disconnect
                 </AdminButton>
               </div>
             ) : (
-              <AdminButton hierarchy="primary"
+              <AdminButton
                 onClick={() => {
                   setD((x) => ({ ...x, connected: true }))
                   toast("Discord connected", { description: "Opens Discord to add our bot to your server." })
-                }}
-              >
+                }}>
                 Connect Discord
               </AdminButton>
             )}
@@ -194,21 +191,17 @@ export function CommunityAdmin() {
               </section>
             </div>
           )}
-          <p className="rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-a-border-strong px-3 py-2 text-xs text-muted-foreground">
             <Mono className="mr-1.5 text-[var(--ts-cta)]">Later</Mono>
             Our own feed with channels, posts and shared trades replaces the Discord link for coaches who want everything in one place (STU-12).
           </p>
         </TabsContent>
       </Tabs>
-      <Dialog open={composing} onOpenChange={setComposing}>
-        <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>New announcement</DialogTitle>
-            <DialogDescription>Choose where it goes and who gets it.</DialogDescription>
-          </DialogHeader>
+      <AdminModal open={composing} onOpenChange={setComposing} title="New announcement" subtitle="Choose where it goes and who gets it." className="sm:max-w-xl">
+          
           <Composer spaces={spaces} onPost={(a) => { setList((l) => [a, ...l]); setComposing(false) }} />
-        </DialogContent>
-      </Dialog>
+        
+</AdminModal>
     </Page>
   )
 }
@@ -284,7 +277,7 @@ function Composer({ spaces, onPost }: { spaces: Space[]; onPost: (a: Announcemen
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Bell className="size-3.5" /> Students get a notification
         </span>
-        <AdminButton hierarchy="primary"
+        <AdminButton
           className="ml-auto"
           disabled={!title.trim() || !body.trim() || channels.length === 0}
           onClick={() => {
@@ -293,8 +286,7 @@ function Composer({ spaces, onPost }: { spaces: Space[]; onPost: (a: Announcemen
             setTitle("")
             setBody("")
             setPin(false)
-          }}
-        >
+          }}>
           <Send /> {later ? "Schedule" : "Send now"}
         </AdminButton>
       </div>
@@ -314,12 +306,12 @@ function SpacesTab({ spaces, setSpaces }: { spaces: Space[]; setSpaces: (n: Spac
             <Hash className="size-4 shrink-0 text-muted-foreground" />
             <Input aria-label="Space name" value={s.name} onChange={(e) => edit(s.id, { name: e.target.value })} className="h-8 w-44" />
             <Input aria-label="Short description" value={s.text} onChange={(e) => edit(s.id, { text: e.target.value })} className="h-8 flex-1" placeholder="What is it for?" />
-            <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label={`Delete ${s.name}`} onClick={() => setSpaces((l) => l.filter((x) => x.id !== s.id))}>
+            <AdminButton aria-label={`Delete ${s.name}`} onClick={() => setSpaces((l) => l.filter((x) => x.id !== s.id))} hierarchy="ghost" size="md" iconOnly>
               <Trash2 />
             </AdminButton>
           </div>
         ))}
-        <AdminButton hierarchy="secondary" size="md" className="justify-self-start" onClick={() => setSpaces((l) => [...l, { id: `s${Date.now()}`, name: "New space", text: "" }])}>
+        <AdminButton className="justify-self-start" onClick={() => setSpaces((l) => [...l, { id: `s${Date.now()}`, name: "New space", text: "" }])} hierarchy="secondary" size="lg">
           <Plus /> Add a space
         </AdminButton>
       </div>
@@ -337,12 +329,12 @@ function RulesTab({ rules, setRules }: { rules: string[]; setRules: (n: string[]
           <div key={i} className="flex items-center gap-2 rounded-lg border bg-card p-2.5">
             <span className="w-5 text-center text-xs text-muted-foreground tabular-nums">{i + 1}</span>
             <Input aria-label={`Rule ${i + 1}`} value={r} onChange={(e) => setRules((l) => l.map((x, j) => (j === i ? e.target.value : x)))} className="h-8 flex-1" />
-            <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label={`Delete rule ${i + 1}`} onClick={() => setRules((l) => l.filter((_, j) => j !== i))}>
+            <AdminButton aria-label={`Delete rule ${i + 1}`} onClick={() => setRules((l) => l.filter((_, j) => j !== i))} hierarchy="ghost" size="md" iconOnly>
               <Trash2 />
             </AdminButton>
           </div>
         ))}
-        <AdminButton hierarchy="secondary" size="md" className="justify-self-start" onClick={() => setRules((l) => [...l, ""])}>
+        <AdminButton className="justify-self-start" onClick={() => setRules((l) => [...l, ""])} hierarchy="secondary" size="lg">
           <Plus /> Add a rule
         </AdminButton>
       </div>

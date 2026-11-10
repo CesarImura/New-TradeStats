@@ -3,12 +3,11 @@
 import { useState } from "react"
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from "recharts"
 import { useCoach } from "@/components/coach/coach-provider"
-
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { MONEY, TRANSACTIONS } from "@/lib/data/people"
 import { REVENUE_MONTHS } from "@/lib/data/sample"
-import { AdminTabs, Panel, PanelHeader, StatPanel, Tag, AdminButton } from "../ui"
+import { AdminButton, AdminTabs, EmptyState, Panel, PanelHeader, StatPanel, Tag } from "../ui"
 
 // ---------- ADM-35 Revenue
 
@@ -58,7 +57,7 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
         <Panel>
           <PanelHeader title="Needs attention" actions={<button onClick={onProblems} className="t-body-m text-a-text-2 hover:text-a-text">All payments</button>} />
           {attention.length === 0 ? (
-            <p className="rounded-a-md border border-dashed border-a-border-strong px-4 py-8 text-center t-body-m text-a-text-2">All payments are fine.</p>
+            <EmptyState compact title="All payments are fine." className="py-8" />
           ) : (
             <ul className="flex flex-col divide-y divide-a-border-subtle">
               {attention.map((t) => (
@@ -68,7 +67,7 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
                     <div className="t-caption truncate text-a-text-2">{t.status === "disputed" ? "Disputed" : "Payment failed"} · {t.what.split(" · ")[0]} €{t.amount}</div>
                   </div>
                   {t.status === "disputed" ? (
-                    <AdminButton hierarchy="secondary" size="md" onClick={onProblems}>Answer the dispute</AdminButton>
+                    <AdminButton onClick={onProblems} hierarchy="secondary" size="lg">Answer the dispute</AdminButton>
                   ) : (
                     <Tag tone={toneOf[t.status as keyof typeof toneOf]} dot>{t.status === "retrying" ? "Retrying" : "Failed"}</Tag>
                   )}

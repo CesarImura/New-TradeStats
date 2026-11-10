@@ -97,7 +97,7 @@ export function WorkspaceSwitcher() {
                     }}
                     className="gap-2.5"
                   >
-                    <span className="grid size-7 place-items-center rounded-md border border-dashed">
+                    <span className="grid size-7 place-items-center rounded-md border border-dashed border-a-border-strong">
                       <Plus className="size-4" />
                     </span>
                     Create a new community

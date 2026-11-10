@@ -1,10 +1,8 @@
 "use client"
 
-import { AdminButton } from "@/components/admin/ui"
 import { Fragment, useState } from "react"
 import { Check, ChevronRight, Eye, Minus, RotateCcw } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   GROUP_RULES,
@@ -23,6 +21,7 @@ import { STUDENTS, tierFor } from "@/lib/data/people"
 import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { Mono } from "../kit"
+import { AdminButton } from "../ui"
 
 /**
  * ADM-14: areas, courses and modules × tiers and groups. Access is set high up
@@ -285,7 +284,7 @@ function Cell({ state, inherited, label, onClick }: { state: "on" | "off" | "som
         "mx-auto my-1 grid size-6 place-items-center rounded-[5px] border transition-colors",
         state === "off" && "border-input hover:border-foreground/40",
         state === "some" && "border-[var(--ts-cta)]/60 text-[var(--ts-cta)]",
-        state === "on" && !inherited && "border-[var(--ts-cta)] bg-[var(--ts-cta)] text-a-on-highlight",
+        state === "on" && !inherited && "border-[var(--ts-cta)] bg-[var(--ts-cta)] text-[#0a0a0a]",
         state === "on" && inherited && "border-[var(--ts-cta)]/40 text-[var(--ts-cta)]/80",
         !onClick && "pointer-events-none",
       )}
@@ -296,7 +295,7 @@ function Cell({ state, inherited, label, onClick }: { state: "on" | "off" | "som
 }
 
 /** ADM-15: see the student side as a tier, a group or one student. Opens it in a new tab. */
-export function PreviewAsMenu({ size = "default" }: { size?: "default" | "sm" }) {
+export function PreviewAsMenu() {
   const { coach } = useCoach()
   const tiers = useTiers(coach)
   const groups = useGroups(coach)
@@ -306,7 +305,7 @@ export function PreviewAsMenu({ size = "default" }: { size?: "default" | "sm" })
   }
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size={size === "sm" ? "md" : "xl"} />}>
+      <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" />}>
         <Eye /> Preview as
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">

@@ -5,10 +5,7 @@ import { Check, FileUp, Pencil, Play, Send, ShieldAlert, Sparkles } from "@/comp
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-
 import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -17,7 +14,7 @@ import { DEFAULT_AI, aiAnswer, type AiReply, type AiSetup } from "@/lib/data/ai"
 import { AI_FEATURES, AI_KNOWLEDGE, AI_QUESTIONS, AI_USAGE } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Field, Mono, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
-import { AdminButton, Panel, PanelHeader, StatPanel } from "../ui"
+import { AdminButton, AdminProgress, Panel, PanelHeader, StatPanel, Tag } from "../ui"
 
 /** ADM-24 features and quotas, ADM-25 knowledge, ADM-26 personality, ADM-27 test and correct, ADM-28 questions asked. */
 export function AiAdmin() {
@@ -108,7 +105,7 @@ export function AiAdmin() {
                   <Field label="Examples or rules">
                     <Textarea rows={3} value={ai.examples} onChange={(e) => set({ examples: e.target.value })} />
                   </Field>
-                  <p className="flex items-start gap-2 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
+                  <p className="flex items-start gap-2 rounded-lg border border-dashed border-a-border-strong px-3 py-2 text-xs text-muted-foreground">
                     <ShieldAlert className="mt-0.5 size-3.5 shrink-0" /> Always on, can&apos;t be changed: no investment advice, no signals, no promises about results.
                   </p>
                 </div>
@@ -134,22 +131,20 @@ export function AiAdmin() {
         <TabsContent value="knowledge" className="grid gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-muted-foreground">What your AI learns from. New lessons and recordings are added automatically.</p>
-            <AdminButton hierarchy="secondary" onClick={() => toast("Add PDFs, docs or a list of questions and answers")}>
+            <AdminButton onClick={() => toast("Add PDFs, docs or a list of questions and answers")} hierarchy="secondary">
               <FileUp /> Add documents
             </AdminButton>
           </div>
           <div className="divide-y rounded-lg border bg-card px-3">
             {AI_KNOWLEDGE.map((k) => (
               <SettingRow key={k.id} label={k.name} text={`${k.kind} · ${k.items}`}>
-                <Badge variant="outline" className="font-normal text-muted-foreground">
-                  {ai.knowledge[k.id] ? "Learned" : "Not used"}
-                </Badge>
+                <Tag>{ai.knowledge[k.id] ? "Learned" : "Not used"}</Tag>
                 <Switch checked={!!ai.knowledge[k.id]} onCheckedChange={(v) => set({ knowledge: { ...ai.knowledge, [k.id]: v } })} />
               </SettingRow>
             ))}
             {ai.corrections.length > 0 && (
               <SettingRow label="Your corrections" text={`${ai.corrections.length} answers you fixed in Test & correct`}>
-                <Badge variant="outline">Learned</Badge>
+                <Tag>Learned</Tag>
               </SettingRow>
             )}
           </div>
@@ -212,7 +207,7 @@ export function AiAdmin() {
                         aria-label={`Daily questions for ${t.name}`}
                       />
                     </span>
-                    <Progress value={Math.min(100, (u.used / 4000) * 100)} />
+                    <AdminProgress label="Quota used" value={Math.min(100, (u.used / 4000) * 100)} />
                     <span className="text-xs text-muted-foreground tabular-nums">{u.used.toLocaleString("en")} questions this month</span>
                   </div>
                 )
@@ -245,9 +240,7 @@ export function AiAdmin() {
                       {q.answered ? (
                         <span className="text-muted-foreground">{q.lesson}</span>
                       ) : (
-                        <Badge variant="outline" className="border-[var(--ts-interactive)]/50 text-[var(--ts-interactive)]">
-                          Gap · no lesson yet
-                        </Badge>
+                        <Tag tone="accent">Gap · no lesson yet</Tag>
                       )}
                     </TableCell>
                   </TableRow>
@@ -286,15 +279,15 @@ function TestChat({ onCorrect }: { onCorrect: (c: { q: string; a: string }) => v
               {editing === i ? (
                 <div className="grid gap-2 pt-1">
                   <Textarea rows={3} value={fix} onChange={(e) => setFix(e.target.value)} />
-                  <AdminButton hierarchy="primary" size="md"
+                  <AdminButton
+                    
                     className="justify-self-end"
                     onClick={() => {
                       setLog((l) => l.map((x, j) => (j === i ? { ...x, fixed: fix } : x)))
                       onCorrect({ q: m.q, a: fix })
                       setEditing(null)
                       toast("Correction saved", { description: "Your AI answers this from now on." })
-                    }}
-                  >
+                    }} size="md">
                     <Check /> Save correction
                   </AdminButton>
                 </div>
@@ -325,7 +318,7 @@ function TestChat({ onCorrect }: { onCorrect: (c: { q: string; a: string }) => v
         }}
       >
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask your AI…" />
-        <AdminButton hierarchy="primary" type="submit">
+        <AdminButton type="submit">
           <Send /> Ask
         </AdminButton>
       </form>

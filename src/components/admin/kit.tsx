@@ -7,7 +7,7 @@ import { setStored, useStored } from "@/lib/prototype-store"
 import { SelectOptions } from "@/components/kit/select-field"
 import { ControlLabel } from "@/components/kit/control-label"
 import { cn } from "@/lib/utils"
-import { AdminPageHeader, EmptyState } from "@/components/admin/ui"
+import { AdminPageHeader } from "@/components/admin/ui"
 
 /** Title row of an admin page (Admin / Page header): title, one plain sentence, the page's actions, and its video guide. */
 export function PageHeader({ title, text, actions, guide }: { title: string; text?: React.ReactNode; actions?: React.ReactNode; guide?: string }) {
@@ -63,22 +63,7 @@ export function SettingRow({ label, text, children, className }: { label: React.
   )
 }
 
-/** Label above a control. */
-export function Field({ label, hint, children, className }: { label: string; hint?: React.ReactNode; children: React.ReactNode; className?: string }) {
-  return (
-    <label className={cn("grid gap-1", className)}>
-      <span className="t-caption-medium flex items-baseline justify-between gap-3 text-a-text">
-        {label}
-        {hint && <span className="t-caption text-a-text-2">{hint}</span>}
-      </span>
-      {children}
-    </label>
-  )
-}
-
-export function Empty({ icon: Icon, title, text, action }: { icon: React.ComponentType<{ className?: string }>; title: string; text?: string; action?: React.ReactNode }) {
-  return <EmptyState icon={Icon} title={title} text={text} action={action} />
-}
+export { AdminField as Field, EmptyState } from "@/components/admin/ui"
 
 /** Small mono label in our own TradeStats style. */
 export function Mono({ children, className }: { children: React.ReactNode; className?: string }) {

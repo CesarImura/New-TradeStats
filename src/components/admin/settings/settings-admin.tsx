@@ -6,7 +6,6 @@ import { Download, Eye, GripVertical, Info, MoreHorizontal, Plus, ShieldCheck, S
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -17,7 +16,7 @@ import { setStored } from "@/lib/prototype-store"
 import { LEGAL } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Field, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
-import { AdminButton, Panel, PanelHeader, Tag } from "../ui"
+import { AdminButton, AdminModal, Panel, PanelHeader, Tag } from "../ui"
 
 /** Figma "Admin · 15 Settings": a menu of five groups (icon, mono label, pages) beside one page at a time. */
 const GROUPS = [
@@ -408,14 +407,18 @@ function Emails() {
           ))}
         </TableBody>
       </DataCard>
-      <Dialog open={!!t} onOpenChange={(o) => !o && setSel(null)}>
-        <DialogContent className="sm:max-w-xl">
+      <AdminModal open={!!t} onOpenChange={(o) => !o && setSel(null)} title={t?.name} subtitle={<>In your design. Words in {"{curly brackets}"} fill in for each student.</>} className="sm:max-w-xl" footer={<>{t && edits[t.id] && (
+                  <AdminButton hierarchy="ghost" onClick={() => t && setEdits((x) => Object.fromEntries(Object.entries(x).filter(([k]) => k !== t.id)))}>
+                    Back to our text
+                  </AdminButton>
+                )}
+                <AdminButton hierarchy="secondary" onClick={() => toast("Test e-mail sent to you")}>
+                  Send me a test
+                </AdminButton>
+                <AdminButton onClick={() => setSel(null)}>Done</AdminButton></>}>
           {t && cur && (
             <>
-              <DialogHeader>
-                <DialogTitle>{t.name}</DialogTitle>
-                <DialogDescription>In your design. Words in {"{curly brackets}"} fill in for each student.</DialogDescription>
-              </DialogHeader>
+              
               <div className="grid gap-3">
                 <Field label="Subject">
                   <Input value={cur.subject} onChange={(e) => setEdits((x) => ({ ...x, [t.id]: { ...cur, subject: e.target.value } }))} />
@@ -429,21 +432,11 @@ function Emails() {
                   <p className="t-body-m whitespace-pre-line text-a-text-2">{fill(cur.body)}</p>
                 </div>
               </div>
-              <DialogFooter>
-                {edits[t.id] && (
-                  <AdminButton hierarchy="ghost" onClick={() => setEdits((x) => Object.fromEntries(Object.entries(x).filter(([k]) => k !== t.id)))}>
-                    Back to our text
-                  </AdminButton>
-                )}
-                <AdminButton hierarchy="secondary" onClick={() => toast("Test e-mail sent to you")}>
-                  Send me a test
-                </AdminButton>
-                <AdminButton onClick={() => setSel(null)}>Done</AdminButton>
-              </DialogFooter>
+              
             </>
           )}
-        </DialogContent>
-      </Dialog>
+        
+</AdminModal>
     </SettingsPage>
   )
 }
@@ -492,25 +485,19 @@ function Legal() {
         <Info className="size-4 shrink-0 text-a-icon" />
         Trading carries risk. The risk disclaimer is shown on every sales page and can&apos;t be turned off.
       </div>
-      <Dialog open={!!page} onOpenChange={(o) => !o && setSel(null)}>
-        <DialogContent className="sm:max-w-2xl">
-          {page && (
-            <>
-              <DialogHeader>
-                <DialogTitle>{page.name}</DialogTitle>
-                <DialogDescription>We provide a starting text. You stay responsible for it; check it with a lawyer.</DialogDescription>
-              </DialogHeader>
-              <Textarea rows={12} value={texts[page.id] ?? page.text} onChange={(e) => setTexts((x) => ({ ...x, [page.id]: e.target.value }))} />
-              <DialogFooter>
-                <AdminButton hierarchy="ghost" onClick={() => setTexts((x) => Object.fromEntries(Object.entries(x).filter(([k]) => k !== page.id)))}>
+      <AdminModal open={!!page} onOpenChange={(o) => !o && setSel(null)} title={page?.name} subtitle="We provide a starting text. You stay responsible for it; check it with a lawyer." className="sm:max-w-2xl" footer={<><AdminButton hierarchy="ghost" onClick={() => page && setTexts((x) => Object.fromEntries(Object.entries(x).filter(([k]) => k !== page.id)))}>
                   Back to our template
                 </AdminButton>
-                <AdminButton onClick={() => setSel(null)}>Done</AdminButton>
-              </DialogFooter>
+                <AdminButton onClick={() => setSel(null)}>Done</AdminButton></>}>
+          {page && (
+            <>
+              
+              <Textarea rows={12} value={texts[page.id] ?? page.text} onChange={(e) => setTexts((x) => ({ ...x, [page.id]: e.target.value }))} />
+              
             </>
           )}
-        </DialogContent>
-      </Dialog>
+        
+</AdminModal>
     </SettingsPage>
   )
 }
@@ -812,12 +799,13 @@ function Team() {
           </TableBody>
         </DataCard>
       </Panel>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Invite to the team</DialogTitle>
-            <DialogDescription>They get an e-mail with a link to join.</DialogDescription>
-          </DialogHeader>
+      <AdminModal open={open} onOpenChange={setOpen} title="Invite to the team" subtitle="They get an e-mail with a link to join." footer={<><AdminButton hierarchy="ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </AdminButton>
+            <AdminButton disabled={!email.includes("@")} onClick={send}>
+              Send invite
+            </AdminButton></>}>
+          
           <div className="grid gap-4">
             <Field label="E-mail">
               <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="rui@gmail.com" />
@@ -844,16 +832,9 @@ function Team() {
               ))}
             </div>
           </div>
-          <DialogFooter>
-            <AdminButton hierarchy="ghost" onClick={() => setOpen(false)}>
-              Cancel
-            </AdminButton>
-            <AdminButton disabled={!email.includes("@")} onClick={send}>
-              Send invite
-            </AdminButton>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          
+        
+</AdminModal>
     </SettingsPage>
   )
 }

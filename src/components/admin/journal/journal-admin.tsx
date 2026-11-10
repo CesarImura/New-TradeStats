@@ -1,24 +1,18 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { ChartCandlestick, Check, ExternalLink, Inbox, Mic, Plus, Send, Settings, Sparkles, Square, Trash2, Video, X } from "@/components/icons"
-import { toast } from "sonner"
-import { TradeChart } from "@/components/charts/trade-chart"
+import { useState } from "react"
+import { ExternalLink, Inbox, Plus, Settings, Trash2, X } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-
 import { Input } from "@/components/ui/input"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Textarea } from "@/components/ui/textarea"
-import { addFeedback, allTrades, useFeedback } from "@/lib/data/feedback"
+import { allTrades, useFeedback } from "@/lib/data/feedback"
 import { STUDENTS, tierFor } from "@/lib/data/people"
-import { STRATEGIES, TAGS, fmtPnl, fmtR } from "@/lib/data/trades"
+import { STRATEGIES, TAGS, fmtR } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
-import { Empty, Mono, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
-import { AdminButton, AdminFilter, AdminSearch, AdminTabs, AdminToolbar, StatPanel, Tag } from "../ui"
+import { EmptyState, Mono, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { AnswerPage } from "./journal-answer"
+import { AdminButton, AdminFilter, AdminSearch, AdminTabs, AdminToolbar, CellPerson, StatPanel, Tag } from "../ui"
 
 /** Who sent which sample trade. In the prototype every student shares the same sample journal. */
 const OWNER: Record<string, string> = { t1: "s2", t2: "s5", t3: "s4", t4: "s1", t5: "s6", t6: "s7", t7: "s1" }
@@ -40,6 +34,12 @@ export function JournalAdmin() {
   const [sort, setSort] = useState("oldest")
   const [openId, setOpenId] = useState<string | null>(null)
   const open = trades.find((t) => t.id === openId) ?? null
+
+  if (open) {
+    const queue = trades.filter((x) => x.review === "waiting" && x.id !== open.id)
+    const go = () => setOpenId(queue[0]?.id ?? null)
+    return <AnswerPage key={open.id} trade={open} student={STUDENTS.find((x) => x.id === OWNER[open.id])!} aiDraft={AI_DRAFT[open.id] ?? "Solid execution. The entry matched the setup; the exit came early. Write down what made you close."} readOnly={open.review !== "waiting"} hasNext={queue.length > 0} onBack={() => setOpenId(null)} onNext={go} onSkip={go} />
+  }
 
   return (
     <Page>
@@ -89,23 +89,14 @@ export function JournalAdmin() {
 
       {tab === "requests" &&
         (waiting.length === 0 ? (
-          <Empty icon={Inbox} title="Nothing waiting" text={`When a ${coach.wording.student.toLowerCase()} presses “Please review” on a trade, it lands here.`} />
+          <EmptyState icon={Inbox} title="Nothing waiting" description={`When a ${coach.wording.student.toLowerCase()} presses “Please review” on a trade, it lands here.`} />
         ) : (
           <RequestsTable trades={waiting} onOpen={setOpenId} q={q} tier={tier} sort={sort} />
         ))}
       {tab === "answered" &&
-        (answered.length === 0 ? <Empty icon={Inbox} title="Nothing answered yet" text="Feedback you send shows up here." /> : <RequestsTable trades={answered} onOpen={setOpenId} answered q={q} tier={tier} sort={sort} />)}
+        (answered.length === 0 ? <EmptyState icon={Inbox} title="Nothing answered yet" description="Feedback you send shows up here." /> : <RequestsTable trades={answered} onOpen={setOpenId} answered q={q} tier={tier} sort={sort} />)}
       {tab === "rules" && <JournalRules />}
 
-      <Sheet open={!!openId} onOpenChange={(o) => !o && setOpenId(null)}>
-        <SheetContent className="w-full data-[side=right]:w-full overflow-y-auto sm:max-w-3xl">
-          <SheetHeader>
-            <SheetTitle>Feedback</SheetTitle>
-            <SheetDescription>Look at the trade, answer, then mark it done.</SheetDescription>
-          </SheetHeader>
-          <div className="px-4 pb-4">{open && <Review key={open.id} trade={open} readOnly={open.review !== "waiting"} onDone={() => setOpenId(null)} />}</div>
-        </SheetContent>
-      </Sheet>
     </Page>
   )
 }
@@ -124,7 +115,7 @@ function RequestsTable({ trades, onOpen, answered, q, tier, sort }: { trades: Re
   return (
     <div className="grid gap-4">
       {rows.length === 0 ? (
-        <Empty icon={Inbox} title="No requests match" text="Clear the search or the filters." />
+        <EmptyState icon={Inbox} title="No requests match" description="Clear the search or the filters." />
       ) : (
         <div className="overflow-hidden rounded-lg border bg-card">
           <div className="overflow-x-auto">
@@ -143,15 +134,7 @@ function RequestsTable({ trades, onOpen, answered, q, tier, sort }: { trades: Re
                 {rows.map(({ t, s, ask }) => (
                   <TableRow key={t.id}>
                     <TableCell>
-                      <div className="flex min-w-40 items-center gap-2.5">
-                        <Avatar className="size-8">
-                          <AvatarFallback className="text-xs">{s.initials}</AvatarFallback>
-                        </Avatar>
-                        <div className="grid min-w-0">
-                          <span className="truncate font-medium">{s.name}</span>
-                          <span className="truncate text-xs text-muted-foreground">{tierFor(coach, s.tier).name}</span>
-                        </div>
-                      </div>
+                      <CellPerson initials={s.initials} name={s.name} subtitle={tierFor(coach, s.tier).name} className="min-w-40" />
                     </TableCell>
                     <TableCell className="max-w-72 whitespace-normal">{ask ? `“${ask.text}”` : "—"}</TableCell>
                     <TableCell className="whitespace-nowrap">
@@ -175,177 +158,6 @@ function RequestsTable({ trades, onOpen, answered, q, tier, sort }: { trades: Re
           <p className="border-t border-a-border-subtle px-4 py-3 t-caption text-a-text-2">
             {rows.length} {rows.length === 1 ? "request" : "requests"} · students get a notification and an e-mail when you answer
           </p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-/** ADM-06 · Look at the trade on TradingView, answer with text, voice, video or a TradingView snapshot, mark done. */
-function Review({ trade: t, onDone, readOnly }: { trade: ReturnType<typeof allTrades>[number]; onDone?: () => void; readOnly?: boolean }) {
-  const { coach } = useCoach()
-  const s = STUDENTS.find((x) => x.id === OWNER[t.id])!
-  const [text, setText] = useState("")
-  const [snapshot, setSnapshot] = useState<string | null>(null)
-  const [recording, setRecording] = useState<null | "voice" | "video">(null)
-  const [secs, setSecs] = useState(0)
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  useEffect(() => () => {
-    if (timer.current) clearInterval(timer.current)
-  }, [])
-
-  const record = (kind: "voice" | "video") => {
-    if (recording) {
-      if (timer.current) clearInterval(timer.current)
-      addFeedback(coach.slug, t.id, { add: { from: "coach", kind: recording, text: `${recording === "voice" ? "Voice note" : "Video"} · 0:${String(Math.max(secs, 3)).padStart(2, "0")}`, when: "just now" } })
-      setRecording(null)
-      setSecs(0)
-      return
-    }
-    setRecording(kind)
-    timer.current = setInterval(() => setSecs((x) => x + 1), 1000)
-  }
-
-  const send = () => {
-    if (!text.trim()) return
-    addFeedback(coach.slug, t.id, { add: { from: "coach", kind: "text", text: text.trim(), when: "just now" } })
-    setText("")
-  }
-
-  return (
-    <div className="grid min-w-0 grid-cols-1 content-start gap-4 rounded-lg border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="grid gap-1">
-          <span className="flex items-center gap-2 text-sm text-muted-foreground">
-            {s.name} · {t.account} · {t.date} {t.time}
-          </span>
-          <span className="flex flex-wrap items-baseline gap-x-3 text-xl">
-            {t.symbol} {t.side}
-            <span className={cn("tabular-nums", t.r >= 0 ? "text-[var(--profit)]" : "text-[var(--loss)]")}>
-              {fmtR(t.r)} · {fmtPnl(t.pnl)}
-            </span>
-          </span>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-lg border bg-background">
-        <TradeChart trade={t} dark background="#0a0a0a" />
-      </div>
-      {!readOnly && <p className="-mt-2 text-xs text-muted-foreground">Mark it up with TradingView&apos;s drawing tools on the left, then share a snapshot with “TradingView snapshot” below.</p>}
-
-      <div className="grid gap-2 text-sm">
-        <div className="flex flex-wrap gap-1.5">
-          <Badge variant="outline" className="h-auto max-w-full whitespace-normal">{t.setup}</Badge>
-          {t.tags.map((g) => (
-            <Badge key={g} variant="secondary" className="h-auto max-w-full whitespace-normal">
-              {g}
-            </Badge>
-          ))}
-          {t.rulesBroken.map((r) => (
-            <Badge key={r} variant="destructive" className="h-auto max-w-full whitespace-normal">
-              Broke: {r}
-            </Badge>
-          ))}
-        </div>
-        {t.note && <p className="break-words text-muted-foreground">Note: “{t.note}”</p>}
-      </div>
-
-      <div className="grid gap-3 border-t pt-4">
-        {t.thread.map((m, i) => (
-          <div key={i} className={cn("flex gap-2.5", m.from === "coach" && "flex-row-reverse")}>
-            <Avatar className="size-7">
-              <AvatarFallback className="text-[0.6875rem]">{m.from === "coach" ? coach.mark : s.initials}</AvatarFallback>
-            </Avatar>
-            <div className={cn("grid max-w-[80%] gap-1 rounded-lg px-3 py-2 text-sm", m.from === "coach" ? "bg-[var(--ts-cta)]/10" : "bg-muted")}>
-              {m.kind === "text" ? (
-                <p>{m.text}</p>
-              ) : m.kind === "chart" ? (
-                <a href={m.link} target="_blank" rel="noreferrer" className="flex items-center gap-2 underline underline-offset-4">
-                  <ChartCandlestick className="size-4" /> {m.text}
-                </a>
-              ) : (
-                <span className="flex items-center gap-2">
-                  {m.kind === "voice" ? <Mic className="size-4" /> : <Video className="size-4" />} {m.text}
-                  <span className="flex h-4 items-end gap-0.5" aria-hidden>
-                    {[3, 7, 5, 9, 4, 8, 6, 3, 7, 5].map((h, j) => (
-                      <span key={j} className="w-0.5 bg-current opacity-60" style={{ height: `${h * 10}%` }} />
-                    ))}
-                  </span>
-                </span>
-              )}
-              <span className="text-[0.6875rem] text-muted-foreground">{m.when}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {!readOnly && (
-        <div className="grid gap-2">
-          {recording ? (
-            <div className="flex items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-3 py-3 text-sm">
-              <span className="size-2 animate-pulse rounded-full bg-[var(--ts-interactive)]" />
-              Recording {recording === "voice" ? "a voice note" : "your screen and camera"} · 0:{String(secs).padStart(2, "0")}
-              <AdminButton hierarchy="primary" size="md" className="ml-auto" onClick={() => record(recording)}>
-                <Square /> Stop and send
-              </AdminButton>
-              <AdminButton hierarchy="ghost" size="md" iconOnly
-                aria-label="Cancel recording"
-                onClick={() => {
-                  if (timer.current) clearInterval(timer.current)
-                  setRecording(null)
-                  setSecs(0)
-                }}
-              >
-                <X />
-              </AdminButton>
-            </div>
-          ) : snapshot !== null ? (
-            <form
-              className="flex gap-2"
-              onSubmit={(e) => {
-                e.preventDefault()
-                addFeedback(coach.slug, t.id, { add: { from: "coach", kind: "chart", text: `Marked-up chart · ${t.symbol}`, link: snapshot || "https://www.tradingview.com/x/", when: "just now" } })
-                setSnapshot(null)
-              }}
-            >
-              <Input autoFocus value={snapshot} onChange={(e) => setSnapshot(e.target.value)} placeholder="https://www.tradingview.com/x/…" aria-label="TradingView snapshot link" />
-              <AdminButton hierarchy="primary" size="md" type="submit">
-                Share
-              </AdminButton>
-            </form>
-          ) : (
-            <Textarea rows={3} aria-label="Your answer" value={text} onChange={(e) => setText(e.target.value)} placeholder={`Answer ${s.name.split(" ")[0]}…`} />
-          )}
-          <div className="flex flex-wrap items-center gap-2">
-            <AdminButton hierarchy="secondary" size="md" onClick={() => setText(AI_DRAFT[t.id] ?? "Solid execution. The entry matched the setup; the exit came early. Write down what made you close.")}>
-              <Sparkles /> AI first draft
-            </AdminButton>
-            <AdminButton hierarchy="secondary" size="md" onClick={() => record("voice")} disabled={!!recording}>
-              <Mic /> Voice note
-            </AdminButton>
-            <AdminButton hierarchy="secondary" size="md" onClick={() => record("video")} disabled={!!recording}>
-              <Video /> Short video
-            </AdminButton>
-            <AdminButton hierarchy="secondary" size="md" onClick={() => setSnapshot(snapshot === null ? "" : null)} disabled={!!recording}>
-              <ChartCandlestick /> TradingView snapshot
-            </AdminButton>
-            <div className="ml-auto flex gap-2">
-              <AdminButton hierarchy="secondary" size="md" disabled={!text.trim()} onClick={send}>
-                <Send /> Send
-              </AdminButton>
-              <AdminButton hierarchy="primary" size="md"
-                onClick={() => {
-                  if (text.trim()) send()
-                  addFeedback(coach.slug, t.id, { done: true })
-                  toast(`Feedback sent to ${s.name}`, { description: "They get a notification and an e-mail." })
-                  onDone?.()
-                }}
-              >
-                <Check /> {text.trim() ? "Send and mark done" : "Mark done"}
-              </AdminButton>
-            </div>
-          </div>
         </div>
       )}
     </div>
@@ -382,9 +194,10 @@ function JournalRules() {
             <h2 className="font-medium">Strategies and their rules</h2>
             <p className="text-sm text-muted-foreground">Students pick one per trade. The journal shows how well each rule is kept.</p>
           </div>
-          <AdminButton hierarchy="secondary" size="md"
-            onClick={() => setR((x) => ({ ...x, strategies: [...x.strategies, { id: `s${Date.now()}`, name: "New strategy", rules: ["First rule"], trades: 0 }] }))}
-          >
+          <AdminButton
+            
+            
+            onClick={() => setR((x) => ({ ...x, strategies: [...x.strategies, { id: `s${Date.now()}`, name: "New strategy", rules: ["First rule"], trades: 0 }] }))} hierarchy="secondary" size="md">
             <Plus /> Strategy
           </AdminButton>
         </div>
@@ -393,7 +206,7 @@ function JournalRules() {
             <div className="flex items-center gap-2">
               <Input value={s.name} onChange={(e) => editStrategy(i, { name: e.target.value })} className="h-8 font-medium" aria-label="Strategy name" />
               <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{s.trades} trades</span>
-              <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Delete ${s.name}`} onClick={() => setR((x) => ({ ...x, strategies: x.strategies.filter((_, j) => j !== i) }))}>
+              <AdminButton aria-label={`Delete ${s.name}`} onClick={() => setR((x) => ({ ...x, strategies: x.strategies.filter((_, j) => j !== i) }))} hierarchy="ghost" size="md" iconOnly>
                 <Trash2 />
               </AdminButton>
             </div>
@@ -407,7 +220,7 @@ function JournalRules() {
                     className="h-7 text-sm"
                     aria-label={`Rule ${k + 1}`}
                   />
-                  <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Remove rule" onClick={() => editStrategy(i, { rules: s.rules.filter((_, j) => j !== k) })}>
+                  <AdminButton aria-label="Remove rule" onClick={() => editStrategy(i, { rules: s.rules.filter((_, j) => j !== k) })} hierarchy="ghost" size="md" iconOnly>
                     <X />
                   </AdminButton>
                 </div>
@@ -436,12 +249,12 @@ function JournalRules() {
           <h2 className="font-medium">Tags</h2>
           <div className="flex flex-wrap gap-1.5">
             {r.tags.map((g) => (
-              <Badge key={g} variant="secondary" className="gap-1 pr-1">
+              <Tag key={g} className="gap-1 pr-1">
                 {g}
                 <button aria-label={`Remove ${g}`} onClick={() => setR((x) => ({ ...x, tags: x.tags.filter((y) => y !== g) }))} className="opacity-60 hover:opacity-100">
                   <X className="size-3" />
                 </button>
-              </Badge>
+              </Tag>
             ))}
           </div>
           <form
@@ -453,7 +266,7 @@ function JournalRules() {
             }}
           >
             <Input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="New tag" className="h-8" />
-            <AdminButton hierarchy="secondary" size="md" type="submit">
+            <AdminButton type="submit" hierarchy="secondary" size="lg">
               Add
             </AdminButton>
           </form>

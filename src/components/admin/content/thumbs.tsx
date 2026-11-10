@@ -1,12 +1,11 @@
 "use client"
 
-import { AdminButton } from "@/components/admin/ui"
 import { useRef } from "react"
 import { ImagePlus, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
-
 import { pictureFrom } from "@/lib/images"
 import { cn } from "@/lib/utils"
+import { AdminButton } from "@/components/admin/ui"
 
 /** The admin keeps its own neutral look, so a course without a cover shows its colour in these tints. */
 export const COVER_TINTS = ["#f97316", "#0ea5e9", "#8b5cf6", "#10b981", "#e11d48"]
@@ -43,11 +42,11 @@ export function PictureField({ value, color, onChange, label, empty, className }
       <div className="grid min-w-0 flex-1 gap-2">
         <span className="text-xs text-muted-foreground">{value ? `Your ${label.toLowerCase()} picture.` : empty}</span>
         <div className="flex flex-wrap gap-2">
-          <AdminButton hierarchy="secondary" size="md" onClick={() => input.current?.click()}>
+          <AdminButton onClick={() => input.current?.click()} hierarchy="secondary" size="lg">
             <ImagePlus /> {value ? "Change" : "Add a picture"}
           </AdminButton>
           {value && (
-            <AdminButton hierarchy="ghost" size="md" onClick={() => onChange(undefined)}>
+            <AdminButton onClick={() => onChange(undefined)} hierarchy="ghost" size="lg">
               <Trash2 /> Remove
             </AdminButton>
           )}

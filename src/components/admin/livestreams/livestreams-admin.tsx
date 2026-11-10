@@ -7,13 +7,12 @@ import { ArrowRight, Plus, Radio, Video } from "@/components/icons"
 import { toast } from "sonner"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useCoach } from "@/components/coach/coach-provider"
-
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { newStreamKey, saveLivestreams, useLivestreams, whenLabel, type Livestream } from "@/lib/data/livestreams"
 import { uid } from "@/lib/data/learning"
-import { Empty, Field, Page, PageHeader } from "../kit"
+import { EmptyState, Field, Page, PageHeader } from "../kit"
 import { AdminButton, AdminSearch, AdminTabs, AdminToolbar, Panel, Tag } from "../ui"
 
 /** Livestreams: what is live, what is next, and what was recorded. One button to schedule, one place to open each. */
@@ -44,7 +43,7 @@ export function LivestreamsAdmin() {
           </>
         }
       />
-      {streams.length === 0 && <Empty icon={Radio} title="No livestreams yet" text="Schedule your first one. You will get the OBS settings on the next screen." action={<AdminButton hierarchy="primary" onClick={() => setCreating(true)}>Schedule a livestream</AdminButton>} />}
+      {streams.length === 0 && <EmptyState icon={Radio} title="No livestreams yet" description="Schedule your first one. You will get the OBS settings on the next screen." actions={<AdminButton onClick={() => setCreating(true)}>Schedule a livestream</AdminButton>} />}
       {streams.length > 0 && <Streams live={live} upcoming={upcoming} past={past} base={base} tiers={coach.tiers} />}
       <NewStream
         open={creating}
@@ -178,7 +177,7 @@ function NewStream({ open, onClose, onCreate }: { open: boolean; onClose: () => 
             <Textarea value={text} onChange={(e) => setText(e.target.value)} className="min-h-16" />
           </Field>
           <DialogFooter>
-            <AdminButton hierarchy="primary" type="submit" disabled={!title.trim()}>
+            <AdminButton type="submit" disabled={!title.trim()}>
               <Video /> Create and open
             </AdminButton>
           </DialogFooter>

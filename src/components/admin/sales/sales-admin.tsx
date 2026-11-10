@@ -1,12 +1,10 @@
 "use client"
 
-import { AdminButton } from "@/components/admin/ui"
 import { useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { ExternalLink, Plus } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Page, PageHeader } from "../kit"
@@ -19,6 +17,7 @@ import { RevenueOverview } from "./revenue"
 import { Payouts } from "./payouts"
 import { Tiers } from "./tiers"
 import { Transactions } from "./transactions"
+import { AdminButton } from "@/components/admin/ui"
 
 /** ADM-29 to ADM-36, ADM-14, ADM-15, ADM-40 and ADM-41: tiers, groups, access, sales page, coupons, revenue, transactions, payouts, affiliates. */
 export function SalesAdmin() {
@@ -33,10 +32,10 @@ export function SalesAdmin() {
         actions={
           <>
             <PreviewAsMenu />
-            <AdminButton hierarchy="secondary" nativeButton={false} render={<a href={`/site/${coach.slug}`} target="_blank" rel="noreferrer" />}>
+            <AdminButton nativeButton={false} render={<a href={`/site/${coach.slug}`} target="_blank" rel="noreferrer" />} hierarchy="secondary">
               <ExternalLink /> Sales page
             </AdminButton>
-            <AdminButton hierarchy="primary" onClick={() => setTab("tiers")}>
+            <AdminButton onClick={() => setTab("tiers")}>
               <Plus /> New tier
             </AdminButton>
           </>
@@ -103,7 +102,7 @@ function Affiliates() {
         <CardDescription>The affiliate program, your partner offers and what they earn are now in one place.</CardDescription>
       </CardHeader>
       <CardContent>
-        <AdminButton hierarchy="secondary" nativeButton={false} render={<Link href={`${base}/partners`} />}>
+        <AdminButton nativeButton={false} render={<Link href={`${base}/partners`} />} hierarchy="secondary">
           Open Partners
         </AdminButton>
       </CardContent>

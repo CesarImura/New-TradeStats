@@ -6,10 +6,8 @@ import { CalendarClock, Plus, Settings, Sparkles, Trash2 } from "@/components/ic
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "../kit"
-import { AdminFilter, AdminTabs, AdminToolbar, ChoiceChip, AdminButton } from "../ui"
-
+import { AdminButton, AdminDrawer, AdminFilter, AdminTabs, AdminToolbar, Tag } from "../ui"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -44,8 +42,8 @@ import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 
-/** Event colours are Admin tokens (Figma Calendar event: Live = accent, Call = success, News = danger). */
-const COLORS: Record<ItemKind, string> = { live: "var(--admin-color-accent-strong)", call: "var(--admin-color-status-success)", workshop: "var(--admin-color-status-info)", "one-on-one": "var(--admin-color-status-success)", news: "var(--admin-color-status-danger)" }
+/** Admin / Calendar event types (Figma): Live is accent, 1:1 Call is success, News is danger, everything else is neutral. */
+const COLORS: Record<ItemKind, string> = { live: "var(--admin-color-accent-strong)", call: "var(--admin-color-text-secondary)", workshop: "var(--admin-color-text-secondary)", "one-on-one": "var(--admin-color-status-success)", news: "var(--admin-color-status-danger)" }
 const RANGE = { from: addDays(NOW, -45), to: addDays(NOW, 75) }
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -79,10 +77,10 @@ export function AdminCalendar() {
         text={`Lives, calls and news · ${schedule.events.length} events this week`}
         actions={
           <>
-            <AdminButton hierarchy="secondary" onClick={() => setTab("availability")}>
+            <AdminButton onClick={() => setTab("availability")} hierarchy="secondary">
               <Settings /> Call settings
             </AdminButton>
-            <AdminButton hierarchy="primary" onClick={() => newEvent(new Date(2026, 9, 13, 15, 30))}>
+            <AdminButton onClick={() => newEvent(new Date(2026, 9, 13, 15, 30))}>
               <Plus /> New event
             </AdminButton>
           </>
@@ -207,12 +205,17 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
   }
 
   return (
-    <Sheet open={!!event} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full gap-0 data-[side=right]:w-full sm:max-w-lg">
-        <SheetHeader className="border-b">
-          <SheetTitle>{isNew ? "New event" : "Edit event"}</SheetTitle>
-          <SheetDescription>{e?.repeat === "weekly" && !isNew ? "Changes apply to every week of this series." : "Students are reminded automatically."}</SheetDescription>
-        </SheetHeader>
+    <AdminDrawer open={!!event} onOpenChange={(o) => !o && onClose()} title={<>{isNew ? "New event" : "Edit event"}</>} subtitle={<>{e?.repeat === "weekly" && !isNew ? "Changes apply to every week of this series." : "Students are reminded automatically."}</>} footer={<>{!isNew ? (
+            <AdminButton className="text-destructive hover:text-destructive" onClick={remove} hierarchy="ghost">
+              <Trash2 /> Cancel event
+            </AdminButton>
+          ) : (
+            <span />
+          )}
+          <AdminButton onClick={save} disabled={!e?.title.trim()}>
+            {isNew ? "Schedule" : "Save changes"}
+          </AdminButton></>}>
+        
         {e && (
           <div className="grid gap-5 overflow-y-auto p-4">
             <div className="grid gap-2">
@@ -322,28 +325,17 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
             )}
           </div>
         )}
-        <SheetFooter className="border-t sm:flex-row sm:justify-between">
-          {!isNew ? (
-            <AdminButton hierarchy="ghost" className="text-destructive hover:text-destructive" onClick={remove}>
-              <Trash2 /> Cancel event
-            </AdminButton>
-          ) : (
-            <span />
-          )}
-          <AdminButton hierarchy="primary" onClick={save} disabled={!e?.title.trim()}>
-            {isNew ? "Schedule" : "Save changes"}
-          </AdminButton>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        
+      
+</AdminDrawer>
   )
 }
 
 function TierChip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <ChoiceChip on={on} onClick={onClick} className="min-h-8 px-3 t-caption">
+    <button onClick={onClick} className={cn("rounded-full border px-3 py-1 text-sm", on ? "border-primary bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
       {children}
-    </ChoiceChip>
+    </button>
   )
 }
 
@@ -391,7 +383,7 @@ function BookingDetail({ item, onClose }: { item: Item; onClose: () => void }) {
         <div className="grid gap-2 rounded-lg border p-3 bg-card">
           <span className="flex items-center gap-2 font-medium">
             <Sparkles className="size-4" /> Briefing
-            <Badge variant="secondary">AI</Badge>
+            <Tag tone="accent">AI</Tag>
           </span>
           <p className="text-muted-foreground">
             19 trades since your last call, 58% win rate. Broke “stop never moved further away” 6 times, mostly after 12:00. Stuck on Module 2 for 12 days.
@@ -399,15 +391,15 @@ function BookingDetail({ item, onClose }: { item: Item; onClose: () => void }) {
         </div>
       </div>
       <SheetFooter className="border-t">
-        <AdminButton hierarchy="primary" onClick={() => toast("The video call would open here.")}>Start call</AdminButton>
-        <AdminButton hierarchy="ghost"
+        <AdminButton onClick={() => toast("The video call would open here.")}>Start call</AdminButton>
+        <AdminButton
+          
           className="text-destructive hover:text-destructive"
           onClick={() => {
             saveSchedule(coach, (s) => ({ ...s, bookings: s.bookings.filter((x) => x.id !== b.id) }))
             toast(`Call cancelled. ${b.student} gets an e-mail with a link to rebook.`)
             onClose()
-          }}
-        >
+          }} hierarchy="ghost">
           Cancel call
         </AdminButton>
       </SheetFooter>
@@ -454,13 +446,12 @@ function NewsEditor({ news, onClose }: { news: NewsItem; onClose: () => void }) 
         </div>
       </div>
       <SheetFooter className="border-t">
-        <AdminButton hierarchy="primary"
+        <AdminButton
           onClick={() => {
             saveSchedule(coach, (s) => ({ ...s, news: s.news.map((n) => (n.id === news.id ? { ...n, noTrade, comment: comment.trim() || undefined } : n)) }))
             toast.success("Saved. Students see your note on the event.")
             onClose()
-          }}
-        >
+          }}>
           Save
         </AdminButton>
       </SheetFooter>
@@ -502,7 +493,7 @@ function NewsNotes({ onOpen, impact }: { onOpen: (n: NewsItem) => void; impact: 
                 <TableCell>
                   <span className="flex gap-0.5" title={`${n.impact} impact`}>
                     {[1, 2, 3].map((d) => (
-                      <i key={d} className={cn("size-1.5 rounded-full", d <= { high: 3, medium: 2, low: 1 }[n.impact] ? "bg-a-danger-fill" : "bg-a-selected")} />
+                      <i key={d} className={cn("size-1.5 rounded-full", d <= { high: 3, medium: 2, low: 1 }[n.impact] ? "bg-rose-500" : "bg-muted")} />
                     ))}
                   </span>
                 </TableCell>
@@ -557,13 +548,13 @@ function AvailabilityEditor() {
                       <span className="text-xs text-muted-foreground">
                         {Math.max(0, Math.floor((toMin(w.to) - toMin(w.from) + a.buffer) / (a.length + a.buffer)))} calls
                       </span>
-                      <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Remove window" onClick={() => setDay(d, windows.filter((_, j) => j !== wi))}>
+                      <AdminButton aria-label="Remove window" onClick={() => setDay(d, windows.filter((_, j) => j !== wi))} hierarchy="ghost" size="md" iconOnly>
                         <Trash2 />
                       </AdminButton>
                     </div>
                   ))}
                   {windows.length > 0 && (
-                    <AdminButton hierarchy="ghost" size="sm" className="w-fit" onClick={() => setDay(d, [...windows, { from: "15:00", to: "17:00" }])}>
+                    <AdminButton className="w-fit" onClick={() => setDay(d, [...windows, { from: "15:00", to: "17:00" }])} hierarchy="ghost" size="md">
                       <Plus /> Add a window
                     </AdminButton>
                   )}

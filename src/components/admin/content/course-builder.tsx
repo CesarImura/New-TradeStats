@@ -1,35 +1,90 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, ChevronDown, GripVertical, X, ExternalLink, MoreHorizontal, Plus, Settings2, Trash2, Pencil, Upload } from "@/components/icons"
+import { useRouter } from "next/navigation"
+import { ArrowLeft, ExternalLink, Minus, Plus, Settings } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { AdminButton, Callout, Tag } from "@/components/admin/ui"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { STATUS_LABEL, allLessons, saveCatalog, uid, useCatalog, type Course, type Lesson, type Module, type Status } from "@/lib/data/learning"
+import { allLessons, saveCatalog, uid, useCatalog, type Course, type Lesson, type Status } from "@/lib/data/learning"
+import { videoFrames } from "@/lib/video-frames"
 import { cn } from "@/lib/utils"
-import { CourseSettings } from "./course-settings"
-import { LessonEditor } from "./lesson-editor"
-import { Tree, type Sel } from "./course-tree"
-import { Tile } from "./thumbs"
+import { AdminButton, AdminProgress, Tag } from "../ui"
+import { Curriculum } from "./curriculum"
+import { CourseCover, PHASE_LABEL, fmtLength, minutesOf, uploadQueue, type Upload } from "./course-parts"
+import { CourseSettingsDrawer } from "./course-settings"
+import { LessonPage } from "./lesson-page"
+import { PublishReview } from "./publish-review"
+import { StudentPreview } from "./student-preview"
 
-const TONE: Record<Status, "success" | "neutral" | "warning"> = { published: "success", draft: "neutral", scheduled: "warning", archived: "neutral" }
+type View = { k: "outline" } | { k: "lesson"; id: string } | { k: "preview"; id: string }
+const AI_CHAPTERS = ["Intro", "The idea", "On the chart", "Common mistakes", "Recap"]
+const tone = (s: Status) => (s === "published" ? "success" : s === "scheduled" ? "warning" : "neutral")
 
-/** Content 07 (course page), 08 (lesson), 09 chapters, 10 quiz, 11 settings drawer. */
+/** Course builder, as the Figma "Content" flow: curriculum (07), lesson (08 to 10), settings (11), publish review (12), preview (13). */
 export function CourseBuilder({ courseId }: { courseId: string }) {
   const { coach, base } = useCoach()
+  const router = useRouter()
   const catalog = useCatalog(coach)
   const course = catalog.courses.find((c) => c.id === courseId)
-  const [sel, setSel] = useState<Sel>({ kind: "course" })
+  const [view, setView] = useState<View>({ k: "outline" })
+  const [saved, setSaved] = useState(true)
   const [settings, setSettings] = useState(false)
-  const [review, setReview] = useState(false)
-  const [when, setWhen] = useState<"now" | "later">("now")
-  const [tell, setTell] = useState({ platform: true, email: false, discord: false })
-  const [saved, setSaved] = useState(false)
+  const [publishing, setPublishing] = useState(false)
+  const [uploads, setUploads] = useState<Upload[]>([])
+  const [tray, setTray] = useState(true)
+  const timers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
+  useEffect(() => { const t = timers.current; return () => t.forEach(clearTimeout) }, [])
+
+  const edit = useCallback((fn: (c: Course) => Course) => {
+    saveCatalog(coach, (cat) => ({ ...cat, courses: cat.courses.map((x) => (x.id === courseId ? { ...fn(x), edited: "just now" } : x)) }))
+    setSaved(true)
+  }, [coach, courseId])
+  const editLesson = useCallback((id: string, patch: Partial<Lesson>) => edit((c) => ({ ...c, modules: c.modules.map((m) => ({ ...m, lessons: m.lessons.map((l) => (l.id === id ? { ...l, ...patch } : l)) })) })), [edit])
+  const patchUpload = (id: string, patch: Partial<Upload>) => setUploads((u) => u.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+  const later = (fn: () => void, ms: number) => { const t = setTimeout(() => (timers.current.delete(t), fn()), ms); timers.current.add(t) }
+
+  /** A video going up: progress, then the transcript and AI chapters. The same bar shows in the tray and on the lesson. */
+  const startUpload = async (lessonId: string, file: File) => {
+    if (!file.type.startsWith("video/")) return void toast.error("This file isn't a video. Use an MP4, MOV or WebM.")
+    const lesson = course && allLessons(course).find((l) => l.id === lessonId)
+    let minutes = lesson?.minutes || 16
+    let thumb: string | undefined
+    try {
+      const { frames, seconds } = await videoFrames(file)
+      minutes = Math.max(1, Math.round(seconds / 60))
+      thumb = lesson?.thumbnail ? undefined : frames[Math.floor(frames.length / 2)]
+    } catch {
+      // A video this browser can't read is still uploaded; it just has no frames to pick from.
+    }
+    const id = uid("u")
+    setUploads((u) => [...u.filter((x) => x.lessonId !== lessonId), { id, lessonId, title: lesson?.title ?? file.name, phase: "uploading", pct: 0 }])
+    setTray(true)
+    const tick = (pct: number) => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) return patchUpload(id, { phase: "failed", pct })
+      if (pct < 100) { patchUpload(id, { pct }); return later(() => tick(Math.min(100, pct + 9)), 180) }
+      patchUpload(id, { pct: 100, phase: "transcribing" })
+      editLesson(lessonId, { video: file.name, minutes, ...(thumb ? { thumbnail: thumb } : {}) })
+      later(() => {
+        patchUpload(id, { phase: "chapters" })
+        later(() => {
+          patchUpload(id, { phase: "ready" })
+          edit((c) => ({ ...c, modules: c.modules.map((m) => ({ ...m, lessons: m.lessons.map((l) => (l.id === lessonId && !l.chapters.length ? { ...l, chapters: AI_CHAPTERS.map((title, i) => ({ at: Math.round(((minutes * 60) / AI_CHAPTERS.length) * i), title, ai: true })) } : l)) })) }))
+          toast.success("Video ready. AI added chapters and a transcript.")
+        }, 1000)
+      }, 1200)
+    }
+    tick(0)
+  }
+
+  // Videos picked in New course start going up as soon as the builder opens.
+  const queued = course ? uploadQueue.get(course.id) : undefined
+  useEffect(() => {
+    if (!queued) return
+    uploadQueue.delete(courseId)
+    queued.forEach((q) => void startUpload(q.lessonId, q.file))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queued, courseId])
 
   if (!course) {
     return (
@@ -40,239 +95,98 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
     )
   }
 
-  const edit = (fn: (c: Course) => Course) => {
-    saveCatalog(coach, (cat) => ({ ...cat, courses: cat.courses.map((x) => (x.id === courseId ? fn(x) : x)) }))
-    setSaved(true)
-  }
-  const editLesson = (id: string, patch: Partial<Lesson>) =>
-    edit((c) => ({ ...c, modules: c.modules.map((m) => ({ ...m, lessons: m.lessons.map((l) => (l.id === id ? { ...l, ...patch } : l)) })) }))
-
   const lessons = allLessons(course)
-  const lesson = sel.kind === "lesson" ? lessons.find((l) => l.id === sel.id) : undefined
-  const studentUrl = `/c/${coach.slug}/courses/${course.id}${lesson ? `/${lesson.id}` : ""}?preview=draft`
-  const minutes = lessons.reduce((n, l) => n + l.minutes, 0)
-  const fmt = (m: number) => (m >= 60 ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, " ").trim()} min` : `${m} min`)
-  const missing = lessons.filter((l) => !l.video)
-  const tiers = course.tiers.length === 0 ? "All tiers" : coach.tiers.filter((t) => course.tiers.includes(t.id)).map((t) => t.name).join(", ")
-  const cover = lessons.find((l) => l.thumbnail)?.thumbnail ?? course.cover
-
-  const addLesson = (moduleId: string) => {
-    const l: Lesson = { id: uid("l"), title: "New lesson", minutes: 0, status: "draft", chapters: [], downloads: [] }
-    edit((c) => ({ ...c, modules: c.modules.map((m) => (m.id === moduleId ? { ...m, lessons: [...m.lessons, l] } : m)) }))
-    setSel({ kind: "lesson", id: l.id })
-  }
-  const duplicate = () => {
-    const copy: Course = { ...structuredClone(course), id: uid("c"), title: `${course.title} (copy)`, status: "draft", modules: course.modules.map((m) => ({ ...m, id: uid("m"), lessons: m.lessons.map((l) => ({ ...l, id: uid("l"), status: "draft" as Status })) })) }
-    saveCatalog(coach, (cat) => ({ ...cat, courses: [...cat.courses, copy] }))
-    setSettings(false)
-    toast.success("Duplicated as a draft.")
-  }
-  const addModule = () => edit((c) => ({ ...c, modules: [...c.modules, { id: uid("m"), title: `Module ${c.modules.length + 1}`, lessons: [] } as Module] }))
-  const renameModule = (id: string, title: string) => edit((c) => ({ ...c, modules: c.modules.map((m) => (m.id === id ? { ...m, title } : m)) }))
-  const removeModule = (id: string) => {
-    let before: Course | null = null
-    edit((c) => ((before = c), { ...c, modules: c.modules.filter((m) => m.id !== id) }))
-    toast("Module deleted.", { action: { label: "Undo", onClick: () => before && edit(() => before!) } })
+  const current = view.k === "outline" ? undefined : lessons.find((l) => l.id === view.id)
+  const first = lessons.find((l) => l.status === "published") ?? lessons[0]
+  const tiers = course.tiers.length ? coach.tiers.filter((t) => course.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers"
+  const publishNow = (o: { when: "now" | "later"; date: string; channels: string[] }) => {
+    edit((c) => ({ ...c, status: o.when === "later" ? "scheduled" : "published", scheduledFor: o.when === "later" ? o.date : c.scheduledFor }))
+    toast.success(o.when === "later" ? `Scheduled for ${o.date}.` : `Published.${o.channels.length ? ` Students are told ${o.channels.join(", ").replace("app", "on the platform").replace("email", "by e-mail").replace("discord", "in Discord")}.` : ""}`)
   }
 
-  const saveLabel = <span className="t-caption text-a-text-3">{saved ? "All changes saved" : ""}</span>
+  const header = (
+    <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
+      <AdminButton hierarchy="secondary" size="xl" iconOnly aria-label="Back to Content" nativeButton={false} render={<Link href={`${base}/content`} />}><ArrowLeft /></AdminButton>
+      <CourseCover course={course} className="h-10 w-16 shrink-0 rounded-a-sm border border-a-border" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-3">
+          <h1 className="t-heading-xl truncate text-a-text">{course.title}</h1>
+          <Tag tone={tone(course.status)} dot>{course.status === "scheduled" && course.scheduledFor ? `Scheduled · ${course.scheduledFor}` : course.status}</Tag>
+        </div>
+        <p className="t-body-m text-a-text-2">{course.modules.length} {course.modules.length === 1 ? "module" : "modules"} · {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}{minutesOf(course) > 0 ? ` · ${fmtLength(minutesOf(course))}` : ""} · {course.soldSeparately ? "Sold on its own" : tiers}</p>
+      </div>
+      <span className="t-caption text-a-text-3">{saved ? "All changes saved" : ""}</span>
+      <AdminButton hierarchy="secondary" onClick={() => setSettings(true)}><Settings /> Settings</AdminButton>
+      <AdminButton hierarchy="secondary" disabled={!first} onClick={() => first && setView({ k: "preview", id: first.id })}><ExternalLink /> Preview as student</AdminButton>
+      {course.status !== "published" && <AdminButton onClick={() => setPublishing(true)}>Publish</AdminButton>}
+    </header>
+  )
 
   return (
-    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
-      {lesson ? (
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6">
+      {view.k === "outline" && (
         <>
-          <header className="flex flex-wrap items-center gap-3">
-            <AdminButton hierarchy="secondary" iconOnly aria-label="Back to the course" onClick={() => setSel({ kind: "course" })}><ArrowLeft /></AdminButton>
-            <div className="flex min-w-0 flex-col gap-1">
-              <h1 className="t-title-l text-a-text [overflow-wrap:anywhere]">{lesson.title}</h1>
-              <p className="t-body-m text-a-text-2">
-                {course.title} · Module {course.modules.findIndex((m) => m.lessons.some((l) => l.id === lesson.id)) + 1} · Lesson {(course.modules.find((m) => m.lessons.some((l) => l.id === lesson.id))?.lessons.findIndex((l) => l.id === lesson.id) ?? 0) + 1}
-              </p>
-            </div>
-            <span className="flex-1" />
-            {saveLabel}
-            <AdminButton hierarchy="secondary" nativeButton={false} render={<a href={studentUrl} target="_blank" rel="noreferrer" />}><ExternalLink /> Preview as student</AdminButton>
-          </header>
-          <div className="grid items-start gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-            <aside className="rounded-a-lg border border-a-border bg-a-panel">
-              <Tree course={course} sel={sel} onSelect={setSel} edit={edit} hideSettings />
-            </aside>
-            <main className="min-w-0">
-              <LessonEditor key={lesson.id} course={course} lesson={lesson} onChange={(p) => editLesson(lesson.id, p)} />
-            </main>
-          </div>
-        </>
-      ) : (
-        <>
-          <header className="flex flex-wrap items-center gap-3">
-            <AdminButton hierarchy="secondary" iconOnly aria-label="Back to Content" nativeButton={false} render={<Link href={`${base}/content`} />}><ArrowLeft /></AdminButton>
-            <Tile src={cover} color={course.color} className="aspect-video h-10 shrink-0 rounded-a-sm" />
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <div className="flex items-center gap-3">
-                <h1 className="t-title-l text-a-text [overflow-wrap:anywhere]">{course.title}</h1>
-                <Tag tone={TONE[course.status]} dot>{STATUS_LABEL[course.status]}{course.status === "scheduled" && course.scheduledFor ? ` · ${course.scheduledFor}` : ""}</Tag>
-              </div>
-              <p className="t-body-m text-a-text-2">{course.modules.length} modules · {lessons.length} lessons · {fmt(minutes)} · {tiers}</p>
-            </div>
-            <span className="flex-1" />
-            {saveLabel}
-            <AdminButton hierarchy="secondary" onClick={() => setSettings(true)}><Settings2 /> Settings</AdminButton>
-            <AdminButton hierarchy="secondary" nativeButton={false} render={<a href={studentUrl} target="_blank" rel="noreferrer" />}><ExternalLink /> Preview as student</AdminButton>
-            {course.status === "published" ? (
-              <AdminButton hierarchy="secondary" onClick={() => (edit((c) => ({ ...c, status: "draft" })), toast("Unpublished. Students no longer see this course."))}>Unpublish</AdminButton>
-            ) : (
-              <AdminButton onClick={() => setReview(true)}>Publish</AdminButton>
-            )}
-          </header>
-
-          {missing.length > 0 && (
-            <Callout tone="danger" action={<AdminButton hierarchy="secondary" size="md" onClick={() => setSel({ kind: "lesson", id: missing[0].id })}>Review</AdminButton>}>
-              {missing.length} {missing.length === 1 ? "lesson still needs" : "lessons still need"} a video: {missing[0].title}{missing.length > 1 ? ` and ${missing.length - 1} more` : ""}
-            </Callout>
-          )}
-
-          {course.modules.map((m, i) => (
-            <ModuleCard key={m.id} index={i + 1} module={m} course={course} cover={course.cover}
-              onOpen={(id) => setSel({ kind: "lesson", id })} onAdd={() => addLesson(m.id)} onRename={(t) => renameModule(m.id, t)} onDelete={() => removeModule(m.id)} />
-          ))}
-          <div>
-            <AdminButton hierarchy="secondary" onClick={addModule}><Plus /> Add module</AdminButton>
-          </div>
+          {header}
+          <Curriculum course={course} edit={edit} uploads={uploads} onOpen={(id) => setView({ k: "lesson", id })} onUpload={startUpload} onReview={() => setPublishing(true)} />
         </>
       )}
+      {view.k === "lesson" && current && (
+        <LessonPage key={current.id} course={course} lesson={current} upload={uploads.find((u) => u.lessonId === current.id)} saved={saved} onChange={(p) => editLesson(current.id, p)} onPick={(f) => startUpload(current.id, f)} onBack={() => setView({ k: "outline" })} onSelect={(id) => setView({ k: "lesson", id })} onPreview={() => setView({ k: "preview", id: current.id })} />
+      )}
+      {view.k === "preview" && current && (
+        <StudentPreview course={course} lesson={current} onSelect={(id) => setView({ k: "preview", id })} onEdit={() => setView({ k: "lesson", id: current.id })} onExit={() => setView({ k: "outline" })} />
+      )}
+      {view.k !== "outline" && !current && <p className="t-body-m text-a-text-2">That lesson no longer exists.</p>}
 
-      <Dialog open={review} onOpenChange={setReview}>
-        <DialogContent className="max-w-[600px] gap-0 p-0 sm:max-w-[600px]">
-          <DialogHeader className="border-b border-a-border px-6 py-5">
-            <DialogTitle className="t-heading-m text-a-text">Review and publish</DialogTitle>
-            <DialogDescription className="t-body-m text-a-text-2">{course.title} · {lessons.length} lessons</DialogDescription>
-          </DialogHeader>
-          <div className="flex max-h-[60vh] flex-col gap-5 overflow-y-auto px-6 py-5">
-            <div className="flex flex-col gap-2">
-              <span className="t-mono-label-s text-a-text-3 uppercase">Heads up</span>
-              {missing.length === 0 && <Check tone="success" title="Every lesson has a video" text="Nothing is hidden from students." />}
-              {missing.map((l) => (
-                <Check key={l.id} tone="warning" title={`${l.title} has no video`} text="Students won’t see this lesson" action={<AdminButton hierarchy="secondary" size="md" onClick={() => (setReview(false), setSel({ kind: "lesson", id: l.id }))}>Fix</AdminButton>} />
-              ))}
-              <Check tone="success" title={`Access: ${tiers}`} text={`${course.tiers.length === 0 ? coach.tiers.reduce((n, t) => n + t.members, 0) : coach.tiers.filter((t) => course.tiers.includes(t.id)).reduce((n, t) => n + t.members, 0)} students can see it`} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <span className="t-caption text-a-text">When</span>
-              <div className="grid grid-cols-2 gap-1.5">
-                {(["now", "later"] as const).map((w) => (
-                  <button key={w} type="button" onClick={() => setWhen(w)} className={cn("h-9 rounded-a-md border t-body-m outline-none", when === w ? "border-a-border-strong bg-a-selected text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover")}>
-                    {w === "now" ? "Publish now" : "Schedule"}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex flex-col gap-2.5">
-              <span className="t-caption text-a-text">Tell students</span>
-              {([["platform", "On the platform"], ["email", "By e-mail"], ["discord", "In Discord"]] as const).map(([k, label]) => (
-                <label key={k} className="flex items-center gap-2.5 t-body-m text-a-text">
-                  <Checkbox checked={tell[k]} onCheckedChange={(v) => setTell({ ...tell, [k]: !!v })} /> {label}
-                </label>
-              ))}
-            </div>
-          </div>
-          <DialogFooter className="m-0 flex-row items-center gap-2 rounded-none bg-transparent border-t border-a-border px-6 py-4 sm:justify-between">
-            <AdminButton hierarchy="secondary" onClick={() => (setReview(false), toast("Saved as a draft."))}>Save as draft</AdminButton>
-            <div className="flex items-center gap-2">
-              <AdminButton hierarchy="ghost" onClick={() => setReview(false)}>Cancel</AdminButton>
-              <AdminButton
-                onClick={() => {
-                  edit((c) => ({ ...c, status: when === "now" ? "published" : "scheduled", scheduledFor: when === "later" ? c.scheduledFor ?? "Thu 29 Oct" : c.scheduledFor }))
-                  setReview(false)
-                  toast.success(when === "now" ? "Published. Students with access see it now." : "Scheduled.")
-                }}
-              >
-                Publish to {course.tiers.length === 0 ? coach.tiers.reduce((n, t) => n + t.members, 0) : coach.tiers.filter((t) => course.tiers.includes(t.id)).reduce((n, t) => n + t.members, 0)} students
-              </AdminButton>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Sheet open={settings} onOpenChange={setSettings}>
-        <SheetContent side="right" showCloseButton={false} className="flex w-full flex-col gap-0 p-0 sm:max-w-[500px]">
-          <SheetHeader className="flex-row items-start justify-between border-b border-a-border px-6 py-5">
-            <div className="grid gap-1">
-              <SheetTitle className="t-heading-m text-a-text">Course settings</SheetTitle>
-              <p className="t-body-m text-a-text-2">{course.title} · {STATUS_LABEL[course.status]}</p>
-            </div>
-            <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Close" onClick={() => setSettings(false)}><X /></AdminButton>
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-5">
-            <CourseSettings course={course} edit={edit} onPublish={() => (setSettings(false), setReview(true))} onDuplicate={duplicate} />
-          </div>
-          <footer className="flex items-center justify-between border-t border-a-border px-6 py-4">
-            <AdminButton hierarchy="ghost" onClick={() => setSettings(false)}>Close</AdminButton>
-            <span className="t-caption text-a-text-2">Changes save as you type</span>
-          </footer>
-        </SheetContent>
-      </Sheet>
+      <CourseSettingsDrawer
+        course={course}
+        open={settings}
+        onOpenChange={setSettings}
+        edit={edit}
+        onPublish={() => (setSettings(false), setPublishing(true))}
+        onReviewAccess={() => (setSettings(false), setPublishing(true))}
+        onDuplicate={() => {
+          const copy: Course = { ...structuredClone(course), id: uid("c"), title: `${course.title} (copy)`, status: "draft", scheduledFor: undefined }
+          saveCatalog(coach, (cat) => ({ ...cat, courses: [...cat.courses, copy] }))
+          setSettings(false)
+          toast("Duplicated as a draft.", { action: { label: "Open", onClick: () => router.push(`${base}/content/${copy.id}`) } })
+        }}
+        onDelete={() => (saveCatalog(coach, (cat) => ({ ...cat, courses: cat.courses.filter((c) => c.id !== course.id) })), toast("Course deleted."), router.push(`${base}/content`))}
+      />
+      <PublishReview course={course} uploads={uploads} open={publishing} onOpenChange={setPublishing} onOpenUploads={() => (setTray(true), setView({ k: "outline" }))} onOpenLesson={(id) => setView({ k: "lesson", id })} onPublish={publishNow} onSaveDraft={() => (edit((c) => ({ ...c, status: "draft" })), toast("Saved as a draft."))} />
+      <UploadTray uploads={uploads} open={tray} setOpen={setTray} onClear={() => setUploads((u) => u.filter((x) => x.phase !== "ready"))} />
     </div>
   )
 }
 
-function ModuleCard({ index, module: m, course, cover, onOpen, onAdd, onRename, onDelete }: { index: number; module: Module; course: Course; cover?: string; onOpen: (id: string) => void; onAdd: () => void; onRename: (t: string) => void; onDelete: () => void }) {
-  const [renaming, setRenaming] = useState(false)
-  const [open, setOpen] = useState(true)
-  const mins = m.lessons.reduce((n, l) => n + l.minutes, 0)
+/** The uploads bar (340 px, bottom right): what is going up, and what is done. */
+function UploadTray({ uploads, open, setOpen, onClear }: { uploads: Upload[]; open: boolean; setOpen: (o: boolean) => void; onClear: () => void }) {
+  if (!uploads.length) return null
+  const ready = uploads.filter((u) => u.phase === "ready").length
+  const left = uploads.reduce((n, u) => n + (u.phase === "ready" || u.phase === "failed" ? 0 : (100 - u.pct) / 100 + (u.phase === "uploading" ? 0.2 : 0)), 0)
   return (
-    <section className="flex min-w-0 flex-col gap-4 rounded-a-lg border border-a-border bg-a-panel p-5">
-      <header className="flex items-center gap-3">
-        <GripVertical aria-hidden className="size-3 shrink-0 text-a-text-3" />
-        <button type="button" aria-label={open ? "Collapse module" : "Expand module"} aria-expanded={open} onClick={() => setOpen(!open)} className="grid size-5 shrink-0 place-items-center rounded-a-xs text-a-text-2 outline-none hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus">
-          <ChevronDown className={cn("size-3 transition-transform", !open && "-rotate-90")} />
-        </button>
-        {renaming ? (
-          <input autoFocus defaultValue={m.title} aria-label="Module name" onBlur={(e) => (onRename(e.target.value.trim() || m.title), setRenaming(false))}
-            onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()} className="t-heading-m h-8 rounded-a-sm bg-a-field px-2 text-a-text outline-none ring-1 ring-a-border-focus" />
-        ) : (
-          <h2 className="t-heading-m text-a-text">{index} · {m.title}</h2>
-        )}
-        <span className="t-caption text-a-text-3">{m.lessons.length} {m.lessons.length === 1 ? "lesson" : "lessons"}{mins ? ` · ${mins} min` : ""}</span>
-        <span className="flex-1" />
-        <AdminButton hierarchy="secondary" size="lg" onClick={onAdd}><Upload /> Upload videos</AdminButton>
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" iconOnly size="lg" aria-label={`${m.title} actions`} />}><MoreHorizontal /></DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setRenaming(true)}><Pencil /> Rename</DropdownMenuItem>
-            <DropdownMenuItem onClick={onDelete}><Trash2 /> Delete module</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
-      {open && <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {m.lessons.map((l) => (
-          <button key={l.id} type="button" onClick={() => onOpen(l.id)} className="group flex min-w-0 flex-col gap-2 text-left outline-none">
-            <Tile src={l.thumbnail ?? cover} color={course.color} className="aspect-video w-full rounded-a-md border border-a-border transition-colors group-hover:border-a-border-strong group-focus-visible:ring-2 group-focus-visible:ring-a-border-focus">
-              <span className="absolute bottom-2 right-2 rounded-a-xs bg-black/60 px-1.5 py-0.5 t-mono-label-s text-a-text-2">{l.minutes ? `${String(l.minutes).padStart(2, "0")}:00` : "--:--"}</span>
-              {l.status !== "published" && <span className="absolute left-2 top-2"><Tag tone={TONE[l.status]} dot>{STATUS_LABEL[l.status]}</Tag></span>}
-            </Tile>
-            <span className="t-body-m truncate text-a-text">{l.title}</span>
-            {!l.video && <span className="t-caption -mt-1 text-a-warning">No video yet</span>}
-          </button>
-        ))}
-        <button type="button" onClick={onAdd} className={cn("flex aspect-video flex-col items-center justify-center gap-1 rounded-a-md border border-dashed border-a-border-strong t-body-m text-a-text-2 outline-none transition-colors hover:bg-a-hover hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus")}>
-          <Plus /> Add lesson
-          <span className="t-caption text-a-text-3">or drop videos here</span>
-        </button>
-      </div>}
-    </section>
-  )
-}
-
-function Check({ tone, title, text, action }: { tone: "success" | "warning" | "danger"; title: string; text: string; action?: React.ReactNode }) {
-  const dot = { success: "bg-a-success-fill", warning: "bg-a-warning-fill", danger: "bg-a-danger-fill" }[tone]
-  return (
-    <div className="flex items-center gap-3 rounded-a-md border border-a-border px-3 py-2.5">
-      <span aria-hidden className={cn("size-2 shrink-0 rounded-full", dot)} />
-      <div className="grid min-w-0 flex-1">
-        <span className="t-body-m text-a-text">{title}</span>
-        <span className="t-caption text-a-text-2">{text}</span>
+    <aside aria-label="Uploads" className="fixed right-4 bottom-16 z-40 w-[340px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-a-lg border border-a-border-strong bg-a-panel shadow-[0_8px_32px_rgb(0_0_0/0.5)]">
+      <div className="flex items-center gap-3 px-4 py-3">
+        <div className="grid min-w-0 flex-1">
+          <span className="t-body-m text-a-text">{ready} of {uploads.length} ready</span>
+          <span className="t-caption text-a-text-2">{ready === uploads.length ? "All done" : left > 0 ? `about ${Math.max(1, Math.round(left))} min left` : "Needs your attention"}</span>
+        </div>
+        {ready > 0 && ready === uploads.length && <AdminButton hierarchy="ghost" size="md" onClick={onClear}>Clear</AdminButton>}
+        <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={open ? "Minimise uploads" : "Show uploads"} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <Minus /> : <Plus />}</AdminButton>
       </div>
-      {action}
-    </div>
+      {open && (
+        <ul className="grid max-h-72 gap-3.5 overflow-y-auto border-t border-a-border-subtle px-4 py-3">
+          {uploads.map((u) => (
+            <li key={u.id} className="grid gap-1.5">
+              <div className="flex items-baseline gap-3 t-body-m">
+                <span className="min-w-0 flex-1 truncate text-a-text">{u.title}</span>
+                <span className={cn("t-caption", u.phase === "failed" ? "text-a-danger" : u.phase === "ready" ? "text-a-success" : "text-a-text-2")}>{u.phase === "uploading" ? `Uploading ${u.pct}%` : u.phase === "failed" ? `Failed at ${u.pct}%` : PHASE_LABEL[u.phase]}</span>
+              </div>
+              <AdminProgress label={u.title} tone={u.phase === "failed" ? "danger" : u.phase === "ready" ? "success" : "accent"} value={u.phase === "uploading" || u.phase === "failed" ? u.pct : 100} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </aside>
   )
 }

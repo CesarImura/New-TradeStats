@@ -96,7 +96,6 @@ ${adm(":is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-md, .rounded-sm).bor
 ${adm(":is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-md, .rounded-sm).border:not([data-slot], .border-dashed, [class*='border-['], [class*='border-transparent'], [class*='border-white'], [class*='border-primary'], [class*='border-destructive'], [class*='border-red'], [class*='border-amber'], [class*='border-emerald'], [class*='border-green'], [class*='border-input']):not([class*='bg-'])")} { background-color: ${T("color-bg-panel")}; }
 ${adm(".bg-card")} { background-color: ${T("color-bg-panel")}; }
 ${adm(":is(.bg-muted, .bg-secondary):not([data-slot=button], [data-slot=tabs-list])")} { background-color: ${T("color-bg-panel")}; }
-${adm(".border-dashed")} { border-color: ${T("color-border-strong")}; }
 ${adm(":is([data-slot=card], .rounded-lg.border, .rounded-xl.border) :is(.rounded-lg, .rounded-xl, .rounded-md, .rounded-sm).border:not([data-slot], .border-dashed, [class*='border-['], [class*='border-transparent'], [class*='border-primary'], [class*='border-destructive']):not([class*='bg-'])")} { background-color: ${T("color-bg-raised")}; border-color: ${T("color-border-subtle")}; }
 ${adm(":is([data-slot=card], .rounded-lg.border, .rounded-xl.border) :is(.bg-muted, .bg-secondary, .bg-card, .bg-background):not([data-slot=button])")} { background-color: ${T("color-bg-raised")}; }
 ${adm("[data-slot=card] [class*='hover:bg-muted']:hover")} { background-color: ${T("color-bg-hover")}; }
@@ -121,25 +120,41 @@ ${adm(":is([data-slot=progress], [data-slot=progress-track])")} { background: ${
 ${adm("[data-slot=progress-indicator]")} { background: ${T("color-accent-default")} !important; }
 /* Tables: no frame, mono header, hairlines. */
 ${adm("[data-slot=table-header] [data-slot=table-row]")} { border-color: ${T("color-border-subtle")}; }
-${adm("[data-slot=table-head]")} { height: 2.5rem; padding-inline: 0.75rem; font: 400 0.625rem/1 ${T("font-family-mono")}; letter-spacing: 0.06em; text-transform: uppercase; color: ${T("color-text-secondary")}; }
+${adm("[data-slot=table-header]")} { background: ${T("color-bg-subtle")}; }
+${adm(":is([data-slot=table-head], [data-slot=table-cell]):first-child")} { padding-left: ${T("space-20")}; }
+${adm(":is([data-slot=table-head], [data-slot=table-cell]):last-child")} { padding-right: ${T("space-20")}; }
+${adm("[data-slot=table-head]")} { height: 2.5rem; padding-inline: ${T("space-8")}; font: 400 0.625rem/1 ${T("font-family-mono")}; letter-spacing: 0.06em; text-transform: uppercase; color: ${T("color-text-tertiary")}; }
 ${adm("[data-slot=table-body] [data-slot=table-row]")} { border-color: ${T("color-border-subtle")}; }
 ${adm("[data-slot=table-body] [data-slot=table-row]:hover")} { background: ${T("color-bg-hover")}; }
-${adm("[data-slot=table-cell]")} { height: 3.25rem; padding-inline: 0.75rem; font-size: 0.8125rem; color: ${T("color-text-secondary")} !important; }
+${adm("[data-slot=table-cell]")} { height: 3.25rem; padding-inline: ${T("space-8")}; font-size: 0.8125rem; }
 
-/* Overlays (Figma Admin / Menu: r12, raised, border strong, shadow 0 16 40 @50%; Modal and Drawer: r16, panel, border strong, shadow 0 30 60 @60%). */
+/* Overlays. Figma: Admin / Menu (radius 12, raised, strong hairline, shadow 0 16 40 black 50%, padding 6, gap 2),
+   Admin / Modal and Drawer (radius 16, panel, strong hairline, shadow 0 30 60 black 60%). */
 ${adm(":is([data-slot=popover-content], [data-slot=dropdown-menu-content], [data-slot=context-menu-content], [data-slot=select-content], [data-slot=command])")} {
   border-radius: ${T("radius-lg")}; background: ${T("color-bg-raised")}; box-shadow: 0 0 0 1px ${T("color-border-strong")}, 0 16px 40px rgb(0 0 0 / 0.5);
 }
-${adm("[data-slot=dialog-content]")} { border-radius: ${T("radius-xl")}; background: ${T("color-bg-panel")}; box-shadow: 0 0 0 1px ${T("color-border-strong")}, 0 30px 60px rgb(0 0 0 / 0.6); }
-${adm("[data-slot=sheet-content]")} { background: ${T("color-bg-panel")}; box-shadow: 0 0 0 1px ${T("color-border-strong")}, 0 30px 60px rgb(0 0 0 / 0.6); }
-${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item]):is([data-highlighted], :hover, [data-selected=true])")} { background: ${T("color-bg-selected")}; }
-${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item])[data-disabled]")} { opacity: 0.4; }
-${adm(":is([data-slot=dropdown-menu-content], [data-slot=context-menu-content])")} { padding: ${T("space-6")}; min-width: 13.75rem; }
+${adm(":is([data-slot=dropdown-menu-content], [data-slot=context-menu-content], [data-slot=select-content])")} { padding: ${T("space-6")}; }
+${adm(":is([data-slot=dialog-content], [data-slot=sheet-content])")} { border-radius: ${T("radius-xl")}; background: ${T("color-bg-panel")}; box-shadow: 0 0 0 1px ${T("color-border-strong")}, 0 30px 60px rgb(0 0 0 / 0.6); }
+${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item])")} { border-radius: ${T("radius-sm")}; min-height: 2rem; padding-inline: ${T("space-10")}; gap: ${T("space-10")}; font-size: 0.8125rem; line-height: 1.125rem; }
+${adm(":is([data-slot=dropdown-menu-separator], [data-slot=context-menu-separator])")} { background: ${T("color-border-subtle")}; margin-inline: 0; }
+${adm(":is([data-slot=dropdown-menu-content], [data-slot=context-menu-content])")} { min-width: 13.75rem; }
 ${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item])")} { white-space: nowrap; }
-${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item])")} { padding-inline: ${T("space-10")}; gap: ${T("space-10")}; }
-${adm(":is([data-slot=dropdown-menu-separator], [data-slot=context-menu-separator])")} { background: ${T("color-border-subtle")}; }
-${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item])")} { border-radius: ${T("radius-sm")}; min-height: 2rem; font-size: 0.8125rem; }
+${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item])[data-disabled]")} { opacity: 0.4; }
 ${adm("[data-slot=tooltip-content]")} { border-radius: ${T("radius-sm")}; font-size: 0.75rem; }
+
+/* Menu item hover is the selected fill (Figma Admin / Menu item). Avatar: track fill, default hairline, 11px initials (24 / 32 / 40). */
+${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item]):is(:hover, [data-highlighted], [data-selected=true])")} { background: ${T("color-bg-selected")}; }
+${adm("[data-slot=avatar]")} { background: ${T("color-bg-track")}; box-shadow: inset 0 0 0 1px ${T("color-border-default")}; }
+${adm("[data-slot=avatar-fallback]")} { background: transparent; color: ${T("color-text-primary")}; font: 500 0.6875rem/0.875rem ${T("font-family-primary")}; }
+
+/* Controls: Admin / Checkbox 16 radius 4, Radio 16 (1.5px ring), Toggle 32 x 18 with a 14px knob, Progress 4px. */
+${adm("[data-slot=checkbox]")} { width: 1rem; height: 1rem; }
+${adm("[data-slot=checkbox][data-checked], [data-slot=checkbox][data-indeterminate]")} { background: ${T("color-control-on")}; border-color: ${T("color-control-on")}; color: ${T("color-control-mark")}; }
+${adm("[data-slot=switch]")} { width: 2rem; height: 1.125rem; padding: ${T("space-2")}; background: ${T("color-control-off")}; }
+${adm("[data-slot=switch] [data-slot=switch-thumb]")} { width: 0.875rem; height: 0.875rem; background: ${T("color-control-knob")}; }
+${adm("[data-slot=switch][data-checked] [data-slot=switch-thumb]")} { transform: translateX(0.875rem); }
+${adm("[data-slot=progress]")} { height: 0.25rem; background: ${T("color-bg-track")}; }
+${adm("[data-slot=progress-indicator]")} { background: ${T("color-control-on")}; }
 
 /* Switcher button in the sidebar keeps the nav-item look. */
 ${adm("[data-slot=sidebar-menu-button]")} { border-radius: ${T("radius-md")}; color: ${T("color-text-nav")}; font-size: 0.8125rem; gap: 0.75rem; }
