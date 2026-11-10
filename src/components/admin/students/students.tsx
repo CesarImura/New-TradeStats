@@ -15,7 +15,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
-import { cn } from "@/lib/utils"
 import { Empty, Field, NativeSelect, Page, PageHeader } from "../kit"
 import { StatPanel, Tag } from "../ui"
 import { SetupTip } from "../setup-checklist"
