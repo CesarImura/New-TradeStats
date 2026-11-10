@@ -37,7 +37,7 @@ export function AdminFilter({ label, value, onValueChange, options, ariaLabel, c
     <Select items={options as { value: string; label: string }[]} value={value} onValueChange={(v) => v != null && onValueChange(String(v))}>
       <SelectTrigger
         aria-label={ariaLabel ?? label}
-        className={cn("h-8! shrink-0 gap-2 rounded-a-md! border-a-border! bg-transparent! pr-2.5 pl-3 t-caption text-a-text hover:bg-a-hover!", className)}
+        className={cn("h-8! shrink-0 gap-2 rounded-a-md! border-a-border! bg-transparent! pr-2.5 pl-3 t-caption text-a-text hover:border-a-border-strong! data-popup-open:border-[var(--admin-color-border-active)]! data-popup-open:bg-a-raised!", className)}
       >
         {label && (
           <>
