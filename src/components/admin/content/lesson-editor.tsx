@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { STATUS_LABEL, fmtTime, uid, type Chapter, type Course, type Lesson, type Quiz, type Status } from "@/lib/data/learning"
 import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
-import { STATUS_DOT, StatusBadge } from "./content-board"
+import { STATUS_DOT } from "./content-board"
 import { PictureField } from "./thumbs"
 import { videoFrames } from "@/lib/video-frames"
 import { Field } from "./course-settings"
@@ -30,28 +30,11 @@ export function LessonEditor({ course, lesson, onChange }: { course: Course; les
   const { coach } = useCoach()
   // Frames from the video the coach just chose: kept while this lesson is open, so one can be picked as the thumbnail.
   const [frames, setFrames] = useState<string[]>([])
-  const mod = course.modules.find((m) => m.lessons.some((l) => l.id === lesson.id))
   return (
     <div className="grid gap-6">
-      <div className="grid gap-1">
-        <span className="text-xs text-muted-foreground">
-          {course.title} · {mod?.title}
-        </span>
-        <input
-          value={lesson.title}
-          onChange={(e) => onChange({ title: e.target.value })}
-          className="-mx-2 rounded-md px-2 py-1 text-xl font-semibold outline-none hover:bg-muted focus:bg-muted"
-          aria-label="Lesson title"
-        />
-        <div className="flex items-center gap-2">
-          <StatusBadge status={lesson.status} when={lesson.unlockAt} />
-          {lesson.minutes > 0 && <span className="text-xs text-muted-foreground">{lesson.minutes} min</span>}
-        </div>
-      </div>
-
       <Tabs defaultValue="content" className="gap-5">
         <TabsList>
-          <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="content">Lesson</TabsTrigger>
           <TabsTrigger value="chapters">
             Chapters <span className="text-muted-foreground tabular-nums">{lesson.chapters.length || ""}</span>
           </TabsTrigger>
@@ -60,6 +43,10 @@ export function LessonEditor({ course, lesson, onChange }: { course: Course; les
         </TabsList>
 
         <TabsContent value="content" className="grid gap-6">
+          <div className="grid gap-2">
+            <Label>Title</Label>
+            <Input value={lesson.title} onChange={(e) => onChange({ title: e.target.value })} aria-label="Lesson title" />
+          </div>
           <VideoField lesson={lesson} onChange={onChange} onFrames={setFrames} />
           <div className="grid gap-2">
             <Label>Thumbnail</Label>

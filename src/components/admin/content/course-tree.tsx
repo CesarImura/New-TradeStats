@@ -14,7 +14,7 @@ import { Tile } from "./thumbs"
 export type Sel = { kind: "course" } | { kind: "lesson"; id: string }
 type Drag = { kind: "lesson" | "module"; id: string } | null
 
-export function Tree({ course, sel, onSelect, edit }: { course: Course; sel: Sel; onSelect: (s: Sel) => void; edit: (fn: (c: Course) => Course) => void }) {
+export function Tree({ course, sel, onSelect, edit, hideSettings }: { course: Course; sel: Sel; onSelect: (s: Sel) => void; edit: (fn: (c: Course) => Course) => void; hideSettings?: boolean }) {
   const [drag, setDrag] = useState<Drag>(null)
   const [target, setTarget] = useState<string | null>(null)
   const [renaming, setRenaming] = useState<string | null>(null)
@@ -84,18 +84,20 @@ export function Tree({ course, sel, onSelect, edit }: { course: Course; sel: Sel
   }
 
   return (
-    <div className="grid gap-1 p-3">
+    <div className="grid gap-1 p-3 [&_*]:min-w-0">
+      {!hideSettings && (
       <button
         onClick={() => onSelect({ kind: "course" })}
         className={cn("flex items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted", sel.kind === "course" && "bg-background font-medium shadow-xs ring-1 ring-border")}
       >
         <Settings2 className="size-4 text-muted-foreground" /> Course settings
       </button>
+      )}
       <div className="mt-2 mb-1 flex items-center justify-between px-2 text-xs text-muted-foreground">
         <span>
           {course.modules.length} modules · {allLessons(course).length} lessons
         </span>
-        <span>Drag to reorder</span>
+        {!hideSettings && <span>Drag to reorder</span>}
       </div>
 
       {course.modules.map((m) => {
@@ -123,7 +125,7 @@ export function Tree({ course, sel, onSelect, edit }: { course: Course; sel: Sel
                 <button onClick={() => setClosed((c) => (open ? [...c, m.id] : c.filter((x) => x !== m.id)))} aria-label={open ? "Collapse" : "Expand"} className="rounded p-0.5 hover:bg-background">
                   <ChevronDown className={cn("size-3.5 transition-transform", !open && "-rotate-90")} />
                 </button>
-                <Tile src={m.lessons.find((l) => l.thumbnail)?.thumbnail ?? course.cover} color={course.color} className="aspect-video w-9 shrink-0 rounded" />
+                <Tile src={m.lessons.find((l) => l.thumbnail)?.thumbnail ?? course.cover} color={course.color} className={cn("aspect-video w-9 shrink-0 rounded", hideSettings && "hidden")} />
                 {renaming === m.id ? (
                   <RenameInput value={m.title} onDone={(v) => (v && rename(m.id, v), setRenaming(null))} />
                 ) : (
@@ -180,12 +182,12 @@ export function Tree({ course, sel, onSelect, edit }: { course: Course; sel: Sel
                         />
                       }
                     >
-                      <Tile src={l.thumbnail ?? course.cover} color={course.color} className="aspect-video w-10 shrink-0 rounded" />
+                      <Tile src={l.thumbnail ?? course.cover} color={course.color} className={cn("aspect-video w-8 shrink-0 rounded", hideSettings && "hidden")} />
                       <span className={cn("size-1.5 shrink-0 rounded-full", STATUS_DOT[l.status])} title={STATUS_LABEL[l.status]} />
                       {renaming === l.id ? (
                         <RenameInput value={l.title} onDone={(v) => (v && rename(l.id, v), setRenaming(null))} />
                       ) : (
-                        <span className="flex-1 truncate" onDoubleClick={() => setRenaming(l.id)}>
+                        <span className="min-w-0 flex-1 truncate" onDoubleClick={() => setRenaming(l.id)}>
                           {l.title}
                         </span>
                       )}
