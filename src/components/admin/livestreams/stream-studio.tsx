@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, Check, Copy, Eye, EyeOff, Play, RefreshCw, Send, Users, Video } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { SelectOptions } from "@/components/kit/select-field"
@@ -15,6 +14,7 @@ import { STATE_LABEL, STREAM_SERVER, newStreamKey, patchLivestream, useLivestrea
 import { cn } from "@/lib/utils"
 import { Field } from "../kit"
 import { StateBadge } from "./livestreams-admin"
+import { AdminButton } from "@/components/admin/ui"
 
 const STEPS = ["scheduled", "live", "ended"] as const
 
@@ -27,9 +27,9 @@ export function StreamStudio({ id }: { id: string }) {
     return (
       <div className="grid place-items-center gap-3 py-24 text-center">
         <p className="text-lg font-medium">This livestream no longer exists</p>
-        <Button variant="outline" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
+        <AdminButton nativeButton={false} render={<Link href={`${base}/livestreams`} />} hierarchy="secondary">
           Back to Livestreams
-        </Button>
+        </AdminButton>
       </div>
     )
   const patch = (p: Partial<Livestream>) => patchLivestream(coach, s.id, p)
@@ -37,9 +37,9 @@ export function StreamStudio({ id }: { id: string }) {
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
-        <Button variant="ghost" size="sm" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
+        <AdminButton nativeButton={false} render={<Link href={`${base}/livestreams`} />} hierarchy="ghost" size="md">
           <ArrowLeft /> Livestreams
-        </Button>
+        </AdminButton>
         <span className="h-4 w-px bg-border" />
         <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">{s.title}</h1>
         <StateBadge state={s.state} />
@@ -98,32 +98,32 @@ function Before({ s, patch }: { s: Livestream; patch: (p: Partial<Livestream>) =
               <Field label="Server">
                 <div className="flex gap-2">
                   <Input readOnly value={STREAM_SERVER} className="font-mono text-xs" />
-                  <Button variant="outline" size="icon" aria-label="Copy the server" onClick={() => copy(STREAM_SERVER, "Server")}>
+                  <AdminButton aria-label="Copy the server" onClick={() => copy(STREAM_SERVER, "Server")} hierarchy="secondary" iconOnly>
                     <Copy />
-                  </Button>
+                  </AdminButton>
                 </div>
               </Field>
               <Field label="Stream key" hint="Keep it private. Anyone with it can stream as you.">
                 <div className="flex gap-2">
                   <Input readOnly type={show ? "text" : "password"} value={s.key} className="font-mono text-xs" />
-                  <Button variant="outline" size="icon" aria-label={show ? "Hide the key" : "Show the key"} onClick={() => setShow(!show)}>
+                  <AdminButton aria-label={show ? "Hide the key" : "Show the key"} onClick={() => setShow(!show)} hierarchy="secondary" iconOnly>
                     {show ? <EyeOff /> : <Eye />}
-                  </Button>
-                  <Button variant="outline" size="icon" aria-label="Copy the key" onClick={() => copy(s.key, "Stream key")}>
+                  </AdminButton>
+                  <AdminButton aria-label="Copy the key" onClick={() => copy(s.key, "Stream key")} hierarchy="secondary" iconOnly>
                     <Copy />
-                  </Button>
-                  <Button variant="outline" size="icon" aria-label="Make a new key" title="Make a new key (the old one stops working)" onClick={() => (patch({ key: newStreamKey() }), setConn("waiting"), toast("New key made. Paste it into OBS again."))}>
+                  </AdminButton>
+                  <AdminButton aria-label="Make a new key" title="Make a new key (the old one stops working)" onClick={() => (patch({ key: newStreamKey() }), setConn("waiting"), toast("New key made. Paste it into OBS again."))} hierarchy="secondary" iconOnly>
                     <RefreshCw />
-                  </Button>
+                  </AdminButton>
                 </div>
               </Field>
             </div>
           </Step>
           <Step n={3} title="Press “Start Streaming” in OBS" text="Then check the connection here. When OBS is sending video, you can go live.">
             <div className="flex flex-wrap items-center gap-3">
-              <Button variant="outline" onClick={check} disabled={conn === "checking"}>
+              <AdminButton onClick={check} disabled={conn === "checking"} hierarchy="secondary">
                 {conn === "checking" ? "Checking…" : "Check the connection"}
-              </Button>
+              </AdminButton>
               <span className={cn("flex items-center gap-2 text-sm", conn === "ok" ? "text-foreground" : "text-muted-foreground")} role="status">
                 <span className={cn("size-2 rounded-full", conn === "ok" ? "bg-emerald-500" : conn === "checking" ? "animate-pulse bg-amber-500" : "bg-muted-foreground/50")} />
                 {conn === "ok" ? "OBS is sending video" : conn === "checking" ? "Looking for OBS…" : "Waiting for OBS"}
@@ -132,9 +132,9 @@ function Before({ s, patch }: { s: Livestream; patch: (p: Partial<Livestream>) =
           </Step>
         </ol>
         <div className="flex flex-wrap items-center gap-3 border-t pt-5">
-          <Button size="lg" disabled={conn !== "ok"} onClick={() => (patch({ state: "live", startedAt: Date.now(), viewers: 3, peak: 3, chat: [] }), toast.success("You are live. Students can watch now."))}>
+          <AdminButton disabled={conn !== "ok"} onClick={() => (patch({ state: "live", startedAt: Date.now(), viewers: 3, peak: 3, chat: [] }), toast.success("You are live. Students can watch now."))} size="xl">
             <Play /> Go live
-          </Button>
+          </AdminButton>
           <span className="text-sm text-muted-foreground">{conn === "ok" ? "Students see you the moment you go live." : "Available once OBS is connected."}</span>
         </div>
       </section>
@@ -153,9 +153,9 @@ function Before({ s, patch }: { s: Livestream; patch: (p: Partial<Livestream>) =
         <Field label="Link for students">
           <div className="flex gap-2">
             <Input readOnly value={path} className="text-xs" />
-            <Button variant="outline" size="icon" aria-label="Copy the link" onClick={() => copy(`${window.location.origin}${path}`, "Link")}>
+            <AdminButton aria-label="Copy the link" onClick={() => copy(`${window.location.origin}${path}`, "Link")} hierarchy="secondary" iconOnly>
               <Copy />
-            </Button>
+            </AdminButton>
           </div>
         </Field>
         <p className="text-xs text-muted-foreground">Starts {whenLabel(s.startsAt)}. You can go live early or late: students always see the real state.</p>
@@ -236,9 +236,9 @@ function Live({ s, patch }: { s: Livestream; patch: (p: Partial<Livestream>) => 
             <Users className="size-4 text-muted-foreground" /> {s.viewers} watching
           </span>
           <span className="text-sm text-muted-foreground tabular-nums">Most at once: {s.peak}</span>
-          <Button variant="destructive" className="ml-auto" onClick={end}>
+          <AdminButton className="ml-auto" onClick={end} hierarchy="danger">
             End the livestream
-          </Button>
+          </AdminButton>
         </div>
       </section>
       <aside className="grid h-[28rem] grid-rows-[auto_minmax(0,1fr)_auto] rounded-xl border bg-card">
@@ -253,9 +253,9 @@ function Live({ s, patch }: { s: Livestream; patch: (p: Partial<Livestream>) => 
         </div>
         <form className="flex gap-2 border-t p-3" onSubmit={(e) => (e.preventDefault(), send())}>
           <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Write to everyone…" aria-label="Message" />
-          <Button type="submit" size="icon" aria-label="Send" disabled={!text.trim()}>
+          <AdminButton type="submit"  aria-label="Send" disabled={!text.trim()} iconOnly>
             <Send />
-          </Button>
+          </AdminButton>
         </form>
       </aside>
     </div>
@@ -329,9 +329,9 @@ function After({ s }: { s: Livestream }) {
                     ))}
                   </SelectOptions>
                 </Field>
-                <Button variant="outline" onClick={save} disabled={!moduleOf || already}>
+                <AdminButton onClick={save} disabled={!moduleOf || already} hierarchy="secondary">
                   {already ? "Already in this course" : "Save as a lesson"}
-                </Button>
+                </AdminButton>
               </div>
             </>
           )}

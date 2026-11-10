@@ -4,13 +4,12 @@ import { useState } from "react"
 import { Copy, Plus } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { COUPONS } from "@/lib/data/people"
 import { Field, NativeSelect, useCommunityData } from "../kit"
+import { AdminButton, AdminModal } from "@/components/admin/ui"
 
 // ---------- ADM-32 Coupons
 
@@ -27,9 +26,9 @@ export function Coupons() {
   return (
     <div className="grid gap-3">
       <div className="flex justify-end">
-        <Button onClick={() => setOpen(true)}>
+        <AdminButton onClick={() => setOpen(true)}>
           <Plus /> New coupon
-        </Button>
+        </AdminButton>
       </div>
       <div className="overflow-x-auto rounded-lg border bg-card">
         <Table>
@@ -61,12 +60,18 @@ export function Coupons() {
           </TableBody>
         </Table>
       </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New coupon</DialogTitle>
-            <DialogDescription>Students enter it at checkout. A wrong code never blocks the purchase.</DialogDescription>
-          </DialogHeader>
+      <AdminModal open={open} onOpenChange={setOpen} title="New coupon" subtitle="Students enter it at checkout. A wrong code never blocks the purchase." footer={<><AdminButton
+              disabled={!code}
+              onClick={() => {
+                const discount = kind === "trial" ? `${amount}-day free trial` : `${kind === "percent" ? `${amount}%` : `€${amount}`} off ${months === "1" ? "first payment" : months === "forever" ? "forever" : `for ${months} months`}`
+                setList((l) => [{ code, discount, uses: limit ? `0 of ${limit}` : "0", expires: "never", active: true }, ...l])
+                setOpen(false)
+                setCode("")
+                toast(`${code} created`)
+              }}>
+              Create coupon
+            </AdminButton></>}>
+          
           <div className="grid gap-3">
             <Field label="Code">
               <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase().replace(/\s/g, ""))} placeholder="AUTUMN20" className="font-mono" />
@@ -97,22 +102,9 @@ export function Coupons() {
               <Input value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="No limit" inputMode="numeric" />
             </Field>
           </div>
-          <DialogFooter>
-            <Button
-              disabled={!code}
-              onClick={() => {
-                const discount = kind === "trial" ? `${amount}-day free trial` : `${kind === "percent" ? `${amount}%` : `€${amount}`} off ${months === "1" ? "first payment" : months === "forever" ? "forever" : `for ${months} months`}`
-                setList((l) => [{ code, discount, uses: limit ? `0 of ${limit}` : "0", expires: "never", active: true }, ...l])
-                setOpen(false)
-                setCode("")
-                toast(`${code} created`)
-              }}
-            >
-              Create coupon
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          
+        
+</AdminModal>
     </div>
   )
 }

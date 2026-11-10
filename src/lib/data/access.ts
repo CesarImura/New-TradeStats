@@ -22,6 +22,8 @@ export type TierExtra = {
   trial: number
   installments: boolean
   hidden: boolean
+  /** People leave their e-mail and hear first when a seat opens. */
+  waitlist?: boolean
   role: string
   /** One line under the name on the sales page. */
   description: string

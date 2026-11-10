@@ -3,7 +3,6 @@
 import { Fragment, useState } from "react"
 import { Check, ChevronRight, Eye, Minus, RotateCcw } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   GROUP_RULES,
@@ -22,6 +21,7 @@ import { STUDENTS, tierFor } from "@/lib/data/people"
 import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { Mono } from "../kit"
+import { AdminButton } from "../ui"
 
 /**
  * ADM-14: areas, courses and modules × tiers and groups. Access is set high up
@@ -295,7 +295,7 @@ function Cell({ state, inherited, label, onClick }: { state: "on" | "off" | "som
 }
 
 /** ADM-15: see the student side as a tier, a group or one student. Opens it in a new tab. */
-export function PreviewAsMenu({ size = "default" }: { size?: "default" | "sm" }) {
+export function PreviewAsMenu() {
   const { coach } = useCoach()
   const tiers = useTiers(coach)
   const groups = useGroups(coach)
@@ -305,7 +305,7 @@ export function PreviewAsMenu({ size = "default" }: { size?: "default" | "sm" })
   }
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" size={size} />}>
+      <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" />}>
         <Eye /> Preview as
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">

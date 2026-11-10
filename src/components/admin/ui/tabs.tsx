@@ -16,9 +16,9 @@ export function AdminTabs<T extends string>({ tabs, value, onChange, label, clas
       }}>
       {tabs.map((t) => (
         <button key={t.id} type="button" role="tab" data-tab={t.id} aria-selected={t.id === value} tabIndex={t.id === (tabs.some((x) => x.id === value) ? value : tabs[0]?.id) ? 0 : -1} onClick={() => onChange(t.id)}
-          className={cn("relative inline-flex h-[26px] shrink-0 items-center gap-1.5 rounded-a-sm px-2.5 t-caption outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
+          className={cn("relative inline-flex h-[26px] pointer-coarse:h-10 shrink-0 items-center gap-1.5 rounded-a-sm px-2.5 t-caption outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
             t.id === value ? "bg-a-raised text-a-text" : "text-a-text-2 hover:bg-a-hover hover:text-a-text")}>
-          {t.dot && <span aria-hidden className="size-1.5 rounded-full bg-a-accent-strong" />}
+          {t.dot && <span aria-hidden className="size-1.5 rounded-full bg-a-warning-fill" />}
           {t.label}
           {t.count !== undefined && <span className="text-a-text-3 tabular-nums">{t.count}</span>}
         </button>

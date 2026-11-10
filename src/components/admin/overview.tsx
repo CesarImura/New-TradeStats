@@ -6,7 +6,7 @@ import { toast } from "sonner"
 import { Bar, CartesianGrid, Cell, ComposedChart, Line, YAxis } from "recharts"
 import { ArrowRight, CalendarDays, ChevronDown, Video } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { AdminButton as Button, AdminPageHeader, AdminTabs, Metric as MetricCard, Panel, PanelHeader, Tag } from "@/components/admin/ui"
+import { AdminButton, AdminPageHeader, AdminTabs, EmptyState, Metric as MetricCard, Panel, PanelHeader, Tag } from "@/components/admin/ui"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import {
@@ -105,7 +105,7 @@ function format(m: Metric, v: number) {
 function FilterChip<T extends string>({ name, value, options, onChange }: { name: string; value: T; options: Record<T, string>; onChange: (v: T) => void }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button hierarchy="secondary" size="md" className="gap-0 px-0" aria-label={name ? `${name}: ${options[value]}` : options[value]} />}>
+      <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" className="gap-0 px-0" aria-label={name ? `${name}: ${options[value]}` : options[value]} />}>
         {name && <span className="border-r border-a-border px-2.5 text-a-text-2">{name}</span>}
         <span className="flex items-center gap-1 px-2.5">
           {!name && <CalendarDays className="size-3.5 text-a-text-2" />}{options[value]} <ChevronDown className="size-3.5 text-a-text-2" />
@@ -162,12 +162,12 @@ function NextLiveBanner({ base }: { base: string }) {
           <span className="t-body-m text-a-text-2">Camera, screen and chat are ready. {next.seats?.split(" ")[0] ?? "0"} students said they will join.</span>
         </div>
         <div className="flex gap-2">
-          <Button hierarchy="highlight" size="md" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
+          <AdminButton hierarchy="highlight" size="md" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
             Open studio
-          </Button>
-          <Button hierarchy="secondary" size="md" onClick={() => toast("Reminder sent", { description: "Signed-up students get a nudge." })}>
+          </AdminButton>
+          <AdminButton hierarchy="secondary" size="md" onClick={() => toast("Reminder sent", { description: "Signed-up students get a nudge." })}>
             Remind
-          </Button>
+          </AdminButton>
         </div>
       </div>
     </section>
@@ -242,12 +242,12 @@ export function AdminOverview() {
               <span className="t-body-m-medium tabular-nums">23</span> Online
             </span>
             <div className="inline-flex">
-              <Button size="lg" className="rounded-r-none" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
+              <AdminButton size="lg" className="rounded-r-none" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
                 <Video /> Go live
-              </Button>
-              <Button size="lg" iconOnly aria-label="Live options" className="rounded-l-none border-l border-white/20" nativeButton={false} render={<Link href={`${base}/calendar`} />}>
+              </AdminButton>
+              <AdminButton size="lg" iconOnly aria-label="Live options" className="rounded-l-none border-l border-white/20" nativeButton={false} render={<Link href={`${base}/calendar`} />}>
                 <ArrowRight />
-              </Button>
+              </AdminButton>
             </div>
           </>
         }
@@ -373,9 +373,9 @@ export function AdminOverview() {
                 </Avatar>
                 <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", u.tone === "danger" ? "bg-a-danger-fill" : "bg-a-warning-fill")} />
                 <span className="sr-only">{u.tone === "danger" ? "Urgent" : "Warning"}</span>
-                <span className="t-body-m-medium w-36 shrink-0 truncate">{u.name}</span>
-                <span className="t-body-m min-w-0 flex-1 truncate text-a-text-2">{u.reason}</span>
-                <Button hierarchy="secondary" size="sm" nativeButton={false} render={<Link href={`${base}/${u.href}`} />}>{u.action}</Button>
+                <span className="t-body-m-medium w-24 shrink-0 truncate sm:w-36">{u.name}</span>
+                <span className="t-body-m hidden min-w-0 flex-1 truncate text-a-text-2 min-[400px]:block">{u.reason}</span>
+                <AdminButton className="ml-auto" hierarchy="secondary" size="sm" nativeButton={false} render={<Link href={`${base}/${u.href}`} />}>{u.action}</AdminButton>
               </li>
             ))}
           </ul>
@@ -386,7 +386,7 @@ export function AdminOverview() {
 }
 
 function EmptyLine({ children }: { children: React.ReactNode }) {
-  return <p className="rounded-a-md border border-dashed border-a-border-strong px-4 py-8 text-center t-body-m text-a-text-2">{children}</p>
+  return <EmptyState compact title={children} className="py-8" />
 }
 
 function OverviewTooltip({ bar, line, ...props }: { bar: Metric; line: Metric } & React.ComponentProps<typeof ChartTooltipContent>) {

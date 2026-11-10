@@ -4,16 +4,14 @@ import { useState } from "react"
 import { CalendarRange, Eye, Plus, Users } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
 import { fmtDate, isFull, saveGroups, setPreviewAs, useGroups, useTiers, type Group } from "@/lib/data/access"
 import { cn } from "@/lib/utils"
 import { Field, SettingRow } from "../kit"
+import { AdminButton, AdminDrawer, AdminProgress } from "@/components/admin/ui"
 
 /** ADM-31: cohorts with start, end, seats, waiting list and which tiers can join. */
 export function Groups() {
@@ -26,8 +24,8 @@ export function Groups() {
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">Cohorts that start together. What a group unlocks can start on its start date, then week by week.</p>
-        <Button
-          variant="outline"
+        <AdminButton
+          
           onClick={() =>
             setOpen({
               id: `g${Date.now()}`,
@@ -42,10 +40,9 @@ export function Groups() {
               channel: true,
               ranking: coach.modules.ranking,
             })
-          }
-        >
+          } hierarchy="secondary">
           <Plus /> New group
-        </Button>
+        </AdminButton>
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {groups.map((g) => (
@@ -65,7 +62,7 @@ export function Groups() {
                   {g.members} of {g.seats}
                 </span>
               </div>
-              <Progress value={(g.members / Math.max(1, g.seats)) * 100} />
+              <AdminProgress label={`${g.name} seats`} value={(g.members / Math.max(1, g.seats)) * 100} />
               {isFull(g) ? (
                 <span className="text-xs text-amber-400">Full{g.waitlist ? ` · ${g.waiting} on the waiting list` : " · sign-ups closed"}</span>
               ) : (
@@ -93,12 +90,28 @@ function GroupEditor({ group, isNew, onClose }: { group: Group | null; isNew: bo
   const set = (p: Partial<Group>) => setG((v) => (v ? { ...v, ...p } : v))
 
   return (
-    <Sheet open={!!group} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full data-[side=right]:w-full sm:max-w-lg">
-        <SheetHeader>
-          <SheetTitle>{g?.name || "Group"}</SheetTitle>
-          <SheetDescription>{isNew ? "A new cohort. Students join it at checkout or you add them." : `${g?.members ?? 0} members.`}</SheetDescription>
-        </SheetHeader>
+    <AdminDrawer open={!!group} onOpenChange={(o) => !o && onClose()} title={<>{g?.name || "Group"}</>} subtitle={<>{isNew ? "A new cohort. Students join it at checkout or you add them." : `${g?.members ?? 0} members.`}</>} footer={<>{!isNew && g && (
+            <AdminButton
+              
+              onClick={() => {
+                setPreviewAs(coach.slug, { kind: "group", id: g.id, label: g.name })
+                window.open(`/c/${coach.slug}/courses`, "_blank")
+              }} hierarchy="secondary">
+              <Eye /> Preview as
+            </AdminButton>
+          )}
+          <AdminButton
+            className="flex-1"
+            disabled={!g?.name || !g.tiers.length}
+            onClick={() => {
+              if (!g) return
+              saveGroups(coach, (list) => (isNew ? [...list, g] : list.map((x) => (x.id === g.id ? g : x))))
+              toast(isNew ? `${g.name} created` : `${g.name} saved`)
+              onClose()
+            }}>
+            {isNew ? "Create group" : "Save group"}
+          </AdminButton></>}>
+        
         {g && (
           <div className="grid gap-5 overflow-y-auto px-4">
             <Field label="Name">
@@ -140,32 +153,8 @@ function GroupEditor({ group, isNew, onClose }: { group: Group | null; isNew: bo
             <p className="text-xs text-muted-foreground">Set when each course opens for this group in the Access tab, e.g. week 2 opens 7 days after the start.</p>
           </div>
         )}
-        <SheetFooter className="flex-row">
-          {!isNew && g && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setPreviewAs(coach.slug, { kind: "group", id: g.id, label: g.name })
-                window.open(`/c/${coach.slug}/courses`, "_blank")
-              }}
-            >
-              <Eye /> Preview as
-            </Button>
-          )}
-          <Button
-            className="flex-1"
-            disabled={!g?.name || !g.tiers.length}
-            onClick={() => {
-              if (!g) return
-              saveGroups(coach, (list) => (isNew ? [...list, g] : list.map((x) => (x.id === g.id ? g : x))))
-              toast(isNew ? `${g.name} created` : `${g.name} saved`)
-              onClose()
-            }}
-          >
-            {isNew ? "Create group" : "Save group"}
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        
+      
+</AdminDrawer>
   )
 }

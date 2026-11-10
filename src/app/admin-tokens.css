@@ -306,6 +306,7 @@
   --color-a-border-subtle: var(--admin-color-border-subtle);
   --color-a-border-danger: var(--admin-color-border-danger);
   --color-a-border-focus: var(--admin-color-border-focus);
+  --color-a-border-active: var(--admin-color-border-active);
   --color-a-text: var(--admin-color-text-primary);
   --color-a-text-2: var(--admin-color-text-secondary);
   --color-a-text-3: var(--admin-color-text-tertiary);

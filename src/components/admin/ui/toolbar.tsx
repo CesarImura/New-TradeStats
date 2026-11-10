@@ -13,7 +13,7 @@ export function AdminToolbar({ className, ...props }: React.ComponentProps<"div"
 /** Admin / Field with a search icon and an optional trailing hint ("⌘K"): 32px, field fill, 1px border, radius md. */
 export function AdminSearch({ value, onChange, placeholder, label, hint, className }: { value: string; onChange: (v: string) => void; placeholder: string; label?: string; hint?: string; className?: string }) {
   return (
-    <label className={cn("relative flex h-8 w-60 max-w-full shrink-0 items-center gap-2 rounded-a-md border border-a-border bg-a-field px-3 transition-colors duration-300 focus-within:border-a-border-focus hover:border-a-border-strong", className)}>
+    <label className={cn("relative flex h-8 pointer-coarse:h-10 w-60 max-w-full shrink-0 items-center gap-2 rounded-a-md border border-a-border bg-a-field px-3 transition-colors duration-300 focus-within:border-a-border-focus hover:border-a-border-strong", className)}>
       <Search className="size-4 shrink-0 text-a-icon" aria-hidden />
       <input
         value={value}
@@ -37,7 +37,7 @@ export function AdminFilter({ label, value, onValueChange, options, ariaLabel, c
     <Select items={options as { value: string; label: string }[]} value={value} onValueChange={(v) => v != null && onValueChange(String(v))}>
       <SelectTrigger
         aria-label={ariaLabel ?? label}
-        className={cn("h-8! shrink-0 gap-2 rounded-a-md! border-a-border! bg-transparent! pr-2.5 pl-3 t-caption text-a-text hover:bg-a-hover!", className)}
+        className={cn("h-8! pointer-coarse:h-10! shrink-0 gap-2 rounded-a-md! border-a-border! bg-transparent! pr-2.5 pl-3 t-caption text-a-text hover:bg-a-hover!", className)}
       >
         {label && (
           <>

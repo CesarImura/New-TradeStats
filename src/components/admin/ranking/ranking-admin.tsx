@@ -6,9 +6,7 @@ import { Medal, Plus, Trophy } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { AdminButton, Panel, PanelHeader, Tag } from "@/components/admin/ui"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AdminButton, AdminModal, Panel, PanelHeader, Tag } from "@/components/admin/ui"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -44,18 +42,18 @@ export function RankingAdmin() {
         title="Ranking"
         text="Leaderboard, competitions, points and badges"
         actions={
-          <Button onClick={() => setCreating(true)}>
+          <AdminButton onClick={() => setCreating(true)}>
             <Plus /> New competition
-          </Button>
+          </AdminButton>
         }
       />
       {!coach.modules.ranking && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
           <Trophy className="size-4 text-[var(--ts-interactive)]" />
           <span className="flex-1">Ranking is switched off, so students don&apos;t see it yet.</span>
-          <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`${base}/design`} />}>
+          <AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="md">
             Switch on in Design
-          </Button>
+          </AdminButton>
         </div>
       )}
       <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className="gap-5">
@@ -249,12 +247,16 @@ function NewCompetition({ open, onOpenChange, onCreate }: { open: boolean; onOpe
   const [end, setEnd] = useState("30 Nov")
   const [prize, setPrize] = useState("")
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>New competition</DialogTitle>
-          <DialogDescription>Only verified broker trades count. Amounts are never shown, only percentages and scores.</DialogDescription>
-        </DialogHeader>
+    <AdminModal open={open} onOpenChange={onOpenChange} title="New competition" subtitle="Only verified broker trades count. Amounts are never shown, only percentages and scores." footer={<><AdminButton
+            disabled={!name.trim()}
+            onClick={() => {
+              onCreate({ id: `c${Date.now()}`, name: name.trim(), metric, start, end, prize: prize || "Bragging rights", entrants: 0, status: "scheduled" })
+              onOpenChange(false)
+              setName("")
+            }}>
+            Create
+          </AdminButton></>}>
+        
         <div className="grid gap-3">
           <Field label="Name">
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="November discipline cup" />
@@ -280,19 +282,8 @@ function NewCompetition({ open, onOpenChange, onCreate }: { open: boolean; onOpe
             <Input value={prize} onChange={(e) => setPrize(e.target.value)} placeholder="A free month of Trading Desk" />
           </Field>
         </div>
-        <DialogFooter>
-          <Button
-            disabled={!name.trim()}
-            onClick={() => {
-              onCreate({ id: `c${Date.now()}`, name: name.trim(), metric, start, end, prize: prize || "Bragging rights", entrants: 0, status: "scheduled" })
-              onOpenChange(false)
-              setName("")
-            }}
-          >
-            Create
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        
+      
+</AdminModal>
   )
 }

@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { Download, MoreHorizontal, RotateCcw } from "@/components/icons"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { TRANSACTIONS, type Txn } from "@/lib/data/people"
@@ -74,7 +73,7 @@ export function Transactions() {
                     </AdminButton>
                   )}
                   <DropdownMenu>
-                    <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Actions" />}>
+                    <DropdownMenuTrigger render={<AdminButton aria-label="Actions" hierarchy="ghost" size="md" iconOnly />}>
                       <MoreHorizontal />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">

@@ -5,17 +5,15 @@ import Link from "next/link"
 import { Handshake, Pencil, Plus, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTiers } from "@/lib/data/access"
 import { CATALOGUE, COACH_SHARE, KIND_LABEL, PARTNER_KINDS, fromCatalogue, saveAffiliate, saveOffers, useAffiliate, useOffers, type PartnerKind, type PartnerOffer } from "@/lib/data/partners"
-import { Tag } from "../ui"
-import { Empty, Field, Mono, NativeSelect, Page, PageHeader, SettingRow } from "../kit"
+import { AdminButton, AdminModal, Tag } from "../ui"
+import { EmptyState, Field, Mono, NativeSelect, Page, PageHeader, SettingRow } from "../kit"
 
 const euro = (n: number) => `€${n.toLocaleString("en")}`
 
@@ -30,12 +28,12 @@ export function PartnersAdmin() {
         text="Offers from our partners and students who bring students"
         actions={
           <>
-            <Button variant="outline" onClick={() => setAdding("own")}>
+            <AdminButton onClick={() => setAdding("own")} hierarchy="secondary">
               Add my own link
-            </Button>
-            <Button onClick={() => setAdding("catalogue")}>
+            </AdminButton>
+            <AdminButton onClick={() => setAdding("catalogue")}>
               <Plus /> Add from catalogue
-            </Button>
+            </AdminButton>
           </>
         }
       />
@@ -43,9 +41,9 @@ export function PartnersAdmin() {
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
           <Handshake className="size-4 text-[var(--ts-interactive)]" />
           <span className="flex-1">Partners is switched off, so students don&apos;t see it yet.</span>
-          <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`${base}/design`} />}>
+          <AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="md">
             Switch on in Design
-          </Button>
+          </AdminButton>
         </div>
       )}
       <Tabs defaultValue="offers" className="gap-5">
@@ -79,16 +77,16 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
 
   if (offers.length === 0) {
     return (
-      <Empty
+      <EmptyState
         icon={Handshake}
         title="No offers yet"
-        text="Add an offer from our catalogue or your own affiliate link. Students see them labelled as partner offers."
-        action={
+        description="Add an offer from our catalogue or your own affiliate link. Students see them labelled as partner offers."
+        actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onAdd("catalogue")}>
+            <AdminButton onClick={() => onAdd("catalogue")} hierarchy="secondary">
               Add from catalogue
-            </Button>
-            <Button onClick={() => onAdd("own")}>Add my own link</Button>
+            </AdminButton>
+            <AdminButton onClick={() => onAdd("own")}>Add my own link</AdminButton>
           </div>
         }
       />
@@ -114,20 +112,19 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
               <span className="min-w-0 t-caption text-a-text-2 tabular-nums">{o.clicks} clicks{o.signups ? ` · ${o.signups} sign-ups` : ""}</span>
             </div>
             <div className="flex justify-end gap-0.5 border-t border-a-border-subtle pt-2">
-              <Button size="icon-sm" variant="ghost" aria-label={`Edit ${o.name}`} onClick={() => setEditing(o)}>
+              <AdminButton aria-label={`Edit ${o.name}`} onClick={() => setEditing(o)} hierarchy="ghost" size="md" iconOnly>
                 <Pencil />
-              </Button>
-              <Button
-                size="icon-sm"
-                variant="ghost"
+              </AdminButton>
+              <AdminButton
+                
+                
                 aria-label={`Remove ${o.name}`}
                 onClick={() => {
                   saveOffers(coach, (l) => l.filter((x) => x.id !== o.id))
                   toast(`${o.name} removed`, { action: { label: "Undo", onClick: () => saveOffers(coach, (l) => [...l, o]) } })
-                }}
-              >
+                }} hierarchy="ghost" size="md" iconOnly>
                 <Trash2 />
-              </Button>
+              </AdminButton>
             </div>
           </article>
         ))}
@@ -143,12 +140,10 @@ function CatalogueDialog({ onClose }: { onClose: () => void }) {
   const offers = useOffers(coach)
   const left = CATALOGUE.filter((c) => !offers.some((o) => o.id === c.id))
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Add from catalogue</DialogTitle>
-          <DialogDescription>Offers we negotiated for coaches. You earn {COACH_SHARE}% of the commission.</DialogDescription>
-        </DialogHeader>
+    <AdminModal open={true} onOpenChange={(o) => !o && onClose()} title="Add from catalogue" subtitle={<>Offers we negotiated for coaches. You earn {COACH_SHARE}% of the commission.</>} className="sm:max-w-xl" footer={<><AdminButton onClick={onClose} hierarchy="secondary">
+            Done
+          </AdminButton></>}>
+        
         {left.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">You have added every offer in the catalogue.</p>
         ) : (
@@ -164,27 +159,22 @@ function CatalogueDialog({ onClose }: { onClose: () => void }) {
                     Commission {c.commission} · You earn {COACH_SHARE}% of the commission
                   </span>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
+                <AdminButton
+                  
+                  
                   onClick={() => {
                     saveOffers(coach, (l) => [...l, fromCatalogue(coach, c)])
                     toast(`${c.name} added`, { description: "Students see it as a partner offer." })
-                  }}
-                >
+                  }} hierarchy="secondary" size="md">
                   <Plus /> Add
-                </Button>
+                </AdminButton>
               </div>
             ))}
           </div>
         )}
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Done
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        
+      
+</AdminModal>
   )
 }
 
@@ -223,12 +213,13 @@ function OwnDialog({ item, onClose }: { item?: PartnerOffer; onClose: () => void
   }
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{item ? `Edit ${item.name}` : "Add my own link"}</DialogTitle>
-          <DialogDescription>{fixed ? "The tracking link stays as we set it, so your earnings are counted." : "Your own affiliate link, shown to students as a partner offer."}</DialogDescription>
-        </DialogHeader>
+    <AdminModal open={true} onOpenChange={(o) => !o && onClose()} title={<>{item ? `Edit ${item.name}` : "Add my own link"}</>} subtitle={<>{fixed ? "The tracking link stays as we set it, so your earnings are counted." : "Your own affiliate link, shown to students as a partner offer."}</>} footer={<><AdminButton onClick={onClose} hierarchy="secondary">
+            Cancel
+          </AdminButton>
+          <AdminButton disabled={!ok} onClick={save}>
+            {item ? "Save" : "Add"}
+          </AdminButton></>}>
+        
         <div className="grid gap-3">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Name">
@@ -267,16 +258,9 @@ function OwnDialog({ item, onClose }: { item?: PartnerOffer; onClose: () => void
             </div>
           </Field>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button disabled={!ok} onClick={save}>
-            {item ? "Save" : "Add"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        
+      
+</AdminModal>
   )
 }
 
@@ -360,7 +344,7 @@ function Affiliates() {
             </Table>
           </div>
         ) : (
-          <Empty icon={Handshake} title="The program is off" text="Switch it on and every student gets a link to share." />
+          <EmptyState icon={Handshake} title="The program is off" description="Switch it on and every student gets a link to share." />
         )}
       </section>
     </div>

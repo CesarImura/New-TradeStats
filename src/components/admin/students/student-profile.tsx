@@ -5,9 +5,6 @@ import { Eye, Mail, MessageSquareText, Sparkles } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -19,6 +16,7 @@ import { NO_QUESTIONS, useOnboardingSettings, useStudentStart } from "@/lib/data
 import { TRADES, fmtPnl, fmtR } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { HealthDot, Mono, NativeSelect, SettingRow, useCommunityData } from "../kit"
+import { AdminButton, AdminProgress, EmptyState, Tag } from "@/components/admin/ui"
 
 /** The prototype's one student who really goes through onboarding (the others are sample data). */
 const DEMO_STUDENT_ID = "s1"
@@ -81,15 +79,15 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
             </div>
           </div>
           <div className="flex flex-wrap gap-2 pt-2">
-            <Button size="sm" variant="outline" onClick={() => onMessage(s)}>
+            <AdminButton onClick={() => onMessage(s)} hierarchy="secondary" size="md">
               <Mail /> Message
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setBriefing((b) => !b)}>
+            </AdminButton>
+            <AdminButton onClick={() => setBriefing((b) => !b)} hierarchy="secondary" size="md">
               <Sparkles /> Briefing for a call
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => toast(`Viewing the platform as ${s.name}`, { description: `${tier.name}${s.group ? `, ${s.group}` : ""}` })}>
+            </AdminButton>
+            <AdminButton onClick={() => toast(`Viewing the platform as ${s.name}`, { description: `${tier.name}${s.group ? `, ${s.group}` : ""}` })} hierarchy="secondary" size="md">
               <Eye /> View as {s.name.split(" ")[0]}
-            </Button>
+            </AdminButton>
           </div>
           {briefing && (
             <div className="mt-3 grid gap-2 rounded-lg border border-[var(--ts-cta)]/25 bg-[var(--ts-cta)]/5 p-3 text-sm">
@@ -129,10 +127,10 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
               </div>
               <div className="grid gap-1 divide-y rounded-lg border px-3 bg-card">
                 <SettingRow label="Broker" text={s.broker ? "Trades sync automatically" : "Not connected yet"}>
-                  <Badge variant={s.broker ? "secondary" : "outline"}>{s.broker ? "Connected" : "Not connected"}</Badge>
+                  <Tag tone={s.broker ? "success" : "neutral"}>{s.broker ? "Connected" : "Not connected"}</Tag>
                 </SettingRow>
                 <SettingRow label="Discord" text={s.discord ? "Role given by tier" : "Hasn't linked Discord"}>
-                  <Badge variant={s.discord ? "secondary" : "outline"}>{s.discord ? "Linked" : "Not linked"}</Badge>
+                  <Tag tone={s.discord ? "success" : "neutral"}>{s.discord ? "Linked" : "Not linked"}</Tag>
                 </SettingRow>
                 <SettingRow label="Assistant coach" text="Sees this student's feedback requests and notes">
                   <NativeSelect defaultValue={s.coach ?? ""} onChange={(e) => toast(e.target.value ? `${s.name} assigned to ${e.target.value}` : "Assistant coach removed")}>
@@ -157,7 +155,7 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
                       <span>{c.title}</span>
                       <span className="text-muted-foreground tabular-nums">{c.locked && tier.id !== "vip" ? "No access" : `${v}%`}</span>
                     </div>
-                    <Progress value={c.locked && tier.id !== "vip" ? 0 : v} />
+                    <AdminProgress label={`${c.title} progress`} value={c.locked && tier.id !== "vip" ? 0 : v} />
                     <span className="text-xs text-muted-foreground">Average of all students: {courseProgress(c) + 9}%</span>
                   </div>
                 )
@@ -166,7 +164,7 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
 
             <TabsContent value="journal" className="grid gap-2">
               {!s.broker ? (
-                <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">{s.name.split(" ")[0]} hasn&apos;t connected a broker yet.</p>
+                <EmptyState compact title={`${s.name.split(" ")[0]} hasn't connected a broker yet.`} />
               ) : (
                 <>
                   <p className="text-xs text-muted-foreground">Read-only. You see the journal as {s.name.split(" ")[0]} does.</p>
@@ -177,7 +175,7 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
                         {t.symbol} {t.side}
                       </span>
                       <span className="flex-1 truncate text-muted-foreground">{t.setup}</span>
-                      {t.review === "waiting" && <Badge variant="outline">Review asked</Badge>}
+                      {t.review === "waiting" && <Tag>Review asked</Tag>}
                       <span className={cn("w-14 text-right tabular-nums", t.r >= 0 ? "text-[var(--profit)]" : "text-[var(--loss)]")}>{fmtR(t.r)}</span>
                       <span className="hidden w-20 text-right text-muted-foreground tabular-nums sm:block">{fmtPnl(t.pnl)}</span>
                     </div>
@@ -189,17 +187,16 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
             <TabsContent value="notes" className="grid gap-3">
               <div className="grid gap-2">
                 <Textarea rows={3} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Private note. Only your team sees it." />
-                <Button
-                  size="sm"
+                <AdminButton
+                  
                   className="justify-self-end"
                   disabled={!draft.trim()}
                   onClick={() => {
                     setNotes((n) => ({ ...n, [s.id]: [{ by: DEMO_ADMIN.name.split(" ")[0], when: "just now", text: draft.trim() }, ...(n[s.id] ?? [])] }))
                     setDraft("")
-                  }}
-                >
+                  }} size="md">
                   <MessageSquareText /> Add note
-                </Button>
+                </AdminButton>
               </div>
               {myNotes.length === 0 && <p className="text-sm text-muted-foreground">No notes yet.</p>}
               {myNotes.map((n, i) => (
@@ -233,9 +230,9 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
                 </NativeSelect>
               </SettingRow>
               <SettingRow label="Extra access" text="Give one course for free, on top of the tier">
-                <Button size="sm" variant="outline" onClick={() => toast("Pick a course to unlock for this student")}>
+                <AdminButton onClick={() => toast("Pick a course to unlock for this student")} hierarchy="secondary" size="md">
                   Add a course
-                </Button>
+                </AdminButton>
               </SettingRow>
               <SettingRow label="Pause access" text="Keeps the account and the journal. Nothing is deleted.">
                 <Switch onCheckedChange={(v) => toast(v ? "Access paused" : "Access back on")} />
@@ -257,15 +254,15 @@ export function StudentProfile({ student: s, onOpenChange, onMessage }: { studen
                 </SettingRow>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => toast("Payment link sent", { description: `${s.name} gets an e-mail to update the card.` })}>
+                <AdminButton onClick={() => toast("Payment link sent", { description: `${s.name} gets an e-mail to update the card.` })} hierarchy="secondary" size="md">
                   Send payment link
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => toast("Refund the last payment?", { description: "In the real product this asks to confirm." })}>
+                </AdminButton>
+                <AdminButton onClick={() => toast("Refund the last payment?", { description: "In the real product this asks to confirm." })} hierarchy="secondary" size="md">
                   Refund last payment
-                </Button>
-                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => toast("Cancel at the end of the period?", { description: "In the real product this asks to confirm." })}>
+                </AdminButton>
+                <AdminButton className="text-destructive" onClick={() => toast("Cancel at the end of the period?", { description: "In the real product this asks to confirm." })} hierarchy="ghost" size="md">
                   Cancel membership
-                </Button>
+                </AdminButton>
               </div>
             </TabsContent>
 

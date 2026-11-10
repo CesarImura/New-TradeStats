@@ -5,9 +5,7 @@ import Link from "next/link"
 import { Download, FileUp, Pencil, Plus, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -15,8 +13,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { useTiers } from "@/lib/data/access"
 import { DOWNLOAD_CATEGORIES, categoryLabel, saveDownloads, shortDate, useDownloads, type DownloadCategory, type DownloadFile, type DownloadItem } from "@/lib/data/downloads"
 import { cn } from "@/lib/utils"
-import { Empty, Field, NativeSelect, Page, PageHeader } from "../kit"
-import { AdminFilter, AdminSearch, AdminTabs, AdminToolbar, FileIcon, Tag } from "../ui"
+import { EmptyState, Field, NativeSelect, Page, PageHeader } from "../kit"
+import { AdminButton, AdminFilter, AdminModal, AdminSearch, AdminTabs, AdminToolbar, FileIcon, Tag } from "../ui"
 
 const TYPES: Record<string, string> = {
   pdf: "PDF",
@@ -62,23 +60,23 @@ export function DownloadsAdmin() {
         title="Downloads"
         text={`Files students can download · ${items.length} files · ${(items.length * 143).toLocaleString("en")} downloads this month`}
         actions={
-          <Button onClick={() => setEditing("new")}>
+          <AdminButton onClick={() => setEditing("new")}>
             <Plus /> Upload a file
-          </Button>
+          </AdminButton>
         }
       />
       {!coach.modules.downloads && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
           <Download className="size-4 text-[var(--ts-interactive)]" />
           <span className="flex-1">Downloads is switched off, so students don&apos;t see it yet.</span>
-          <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`${base}/design`} />}>
+          <AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="md">
             Switch on in Design
-          </Button>
+          </AdminButton>
         </div>
       )}
 
       {items.length === 0 ? (
-        <Empty icon={Download} title="No files yet" text="Upload an indicator, a template or a checklist and students find it under Downloads." action={<Button onClick={() => setEditing("new")}><Plus /> Upload a file</Button>} />
+        <EmptyState icon={Download} title="No files yet" description="Upload an indicator, a template or a checklist and students find it under Downloads." actions={<AdminButton onClick={() => setEditing("new")}><Plus /> Upload a file</AdminButton>} />
       ) : (
         <>
         <AdminToolbar>
@@ -126,12 +124,12 @@ export function DownloadsAdmin() {
                   <TableCell className="hidden text-right tabular-nums md:table-cell">{[...d.id].reduce((n, c) => n + c.charCodeAt(0), 0) * 7 % 400 + 14}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-0.5">
-                      <Button size="icon-sm" variant="ghost" aria-label={`Edit ${d.title}`} onClick={() => setEditing(d)}>
+                      <AdminButton aria-label={`Edit ${d.title}`} onClick={() => setEditing(d)} hierarchy="ghost" size="md" iconOnly>
                         <Pencil />
-                      </Button>
-                      <Button size="icon-sm" variant="ghost" aria-label={`Delete ${d.title}`} onClick={() => remove(d)}>
+                      </AdminButton>
+                      <AdminButton aria-label={`Delete ${d.title}`} onClick={() => remove(d)} hierarchy="ghost" size="md" iconOnly>
                         <Trash2 />
-                      </Button>
+                      </AdminButton>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -189,12 +187,13 @@ function UploadDialog({ item, onClose }: { item?: DownloadItem; onClose: () => v
   }
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{item ? "Edit file" : "Upload a file"}</DialogTitle>
-          <DialogDescription>Students find it under {coach.wording.downloads}. Replace the file to publish a new version.</DialogDescription>
-        </DialogHeader>
+    <AdminModal open={true} onOpenChange={(o) => !o && onClose()} title={<>{item ? "Edit file" : "Upload a file"}</>} subtitle={<>Students find it under {coach.wording.downloads}. Replace the file to publish a new version.</>} footer={<><AdminButton onClick={onClose} hierarchy="secondary">
+            Cancel
+          </AdminButton>
+          <AdminButton disabled={!ok} onClick={save}>
+            {item ? "Save" : "Upload"}
+          </AdminButton></>}>
+        
         <div className="grid gap-3">
           <button
             type="button"
@@ -209,7 +208,7 @@ function UploadDialog({ item, onClose }: { item?: DownloadItem; onClose: () => v
               setOver(false)
               take(e.dataTransfer.files[0])
             }}
-            className={cn("grid place-items-center gap-1 rounded-lg border border-dashed px-4 py-6 text-center text-sm", over && "border-[var(--ts-interactive)] bg-[var(--ts-interactive)]/8")}
+            className={cn("grid place-items-center gap-1 rounded-lg border border-dashed border-a-border-strong px-4 py-6 text-center text-sm", over && "border-[var(--ts-interactive)] bg-[var(--ts-interactive)]/8")}
           >
             <FileUp className="size-5 text-muted-foreground" />
             {file ? (
@@ -266,15 +265,8 @@ function UploadDialog({ item, onClose }: { item?: DownloadItem; onClose: () => v
             <Switch checked={notify} onCheckedChange={setNotify} />
           </label>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button disabled={!ok} onClick={save}>
-            {item ? "Save" : "Upload"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        
+      
+</AdminModal>
   )
 }

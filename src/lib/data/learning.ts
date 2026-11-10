@@ -25,6 +25,8 @@ export type Lesson = {
   status: Status
   /** Shown to students while locked, e.g. "Thu 15 Oct". */
   unlockAt?: string
+  /** Open to students without access (a taster). Set from the lesson's Visibility in the admin. */
+  freePreview?: boolean
   summary?: string
   takeaways?: string[]
   aiSummary?: boolean
@@ -54,6 +56,10 @@ export type Course = {
   color: number
   /** The course's own cover picture (a small JPEG as a data URL). Empty: its colour. */
   cover?: string
+  /** When the coach last changed it, as a short phrase for the admin lists ("2 h ago"). */
+  edited?: string
+  /** Sold on its own, outside the tiers (set when it was made; the price lives in Sales). */
+  soldSeparately?: boolean
   modules: Module[]
 }
 
@@ -272,6 +278,9 @@ const fromDrafts = (drafts: CourseDraft[]): Catalog => ({
   })),
 })
 
+const EDITED = ["2 h ago", "yesterday", "3 d ago", "4 d ago", "1 w ago", "2 w ago"]
+const withEdited = (c: Catalog): Catalog => ({ ...c, courses: c.courses.map((x, i) => ({ ...x, edited: x.edited ?? EDITED[i % EDITED.length] })) })
+
 // The seed follows the coach's setup uploads, so the wizard preview shows their own
 // courses instead of the sample. Without uploads it stays the memoised sample.
 const seedFor = (coach: Coach): Catalog => {
@@ -281,7 +290,7 @@ const seedFor = (coach: Coach): Catalog => {
     if (!SEEDS.has(key)) SEEDS.set(key, fromDrafts(drafts))
     return SEEDS.get(key)!
   }
-  if (!SEEDS.has(coach.slug)) SEEDS.set(coach.slug, seed(coach))
+  if (!SEEDS.has(coach.slug)) SEEDS.set(coach.slug, withEdited(seed(coach)))
   return SEEDS.get(coach.slug)!
 }
 

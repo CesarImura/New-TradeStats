@@ -4,18 +4,14 @@ import { useMemo, useState } from "react"
 import { Download, Mail, MoreHorizontal, Plus, Send, Users } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
-import { Empty, Field, Page, PageHeader } from "../kit"
-import { AdminFilter, AdminSearch, AdminTabs, AdminToolbar } from "../ui"
+import { EmptyState, Field, Page, PageHeader } from "../kit"
+import { AdminButton, AdminFilter, AdminModal, AdminSearch, AdminTabs, AdminToolbar, CellPerson, CellProgress, CellStack } from "../ui"
 import { StatPanel, Tag } from "../ui"
 import { SetupTip } from "../setup-checklist"
 import { ImportDialog } from "./import-dialog"
@@ -68,12 +64,12 @@ export function StudentsPage() {
         text={`${coach.name} · ${STUDENTS.length} students · ${joinedThisMonth} joined this month`}
         actions={
           <>
-            <Button variant="outline" onClick={() => toast("Export started", { description: "students.csv with the columns you see." })}>
+            <AdminButton onClick={() => toast("Export started", { description: "students.csv with the columns you see." })} hierarchy="secondary">
               <Download /> Export
-            </Button>
-            <Button onClick={() => setImporting(true)}>
+            </AdminButton>
+            <AdminButton onClick={() => setImporting(true)}>
               <Plus /> Import or invite
-            </Button>
+            </AdminButton>
           </>
         }
       />
@@ -109,11 +105,11 @@ export function StudentsPage() {
       {picked.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--ts-cta)]/30 bg-[var(--ts-cta)]/6 px-3 py-2 text-sm">
           <span className="tabular-nums">{picked.length} selected</span>
-          <Button size="sm" variant="outline" onClick={() => setMessage(selected)}>
+          <AdminButton onClick={() => setMessage(selected)} hierarchy="secondary" size="md">
             <Mail /> Message
-          </Button>
+          </AdminButton>
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>Move to tier</DropdownMenuTrigger>
+            <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Move to tier</DropdownMenuTrigger>
             <DropdownMenuContent>
               {coach.tiers.map((t) => (
                 <DropdownMenuItem key={t.id} onClick={() => toast(`${picked.length} students move to ${t.name}`, { description: "Upgrades start now, downgrades at the end of the period." })}>
@@ -123,7 +119,7 @@ export function StudentsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>Add to group</DropdownMenuTrigger>
+            <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Add to group</DropdownMenuTrigger>
             <DropdownMenuContent>
               {GROUPS.map((g) => (
                 <DropdownMenuItem key={g.id} onClick={() => toast(`${picked.length} students added to ${g.name}`)}>
@@ -132,14 +128,14 @@ export function StudentsPage() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setPicked([])}>
+          <AdminButton className="ml-auto" onClick={() => setPicked([])} hierarchy="ghost" size="md">
             Clear
-          </Button>
+          </AdminButton>
         </div>
       )}
 
       {rows.length === 0 ? (
-        <Empty icon={Users} title="No students match" text="Clear the search or the filters." />
+        <EmptyState icon={Users} title="No students match" description="Clear the search or the filters." />
       ) : (
         <div className="overflow-hidden rounded-lg border bg-card">
           <Table>
@@ -164,27 +160,13 @@ export function StudentsPage() {
                     <Checkbox checked={picked.includes(s.id)} onCheckedChange={() => toggle(s.id)} aria-label={`Select ${s.name}`} />
                   </TableCell>
                   <TableCell>
-                    <div className="flex min-w-44 items-center gap-2.5">
-                      <Avatar className="size-8">
-                        <AvatarFallback className="text-xs">{s.initials}</AvatarFallback>
-                      </Avatar>
-                      <div className="grid min-w-0">
-                        <span className="truncate font-medium">{s.name}</span>
-                        <span className="truncate text-xs text-muted-foreground">{s.email}</span>
-                      </div>
-                    </div>
+                    <CellPerson initials={s.initials} name={s.name} subtitle={s.email} className="min-w-44" />
                   </TableCell>
                   <TableCell>
-                    <div className="grid">
-                      <span>{tierFor(coach, s.tier).name}</span>
-                      <span className="text-xs text-muted-foreground">{s.group ?? "No group"}</span>
-                    </div>
+                    <CellStack title={tierFor(coach, s.tier).name} subtitle={s.group ?? "No group"} />
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    <div className="flex w-32 items-center gap-2">
-                      <Progress value={s.progress} className="flex-1" />
-                      <span className="w-8 text-right text-xs text-muted-foreground tabular-nums">{s.progress}%</span>
-                    </div>
+                    <CellProgress label={`${s.name} course progress`} value={s.progress} />
                   </TableCell>
                   <TableCell className="hidden text-right tabular-nums xl:table-cell">
                     {s.broker ? `${s.rules}%` : <span className="text-a-text-3">—</span>}
@@ -197,7 +179,7 @@ export function StudentsPage() {
                   <TableCell className="hidden text-right text-a-text-2 md:table-cell">{s.lastActive}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={`Actions for ${s.name}`} />}>
+                      <DropdownMenuTrigger render={<AdminButton aria-label={`Actions for ${s.name}`} hierarchy="ghost" size="md" iconOnly />}>
                         <MoreHorizontal />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -238,12 +220,20 @@ export function MessageDialog({ to, onClose }: { to: Student[] | null; onClose: 
   const [email, setEmail] = useState(true)
   const names = to?.map((s) => s.name.split(" ")[0]).join(", ")
   return (
-    <Dialog open={!!to} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Message {to?.length === 1 ? to[0].name : `${to?.length} students`}</DialogTitle>
-          <DialogDescription>{to && to.length > 1 ? names : "Arrives in their notifications"}{email ? " and by e-mail" : ""}, from {coach.coachName}.</DialogDescription>
-        </DialogHeader>
+    <AdminModal open={!!to} onOpenChange={(o) => !o && onClose()} title={<>Message {to?.length === 1 ? to[0].name : `${to?.length} students`}</>} subtitle={<>{to && to.length > 1 ? names : "Arrives in their notifications"}{email ? " and by e-mail" : ""}, from {coach.coachName}.</>} className="sm:max-w-lg" footer={<><AdminButton onClick={onClose} hierarchy="ghost">
+            Cancel
+          </AdminButton>
+          <AdminButton
+            disabled={!body.trim()}
+            onClick={() => {
+              toast(`Message sent to ${to?.length === 1 ? to[0].name : `${to?.length} students`}`)
+              setSubject("")
+              setBody("")
+              onClose()
+            }}>
+            <Send /> Send
+          </AdminButton></>}>
+        
         <div className="grid gap-3">
           <Field label="Subject">
             <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Quick check-in" />
@@ -255,24 +245,9 @@ export function MessageDialog({ to, onClose }: { to: Student[] | null; onClose: 
             <Checkbox checked={email} onCheckedChange={(v) => setEmail(!!v)} /> Also send by e-mail
           </label>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            disabled={!body.trim()}
-            onClick={() => {
-              toast(`Message sent to ${to?.length === 1 ? to[0].name : `${to?.length} students`}`)
-              setSubject("")
-              setBody("")
-              onClose()
-            }}
-          >
-            <Send /> Send
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        
+      
+</AdminModal>
   )
 }
 
