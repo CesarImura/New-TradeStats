@@ -32,7 +32,7 @@ export function RankingAdmin() {
     <Page>
       <PageHeader
         title="Ranking"
-        text="Leaderboards and competitions that reward the right things: discipline and consistency, not only profit."
+        text="Leaderboard, competitions, points and badges"
         actions={
           <Button onClick={() => setCreating(true)}>
             <Plus /> New competition
@@ -79,7 +79,9 @@ export function RankingAdmin() {
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="w-16">Rank</TableHead>
                     <TableHead>Student</TableHead>
-                    <TableHead className="text-right">Score</TableHead>
+                    <TableHead className="hidden md:table-cell">Tier</TableHead>
+                    <TableHead className="text-right">Points</TableHead>
+                    <TableHead className="hidden text-right md:table-cell">Rules kept</TableHead>
                     <TableHead className="text-right">Move</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -95,7 +97,9 @@ export function RankingAdmin() {
                           {r.nicknames ? l.name : l.name.replace(".", "")}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{l.score}</TableCell>
+                      <TableCell className="hidden text-a-text-2 md:table-cell">{["Pro", "Funded Track", "Pro", "Free", "Pro"][l.rank % 5]}</TableCell>
+                      <TableCell className="text-right tabular-nums">{(l.score * 25).toLocaleString("en")}</TableCell>
+                      <TableCell className="hidden text-right tabular-nums md:table-cell">{l.score - 4}%</TableCell>
                       <TableCell className="text-right">
                         {l.change === 0 ? <Tag>–</Tag> : <Tag tone={l.change > 0 ? "success" : "danger"}>{l.change > 0 ? `+${l.change}` : l.change}</Tag>}
                       </TableCell>

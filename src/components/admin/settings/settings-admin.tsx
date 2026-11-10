@@ -34,9 +34,10 @@ const GROUPS = [
 /** ADM-45 to ADM-52. */
 export function SettingsAdmin() {
   const tab = useSearchParams().get("tab") ?? "general"
+  const { coach } = useCoach()
   return (
     <Page>
-      <PageHeader title="Settings" text="Your platform's name, address, e-mails, legal pages and team." guide="Your own domain · 2 min" />
+      <PageHeader title="Settings" text={`${coach.name} · saved as you type`} />
       <Tabs defaultValue={tab} orientation="vertical" className="gap-6 max-md:flex-col!">
         <TabsList variant="line" className="h-fit shrink-0 items-stretch max-md:w-full max-md:flex-row! max-md:overflow-x-auto max-md:[scrollbar-width:none] md:w-56">
           {GROUPS.map((g) => (
