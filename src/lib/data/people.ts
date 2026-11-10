@@ -37,7 +37,7 @@ export const STUDENTS: Student[] = [
     history: [H("Today 07:12", "Payment of €149 failed (card expired)"), H("Fri 9 Oct", "Asked for review: NQ long −1.2R"), H("1 Oct", "Joined October cohort"), H("3 Mar", "Joined Core")],
   },
   {
-    id: "s2", name: "Mia Sørensen", initials: "MS", email: "mia.s@proton.me", tier: "desk", progress: 81, lastActive: "today", activeDays: 13, health: "red", reason: "Broke daily loss limit twice",
+    id: "s2", name: "Mia Sørensen", initials: "MS", email: "mia.s@proton.me", tier: "desk", progress: 81, lastActive: "today", activeDays: 13, health: "amber", reason: "Broke loss limit twice",
     joined: "12 Jan 2026", paid: 3510, broker: true, discord: true, country: "DK", coach: "Jana", trades30: 68, rules: 71,
     notes: [{ by: "Jana", when: "8 Oct", text: "Revenge trades after the first loss. Suggest a hard stop after −2R." }],
     history: [H("Fri 9 Oct", "Broke daily loss limit"), H("Wed 7 Oct", "Broke daily loss limit"), H("12 Jan", "Joined Trading Desk")],

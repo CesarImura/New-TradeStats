@@ -82,7 +82,7 @@ export function StudentsPage() {
       <StatPanel
         stats={[
           { label: "Active this week", value: STUDENTS.filter((s) => s.activeDays > 0 && !s.joined.startsWith("invited")).length, delta: `${Math.round((STUDENTS.filter((s) => s.activeDays > 0).length / Math.max(STUDENTS.length, 1)) * 100)}% of all students` },
-          { label: "Need help", value: counts.help, delta: "Rules broken or stuck", tone: counts.help ? "danger" : "neutral" },
+          { label: "Need help", value: counts.help, delta: "Rules broken or stuck" },
           { label: "Payment issues", value: STUDENTS.filter((s) => s.reason?.toLowerCase().includes("payment")).length, delta: "Retrying automatically" },
           { label: "Invited", value: counts.invited, delta: "Haven't joined yet" },
         ]}
