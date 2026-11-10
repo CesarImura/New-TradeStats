@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils"
 import { Empty, Field, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
 import { AdminSearch, Tag, AdminButton } from "../ui"
 
-export const LEVEL_COLOR = { support: "var(--profit)", resistance: "var(--loss)", target: "var(--highlight, #f8ff9e)" } as const
 
 /** ADM-57 chart settings and ADM-58 the coach's marked-up charts. */
 export function ChartsAdmin() {

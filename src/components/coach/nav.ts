@@ -1,9 +1,7 @@
 import {
-  BarChart3,
   BookOpen,
   CalendarDays,
   ChartCandlestick,
-  CreditCard,
   Currency,
   LineChart,
   Video,
@@ -15,7 +13,6 @@ import {
   MessagesSquare,
   NotebookPen,
   Palette,
-  Radio,
   Settings,
   Sparkles,
   Trophy,
