@@ -1,89 +1,115 @@
 "use client"
 
+import { useRef } from "react"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Button } from "@/components/ui/button"
+import { AdminButton, Tag } from "@/components/admin/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { STATUS_LABEL, allLessons, type Course, type Status } from "@/lib/data/learning"
+import { STATUS_LABEL, type Course } from "@/lib/data/learning"
+import { pictureFrom } from "@/lib/images"
 import { cn } from "@/lib/utils"
-import { STATUS_DOT } from "./content-board"
-import { PictureField } from "./thumbs"
+import { Tile } from "./thumbs"
 
-export function CourseSettings({ course, edit }: { course: Course; edit: (fn: (c: Course) => Course) => void }) {
+const TONE = { published: "success", draft: "neutral", scheduled: "warning", archived: "neutral" } as const
+
+/** Content 11: Course settings drawer: Course, Access, Status and Danger zone (Figma 530:7542 family). */
+export function CourseSettings({ course, edit, onPublish, onDuplicate }: { course: Course; edit: (fn: (c: Course) => Course) => void; onPublish: () => void; onDuplicate: () => void }) {
   const { coach } = useCoach()
   const set = (patch: Partial<Course>) => edit((c) => ({ ...c, ...patch }))
-  const lessons = allLessons(course)
-  const missing = lessons.filter((l) => !l.video).length
+  const cover = useRef<HTMLInputElement>(null)
+  const everyone = course.tiers.length === 0
+  const total = coach.tiers.reduce((n, t) => n + t.members, 0)
+  const losing = !everyone && course.status === "published" ? coach.tiers.filter((t) => !course.tiers.includes(t.id)).reduce((n, t) => n + t.members, 0) : 0
+  const reach = everyone ? total : coach.tiers.filter((t) => course.tiers.includes(t.id)).reduce((n, t) => n + t.members, 0)
+
+  const pick = async (file: File | undefined) => {
+    if (!file) return
+    try {
+      set({ cover: await pictureFrom(file, { max: 960, quality: 0.8, keep: [] }) })
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "That picture couldn't be used.")
+    }
+  }
 
   return (
-    <div className="grid gap-8">
-      <section className="grid gap-4">
-        <Field label="Title">
-          <Input value={course.title} onChange={(e) => set({ title: e.target.value })} />
-        </Field>
-        <Field label="Short description" hint="Shown under the title">
-          <Input value={course.tagline} onChange={(e) => set({ tagline: e.target.value })} placeholder="e.g. Six setups, step by step" />
-        </Field>
-        <Field label="Cover" hint="Shown on Home, in the course list and on the sales page">
-          <PictureField value={course.cover} color={course.color} onChange={(cover) => set({ cover })} label="Cover" empty="No picture yet: students see your brand colour." />
-        </Field>
-      </section>
-
-      <section className="grid gap-3">
-        <div>
-          <h3 className="font-medium">Who gets it</h3>
-          <p className="text-sm text-muted-foreground">Students in other tiers see it locked, with an upgrade button.</p>
+    <div className="flex flex-col gap-6">
+      <section className="flex flex-col gap-4">
+        <h3 className="t-body-m text-a-text">Course</h3>
+        <div className="grid gap-1.5">
+          <Label htmlFor="cs-title">Title</Label>
+          <Input id="cs-title" value={course.title} onChange={(e) => set({ title: e.target.value })} />
         </div>
-        <label className="flex items-center gap-3 rounded-lg border p-3 text-sm bg-card">
-          <Checkbox checked={course.tiers.length === 0} onCheckedChange={(v) => v && set({ tiers: [] })} />
-          <span className="flex-1">Every tier</span>
-        </label>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {coach.tiers.map((t) => (
-            <label key={t.id} className={cn("flex items-center gap-3 rounded-lg border p-3 text-sm bg-card", course.tiers.includes(t.id) && "border-primary/50 bg-primary/5")}>
-              <Checkbox
-                checked={course.tiers.includes(t.id)}
-                onCheckedChange={(v) => set({ tiers: v ? [...course.tiers, t.id] : course.tiers.filter((x) => x !== t.id) })}
-              />
-              <span className="grid flex-1">
-                <span>{t.name}</span>
-                <span className="text-xs text-muted-foreground">{t.members} students</span>
-              </span>
-            </label>
-          ))}
+        <div className="grid gap-1.5">
+          <Label htmlFor="cs-desc">Short description</Label>
+          <Input id="cs-desc" value={course.tagline} onChange={(e) => set({ tagline: e.target.value })} placeholder="e.g. Six setups, step by step" />
+        </div>
+        <div className="flex items-center gap-3">
+          <Tile src={course.cover} color={course.color} className="aspect-video w-[124px] shrink-0 rounded-a-md border border-a-border" />
+          <AdminButton hierarchy="secondary" size="md" onClick={() => cover.current?.click()}>Change cover</AdminButton>
+          {course.cover && <AdminButton hierarchy="ghost" size="md" onClick={() => set({ cover: undefined })}>Remove</AdminButton>}
+          <input ref={cover} type="file" accept="image/*" aria-label="Cover" className="sr-only" onChange={(e) => (void pick(e.target.files?.[0]), (e.target.value = ""))} />
         </div>
       </section>
 
-      <section className="grid gap-3">
-        <h3 className="font-medium">Publishing</h3>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {(["draft", "published", "scheduled"] as Status[]).map((s) => (
-            <button
-              key={s}
-              onClick={() => set({ status: s, scheduledFor: s === "scheduled" ? course.scheduledFor ?? "Thu 29 Oct" : course.scheduledFor })}
-              className={cn("flex items-center gap-2 rounded-lg border p-3 text-left text-sm bg-card", course.status === s && "border-primary ring-1 ring-primary")}
-            >
-              <span className={cn("size-2 rounded-full", STATUS_DOT[s])} />
-              {STATUS_LABEL[s]}
-            </button>
-          ))}
+      <div className="h-px bg-a-border" />
+
+      <section className="flex flex-col gap-3">
+        <h3 className="t-body-m text-a-text">Access</h3>
+        <div className="grid grid-cols-2 gap-1.5">
+          {([["all", "All tiers"], ["pick", "Pick tiers"]] as const).map(([k, label]) => {
+            const on = (k === "all") === everyone
+            return (
+              <button key={k} type="button" onClick={() => set({ tiers: k === "all" ? [] : coach.tiers.slice(0, 1).map((t) => t.id) })}
+                className={cn("h-9 rounded-a-md border t-body-m outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus", on ? "border-a-border-active bg-a-selected text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover")}>
+                {label}
+              </button>
+            )
+          })}
         </div>
-        {course.status === "scheduled" && (
-          <Field label="Goes live on">
-            <Input value={course.scheduledFor ?? ""} onChange={(e) => set({ scheduledFor: e.target.value })} placeholder="e.g. Thu 29 Oct" className="max-w-48" />
-          </Field>
+        {!everyone && (
+          <div className="flex flex-col gap-2">
+            {coach.tiers.map((t) => (
+              <label key={t.id} className="flex items-center gap-2.5 t-body-m text-a-text">
+                <Checkbox checked={course.tiers.includes(t.id)} onCheckedChange={(v) => set({ tiers: v ? [...course.tiers, t.id] : course.tiers.filter((x) => x !== t.id) })} />
+                <span className="flex-1">{t.name}</span>
+                <span className="t-caption text-a-text-2">{t.members} students</span>
+              </label>
+            ))}
+          </div>
         )}
-        {missing > 0 && <p className="text-sm text-amber-600">{missing} {missing === 1 ? "lesson still needs" : "lessons still need"} a video.</p>}
+        {losing > 0 && (
+          <div role="status" className="flex items-center gap-3 rounded-a-md bg-a-warning-soft px-3 py-2.5">
+            <p className="t-body-m flex-1 text-a-warning">{losing} students lose access. Their progress is kept.</p>
+          </div>
+        )}
       </section>
 
-      <section className="grid gap-3 border-t pt-6">
-        <h3 className="font-medium">Archive</h3>
-        <p className="text-sm text-muted-foreground">Archived courses disappear for students. Their progress is kept, so you can bring it back any time.</p>
-        <Button variant="outline" className="w-fit" onClick={() => (set({ status: course.status === "archived" ? "draft" : "archived" }), toast(course.status === "archived" ? "Restored as a draft." : "Archived."))}>
-          {course.status === "archived" ? "Restore as draft" : "Archive course"}
-        </Button>
+      <div className="h-px bg-a-border" />
+
+      <section className="flex flex-col gap-3">
+        <h3 className="t-body-m text-a-text">Status</h3>
+        <div className="flex items-center gap-3">
+          <Tag tone={TONE[course.status]} dot>{STATUS_LABEL[course.status]}</Tag>
+          <span className="t-body-m flex-1 text-a-text-2">{course.status === "scheduled" ? `Goes live ${course.scheduledFor ?? "soon"}` : course.status === "published" ? `${reach} students can see it` : "Only you see it"}</span>
+          {course.status === "published" ? (
+            <AdminButton hierarchy="secondary" onClick={() => (set({ status: "draft" }), toast("Unpublished. Students no longer see this course."))}>Unpublish</AdminButton>
+          ) : course.status === "archived" ? (
+            <AdminButton hierarchy="secondary" onClick={() => (set({ status: "draft" }), toast("Restored as a draft."))}>Restore</AdminButton>
+          ) : (
+            <AdminButton onClick={onPublish}>Publish</AdminButton>
+          )}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-a-lg border border-a-border p-5">
+        <h3 className="t-body-m text-a-text">Danger zone</h3>
+        <div className="flex gap-2">
+          <AdminButton hierarchy="secondary" onClick={onDuplicate}>Duplicate</AdminButton>
+          <AdminButton hierarchy="danger" disabled={course.status === "archived"} onClick={() => (set({ status: "archived" }), toast("Archived."))}>Archive</AdminButton>
+        </div>
+        <p className="t-caption text-a-text-2">Archived courses disappear for students. Their progress is kept. Delete only shows on courses without students.</p>
       </section>
     </div>
   )

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, ExternalLink, MoreHorizontal, Plus, Settings2, Trash2, Pencil, Upload } from "@/components/icons"
+import { ArrowLeft, ChevronDown, GripVertical, X, ExternalLink, MoreHorizontal, Plus, Settings2, Trash2, Pencil, Upload } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { AdminButton, Tag } from "@/components/admin/ui"
@@ -60,6 +60,12 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
     const l: Lesson = { id: uid("l"), title: "New lesson", minutes: 0, status: "draft", chapters: [], downloads: [] }
     edit((c) => ({ ...c, modules: c.modules.map((m) => (m.id === moduleId ? { ...m, lessons: [...m.lessons, l] } : m)) }))
     setSel({ kind: "lesson", id: l.id })
+  }
+  const duplicate = () => {
+    const copy: Course = { ...structuredClone(course), id: uid("c"), title: `${course.title} (copy)`, status: "draft", modules: course.modules.map((m) => ({ ...m, id: uid("m"), lessons: m.lessons.map((l) => ({ ...l, id: uid("l"), status: "draft" as Status })) })) }
+    saveCatalog(coach, (cat) => ({ ...cat, courses: [...cat.courses, copy] }))
+    setSettings(false)
+    toast.success("Duplicated as a draft.")
   }
   const addModule = () => edit((c) => ({ ...c, modules: [...c.modules, { id: uid("m"), title: `Module ${c.modules.length + 1}`, lessons: [] } as Module] }))
   const renameModule = (id: string, title: string) => edit((c) => ({ ...c, modules: c.modules.map((m) => (m.id === id ? { ...m, title } : m)) }))
@@ -190,9 +196,21 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
       </Dialog>
 
       <Sheet open={settings} onOpenChange={setSettings}>
-        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
-          <SheetHeader><SheetTitle>Course settings</SheetTitle></SheetHeader>
-          <div className="px-4 pb-8"><CourseSettings course={course} edit={edit} /></div>
+        <SheetContent side="right" showCloseButton={false} className="flex w-full flex-col gap-0 p-0 sm:max-w-[500px]">
+          <SheetHeader className="flex-row items-start justify-between border-b border-a-border px-6 py-5">
+            <div className="grid gap-1">
+              <SheetTitle className="t-heading-m text-a-text">Course settings</SheetTitle>
+              <p className="t-body-m text-a-text-2">{course.title} · {STATUS_LABEL[course.status]}</p>
+            </div>
+            <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Close" onClick={() => setSettings(false)}><X /></AdminButton>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            <CourseSettings course={course} edit={edit} onPublish={() => (setSettings(false), setReview(true))} onDuplicate={duplicate} />
+          </div>
+          <footer className="flex items-center justify-between border-t border-a-border px-6 py-4">
+            <AdminButton hierarchy="ghost" onClick={() => setSettings(false)}>Close</AdminButton>
+            <span className="t-caption text-a-text-2">Changes save as you type</span>
+          </footer>
         </SheetContent>
       </Sheet>
     </div>
@@ -201,10 +219,15 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
 
 function ModuleCard({ index, module: m, course, cover, onOpen, onAdd, onRename, onDelete }: { index: number; module: Module; course: Course; cover?: string; onOpen: (id: string) => void; onAdd: () => void; onRename: (t: string) => void; onDelete: () => void }) {
   const [renaming, setRenaming] = useState(false)
+  const [open, setOpen] = useState(true)
   const mins = m.lessons.reduce((n, l) => n + l.minutes, 0)
   return (
     <section className="flex min-w-0 flex-col gap-4 rounded-a-lg border border-a-border bg-a-panel p-5">
       <header className="flex items-center gap-3">
+        <GripVertical aria-hidden className="size-3 shrink-0 text-a-text-3" />
+        <button type="button" aria-label={open ? "Collapse module" : "Expand module"} aria-expanded={open} onClick={() => setOpen(!open)} className="grid size-5 shrink-0 place-items-center rounded-a-xs text-a-text-2 outline-none hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus">
+          <ChevronDown className={cn("size-3 transition-transform", !open && "-rotate-90")} />
+        </button>
         {renaming ? (
           <input autoFocus defaultValue={m.title} aria-label="Module name" onBlur={(e) => (onRename(e.target.value.trim() || m.title), setRenaming(false))}
             onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()} className="t-heading-m h-8 rounded-a-sm bg-a-field px-2 text-a-text outline-none ring-1 ring-a-border-focus" />
@@ -222,7 +245,7 @@ function ModuleCard({ index, module: m, course, cover, onOpen, onAdd, onRename, 
           </DropdownMenuContent>
         </DropdownMenu>
       </header>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {open && <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {m.lessons.map((l) => (
           <button key={l.id} type="button" onClick={() => onOpen(l.id)} className="group flex min-w-0 flex-col gap-2 text-left outline-none">
             <Tile src={l.thumbnail ?? cover} color={course.color} className="aspect-video w-full rounded-a-md border border-a-border transition-colors group-hover:border-a-border-strong group-focus-visible:ring-2 group-focus-visible:ring-a-border-focus">
@@ -237,7 +260,7 @@ function ModuleCard({ index, module: m, course, cover, onOpen, onAdd, onRename, 
           <Plus /> Add lesson
           <span className="t-caption text-a-text-3">or drop videos here</span>
         </button>
-      </div>
+      </div>}
     </section>
   )
 }
