@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { addDays, format } from "date-fns"
-import { CalendarClock, Plus, Sparkles, Trash2 } from "@/components/icons"
+import { CalendarClock, Plus, Settings, Sparkles, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -52,6 +52,7 @@ const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 export function AdminCalendar() {
   const { coach } = useCoach()
   const schedule = useSchedule(coach)
+  const [tab, setTab] = useState("calendar")
   const [view, setView] = useState<View>("week")
   const [cursor, setCursor] = useState(NOW)
   const [editing, setEditing] = useState<CalEvent | null>(null)
@@ -73,11 +74,16 @@ export function AdminCalendar() {
     <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
       <PageHeader
         title="Calendar"
-        text="Lives, calls, workshops, 1:1s and market news. Students see it in their own time zone."
+        text={`Lives, calls and news · ${schedule.events.length} events this week`}
         actions={
-          <Button onClick={() => newEvent(new Date(2026, 9, 13, 15, 30))}>
-            <Plus /> New event
-          </Button>
+          <>
+            <Button variant="outline" onClick={() => setTab("availability")}>
+              <Settings /> Call settings
+            </Button>
+            <Button onClick={() => newEvent(new Date(2026, 9, 13, 15, 30))}>
+              <Plus /> New event
+            </Button>
+          </>
         }
       />
       <SetupTip task="live" />
@@ -85,12 +91,12 @@ export function AdminCalendar() {
         Events and 1:1 bookings marked Sample are examples, so you can see how your calendar looks. Replace or delete them before you invite students.
       </SampleNotice>
 
-      <Tabs defaultValue="calendar" className="gap-5">
+      <Tabs value={tab} onValueChange={setTab} className="gap-5">
         <TabsList>
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
-          <TabsTrigger value="availability">1:1 availability</TabsTrigger>
+          <TabsTrigger value="availability">Availability</TabsTrigger>
           <TabsTrigger value="news">
-            Economic news <span className="text-muted-foreground tabular-nums">{schedule.news.filter((n) => n.noTrade && at(n.start) >= NOW).length} no-trade</span>
+            News <span className="text-muted-foreground tabular-nums">{schedule.news.filter((n) => n.noTrade && at(n.start) >= NOW).length} no-trade</span>
           </TabsTrigger>
         </TabsList>
 

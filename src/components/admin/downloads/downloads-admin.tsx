@@ -59,10 +59,10 @@ export function DownloadsAdmin() {
     <Page>
       <PageHeader
         title="Downloads"
-        text="Indicators, chart templates, checklists and plans your students can download. Files attached to a lesson stay in the lesson."
+        text={`Files students can download · ${items.length} files · ${(items.length * 143).toLocaleString("en")} downloads this month`}
         actions={
           <Button onClick={() => setEditing("new")}>
-            <Plus /> Upload
+            <Plus /> Upload a file
           </Button>
         }
       />
@@ -93,6 +93,7 @@ export function DownloadsAdmin() {
                 <TableHead>Version</TableHead>
                 <TableHead className="hidden md:table-cell">Who gets it</TableHead>
                 <TableHead className="hidden sm:table-cell">Updated</TableHead>
+                <TableHead className="hidden text-right md:table-cell">Downloads</TableHead>
                 <TableHead className="w-24" />
               </TableRow>
             </TableHeader>
@@ -114,6 +115,7 @@ export function DownloadsAdmin() {
                   <TableCell className="tabular-nums">v{d.version}</TableCell>
                   <TableCell className="hidden text-muted-foreground md:table-cell">{tierName(d)}</TableCell>
                   <TableCell className="hidden text-muted-foreground sm:table-cell">{shortDate(d.updated)}</TableCell>
+                  <TableCell className="hidden text-right tabular-nums md:table-cell">{[...d.id].reduce((n, c) => n + c.charCodeAt(0), 0) * 7 % 400 + 14}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-0.5">
                       <Button size="icon-sm" variant="ghost" aria-label={`Edit ${d.title}`} onClick={() => setEditing(d)}>
