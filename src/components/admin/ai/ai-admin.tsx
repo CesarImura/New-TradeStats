@@ -1,14 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Bot, Check, FileUp, Pencil, Send, ShieldAlert, Sparkles } from "@/components/icons"
+import { Check, FileUp, Pencil, Send, ShieldAlert, Sparkles } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
-import { SliderField } from "@/components/admin/design/fields/controls"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -17,7 +17,7 @@ import { DEFAULT_AI, aiAnswer, type AiReply, type AiSetup } from "@/lib/data/ai"
 import { AI_FEATURES, AI_KNOWLEDGE, AI_QUESTIONS, AI_USAGE } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Field, Mono, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
-import { StatPanel } from "../ui"
+import { Panel, PanelHeader, StatPanel } from "../ui"
 
 /** ADM-24 features and quotas, ADM-25 knowledge, ADM-26 personality, ADM-27 test and correct, ADM-28 questions asked. */
 export function AiAdmin() {
@@ -51,48 +51,59 @@ export function AiAdmin() {
         </TabsList>
 
         <TabsContent value="personality">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="grid content-start gap-4">
-              <div className="flex items-center gap-3 rounded-lg border bg-card p-4">
-                <span className="grid size-12 place-items-center rounded-lg bg-[var(--ts-cta)] text-[#0a0a0a]">
-                  <Bot className="size-6" />
-                </span>
-                <div className="grid flex-1 gap-0.5">
-                  <span className="font-medium">{coach.wording.ai}</span>
-                  <span className="text-sm text-muted-foreground">Rename it in Design → Menu and words.</span>
+          <div className="grid items-start gap-4 lg:grid-cols-2">
+            <Panel>
+              <PanelHeader title="How it sounds" />
+              <div className="grid gap-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="size-10">
+                    <AvatarFallback className="text-xs">{coach.wording.ai.split(" ").map((w) => w[0]).join("").slice(0, 2)}</AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 gap-1">
+                    <Field label="Name">
+                      <Input value={coach.wording.ai} readOnly aria-readonly />
+                    </Field>
+                    <span className="t-caption text-a-text-2">Rename it in Design → Menu and words.</span>
+                  </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => toast("Upload a picture for your AI")}>
-                  Change picture
-                </Button>
+                <Field label="Tone">
+                  <div role="radiogroup" aria-label="Tone" className="grid grid-cols-3 gap-2">
+                    {([["Calm and clear", 50], ["Friendly and warm", 15], ["Direct, no small talk", 85]] as const).map(([label, v]) => {
+                      const on = label === (ai.tone < 33 ? "Friendly and warm" : ai.tone > 66 ? "Direct, no small talk" : "Calm and clear")
+                      return (
+                        <button key={label} type="button" role="radio" aria-checked={on} onClick={() => set({ tone: v })} className={cn("rounded-a-md border border-a-border-subtle px-2 py-2 t-body-m transition-colors duration-300 hover:bg-a-hover", on && "border-a-border-strong bg-a-selected")}>
+                          {label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </Field>
+                <Field label="Answer length">
+                  <div role="radiogroup" aria-label="Answer length" className="grid grid-cols-3 gap-2">
+                    {(["short", "medium", "long"] as const).map((l) => (
+                      <button key={l} type="button" role="radio" aria-checked={ai.length === l} onClick={() => set({ length: l })} className={cn("rounded-a-md border border-a-border-subtle px-2 py-2 t-body-m capitalize transition-colors duration-300 hover:bg-a-hover", ai.length === l && "border-a-border-strong bg-a-selected")}>
+                        {l === "long" ? "Detailed" : l}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
               </div>
-              <SliderField
-                label="Tone"
-                value={ai.tone}
-                min={0}
-                max={100}
-                format={(t) => (t < 33 ? "Friendly and warm" : t > 66 ? "Direct, no small talk" : "Calm and clear")}
-                ends={["Warm", "Direct"]}
-                onChange={(tone) => set({ tone })}
-              />
-              <Field label="Answer length">
-                <div className="grid grid-cols-3 gap-1 rounded-lg border p-1">
-                  {(["short", "medium", "long"] as const).map((l) => (
-                    <button key={l} onClick={() => set({ length: l })} className={cn("rounded-md py-1.5 text-sm capitalize", ai.length === l && "bg-muted font-medium")}>
-                      {l}
-                    </button>
-                  ))}
+            </Panel>
+            <div className="grid gap-4">
+              <Panel>
+                <PanelHeader title="Rules" />
+                <div className="grid gap-4">
+                  <Field label="Never talk about">
+                    <Textarea rows={2} value={ai.avoid} onChange={(e) => set({ avoid: e.target.value })} />
+                  </Field>
+                  <Field label="Examples or rules">
+                    <Textarea rows={3} value={ai.examples} onChange={(e) => set({ examples: e.target.value })} />
+                  </Field>
+                  <p className="flex items-start gap-2 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
+                    <ShieldAlert className="mt-0.5 size-3.5 shrink-0" /> Always on, can&apos;t be changed: no investment advice, no signals, no promises about results.
+                  </p>
                 </div>
-              </Field>
-              <Field label="How you talk" hint="Examples or rules">
-                <Textarea rows={3} value={ai.examples} onChange={(e) => set({ examples: e.target.value })} />
-              </Field>
-              <Field label="Never talk about">
-                <Textarea rows={3} value={ai.avoid} onChange={(e) => set({ avoid: e.target.value })} />
-              </Field>
-              <p className="flex items-start gap-2 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
-                <ShieldAlert className="mt-0.5 size-3.5 shrink-0" /> Always on, can&apos;t be changed: no investment advice, no signals, no promises about results.
-              </p>
-            </div>
+              </Panel>
             <div className="grid content-start gap-2">
               <Mono className="text-muted-foreground">How it sounds</Mono>
               <div className="grid gap-2 rounded-lg border bg-card p-4 text-sm">
@@ -106,6 +117,7 @@ export function AiAdmin() {
                   {ai.length !== "short" && <span className="mt-1 block text-xs text-muted-foreground">Module 3 · Daily loss limits, 08:02</span>}
                 </p>
               </div>
+            </div>
             </div>
           </div>
         </TabsContent>
