@@ -121,6 +121,9 @@ import {
   View as CView,
   ViewOff as CViewOff,
   Wallet as CWallet,
+  Store as CStore,
+  Ticket as CTicket,
+  UserAdmin as CUserAdmin,
   Warning as CWarning,
   WarningAlt as CWarningAlt,
   SettingsAdjust as CSettingsAdjust,
@@ -287,6 +290,10 @@ export const UserPlus = i(CUserFollow, "UserPlus")
 export const Currency = i(CCurrency, "Currency")
 export const Video = i(CVideo, "Video")
 export const Wallet = i(CWallet, "Wallet")
+export const Store = i(CStore, "Store")
+export const Ticket = i(CTicket, "Ticket")
+export const UserAdmin = i(CUserAdmin, "UserAdmin")
+export const ShieldCheck = i(CSecurity, "ShieldCheck")
 export const Wand2 = i(CMagicWand, "Wand2")
 export const Wrench = i(CTools, "Wrench")
 export const X = i(CClose, "X")
