@@ -28,10 +28,10 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
     <div className="grid gap-4">
       <StatPanel
         stats={[
-          { label: "Monthly recurring", value: `€${MONEY.mrr.toLocaleString("en")}`, delta: `+${MONEY.mrrChange}% vs September`, tone: "success" },
-          { label: "Paid out to you · October", value: `€${MONEY.month.toLocaleString("en")}`, delta: `After €${MONEY.fees.amount.toLocaleString("en")} fees` },
-          { label: "Next payout", value: `€${MONEY.nextPayout.amount.toLocaleString("en")}`, delta: MONEY.nextPayout.date },
-          { label: "Cancellations", value: `${MONEY.churn}%`, delta: `${MONEY.trials} trials running` },
+          { label: "Revenue · October", value: `€${MONEY.mrr.toLocaleString("en")}`, delta: `+${MONEY.mrrChange}% · €${Math.round((MONEY.mrr * MONEY.mrrChange) / 100).toLocaleString("en")} more`, tone: "success" },
+          { label: "Active members", value: members.toLocaleString("en"), delta: "+14 this month" },
+          { label: "Next payout", value: `€${MONEY.nextPayout.amount.toLocaleString("en")}`, delta: `${MONEY.nextPayout.date} · Bank ••7` },
+          { label: "Needs attention", value: attention.length, delta: `${attention.filter((t) => t.status !== "disputed").length} failed · ${attention.filter((t) => t.status === "disputed").length} disputed` },
         ]}
       />
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
