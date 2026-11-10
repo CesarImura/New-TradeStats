@@ -133,7 +133,7 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
   return (
     <>
       <div className="flex items-center justify-between pr-1">
-        <TsLogo className="gap-2.5 px-2 [&>span]:text-[1rem] [&>svg]:size-5" />
+        <TsLogo name="Traderhub" className="gap-2.5 px-2 [&>span]:text-[1rem] [&>svg]:size-5" />
         <PanelLeftIcon aria-hidden className="size-4 text-a-icon" />
       </div>
       <nav aria-label="Admin" className="-mx-1 mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 pb-2">

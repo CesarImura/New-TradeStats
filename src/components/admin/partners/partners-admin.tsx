@@ -10,11 +10,11 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTiers } from "@/lib/data/access"
 import { CATALOGUE, COACH_SHARE, KIND_LABEL, PARTNER_KINDS, fromCatalogue, saveAffiliate, saveOffers, useAffiliate, useOffers, type PartnerKind, type PartnerOffer } from "@/lib/data/partners"
-import { StatPanel, Tag } from "../ui"
+import { Tag } from "../ui"
 import { Empty, Field, Mono, NativeSelect, Page, PageHeader, SettingRow } from "../kit"
 
 const euro = (n: number) => `€${n.toLocaleString("en")}`
@@ -96,89 +96,42 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
 
   return (
     <div className="grid gap-3">
-      <StatPanel
-        stats={[
-          { label: "Clicks", value: total.clicks.toLocaleString("en"), delta: "Offers that are on" },
-          { label: "Sign-ups", value: total.signups, delta: total.clicks ? `${((total.signups / total.clicks) * 100).toFixed(1)}% of clicks` : undefined },
-          { label: "Earned", value: euro(total.earnings), delta: "From catalogue offers" },
-        ]}
-      />
-      <div className="overflow-x-auto rounded-a-lg border border-a-border bg-a-panel">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>Partner</TableHead>
-              <TableHead className="hidden lg:table-cell">Offer</TableHead>
-              <TableHead className="hidden md:table-cell">Who sees it</TableHead>
-              <TableHead className="text-right">Clicks</TableHead>
-              <TableHead className="text-right">Sign-ups</TableHead>
-              <TableHead className="text-right">Earned</TableHead>
-              <TableHead>On</TableHead>
-              <TableHead className="w-20" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {offers.map((o) => (
-              <TableRow key={o.id}>
-                <TableCell>
-                  <div className="grid">
-                    <span className="flex items-center gap-2 font-medium">
-                      {o.name}
-                      {o.source === "catalogue" && <Tag>Our partner</Tag>}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{KIND_LABEL[o.kind]}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden max-w-56 lg:table-cell">
-                  <div className="grid">
-                    <span className="truncate">{o.offer}</span>
-                    {o.code && <span className="font-mono text-xs text-muted-foreground">{o.code}</span>}
-                  </div>
-                </TableCell>
-                <TableCell className="hidden text-muted-foreground md:table-cell">{tierName(o)}</TableCell>
-                <TableCell className="text-right tabular-nums">{o.clicks}</TableCell>
-                <TableCell className="text-right tabular-nums">{o.signups}</TableCell>
-                <TableCell className="text-right tabular-nums">{o.source === "own" ? "Your own" : euro(o.earnings)}</TableCell>
-                <TableCell>
-                  <Switch checked={o.on} onCheckedChange={(v) => saveOffers(coach, (l) => l.map((x) => (x.id === o.id ? { ...x, on: v } : x)))} aria-label={`${o.name} on`} />
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-0.5">
-                    <Button size="icon-sm" variant="ghost" aria-label={`Edit ${o.name}`} onClick={() => setEditing(o)}>
-                      <Pencil />
-                    </Button>
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      aria-label={`Remove ${o.name}`}
-                      onClick={() => {
-                        saveOffers(coach, (l) => l.filter((x) => x.id !== o.id))
-                        toast(`${o.name} removed`, { action: { label: "Undo", onClick: () => saveOffers(coach, (l) => [...l, o]) } })
-                      }}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-          <TableFooter>
-            <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={2} className="hidden lg:table-cell">
-                Total, offers that are on
-              </TableCell>
-              <TableCell className="lg:hidden">Total</TableCell>
-              <TableCell className="hidden md:table-cell" />
-              <TableCell className="text-right tabular-nums">{total.clicks}</TableCell>
-              <TableCell className="text-right tabular-nums">{total.signups}</TableCell>
-              <TableCell className="text-right tabular-nums">{euro(total.earnings)}</TableCell>
-              <TableCell colSpan={2} />
-            </TableRow>
-          </TableFooter>
-        </Table>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {offers.map((o) => (
+          <article key={o.id} className="flex min-w-0 flex-col gap-3 rounded-a-lg border border-a-border bg-a-panel p-4">
+            <div className="flex items-center gap-3">
+              <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-a-md bg-a-selected t-body-m-medium">{o.name.slice(0, 2)}</span>
+              <div className="grid min-w-0 flex-1">
+                <span className="truncate t-body-l-medium">{o.name}</span>
+                <span className="truncate t-caption text-a-text-2">{KIND_LABEL[o.kind]} · {o.source === "catalogue" ? "Our partner" : "Your own link"}</span>
+              </div>
+              <Switch checked={o.on} onCheckedChange={(v) => saveOffers(coach, (l) => l.map((x) => (x.id === o.id ? { ...x, on: v } : x)))} aria-label={`${o.name} on`} />
+            </div>
+            <p className="t-body-m">{o.offer}{o.code ? <span className="ml-1 font-mono text-a-text-2">{o.code}</span> : null}</p>
+            <div className="mt-auto flex items-center justify-between gap-2">
+              <Tag>{tierName(o)}</Tag>
+              <span className="t-caption text-a-text-2 tabular-nums">{o.clicks} clicks{o.signups ? ` · ${o.signups} sign-ups` : ""}</span>
+            </div>
+            <div className="flex justify-end gap-0.5 border-t border-a-border-subtle pt-2">
+              <Button size="icon-sm" variant="ghost" aria-label={`Edit ${o.name}`} onClick={() => setEditing(o)}>
+                <Pencil />
+              </Button>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label={`Remove ${o.name}`}
+                onClick={() => {
+                  saveOffers(coach, (l) => l.filter((x) => x.id !== o.id))
+                  toast(`${o.name} removed`, { action: { label: "Undo", onClick: () => saveOffers(coach, (l) => [...l, o]) } })
+                }}
+              >
+                <Trash2 />
+              </Button>
+            </div>
+          </article>
+        ))}
       </div>
-      <p className="text-xs text-muted-foreground">Students see every offer labelled as a partner offer. Earnings from catalogue offers are paid out with your other payouts.</p>
+      <p className="t-caption text-a-text-2">Students see every offer labelled as a partner offer. {total.clicks} clicks, {total.signups} sign-ups and {euro(total.earnings)} earned from offers that are on.</p>
       {editing && <OwnDialog key={editing.id} item={editing} onClose={() => setEditing(null)} />}
     </div>
   )

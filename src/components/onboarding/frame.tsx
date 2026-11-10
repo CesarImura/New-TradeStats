@@ -12,13 +12,13 @@ import { cn } from "@/lib/utils"
  */
 export const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] uppercase tracking-[0.06em]"
 
-export function TsLogo({ className }: { className?: string }) {
+export function TsLogo({ className, name = "TradeStats" }: { className?: string; name?: string }) {
   return (
-    <Link href="/" className={cn("flex items-center gap-2", className)} aria-label="TradeStats">
+    <Link href="/" className={cn("flex items-center gap-2", className)} aria-label={name}>
       <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
         <path fill="#ff5500" d="M2 3h20v6h-7v12H9V9H2z" />
       </svg>
-      <span className="text-[0.8125rem] font-semibold tracking-tight">TradeStats</span>
+      <span className="text-[0.8125rem] font-semibold tracking-tight">{name}</span>
     </Link>
   )
 }
