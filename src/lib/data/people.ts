@@ -211,8 +211,8 @@ export const LEVELS = [
 export const BADGES = [
   { name: "First trade logged", earned: 412 },
   { name: "7-day streak", earned: 158 },
-  { name: "Rulebook keeper", earned: 61 },
-  { name: "Course finished", earned: 94 },
+  { name: "Rule keeper", earned: 61 },
+  { name: "Course finisher", earned: 94 },
   { name: "Asked for feedback", earned: 203 },
 ]
 

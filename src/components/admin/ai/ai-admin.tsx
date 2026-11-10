@@ -130,7 +130,7 @@ export function AiAdmin() {
 
         <TabsContent value="knowledge" className="grid gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm text-muted-foreground">What your AI learns from. New lessons and recordings are added automatically.</p>
+            <p className="text-sm text-muted-foreground">Your AI only answers from what you add here. New lessons and recordings are added automatically.</p>
             <AdminButton onClick={() => toast("Add PDFs, docs or a list of questions and answers")} hierarchy="secondary">
               <FileUp /> Add documents
             </AdminButton>

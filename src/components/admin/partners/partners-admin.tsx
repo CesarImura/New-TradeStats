@@ -344,7 +344,7 @@ function Affiliates() {
             </Table>
           </div>
         ) : (
-          <EmptyState icon={Handshake} title="The program is off" description="Switch it on and every student gets a link to share." />
+          <EmptyState icon={Handshake} title="The program is off" description="Switch it on and every student gets a link to share. You choose the commission." actions={<AdminButton hierarchy="primary" size="md" onClick={() => set({ on: true })}>Turn on the program</AdminButton>} />
         )}
       </section>
     </div>
