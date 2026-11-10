@@ -150,7 +150,7 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "relative flex h-9 items-center gap-3 rounded-a-md border px-2 t-body-l outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
-                    active ? "border-a-border bg-a-selected text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-a-accent-strong" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text"
+                    active ? "border-a-border bg-a-panel text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-a-accent-strong" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text"
                   )}
                 >
                   <item.icon className={cn("size-4 shrink-0", active ? "text-a-accent-strong" : "text-a-icon")} />

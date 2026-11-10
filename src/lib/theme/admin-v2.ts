@@ -58,8 +58,15 @@ ${adm(":is([data-slot=button].bg-secondary, [data-slot=button][class*='border-bo
   background: transparent; border-color: transparent; box-shadow: inset 0 0 0 1px ${T("component-button-secondary-border")}; color: ${T("component-button-secondary-content")};
 }
 ${adm(":is([data-slot=button].bg-secondary, [data-slot=button][class*='border-border']):hover")} { background: ${T("component-button-secondary-bg-hover")}; border-color: transparent; }
-${adm("[data-slot=switch][data-checked] [data-slot=switch-thumb]")} { background: ${T("color-control-knob")} !important; }
+/* Toggle: 32 x 18, padding 2, knob 14. Off = control/off (hover: selected), On = accent (hover: accent hover). Disabled = 40%. */
+${adm("[data-slot=switch]")} { width: 32px !important; height: 18px !important; padding: 2px; border: 0; transition: background-color 0.3s ease-out; }
+${adm("[data-slot=switch][data-unchecked]")} { background: ${T("color-control-off")}; }
+${adm("[data-slot=switch][data-unchecked]:hover")} { background: ${T("color-bg-selected")}; }
 ${adm("[data-slot=switch][data-checked]")} { background: ${T("color-control-on")}; }
+${adm("[data-slot=switch][data-checked]:hover")} { background: ${T("color-accent-hover")}; }
+${adm("[data-slot=switch][data-disabled]")} { opacity: 0.4; }
+${adm("[data-slot=switch-thumb]")} { width: 14px !important; height: 14px !important; background: ${T("color-control-knob")} !important; transform: none !important; translate: 0 0 !important; }
+${adm("[data-slot=switch][data-checked] [data-slot=switch-thumb]")} { translate: 14px 0 !important; }
 
 /* Fields: Admin / Field. 44px control, radius md, field fill, subtle hairline. */
 ${adm(":is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], select)")} {
@@ -70,7 +77,9 @@ ${adm(":is([data-slot=input], [data-slot=textarea], [data-slot=select-trigger], 
 ${adm(":is([data-slot=input], [data-slot=select-trigger], select):not(textarea)")} { height: 2.75rem; }
 ${adm(":is([data-slot=input], [data-slot=select-trigger], select):not(textarea)")} { padding-inline: ${T("space-12")}; }
 ${adm("[data-slot=label]")} { font-size: 0.75rem; line-height: 1rem; font-weight: 400; gap: ${T("space-6")}; color: ${T("color-text-primary")}; }
-${adm("[data-slot=checkbox]")} { border-radius: ${T("radius-xs")}; background: ${T("color-bg-field")}; border-color: ${T("color-border-strong")}; }
+${adm("[data-slot=checkbox]")} { border-radius: ${T("radius-xs")}; background: transparent; border-color: ${T("color-border-strong")}; transition: background-color 0.3s ease-out; }
+${adm("[data-slot=checkbox][data-unchecked]:hover")} { background: ${T("color-bg-selected")}; }
+${adm("[data-slot=checkbox][data-disabled]")} { opacity: 0.4; }
 
 /* Panels: Admin / Panel. bg panel, 1px hairline, radius lg, padding 20. */
 ${adm("[data-slot=card]")} { --card-spacing: 1.25rem; border-radius: ${T("radius-lg")}; background: ${T("color-bg-panel")}; box-shadow: 0 0 0 1px ${T("color-border-default")}; }
@@ -123,7 +132,10 @@ ${adm(":is([data-slot=popover-content], [data-slot=dropdown-menu-content], [data
 }
 ${adm("[data-slot=dialog-content]")} { border-radius: ${T("radius-xl")}; background: ${T("color-bg-panel")}; box-shadow: 0 0 0 1px ${T("color-border-strong")}, 0 30px 60px rgb(0 0 0 / 0.6); }
 ${adm("[data-slot=sheet-content]")} { background: ${T("color-bg-panel")}; box-shadow: 0 0 0 1px ${T("color-border-strong")}, 0 30px 60px rgb(0 0 0 / 0.6); }
-${adm(":is([data-slot=dropdown-menu-content], [data-slot=context-menu-content])")} { padding: ${T("space-6")}; }
+${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item]):is([data-highlighted], :hover, [data-selected=true])")} { background: ${T("color-bg-selected")}; }
+${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item])[data-disabled]")} { opacity: 0.4; }
+${adm(":is([data-slot=dropdown-menu-content], [data-slot=context-menu-content])")} { padding: ${T("space-6")}; min-width: 13.75rem; }
+${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item])")} { white-space: nowrap; }
 ${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item])")} { padding-inline: ${T("space-10")}; gap: ${T("space-10")}; }
 ${adm(":is([data-slot=dropdown-menu-separator], [data-slot=context-menu-separator])")} { background: ${T("color-border-subtle")}; }
 ${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item])")} { border-radius: ${T("radius-sm")}; min-height: 2rem; font-size: 0.8125rem; }
@@ -133,7 +145,7 @@ ${adm("[data-slot=tooltip-content]")} { border-radius: ${T("radius-sm")}; font-s
 ${adm("[data-slot=sidebar-menu-button]")} { border-radius: ${T("radius-md")}; color: ${T("color-text-nav")}; font-size: 0.8125rem; gap: 0.75rem; }
 ${adm("[data-slot=sidebar-menu-button]:not([data-size=lg])")} { height: 2.25rem; }
 ${adm("[data-slot=sidebar-menu-button]:hover")} { background: ${T("color-bg-hover")}; color: ${T("color-text-primary")}; }
-${adm("[data-slot=sidebar-menu-button][data-active]")} { background: ${T("color-bg-selected")}; color: ${T("color-text-primary")}; }
+${adm("[data-slot=sidebar-menu-button][data-active]")} { background: ${T("color-bg-panel")}; box-shadow: inset 0 0 0 1px ${T("color-border-default")}; color: ${T("color-text-primary")}; }
 
 @media (prefers-reduced-motion: reduce) {
   ${adm("[data-slot=button]")} { transition: none; }

@@ -7,7 +7,7 @@ import { setStored, useStored } from "@/lib/prototype-store"
 import { SelectOptions } from "@/components/kit/select-field"
 import { ControlLabel } from "@/components/kit/control-label"
 import { cn } from "@/lib/utils"
-import { AdminPageHeader } from "@/components/admin/ui"
+import { AdminPageHeader, EmptyState } from "@/components/admin/ui"
 
 /** Title row of an admin page (Admin / Page header): title, one plain sentence, the page's actions, and its video guide. */
 export function PageHeader({ title, text, actions, guide }: { title: string; text?: React.ReactNode; actions?: React.ReactNode; guide?: string }) {
@@ -77,14 +77,7 @@ export function Field({ label, hint, children, className }: { label: string; hin
 }
 
 export function Empty({ icon: Icon, title, text, action }: { icon: React.ComponentType<{ className?: string }>; title: string; text?: string; action?: React.ReactNode }) {
-  return (
-    <div className="grid place-items-center gap-2 rounded-a-lg border border-dashed border-a-border-strong px-6 py-12 text-center">
-      <Icon className="size-6 text-a-icon" />
-      <p className="t-heading-s">{title}</p>
-      {text && <p className="t-body-m max-w-sm text-a-text-2">{text}</p>}
-      {action && <div className="mt-2">{action}</div>}
-    </div>
-  )
+  return <EmptyState icon={Icon} title={title} text={text} action={action} />
 }
 
 /** Small mono label in our own TradeStats style. */

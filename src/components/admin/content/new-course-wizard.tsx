@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Check, FolderUp, Plus, X } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { AdminButton } from "@/components/admin/ui"
+import { AdminButton, OptionCard } from "@/components/admin/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -112,10 +112,10 @@ export function NewCourseWizard({ open, area, onClose, onCreate }: { open: boole
                 <>
                   <p className="t-body-m text-a-text-2">Start with a folder of videos, or build the course lesson by lesson.</p>
                   {([["folder", "Upload a folder", "AI proposes modules and lesson names from your files.", FolderUp], ["empty", "Start empty", "One module with a first lesson. Add videos later.", Plus]] as const).map(([k, label, text, Icon]) => (
-                    <button key={k} type="button" onClick={() => setStart(k)} className={cn("flex items-center gap-3 rounded-a-lg border p-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus", start === k ? "border-a-border-strong bg-a-selected" : "border-a-border hover:bg-a-hover")}>
+                    <OptionCard key={k} active={start === k} onClick={() => setStart(k)}>
                       <Icon className="size-4 text-a-text-2" />
                       <span className="grid gap-0.5"><span className="t-body-m text-a-text">{label}</span><span className="t-caption text-a-text-2">{text}</span></span>
-                    </button>
+                    </OptionCard>
                   ))}
                 </>
               )}

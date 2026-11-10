@@ -3,7 +3,7 @@
 import { useRef } from "react"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { AdminButton, Tag } from "@/components/admin/ui"
+import { AdminButton, Callout, Tag } from "@/components/admin/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -80,9 +80,7 @@ export function CourseSettings({ course, edit, onPublish, onDuplicate }: { cours
           </div>
         )}
         {losing > 0 && (
-          <div role="status" className="flex items-center gap-3 rounded-a-md bg-a-warning-soft px-3 py-2.5">
-            <p className="t-body-m flex-1 text-a-warning">{losing} students lose access. Their progress is kept.</p>
-          </div>
+          <Callout tone="warning">{losing} students lose access. Their progress is kept.</Callout>
         )}
       </section>
 

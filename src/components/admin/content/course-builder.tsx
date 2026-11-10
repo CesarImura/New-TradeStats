@@ -5,7 +5,7 @@ import Link from "next/link"
 import { ArrowLeft, ChevronDown, GripVertical, X, ExternalLink, MoreHorizontal, Plus, Settings2, Trash2, Pencil, Upload } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { AdminButton, Tag } from "@/components/admin/ui"
+import { AdminButton, Callout, Tag } from "@/components/admin/ui"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -126,11 +126,9 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
           </header>
 
           {missing.length > 0 && (
-            <div role="status" className="flex items-center gap-3 rounded-a-lg border border-a-border bg-a-danger-soft px-4 py-2.5">
-              <span aria-hidden className="size-1.5 rounded-full bg-a-danger-fill" />
-              <p className="t-body-m flex-1 text-a-danger">{missing.length} {missing.length === 1 ? "lesson still needs" : "lessons still need"} a video: {missing[0].title}{missing.length > 1 ? ` and ${missing.length - 1} more` : ""}</p>
-              <AdminButton hierarchy="secondary" size="md" onClick={() => setSel({ kind: "lesson", id: missing[0].id })}>Review</AdminButton>
-            </div>
+            <Callout tone="danger" action={<AdminButton hierarchy="secondary" size="md" onClick={() => setSel({ kind: "lesson", id: missing[0].id })}>Review</AdminButton>}>
+              {missing.length} {missing.length === 1 ? "lesson still needs" : "lessons still need"} a video: {missing[0].title}{missing.length > 1 ? ` and ${missing.length - 1} more` : ""}
+            </Callout>
           )}
 
           {course.modules.map((m, i) => (

@@ -1,5 +1,6 @@
 "use client"
 
+import { Dropzone } from "@/components/admin/ui"
 import { useRef, useState } from "react"
 import Link from "next/link"
 import { Download, FileUp, Pencil, Plus, Trash2 } from "@/components/icons"
@@ -14,7 +15,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { useTiers } from "@/lib/data/access"
 import { DOWNLOAD_CATEGORIES, categoryLabel, saveDownloads, shortDate, useDownloads, type DownloadCategory, type DownloadFile, type DownloadItem } from "@/lib/data/downloads"
-import { cn } from "@/lib/utils"
 import { Empty, Field, NativeSelect, Page, PageHeader } from "../kit"
 import { AdminFilter, AdminSearch, AdminTabs, AdminToolbar, FileIcon, Tag } from "../ui"
 
@@ -196,8 +196,8 @@ function UploadDialog({ item, onClose }: { item?: DownloadItem; onClose: () => v
           <DialogDescription>Students find it under {coach.wording.downloads}. Replace the file to publish a new version.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
-          <button
-            type="button"
+          <Dropzone
+            over={over}
             onClick={() => input.current?.click()}
             onDragOver={(e) => {
               e.preventDefault()
@@ -209,23 +209,22 @@ function UploadDialog({ item, onClose }: { item?: DownloadItem; onClose: () => v
               setOver(false)
               take(e.dataTransfer.files[0])
             }}
-            className={cn("grid place-items-center gap-1 rounded-lg border border-dashed px-4 py-6 text-center text-sm", over && "border-[var(--ts-interactive)] bg-[var(--ts-interactive)]/8")}
           >
-            <FileUp className="size-5 text-muted-foreground" />
+            <FileUp className="size-[22px] text-a-icon" />
             {file ? (
               <>
-                <span className="font-medium">{file.name}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="t-body-m-medium text-a-text">{file.name}</span>
+                <span className="t-caption text-a-text-3">
                   {file.type} · {file.size} · click to replace
                 </span>
               </>
             ) : (
               <>
-                <span className="font-medium">Drop a file here, or click to choose</span>
-                <span className="text-xs text-muted-foreground">Only the name and size are kept in this prototype.</span>
+                <span className="t-body-m text-a-text">Drop a file here, or click to choose</span>
+                <span className="t-caption text-a-text-3">Only the name and size are kept in this prototype.</span>
               </>
             )}
-          </button>
+          </Dropzone>
           <input ref={input} type="file" className="hidden" onChange={(e) => take(e.target.files?.[0])} />
           <Field label="Title">
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Session levels indicator (TradingView)" />
