@@ -50,7 +50,7 @@ export function AiAdmin() {
         <StatPanel
           stats={[
             { label: "Questions this month", value: "1,412", delta: "+22% vs last month", tone: "success" },
-            { label: "Answered alone", value: "91%", delta: "9% sent to you" },
+            { label: "Answered alone", value: "91%", delta: "9% handed to you" },
             { label: "Corrections", value: 14, delta: "Used in every answer" },
             { label: "Most asked", value: "Stops on ORB", delta: "64 times" },
           ]}
@@ -189,7 +189,7 @@ export function AiAdmin() {
           </div>
           <section className="grid gap-2">
             <h2 className="font-medium">Questions per day</h2>
-            <p className="text-sm text-muted-foreground">0 means unlimited. AI costs are on our side up to your plan&apos;s limit.</p>
+            <p className="text-sm text-muted-foreground">Questions per day, per student. 0 means unlimited.</p>
             <div className="grid gap-3 sm:grid-cols-3">
               {coach.tiers.map((t, i) => {
                 const u = AI_USAGE[Math.min(i, AI_USAGE.length - 1)]

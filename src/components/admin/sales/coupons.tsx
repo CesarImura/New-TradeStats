@@ -98,7 +98,7 @@ export function Coupons() {
                 </NativeSelect>
               </Field>
             )}
-            <Field label="Limit" hint="Optional">
+            <Field label="Limit" hint="Leave empty for no limit">
               <Input value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="No limit" inputMode="numeric" />
             </Field>
           </div>

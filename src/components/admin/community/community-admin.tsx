@@ -335,7 +335,7 @@ function RulesTab({ rules, setRules }: { rules: string[]; setRules: (n: string[]
           </div>
         ))}
         <AdminButton className="justify-self-start" onClick={() => setRules((l) => [...l, ""])} hierarchy="secondary" size="lg">
-          <Plus /> Add a rule
+          <Plus /> Add rule
         </AdminButton>
       </div>
     </section>

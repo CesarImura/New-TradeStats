@@ -237,7 +237,7 @@ function ChaptersTab({ course, lesson, t, setT, onChange }: { course: Course; le
         {lesson.chapters.map((c, i) => (
           <li key={`${i}-${c.at}`} className={cn("flex h-11 items-center gap-3 rounded-a-md border bg-a-panel px-3.5", i === active ? "border-a-accent-strong" : "border-a-border")}>
             <input defaultValue={clock(c.at)} aria-label="Start time" onFocus={() => setT(c.at)} onBlur={(e) => set(lesson.chapters.map((x, j) => (j === i ? { ...x, at: Math.min(duration, parseTime(e.target.value)), ai: false } : x)))} className="w-12 bg-transparent t-mono-data text-a-text-2 outline-none focus-visible:text-a-text" />
-            <input value={c.title} aria-label="Chapter title" onFocus={() => setT(c.at)} onChange={(e) => update(i, { title: e.target.value })} className="min-w-0 flex-1 bg-transparent t-body-m text-a-text outline-none" />
+            <input value={c.title} aria-label="Chapter title" onFocus={() => setT(c.at)} onChange={(e) => update(i, { title: e.target.value })} className="min-w-0 flex-1 bg-transparent t-body-m text-a-text outline-none focus-visible:ring-1 focus-visible:ring-[var(--admin-color-border-focus)]" />
             {c.ai && <Tag tone="accent" dot>AI</Tag>}
             <DropdownMenu>
               <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`More for ${c.title}`} />}>
