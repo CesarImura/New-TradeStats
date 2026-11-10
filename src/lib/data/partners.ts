@@ -44,6 +44,7 @@ export const CATALOGUE: CatalogueOffer[] = [
   { id: "ic-markets", name: "IC Markets", kind: "broker", offer: "Lower fees on every trade", text: "Raw spreads on forex and futures CFDs", commission: "Up to $6 per lot" },
   { id: "pepperstone", name: "Pepperstone", kind: "broker", offer: "Cashback on the first 10 lots", text: "Fast execution, cTrader and MT5", commission: "Up to $5 per lot" },
   { id: "ftmo", name: "FTMO", kind: "prop", offer: "10% off the challenge", text: "Two-step evaluation, up to 90% profit split", commission: "10% of the fee" },
+  { id: "tradeify", name: "Tradeify", kind: "prop", offer: "20% off any evaluation", text: "Futures evaluation with instant funding", commission: "12% of the fee" },
   { id: "topstep", name: "Topstep", kind: "prop", offer: "50% off the first month", text: "Futures combine with a daily loss limit", commission: "15% of the fee" },
   { id: "tradingview", name: "TradingView", kind: "tool", offer: "$15 credit on any paid plan", text: "The charts used in the lessons", commission: "$30 per paid sign-up" },
   { id: "edgewonk", name: "Edgewonk", kind: "tool", offer: "20% off the first year", text: "A trading journal with deep statistics", commission: "20% of the first year" },
@@ -79,23 +80,20 @@ export function defaultOffers(coach: Coach): PartnerOffer[] {
   const hit = cache.get(coach.slug)
   if (hit) return hit
   const cat = (id: string) => CATALOGUE.find((c) => c.id === id)!
-  const second = coach.tiers[1]?.id
+  const third = coach.tiers[2]?.id
   const list: PartnerOffer[] = [
-    fromCatalogue(coach, cat("ic-markets"), { clicks: 412, signups: 38, earnings: 1140 }),
-    fromCatalogue(coach, cat("ftmo"), { clicks: 286, signups: 17, earnings: 640, tiers: second ? [second] : [] }),
-    fromCatalogue(coach, cat("tradingview"), { clicks: 530, signups: 44, earnings: 780 }),
-    fromCatalogue(coach, cat("edgewonk"), { clicks: 96, signups: 9, earnings: 118 }),
+    fromCatalogue(coach, cat("tradeify"), { offer: `20% off any evaluation with code ${coachCode(coach, 20)}`, code: undefined, clicks: 312, signups: 41, earnings: 1140 }),
+    fromCatalogue(coach, { ...cat("tradingview"), offer: "30 days of Premium free" }, { offer: "30 days of Premium free", tiers: coach.tiers.filter((t) => t.price !== "€0").map((t) => t.id), clicks: 155, signups: 22, earnings: 780 }),
     {
-      id: "own-sheets",
-      name: "Notion trade log",
-      kind: "tool",
-      offer: "My trade log template, 30% off",
-      code: coachCode(coach, 30),
-      url: `https://example.com/${coach.slug}-trade-log`,
-      tiers: [],
+      id: "own-broker",
+      name: "My broker",
+      kind: "broker",
+      offer: "Open an account with lower commissions",
+      url: `https://example.com/${coach.slug}-broker`,
+      tiers: third ? [third] : [],
       source: "own",
       clicks: 64,
-      signups: 5,
+      signups: 0,
       earnings: 0,
       on: true,
     },

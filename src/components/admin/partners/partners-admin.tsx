@@ -73,7 +73,8 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
   const offers = useOffers(coach)
   const tiers = useTiers(coach)
   const [editing, setEditing] = useState<PartnerOffer | null>(null)
-  const tierName = (o: PartnerOffer) => (o.tiers.length === 0 ? "Everyone" : o.tiers.map((id) => tiers.find((t) => t.id === id)?.name ?? id).join(", "))
+  const paid = tiers.filter((t) => t.price !== "€0").map((t) => t.id)
+  const tierName = (o: PartnerOffer) => (o.tiers.length === 0 ? "Everyone" : paid.length > 1 && o.tiers.length === paid.length && paid.every((id) => o.tiers.includes(id)) ? "Paid tiers" : o.tiers.map((id) => tiers.find((t) => t.id === id)?.name ?? id).join(", "))
   const total = offers.filter((o) => o.on).reduce((t, o) => ({ clicks: t.clicks + o.clicks, signups: t.signups + o.signups, earnings: t.earnings + o.earnings }), { clicks: 0, signups: 0, earnings: 0 })
 
   if (offers.length === 0) {
@@ -108,9 +109,9 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
               <Switch checked={o.on} onCheckedChange={(v) => saveOffers(coach, (l) => l.map((x) => (x.id === o.id ? { ...x, on: v } : x)))} aria-label={`${o.name} on`} />
             </div>
             <p className="t-body-m">{o.offer}{o.code ? <span className="ml-1 font-mono text-a-text-2">{o.code}</span> : null}</p>
-            <div className="mt-auto flex items-center justify-between gap-2">
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
               <Tag>{tierName(o)}</Tag>
-              <span className="t-caption text-a-text-2 tabular-nums">{o.clicks} clicks{o.signups ? ` · ${o.signups} sign-ups` : ""}</span>
+              <span className="min-w-0 t-caption text-a-text-2 tabular-nums">{o.clicks} clicks{o.signups ? ` · ${o.signups} sign-ups` : ""}</span>
             </div>
             <div className="flex justify-end gap-0.5 border-t border-a-border-subtle pt-2">
               <Button size="icon-sm" variant="ghost" aria-label={`Edit ${o.name}`} onClick={() => setEditing(o)}>

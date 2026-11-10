@@ -14,12 +14,21 @@ import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BADGES, COMPETITIONS, LEVELS, POINTS, RANK_METRICS } from "@/lib/data/people"
-import { LEADERBOARD } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { Field, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
 
 export type RankingSetup = { metric: string; period: string; nicknames: boolean; optOut: boolean; competitions: typeof COMPETITIONS; points: typeof POINTS }
 export const DEFAULT_RANKING: RankingSetup = { metric: "discipline", period: "month", nicknames: true, optOut: true, competitions: COMPETITIONS, points: POINTS }
+
+/** Admin leaderboard rows (Figma 537:7990): full names, tier, points, rules kept, move. */
+const BOARD = [
+  { rank: 1, name: "Sara Kowalski", initials: "SK", tier: "Trading Desk", points: 2410, rules: 96, change: 3 },
+  { rank: 2, name: "Jonas Weber", initials: "JW", tier: "Inner Circle", points: 2180, rules: 91, change: -1 },
+  { rank: 3, name: "Mia Sørensen", initials: "MS", tier: "Trading Desk", points: 1960, rules: 88, change: 5 },
+  { rank: 4, name: "Lena Ito", initials: "LI", tier: "1:1 VIP", points: 1720, rules: 93, change: 0 },
+  { rank: 5, name: "Alex Moreau", initials: "AM", tier: "Trading Desk", points: 1604, rules: 74, change: -2 },
+  { rank: 6, name: "Priya Nair", initials: "PN", tier: "Inner Circle", points: 1511, rules: 90, change: 1 },
+]
 
 /** ADM-53 ranking and competitions, ADM-54 points, levels and badges. */
 export function RankingAdmin() {
@@ -86,7 +95,7 @@ export function RankingAdmin() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {LEADERBOARD.filter((l) => !l.me).map((l) => (
+                  {BOARD.map((l) => (
                     <TableRow key={l.rank}>
                       <TableCell className={cn("tabular-nums", l.rank <= 3 && "text-a-accent-strong")}>{l.rank}</TableCell>
                       <TableCell>
@@ -97,9 +106,9 @@ export function RankingAdmin() {
                           {r.nicknames ? l.name : l.name.replace(".", "")}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden text-a-text-2 md:table-cell">{["Pro", "Funded Track", "Pro", "Free", "Pro"][l.rank % 5]}</TableCell>
-                      <TableCell className="text-right tabular-nums">{(l.score * 25).toLocaleString("en")}</TableCell>
-                      <TableCell className="hidden text-right tabular-nums md:table-cell">{l.score - 4}%</TableCell>
+                      <TableCell className="hidden text-a-text-2 md:table-cell">{l.tier}</TableCell>
+                      <TableCell className="text-right tabular-nums">{l.points.toLocaleString("en")}</TableCell>
+                      <TableCell className="hidden text-right tabular-nums md:table-cell">{l.rules}%</TableCell>
                       <TableCell className="text-right">
                         {l.change === 0 ? <Tag>–</Tag> : <Tag tone={l.change > 0 ? "success" : "danger"}>{l.change > 0 ? `+${l.change}` : l.change}</Tag>}
                       </TableCell>
