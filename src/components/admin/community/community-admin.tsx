@@ -32,9 +32,9 @@ const DEFAULT_DISCORD: DiscordSetup = {
 const NO_DISCORD: DiscordSetup = { ...DEFAULT_DISCORD, connected: false }
 const SERVER_ROLES = ["@Core", "@Trading Desk", "@VIP", "@Members", "@Funded", "No role"]
 const CHANNELS = [
-  { id: "platform", label: "On the platform" },
-  { id: "email", label: "By e-mail" },
-  { id: "discord", label: "In Discord" },
+  { id: "platform", label: "Platform" },
+  { id: "email", label: "E-mail" },
+  { id: "discord", label: "Discord" },
 ] as const
 
 /** ADM-17 Discord connection and roles, ADM-18 announcements. */
@@ -50,8 +50,7 @@ export function CommunityAdmin() {
     <Page>
       <PageHeader
         title="Community"
-        text={`Your Discord, connected to your tiers, and announcements to your ${coach.wording.students.toLowerCase()}. Students see it as “${coach.wording.community}”.`}
-        guide="Connecting Discord · 2 min"
+        text="Announcements, spaces and Discord"
       />
       <SetupTip task="discord" />
       <Tabs defaultValue="announcements" className="gap-5">
@@ -91,7 +90,7 @@ export function CommunityAdmin() {
                         </div>
                       </TableCell>
                       <TableCell className="hidden text-a-text-2 md:table-cell">{a.channels.map((c) => CHANNELS.find((x) => x.id === c)?.label).join(", ")}</TableCell>
-                      <TableCell className={cn("whitespace-nowrap", a.scheduled ? "text-a-text-accent" : "text-a-text-2")}>{a.scheduled ? `Scheduled · ${a.scheduled}` : `${a.when} · read by ${a.reads}`}</TableCell>
+                      <TableCell className={cn("whitespace-nowrap", a.scheduled ? "text-a-text-accent" : "text-a-text-2")}>{a.scheduled ? `Scheduled · ${a.scheduled}` : `Sent · ${a.when}`}</TableCell>
                       <TableCell>
                         <Button variant="ghost" size="icon-sm" aria-label={a.pinned ? `Unpin ${a.title}` : `Pin ${a.title}`} onClick={() => setList((l) => l.map((x) => (x.id === a.id ? { ...x, pinned: !x.pinned } : x)))}>
                           <Pin />

@@ -31,15 +31,14 @@ export function AiAdmin() {
     <Page>
       <PageHeader
         title="AI assistant"
-        text={`Answers your ${coach.wording.students.toLowerCase()}' questions from your own lessons, in your way of trading. Students see it as “${coach.wording.ai}”. Everything it writes is marked as AI.`}
-        guide="Training your AI · 3 min"
+        text="Answers students 24/7 from your courses and notes"
       />
       <StatPanel
         stats={[
-          { label: "Questions this month", value: "1,412", delta: "+18% vs last month", tone: "success" },
-          { label: "Answered by AI", value: "91%", delta: "9% sent to you" },
-          { label: "Corrections", value: 14, delta: "Taught in the last 30 days" },
-          { label: "Top topic", value: "Stops on ORB", delta: "212 questions" },
+          { label: "Questions this month", value: "1,412", delta: "+22% vs last month", tone: "success" },
+          { label: "Answered alone", value: "91%", delta: "9% sent to you" },
+          { label: "Corrections", value: 14, delta: "Used in every answer" },
+          { label: "Most asked", value: "Stops on ORB", delta: "64 times" },
         ]}
       />
       <Tabs defaultValue="personality" className="gap-5">
@@ -48,7 +47,7 @@ export function AiAdmin() {
           <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
           <TabsTrigger value="features">Features & quotas</TabsTrigger>
           <TabsTrigger value="test">Test & correct</TabsTrigger>
-          <TabsTrigger value="questions">Questions asked</TabsTrigger>
+          <TabsTrigger value="questions">Questions <span className="text-muted-foreground tabular-nums">1.4k</span></TabsTrigger>
         </TabsList>
 
         <TabsContent value="personality">
