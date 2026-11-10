@@ -107,7 +107,7 @@ export function ContentBoard() {
     <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
       <PageHeader
         title="Content"
-        text={<>Your courses. Students see what&apos;s published, in your words: “{coach.wording.courses}”.</>}
+        text={`${catalog.courses.length} ${catalog.courses.length === 1 ? "course" : "courses"} · ${catalog.courses.reduce((n, c) => n + allLessons(c).length, 0)} lessons`}
         actions={
           <>
             <Button variant="outline" onClick={() => setBulk(true)}>
@@ -121,10 +121,10 @@ export function ContentBoard() {
       />
       <StatPanel
         stats={[
-          { label: "Students with access", value: coach.tiers.reduce((n, t) => n + t.members, 0).toLocaleString("en"), delta: `${catalog.courses.length} ${catalog.courses.length === 1 ? "course" : "courses"}` },
-          { label: "Active this week", value: 86, delta: "Watched a lesson", tone: "success" },
-          { label: "Average completion", value: "44%", delta: "Across published courses" },
-          { label: "Most watched", value: "Lesson 2", delta: "Entries that don't chase" },
+          { label: "Enrolled students", value: "201", delta: "+12 vs last 30 days" },
+          { label: "Active this week", value: 86, delta: "43% of enrolled" },
+          { label: "Avg. completion", value: "44%", delta: "+3 pp vs last 30 days", tone: "success" },
+          { label: "Where students stop", value: "Lesson 2", delta: "Price action playbook · 31% don't go past it" },
         ]}
       />
       <SetupTip task="course" />
@@ -146,31 +146,42 @@ export function ContentBoard() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {list.map((c) => {
           const lessons = allLessons(c)
+          const live = c.status === "published"
+          const seed = [...c.id].reduce((n, ch) => n + ch.charCodeAt(0), 0)
           const tiers = c.tiers.length ? coach.tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers"
           return (
             <div key={c.id} data-interactive className={cn("group relative overflow-hidden rounded-xl border bg-card", c.status === "archived" && "opacity-70")}>
               <Link href={`${base}/content/${c.id}`} className="block">
                 <div data-media>
-                  <Tile src={c.cover} color={c.color} className="flex aspect-[16/7] items-end p-2.5">
-                    <span className="relative rounded bg-black/40 px-1.5 py-0.5 text-[0.6875rem] text-white backdrop-blur-sm">
-                      {c.modules.length} {c.modules.length === 1 ? "module" : "modules"} · {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}
-                    </span>
+                  <Tile src={c.cover} color={c.color} className="aspect-[16/7]">
+                    <span className="absolute top-2.5 left-2.5"><StatusBadge status={c.status} when={c.scheduledFor} /></span>
                   </Tile>
                 </div>
-                <div className="grid gap-3 p-4">
+                <div className="grid gap-3 px-4 pt-4">
                   <div className="grid gap-0.5">
                     <span className="text-sm leading-tight font-medium">{c.title}</span>
                     <span className="line-clamp-1 text-xs text-muted-foreground">{c.tagline}</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <StatusBadge status={c.status} when={c.scheduledFor} />
                     {sample(c.id) && <Badge variant="outline">Sample</Badge>}
                     <span className="truncate text-xs text-muted-foreground">{tiers}</span>
                   </div>
                 </div>
+                <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-a-border-subtle px-4 py-3">
+                  {[
+                    [String(lessons.length), "Lessons"],
+                    [live ? String(80 + ((seed * 37) % 120)) : "—", "Students"],
+                    [live ? `${20 + ((seed * 13) % 60)}%` : "—", "Completed"],
+                  ].map(([v, l]) => (
+                    <div key={l} className="grid gap-0.5">
+                      <dd className="text-sm font-medium tabular-nums">{v}</dd>
+                      <dt className="t-caption text-a-text-2">{l}</dt>
+                    </div>
+                  ))}
+                </dl>
               </Link>
                     <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="secondary" size="icon-xs" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 data-popup-open:opacity-100" aria-label={`Actions for ${c.title}`} />}>
+                      <DropdownMenuTrigger render={<Button variant="secondary" size="icon-xs" className="absolute top-2.5 right-2.5" aria-label={`Actions for ${c.title}`} />}>
                         <MoreHorizontal />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
