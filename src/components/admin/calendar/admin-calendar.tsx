@@ -116,7 +116,7 @@ export function AdminCalendar() {
               } else setOpen(i)
             }}
             toolbar={
-              <div className="hidden flex-wrap gap-3 text-xs text-muted-foreground xl:flex">
+              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                 {(Object.keys(COLORS) as ItemKind[]).map((k) => (
                   <span key={k} className="flex items-center gap-1.5">
                     <span className="size-2 rounded-full" style={{ background: COLORS[k] }} />
