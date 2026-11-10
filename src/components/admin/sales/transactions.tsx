@@ -65,11 +65,11 @@ export function Transactions() {
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
                   {t.status === "disputed" ? (
-                    <AdminButton hierarchy="secondary" size="md" onClick={() => toast("Send proof", { description: "We add the login history and course progress for you." })}>
+                    <AdminButton hierarchy="secondary" size="lg" onClick={() => toast("Send proof", { description: "We add the login history and course progress for you." })}>
                       Answer the dispute
                     </AdminButton>
                   ) : (
-                    <AdminButton hierarchy="ghost" size="md" onClick={() => toast("Invoice downloaded")}>
+                    <AdminButton hierarchy="ghost" size="lg" onClick={() => toast("Invoice downloaded")}>
                       <Download /> Invoice
                     </AdminButton>
                   )}

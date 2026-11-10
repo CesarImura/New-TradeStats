@@ -320,7 +320,7 @@ function ChaptersEditor({ lesson, onChange }: { lesson: Lesson; onChange: (p: Pa
             />
             <input value={c.title} onChange={(e) => update(i, { title: e.target.value })} aria-label="Chapter title" className="t-body-m min-w-0 flex-1 bg-transparent text-a-text outline-none" />
             {c.ai && <Tag tone="accent"><Sparkles className="size-3" /> AI</Tag>}
-            <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Delete chapter" onClick={() => set(lesson.chapters.filter((_, j) => j !== i))}>
+            <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Delete chapter" onClick={() => set(lesson.chapters.filter((_, j) => j !== i))}>
               <Trash2 />
             </AdminButton>
           </div>
@@ -383,7 +383,7 @@ function QuizEditor({ lesson, onChange }: { lesson: Lesson; onChange: (p: Partia
               <span className="t-caption w-4 text-a-text-3 tabular-nums">{qi + 1}</span>
               <input value={q.q} onChange={(e) => updateQ(q.id, { q: e.target.value })} placeholder="Question" aria-label="Question" className="t-body-m-medium min-w-0 flex-1 bg-transparent text-a-text outline-none placeholder:text-a-text-3" />
               <span className="t-caption text-a-text-3">{q.options.length} answers</span>
-              <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Delete question" onClick={() => set({ questions: quiz.questions.filter((x) => x.id !== q.id), passMark: Math.max(1, Math.min(quiz.passMark, quiz.questions.length - 1)) })}>
+              <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Delete question" onClick={() => set({ questions: quiz.questions.filter((x) => x.id !== q.id), passMark: Math.max(1, Math.min(quiz.passMark, quiz.questions.length - 1)) })}>
                 <Trash2 />
               </AdminButton>
             </div>
@@ -401,14 +401,14 @@ function QuizEditor({ lesson, onChange }: { lesson: Lesson; onChange: (p: Partia
                   <Input value={o} onChange={(e) => updateQ(q.id, { options: q.options.map((x, j) => (j === oi ? e.target.value : x)) })} placeholder={`Answer ${oi + 1}`} className="h-8" />
                   {q.answer === oi && <Tag tone="success">Correct</Tag>}
                   {q.options.length > 2 && (
-                    <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Remove answer" onClick={() => updateQ(q.id, { options: q.options.filter((_, j) => j !== oi), answer: q.answer >= oi && q.answer > 0 ? q.answer - 1 : q.answer })}>
+                    <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Remove answer" onClick={() => updateQ(q.id, { options: q.options.filter((_, j) => j !== oi), answer: q.answer >= oi && q.answer > 0 ? q.answer - 1 : q.answer })}>
                       <Trash2 />
                     </AdminButton>
                   )}
                 </div>
               ))}
               {q.options.length < 5 && (
-                <AdminButton hierarchy="ghost" size="sm" className="w-fit" onClick={() => updateQ(q.id, { options: [...q.options, ""] })}><Plus /> Add answer</AdminButton>
+                <AdminButton hierarchy="ghost" size="md" className="w-fit" onClick={() => updateQ(q.id, { options: [...q.options, ""] })}><Plus /> Add answer</AdminButton>
               )}
             </div>
           </div>

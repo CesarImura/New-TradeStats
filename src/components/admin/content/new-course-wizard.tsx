@@ -74,7 +74,7 @@ export function NewCourseWizard({ open, area, onClose, onCreate }: { open: boole
           <div className="flex min-w-0 flex-col">
             <header className="flex h-16 items-center justify-between border-b border-a-border px-6">
               <h2 className="t-heading-m text-a-text">{STEPS[step]}</h2>
-              <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Close" onClick={close}><X /></AdminButton>
+              <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Close" onClick={close}><X /></AdminButton>
             </header>
             <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-5">
               {step === 0 && (

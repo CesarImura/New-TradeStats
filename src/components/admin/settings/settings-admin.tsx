@@ -148,7 +148,7 @@ function Segmented<T extends string>({ value, onChange, options, label }: { valu
 
 const RowMenu = ({ label, items }: { label: string; items: { text: string; onClick: () => void }[] }) => (
   <DropdownMenu>
-    <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="sm" iconOnly aria-label={label} />}>
+    <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={label} />}>
       <MoreHorizontal />
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
@@ -186,7 +186,7 @@ function General() {
             <AvatarFallback>{coach.name[0]}</AvatarFallback>
           </Avatar>
           <div className="grid gap-1">
-            <AdminButton hierarchy="secondary" size="sm" className="justify-self-start" onClick={() => toast("Logo is changed in Design", { description: "Pick a file there and you see it on your site at once." })}>
+            <AdminButton hierarchy="secondary" size="md" className="justify-self-start" onClick={() => toast("Logo is changed in Design", { description: "Pick a file there and you see it on your site at once." })}>
               Change logo
             </AdminButton>
             <span className="t-caption text-a-text-2">Square, at least 256 px</span>
@@ -254,7 +254,7 @@ function Domain() {
           <Input aria-label="Web address" defaultValue={handle} className="h-full flex-1 rounded-none border-0 bg-transparent" />
           <span className="flex items-center t-caption text-a-text-3">.traderhub.io</span>
           <div className="flex items-center px-1">
-            <AdminButton hierarchy="secondary" size="sm" onClick={() => copy(`${handle}.traderhub.io`)}>
+            <AdminButton hierarchy="secondary" size="md" onClick={() => copy(`${handle}.traderhub.io`)}>
               Copy
             </AdminButton>
           </div>
@@ -268,7 +268,7 @@ function Domain() {
             <Input aria-label="Domain" value={value} onChange={(e) => setValue(e.target.value.toLowerCase())} placeholder={`academy.${handle}.trading`} className="h-full flex-1 rounded-none border-0 bg-transparent" />
             {d.step === 0 && (
               <div className="flex items-center px-1">
-                <AdminButton size="sm" disabled={!value.includes(".")} onClick={() => setD({ domain: value, step: 1 })}>
+                <AdminButton size="md" disabled={!value.includes(".")} onClick={() => setD({ domain: value, step: 1 })}>
                   Connect
                 </AdminButton>
               </div>
@@ -320,7 +320,7 @@ function Domain() {
                 <span className="flex-1">Waiting for the TXT record · last checked 2 min ago</span>
                 <AdminButton
                   hierarchy="secondary"
-                  size="sm"
+                  size="md"
                   disabled={checking}
                   onClick={() => {
                     setChecking(true)
@@ -338,7 +338,7 @@ function Domain() {
               <div className="flex flex-wrap items-center gap-3 rounded-a-md border border-a-success/30 bg-a-success-soft px-3 py-2 t-body-m text-a-success">
                 <Info className="size-4 shrink-0" />
                 <span className="flex-1">{d.domain} is connected. {`${handle}.traderhub.io`} forwards here.</span>
-                <AdminButton hierarchy="ghost" size="sm" onClick={() => setD({ domain: "", step: 0 })}>
+                <AdminButton hierarchy="ghost" size="md" onClick={() => setD({ domain: "", step: 0 })}>
                   Remove
                 </AdminButton>
               </div>
@@ -400,7 +400,7 @@ function Emails() {
                 <Switch checked={off[x.id] === undefined ? x.on : off[x.id]} onCheckedChange={(v) => setOff((o) => ({ ...o, [x.id]: v }))} aria-label={`${x.name} e-mail`} />
               </TableCell>
               <TableCell className="text-right">
-                <AdminButton hierarchy="ghost" size="sm" onClick={() => setSel(x.id)}>
+                <AdminButton hierarchy="ghost" size="md" onClick={() => setSel(x.id)}>
                   Edit
                 </AdminButton>
               </TableCell>
@@ -480,7 +480,7 @@ function Legal() {
               <TableCell className="text-a-text-2">{texts[l.id] !== undefined ? "Our template · edited" : l.source}</TableCell>
               <TableCell className="text-a-text-2">{l.updated}</TableCell>
               <TableCell className="text-right">
-                <AdminButton hierarchy="ghost" size="sm" onClick={() => setSel(l.id)}>
+                <AdminButton hierarchy="ghost" size="md" onClick={() => setSel(l.id)}>
                   Edit
                 </AdminButton>
               </TableCell>
@@ -550,7 +550,7 @@ function StudentOnboarding() {
             <span className="t-body-m">Welcome video</span>
             <span className="t-caption text-a-text-2">{s.video ? "1:42 · plays once" : "Not added yet"}</span>
           </div>
-          <AdminButton hierarchy="secondary" size="sm" onClick={() => set({ video: !s.video })}>
+          <AdminButton hierarchy="secondary" size="md" onClick={() => set({ video: !s.video })}>
             {s.video ? "Change" : "Upload"}
           </AdminButton>
         </div>
@@ -589,7 +589,7 @@ function StudentOnboarding() {
             </div>
           ))}
           {custom.length < MAX_CUSTOM_QUESTIONS && (
-            <AdminButton hierarchy="ghost" size="sm" className="justify-self-start" onClick={() => set({ custom: [...custom, { id: `q${Date.now()}`, text: "", kind: "short", options: [] }] })}>
+            <AdminButton hierarchy="ghost" size="md" className="justify-self-start" onClick={() => set({ custom: [...custom, { id: `q${Date.now()}`, text: "", kind: "short", options: [] }] })}>
               <Plus /> Add your own question
             </AdminButton>
           )}
@@ -631,7 +631,7 @@ function FirstWeek() {
           actions={
             <AdminButton
               hierarchy="secondary"
-              size="sm"
+              size="md"
               onClick={() => {
                 resetAsNewStudent(coach.slug)
                 window.open(`/site/${coach.slug}/start`, "_blank")
@@ -902,7 +902,7 @@ function Plan() {
             <span className="t-body-m">Custom design</span>
             <span className="t-caption text-a-text-2">We design your site with you · one-time</span>
           </div>
-          <AdminButton hierarchy="secondary" size="sm" onClick={() => toast("Custom design requested", { description: "We'll book a short call to start." })}>
+          <AdminButton hierarchy="secondary" size="md" onClick={() => toast("Custom design requested", { description: "We'll book a short call to start." })}>
             Learn more
           </AdminButton>
         </div>
@@ -925,7 +925,7 @@ function Plan() {
                 <Tag tone="success" dot>Paid</Tag>
               </TableCell>
               <TableCell className="text-right">
-                <AdminButton hierarchy="ghost" size="sm" onClick={() => toast("Invoice downloaded")}>
+                <AdminButton hierarchy="ghost" size="md" onClick={() => toast("Invoice downloaded")}>
                   <Download /> Download
                 </AdminButton>
               </TableCell>

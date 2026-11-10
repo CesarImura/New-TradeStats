@@ -70,7 +70,7 @@ export function RankingAdmin() {
             <div className="flex-1" />
             <div role="group" aria-label="Period" className="flex items-center gap-2">
               {([["week", "This week"], ["month", "This month"], ["all", "All time"]] as const).map(([id, label]) => (
-                <AdminButton key={id} type="button" hierarchy={r.period === id ? "secondary" : "ghost"} size="md" aria-pressed={r.period === id} onClick={() => set({ period: id })}>
+                <AdminButton key={id} type="button" hierarchy={r.period === id ? "secondary" : "ghost"} size="lg" aria-pressed={r.period === id} onClick={() => set({ period: id })}>
                   {label}
                 </AdminButton>
               ))}

@@ -163,7 +163,7 @@ function RequestsTable({ trades, onOpen, answered, q, tier, sort }: { trades: Re
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap text-muted-foreground">{ask?.when}</TableCell>
                     <TableCell className="text-right">
-                      <AdminButton hierarchy="secondary" size="sm" onClick={() => onOpen(t.id)}>
+                      <AdminButton hierarchy="secondary" size="md" onClick={() => onOpen(t.id)}>
                         {answered ? "Open" : "Answer"}
                       </AdminButton>
                     </TableCell>

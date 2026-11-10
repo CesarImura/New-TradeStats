@@ -47,8 +47,8 @@ export function CourseSettings({ course, edit, onPublish, onDuplicate }: { cours
         </div>
         <div className="flex items-center gap-3">
           <Tile src={course.cover} color={course.color} className="aspect-video w-[124px] shrink-0 rounded-a-md border border-a-border" />
-          <AdminButton hierarchy="secondary" size="md" onClick={() => cover.current?.click()}>Change cover</AdminButton>
-          {course.cover && <AdminButton hierarchy="ghost" size="md" onClick={() => set({ cover: undefined })}>Remove</AdminButton>}
+          <AdminButton hierarchy="secondary" size="lg" onClick={() => cover.current?.click()}>Change cover</AdminButton>
+          {course.cover && <AdminButton hierarchy="ghost" size="lg" onClick={() => set({ cover: undefined })}>Remove</AdminButton>}
           <input ref={cover} type="file" accept="image/*" aria-label="Cover" className="sr-only" onChange={(e) => (void pick(e.target.files?.[0]), (e.target.value = ""))} />
         </div>
       </section>

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 
 /**
  * Admin / Button (Figma 572:28569). Hierarchy × size, states by CSS.
- * Sizes: sm 28, md 32, lg 36 (default), xl 44. `iconOnly` makes it square.
+ * Sizes as in Figma _Base Button: sm 24 (r6, 12px), md 28 (12px), lg 32 (13px), xl 36 (13px, default). `iconOnly` makes it square.
  */
 const button = cva(
   "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-a-md t-body-m-medium outline-none select-none transition-colors duration-300 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -18,20 +18,20 @@ const button = cva(
         highlight: "bg-[var(--admin-component-button-highlight-bg-default)] text-[var(--admin-component-button-highlight-content)] hover:bg-[var(--admin-component-button-highlight-bg-hover)]",
       },
       size: {
-        sm: "h-7 px-2 rounded-a-sm t-caption-medium",
-        md: "h-8 px-2.5",
-        lg: "h-9 px-3.5",
-        xl: "h-11 px-4",
+        sm: "h-6 px-2 rounded-a-sm t-caption-medium",
+        md: "h-7 px-2.5 t-caption-medium",
+        lg: "h-8 px-3",
+        xl: "h-9 px-3.5",
       },
       iconOnly: { true: "px-0", false: "" },
     },
     compoundVariants: [
-      { iconOnly: true, size: "sm", class: "w-7" },
-      { iconOnly: true, size: "md", class: "w-8" },
-      { iconOnly: true, size: "lg", class: "w-9" },
-      { iconOnly: true, size: "xl", class: "w-11" },
+      { iconOnly: true, size: "sm", class: "w-6" },
+      { iconOnly: true, size: "md", class: "w-7" },
+      { iconOnly: true, size: "lg", class: "w-8" },
+      { iconOnly: true, size: "xl", class: "w-9" },
     ],
-    defaultVariants: { hierarchy: "primary", size: "lg", iconOnly: false },
+    defaultVariants: { hierarchy: "primary", size: "xl", iconOnly: false },
   }
 )
 

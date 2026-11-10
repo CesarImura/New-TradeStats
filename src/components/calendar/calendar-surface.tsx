@@ -64,19 +64,19 @@ export function CalendarSurface({
         <div className="flex flex-wrap items-center gap-2">
           {leading}
           <div className="flex-1" />
-          <AdminButton hierarchy="secondary" size="md" onClick={() => onCursor(NOW)}>
+          <AdminButton hierarchy="secondary" size="lg" onClick={() => onCursor(NOW)}>
             Today
           </AdminButton>
-          <AdminButton hierarchy="secondary" size="md" iconOnly aria-label="Previous" onClick={() => step(-1)}>
+          <AdminButton hierarchy="secondary" size="lg" iconOnly aria-label="Previous" onClick={() => step(-1)}>
             <ChevronLeft />
           </AdminButton>
-          <AdminButton hierarchy="secondary" size="md" iconOnly aria-label="Next" onClick={() => step(1)}>
+          <AdminButton hierarchy="secondary" size="lg" iconOnly aria-label="Next" onClick={() => step(1)}>
             <ChevronRight />
           </AdminButton>
           <span className="t-body-m-medium px-1 text-a-text">{label}</span>
           <div role="radiogroup" aria-label="View" className="flex items-center gap-1">
             {(["week", "month"] as View[]).map((v) => (
-              <AdminButton key={v} role="radio" aria-checked={view === v} hierarchy={view === v ? "secondary" : "ghost"} size="md" className="capitalize" onClick={() => onView(v)}>
+              <AdminButton key={v} role="radio" aria-checked={view === v} hierarchy={view === v ? "secondary" : "ghost"} size="lg" className="capitalize" onClick={() => onView(v)}>
                 {v}
               </AdminButton>
             ))}

@@ -67,7 +67,7 @@ export function AdminViewToggle<T extends string>({ value, onChange, label = "Vi
   return (
     <div role="group" aria-label={label} className="flex items-center gap-1">
       {items.map((it) => (
-        <AdminButton key={it.id} type="button" hierarchy={value === it.id ? "secondary" : "ghost"} size="md" iconOnly aria-label={it.name} aria-pressed={value === it.id} onClick={() => onChange(it.id as T)}>
+        <AdminButton key={it.id} type="button" hierarchy={value === it.id ? "secondary" : "ghost"} size="lg" iconOnly aria-label={it.name} aria-pressed={value === it.id} onClick={() => onChange(it.id as T)}>
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             {it.icon}
           </svg>

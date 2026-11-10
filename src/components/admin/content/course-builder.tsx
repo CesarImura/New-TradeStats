@@ -129,7 +129,7 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
             <div role="status" className="flex items-center gap-3 rounded-a-lg border border-a-border bg-a-danger-soft px-4 py-2.5">
               <span aria-hidden className="size-1.5 rounded-full bg-a-danger-fill" />
               <p className="t-body-m flex-1 text-a-danger">{missing.length} {missing.length === 1 ? "lesson still needs" : "lessons still need"} a video: {missing[0].title}{missing.length > 1 ? ` and ${missing.length - 1} more` : ""}</p>
-              <AdminButton hierarchy="secondary" size="sm" onClick={() => setSel({ kind: "lesson", id: missing[0].id })}>Review</AdminButton>
+              <AdminButton hierarchy="secondary" size="md" onClick={() => setSel({ kind: "lesson", id: missing[0].id })}>Review</AdminButton>
             </div>
           )}
 
@@ -154,7 +154,7 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
               <span className="t-mono-label-s text-a-text-3 uppercase">Heads up</span>
               {missing.length === 0 && <Check tone="success" title="Every lesson has a video" text="Nothing is hidden from students." />}
               {missing.map((l) => (
-                <Check key={l.id} tone="warning" title={`${l.title} has no video`} text="Students won’t see this lesson" action={<AdminButton hierarchy="secondary" size="sm" onClick={() => (setReview(false), setSel({ kind: "lesson", id: l.id }))}>Fix</AdminButton>} />
+                <Check key={l.id} tone="warning" title={`${l.title} has no video`} text="Students won’t see this lesson" action={<AdminButton hierarchy="secondary" size="md" onClick={() => (setReview(false), setSel({ kind: "lesson", id: l.id }))}>Fix</AdminButton>} />
               ))}
               <Check tone="success" title={`Access: ${tiers}`} text={`${course.tiers.length === 0 ? coach.tiers.reduce((n, t) => n + t.members, 0) : coach.tiers.filter((t) => course.tiers.includes(t.id)).reduce((n, t) => n + t.members, 0)} students can see it`} />
             </div>
@@ -202,7 +202,7 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
               <SheetTitle className="t-heading-m text-a-text">Course settings</SheetTitle>
               <p className="t-body-m text-a-text-2">{course.title} · {STATUS_LABEL[course.status]}</p>
             </div>
-            <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label="Close" onClick={() => setSettings(false)}><X /></AdminButton>
+            <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Close" onClick={() => setSettings(false)}><X /></AdminButton>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-6 py-5">
             <CourseSettings course={course} edit={edit} onPublish={() => (setSettings(false), setReview(true))} onDuplicate={duplicate} />
@@ -236,9 +236,9 @@ function ModuleCard({ index, module: m, course, cover, onOpen, onAdd, onRename, 
         )}
         <span className="t-caption text-a-text-3">{m.lessons.length} {m.lessons.length === 1 ? "lesson" : "lessons"}{mins ? ` · ${mins} min` : ""}</span>
         <span className="flex-1" />
-        <AdminButton hierarchy="secondary" size="md" onClick={onAdd}><Upload /> Upload videos</AdminButton>
+        <AdminButton hierarchy="secondary" size="lg" onClick={onAdd}><Upload /> Upload videos</AdminButton>
         <DropdownMenu>
-          <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" iconOnly size="md" aria-label={`${m.title} actions`} />}><MoreHorizontal /></DropdownMenuTrigger>
+          <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" iconOnly size="lg" aria-label={`${m.title} actions`} />}><MoreHorizontal /></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => setRenaming(true)}><Pencil /> Rename</DropdownMenuItem>
             <DropdownMenuItem onClick={onDelete}><Trash2 /> Delete module</DropdownMenuItem>
