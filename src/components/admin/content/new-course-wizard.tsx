@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Check, FolderUp, Plus, X } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { AdminButton, OptionCard } from "@/components/admin/ui"
+import { AdminButton, OptionCard, StepIndicator } from "@/components/admin/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -62,9 +62,7 @@ export function NewCourseWizard({ open, area, onClose, onCreate }: { open: boole
               return (
                 <button key={name} type="button" disabled={i > step && !valid} onClick={() => setStep(i)} aria-current={i === step ? "step" : undefined}
                   className={cn("flex h-9 items-center gap-2.5 rounded-a-md px-2.5 t-body-m outline-none transition-colors focus-visible:ring-2 focus-visible:ring-a-border-focus", i === step ? "bg-a-selected text-a-text" : "text-a-text-2 hover:bg-a-hover")}>
-                  <span className={cn("grid size-5 shrink-0 place-items-center rounded-full t-caption", done ? "bg-a-success-fill text-black" : i === step ? "bg-a-accent-strong text-white" : "bg-a-muted text-a-text-2")}>
-                    {done ? <Check className="size-3" /> : i + 1}
-                  </span>
+                  <StepIndicator state={done ? "done" : i === step ? "current" : "upcoming"}>{i + 1}</StepIndicator>
                   {name}
                 </button>
               )

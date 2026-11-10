@@ -8,7 +8,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "../kit"
-import { AdminFilter, AdminTabs, AdminToolbar } from "../ui"
+import { AdminFilter, AdminTabs, AdminToolbar, ChoiceChip } from "../ui"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -341,9 +341,9 @@ function EventEditor({ event, isNew, onClose }: { event: CalEvent | null; isNew:
 
 function TierChip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} className={cn("rounded-full border px-3 py-1 text-sm", on ? "border-primary bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
+    <ChoiceChip on={on} onClick={onClick} className="min-h-8 px-3 t-caption">
       {children}
-    </button>
+    </ChoiceChip>
   )
 }
 

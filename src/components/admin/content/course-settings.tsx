@@ -3,7 +3,7 @@
 import { useRef } from "react"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { AdminButton, Callout, Tag } from "@/components/admin/ui"
+import { AdminButton, AdminSegmented, Callout, Tag } from "@/components/admin/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -57,17 +57,7 @@ export function CourseSettings({ course, edit, onPublish, onDuplicate }: { cours
 
       <section className="flex flex-col gap-3">
         <h3 className="t-body-m text-a-text">Access</h3>
-        <div className="grid grid-cols-2 gap-1.5">
-          {([["all", "All tiers"], ["pick", "Pick tiers"]] as const).map(([k, label]) => {
-            const on = (k === "all") === everyone
-            return (
-              <button key={k} type="button" onClick={() => set({ tiers: k === "all" ? [] : coach.tiers.slice(0, 1).map((t) => t.id) })}
-                className={cn("h-9 rounded-a-md border t-body-m outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus", on ? "border-a-border-active bg-a-selected text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover")}>
-                {label}
-              </button>
-            )
-          })}
-        </div>
+        <AdminSegmented label="Access" value={everyone ? "all" : "pick"} onChange={(k) => set({ tiers: k === "all" ? [] : coach.tiers.slice(0, 1).map((t) => t.id) })} options={[{ id: "all", label: "All tiers" }, { id: "pick", label: "Pick tiers" }]} />
         {!everyone && (
           <div className="flex flex-col gap-2">
             {coach.tiers.map((t) => (
