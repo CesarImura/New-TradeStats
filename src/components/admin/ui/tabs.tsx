@@ -3,9 +3,9 @@
 import { cn } from "@/lib/utils"
 
 /** Admin / Tab (580:459): caption text, soft pill when Active. Controlled; arrow keys move between tabs. */
-export function AdminTabs<T extends string>({ tabs, value, onChange, label, className }: { tabs: readonly { id: T; label: string; dot?: boolean }[]; value: T; onChange: (id: T) => void; label: string; className?: string }) {
+export function AdminTabs<T extends string>({ tabs, value, onChange, label, className }: { tabs: readonly { id: T; label: string; count?: number | string; dot?: boolean }[]; value: T; onChange: (id: T) => void; label: string; className?: string }) {
   return (
-    <div role="tablist" aria-label={label} className={cn("flex max-w-full gap-1 overflow-x-auto", className)}
+    <div role="tablist" aria-label={label} className={cn("flex max-w-full shrink-0 items-start overflow-x-auto rounded-a-md border border-a-border p-0.5 [scrollbar-width:none]", className)}
       onKeyDown={(e) => {
         if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(e.key)) return
         e.preventDefault()
@@ -17,14 +17,10 @@ export function AdminTabs<T extends string>({ tabs, value, onChange, label, clas
       {tabs.map((t) => (
         <button key={t.id} type="button" role="tab" data-tab={t.id} aria-selected={t.id === value} tabIndex={t.id === (tabs.some((x) => x.id === value) ? value : tabs[0]?.id) ? 0 : -1} onClick={() => onChange(t.id)}
           className={cn("relative inline-flex h-[26px] shrink-0 items-center gap-1.5 rounded-a-sm px-2.5 t-caption outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
-            t.id === value ? "bg-a-selected text-a-text" : "text-a-text-2 hover:bg-a-hover hover:text-a-text")}>
+            t.id === value ? "bg-a-raised text-a-text" : "text-a-text-2 hover:bg-a-hover hover:text-a-text")}>
+          {t.dot && <span aria-hidden className="size-1.5 rounded-full bg-a-accent-strong" />}
           {t.label}
-          {t.dot && (
-            <>
-              <span aria-hidden className="size-1.5 rounded-full bg-a-accent-strong" />
-              <span className="sr-only">needs attention</span>
-            </>
-          )}
+          {t.count !== undefined && <span className="text-a-text-3 tabular-nums">{t.count}</span>}
         </button>
       ))}
     </div>

@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { newStreamKey, saveLivestreams, useLivestreams, whenLabel, type Livestream } from "@/lib/data/livestreams"
 import { uid } from "@/lib/data/learning"
 import { Empty, Field, Page, PageHeader } from "../kit"
-import { AdminButton, AdminTabs, Panel, Tag } from "../ui"
+import { AdminButton, AdminSearch, AdminTabs, AdminToolbar, Panel, Tag } from "../ui"
 
 /** Livestreams: what is live, what is next, and what was recorded. One button to schedule, one place to open each. */
 export function LivestreamsAdmin() {
@@ -32,9 +32,16 @@ export function LivestreamsAdmin() {
         title="Livestreams"
         text="Go live with OBS, chat with your students, and keep the recording."
         actions={
-          <Button onClick={() => setCreating(true)}>
-            <Plus /> Schedule a livestream
-          </Button>
+          <>
+            {streams[0] && (
+              <AdminButton hierarchy="secondary" nativeButton={false} render={<Link href={`${base}/livestreams/${streams[0].id}`} />}>
+                <Radio /> Open studio
+              </AdminButton>
+            )}
+            <AdminButton onClick={() => setCreating(true)}>
+              <Plus /> Schedule a livestream
+            </AdminButton>
+          </>
         }
       />
       {streams.length === 0 && <Empty icon={Radio} title="No livestreams yet" text="Schedule your first one. You will get the OBS settings on the next screen." action={<Button onClick={() => setCreating(true)}>Schedule a livestream</Button>} />}
@@ -88,19 +95,20 @@ function Streams({ live, upcoming, past, base, tiers }: { live: Livestream[]; up
           </div>
         </Panel>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <AdminToolbar>
         <AdminTabs
           label="Livestreams"
           value={tab}
           onChange={setTab}
           tabs={[
-            { id: "upcoming", label: `Coming up ${upcoming.length}` },
-            { id: "live", label: `Live now ${live.length}` },
-            { id: "past", label: `Recordings ${past.length}` },
+            { id: "upcoming", label: "Coming up", count: upcoming.length },
+            { id: "live", label: "Live now", count: live.length },
+            { id: "past", label: "Recordings", count: past.length },
           ]}
         />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search livestreams" aria-label="Search livestreams" className="w-full sm:w-64" />
-      </div>
+        <div className="flex-1" />
+        <AdminSearch value={q} onChange={setQ} placeholder="Search livestreams" hint="⌘K" />
+      </AdminToolbar>
       <div className="overflow-x-auto rounded-a-lg border border-a-border bg-a-panel">
         <Table>
           <TableHeader>

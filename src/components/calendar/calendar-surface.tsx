@@ -3,6 +3,7 @@
 import { useContext } from "react"
 import { addDays, addMonths, addWeeks, endOfMonth, format, isSameDay, isSameMonth, startOfMonth, startOfWeek } from "date-fns"
 import { ChevronLeft, ChevronRight } from "@/components/icons"
+import { AdminButton } from "@/components/admin/ui"
 import { Button } from "@/components/ui/button"
 import { ShellEditorContext } from "@/components/shells/student-shell"
 import { NOW, hhmm, isLiveNow, type Item, type ItemKind } from "@/lib/data/schedule"
@@ -28,6 +29,7 @@ export function CalendarSurface({
   eventStyle = "tinted",
   toolbar,
   onEmptySlot,
+  leading,
 }: {
   items: Item[]
   view: View
@@ -42,6 +44,8 @@ export function CalendarSurface({
   toolbar?: React.ReactNode
   /** Admin: click an empty time in the week view to create something there. */
   onEmptySlot?: (d: Date) => void
+  /** Admin: what sits at the start of the header row (the page tabs), so tabs and view controls share one row as in the Figma toolbar. */
+  leading?: React.ReactNode
 }) {
   const step = (dir: 1 | -1) => onCursor(view === "month" ? addMonths(cursor, dir) : addWeeks(cursor, dir))
   const weekStart = startOfWeek(cursor, { weekStartsOn: 1 })
@@ -56,7 +60,31 @@ export function CalendarSurface({
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <div className={cn("flex flex-wrap items-center gap-2", admin && "justify-end")}>
+      {admin && (
+        <div className="flex flex-wrap items-center gap-2">
+          {leading}
+          <div className="flex-1" />
+          <AdminButton hierarchy="secondary" size="md" onClick={() => onCursor(NOW)}>
+            Today
+          </AdminButton>
+          <AdminButton hierarchy="secondary" size="md" iconOnly aria-label="Previous" onClick={() => step(-1)}>
+            <ChevronLeft />
+          </AdminButton>
+          <AdminButton hierarchy="secondary" size="md" iconOnly aria-label="Next" onClick={() => step(1)}>
+            <ChevronRight />
+          </AdminButton>
+          <span className="t-body-m-medium px-1 text-a-text">{label}</span>
+          <div role="radiogroup" aria-label="View" className="flex items-center gap-1">
+            {(["week", "month"] as View[]).map((v) => (
+              <AdminButton key={v} role="radio" aria-checked={view === v} hierarchy={view === v ? "secondary" : "ghost"} size="md" className="capitalize" onClick={() => onView(v)}>
+                {v}
+              </AdminButton>
+            ))}
+          </div>
+        </div>
+      )}
+      {!admin && (
+      <div className="flex flex-wrap items-center gap-2">
         <div className={cn("flex items-center gap-1", admin && "order-2")}>
           {admin ? (
             <Button variant="outline" size="sm" onClick={() => onCursor(NOW)}>
@@ -98,6 +126,7 @@ export function CalendarSurface({
           </div>
         </div>
       </div>
+      )}
 
       {view === "month" && <Month items={items} cursor={cursor} onSelect={onSelect} colorOf={colorOf} eventStyle={eventStyle} onDay={(d) => (onCursor(d), onView("week"))} />}
       {view === "week" && (

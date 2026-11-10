@@ -6,7 +6,7 @@ import { Medal, Plus, Trophy } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { AdminTabs, Panel, PanelHeader, Tag } from "@/components/admin/ui"
+import { AdminButton, Panel, PanelHeader, Tag } from "@/components/admin/ui"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -35,6 +35,7 @@ export function RankingAdmin() {
   const { coach, base } = useCoach()
   const [r, setR] = useCommunityData(coach.slug, "ranking", DEFAULT_RANKING)
   const [creating, setCreating] = useState(false)
+  const [tab, setTab] = useState("leaderboard")
   const set = (p: Partial<RankingSetup>) => setR((x) => ({ ...x, ...p }))
 
   return (
@@ -57,30 +58,32 @@ export function RankingAdmin() {
           </Button>
         </div>
       )}
-      <Tabs defaultValue="leaderboard" className="gap-5">
+      <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className="gap-5">
+        <div className="flex flex-wrap items-center gap-2">
         <TabsList>
           <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
           <TabsTrigger value="competitions">Competitions</TabsTrigger>
           <TabsTrigger value="points">Points & badges</TabsTrigger>
         </TabsList>
+        {tab === "leaderboard" && (
+          <>
+            <div className="flex-1" />
+            <div role="group" aria-label="Period" className="flex items-center gap-2">
+              {([["week", "This week"], ["month", "This month"], ["all", "All time"]] as const).map(([id, label]) => (
+                <AdminButton key={id} type="button" hierarchy={r.period === id ? "secondary" : "ghost"} size="md" aria-pressed={r.period === id} onClick={() => set({ period: id })}>
+                  {label}
+                </AdminButton>
+              ))}
+            </div>
+          </>
+        )}
+        </div>
 
         <TabsContent value="leaderboard" className="grid gap-6">
           <Panel>
             <PanelHeader
               title={`Now · ${RANK_METRICS.find((m) => m.id === r.metric)?.name}`}
               description="Ranks by points: lessons, journal entries and rules kept. Students can opt out."
-              actions={
-                <AdminTabs
-                  label="Period"
-                  value={r.period as "week" | "month" | "all"}
-                  onChange={(v) => set({ period: v })}
-                  tabs={[
-                    { id: "week", label: "This week" },
-                    { id: "month", label: "This month" },
-                    { id: "all", label: "All time" },
-                  ]}
-                />
-              }
             />
             <div className="overflow-x-auto">
               <Table>

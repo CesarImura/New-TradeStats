@@ -8,7 +8,6 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { TRANSACTIONS } from "@/lib/data/people"
 import { Page, PageHeader } from "../kit"
 import { SetupTip } from "../setup-checklist"
 import { AccessOverview, PreviewAsMenu } from "./access-overview"
@@ -24,7 +23,6 @@ import { Transactions } from "./transactions"
 export function SalesAdmin() {
   const { coach } = useCoach()
   const [tab, setTab] = useState(useSearchParams().get("tab") ?? "overview")
-  const problems = TRANSACTIONS.filter((t) => ["failed", "retrying", "disputed"].includes(t.status)).length
 
   return (
     <Page>
@@ -33,11 +31,11 @@ export function SalesAdmin() {
         text="Tiers, sales page, coupons and payouts"
         actions={
           <>
-            <PreviewAsMenu size="sm" />
-            <Button size="sm" variant="outline" nativeButton={false} render={<a href={`/site/${coach.slug}`} target="_blank" rel="noreferrer" />}>
+            <PreviewAsMenu />
+            <Button variant="outline" nativeButton={false} render={<a href={`/site/${coach.slug}`} target="_blank" rel="noreferrer" />}>
               <ExternalLink /> Sales page
             </Button>
-            <Button size="sm" onClick={() => setTab("tiers")}>
+            <Button onClick={() => setTab("tiers")}>
               <Plus /> New tier
             </Button>
           </>
@@ -56,7 +54,7 @@ export function SalesAdmin() {
             <TabsTrigger value="page">Sales page</TabsTrigger>
             <TabsTrigger value="coupons">Coupons</TabsTrigger>
             <TabsTrigger value="transactions">
-              Payments {problems > 0 && <span className="rounded-full bg-[var(--loss)]/20 px-1.5 text-[0.6875rem] text-[var(--ts-loss-text)] tabular-nums">{problems}</span>}
+              Transactions
             </TabsTrigger>
             <TabsTrigger value="payouts">Payouts</TabsTrigger>
           </TabsList>

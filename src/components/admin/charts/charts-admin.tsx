@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { COACH_CHARTS, chartDefaults, INDICATORS, INTERVALS, MARKETS, type ChartSettings, type Market, type CoachChart } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { Empty, Field, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
-import { Tag } from "../ui"
+import { AdminSearch, Tag } from "../ui"
 
 export const LEVEL_COLOR = { support: "var(--profit)", resistance: "var(--loss)", target: "var(--highlight, #f8ff9e)" } as const
 
@@ -27,6 +27,8 @@ export function ChartsAdmin() {
   const defaults = useMemo(() => chartDefaults(picked ? (picked.split(",") as Market[]) : undefined), [picked])
   const [s, setS] = useCommunityData<ChartSettings>(coach.slug, "charts", defaults)
   const [charts, setCharts] = useCommunityData<CoachChart[]>(coach.slug, "coach-charts", COACH_CHARTS)
+  const [tab, setTab] = useState("charts")
+  const [q, setQ] = useState("")
   const [creating, setCreating] = useState(false)
   const [preview, setPreview] = useState(s.watchlist[0]?.tv ?? "CAPITALCOM:US100")
   const on = coach.modules.charts
@@ -62,20 +64,28 @@ export function ChartsAdmin() {
         </div>
       )}
 
-      <Tabs defaultValue="charts" className="gap-5">
+      <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className="gap-5">
+        <div className="flex flex-wrap items-center gap-2">
         <TabsList>
           <TabsTrigger value="charts">
             Your charts <span className="text-muted-foreground tabular-nums">{charts.filter((c) => !c.archived).length}</span>
           </TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
+        {tab === "charts" && (
+          <>
+            <div className="flex-1" />
+            <AdminSearch value={q} onChange={setQ} placeholder="Search charts" hint="⌘K" />
+          </>
+        )}
+        </div>
 
         <TabsContent value="charts">
           {charts.filter((c) => !c.archived).length === 0 ? (
             <Empty icon={ChartCandlestick} title="No marked-up charts yet" text="Draw your levels for the week and share them. Students open them with your lines on top." action={<Button onClick={() => setCreating(true)}>Mark up a chart</Button>} />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {[...charts.filter((c) => !c.archived)]
+              {[...charts.filter((c) => !c.archived && c.title.toLowerCase().includes(q.toLowerCase()))]
                 .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned))
                 .map((c) => (
                   <ChartCard

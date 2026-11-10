@@ -48,3 +48,10 @@ Ordem de trabalho: shell, Overview, Students, Journal, Content, Downloads, Calen
 - Journal: tabela de pedidos (Student, Question, Trade, Rules, Waiting, Answer). A resposta abre numa sheet com o mesmo editor de antes.
 - Students, Content, Downloads, Calendar, Charts, Community, AI, Sales, Partners, Ranking, Settings: subtítulos, rótulos, colunas e botões do Figma.
 - Diferenças que ficaram de propósito: nome "TradeStats" no logo (Figma diz "Traderhub"), "View as student" no menu, botão "Bulk upload" em Content, aba "Affiliates" em Sales, Partners e Livestreams em tabela, Personality da AI em layout de formulário (Figma tem dois cartões).
+
+## Tabs, filters and buttons pass (10/11)
+- Tabs: bordered group, 2 px inside, 26 px tabs, open tab on `bg-raised`, counts in tertiary (Figma Toolbar > Tabs). One rule in `admin-v2.ts` for the legacy `TabsList` plus `AdminTabs` (now with `count`, `dot`).
+- New in `admin/ui/toolbar.tsx`: `AdminToolbar` (tabs left, controls right), `AdminSearch` (⌘K), `AdminFilter` ("Label | value"), `AdminViewToggle`. Used in Journal, Content, Students, Downloads, Livestreams, Charts, Sales > Transactions, Calendar (News).
+- Tab sets now as Figma: Students All / Needs help / Invited / Paused; Content All / Needs attention / Published / Scheduled / Draft / Archived (+ grid/list); Community Announcements / Spaces & rules / Discord; Sales "Transactions".
+- Buttons: Calendar Today, ‹ ›, Week, Month in the tabs row (admin only; List stays on the student side); Ranking period buttons in the toolbar; AI "Test it" and "Publish changes"; Livestreams "Open studio"; Journal Rules "Preview as student"; Transactions "Invoice" / "Answer the dispute"; Community "New announcement" in the header; Students "Import or invite" with plus.
+- Left as is: Group filter in Ranking (no data), Type / date filters in Journal Answered, month filter in Transactions, card cover art in Content (the sample covers carry their own text).

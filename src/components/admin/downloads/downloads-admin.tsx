@@ -16,7 +16,7 @@ import { useTiers } from "@/lib/data/access"
 import { DOWNLOAD_CATEGORIES, categoryLabel, saveDownloads, shortDate, useDownloads, type DownloadCategory, type DownloadFile, type DownloadItem } from "@/lib/data/downloads"
 import { cn } from "@/lib/utils"
 import { Empty, Field, NativeSelect, Page, PageHeader } from "../kit"
-import { AdminTabs, FileIcon, Tag } from "../ui"
+import { AdminFilter, AdminSearch, AdminTabs, AdminToolbar, FileIcon, Tag } from "../ui"
 
 const TYPES: Record<string, string> = {
   pdf: "PDF",
@@ -45,7 +45,8 @@ export function DownloadsAdmin() {
   const items = useDownloads(coach)
   const [cat, setCat] = useState<string>("all")
   const [q, setQ] = useState("")
-  const shown = items.filter((d) => (cat === "all" || d.category === cat) && (!q || `${d.title} ${d.file.name}`.toLowerCase().includes(q.toLowerCase())))
+  const [tierSel, setTierSel] = useState("all")
+  const shown = items.filter((d) => (cat === "all" || d.category === cat) && (tierSel === "all" || d.tiers.length === 0 || d.tiers.includes(tierSel)) && (!q || `${d.title} ${d.file.name}`.toLowerCase().includes(q.toLowerCase())))
   const tiers = useTiers(coach)
   const [editing, setEditing] = useState<DownloadItem | "new" | null>(null)
   const tierName = (d: DownloadItem) => (d.tiers.length === 0 ? "Everyone" : d.tiers.map((id) => tiers.find((t) => t.id === id)?.name ?? id).join(", "))
@@ -80,10 +81,17 @@ export function DownloadsAdmin() {
         <Empty icon={Download} title="No files yet" text="Upload an indicator, a template or a checklist and students find it under Downloads." action={<Button onClick={() => setEditing("new")}><Plus /> Upload a file</Button>} />
       ) : (
         <>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <AdminTabs label="Category" tabs={[{ id: "all", label: "All" }, ...DOWNLOAD_CATEGORIES.map((c) => ({ id: c.id, label: c.label }))]} value={cat} onChange={setCat} />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search files" aria-label="Search files" className="w-full sm:w-64" />
-        </div>
+        <AdminToolbar>
+          <AdminTabs
+            label="Category"
+            tabs={[{ id: "all", label: "All", count: items.length }, ...DOWNLOAD_CATEGORIES.map((c) => ({ id: c.id, label: c.label }))]}
+            value={cat}
+            onChange={setCat}
+          />
+          <div className="flex-1" />
+          <AdminSearch value={q} onChange={setQ} placeholder="Search files" hint="⌘K" />
+          <AdminFilter ariaLabel="Tier" value={tierSel} onValueChange={setTierSel} options={[{ value: "all", label: "All tiers" }, ...tiers.map((t) => ({ value: t.id, label: t.name }))]} />
+        </AdminToolbar>
         <div className="overflow-x-auto rounded-lg border bg-card">
           <Table>
             <TableHeader>

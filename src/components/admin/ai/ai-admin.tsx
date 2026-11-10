@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, FileUp, Pencil, Send, ShieldAlert, Sparkles } from "@/components/icons"
+import { Check, FileUp, Pencil, Play, Send, ShieldAlert, Sparkles } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -17,12 +17,13 @@ import { DEFAULT_AI, aiAnswer, type AiReply, type AiSetup } from "@/lib/data/ai"
 import { AI_FEATURES, AI_KNOWLEDGE, AI_QUESTIONS, AI_USAGE } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { Field, Mono, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
-import { Panel, PanelHeader, StatPanel } from "../ui"
+import { AdminButton, Panel, PanelHeader, StatPanel } from "../ui"
 
 /** ADM-24 features and quotas, ADM-25 knowledge, ADM-26 personality, ADM-27 test and correct, ADM-28 questions asked. */
 export function AiAdmin() {
   const { coach } = useCoach()
   const [ai, setAi] = useCommunityData(coach.slug, "ai", DEFAULT_AI)
+  const [tab, setTab] = useState("personality")
   const set = (patch: Partial<AiSetup>) => setAi((x) => ({ ...x, ...patch }))
   // Everything is on by default except the weekly summary in the entry tier.
   const featureOn = (f: string, tier: string) => ai.features[f]?.[tier] ?? !(f === "weekly" && tier === coach.tiers[0]?.id)
@@ -32,16 +33,16 @@ export function AiAdmin() {
       <PageHeader
         title="AI assistant"
         text="Answers students 24/7 from your courses and notes"
+        actions={
+          <>
+            <AdminButton hierarchy="secondary" onClick={() => setTab("test")}>
+              <Play /> Test it
+            </AdminButton>
+            <AdminButton onClick={() => toast.success("Published. Students get the new answers now.")}>Publish changes</AdminButton>
+          </>
+        }
       />
-      <StatPanel
-        stats={[
-          { label: "Questions this month", value: "1,412", delta: "+22% vs last month", tone: "success" },
-          { label: "Answered alone", value: "91%", delta: "9% sent to you" },
-          { label: "Corrections", value: 14, delta: "Used in every answer" },
-          { label: "Most asked", value: "Stops on ORB", delta: "64 times" },
-        ]}
-      />
-      <Tabs defaultValue="personality" className="gap-5">
+      <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className="gap-5">
         <TabsList className="flex-wrap">
           <TabsTrigger value="personality">Personality</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
@@ -49,6 +50,14 @@ export function AiAdmin() {
           <TabsTrigger value="test">Test & correct</TabsTrigger>
           <TabsTrigger value="questions">Questions <span className="text-muted-foreground tabular-nums">1.4k</span></TabsTrigger>
         </TabsList>
+        <StatPanel
+          stats={[
+            { label: "Questions this month", value: "1,412", delta: "+22% vs last month", tone: "success" },
+            { label: "Answered alone", value: "91%", delta: "9% sent to you" },
+            { label: "Corrections", value: 14, delta: "Used in every answer" },
+            { label: "Most asked", value: "Stops on ORB", delta: "64 times" },
+          ]}
+        />
 
         <TabsContent value="personality">
           <div className="grid items-start gap-4 lg:grid-cols-2">

@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Download, FileUp, Mail, MoreHorizontal, Search, Send, Users } from "@/components/icons"
+import { Download, Mail, MoreHorizontal, Plus, Send, Users } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -12,16 +12,16 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
-import { Empty, Field, NativeSelect, Page, PageHeader } from "../kit"
+import { Empty, Field, Page, PageHeader } from "../kit"
+import { AdminFilter, AdminSearch, AdminTabs, AdminToolbar } from "../ui"
 import { StatPanel, Tag } from "../ui"
 import { SetupTip } from "../setup-checklist"
 import { ImportDialog } from "./import-dialog"
 import { StudentProfile } from "./student-profile"
 
-type Filter = "all" | "help" | "new" | "invited"
+type Filter = "all" | "help" | "invited" | "paused"
 
 /** ADM-02 students list, with import (ADM-03), profile (ADM-04) and messages (ADM-55). */
 export function StudentsPage() {
@@ -31,6 +31,7 @@ export function StudentsPage() {
   const [tier, setTier] = useState("")
   const [group, setGroup] = useState("")
   const [picked, setPicked] = useState<string[]>([])
+  const [paused, setPaused] = useState<string[]>([])
   const [open, setOpen] = useState<Student | null>(null)
   const [importing, setImporting] = useState(false)
   const [message, setMessage] = useState<Student[] | null>(null)
@@ -40,13 +41,13 @@ export function StudentsPage() {
       STUDENTS.filter((s) => {
         if (q && !`${s.name} ${s.email}`.toLowerCase().includes(q.toLowerCase())) return false
         if (filter === "help" && s.health === "green") return false
-        if (filter === "new" && !/Oct 2026|Sep 2026/.test(s.joined)) return false
+        if (filter === "paused" && !paused.includes(s.id)) return false
         if (filter === "invited" && !s.joined.startsWith("invited")) return false
         if (tier && tierFor(coach, s.tier).id !== tier) return false
         if (group && s.group !== group) return false
         return true
       }).sort((a, b) => rank(a) - rank(b)),
-    [q, filter, tier, group, coach],
+    [q, filter, tier, group, coach, paused],
   )
   const all = rows.length > 0 && rows.every((r) => picked.includes(r.id))
   const counts = {
@@ -54,7 +55,9 @@ export function StudentsPage() {
     help: STUDENTS.filter((s) => s.health !== "green").length,
     new: STUDENTS.filter((s) => /Oct 2026|Sep 2026/.test(s.joined)).length,
     invited: STUDENTS.filter((s) => s.joined.startsWith("invited")).length,
+    paused: paused.length,
   }
+  const joinedThisMonth = STUDENTS.filter((s) => /Oct 2026|Sep 2026/.test(s.joined)).length
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
   const selected = STUDENTS.filter((s) => picked.includes(s.id))
 
@@ -62,14 +65,14 @@ export function StudentsPage() {
     <Page>
       <PageHeader
         title="Students"
-        text={`${coach.name} · ${STUDENTS.length} students · ${counts.new} joined this month`}
+        text={`${coach.name} · ${STUDENTS.length} students · ${joinedThisMonth} joined this month`}
         actions={
           <>
             <Button variant="outline" onClick={() => toast("Export started", { description: "students.csv with the columns you see." })}>
               <Download /> Export
             </Button>
             <Button onClick={() => setImporting(true)}>
-              <FileUp /> Import or invite
+              <Plus /> Import or invite
             </Button>
           </>
         }
@@ -85,44 +88,23 @@ export function StudentsPage() {
         ]}
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
-          <TabsList>
-            {(
-              [
-                ["all", "All"],
-                ["help", "Needs help"],
-                ["new", "New"],
-                ["invited", "Invited"],
-              ] as const
-            ).map(([id, label]) => (
-              <TabsTrigger key={id} value={id}>
-                {label} <span className="text-muted-foreground tabular-nums">{counts[id]}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        <div className="relative ml-auto w-full sm:w-64">
-          <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or e-mail" className="pl-8" aria-label="Search students" />
-        </div>
-        <NativeSelect value={tier} onChange={(e) => setTier(e.target.value)} aria-label="Tier">
-          <option value="">All tiers</option>
-          {coach.tiers.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect value={group} onChange={(e) => setGroup(e.target.value)} aria-label="Group">
-          <option value="">All groups</option>
-          {GROUPS.map((g) => (
-            <option key={g.id} value={g.name}>
-              {g.name}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
+      <AdminToolbar>
+        <AdminTabs
+          label="Students"
+          value={filter}
+          onChange={(v) => setFilter(v as Filter)}
+          tabs={[
+            { id: "all", label: "All", count: counts.all },
+            { id: "help", label: "Needs help", count: counts.help },
+            { id: "invited", label: "Invited", count: counts.invited },
+            { id: "paused", label: "Paused", count: counts.paused },
+          ]}
+        />
+        <div className="flex-1" />
+        <AdminSearch value={q} onChange={setQ} placeholder="Search students" hint="⌘K" />
+        <AdminFilter label="Tier" value={tier} onValueChange={setTier} options={[{ value: "", label: "All tiers" }, ...coach.tiers.map((t) => ({ value: t.id, label: t.name }))]} />
+        <AdminFilter label="Group" value={group} onValueChange={setGroup} options={[{ value: "", label: "All groups" }, ...GROUPS.map((g) => ({ value: g.name, label: g.name }))]} />
+      </AdminToolbar>
 
       {picked.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--ts-cta)]/30 bg-[var(--ts-cta)]/6 px-3 py-2 text-sm">
@@ -225,7 +207,7 @@ export function StudentsPage() {
                           View the platform as {s.name.split(" ")[0]}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="destructive" onClick={() => toast(`${s.name}'s access paused`)}>
+                        <DropdownMenuItem variant="destructive" onClick={() => { setPaused((p) => (p.includes(s.id) ? p : [...p, s.id])); toast(`${s.name}'s access paused`) }}>
                           Pause access
                         </DropdownMenuItem>
                       </DropdownMenuContent>

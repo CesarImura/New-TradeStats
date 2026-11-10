@@ -119,7 +119,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
               </Avatar>
             </div>
           </header>
-          <main className="mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10 xl:pt-12">{children}</main>
+          <main className="mx-auto w-full max-w-[1264px] min-w-0 flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10 xl:pt-12">{children}</main>
         </div>
       </div>
     </SidebarProvider>

@@ -23,7 +23,7 @@ import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "../kit"
-import { StatPanel } from "../ui"
+import { AdminFilter, AdminSearch, AdminTabs, AdminToolbar, AdminViewToggle, StatPanel } from "../ui"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
@@ -36,7 +36,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { STATUS_LABEL, allLessons, isSampleCourse, saveCatalog, uid, useCatalog, type Catalog, type Course, type Status } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
@@ -64,7 +64,10 @@ export function StatusBadge({ status, when }: { status: Status; when?: string })
 /** Thumbnail tints for the admin, which keeps its own neutral look. */
 export { COVER_TINTS as THUMB } from "./thumbs"
 
-type Filter = "all" | Status
+type Filter = "all" | "attention" | Status
+
+/** Published and still holding a lesson that is not ready for students. */
+const needsAttention = (c: Course) => c.status === "published" && allLessons(c).some((l) => l.status === "draft")
 
 /** ADM-08: areas and courses as a board; drafts, scheduled and archived. */
 export function ContentBoard() {
@@ -77,10 +80,17 @@ export function ContentBoard() {
   const [filter, setFilter] = useState<Filter>("all")
   const [creating, setCreating] = useState(false)
   const [bulk, setBulk] = useState(false)
+  const [q, setQ] = useState("")
+  const [tierSel, setTierSel] = useState("all")
+  const [sort, setSort] = useState("edited")
+  const [view, setView] = useState<"grid" | "list">("grid")
 
   const edit = (fn: (c: Catalog) => Catalog) => saveCatalog(coach, fn)
-  const count = (s: Filter) => catalog.courses.filter((c) => (s === "all" ? c.status !== "archived" : c.status === s)).length
-  const list = catalog.courses.filter((c) => (filter === "all" ? c.status !== "archived" : c.status === filter))
+  const inFilter = (c: Course, f: Filter) => (f === "all" ? c.status !== "archived" : f === "attention" ? needsAttention(c) : c.status === f)
+  const count = (f: Filter) => catalog.courses.filter((c) => inFilter(c, f)).length
+  const list = catalog.courses
+    .filter((c) => inFilter(c, filter) && (tierSel === "all" || !c.tiers.length || c.tiers.includes(tierSel)) && `${c.title} ${c.tagline}`.toLowerCase().includes(q.toLowerCase()))
+    .sort((a, b) => (sort === "name" ? a.title.localeCompare(b.title) : 0))
 
   const setStatus = (id: string, status: Status) => {
     edit((c) => ({ ...c, courses: c.courses.map((x) => (x.id === id ? { ...x, status } : x)) }))
@@ -132,18 +142,58 @@ export function ContentBoard() {
         Courses marked Sample are examples, so you can see how your courses look. Replace or delete them before you invite students.
       </SampleNotice>
 
-      <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
-        <TabsList>
-          {(["all", "published", "draft", "scheduled", "archived"] as Filter[]).map((f) => (
-            <TabsTrigger key={f} value={f}>
-              {f === "all" ? "All" : STATUS_LABEL[f as Status]}
-              <span className="text-muted-foreground tabular-nums">{count(f)}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <AdminToolbar>
+        <AdminTabs
+          label="Courses"
+          value={filter}
+          onChange={(v) => setFilter(v as Filter)}
+          tabs={(["all", "attention", "published", "scheduled", "draft", "archived"] as Filter[]).map((f) => ({
+            id: f,
+            label: f === "all" ? "All" : f === "attention" ? "Needs attention" : STATUS_LABEL[f as Status],
+            count: count(f),
+            dot: f === "attention" && count(f) > 0,
+          }))}
+        />
+        <div className="flex-1" />
+        <AdminSearch value={q} onChange={setQ} placeholder="Search courses and lessons" hint="⌘K" className="w-60" />
+        <AdminFilter ariaLabel="Tier" value={tierSel} onValueChange={setTierSel} options={[{ value: "all", label: "All tiers" }, ...coach.tiers.map((t) => ({ value: t.id, label: t.name }))]} />
+        <AdminFilter ariaLabel="Sort" value={sort} onValueChange={setSort} options={[{ value: "edited", label: "Last edited" }, { value: "name", label: "Name" }]} />
+        <AdminViewToggle value={view} onChange={setView} />
+      </AdminToolbar>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {view === "list" && list.length > 0 && (
+        <div className="overflow-hidden rounded-a-lg border border-a-border bg-a-panel">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Course</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Tiers</TableHead>
+                <TableHead className="text-right">Lessons</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {list.map((c) => (
+                <TableRow key={c.id} className="cursor-pointer" onClick={() => router.push(`${base}/content/${c.id}`)}>
+                  <TableCell>
+                    <div className="grid min-w-0">
+                      <span className="truncate font-medium">{c.title}</span>
+                      <span className="truncate text-xs text-muted-foreground">{c.tagline}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={c.status} when={c.scheduledFor} />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{c.tiers.length ? coach.tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers"}</TableCell>
+                  <TableCell className="text-right tabular-nums">{allLessons(c).length}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      <div className={cn("grid gap-4 sm:grid-cols-2 xl:grid-cols-3", view === "list" && list.length > 0 && "hidden")}>
         {list.map((c) => {
           const lessons = allLessons(c)
           const live = c.status === "published"
@@ -220,7 +270,7 @@ export function ContentBoard() {
         {list.length === 0 && (
           <button onClick={() => setCreating(true)} className="grid place-items-center gap-1 rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground hover:bg-muted/50 sm:col-span-2 xl:col-span-3">
             <BookOpen className="size-5" />
-            {filter === "all" ? "No courses yet. Add your first one." : `Nothing ${STATUS_LABEL[filter as Status].toLowerCase()} here.`}
+            {filter === "all" ? "No courses yet. Add your first one." : filter === "attention" ? "Nothing needs attention." : `Nothing ${STATUS_LABEL[filter as Status].toLowerCase()} here.`}
           </button>
         )}
       </div>

@@ -96,10 +96,13 @@ ${adm("[data-slot=badge].bg-secondary")} { background: ${T("color-bg-selected")}
 ${adm("[data-slot=badge][class*='border-border']")} { border-color: transparent; background: ${T("color-bg-selected")}; }
 ${adm("[data-slot=badge].text-destructive")} { color: ${T("color-status-danger")}; }
 
-/* Tabs: Admin / Tab. Plain words, the open one is a soft pill. */
-${adm("[data-slot=tabs-list][data-variant=default]")} { background: transparent; height: 2.5rem !important; gap: 0.25rem; box-shadow: inset 0 -1px 0 ${T("color-border-subtle")}; }
-${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger]")} { padding: 0 0.625rem; font-size: 0.75rem; color: ${T("color-text-secondary")}; border-radius: ${T("radius-sm")}; }
-${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger][data-active]")} { background: ${T("color-bg-selected")}; color: ${T("color-text-primary")}; box-shadow: none !important; }
+/* Tabs: Admin / Tab group (Figma Toolbar > Tabs). A bordered group, 2px inside, 26px tabs; the open one is a raised pill. Counts are tertiary. */
+${adm("[data-slot=tabs-list][data-variant=default]")} { background: transparent; height: auto !important; padding: ${T("space-2")}; gap: 0; border: 1px solid ${T("color-border-default")}; border-radius: ${T("radius-md")}; box-shadow: none; justify-content: flex-start; }
+${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger]")} { flex: 0 0 auto; height: 1.625rem; padding: 0 ${T("space-10")}; gap: ${T("space-6")}; font-size: 0.75rem; line-height: 1rem; font-weight: 400; color: ${T("color-text-secondary")}; border: 0; border-radius: ${T("radius-sm")}; }
+${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger]:hover")} { color: ${T("color-text-primary")}; }
+${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger][data-active]")} { background: ${T("color-bg-raised")}; color: ${T("color-text-primary")}; box-shadow: none !important; }
+${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger]::after")} { display: none; }
+${adm("[data-slot=tabs-list][data-variant=default] [data-slot=tabs-trigger] > :is(.text-muted-foreground, .tabular-nums)")} { color: ${T("color-text-tertiary")}; }
 ${adm("[data-slot=tabs-list][data-variant=line] [data-slot=tabs-trigger]::after")} { background: ${T("color-accent-default")}; }
 
 /* Tables: no frame, mono header, hairlines. */

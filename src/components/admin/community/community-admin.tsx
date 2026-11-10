@@ -51,22 +51,21 @@ export function CommunityAdmin() {
       <PageHeader
         title="Community"
         text="Announcements, spaces and Discord"
+        actions={
+          <AdminButton onClick={() => setComposing(true)}>
+            <Plus /> New announcement
+          </AdminButton>
+        }
       />
       <SetupTip task="discord" />
       <Tabs defaultValue="announcements" className="gap-5">
         <TabsList>
           <TabsTrigger value="announcements">Announcements</TabsTrigger>
-          <TabsTrigger value="spaces">Spaces</TabsTrigger>
-          <TabsTrigger value="rules">Rules</TabsTrigger>
+          <TabsTrigger value="spaces">Spaces &amp; rules</TabsTrigger>
           <TabsTrigger value="discord">Discord</TabsTrigger>
         </TabsList>
         <TabsContent value="announcements">
           <div className="grid gap-4">
-            <div className="flex justify-end">
-              <AdminButton onClick={() => setComposing(true)}>
-                <Plus /> New announcement
-              </AdminButton>
-            </div>
             <div className="overflow-x-auto rounded-a-lg border border-a-border bg-a-panel">
               <Table>
                 <TableHeader>
@@ -113,23 +112,11 @@ export function CommunityAdmin() {
                 ))}
               </div>
             </Panel>
-            <Dialog open={composing} onOpenChange={setComposing}>
-              <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-xl">
-                <DialogHeader>
-                  <DialogTitle>New announcement</DialogTitle>
-                  <DialogDescription>Choose where it goes and who gets it.</DialogDescription>
-                </DialogHeader>
-                <Composer spaces={spaces} onPost={(a) => { setList((l) => [a, ...l]); setComposing(false) }} />
-              </DialogContent>
-            </Dialog>
           </div>
         </TabsContent>
 
-        <TabsContent value="spaces">
+        <TabsContent value="spaces" className="grid gap-6">
           <SpacesTab spaces={spaces} setSpaces={setSpaces} />
-        </TabsContent>
-
-        <TabsContent value="rules">
           <RulesTab rules={rules} setRules={setRules} />
         </TabsContent>
 
@@ -213,6 +200,15 @@ export function CommunityAdmin() {
           </p>
         </TabsContent>
       </Tabs>
+      <Dialog open={composing} onOpenChange={setComposing}>
+        <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>New announcement</DialogTitle>
+            <DialogDescription>Choose where it goes and who gets it.</DialogDescription>
+          </DialogHeader>
+          <Composer spaces={spaces} onPost={(a) => { setList((l) => [a, ...l]); setComposing(false) }} />
+        </DialogContent>
+      </Dialog>
     </Page>
   )
 }

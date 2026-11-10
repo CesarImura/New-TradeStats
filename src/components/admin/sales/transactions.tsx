@@ -1,14 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { MoreHorizontal, RotateCcw } from "@/components/icons"
+import { Download, MoreHorizontal, RotateCcw } from "@/components/icons"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { TRANSACTIONS, type Txn } from "@/lib/data/people"
-import { AdminTabs, Tag } from "../ui"
+import { AdminButton, AdminSearch, AdminTabs, AdminToolbar, Tag } from "../ui"
 
 const TXN_TONE = { paid: "success", failed: "danger", retrying: "warning", refunded: "neutral", disputed: "danger" } as const
 const LABEL: Record<Txn["status"], string> = { paid: "Paid", failed: "Failed", retrying: "Retrying", refunded: "Refunded", disputed: "Disputed" }
@@ -23,20 +22,21 @@ export function Transactions() {
   const shown = rows.filter((t) => (filter === "all" || t.status === filter) && (!q.trim() || `${t.who} ${t.what}`.toLowerCase().includes(q.trim().toLowerCase())))
   return (
     <div className="grid gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <AdminToolbar>
         <AdminTabs
           label="Payment status"
           value={filter}
           onChange={setFilter}
           tabs={[
-            { id: "all", label: `All payments ${rows.length}` },
-            { id: "failed", label: `Failed ${count("failed")}` },
-            { id: "disputed", label: `Disputed ${count("disputed")}` },
-            { id: "refunded", label: `Refunded ${count("refunded")}` },
+            { id: "all", label: "All payments", count: rows.length },
+            { id: "failed", label: "Failed", count: count("failed") },
+            { id: "disputed", label: "Disputed", count: count("disputed") },
+            { id: "refunded", label: "Refunded", count: count("refunded") },
           ]}
         />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or e-mail" aria-label="Search payments" className="w-full sm:w-72" />
-      </div>
+        <div className="flex-1" />
+        <AdminSearch value={q} onChange={setQ} placeholder="Search name or e-mail" label="Search payments" hint="⌘K" className="w-72" />
+      </AdminToolbar>
       <div className="overflow-x-auto rounded-a-lg border border-a-border bg-a-panel">
         <Table>
           <TableHeader>
@@ -63,6 +63,16 @@ export function Transactions() {
                 <TableCell><Tag tone={TXN_TONE[t.status]} dot>{LABEL[t.status]}</Tag></TableCell>
                 <TableCell className="hidden text-muted-foreground sm:table-cell">{t.when}</TableCell>
                 <TableCell>
+                  <div className="flex items-center justify-end gap-1">
+                  {t.status === "disputed" ? (
+                    <AdminButton hierarchy="secondary" size="md" onClick={() => toast("Send proof", { description: "We add the login history and course progress for you." })}>
+                      Answer the dispute
+                    </AdminButton>
+                  ) : (
+                    <AdminButton hierarchy="ghost" size="md" onClick={() => toast("Invoice downloaded")}>
+                      <Download /> Invoice
+                    </AdminButton>
+                  )}
                   <DropdownMenu>
                     <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Actions" />}>
                       <MoreHorizontal />
@@ -96,6 +106,7 @@ export function Transactions() {
                       <DropdownMenuItem onClick={() => toast("Invoice downloaded")}>Download invoice</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

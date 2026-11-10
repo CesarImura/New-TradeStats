@@ -8,6 +8,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "../kit"
+import { AdminFilter, AdminTabs, AdminToolbar } from "../ui"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -16,7 +17,6 @@ import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { CalendarSurface, type View } from "@/components/calendar/calendar-surface"
 import {
@@ -53,6 +53,7 @@ export function AdminCalendar() {
   const { coach } = useCoach()
   const schedule = useSchedule(coach)
   const [tab, setTab] = useState("calendar")
+  const [impact, setImpact] = useState<Impact | "all">("all")
   const [view, setView] = useState<View>("week")
   const [cursor, setCursor] = useState(NOW)
   const [editing, setEditing] = useState<CalEvent | null>(null)
@@ -91,17 +92,41 @@ export function AdminCalendar() {
         Events and 1:1 bookings marked Sample are examples, so you can see how your calendar looks. Replace or delete them before you invite students.
       </SampleNotice>
 
-      <Tabs value={tab} onValueChange={setTab} className="gap-5">
-        <TabsList>
-          <TabsTrigger value="calendar">Calendar</TabsTrigger>
-          <TabsTrigger value="availability">Availability</TabsTrigger>
-          <TabsTrigger value="news">
-            News <span className="text-muted-foreground tabular-nums">{schedule.news.filter((n) => n.noTrade && at(n.start) >= NOW).length} no-trade</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="calendar">
+      {(() => {
+        const tabsBar = (
+          <AdminTabs
+            label="Calendar"
+            value={tab}
+            onChange={setTab}
+            tabs={[
+              { id: "calendar", label: "Calendar" },
+              { id: "availability", label: "Availability" },
+              { id: "news", label: "News", count: `${schedule.news.filter((n) => n.noTrade && at(n.start) >= NOW).length} no-trade` },
+            ]}
+          />
+        )
+        return (
+          <div className="flex flex-col gap-4">
+            {tab !== "calendar" && (
+              <AdminToolbar>
+                {tabsBar}
+                {tab === "news" && (
+                  <>
+                    <div className="flex-1" />
+                    <AdminFilter
+                      label="Impact"
+                      value={impact}
+                      onValueChange={(v) => setImpact(v as Impact | "all")}
+                      options={[{ value: "all", label: "All" }, { value: "high", label: "High" }, { value: "medium", label: "Medium" }, { value: "low", label: "Low" }]}
+                    />
+                  </>
+                )}
+              </AdminToolbar>
+            )}
+        {tab === "calendar" && (
+          <>
           <CalendarSurface
+            leading={tabsBar}
             items={items}
             view={view}
             onView={setView}
@@ -127,16 +152,15 @@ export function AdminCalendar() {
             }
           />
           <p className="mt-2 text-xs text-muted-foreground">Click an empty time in the week view to schedule something there.</p>
-        </TabsContent>
+          </>
+        )}
 
-        <TabsContent value="availability">
-          <AvailabilityEditor />
-        </TabsContent>
+        {tab === "availability" && <AvailabilityEditor />}
 
-        <TabsContent value="news">
-          <NewsNotes onOpen={(n) => setOpen({ key: n.id, kind: "news", title: n.title, start: at(n.start), end: at(n.start), news: n })} />
-        </TabsContent>
-      </Tabs>
+        {tab === "news" && <NewsNotes impact={impact} onOpen={(n) => setOpen({ key: n.id, kind: "news", title: n.title, start: at(n.start), end: at(n.start), news: n })} />}
+          </div>
+        )
+      })()}
 
       <EventEditor event={editing} isNew={isNew} onClose={() => setEditing(null)} />
       <DetailSheet item={open} onClose={() => setOpen(null)} />
@@ -444,10 +468,9 @@ function NewsEditor({ news, onClose }: { news: NewsItem; onClose: () => void }) 
   )
 }
 
-function NewsNotes({ onOpen }: { onOpen: (n: NewsItem) => void }) {
+function NewsNotes({ onOpen, impact }: { onOpen: (n: NewsItem) => void; impact: Impact | "all" }) {
   const { coach } = useCoach()
   const schedule = useSchedule(coach)
-  const [impact, setImpact] = useState<Impact | "all">("all")
   const rows = schedule.news.filter((n) => at(n.start) >= addDays(NOW, -1) && (impact === "all" || n.impact === impact)).sort((a, b) => +at(a.start) - +at(b.start))
   const toggle = (n: NewsItem, v: boolean) => saveSchedule(coach, (s) => ({ ...s, news: s.news.map((x) => (x.id === n.id ? { ...x, noTrade: v } : x)) }))
   return (
@@ -455,13 +478,6 @@ function NewsNotes({ onOpen }: { onOpen: (n: NewsItem) => void }) {
       <CardHeader>
         <CardTitle>Economic news</CardTitle>
         <CardDescription>From our news feed, in your time zone. Mark the ones your students shouldn&apos;t trade, and add a note.</CardDescription>
-        <div className="flex gap-1 pt-2">
-          {(["all", "high", "medium", "low"] as const).map((v) => (
-            <Button key={v} size="xs" variant={impact === v ? "secondary" : "ghost"} onClick={() => setImpact(v)} className="capitalize">
-              {v === "all" ? "All" : `${v} impact`}
-            </Button>
-          ))}
-        </div>
       </CardHeader>
       <CardContent>
         <Table>

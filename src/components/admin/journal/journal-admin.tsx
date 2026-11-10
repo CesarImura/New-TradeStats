@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ChartCandlestick, Check, Inbox, Mic, Plus, Search, Send, Settings, Sparkles, Square, Trash2, Video, X } from "@/components/icons"
+import { ChartCandlestick, Check, ExternalLink, Inbox, Mic, Plus, Send, Settings, Sparkles, Square, Trash2, Video, X } from "@/components/icons"
 import { toast } from "sonner"
 import { TradeChart } from "@/components/charts/trade-chart"
 import { useCoach } from "@/components/coach/coach-provider"
@@ -12,14 +12,13 @@ import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { addFeedback, allTrades, useFeedback } from "@/lib/data/feedback"
 import { STUDENTS, tierFor } from "@/lib/data/people"
 import { STRATEGIES, TAGS, fmtPnl, fmtR } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
-import { Empty, Mono, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
-import { AdminButton, StatPanel, Tag } from "../ui"
+import { Empty, Mono, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { AdminButton, AdminFilter, AdminSearch, AdminTabs, AdminToolbar, StatPanel, Tag } from "../ui"
 
 /** Who sent which sample trade. In the prototype every student shares the same sample journal. */
 const OWNER: Record<string, string> = { t1: "s2", t2: "s5", t3: "s4", t4: "s1", t5: "s6", t6: "s7", t7: "s1" }
@@ -36,6 +35,9 @@ export function JournalAdmin() {
   const waiting = trades.filter((t) => t.review === "waiting").sort((a, b) => a.id.localeCompare(b.id))
   const answered = trades.filter((t) => t.review === "answered")
   const [tab, setTab] = useState("requests")
+  const [q, setQ] = useState("")
+  const [tier, setTier] = useState("all")
+  const [sort, setSort] = useState("oldest")
   const [openId, setOpenId] = useState<string | null>(null)
   const open = trades.find((t) => t.id === openId) ?? null
 
@@ -45,9 +47,15 @@ export function JournalAdmin() {
         title="Journal & feedback"
         text="Journal, rules and feedback requests · 312 entries in the last 30 days"
         actions={
-          <AdminButton hierarchy="secondary" onClick={() => setTab("rules")}>
-            <Settings /> Journal rules
-          </AdminButton>
+          tab === "rules" ? (
+            <AdminButton hierarchy="secondary" nativeButton={false} render={<a href={`/c/${coach.slug}/journal`} target="_blank" rel="noreferrer" />}>
+              <ExternalLink /> Preview as student
+            </AdminButton>
+          ) : (
+            <AdminButton hierarchy="secondary" onClick={() => setTab("rules")}>
+              <Settings /> Journal rules
+            </AdminButton>
+          )
         }
       />
       <StatPanel
@@ -58,33 +66,36 @@ export function JournalAdmin() {
           { label: "Journaling students", value: 121, delta: "60% of active students" },
         ]}
       />
-      <Tabs value={tab} onValueChange={setTab} className="gap-5">
-        <TabsList>
-          <TabsTrigger value="requests">
-            Requests <span className="text-muted-foreground tabular-nums">{waiting.length}</span>
-          </TabsTrigger>
-          <TabsTrigger value="answered">
-            Answered <span className="text-muted-foreground tabular-nums">{answered.length}</span>
-          </TabsTrigger>
-          <TabsTrigger value="rules">Rules</TabsTrigger>
-        </TabsList>
+      <AdminToolbar>
+        <AdminTabs
+          label="Journal"
+          value={tab}
+          onChange={setTab}
+          tabs={[
+            { id: "requests", label: "Requests", count: waiting.length },
+            { id: "answered", label: "Answered", count: answered.length },
+            { id: "rules", label: "Rules" },
+          ]}
+        />
+        {tab !== "rules" && (
+          <>
+            <div className="flex-1" />
+            <AdminSearch value={q} onChange={setQ} placeholder="Search requests" hint="⌘K" />
+            <AdminFilter label="Tier" ariaLabel="Tier" value={tier} onValueChange={setTier} options={[{ value: "all", label: "All tiers" }, ...coach.tiers.map((t) => ({ value: t.id, label: t.name }))]} />
+            <AdminFilter label="Sort" ariaLabel="Sort" value={sort} onValueChange={setSort} options={[{ value: "oldest", label: "Oldest first" }, { value: "newest", label: "Newest first" }]} />
+          </>
+        )}
+      </AdminToolbar>
 
-        <TabsContent value="requests">
-          {waiting.length === 0 ? (
-            <Empty icon={Inbox} title="Nothing waiting" text={`When a ${coach.wording.student.toLowerCase()} presses “Please review” on a trade, it lands here.`} />
-          ) : (
-            <RequestsTable trades={waiting} onOpen={setOpenId} />
-          )}
-        </TabsContent>
-
-        <TabsContent value="answered">
-          {answered.length === 0 ? <Empty icon={Inbox} title="Nothing answered yet" text="Feedback you send shows up here." /> : <RequestsTable trades={answered} onOpen={setOpenId} answered />}
-        </TabsContent>
-
-        <TabsContent value="rules">
-          <JournalRules />
-        </TabsContent>
-      </Tabs>
+      {tab === "requests" &&
+        (waiting.length === 0 ? (
+          <Empty icon={Inbox} title="Nothing waiting" text={`When a ${coach.wording.student.toLowerCase()} presses “Please review” on a trade, it lands here.`} />
+        ) : (
+          <RequestsTable trades={waiting} onOpen={setOpenId} q={q} tier={tier} sort={sort} />
+        ))}
+      {tab === "answered" &&
+        (answered.length === 0 ? <Empty icon={Inbox} title="Nothing answered yet" text="Feedback you send shows up here." /> : <RequestsTable trades={answered} onOpen={setOpenId} answered q={q} tier={tier} sort={sort} />)}
+      {tab === "rules" && <JournalRules />}
 
       <Sheet open={!!openId} onOpenChange={(o) => !o && setOpenId(null)}>
         <SheetContent className="w-full data-[side=right]:w-full overflow-y-auto sm:max-w-3xl">
@@ -100,11 +111,8 @@ export function JournalAdmin() {
 }
 
 /** Figma 525:7153. One row per request: who, what they asked, the trade, rules, how long it has waited. */
-function RequestsTable({ trades, onOpen, answered }: { trades: ReturnType<typeof allTrades>; onOpen: (id: string) => void; answered?: boolean }) {
+function RequestsTable({ trades, onOpen, answered, q, tier, sort }: { trades: ReturnType<typeof allTrades>; onOpen: (id: string) => void; answered?: boolean; q: string; tier: string; sort: string }) {
   const { coach } = useCoach()
-  const [q, setQ] = useState("")
-  const [tier, setTier] = useState("all")
-  const [sort, setSort] = useState("oldest")
   const rows = trades
     .map((t) => {
       const s = STUDENTS.find((x) => x.id === OWNER[t.id])!
@@ -115,24 +123,6 @@ function RequestsTable({ trades, onOpen, answered }: { trades: ReturnType<typeof
 
   return (
     <div className="grid gap-4">
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-a-text-3" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search requests" aria-label="Search requests" className="w-56 pl-8" />
-        </div>
-        <NativeSelect value={tier} onChange={(e) => setTier(e.target.value)} aria-label="Tier">
-          <option value="all">All tiers</option>
-          {coach.tiers.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
-          <option value="oldest">Oldest first</option>
-          <option value="newest">Newest first</option>
-        </NativeSelect>
-      </div>
       {rows.length === 0 ? (
         <Empty icon={Inbox} title="No requests match" text="Clear the search or the filters." />
       ) : (
