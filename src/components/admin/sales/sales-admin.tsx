@@ -5,7 +5,6 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { ExternalLink, Plus } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Page, PageHeader } from "../kit"
 import { SetupTip } from "../setup-checklist"
@@ -17,7 +16,7 @@ import { RevenueOverview } from "./revenue"
 import { Payouts } from "./payouts"
 import { Tiers } from "./tiers"
 import { Transactions } from "./transactions"
-import { AdminButton } from "@/components/admin/ui"
+import { AdminButton, Panel, PanelHeader } from "@/components/admin/ui"
 
 /** ADM-29 to ADM-36, ADM-14, ADM-15, ADM-40 and ADM-41: tiers, groups, access, sales page, coupons, revenue, transactions, payouts, affiliates. */
 export function SalesAdmin() {
@@ -96,16 +95,11 @@ export function SalesAdmin() {
 function Affiliates() {
   const { base } = useCoach()
   return (
-    <Card className="max-w-xl">
-      <CardHeader>
-        <CardTitle>Affiliates moved to Partners</CardTitle>
-        <CardDescription>The affiliate program, your partner offers and what they earn are now in one place.</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Panel className="max-w-xl"><PanelHeader title={<>Affiliates moved to Partners</>} description={<>The affiliate program, your partner offers and what they earn are now in one place.</>} /><div>
         <AdminButton nativeButton={false} render={<Link href={`${base}/partners`} />} hierarchy="secondary">
           Open Partners
         </AdminButton>
-      </CardContent>
-    </Card>
+      </div>
+</Panel>
   )
 }

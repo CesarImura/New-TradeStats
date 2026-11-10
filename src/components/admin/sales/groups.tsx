@@ -4,14 +4,13 @@ import { useState } from "react"
 import { CalendarRange, Eye, Plus, Users } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { fmtDate, isFull, saveGroups, setPreviewAs, useGroups, useTiers, type Group } from "@/lib/data/access"
 import { cn } from "@/lib/utils"
 import { Field, SettingRow } from "../kit"
-import { AdminButton, AdminDrawer, AdminProgress } from "@/components/admin/ui"
+import { AdminButton, AdminDrawer, AdminProgress, Panel, PanelHeader } from "@/components/admin/ui"
 
 /** ADM-31: cohorts with start, end, seats, waiting list and which tiers can join. */
 export function Groups() {
@@ -46,14 +45,9 @@ export function Groups() {
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {groups.map((g) => (
-          <Card key={g.id} size="sm" className="cursor-pointer transition-colors hover:ring-foreground/20" onClick={() => setOpen(g)}>
-            <CardHeader>
-              <CardTitle>{g.name}</CardTitle>
-              <CardDescription className="flex items-center gap-1.5">
-                <CalendarRange className="size-3.5" /> {fmtDate(g.start)} – {fmtDate(g.end)}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-2 text-sm">
+          <Panel key={g.id} className="cursor-pointer transition-colors hover:border-a-border-strong" onClick={() => setOpen(g)}>
+            <PanelHeader title={g.name} description={<span className="flex items-center gap-1.5"><CalendarRange className="size-3.5" /> {fmtDate(g.start)} – {fmtDate(g.end)}</span>} />
+            <div className="grid gap-2 text-sm">
               <div className="flex justify-between">
                 <span className="flex items-center gap-1.5 text-muted-foreground">
                   <Users className="size-3.5" /> Seats
@@ -69,8 +63,8 @@ export function Groups() {
                 <span className="text-xs text-muted-foreground">{g.seats - g.members} seats left</span>
               )}
               <span className="text-xs text-muted-foreground">For {g.tiers.map((id) => tiers.find((t) => t.id === id)?.name).filter(Boolean).join(", ") || "no tier yet"}</span>
-            </CardContent>
-          </Card>
+            </div>
+</Panel>
         ))}
       </div>
       <GroupEditor group={open} isNew={!!open && !groups.some((g) => g.id === open.id)} onClose={() => setOpen(null)} />

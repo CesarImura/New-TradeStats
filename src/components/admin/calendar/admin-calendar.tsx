@@ -7,8 +7,7 @@ import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { PageHeader } from "../kit"
-import { AdminButton, AdminDrawer, AdminFilter, AdminTabs, AdminToolbar, Tag } from "../ui"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { AdminButton, AdminDrawer, AdminFilter, AdminTabs, AdminToolbar, Panel, PanelHeader, Tag } from "../ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -465,12 +464,7 @@ function NewsNotes({ onOpen, impact }: { onOpen: (n: NewsItem) => void; impact: 
   const rows = schedule.news.filter((n) => at(n.start) >= addDays(NOW, -1) && (impact === "all" || n.impact === impact)).sort((a, b) => +at(a.start) - +at(b.start))
   const toggle = (n: NewsItem, v: boolean) => saveSchedule(coach, (s) => ({ ...s, news: s.news.map((x) => (x.id === n.id ? { ...x, noTrade: v } : x)) }))
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Economic news</CardTitle>
-        <CardDescription>From our news feed, in your time zone. Mark the ones your students shouldn&apos;t trade, and add a note.</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Panel className="gap-0 overflow-hidden p-0"><PanelHeader className="p-5" title={<>Economic news</>} description={<>From our news feed, in your time zone. Mark the ones your students shouldn&apos;t trade, and add a note.</>} /><div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -506,8 +500,8 @@ function NewsNotes({ onOpen, impact }: { onOpen: (n: NewsItem) => void; impact: 
             ))}
           </TableBody>
         </Table>
-      </CardContent>
-    </Card>
+      </div>
+</Panel>
   )
 }
 
@@ -523,12 +517,7 @@ function AvailabilityEditor() {
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <Card>
-        <CardHeader>
-          <CardTitle>Weekly free time</CardTitle>
-          <CardDescription>Students book 1:1 calls inside these windows. Lives and other events block their time automatically.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid divide-y">
+      <Panel><PanelHeader title={<>Weekly free time</>} description={<>Students book 1:1 calls inside these windows. Lives and other events block their time automatically.</>} /><div className="grid divide-y">
           {DAYS.map((name, i) => {
             const d = i + 1
             const windows = a.week[d] ?? []
@@ -562,26 +551,17 @@ function AvailabilityEditor() {
               </div>
             )
           })}
-        </CardContent>
-      </Card>
+        </div>
+</Panel>
 
       <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Call settings</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4">
+        <Panel><PanelHeader title={<>Call settings</>} /><div className="grid gap-4">
             <SettingSelect label="Call length" value={a.length} options={[15, 20, 30, 45, 60]} suffix="min" onChange={(v) => set({ length: v })} />
             <SettingSelect label="Break between calls" value={a.buffer} options={[0, 5, 10, 15, 30]} suffix="min" onChange={(v) => set({ buffer: v })} />
             <SettingSelect label="Book at least" value={a.noticeHours} options={[2, 6, 12, 24, 48]} suffix="h ahead" onChange={(v) => set({ noticeHours: v })} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Calls per month</CardTitle>
-            <CardDescription>By tier. 0 means the tier can&apos;t book.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3">
+          </div>
+</Panel>
+        <Panel><PanelHeader title={<>Calls per month</>} description={<>By tier. 0 means the tier can&apos;t book.</>} /><div className="grid gap-3">
             {coach.tiers.map((t) => (
               <div key={t.id} className="flex items-center justify-between gap-3 text-sm">
                 <span>{t.name}</span>
@@ -594,16 +574,11 @@ function AvailabilityEditor() {
                 />
               </div>
             ))}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarClock className="size-4" /> What students see
-            </CardTitle>
-            <CardDescription>The next free times, after bookings and events.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3">
+          </div>
+</Panel>
+        <Panel>
+          <PanelHeader title={<span className="flex items-center gap-2"><CalendarClock className="size-4" /> What students see</span>} description="The next free times, after bookings and events." />
+          <div className="grid gap-3">
             {next.length === 0 && <p className="text-sm text-muted-foreground">No free times in the next two weeks.</p>}
             {next.map((d) => (
               <div key={+d.day} className="grid gap-1.5">
@@ -617,8 +592,8 @@ function AvailabilityEditor() {
                 </div>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+</Panel>
       </div>
     </div>
   )
