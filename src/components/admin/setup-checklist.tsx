@@ -10,7 +10,6 @@ import { allLessons, isSampleCourse, useCatalog, type Catalog } from "@/lib/data
 import { isSampleEvent, useSchedule } from "@/lib/data/schedule"
 import { useCustomCommunities } from "@/lib/data/use-communities"
 import { setStored, useHistory, useStored } from "@/lib/prototype-store"
-import { cn } from "@/lib/utils"
 
 /**
  * The getting-started checklist on the Overview, and the short how-to at the top of each screen it
