@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ArrowLeft, ArrowRight, ExternalLink, Mic, Plus, Square, X } from "@/components/icons"
+import { ArrowRight, ExternalLink, Mic, Pause, Plus, Square, X } from "@/components/icons"
 import { toast } from "sonner"
 import { TradeChart } from "@/components/charts/trade-chart"
 import { useCoach } from "@/components/coach/coach-provider"
@@ -76,7 +76,6 @@ export function AnswerPage({ trade: t, student: s, aiDraft, readOnly, onBack, on
 
   const header = (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
-      <AdminButton hierarchy="secondary" size="xl" iconOnly aria-label="Back to requests" onClick={onBack}><ArrowLeft /></AdminButton>
       <div className="min-w-0 flex-1">
         <h1 className="t-title text-a-text">{s.name}</h1>
         <p className="t-body-m text-a-text-2">{tierFor(coach, s.tier).name} · asked {ask?.when ?? "recently"} · 48 trades journaled</p>
@@ -93,20 +92,20 @@ export function AnswerPage({ trade: t, student: s, aiDraft, readOnly, onBack, on
     return (
       <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6">
         {header}
-        <Panel className="gap-4">
-          <div className="flex items-center gap-3">
+        <Panel className="min-w-0 gap-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <Tag tone="danger" dot>Recording</Tag>
             <span className="t-mono-data text-a-text">{clock(secs)}</span>
-            <span className="ml-auto t-caption text-a-text-2">{mode === "video" ? "Your screen and camera" : "Your microphone"} · max 5 min</span>
+            <span className="min-w-0 sm:ml-auto t-caption text-a-text-2">{mode === "video" ? "Your screen and camera" : "Your microphone"} · max 5 min</span>
           </div>
           <div className="relative grid aspect-[2.2] place-items-center overflow-hidden rounded-a-lg border border-a-border bg-gradient-to-b from-a-raised to-a-page">
             {mode === "voice" && <Mic className="size-8 text-a-text-3" aria-hidden />}
             {mode === "video" && <span className="absolute bottom-4 left-5 grid size-[120px] place-items-center rounded-full border border-a-border-strong bg-a-muted t-title-l text-a-text">{coach.mark}</span>}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <AdminButton hierarchy="ghost" onClick={cancelRecording}>Cancel recording</AdminButton>
-            <span className="flex-1" />
-            <AdminButton hierarchy="secondary" onClick={() => setPaused((p) => !p)}>{paused ? "Resume" : "Pause"}</AdminButton>
+            <span className="min-w-px flex-1" />
+            <AdminButton hierarchy="secondary" onClick={() => setPaused((p) => !p)}><Pause /> {paused ? "Resume" : "Pause"}</AdminButton>
             <AdminButton onClick={stopRecording}><Square /> Stop and review</AdminButton>
           </div>
         </Panel>

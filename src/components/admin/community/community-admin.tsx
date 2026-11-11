@@ -1,22 +1,19 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, CalendarClock, Check, Hash, Pin, Plus, RefreshCw, Send, Trash2, Unplug } from "@/components/icons"
+import { CalendarClock, Check, LayoutGrid, MoreHorizontal, Plus, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
 import { DEFAULT_RULES, DEFAULT_SPACES, type Space } from "@/lib/data/community"
 import { ANNOUNCEMENTS, DISCORD_ROLES } from "@/lib/data/people"
-import { DISCORD } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
-import { Field, Mono, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { PageHeader, useCommunityData } from "../kit"
 import { SetupTip, useWizardCommunity } from "../setup-checklist"
-import { AdminButton, AdminModal, Panel, PanelHeader, Tag } from "../ui"
+import { AdminButton, AdminDrawer, AdminField, AdminFilter, AdminModal, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, Callout, EmptyState, Panel, SortHint, SortableRow, Tag, adminControl, useMoveFeedback } from "../ui"
+import { dropLine } from "@/components/kit/drop-line"
 
 export type Announcement = (typeof ANNOUNCEMENTS)[number] & { tiers?: string[]; scheduled?: string; space?: string }
 type DiscordSetup = { connected: boolean; roles: Record<string, string>; posts: Record<string, boolean>; removeOnCancel: boolean }
@@ -28,317 +25,433 @@ const DEFAULT_DISCORD: DiscordSetup = {
 }
 /** A community made in setup starts without Discord (the demo ones have it connected). */
 const NO_DISCORD: DiscordSetup = { ...DEFAULT_DISCORD, connected: false }
-const SERVER_ROLES = ["@Core", "@Trading Desk", "@VIP", "@Members", "@Funded", "No role"]
+const SERVER_ROLES = ["@inner-circle", "@core", "@desk", "@vip", "@members", "@funded", "No role"]
 const CHANNELS = [
-  { id: "platform", label: "Platform" },
-  { id: "email", label: "E-mail" },
+  { id: "platform", label: "Platform", post: "On the platform" },
+  { id: "email", label: "E-mail", post: "By e-mail" },
+  { id: "discord", label: "Discord", post: "In Discord" },
+] as const
+const BOT_POSTS = [
+  ["lesson", "New lesson published", "#announcements"],
+  ["live", "A live session starts", "#live"],
+  ["chart", "A new marked-up chart", "#charts"],
+] as const
+const TABS = [
+  { id: "announcements", label: "Announcements" },
+  { id: "spaces", label: "Spaces & rules" },
   { id: "discord", label: "Discord" },
 ] as const
+type Tab = (typeof TABS)[number]["id"]
 
-/** ADM-17 Discord connection and roles, ADM-18 announcements. */
+/** Community (Figma 534:7152, 01 to 05): announcements, spaces and rules, and the Discord connection. */
 export function CommunityAdmin() {
   const { coach } = useCoach()
   const [list, setList] = useCommunityData<Announcement[]>(coach.slug, "announcements", ANNOUNCEMENTS)
   const [spaces, setSpaces] = useCommunityData<Space[]>(coach.slug, "spaces", DEFAULT_SPACES)
   const [rules, setRules] = useCommunityData<string[]>(coach.slug, "rules", DEFAULT_RULES)
-  const [composing, setComposing] = useState(false)
   const [d, setD] = useCommunityData(coach.slug, "discord", useWizardCommunity(coach.slug) ? NO_DISCORD : DEFAULT_DISCORD)
+  const [tab, setTab] = useState<Tab>("announcements")
+  const [composing, setComposing] = useState(false)
+  const [editing, setEditing] = useState<Space | "new" | null>(null)
 
   return (
-    <Page>
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
       <PageHeader
         title="Community"
         text="Announcements, spaces and Discord"
         actions={
-          <AdminButton onClick={() => setComposing(true)}>
-            <Plus /> New announcement
-          </AdminButton>
+          tab === "spaces" ? (
+            <AdminButton onClick={() => setEditing("new")}><Plus /> New space</AdminButton>
+          ) : (
+            <AdminButton onClick={() => setComposing(true)}><Plus /> New announcement</AdminButton>
+          )
         }
       />
       <SetupTip task="discord" />
-      <Tabs defaultValue="announcements" className="gap-5">
-        <TabsList>
-          <TabsTrigger value="announcements">Announcements</TabsTrigger>
-          <TabsTrigger value="spaces">Spaces &amp; rules</TabsTrigger>
-          <TabsTrigger value="discord">Discord</TabsTrigger>
-        </TabsList>
-        <TabsContent value="announcements">
-          <div className="grid gap-4">
-            <div className="overflow-x-auto rounded-a-lg border border-a-border bg-a-panel">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="pl-5">Announcement</TableHead>
-                    <TableHead className="hidden md:table-cell">Sent to</TableHead>
-                    <TableHead>When</TableHead>
-                    <TableHead className="w-12" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {list.map((a) => (
-                    <TableRow key={a.id}>
-                      <TableCell className="max-w-80 pl-5">
-                        <div className="flex items-center gap-2.5">
-                          {a.pinned && <Tag tone="accent" dot>Pinned</Tag>}
-                          <div className="grid min-w-0">
-                            <span className="truncate font-medium">{a.title}</span>
-                            <span className="truncate text-xs text-a-text-2">{a.body}</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden text-a-text-2 md:table-cell">{a.channels.map((c) => CHANNELS.find((x) => x.id === c)?.label).join(", ")}</TableCell>
-                      <TableCell className={cn("whitespace-nowrap", a.scheduled ? "text-a-text-accent" : "text-a-text-2")}>{a.scheduled ? `Scheduled · ${a.scheduled}` : `Sent · ${a.when}`}</TableCell>
-                      <TableCell>
-                        <AdminButton aria-label={a.pinned ? `Unpin ${a.title}` : `Pin ${a.title}`} onClick={() => setList((l) => l.map((x) => (x.id === a.id ? { ...x, pinned: !x.pinned } : x)))} hierarchy="ghost" size="md" iconOnly>
-                          <Pin />
-                        </AdminButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              {list.length === 0 && <p className="px-4 py-8 text-center t-body-m text-a-text-2">No announcements yet.</p>}
-              <p className="border-t border-a-border-subtle px-5 py-3 t-caption text-a-text-2">Also shows as the Announcement widget on Home</p>
-            </div>
-            <Panel>
-              <PanelHeader title="Automatic announcements" />
-              <div className="grid divide-y divide-a-border-subtle">
-                {([["lesson", "New lesson published"], ["live", "A live session starts"], ["chart", "A new marked-up chart"]] as const).map(([id, label]) => (
-                  <SettingRow key={id} label={label}>
-                    <Switch checked={!!d.posts[id]} onCheckedChange={(v) => setD((x) => ({ ...x, posts: { ...x.posts, [id]: v } }))} />
-                  </SettingRow>
-                ))}
-              </div>
-            </Panel>
-          </div>
-        </TabsContent>
+      <AdminTabs label="Community" tabs={TABS} value={tab} onChange={setTab} className="self-start" />
 
-        <TabsContent value="spaces" className="grid gap-6">
-          <SpacesTab spaces={spaces} setSpaces={setSpaces} />
-          <RulesTab rules={rules} setRules={setRules} />
-        </TabsContent>
+      {tab === "announcements" && <AnnouncementsTab list={list} setList={setList} d={d} setD={setD} />}
+      {tab === "spaces" && <SpacesTab spaces={spaces} setSpaces={setSpaces} rules={rules} setRules={setRules} onEdit={setEditing} />}
+      {tab === "discord" && <DiscordTab d={d} setD={setD} />}
 
-        <TabsContent value="discord" className="grid gap-6">
-          <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-card p-4">
-            <span className="grid size-11 place-items-center rounded-lg bg-[#5865F2] text-white">
-              <DiscordMark />
-            </span>
-            <div className="grid flex-1 gap-0.5">
-              <span className="font-medium">{d.connected ? `${coach.org} server` : "Connect your Discord server"}</span>
-              <span className="text-sm text-muted-foreground">
-                {d.connected
-                  ? `${DISCORD.members.toLocaleString("en")} members · ${DISCORD.online} online · our bot gives and removes roles by tier`
-                  : "Students link their Discord in one click and get the right role automatically."}
-              </span>
-            </div>
-            {d.connected ? (
-              <div className="flex gap-2">
-                <AdminButton onClick={() => toast("Roles checked", { description: "3 members got their role, 1 lost it (cancelled)." })} hierarchy="secondary" size="lg">
-                  <RefreshCw /> Check roles now
-                </AdminButton>
-                <AdminButton onClick={() => setD((x) => ({ ...x, connected: false }))} hierarchy="ghost" size="lg">
-                  <Unplug /> Disconnect
-                </AdminButton>
-              </div>
-            ) : (
-              <AdminButton
-                onClick={() => {
-                  setD((x) => ({ ...x, connected: true }))
-                  toast("Discord connected", { description: "Opens Discord to add our bot to your server." })
-                }}>
-                Connect Discord
-              </AdminButton>
-            )}
-          </div>
-
-          {d.connected && (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <section className="grid content-start gap-1">
-                <h2 className="font-medium">Role for each tier</h2>
-                <p className="text-sm text-muted-foreground">Given when someone joins, removed when they cancel.</p>
-                <div className="mt-2 divide-y rounded-lg border bg-card px-3">
-                  {coach.tiers.map((t, i) => (
-                    <SettingRow key={t.id} label={t.name} text={`${t.members} members`}>
-                      <NativeSelect value={d.roles[t.id] ?? DISCORD_ROLES[i]?.role ?? "No role"} onChange={(e) => setD((x) => ({ ...x, roles: { ...x.roles, [t.id]: e.target.value } }))}>
-                        {SERVER_ROLES.map((r) => (
-                          <option key={r}>{r}</option>
-                        ))}
-                      </NativeSelect>
-                    </SettingRow>
-                  ))}
-                  <SettingRow label="Remove the role when someone cancels" text="At the end of their paid period">
-                    <Switch checked={d.removeOnCancel} onCheckedChange={(v) => setD((x) => ({ ...x, removeOnCancel: v }))} />
-                  </SettingRow>
-                </div>
-              </section>
-              <section className="grid content-start gap-1">
-                <h2 className="font-medium">Our bot posts in Discord</h2>
-                <p className="text-sm text-muted-foreground">So your server knows what&apos;s new on the platform.</p>
-                <div className="mt-2 divide-y rounded-lg border bg-card px-3">
-                  {(
-                    [
-                      ["lesson", "New lesson published", "#announcements"],
-                      ["live", "A live session starts", "#live"],
-                      ["announcement", "Your announcements", "#announcements"],
-                      ["chart", "A new marked-up chart", "#trade-ideas"],
-                    ] as const
-                  ).map(([id, label, channel]) => (
-                    <SettingRow key={id} label={label} text={<span className="inline-flex items-center gap-1"><Hash className="size-3" />{channel.slice(1)}</span>}>
-                      <Switch checked={!!d.posts[id]} onCheckedChange={(v) => setD((x) => ({ ...x, posts: { ...x.posts, [id]: v } }))} />
-                    </SettingRow>
-                  ))}
-                </div>
-              </section>
-            </div>
-          )}
-          <p className="rounded-lg border border-dashed border-a-border-strong px-3 py-2 text-xs text-muted-foreground">
-            <Mono className="mr-1.5 text-[var(--ts-cta)]">Later</Mono>
-            Our own feed with channels, posts and shared trades replaces the Discord link for coaches who want everything in one place (STU-12).
-          </p>
-        </TabsContent>
-      </Tabs>
-      <AdminModal open={composing} onOpenChange={setComposing} title="New announcement" subtitle="Choose where it goes and who gets it." className="sm:max-w-xl">
-          
-          <Composer spaces={spaces} onPost={(a) => { setList((l) => [a, ...l]); setComposing(false) }} />
-        
-</AdminModal>
-    </Page>
-  )
-}
-
-function Composer({ spaces, onPost }: { spaces: Space[]; onPost: (a: Announcement) => void }) {
-  const { coach } = useCoach()
-  const [title, setTitle] = useState("")
-  const [body, setBody] = useState("")
-  const [channels, setChannels] = useState<string[]>(["platform", "email", "discord"])
-  const [tiers, setTiers] = useState<string[]>([])
-  const [pin, setPin] = useState(false)
-  const [space, setSpace] = useState("")
-  const [later, setLater] = useState(false)
-  const [when, setWhen] = useState("Tue 13 Oct, 08:00")
-
-  return (
-    <div className="grid content-start gap-3">
-      <Field label="Title">
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="New module is live" />
-      </Field>
-      <Field label="Message">
-        <Textarea rows={5} value={body} onChange={(e) => setBody(e.target.value)} placeholder="What should everyone know?" />
-      </Field>
-      {spaces.length > 0 && (
-        <Field label="Post in">
-          <NativeSelect value={space || spaces[0].id} onChange={(e) => setSpace(e.target.value)}>
-            {spaces.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </NativeSelect>
-        </Field>
-      )}
-      <div className="grid gap-2">
-        <span className="text-[0.8125rem] font-medium">Send it</span>
-        <div className="flex flex-wrap gap-3">
-          {CHANNELS.map((c) => (
-            <label key={c.id} className="flex items-center gap-1.5 text-sm">
-              <Checkbox checked={channels.includes(c.id)} onCheckedChange={(v) => setChannels((x) => (v ? [...x, c.id] : x.filter((y) => y !== c.id)))} />
-              {c.label}
-            </label>
-          ))}
-        </div>
-      </div>
-      <div className="grid gap-2">
-        <span className="text-[0.8125rem] font-medium">To</span>
-        <div className="flex flex-wrap gap-1.5">
-          <button onClick={() => setTiers([])} className={cn("rounded-md border px-2.5 py-1 text-sm bg-card", tiers.length === 0 && "border-[var(--ts-interactive)]")}>
-            Everyone
-          </button>
-          {coach.tiers.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTiers((x) => (x.includes(t.id) ? x.filter((y) => y !== t.id) : [...x, t.id]))}
-              className={cn("rounded-md border px-2.5 py-1 text-sm bg-card", tiers.includes(t.id) && "border-[var(--ts-interactive)]")}
-            >
-              {t.name}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="divide-y border-t">
-        <SettingRow label="Pin to the top" text="Also shows as the Announcement widget on Home">
-          <Switch checked={pin} onCheckedChange={setPin} />
-        </SettingRow>
-        <SettingRow label="Send later">
-          {later && <Input value={when} onChange={(e) => setWhen(e.target.value)} className="h-8 w-44" aria-label="When" />}
-          <Switch checked={later} onCheckedChange={setLater} />
-        </SettingRow>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Bell className="size-3.5" /> Students get a notification
-        </span>
-        <AdminButton
-          className="ml-auto"
-          disabled={!title.trim() || !body.trim() || channels.length === 0}
-          onClick={() => {
-            onPost({ id: `n${Date.now()}`, title: title.trim(), body: body.trim(), when: "just now", pinned: pin, channels, reads: 0, tiers, scheduled: later ? when : undefined, space: spaces.length ? space || spaces[0].id : undefined })
-            toast(later ? `Scheduled for ${when}` : "Announcement sent", { icon: later ? <CalendarClock className="size-4" /> : <Check className="size-4" /> })
-            setTitle("")
-            setBody("")
-            setPin(false)
-          }}>
-          <Send /> {later ? "Schedule" : "Send now"}
-        </AdminButton>
-      </div>
+      <AnnouncementDrawer open={composing} onOpenChange={setComposing} onPost={(a) => setList((l) => [{ ...a, space: spaces[0]?.id }, ...l])} />
+      <SpaceDialog space={editing} onClose={() => setEditing(null)} onSave={(s) => setSpaces((l) => (l.some((x) => x.id === s.id) ? l.map((x) => (x.id === s.id ? s : x)) : [...l, s]))} />
     </div>
   )
 }
 
-function SpacesTab({ spaces, setSpaces }: { spaces: Space[]; setSpaces: (n: Space[] | ((c: Space[]) => Space[])) => void }) {
-  const edit = (id: string, patch: Partial<Space>) => setSpaces((l) => l.map((s) => (s.id === id ? { ...s, ...patch } : s)))
+/* ---------- 01 Announcements ---------- */
+
+function AnnouncementsTab({ list, setList, d, setD }: { list: Announcement[]; setList: (n: Announcement[] | ((c: Announcement[]) => Announcement[])) => void; d: DiscordSetup; setD: (n: DiscordSetup | ((c: DiscordSetup) => DiscordSetup)) => void }) {
   return (
-    <section className="grid max-w-2xl content-start gap-1">
-      <h2 className="font-medium">Spaces</h2>
-      <p className="text-sm text-muted-foreground">Topics your students can filter the feed by. Every post goes in one space.</p>
-      <div className="mt-2 grid gap-2">
-        {spaces.map((s) => (
-          <div key={s.id} className="flex items-center gap-2 rounded-lg border bg-card p-2.5">
-            <Hash className="size-4 shrink-0 text-muted-foreground" />
-            <Input aria-label="Space name" value={s.name} onChange={(e) => edit(s.id, { name: e.target.value })} className="h-8 w-44" />
-            <Input aria-label="Short description" value={s.text} onChange={(e) => edit(s.id, { text: e.target.value })} className="h-8 flex-1" placeholder="What is it for?" />
-            <AdminButton aria-label={`Delete ${s.name}`} onClick={() => setSpaces((l) => l.filter((x) => x.id !== s.id))} hierarchy="ghost" size="md" iconOnly>
-              <Trash2 />
-            </AdminButton>
-          </div>
-        ))}
-        <AdminButton className="justify-self-start" onClick={() => setSpaces((l) => [...l, { id: `s${Date.now()}`, name: "New space", text: "" }])} hierarchy="secondary" size="lg">
-          <Plus /> Add a space
-        </AdminButton>
-      </div>
-    </section>
+    <>
+      {list.length === 0 ? (
+        <EmptyState icon={CalendarClock} title="No announcements yet" description="Write the first one: students get it in the platform, by e-mail or in Discord." />
+      ) : (
+        <AdminTable
+          minWidth={820}
+          footer={<AdminTableFooter>Also shows as the Announcement widget on Home</AdminTableFooter>}>
+          <AdminTableHead>
+            <AdminTh>Announcement</AdminTh>
+            <AdminTh width={236}>Sent to</AdminTh>
+            <AdminTh width={236}>When</AdminTh>
+            <AdminTh width={64} />
+          </AdminTableHead>
+          <tbody>
+            {list.map((a) => (
+              <AdminTr key={a.id}>
+                <AdminTd>
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    {a.pinned && <Tag tone="accent" dot>Pinned</Tag>}
+                    <div className="grid min-w-0 gap-0.5">
+                      <span className="truncate t-body-m text-a-text">{a.title}</span>
+                      <span className="truncate t-caption text-a-text-2">{a.body}</span>
+                    </div>
+                  </div>
+                </AdminTd>
+                <AdminTd>{a.channels.map((c) => CHANNELS.find((x) => x.id === c)?.label).join(", ")}</AdminTd>
+                <AdminTd className={cn("whitespace-nowrap", a.scheduled && "text-a-text-accent")}>{a.scheduled ? `Scheduled · ${a.scheduled}` : `Sent · ${a.when}`}</AdminTd>
+                <AdminTd align="end">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Actions for ${a.title}`} />}><MoreHorizontal /></DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setList((l) => l.map((x) => (x.id === a.id ? { ...x, pinned: !x.pinned } : x)))}>{a.pinned ? "Unpin from the top" : "Pin to the top"}</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem variant="destructive" onClick={() => (setList((l) => l.filter((x) => x.id !== a.id)), toast("Announcement deleted"))}>Delete</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </AdminTd>
+              </AdminTr>
+            ))}
+          </tbody>
+        </AdminTable>
+      )}
+      <Panel className="gap-3">
+        <h2 className="t-heading-s text-a-text">Automatic announcements</h2>
+        <div className="flex flex-col gap-3">
+          {BOT_POSTS.map(([id, label]) => (
+            <label key={id} className="flex items-center justify-between gap-3 t-body-m text-a-text">
+              {label}
+              <Switch checked={!!d.posts[id]} onCheckedChange={(v) => setD((x) => ({ ...x, posts: { ...x.posts, [id]: v } }))} />
+            </label>
+          ))}
+        </div>
+      </Panel>
+    </>
   )
 }
 
-function RulesTab({ rules, setRules }: { rules: string[]; setRules: (n: string[] | ((c: string[]) => string[])) => void }) {
+/* ---------- 02 New announcement ---------- */
+
+function AnnouncementDrawer({ open, onOpenChange, onPost }: { open: boolean; onOpenChange: (o: boolean) => void; onPost: (a: Announcement) => void }) {
+  const { coach } = useCoach()
+  const [title, setTitle] = useState("")
+  const [body, setBody] = useState("")
+  const [who, setWho] = useState<"all" | "tiers">("all")
+  const [tiers, setTiers] = useState<string[]>([])
+  const [later, setLater] = useState<"now" | "later">("now")
+  const [at, setAt] = useState("")
+  const [channels, setChannels] = useState<string[]>(["platform", "email", "discord"])
+  const [pin, setPin] = useState(true)
+
+  const reset = () => {
+    setTitle("")
+    setBody("")
+    setWho("all")
+    setTiers([])
+    setLater("now")
+    setAt("")
+    setChannels(["platform", "email", "discord"])
+    setPin(true)
+  }
+  const when = at ? new Date(at).toLocaleString("en", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }).replace(",", "") : ""
+  const missing = !title.trim() || !body.trim() || channels.length === 0 || (who === "tiers" && tiers.length === 0) || (later === "later" && !at)
+  const close = () => {
+    onOpenChange(false)
+    setTimeout(reset, 250)
+  }
+  const send = () => {
+    if (missing) return
+    onPost({ id: `n${Date.now()}`, title: title.trim(), body: body.trim(), when: "just now", pinned: pin, channels, reads: 0, tiers: who === "tiers" ? tiers : [], scheduled: later === "later" ? when : undefined })
+    toast(later === "later" ? `Scheduled for ${when}` : "Announcement sent", { icon: later === "later" ? <CalendarClock className="size-4" /> : <Check className="size-4" /> })
+    close()
+  }
+
   return (
-    <section className="grid max-w-2xl content-start gap-1">
-      <h2 className="font-medium">Community rules</h2>
-      <p className="text-sm text-muted-foreground">Students see these at the top of the community.</p>
-      <div className="mt-2 grid gap-2">
-        {rules.map((r, i) => (
-          <div key={i} className="flex items-center gap-2 rounded-lg border bg-card p-2.5">
-            <span className="w-5 text-center text-xs text-muted-foreground tabular-nums">{i + 1}</span>
-            <Input aria-label={`Rule ${i + 1}`} value={r} onChange={(e) => setRules((l) => l.map((x, j) => (j === i ? e.target.value : x)))} className="h-8 flex-1" />
-            <AdminButton aria-label={`Delete rule ${i + 1}`} onClick={() => setRules((l) => l.filter((_, j) => j !== i))} hierarchy="ghost" size="md" iconOnly>
-              <Trash2 />
-            </AdminButton>
-          </div>
-        ))}
-        <AdminButton className="justify-self-start" onClick={() => setRules((l) => [...l, ""])} hierarchy="secondary" size="lg">
-          <Plus /> Add rule
-        </AdminButton>
+    <AdminDrawer
+      open={open}
+      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
+      title="New announcement"
+      subtitle="What should everyone know?"
+      className="sm:data-[side=right]:w-[480px]"
+      bodyClassName="gap-5"
+      footer={
+        <div className="flex w-full items-center gap-2">
+          <AdminButton hierarchy="ghost" onClick={close}>Cancel</AdminButton>
+          <span aria-hidden className="h-px min-w-px flex-1" />
+          <AdminButton disabled={missing} onClick={send}>{later === "later" ? "Schedule" : "Send now"}</AdminButton>
+        </div>
+      }>
+      <div className="flex flex-col gap-4">
+        <AdminField label="Title">
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="New module is live" className={cn(adminControl, "h-11")} />
+        </AdminField>
+        <AdminField label="Message">
+          <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Module 3 covers daily loss limits and the end-of-day review…" className={cn(adminControl, "block h-[104px] resize-none py-2.5")} />
+        </AdminField>
       </div>
-    </section>
+      <hr className="m-0 h-px shrink-0 border-0 bg-a-border-subtle" />
+      <div className="flex flex-col gap-4">
+        <div className="grid gap-1.5">
+          <span className="t-caption text-a-text">Who gets it</span>
+          <AdminSegmented label="Who gets it" value={who} onChange={setWho} options={[{ value: "all", label: "Everyone" }, { value: "tiers", label: "Pick tiers" }]} />
+          {who === "tiers" && (
+            <div className="flex flex-wrap gap-x-4 gap-y-2 pt-1">
+              {coach.tiers.map((t) => (
+                <label key={t.id} className="flex items-center gap-2 t-body-m text-a-text">
+                  <Checkbox checked={tiers.includes(t.id)} onCheckedChange={(v) => setTiers((x) => (v ? [...x, t.id] : x.filter((y) => y !== t.id)))} />
+                  {t.name}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="grid gap-1.5">
+          <span className="t-caption text-a-text">When</span>
+          <AdminSegmented label="When" value={later} onChange={setLater} options={[{ value: "now", label: "Send now" }, { value: "later", label: "Send later" }]} />
+          {later === "later" && <input type="datetime-local" aria-label="Send at" value={at} onChange={(e) => setAt(e.target.value)} className={cn(adminControl, "mt-1 h-11 scheme-dark")} />}
+        </div>
+      </div>
+      <hr className="m-0 h-px shrink-0 border-0 bg-a-border-subtle" />
+      <div className="flex flex-col gap-4">
+        <fieldset className="grid gap-2.5">
+          <legend className="mb-2.5 t-caption text-a-text">Post in</legend>
+          {CHANNELS.map((c) => (
+            <label key={c.id} className="flex items-center gap-2.5 t-body-m text-a-text">
+              <Checkbox checked={channels.includes(c.id)} onCheckedChange={(v) => setChannels((x) => (v ? [...x, c.id] : x.filter((y) => y !== c.id)))} />
+              {c.post}
+              {c.id === "discord" && <span className="t-caption text-a-text-3">#announcements</span>}
+            </label>
+          ))}
+        </fieldset>
+        <label className="flex items-center justify-between gap-6">
+          <span className="grid gap-0.5">
+            <span className="t-body-m text-a-text">Pin to the top</span>
+            <span className="t-caption text-a-text-2">Students see these at the top of the community</span>
+          </span>
+          <Switch checked={pin} onCheckedChange={setPin} />
+        </label>
+      </div>
+    </AdminDrawer>
+  )
+}
+
+/* ---------- 03 Spaces and rules ---------- */
+
+function SpacesTab({ spaces, setSpaces, rules, setRules, onEdit }: { spaces: Space[]; setSpaces: (n: Space[] | ((c: Space[]) => Space[])) => void; rules: string[]; setRules: (n: string[] | ((c: string[]) => string[])) => void; onEdit: (s: Space) => void }) {
+  const { coach } = useCoach()
+  const [drag, setDrag] = useState<number | null>(null)
+  const [over, setOver] = useState<number | null>(null)
+  const { flashed, moved, Live } = useMoveFeedback()
+  const n = spaces.length
+  const reorder = (from: number, to: number) => {
+    if (from === to || to < 0 || to >= n) return
+    const before = spaces
+    const next = [...before]
+    const [m] = next.splice(from, 1)
+    next.splice(to, 0, m)
+    setSpaces(next)
+    moved(m.id, `${m.name} moved to ${to + 1} of ${n}.`)
+    toast(`# ${m.name} moved to ${to + 1} of ${n}.`, { id: "space-undo", action: { label: "Undo", onClick: () => setSpaces(before) } })
+  }
+  const drop = (i: number) => {
+    if (drag !== null) reorder(drag, i)
+    setDrag(null)
+    setOver(null)
+  }
+
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,784fr)_minmax(0,400fr)]">
+      <Panel className="gap-0 overflow-hidden p-0">
+        <SortHint id="space-sort-hint" />
+        <Live />
+        <div className="flex items-center justify-between gap-3 px-5 py-4">
+          <h2 className="t-heading-s text-a-text">Spaces</h2>
+          {n > 1 && <span className="t-caption text-a-text-3">Drag to reorder</span>}
+        </div>
+        {n === 0 && <p className="border-t border-a-border px-5 py-8 text-center t-body-m text-a-text-2">No spaces yet. Add one for each topic.</p>}
+        {spaces.map((s, i) => {
+          const tier = s.audience ? coach.tiers.find((t) => t.id === s.audience)?.name : undefined
+          return (
+            <div key={s.id} onDragOver={(e) => drag !== null && (e.preventDefault(), setOver(i))} onDrop={() => drop(i)} className={cn("border-t border-a-border", over === i && drag !== null && drag !== i && dropLine(drag < i ? "after" : "before"))}>
+              <SortableRow
+                className="rounded-none"
+                dragging={drag === i}
+                active={flashed(s.id)}
+                handle={{
+                  label: `Reorder ${s.name}`,
+                  hintId: "space-sort-hint",
+                  onMove: (by) => reorder(i, i + by),
+                  draggable: true,
+                  onDragStart: (e) => {
+                    setDrag(i)
+                    e.dataTransfer.effectAllowed = "move"
+                    const row = e.currentTarget.closest("[data-slot=sortable-row]") ?? e.currentTarget
+                    e.dataTransfer.setDragImage(row, 24, 26)
+                  },
+                  onDragEnd: () => (setDrag(null), setOver(null)),
+                }}
+                title={<># {s.name}</>}
+                description={s.text}
+                trailing={
+                  <>
+                    <Tag>{tier ?? "Everyone"}</Tag>
+                    {s.posts !== undefined && <span className="t-caption text-a-text-2 tabular-nums">{s.posts >= 1000 ? `${(s.posts / 1000).toFixed(1)}k` : s.posts} posts</span>}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Actions for ${s.name}`} />}><MoreHorizontal /></DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEdit(s)}>Edit</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem variant="destructive" onClick={() => (setSpaces((l) => l.filter((x) => x.id !== s.id)), toast(`# ${s.name} deleted`))}>Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                }
+              />
+            </div>
+          )
+        })}
+      </Panel>
+      <RulesPanel rules={rules} setRules={setRules} />
+    </div>
+  )
+}
+
+function RulesPanel({ rules, setRules }: { rules: string[]; setRules: (n: string[] | ((c: string[]) => string[])) => void }) {
+  const [edit, setEdit] = useState<number | null>(null)
+  return (
+    <Panel className="gap-3">
+      <h2 className="t-heading-s text-a-text">Community rules</h2>
+      <ol className="flex flex-col gap-3">
+        {rules.map((r, i) => (
+          <li key={i} className="group/rule flex items-start gap-2 t-body-m">
+            <span className="w-4 shrink-0 text-center t-caption leading-[18px] text-a-text-accent tabular-nums">{i + 1}</span>
+            {edit === i ? (
+              <input autoFocus aria-label={`Rule ${i + 1}`} defaultValue={r} onBlur={(e) => (setRules((l) => (e.target.value.trim() ? l.map((x, j) => (j === i ? e.target.value.trim() : x)) : l.filter((_, j) => j !== i))), setEdit(null))} onKeyDown={(e) => (e.key === "Enter" && e.currentTarget.blur()) || (e.key === "Escape" && setEdit(null))} className={cn(adminControl, "h-8 min-w-0 flex-1 py-0 t-body-m")} />
+            ) : (
+              <>
+                <button type="button" onClick={() => setEdit(i)} aria-label={`Edit rule ${i + 1}: ${r}`} className="min-w-0 flex-1 rounded-a-xs text-left text-a-text outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">{r}</button>
+                <button type="button" aria-label={`Delete rule ${i + 1}`} onClick={() => setRules((l) => l.filter((_, j) => j !== i))} className="grid size-5 shrink-0 place-items-center rounded-a-xs text-a-text-3 opacity-0 outline-none transition-opacity hover:text-a-text focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-a-border-focus group-hover/rule:opacity-100 pointer-coarse:size-8 pointer-coarse:opacity-100">
+                  <Trash2 className="size-3.5" />
+                </button>
+              </>
+            )}
+          </li>
+        ))}
+      </ol>
+      <AdminButton hierarchy="ghost" size="md" className="w-fit" onClick={() => (setRules((l) => [...l, ""]), setEdit(rules.length))}>
+        <Plus /> Add rule
+      </AdminButton>
+    </Panel>
+  )
+}
+
+function SpaceDialog({ space, onClose, onSave }: { space: Space | "new" | null; onClose: () => void; onSave: (s: Space) => void }) {
+  const { coach } = useCoach()
+  const [last, setLast] = useState<Space | "new" | null>(space)
+  const [name, setName] = useState("")
+  const [text, setText] = useState("")
+  const [audience, setAudience] = useState("")
+  if (space && space !== last) {
+    setLast(space)
+    setName(space === "new" ? "" : space.name)
+    setText(space === "new" ? "" : space.text)
+    setAudience(space === "new" ? "" : (space.audience ?? ""))
+  }
+  const shown = space ?? last
+  const slug = name.trim().replace(/^#\s*/, "").toLowerCase().replace(/\s+/g, "-")
+  return (
+    <AdminModal open={!!space} onOpenChange={(o) => !o && onClose()} title={shown === "new" ? "New space" : "Edit space"} subtitle="A topic your students can post in and filter the feed by." className="sm:max-w-[480px]"
+      footer={
+        <div className="flex w-full items-center gap-2">
+          <span aria-hidden className="h-px min-w-px flex-1" />
+          <AdminButton hierarchy="ghost" onClick={onClose}>Cancel</AdminButton>
+          <AdminButton disabled={!slug} onClick={() => (onSave({ ...(shown && shown !== "new" ? shown : { id: `s${Date.now()}`, posts: 0 }), name: slug, text: text.trim(), audience: audience || undefined }), onClose())}>Save</AdminButton>
+        </div>
+      }>
+      <AdminField label="Name" hint="Lowercase, with dashes">
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="trade-ideas" className={cn(adminControl, "h-11")} />
+      </AdminField>
+      <AdminField label="What is it for?" optional>
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Share setups before the open" className={cn(adminControl, "h-11")} />
+      </AdminField>
+      <div className="grid gap-1.5">
+        <span className="t-caption text-a-text">Who sees it</span>
+        <AdminFilter ariaLabel="Who sees it" value={audience} onValueChange={setAudience} options={[{ value: "", label: "Everyone" }, ...coach.tiers.map((t) => ({ value: t.id, label: t.name }))]} className="w-full justify-between" />
+      </div>
+    </AdminModal>
+  )
+}
+
+/* ---------- 04 and 05 Discord ---------- */
+
+function DiscordTab({ d, setD }: { d: DiscordSetup; setD: (n: DiscordSetup | ((c: DiscordSetup) => DiscordSetup)) => void }) {
+  const { coach } = useCoach()
+  if (!d.connected) {
+    return (
+      <EmptyState
+        icon={LayoutGrid}
+        title="Connect your Discord server"
+        description="Students get the right role for their tier, and our bot posts what's new. Takes about 2 minutes."
+        className="py-12"
+        actions={<AdminButton onClick={() => (setD((x) => ({ ...x, connected: true })), toast("Discord connected", { description: "Roles are checked now." }))}>Connect Discord</AdminButton>}
+      />
+    )
+  }
+  return (
+    <>
+      <Callout tone="success" icon={<Check className="size-4" />} action={<AdminButton hierarchy="secondary" size="md" onClick={() => toast("Roles checked", { description: "Every member has the role of their tier." })}>Review</AdminButton>}>
+        Discord connected · {coach.org} Traders · Roles checked 2 min ago
+      </Callout>
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,572fr)_minmax(0,612fr)]">
+        <Panel className="gap-0 overflow-hidden p-0">
+          <div className="grid gap-1 px-5 py-4">
+            <h2 className="t-heading-s text-a-text">Role for each tier</h2>
+            <p className="t-caption text-a-text-2">Given when someone joins, removed when they cancel.</p>
+          </div>
+          {coach.tiers.map((t) => (
+            <div key={t.id} className="flex h-[52px] items-center justify-between gap-3 border-t border-a-border px-5 t-body-m text-a-text">
+              <span className="min-w-0 truncate">{t.name}</span>
+              <AdminFilter ariaLabel={`Role for ${t.name}`} value={d.roles[t.id] ?? "No role"} onValueChange={(v) => setD((x) => ({ ...x, roles: { ...x.roles, [t.id]: v } }))} options={[...new Set([d.roles[t.id] ?? "No role", ...SERVER_ROLES])].map((r) => ({ value: r, label: r }))} />
+            </div>
+          ))}
+        </Panel>
+        <Panel className="gap-3">
+          <div className="grid gap-0.5">
+            <h2 className="t-heading-s text-a-text">Our bot posts in Discord</h2>
+            <p className="t-caption text-a-text-2">So your server knows what&apos;s new on the platform.</p>
+          </div>
+          <div className="flex flex-col gap-3">
+            {BOT_POSTS.map(([id, label, channel]) => (
+              <label key={id} className="flex items-center gap-2.5 t-body-m text-a-text">
+                <Switch checked={!!d.posts[id]} onCheckedChange={(v) => setD((x) => ({ ...x, posts: { ...x.posts, [id]: v } }))} />
+                {label}
+                <span aria-hidden className="h-px min-w-px flex-1" />
+                <span className="t-caption text-a-text-3">{channel}</span>
+              </label>
+            ))}
+          </div>
+          <hr className="m-0 h-px border-0 bg-a-border-subtle" />
+          <label className="flex items-center justify-between gap-6">
+            <span className="grid gap-0.5">
+              <span className="t-body-m text-a-text">Remove the role when someone cancels</span>
+              <span className="t-caption text-a-text-2">At the end of their paid period</span>
+            </span>
+            <Switch checked={d.removeOnCancel} onCheckedChange={(v) => setD((x) => ({ ...x, removeOnCancel: v }))} />
+          </label>
+        </Panel>
+      </div>
+    </>
   )
 }
 

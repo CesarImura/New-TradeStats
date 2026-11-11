@@ -1,12 +1,12 @@
 "use client"
 
-import { Maximize } from "@/components/icons"
 import { tintOf } from "./thumbs"
+import { AdminVideoPlayer } from "../ui/video-player"
 import { fmtTime, type Course, type Lesson, type Module } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
 
 /** One video going up. Lives in the builder, so the tray and the lesson page show the same progress. */
-export type Upload = { id: string; lessonId: string; title: string; phase: "uploading" | "transcribing" | "chapters" | "ready" | "failed"; pct: number }
+export type Upload = { id: string; lessonId: string; title: string; phase: "uploading" | "transcribing" | "chapters" | "ready" | "failed"; pct: number; file?: File }
 
 /** Videos picked in New course, waiting for the builder to start uploading them (files cannot travel in a URL). */
 export const uploadQueue = new Map<string, { lessonId: string; file: File }[]>()
@@ -63,27 +63,30 @@ export function LessonThumb({ lesson, course, className, showTime = true, upload
   )
 }
 
-/** The video area: a dark frame, with the play bar when there is a video. `children` sit on top (chapter markers). */
-export function PlayerFrame({ lesson, course, className, children, controls = true, t = 0 }: { lesson: Lesson; course: Course; className?: string; children?: React.ReactNode; controls?: boolean; t?: number }) {
-  const total = Math.max(60, lesson.minutes * 60)
+/** The lesson's video area: the shared Admin video player with the lesson's length, picture, chapters and course tint. It remembers where the viewer stopped and can offer the next lesson. */
+export function PlayerFrame({ lesson, course, className, children, controls = true, t = 0, next }: { lesson: Lesson; course: Course; className?: string; children?: React.ReactNode; controls?: boolean; t?: number; next?: { title: string; onPlay: () => void } }) {
   return (
-    <div className={cn("relative aspect-[1.78] overflow-hidden rounded-a-lg border border-a-border", className)} style={lesson.thumbnail ? undefined : { background: quiet(course.color) }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {lesson.thumbnail && <img src={lesson.thumbnail} alt="" className="absolute inset-0 size-full object-cover" />}
-      <span aria-hidden className="absolute inset-0 bg-gradient-to-b from-a-page/40 to-a-page/70" />
-      {controls && (
-        <div className="absolute inset-x-4 bottom-4 flex items-center gap-3 t-body-m text-a-text-2">
-          <span aria-hidden className="size-0 border-y-[5px] border-l-[8px] border-y-transparent border-l-a-text" />
-          <span className="t-mono-data tabular-nums">{clock(t)} / {clock(total)}</span>
-          <span aria-hidden className="relative h-0.5 max-w-[42%] flex-1 rounded-full bg-a-track">
-            <span className="absolute inset-y-0 left-0 rounded-full bg-a-accent-strong" style={{ width: `${Math.min(100, (t / total) * 100)}%` }} />
-          </span>
-          <Maximize aria-hidden className="ml-auto size-3.5 text-a-text-2" />
-        </div>
-      )}
+    <AdminVideoPlayer
+      seconds={Math.max(60, lesson.minutes * 60)}
+      startAt={t}
+      resetKey={lesson.id}
+      resumeKey={controls ? `lesson:${lesson.id}` : undefined}
+      poster={lesson.thumbnail}
+      background={quiet(course.color)}
+      controls={controls}
+      chapters={lesson.chapters}
+      next={next}
+      className={className}
+    >
       {children}
-    </div>
+    </AdminVideoPlayer>
   )
 }
 
 export const moduleOf = (c: Course, lessonId: string): Module | undefined => c.modules.find((m) => m.lessons.some((l) => l.id === lessonId))
+
+/** A date and time as the coach reads it: "Thu 29 Oct" and "Thu 29 Oct at 09:00". `iso` is local ("2026-10-29T09:00"). */
+export const dayLabel = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }).replace(",", "")
+export const whenLabel = (iso: string) => `${dayLabel(iso)} at ${iso.slice(11, 16)}`
+/** Local "YYYY-MM-DDTHH:MM" for a Date (what date and time inputs speak). */
+export const localIso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`

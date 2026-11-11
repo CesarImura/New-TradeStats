@@ -1,25 +1,53 @@
 "use client"
 
-import { useState } from "react"
-import { Eye, Mail, MessageSquareText, Sparkles } from "@/components/icons"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DEMO_ADMIN } from "@/lib/data/account"
-import { GROUPS, TEAM, tierFor, type Student } from "@/lib/data/people"
-import { COURSES, courseProgress } from "@/lib/data/sample"
+import { GROUPS, tierFor, type Student } from "@/lib/data/people"
+import { COURSES } from "@/lib/data/sample"
 import { NO_QUESTIONS, useOnboardingSettings, useStudentStart } from "@/lib/data/student-start"
-import { TRADES, fmtPnl, fmtR } from "@/lib/data/trades"
+import { TRADES } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
-import { HealthDot, Mono, NativeSelect, SettingRow, useCommunityData } from "../kit"
-import { AdminButton, AdminProgress, EmptyState, Tag } from "@/components/admin/ui"
+import { useCommunityData } from "../kit"
+import { AdminButton, AdminDrawer, AdminProgress, AdminUnderlineTabs, Callout, Metric, StepIndicator, adminControl } from "../ui"
 
 /** The prototype's one student who really goes through onboarding (the others are sample data). */
 const DEMO_STUDENT_ID = "s1"
+const NO_NOTES: Record<string, Student["notes"]> = {}
+const TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "activity", label: "Activity" },
+  { id: "notes", label: "Notes" },
+] as const
+type Tab = (typeof TABS)[number]["id"]
+
+const Label = ({ children }: { children: React.ReactNode }) => <h3 className="t-mono-label text-a-text-2">{children}</h3>
+const Rule = () => <hr className="m-0 h-px shrink-0 border-0 bg-a-border-subtle" />
+
+/** A label on the left and its value on the right (Figma 'Row / …'). With `options` the value opens a menu, so the row stays plain at rest. */
+function Row({ label, value, options }: { label: string; value: string; options?: { label: string; onSelect: () => void }[] }) {
+  return (
+    <div className="flex items-center gap-2 t-body-m">
+      <span className="text-a-text-2">{label}</span>
+      <span aria-hidden className="h-px min-w-px flex-1" />
+      {options ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<button type="button" className="-mx-1.5 min-w-0 truncate rounded-a-xs px-1.5 text-right text-a-text outline-none transition-colors duration-300 hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:inline-flex pointer-coarse:min-h-10 pointer-coarse:items-center" aria-label={`Change ${label.toLowerCase()}, now ${value}`} />}>{value}</DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {options.map((o) => (
+              <DropdownMenuItem key={o.label} onClick={o.onSelect}>{o.label}</DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <span className="min-w-0 truncate text-right text-a-text">{value}</span>
+      )}
+    </div>
+  )
+}
 
 /** What the student answered in the short profile at the start, with the coach's own questions. */
 function OnboardingAnswers() {
@@ -27,259 +55,296 @@ function OnboardingAnswers() {
   const { profile: p } = useStudentStart(coach.slug)
   const settings = useOnboardingSettings(coach.slug)
   const rows: [string, string][] = [
-    ["How long they've traded", p.experience],
-    ["Markets they trade", p.markets.join(", ")],
-    ["Their goal", p.goal],
+    ["Trading for", p.experience],
+    ["Markets", p.markets.join(", ")],
+    ["Goal", p.goal],
     ...(settings.custom ?? NO_QUESTIONS).map((c): [string, string] => [c.text, p.answers?.[c.id] ?? ""]),
   ]
   const answered = rows.filter(([, v]) => v.trim())
   if (!answered.length) return null
   return (
-    <div className="grid gap-1 divide-y rounded-lg border bg-card px-3">
-      <span className="py-2.5 text-sm font-medium">Said when they joined</span>
-      {answered.map(([q, a]) => (
-        <SettingRow key={q} label={q}>
-          <span className="text-sm text-muted-foreground">{a}</span>
-        </SettingRow>
-      ))}
-    </div>
+    <>
+      <Rule />
+      <section className="flex flex-col gap-2.5">
+        <Label>Said when they joined</Label>
+        {answered.map(([q, a]) => (
+          <div key={q} className="grid gap-0.5 t-body-m">
+            <span className="text-a-text-2">{q}</span>
+            <span className="text-a-text">{a}</span>
+          </div>
+        ))}
+      </section>
+    </>
   )
 }
 
-const NO_NOTES: Record<string, Student["notes"]> = {}
+/** Twelve weeks of lessons and trades. The three busiest weeks carry the accent, the rest stay quiet (Figma 'Weekly activity chart'). Numbers are sample data, steady per student. */
+function WeeklyActivity({ s }: { s: Student }) {
+  const weeks = useMemo(() => {
+    const seed = [...s.id].reduce((n, c) => n + c.charCodeAt(0), 0) + s.trades30 + s.activeDays
+    const out = Array.from({ length: 12 }, (_, i) => {
+      const wave = ((seed * (i + 3) * 7919) % 11) / 11
+      const lessons = Math.round(wave * 4 + (s.progress / 100) * 3)
+      const trades = Math.round(((((seed + i) * 104729) % 13) / 13) * (s.trades30 / 4 + 2))
+      return { lessons, trades, total: lessons + trades }
+    })
+    const top = [...out].sort((a, b) => b.total - a.total).slice(0, 3).map((w) => w.total)
+    return out.map((w) => ({ ...w, hot: w.total > 0 && w.total >= Math.min(...top) }))
+  }, [s])
+  const max = Math.max(4, ...weeks.map((w) => w.total))
+  const ceil = Math.ceil(max / 2) * 2
+  return (
+    <section className="flex flex-col gap-4" aria-label="Lessons and trades per week">
+      <Label>Lessons and trades per week</Label>
+      <div className="flex gap-3">
+        <div aria-hidden className="flex h-[125px] shrink-0 flex-col justify-between text-right t-micro text-a-text-3 tabular-nums">
+          <span>{ceil}</span>
+          <span>{ceil / 2}</span>
+          <span>0</span>
+        </div>
+        <ul className="grid min-w-0 flex-1 grid-cols-12 gap-2">
+          {weeks.map((w, i) => (
+            <li key={i} className="flex min-w-0 flex-col items-center gap-1" title={`${12 - i === 1 ? "This week" : `${12 - i - 1} weeks ago`}: ${w.lessons} lessons, ${w.trades} trades`}>
+              <span className="flex h-[125px] w-full items-end border-b border-a-border-subtle">
+                <span className={cn("block w-full rounded-t-a-xs transition-colors duration-300", w.hot ? "bg-a-accent-strong" : "bg-a-track")} style={{ height: `${Math.max(2, (w.total / ceil) * 100)}%` }} />
+              </span>
+              <span className="t-micro text-a-text-3 tabular-nums">{i + 1}</span>
+              <span className="sr-only">{`${w.lessons} lessons, ${w.trades} trades`}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
 
-/** ADM-04 · Everything about one student, with the AI briefing (ADM-07) before a call. */
-export function StudentProfile({ student: s, onOpenChange, onMessage }: { student: Student | null; onOpenChange: (o: boolean) => void; onMessage: (s: Student) => void }) {
+/** Students · 03 Profile, 07 Activity, 08 Notes (Figma 556:32726): everything about one student, in the drawer. Their name and money first, then what needs the coach, then the details. */
+export function StudentProfile({ student: s, paused = false, onOpenChange, onMessage, onPause }: { student: Student | null; paused?: boolean; onOpenChange: (o: boolean) => void; onMessage: (s: Student) => void; onPause: (s: Student) => void }) {
   const { coach } = useCoach()
   const [notes, setNotes] = useCommunityData(coach.slug, "student-notes", NO_NOTES)
+  const [tab, setTab] = useState<Tab>("overview")
   const [draft, setDraft] = useState("")
-  const [briefing, setBriefing] = useState(false)
-  if (!s) return <Sheet open={false} onOpenChange={onOpenChange} />
+  // The pieces below follow the student on screen; while the drawer closes `last` keeps them so the content does not blink out.
+  const [last, setLast] = useState<Student | null>(s)
+  if (s && s !== last) {
+    setLast(s)
+    setDraft("")
+  }
+  const shown = s ?? last
+  // Every time it opens it starts on the overview, even for the same student.
+  const open = !!s
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) setTab("overview")
+  }
 
-  const myNotes = [...(notes[s.id] ?? []), ...s.notes]
-  const tier = tierFor(coach, s.tier)
+  const first = shown?.name.split(" ")[0] ?? ""
+  const tier = shown ? tierFor(coach, shown.tier) : null
+  const mine = shown ? [...(notes[shown.id] ?? []), ...shown.notes] : []
+  const price = (id: string) => {
+    const t = coach.tiers.find((x) => x.id === id)
+    return t ? `${t.price}/${t.cadence === "quarter" ? "qtr" : "mo"}` : ""
+  }
+  const invited = !!shown?.joined.startsWith("invited")
+  const failed = shown?.reason?.toLowerCase().includes("payment")
+  const addNote = () => {
+    if (!shown || !draft.trim()) return
+    setNotes((n) => ({ ...n, [shown.id]: [{ by: "you", when: "just now", text: draft.trim() }, ...(n[shown.id] ?? [])] }))
+    setDraft("")
+    toast("Note added", { description: `Only your team sees it.` })
+  }
 
   return (
-    <Sheet open={!!s} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full gap-0 data-[side=right]:w-full sm:max-w-2xl">
-        <SheetHeader className="border-b pb-4">
-          <div className="flex items-start gap-3 pr-8">
-            <Avatar className="size-12">
-              <AvatarFallback>{s.initials}</AvatarFallback>
+    <AdminDrawer
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Student"
+      className="sm:data-[side=right]:w-[540px]"
+      bodyClassName="gap-5"
+      footer={
+        shown && (
+          <div className="flex w-full flex-wrap items-center gap-2">
+            <AdminButton hierarchy={paused ? "secondary" : "danger"} onClick={() => onPause(shown)}>{paused ? "Resume access" : "Pause access"}</AdminButton>
+            <span aria-hidden className="h-px min-w-px flex-1" />
+            <AdminButton hierarchy="secondary" onClick={() => toast(`Opening ${first}'s journal`, { description: "Read-only: you see it as they do." })}>Open journal</AdminButton>
+            <AdminButton className="max-sm:order-first max-sm:w-full" onClick={() => onMessage(shown)}>Send a message</AdminButton>
+          </div>
+        )
+      }>
+      {shown && tier && (
+        <>
+          <div className="flex items-center gap-3.5">
+            <Avatar className="size-10 border border-a-border bg-a-track">
+              <AvatarFallback className="bg-transparent t-body-m text-a-text">{shown.initials}</AvatarFallback>
             </Avatar>
-            <div className="grid min-w-0 flex-1 gap-1">
-              <SheetTitle className="text-lg">{s.name}</SheetTitle>
-              <SheetDescription>
-                {tier.name}
-                {s.group ? ` · ${s.group}` : ""} · joined {s.joined} · {s.email}
-              </SheetDescription>
-              <span className="flex items-center gap-2 text-sm">
-                <HealthDot health={s.health} /> {s.reason ?? "All good"}
-              </span>
+            <div className="grid min-w-0 gap-0.5">
+              <h2 className="t-heading-l truncate text-a-text">{shown.name}</h2>
+              <p className="truncate t-body-m text-a-text-2">
+                {shown.email} · {invited ? "invited" : "joined"} {shown.joined.replace(/^invited\s*/, "").replace(/ 20\d\d$/, "")}
+              </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 pt-2">
-            <AdminButton onClick={() => onMessage(s)} hierarchy="secondary" size="lg">
-              <Mail /> Message
-            </AdminButton>
-            <AdminButton onClick={() => setBriefing((b) => !b)} hierarchy="secondary" size="lg">
-              <Sparkles /> Briefing for a call
-            </AdminButton>
-            <AdminButton onClick={() => toast(`Viewing the platform as ${s.name}`, { description: `${tier.name}${s.group ? `, ${s.group}` : ""}` })} hierarchy="secondary" size="lg">
-              <Eye /> View as {s.name.split(" ")[0]}
-            </AdminButton>
-          </div>
-          {briefing && (
-            <div className="mt-3 grid gap-2 rounded-lg border border-[var(--ts-cta)]/25 bg-[var(--ts-cta)]/5 p-3 text-sm">
-              <Mono className="text-[var(--ts-cta)]">AI briefing · only you see this</Mono>
-              <ul className="grid gap-1 text-muted-foreground">
-                <li>· {s.trades30} trades in 30 days, {s.rules}% of rules kept. Most broken: “Stop never moved further away”.</li>
-                <li>· Losing trades cluster after 12:00; mornings average +0.8R.</li>
-                <li>· Last question to the AI: “Where exactly do I put my stop on an ORB?”</li>
-                <li>· Open: {TRADES.filter((t) => t.review === "waiting").length} trades waiting for your review.</li>
-              </ul>
-            </div>
-          )}
-        </SheetHeader>
 
-        <Tabs defaultValue="overview" className="min-h-0 flex-1 gap-0">
-          <TabsList variant="line" className="w-full shrink-0 justify-start gap-0 overflow-x-auto border-b px-4 [scrollbar-width:none]">
-            {["overview", "progress", "journal", "notes", "access", "billing", "history"].map((t) => (
-              <TabsTrigger key={t} value={t} className="capitalize">
-                {t}
-              </TabsTrigger>
+          <div className="flex items-stretch gap-2 sm:gap-4">
+            {[
+              ["Progress", `${shown.progress}%`],
+              ["Rules kept", shown.broker ? `${shown.rules}%` : "—"],
+              ["Paid so far", `€${shown.paid.toLocaleString("en")}`],
+            ].map(([label, value], i) => (
+              <div key={label} className="contents">
+                {i > 0 && <span aria-hidden className="w-px bg-a-border" />}
+                {/* On a phone the three share 300px: smaller padding and value, and the label may wrap instead of being cut. */}
+                <Metric className="flex-1 px-3 max-sm:gap-1 sm:px-5 max-sm:[&>span:first-child]:min-h-7 max-sm:[&>span:first-child]:whitespace-normal max-sm:[&>span:nth-child(2)]:t-heading-l max-sm:[&>span:nth-child(2)]:whitespace-nowrap" label={label} value={value} />
+              </div>
             ))}
-          </TabsList>
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            <TabsContent value="overview" className="grid gap-4">
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {[
-                  ["Course progress", `${s.progress}%`],
-                  ["Active", `${s.activeDays} of 14 days`],
-                  ["Rules kept", s.broker ? `${s.rules}%` : "–"],
-                  ["Paid so far", `€${s.paid.toLocaleString("en")}`],
-                ].map(([l, v]) => (
-                  <div key={l} className="grid gap-1 rounded-lg border p-3 bg-card">
-                    <span className="text-xs text-muted-foreground">{l}</span>
-                    <span className="text-lg tabular-nums">{v}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="grid gap-1 divide-y rounded-lg border px-3 bg-card">
-                <SettingRow label="Broker" text={s.broker ? "Trades sync automatically" : "Not connected yet"}>
-                  <Tag tone={s.broker ? "success" : "neutral"}>{s.broker ? "Connected" : "Not connected"}</Tag>
-                </SettingRow>
-                <SettingRow label="Discord" text={s.discord ? "Role given by tier" : "Hasn't linked Discord"}>
-                  <Tag tone={s.discord ? "success" : "neutral"}>{s.discord ? "Linked" : "Not linked"}</Tag>
-                </SettingRow>
-                <SettingRow label="Assistant coach" text="Sees this student's feedback requests and notes">
-                  <NativeSelect defaultValue={s.coach ?? ""} onChange={(e) => toast(e.target.value ? `${s.name} assigned to ${e.target.value}` : "Assistant coach removed")}>
-                    <option value="">Nobody</option>
-                    {TEAM.filter((t) => t.role === "Assistant coach").map((t) => (
-                      <option key={t.name} value={t.name.split(" ")[0]}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </SettingRow>
-              </div>
-              {s.id === DEMO_STUDENT_ID && <OnboardingAnswers />}
-            </TabsContent>
-
-            <TabsContent value="progress" className="grid gap-4">
-              {COURSES.map((c, i) => {
-                const v = Math.max(0, Math.min(100, s.progress + (i === 0 ? 20 : i === 1 ? -20 : -60)))
-                return (
-                  <div key={c.id} className="grid gap-1.5">
-                    <div className="flex justify-between text-sm">
-                      <span>{c.title}</span>
-                      <span className="text-muted-foreground tabular-nums">{c.locked && tier.id !== "vip" ? "No access" : `${v}%`}</span>
-                    </div>
-                    <AdminProgress label={`${c.title} progress`} value={c.locked && tier.id !== "vip" ? 0 : v} />
-                    <span className="text-xs text-muted-foreground">Average of all students: {courseProgress(c) + 9}%</span>
-                  </div>
-                )
-              })}
-            </TabsContent>
-
-            <TabsContent value="journal" className="grid gap-2">
-              {!s.broker ? (
-                <EmptyState compact title={`${s.name.split(" ")[0]} hasn't connected a broker yet.`} />
-              ) : (
-                <>
-                  <p className="text-xs text-muted-foreground">Read-only. You see the journal as {s.name.split(" ")[0]} does.</p>
-                  {TRADES.map((t) => (
-                    <div key={t.id} className="flex items-center gap-3 rounded-lg border p-3 text-sm bg-card">
-                      <span className="w-24 shrink-0 text-xs text-muted-foreground">{t.date}</span>
-                      <span className="w-24 shrink-0 font-medium">
-                        {t.symbol} {t.side}
-                      </span>
-                      <span className="flex-1 truncate text-muted-foreground">{t.setup}</span>
-                      {t.review === "waiting" && <Tag>Review asked</Tag>}
-                      <span className={cn("w-14 text-right tabular-nums", t.r >= 0 ? "text-[var(--profit)]" : "text-[var(--loss)]")}>{fmtR(t.r)}</span>
-                      <span className="hidden w-20 text-right text-muted-foreground tabular-nums sm:block">{fmtPnl(t.pnl)}</span>
-                    </div>
-                  ))}
-                </>
-              )}
-            </TabsContent>
-
-            <TabsContent value="notes" className="grid gap-3">
-              <div className="grid gap-2">
-                <Textarea rows={3} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Private note. Only your team sees it." />
-                <AdminButton
-                  
-                  className="justify-self-end"
-                  disabled={!draft.trim()}
-                  onClick={() => {
-                    setNotes((n) => ({ ...n, [s.id]: [{ by: DEMO_ADMIN.name.split(" ")[0], when: "just now", text: draft.trim() }, ...(n[s.id] ?? [])] }))
-                    setDraft("")
-                  }} size="md">
-                  <MessageSquareText /> Add note
-                </AdminButton>
-              </div>
-              {myNotes.length === 0 && <p className="text-sm text-muted-foreground">No notes yet.</p>}
-              {myNotes.map((n, i) => (
-                <div key={i} className="grid gap-1 rounded-lg border p-3 text-sm bg-card">
-                  <span className="text-xs text-muted-foreground">
-                    {n.by} · {n.when}
-                  </span>
-                  <p>{n.text}</p>
-                </div>
-              ))}
-            </TabsContent>
-
-            <TabsContent value="access" className="grid gap-1 divide-y">
-              <SettingRow label="Tier" text="Upgrades start now. Downgrades at the end of the period.">
-                <NativeSelect defaultValue={tier.id} onChange={(e) => toast(`${s.name} moves to ${coach.tiers.find((t) => t.id === e.target.value)?.name}`)}>
-                  {coach.tiers.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} · {t.price}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </SettingRow>
-              <SettingRow label="Group" text="What a group unlocks starts on the group's start date">
-                <NativeSelect defaultValue={s.group ?? ""} onChange={(e) => toast(e.target.value ? `Added to ${e.target.value}` : "Removed from the group")}>
-                  <option value="">No group</option>
-                  {GROUPS.map((g) => (
-                    <option key={g.id} value={g.name}>
-                      {g.name}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </SettingRow>
-              <SettingRow label="Extra access" text="Give one course for free, on top of the tier">
-                <AdminButton onClick={() => toast("Pick a course to unlock for this student")} hierarchy="secondary" size="lg">
-                  Add a course
-                </AdminButton>
-              </SettingRow>
-              <SettingRow label="Pause access" text="Keeps the account and the journal. Nothing is deleted.">
-                <Switch onCheckedChange={(v) => toast(v ? "Access paused" : "Access back on")} />
-              </SettingRow>
-            </TabsContent>
-
-            <TabsContent value="billing" className="grid gap-3">
-              <div className="grid gap-1 divide-y rounded-lg border px-3 bg-card">
-                <SettingRow label="Plan">
-                  <span className="text-sm">
-                    {tier.name} · {"price" in tier ? `${tier.price} / ${(tier as { cadence?: string }).cadence ?? "month"}` : ""}
-                  </span>
-                </SettingRow>
-                <SettingRow label="Next payment">
-                  <span className="text-sm">{s.reason === "Payment failed" ? "Retrying Wed 14 Oct" : "1 Nov 2026"}</span>
-                </SettingRow>
-                <SettingRow label="Card">
-                  <span className="text-sm text-muted-foreground">Visa ·· 4242{s.reason === "Payment failed" ? " · expired" : ""}</span>
-                </SettingRow>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <AdminButton onClick={() => toast("Payment link sent", { description: `${s.name} gets an e-mail to update the card.` })} hierarchy="secondary" size="lg">
-                  Send payment link
-                </AdminButton>
-                <AdminButton onClick={() => toast("Refund the last payment?", { description: "In the real product this asks to confirm." })} hierarchy="secondary" size="lg">
-                  Refund last payment
-                </AdminButton>
-                <AdminButton className="text-destructive" onClick={() => toast("Cancel at the end of the period?", { description: "In the real product this asks to confirm." })} hierarchy="ghost" size="lg">
-                  Cancel membership
-                </AdminButton>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="history">
-              <ol className="relative grid gap-4 border-l pl-4">
-                {s.history.map((h, i) => (
-                  <li key={i} className="grid gap-0.5 text-sm">
-                    <span className="absolute -left-[4.5px] mt-1.5 size-2 rounded-full bg-muted-foreground/60" />
-                    <span className="text-xs text-muted-foreground">{h.when}</span>
-                    {h.text}
-                  </li>
-                ))}
-              </ol>
-            </TabsContent>
           </div>
-        </Tabs>
-      </SheetContent>
-    </Sheet>
+
+          {shown.reason && (
+            <Callout
+              tone={shown.health === "red" ? "danger" : "warning"}
+              action={
+                <DropdownMenu>
+                  <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Review</DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {failed ? (
+                      <>
+                        <DropdownMenuItem onClick={() => toast("Payment link sent", { description: `${first} gets an e-mail to update the card.` })}>Send payment link</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toast("Retrying the payment", { description: "You'll see the result here." })}>Retry now</DropdownMenuItem>
+                      </>
+                    ) : invited ? (
+                      <>
+                        <DropdownMenuItem onClick={() => toast("Invite sent again", { description: `${first} gets a new e-mail.` })}>Send the invite again</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onMessage(shown)}>Send a message</DropdownMenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <DropdownMenuItem onClick={() => onMessage(shown)}>Send a message</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toast(`Opening ${first}'s journal`)}>Open journal</DropdownMenuItem>
+                      </>
+                    )}
+                    <DropdownMenuItem onClick={() => toast("Marked as reviewed", { description: "It stays in the history." })}>Mark as reviewed</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              }>
+              {failed ? `${shown.reason} · retrying Wed 14 Oct` : shown.reason}
+            </Callout>
+          )}
+
+          <AdminUnderlineTabs label="Student" tabs={TABS} value={tab} onChange={setTab} />
+
+          {tab === "overview" && (
+            <>
+              <section className="flex flex-col gap-2 rounded-a-10 border border-a-accent-strong bg-a-accent-soft px-4 py-3.5">
+                <h3 className="t-mono-label text-a-text-accent">AI briefing · only you see this</h3>
+                <p className="t-body-m text-a-text">
+                  {first} has logged {shown.trades30} trades in 30 days and kept {shown.broker ? `${shown.rules}% of the rules` : "no rules yet, no broker connected"}. {shown.reason ? `${shown.reason}.` : "Nothing needs you this week."} {TRADES.filter((t) => t.review === "waiting").length > 0 && shown.id === DEMO_STUDENT_ID ? `${TRADES.filter((t) => t.review === "waiting").length} trades wait for your review.` : ""}
+                </p>
+              </section>
+
+              <section className="flex flex-col gap-2.5">
+                <Label>Tier and group</Label>
+                <Row label="Tier" value={`${tier.name} · ${price(tier.id)}`} options={coach.tiers.map((t) => ({ label: `${t.name} · ${price(t.id)}`, onSelect: () => toast(`${shown.name} moves to ${t.name}`, { description: "Upgrades start now, downgrades at the end of the period." }) }))} />
+                <Row label="Group" value={shown.group ?? "No group"} options={[{ label: "No group", onSelect: () => toast("Removed from the group") }, ...GROUPS.map((g) => ({ label: g.name, onSelect: () => toast(`Added to ${g.name}`, { description: "What a group unlocks starts on its start date." }) }))]} />
+                <Row label="Next payment" value={failed ? "14 Oct" : "1 Nov"} />
+                <Row label="Extra access" value={shown.coach ?? "Nobody"} options={[{ label: "Add a course for free", onSelect: () => toast("Pick a course to unlock for this student") }]} />
+              </section>
+              <Rule />
+              <section className="flex flex-col gap-2.5">
+                <Label>Course progress</Label>
+                {COURSES.map((c, i) => {
+                  const locked = c.locked && tier.id !== "vip"
+                  const v = locked ? 0 : Math.max(0, Math.min(100, shown.progress + (i === 0 ? 0 : i === 1 ? -32 : -62)))
+                  return (
+                    <div key={c.id} className="grid gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="min-w-0 flex-1 truncate t-body-m text-a-text">{c.title}</span>
+                        <span className="t-caption text-a-text-2 tabular-nums">{locked ? "No access" : `${v}%`}</span>
+                      </div>
+                      <AdminProgress label={`${c.title} progress`} value={v} />
+                    </div>
+                  )
+                })}
+              </section>
+              <Rule />
+              <section className="flex flex-col gap-2.5">
+                <Label>Connected</Label>
+                <Row label="Broker" value={shown.broker ? "Syncs automatically" : "Not connected"} />
+                <Row label="Discord" value={shown.discord ? "Linked" : "Not linked"} />
+              </section>
+              {shown.id === DEMO_STUDENT_ID && <OnboardingAnswers />}
+            </>
+          )}
+
+          {tab === "activity" && (
+            <>
+              <section className="flex flex-col gap-4">
+                <Label>Recent activity</Label>
+                {shown.history.length === 0 ? (
+                  <p className="t-body-m text-a-text-2">Nothing yet. {first} hasn&apos;t done anything on the platform.</p>
+                ) : (
+                  <ol className="flex flex-col gap-4">
+                    {shown.history.map((h, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <StepIndicator step={i + 1} state={/fail|declin|broke/i.test(h.text) ? "error" : "success"} />
+                        <div className="grid min-w-0 t-body-m">
+                          <span className="text-a-text">{h.text}</span>
+                          <span className="text-a-text-2">{h.when}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
+              <Rule />
+              {shown.activeDays === 0 && shown.trades30 === 0 && shown.progress === 0 ? (
+                <section className="flex flex-col gap-2.5">
+                  <Label>Lessons and trades per week</Label>
+                  <p className="t-body-m text-a-text-2">{invited ? `${first} hasn't joined yet.` : "Nothing in the last 12 weeks."}</p>
+                </section>
+              ) : (
+                <WeeklyActivity s={shown} />
+              )}
+            </>
+          )}
+
+          {tab === "notes" && (
+            <>
+              <section className="flex flex-col gap-2.5">
+                <Label>Private note</Label>
+                <div className="relative">
+                  <textarea
+                    aria-label={`Private note about ${first}`}
+                    rows={3}
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === "Enter" && (e.preventDefault(), addNote())}
+                    placeholder="Only your team sees this"
+                    className={cn(adminControl, "block h-[72px] resize-none py-2.5 pr-24")}
+                  />
+                  <AdminButton size="md" onClick={addNote} disabled={!draft.trim()} className="absolute right-2 bottom-2 motion-safe:transition-opacity">Add note</AdminButton>
+                </div>
+              </section>
+              <Rule />
+              <section className="flex flex-col gap-3.5">
+                <Label>Pinned notes</Label>
+                {mine.length === 0 ? (
+                  <p className="t-body-m text-a-text-2">No notes yet. Write the first one above.</p>
+                ) : (
+                  mine.map((n, i) => (
+                    <div key={`${n.when}-${i}`} className="grid t-body-m">
+                      <span className="text-a-text-2">
+                        {n.when} · {n.by === DEMO_ADMIN.name.split(" ")[0] ? "you" : n.by}
+                      </span>
+                      <p className="text-a-text">{n.text}</p>
+                    </div>
+                  ))
+                )}
+              </section>
+            </>
+          )}
+        </>
+      )}
+    </AdminDrawer>
   )
 }

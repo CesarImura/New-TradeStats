@@ -5,88 +5,81 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { ExternalLink, Plus } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Page, PageHeader } from "../kit"
+import { PageHeader } from "../kit"
 import { SetupTip } from "../setup-checklist"
-import { AccessOverview, PreviewAsMenu } from "./access-overview"
-import { Groups } from "./groups"
-import { SalesPageEditor } from "./sales-page-editor"
-import { Coupons } from "./coupons"
+import { AdminButton, AdminTabs, Panel, PanelHeader } from "@/components/admin/ui"
+import { AccessOverview } from "./access-overview"
+import { Groups, NewGroupButton } from "./groups"
+import { SalesPageEditor, SalesPageActions } from "./sales-page-editor"
+import { Coupons, NewCouponButton } from "./coupons"
 import { RevenueOverview } from "./revenue"
 import { Payouts } from "./payouts"
 import { Tiers } from "./tiers"
 import { Transactions } from "./transactions"
-import { AdminButton, Panel, PanelHeader } from "@/components/admin/ui"
 
-/** ADM-29 to ADM-36, ADM-14, ADM-15, ADM-40 and ADM-41: tiers, groups, access, sales page, coupons, revenue, transactions, payouts, affiliates. */
+const TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "tiers", label: "Tiers & prices" },
+  { id: "groups", label: "Groups" },
+  { id: "access", label: "Access" },
+  { id: "page", label: "Sales page" },
+  { id: "coupons", label: "Coupons" },
+  { id: "transactions", label: "Transactions" },
+  { id: "payouts", label: "Payouts" },
+] as const
+type Tab = (typeof TABS)[number]["id"] | "affiliates"
+
+/** Sales & payments (Figma 535:7152, 12 screens): tiers, groups, access, the sales page, coupons, transactions and payouts. The header's actions follow the tab. */
 export function SalesAdmin() {
   const { coach } = useCoach()
-  const [tab, setTab] = useState(useSearchParams().get("tab") ?? "overview")
+  const asked = useSearchParams().get("tab")
+  const [tab, setTab] = useState<Tab>(TABS.some((t) => t.id === asked) || asked === "affiliates" ? (asked as Tab) : "overview")
+  const [newTier, setNewTier] = useState(0)
+  const [newGroup, setNewGroup] = useState(0)
+  const [newCoupon, setNewCoupon] = useState(0)
+  const [resetPage, setResetPage] = useState(0)
+
+  const salesPage = (
+    <AdminButton nativeButton={false} render={<a href={`/site/${coach.slug}`} target="_blank" rel="noreferrer" />} hierarchy="secondary">
+      <ExternalLink /> Sales page
+    </AdminButton>
+  )
+  const actions =
+    tab === "overview" || tab === "tiers" ? (
+      <>
+        {salesPage}
+        <AdminButton onClick={() => (setTab("tiers"), setNewTier((n) => n + 1))}>
+          <Plus /> New tier
+        </AdminButton>
+      </>
+    ) : tab === "groups" ? (
+      <NewGroupButton onClick={() => setNewGroup((n) => n + 1)} />
+    ) : tab === "page" ? (
+      <SalesPageActions slug={coach.slug} onReset={() => setResetPage((n) => n + 1)} />
+    ) : tab === "coupons" ? (
+      <NewCouponButton onClick={() => setNewCoupon((n) => n + 1)} />
+    ) : (
+      salesPage
+    )
 
   return (
-    <Page>
-      <PageHeader
-        title="Sales & payments"
-        text="Tiers, sales page, coupons and payouts"
-        actions={
-          <>
-            <PreviewAsMenu />
-            <AdminButton nativeButton={false} render={<a href={`/site/${coach.slug}`} target="_blank" rel="noreferrer" />} hierarchy="secondary">
-              <ExternalLink /> Sales page
-            </AdminButton>
-            <AdminButton onClick={() => setTab("tiers")}>
-              <Plus /> New tier
-            </AdminButton>
-          </>
-        }
-      />
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
+      <PageHeader title="Sales & payments" text="Tiers, sales page, coupons and payouts" actions={actions} />
       {tab === "tiers" && <SetupTip task="membership" />}
       {tab === "payouts" && <SetupTip task="payouts" />}
-      <Tabs value={tab} onValueChange={setTab} className="gap-5">
-        {/* Scrolls sideways on narrow screens instead of widening the page. */}
-        <div className="w-0 min-w-full overflow-x-auto [scrollbar-width:none]">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="tiers">Tiers & prices</TabsTrigger>
-            <TabsTrigger value="groups">Groups</TabsTrigger>
-            <TabsTrigger value="access">Access</TabsTrigger>
-            <TabsTrigger value="page">Sales page</TabsTrigger>
-            <TabsTrigger value="coupons">Coupons</TabsTrigger>
-            <TabsTrigger value="transactions">
-              Transactions
-            </TabsTrigger>
-            <TabsTrigger value="payouts">Payouts</TabsTrigger>
-          </TabsList>
-        </div>
-        <TabsContent value="overview">
-          <RevenueOverview onProblems={() => setTab("transactions")} />
-        </TabsContent>
-        <TabsContent value="tiers">
-          <Tiers />
-        </TabsContent>
-        <TabsContent value="groups">
-          <Groups />
-        </TabsContent>
-        <TabsContent value="access">
-          <AccessOverview />
-        </TabsContent>
-        <TabsContent value="page">
-          <SalesPageEditor />
-        </TabsContent>
-        <TabsContent value="coupons">
-          <Coupons />
-        </TabsContent>
-        <TabsContent value="transactions">
-          <Transactions />
-        </TabsContent>
-        <TabsContent value="payouts">
-          <Payouts />
-        </TabsContent>
-        <TabsContent value="affiliates">
-          <Affiliates />
-        </TabsContent>
-      </Tabs>
-    </Page>
+      <div className="flex">
+        <AdminTabs label="Sales sections" tabs={TABS} value={tab as (typeof TABS)[number]["id"]} onChange={setTab} />
+      </div>
+      {tab === "overview" && <RevenueOverview onProblems={() => setTab("transactions")} />}
+      {tab === "tiers" && <Tiers newSignal={newTier} />}
+      {tab === "groups" && <Groups newSignal={newGroup} />}
+      {tab === "access" && <AccessOverview />}
+      {tab === "page" && <SalesPageEditor resetSignal={resetPage} />}
+      {tab === "coupons" && <Coupons newSignal={newCoupon} />}
+      {tab === "transactions" && <Transactions />}
+      {tab === "payouts" && <Payouts />}
+      {tab === "affiliates" && <Affiliates />}
+    </div>
   )
 }
 
@@ -95,11 +88,13 @@ export function SalesAdmin() {
 function Affiliates() {
   const { base } = useCoach()
   return (
-    <Panel className="max-w-xl"><PanelHeader title={<>Affiliates moved to Partners</>} description={<>The affiliate program, your partner offers and what they earn are now in one place.</>} /><div>
+    <Panel className="max-w-xl">
+      <PanelHeader title="Affiliates moved to Partners" description="The affiliate program, your partner offers and what they earn are now in one place." />
+      <div>
         <AdminButton nativeButton={false} render={<Link href={`${base}/partners`} />} hierarchy="secondary">
           Open Partners
         </AdminButton>
       </div>
-</Panel>
+    </Panel>
   )
 }

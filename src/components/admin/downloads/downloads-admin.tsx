@@ -1,20 +1,19 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
-import { Download, FileUp, Pencil, Plus, Trash2 } from "@/components/icons"
+import { Download, MoreHorizontal, Trash2, Upload } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Textarea } from "@/components/ui/textarea"
 import { useTiers } from "@/lib/data/access"
-import { DOWNLOAD_CATEGORIES, categoryLabel, saveDownloads, shortDate, useDownloads, type DownloadCategory, type DownloadFile, type DownloadItem } from "@/lib/data/downloads"
+import { DOWNLOAD_CATEGORIES, categoryLabel, daysAgo, saveDownloads, shortDate, useDownloads, type DownloadCategory, type DownloadFile, type DownloadItem } from "@/lib/data/downloads"
+import { useCatalog } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
-import { EmptyState, Field, NativeSelect, Page, PageHeader } from "../kit"
-import { AdminButton, AdminFilter, AdminModal, AdminSearch, AdminTabs, AdminToolbar, FileIcon, Tag } from "../ui"
+import { PageHeader } from "../kit"
+import { AdminButton, AdminDrawer, AdminField, AdminFilter, AdminSearch, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, Callout, Dropzone, EmptyState, FileIcon, FileItem, Tag, adminControl } from "../ui"
 
 const TYPES: Record<string, string> = {
   pdf: "PDF",
@@ -36,237 +35,223 @@ const TYPES: Record<string, string> = {
 
 const sizeOf = (bytes: number) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`)
 const fileOf = (f: File): DownloadFile => ({ name: f.name, size: sizeOf(f.size), type: TYPES[f.name.split(".").pop()?.toLowerCase() ?? ""] ?? "File" })
+const ago = (iso: string) => {
+  const d = Math.max(0, daysAgo(iso))
+  return d === 0 ? "today" : d < 7 ? `${d} d ago` : d < 30 ? `${Math.floor(d / 7)} w ago` : `${Math.floor(d / 30)} mo ago`
+}
+const count = (id: string) => ([...id].reduce((n, c) => n + c.charCodeAt(0), 0) * 7) % 400 + 14
+/** Figma groups checklists, trading plans and the rest as Tools. */
+const TABS = [
+  { id: "all", label: "All" },
+  { id: "indicators", label: "Indicators" },
+  { id: "templates", label: "Templates" },
+  { id: "tools", label: "Tools" },
+  { id: "lesson", label: "Lesson files" },
+] as const
+const groupOf = (c: DownloadCategory) => (c === "indicators" ? "indicators" : c === "templates" ? "templates" : "tools")
 
-/** Files students can download beyond the ones attached to a lesson. */
+type Row = { id: string; title: string; sub: string; name: string; tag: string; version: string; who: string; whoIds: string[]; updated: string; date: string; downloads: number; item?: DownloadItem }
+
+/** Downloads (Figma 532:7152, 01 List, 02 Upload a file, 03 No files yet): files beyond the ones attached to a lesson, and the lesson files from Content. */
 export function DownloadsAdmin() {
   const { coach, base } = useCoach()
   const items = useDownloads(coach)
-  const [cat, setCat] = useState<string>("all")
+  const catalog = useCatalog(coach)
+  const tiers = useTiers(coach)
+  const [tab, setTab] = useState<string>("all")
   const [q, setQ] = useState("")
   const [tierSel, setTierSel] = useState("all")
-  const shown = items.filter((d) => (cat === "all" || d.category === cat) && (tierSel === "all" || d.tiers.length === 0 || d.tiers.includes(tierSel)) && (!q || `${d.title} ${d.file.name}`.toLowerCase().includes(q.toLowerCase())))
-  const tiers = useTiers(coach)
   const [editing, setEditing] = useState<DownloadItem | "new" | null>(null)
   const tierName = (d: DownloadItem) => (d.tiers.length === 0 ? "Everyone" : d.tiers.map((id) => tiers.find((t) => t.id === id)?.name ?? id).join(", "))
 
+  const own: Row[] = items.map((d) => ({ id: d.id, title: d.title, sub: d.file.type, name: d.file.name, tag: categoryLabel(d.category), version: `v${d.version}`, who: tierName(d), whoIds: d.tiers, updated: ago(d.updated), date: shortDate(d.updated), downloads: count(d.id), item: d }))
+  const lesson: Row[] = catalog.courses.flatMap((c) =>
+    c.modules.flatMap((m) =>
+      m.lessons.flatMap((l, i) => l.downloads.map((f, k) => ({ id: `${l.id}-${k}`, title: f.name.replace(/\.[^.]+$/, ""), sub: `${TYPES[f.name.split(".").pop()?.toLowerCase() ?? ""] ?? "File"} · from ${c.title} · Lesson ${i + 1}`, name: f.name, tag: "Lesson file", version: "—", who: "All tiers", whoIds: [], updated: "—", date: "", downloads: count(l.id) })))
+    )
+  )
+  const all = [...own, ...lesson]
+  const rows = all.filter((r) => {
+    const g = r.item ? groupOf(r.item.category) : "lesson"
+    return (tab === "all" || tab === g) && (tierSel === "all" || r.whoIds.length === 0 || r.whoIds.includes(tierSel)) && (!q || `${r.title} ${r.name}`.toLowerCase().includes(q.toLowerCase()))
+  })
   const remove = (d: DownloadItem) => {
     saveDownloads(coach, (l) => l.filter((x) => x.id !== d.id))
     toast(`${d.title} deleted`, { action: { label: "Undo", onClick: () => saveDownloads(coach, (l) => [d, ...l]) } })
   }
+  const upload = <AdminButton onClick={() => setEditing("new")}><Upload /> Upload a file</AdminButton>
 
   return (
-    <Page>
-      <PageHeader
-        title="Downloads"
-        text={`Files students can download · ${items.length} files · ${(items.length * 143).toLocaleString("en")} downloads this month`}
-        actions={
-          <AdminButton onClick={() => setEditing("new")}>
-            <Plus /> Upload a file
-          </AdminButton>
-        }
-      />
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
+      <PageHeader title="Downloads" text={all.length === 0 ? "No files yet" : `Files students can download · ${all.length} files · ${all.reduce((n, r) => n + r.downloads, 0).toLocaleString("en")} downloads this month`} actions={upload} />
       {!coach.modules.downloads && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
-          <Download className="size-4 text-[var(--ts-interactive)]" />
-          <span className="flex-1">Downloads is switched off, so students don&apos;t see it yet.</span>
-          <AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="lg">
-            Switch on in Design
-          </AdminButton>
-        </div>
+        <Callout tone="warning" action={<AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="md">Review</AdminButton>}>
+          Downloads is switched off, so students don&apos;t see it yet.
+        </Callout>
       )}
 
-      {items.length === 0 ? (
-        <EmptyState icon={Download} title="No files yet" description="Upload an indicator, a template or a checklist and students find it under Downloads." actions={<AdminButton onClick={() => setEditing("new")}><Plus /> Upload a file</AdminButton>} />
+      {all.length === 0 ? (
+        <EmptyState icon={Download} title="No files yet" description="Share indicators, templates and worksheets. Students get a notification when you add one." actions={upload} />
       ) : (
         <>
-        <AdminToolbar>
-          <AdminTabs
-            label="Category"
-            tabs={[{ id: "all", label: "All", count: items.length }, ...DOWNLOAD_CATEGORIES.map((c) => ({ id: c.id, label: c.label }))]}
-            value={cat}
-            onChange={setCat}
-          />
-          <div className="flex-1" />
-          <AdminSearch value={q} onChange={setQ} placeholder="Search files" hint="⌘K" />
-          <AdminFilter ariaLabel="Tier" value={tierSel} onValueChange={setTierSel} options={[{ value: "all", label: "All tiers" }, ...tiers.map((t) => ({ value: t.id, label: t.name }))]} />
-        </AdminToolbar>
-        <div className="overflow-x-auto rounded-lg border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>File</TableHead>
-                <TableHead className="hidden sm:table-cell">Category</TableHead>
-                <TableHead>Version</TableHead>
-                <TableHead className="hidden md:table-cell">Who gets it</TableHead>
-                <TableHead className="hidden sm:table-cell">Updated</TableHead>
-                <TableHead className="hidden text-right md:table-cell">Downloads</TableHead>
-                <TableHead className="w-24" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {shown.map((d) => (
-                <TableRow key={d.id}>
-                  <TableCell className="max-w-72">
-                    <div className="flex items-center gap-3">
-                      <FileIcon name={d.file.name} />
-                      <div className="grid min-w-0">
-                        <span className="truncate font-medium">{d.title}</span>
-                        <span className="truncate text-xs text-muted-foreground">
-                          {d.file.name} · {d.file.size}
-                        </span>
+          <AdminToolbar>
+            <AdminTabs label="Category" tabs={TABS.map((t) => (t.id === "all" ? { ...t, count: all.length } : t))} value={tab} onChange={setTab} />
+            <div className="flex-1" />
+            <AdminSearch value={q} onChange={setQ} placeholder="Search files" hint="⌘K" />
+            <AdminFilter ariaLabel="Tier" value={tierSel} onValueChange={setTierSel} options={[{ value: "all", label: "All tiers" }, ...tiers.map((t) => ({ value: t.id, label: t.name }))]} />
+          </AdminToolbar>
+          {rows.length === 0 ? (
+            <EmptyState icon={Download} title="No files match" description="Clear the search or the filters." />
+          ) : (
+            <AdminTable minWidth={980} footer={<AdminTableFooter>Lesson files come from Content and are grouped by course</AdminTableFooter>}>
+              <AdminTableHead>
+                <AdminTh>File</AdminTh>
+                <AdminTh width={146}>Category</AdminTh>
+                <AdminTh width={96}>Version</AdminTh>
+                <AdminTh width={216}>Who gets it</AdminTh>
+                <AdminTh width={116}>Updated</AdminTh>
+                <AdminTh width={106} align="end">Downloads</AdminTh>
+                <AdminTh width={56} />
+              </AdminTableHead>
+              <tbody>
+                {rows.map((r) => (
+                  <AdminTr key={r.id}>
+                    <AdminTd>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <FileIcon name={r.name} />
+                        <div className="grid min-w-0 gap-0.5">
+                          <span className="truncate t-body-m text-a-text">{r.title}</span>
+                          <span className="truncate t-caption text-a-text-2">{r.sub}</span>
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell"><Tag>{categoryLabel(d.category)}</Tag></TableCell>
-                  <TableCell className="tabular-nums">v{d.version}</TableCell>
-                  <TableCell className="hidden text-muted-foreground md:table-cell">{tierName(d)}</TableCell>
-                  <TableCell className="hidden text-muted-foreground sm:table-cell">{shortDate(d.updated)}</TableCell>
-                  <TableCell className="hidden text-right tabular-nums md:table-cell">{[...d.id].reduce((n, c) => n + c.charCodeAt(0), 0) * 7 % 400 + 14}</TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-0.5">
-                      <AdminButton aria-label={`Edit ${d.title}`} onClick={() => setEditing(d)} hierarchy="ghost" size="md" iconOnly>
-                        <Pencil />
-                      </AdminButton>
-                      <AdminButton aria-label={`Delete ${d.title}`} onClick={() => remove(d)} hierarchy="ghost" size="md" iconOnly>
-                        <Trash2 />
-                      </AdminButton>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {shown.length === 0 && <p className="px-4 py-8 text-center t-body-m text-a-text-2">No files match.</p>}
-        </div>
+                    </AdminTd>
+                    <AdminTd><Tag>{r.tag}</Tag></AdminTd>
+                    <AdminTd className="text-a-text tabular-nums">{r.version}</AdminTd>
+                    <AdminTd className="truncate text-a-text">{r.who}</AdminTd>
+                    <AdminTd className="whitespace-nowrap" title={r.date || undefined}>{r.updated}</AdminTd>
+                    <AdminTd align="end" className="text-a-text">{r.downloads.toLocaleString("en")}</AdminTd>
+                    <AdminTd align="end">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Actions for ${r.title}`} />}><MoreHorizontal /></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {r.item ? (
+                            <>
+                              <DropdownMenuItem onClick={() => setEditing(r.item!)}>Edit</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem variant="destructive" onClick={() => remove(r.item!)}><Trash2 /> Delete</DropdownMenuItem>
+                            </>
+                          ) : (
+                            <DropdownMenuItem render={<Link href={`${base}/content`} />}>Open in Content</DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </AdminTd>
+                  </AdminTr>
+                ))}
+              </tbody>
+            </AdminTable>
+          )}
         </>
       )}
-      <p className="text-xs text-muted-foreground">For invite-only TradingView scripts, add the student&apos;s username under Settings later.</p>
 
-      {editing && <UploadDialog key={editing === "new" ? "new" : editing.id} item={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} />}
-    </Page>
+      {editing && <UploadDrawer key={editing === "new" ? "new" : editing.id} item={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} />}
+    </div>
   )
 }
 
-function UploadDialog({ item, onClose }: { item?: DownloadItem; onClose: () => void }) {
+/** Downloads · 02 Upload a file (Figma 556:17251): the file first, then what it is and who gets it. */
+function UploadDrawer({ item, onClose }: { item?: DownloadItem; onClose: () => void }) {
   const { coach } = useCoach()
   const tiers = useTiers(coach)
+  const [open, setOpen] = useState(true)
   const [title, setTitle] = useState(item?.title ?? "")
   const [description, setDescription] = useState(item?.description ?? "")
   const [category, setCategory] = useState<DownloadCategory>(item?.category ?? "indicators")
   const [version, setVersion] = useState(item?.version ?? "1.0")
   const [chosen, setChosen] = useState<string[]>(item?.tiers ?? [])
+  const [pick, setPick] = useState((item?.tiers.length ?? 0) > 0)
   const [file, setFile] = useState<DownloadFile | undefined>(item?.file)
   const [notify, setNotify] = useState(item?.notify ?? true)
-  const [over, setOver] = useState(false)
-  const input = useRef<HTMLInputElement>(null)
-
   const take = (f?: File) => {
     if (!f) return
     setFile(fileOf(f))
     if (!title) setTitle(f.name.replace(/\.[^.]+$/, ""))
   }
-  const ok = title.trim() && file
-
+  const missing = !title.trim() || !file || (pick && chosen.length === 0)
+  const close = () => {
+    setOpen(false)
+    setTimeout(onClose, 250)
+  }
   const save = () => {
-    if (!ok) return
-    const next: DownloadItem = {
-      id: item?.id ?? `d${Date.now()}`,
-      title: title.trim(),
-      description: description.trim(),
-      category,
-      file,
-      version: version.trim() || "1.0",
-      updated: "2026-10-12",
-      tiers: chosen,
-      cover: item?.cover ?? Math.floor(Math.random() * 5),
-      notify,
-    }
+    if (missing || !file) return
+    const next: DownloadItem = { id: item?.id ?? `d${Date.now()}`, title: title.trim(), description: description.trim(), category, file, version: version.trim() || "1.0", updated: "2026-10-12", tiers: pick ? chosen : [], cover: item?.cover ?? Math.floor(Math.random() * 5), notify }
     saveDownloads(coach, (l) => (item ? l.map((x) => (x.id === item.id ? next : x)) : [next, ...l]))
     toast(item ? `${next.title} updated` : `${next.title} added`, { description: notify ? "Students get a notification." : undefined })
-    onClose()
+    close()
   }
 
   return (
-    <AdminModal open={true} onOpenChange={(o) => !o && onClose()} title={<>{item ? "Edit file" : "Upload a file"}</>} subtitle={<>Students find it under {coach.wording.downloads}. Replace the file to publish a new version.</>} footer={<><AdminButton onClick={onClose} hierarchy="secondary">
-            Cancel
-          </AdminButton>
-          <AdminButton disabled={!ok} onClick={save}>
-            {item ? "Save" : "Upload"}
-          </AdminButton></>}>
-        
-        <div className="grid gap-3">
-          <button
-            type="button"
-            onClick={() => input.current?.click()}
-            onDragOver={(e) => {
-              e.preventDefault()
-              setOver(true)
-            }}
-            onDragLeave={() => setOver(false)}
-            onDrop={(e) => {
-              e.preventDefault()
-              setOver(false)
-              take(e.dataTransfer.files[0])
-            }}
-            className={cn("grid place-items-center gap-1 rounded-lg border border-dashed border-a-border-strong px-4 py-6 text-center text-sm", over && "border-[var(--ts-interactive)] bg-[var(--ts-interactive)]/8")}
-          >
-            <FileUp className="size-5 text-muted-foreground" />
-            {file ? (
-              <>
-                <span className="font-medium">{file.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {file.type} · {file.size} · click to replace
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="font-medium">Drop a file here, or click to choose</span>
-                <span className="text-xs text-muted-foreground">Only the name and size are kept in this prototype.</span>
-              </>
-            )}
-          </button>
-          <input ref={input} type="file" className="hidden" onChange={(e) => take(e.target.files?.[0])} />
-          <Field label="Title">
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Session levels indicator (TradingView)" />
-          </Field>
-          <Field label="Description">
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="What it is and how to use it" />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Category">
-              <NativeSelect value={category} onChange={(e) => setCategory(e.target.value as DownloadCategory)}>
-                {DOWNLOAD_CATEGORIES.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label}
-                  </option>
-                ))}
-              </NativeSelect>
-            </Field>
-            <Field label="Version">
-              <Input value={version} onChange={(e) => setVersion(e.target.value)} className="tabular-nums" />
-            </Field>
+    <AdminDrawer
+      open={open}
+      onOpenChange={(o) => !o && close()}
+      title={item ? "Edit file" : "Upload a file"}
+      className="sm:data-[side=right]:w-[480px]"
+      bodyClassName="gap-5"
+      footer={
+        <div className="flex w-full items-center gap-2">
+          <AdminButton hierarchy="ghost" onClick={close}>Cancel</AdminButton>
+          <span aria-hidden className="h-px min-w-px flex-1" />
+          <AdminButton disabled={missing} onClick={save}>{item ? "Save" : "Upload"}</AdminButton>
+        </div>
+      }>
+      {file ? (
+        <FileItem name={file.name} status="done" meta={`${file.size} · Completed`} trailing={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Remove ${file.name}`} onClick={() => setFile(undefined)}><Trash2 /></AdminButton>} />
+      ) : (
+        <Dropzone title="Drop a file here, or click to choose" hint="Only the name and size are kept in this prototype." onFiles={(f) => take(f[0])} />
+      )}
+      <hr className="m-0 h-px shrink-0 border-0 bg-a-border-subtle" />
+      <div className="flex flex-col gap-4">
+        <AdminField label="Title">
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Session levels indicator" className={cn(adminControl, "h-11")} />
+        </AdminField>
+        <AdminField label="Description">
+          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What it is and how to use it" className={cn(adminControl, "h-11")} />
+        </AdminField>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-1.5">
+            <span className="t-caption text-a-text">Category</span>
+            <AdminFilter ariaLabel="Category" value={category} onValueChange={(v) => setCategory(v as DownloadCategory)} options={DOWNLOAD_CATEGORIES.map((c) => ({ value: c.id, label: c.label }))} className="h-11! w-full justify-between" />
           </div>
-          <Field label="Who gets it" hint={chosen.length === 0 ? "Everyone" : undefined}>
-            <div className="grid gap-1.5 rounded-lg border p-2.5 bg-card">
+          <AdminField label="Version">
+            <input value={version} onChange={(e) => setVersion(e.target.value)} className={cn(adminControl, "h-11 tabular-nums")} />
+          </AdminField>
+        </div>
+      </div>
+      <hr className="m-0 h-px shrink-0 border-0 bg-a-border-subtle" />
+      <div className="flex flex-col gap-4">
+        <div className="grid gap-1.5">
+          <span className="t-caption text-a-text">Who gets it</span>
+          <AdminSegmented label="Who gets it" value={pick ? "tiers" : "all"} onChange={(v) => (setPick(v === "tiers"), v === "tiers" && !chosen.length && setChosen(tiers.slice(1, 2).map((t) => t.id)))} options={[{ value: "all", label: "Everyone" }, { value: "tiers", label: "Pick tiers" }]} />
+          {pick && (
+            <div className="grid gap-2 pt-1">
               {tiers.map((t) => (
-                <label key={t.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                <label key={t.id} className="flex items-center gap-2.5 t-body-m text-a-text">
                   <Checkbox checked={chosen.includes(t.id)} onCheckedChange={(v) => setChosen((c) => (v ? [...c, t.id] : c.filter((x) => x !== t.id)))} />
                   {t.name}
                 </label>
               ))}
-              <span className="text-xs text-muted-foreground">Leave all unchecked to give it to everyone. Other tiers see it locked.</span>
+              <span className="t-caption text-a-text-2">Other tiers see it locked.</span>
             </div>
-          </Field>
-          <label className="flex items-center justify-between gap-3 text-sm">
-            <span className="grid">
-              <span className="font-medium">Notify students</span>
-              <span className="text-xs text-muted-foreground">A notification says it is new or updated</span>
-            </span>
-            <Switch checked={notify} onCheckedChange={setNotify} />
-          </label>
+          )}
         </div>
-        
-      
-</AdminModal>
+        <label className="flex items-center justify-between gap-6">
+          <span className="grid gap-0.5">
+            <span className="t-body-m text-a-text">Notify students</span>
+            <span className="t-caption text-a-text-2">A notification says it is new or updated</span>
+          </span>
+          <Switch checked={notify} onCheckedChange={setNotify} />
+        </label>
+      </div>
+    </AdminDrawer>
   )
 }

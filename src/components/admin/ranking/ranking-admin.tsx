@@ -2,288 +2,393 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Medal, Plus, Trophy } from "@/components/icons"
+import { MoreHorizontal, Plus, Star, Trophy } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { AdminButton, AdminModal, Panel, PanelHeader, Tag } from "@/components/admin/ui"
-import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { BADGES, COMPETITIONS, LEVELS, POINTS, RANK_METRICS } from "@/lib/data/people"
+import { isFreeTier, useGroups, useTiers } from "@/lib/data/access"
+import { ADMIN_BADGES, COMPETITIONS, COMPETITION_METRICS, POINTS, competitionState, dayLabel, type Competition } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
-import { Field, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { PageHeader, useCommunityData } from "../kit"
+import { AdminButton, AdminField, AdminFilter, AdminModal, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, Callout, EmptyState, Panel, PanelHeader, Tag, adminControl } from "../ui"
 
-export type RankingSetup = { metric: string; period: string; nicknames: boolean; optOut: boolean; competitions: typeof COMPETITIONS; points: typeof POINTS }
-export const DEFAULT_RANKING: RankingSetup = { metric: "discipline", period: "month", nicknames: true, optOut: true, competitions: COMPETITIONS, points: POINTS }
+export type RankingSetup = { metric: string; period: string; nicknames: boolean; optOut: boolean; competitions: Competition[]; points: typeof POINTS; badges?: typeof ADMIN_BADGES }
+export const DEFAULT_RANKING: RankingSetup = { metric: "discipline", period: "month", nicknames: true, optOut: true, competitions: COMPETITIONS, points: POINTS, badges: ADMIN_BADGES }
 
-/** Admin leaderboard rows (Figma 537:7990): full names, tier, points, rules kept, move. */
+/** Saved setups from before the redesign hold competitions and points in the old shape: use the new ones then. */
+export function normalizeRanking(r: RankingSetup): RankingSetup {
+  const fresh = Array.isArray(r.competitions) && r.competitions.every((c) => "who" in c)
+  const pts = Array.isArray(r.points) && r.points.every((p) => "on" in p)
+  return { ...r, competitions: fresh ? r.competitions : COMPETITIONS, points: pts ? r.points : POINTS, badges: r.badges ?? ADMIN_BADGES }
+}
+
+/** Admin leaderboard (Figma 537:7990): points this month, with the shape of the other periods and each student's group. */
 const BOARD = [
-  { rank: 1, name: "Sara Kowalski", initials: "SK", tier: "Trading Desk", points: 2410, rules: 96, change: 3 },
-  { rank: 2, name: "Jonas Weber", initials: "JW", tier: "Inner Circle", points: 2180, rules: 91, change: -1 },
-  { rank: 3, name: "Mia Sørensen", initials: "MS", tier: "Trading Desk", points: 1960, rules: 88, change: 5 },
-  { rank: 4, name: "Lena Ito", initials: "LI", tier: "1:1 VIP", points: 1720, rules: 93, change: 0 },
-  { rank: 5, name: "Alex Moreau", initials: "AM", tier: "Trading Desk", points: 1604, rules: 74, change: -2 },
-  { rank: 6, name: "Priya Nair", initials: "PN", tier: "Inner Circle", points: 1511, rules: 90, change: 1 },
+  { name: "Sara Kowalski", initials: "SK", tier: "Trading Desk", group: "mastermind", points: 2410, rules: 96, change: 3, week: 0.28, all: 3.6 },
+  { name: "Jonas Weber", initials: "JW", tier: "Inner Circle", group: "oct", points: 2180, rules: 91, change: -1, week: 0.25, all: 4.1 },
+  { name: "Mia Sørensen", initials: "MS", tier: "Trading Desk", group: "oct", points: 1960, rules: 88, change: 5, week: 0.3, all: 3.2 },
+  { name: "Lena Ito", initials: "LI", tier: "1:1 VIP", group: "nov", points: 1720, rules: 93, change: 0, week: 0.22, all: 3.9 },
+  { name: "Alex Moreau", initials: "AM", tier: "Trading Desk", group: "oct", points: 1604, rules: 74, change: -2, week: 0.2, all: 3.7 },
+  { name: "Priya Nair", initials: "PN", tier: "Inner Circle", group: "nov", points: 1511, rules: 90, change: 1, week: 0.26, all: 4.4 },
 ]
+const PERIODS = [{ value: "week", label: "This week" }, { value: "month", label: "This month" }, { value: "all", label: "All time" }]
+const TABS = [{ id: "leaderboard", label: "Leaderboard" }, { id: "competitions", label: "Competitions" }, { id: "points", label: "Points & badges" }] as const
+type Tab = (typeof TABS)[number]["id"]
+const metricName = (m: Competition["metric"]) => COMPETITION_METRICS.find((x) => x.value === m)?.label ?? m
 
-/** ADM-53 ranking and competitions, ADM-54 points, levels and badges. */
+/** Ranking (Figma 537:7989: 01 Leaderboard, 02 Competitions, 03 New competition, 04 Points & badges). */
 export function RankingAdmin() {
   const { coach, base } = useCoach()
-  const [r, setR] = useCommunityData(coach.slug, "ranking", DEFAULT_RANKING)
-  const [creating, setCreating] = useState(false)
-  const [tab, setTab] = useState("leaderboard")
-  const set = (p: Partial<RankingSetup>) => setR((x) => ({ ...x, ...p }))
+  const [stored, setR] = useCommunityData(coach.slug, "ranking", DEFAULT_RANKING)
+  const r = normalizeRanking(stored)
+  const [tab, setTab] = useState<Tab>("leaderboard")
+  const [editing, setEditing] = useState<Competition | "new" | null>(null)
+  const [group, setGroup] = useState("all")
+  const set = (p: Partial<RankingSetup>) => setR((x) => ({ ...normalizeRanking(x), ...p }))
 
   return (
-    <Page>
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
       <PageHeader
         title="Ranking"
         text="Leaderboard, competitions, points and badges"
         actions={
-          <AdminButton onClick={() => setCreating(true)}>
-            <Plus /> New competition
-          </AdminButton>
+          <>
+            <Tag tone="warning" dot>V2</Tag>
+            <AdminButton onClick={() => setEditing("new")}>
+              <Plus /> New competition
+            </AdminButton>
+          </>
         }
       />
       {!coach.modules.ranking && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-4 py-3 text-sm">
-          <Trophy className="size-4 text-[var(--ts-interactive)]" />
-          <span className="flex-1">Ranking is switched off, so students don&apos;t see it yet.</span>
-          <AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="lg">
-            Switch on in Design
-          </AdminButton>
-        </div>
+        <Callout tone="warning" icon={<Trophy className="size-4" />} action={<AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="md">Review</AdminButton>}>
+          Ranking is switched off, so students don&apos;t see it yet.
+        </Callout>
       )}
-      <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className="gap-5">
-        <div className="flex flex-wrap items-center gap-2">
-        <TabsList>
-          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-          <TabsTrigger value="competitions">Competitions</TabsTrigger>
-          <TabsTrigger value="points">Points & badges</TabsTrigger>
-        </TabsList>
-        {tab === "leaderboard" && (
-          <>
-            <div className="flex-1" />
-            <div role="group" aria-label="Period" className="flex items-center gap-2">
-              {([["week", "This week"], ["month", "This month"], ["all", "All time"]] as const).map(([id, label]) => (
-                <AdminButton key={id} type="button" hierarchy={r.period === id ? "secondary" : "ghost"} size="lg" aria-pressed={r.period === id} onClick={() => set({ period: id })}>
-                  {label}
-                </AdminButton>
-              ))}
-            </div>
-          </>
-        )}
-        </div>
-
-        <TabsContent value="leaderboard" className="grid gap-6">
-          <Panel>
-            <PanelHeader
-              title={`Now · ${RANK_METRICS.find((m) => m.id === r.metric)?.name}`}
-              description="Ranks by points: lessons, journal entries and rules kept. Students can opt out."
-            />
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-16">Rank</TableHead>
-                    <TableHead>Student</TableHead>
-                    <TableHead className="hidden md:table-cell">Tier</TableHead>
-                    <TableHead className="text-right">Points</TableHead>
-                    <TableHead className="hidden text-right md:table-cell">Rules kept</TableHead>
-                    <TableHead className="text-right">Move</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {BOARD.map((l) => (
-                    <TableRow key={l.rank}>
-                      <TableCell className={cn("tabular-nums", l.rank <= 3 && "text-a-accent-strong")}>{l.rank}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="size-6">
-                            <AvatarFallback className="text-[10px]">{l.initials}</AvatarFallback>
-                          </Avatar>
-                          {r.nicknames ? l.name : l.name.replace(".", "")}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden text-a-text-2 md:table-cell">{l.tier}</TableCell>
-                      <TableCell className="text-right tabular-nums">{l.points.toLocaleString("en")}</TableCell>
-                      <TableCell className="hidden text-right tabular-nums md:table-cell">{l.rules}%</TableCell>
-                      <TableCell className="text-right">
-                        {l.change === 0 ? <Tag>–</Tag> : <Tag tone={l.change > 0 ? "success" : "danger"}>{l.change > 0 ? `+${l.change}` : l.change}</Tag>}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </Panel>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Panel className="grid content-start gap-2 p-4">
-              <h2 className="t-heading-m">What ranks students</h2>
-              <div role="radiogroup" aria-label="What ranks students" className="mt-1 grid gap-2">
-                {RANK_METRICS.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => set({ metric: m.id })}
-                    role="radio"
-                    aria-checked={r.metric === m.id}
-                    type="button"
-                    className={cn("grid gap-0.5 rounded-a-md border border-a-border-subtle px-3 py-2.5 text-left transition-colors duration-300 hover:bg-a-hover", r.metric === m.id && "border-a-border-strong bg-a-selected")}
-                  >
-                    <span className="t-body-m">{m.name}</span>
-                    <span className="t-caption text-a-text-2">{m.text}</span>
-                  </button>
-                ))}
-              </div>
-            </Panel>
-            <Panel className="divide-y divide-a-border-subtle self-start px-4">
-              <SettingRow label="Nicknames instead of real names">
-                <Switch checked={r.nicknames} onCheckedChange={(v) => set({ nicknames: v })} />
-              </SettingRow>
-              <SettingRow label="Students can opt out" text="They still see their own position">
-                <Switch checked={r.optOut} onCheckedChange={(v) => set({ optOut: v })} />
-              </SettingRow>
-            </Panel>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="competitions">
-          <div className="overflow-x-auto rounded-lg border bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead>Competition</TableHead>
-                  <TableHead>Ranks by</TableHead>
-                  <TableHead>Dates</TableHead>
-                  <TableHead>Prize</TableHead>
-                  <TableHead className="text-right">Entrants</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {r.competitions.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2 font-medium">
-                        {c.name}
-                        <Tag tone={c.status === "running" ? "success" : "neutral"} className="capitalize">
-                          {c.status}
-                        </Tag>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{RANK_METRICS.find((m) => m.id === c.metric)?.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {c.start} – {c.end}
-                    </TableCell>
-                    <TableCell className="whitespace-normal">{c.prize}</TableCell>
-                    <TableCell className="text-right tabular-nums">{c.entrants}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="points" className="grid gap-6 lg:grid-cols-3">
-          <section className="grid content-start gap-2">
-            <h2 className="font-medium">Points</h2>
-            <div className="divide-y rounded-lg border bg-card px-3">
-              {r.points.map((p, i) => (
-                <SettingRow key={p.action} label={p.action}>
-                  <Input
-                    type="number"
-                    value={p.points}
-                    onChange={(e) => set({ points: r.points.map((x, j) => (j === i ? { ...x, points: Number(e.target.value) } : x)) })}
-                    className="h-7 w-16 text-right tabular-nums"
-                    aria-label={`Points for ${p.action}`}
-                  />
-                </SettingRow>
-              ))}
-            </div>
-          </section>
-          <section className="grid content-start gap-2">
-            <h2 className="font-medium">Levels</h2>
-            <div className="divide-y rounded-lg border bg-card">
-              {LEVELS.map((l, i) => (
-                <div key={l.name} className="flex items-center gap-3 px-3 py-2.5 text-sm">
-                  <span className="grid size-6 place-items-center rounded-md bg-muted text-xs tabular-nums">{i + 1}</span>
-                  <span className="flex-1">{l.name}</span>
-                  <span className="text-muted-foreground tabular-nums">from {l.from}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-          <section className="grid content-start gap-2">
-            <h2 className="font-medium">Badges</h2>
-            <div className="divide-y rounded-lg border bg-card">
-              {BADGES.map((b) => (
-                <div key={b.name} className="flex items-center gap-3 px-3 py-2.5 text-sm">
-                  <Medal className="size-4 text-[var(--ts-cta)]" />
-                  <span className="flex-1">{b.name}</span>
-                  <span className="text-muted-foreground tabular-nums">{b.earned} earned</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        </TabsContent>
-      </Tabs>
-      <NewCompetition
-        open={creating}
-        onOpenChange={setCreating}
-        onCreate={(c) => {
-          set({ competitions: [c, ...r.competitions] })
-          toast(`${c.name} scheduled`, { description: "Students see it in Ranking and get a notification." })
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <AdminTabs label="Ranking sections" tabs={TABS} value={tab} onChange={setTab} />
+        {tab === "leaderboard" && <LeaderboardControls period={r.period} setPeriod={(v) => set({ period: v })} group={group} setGroup={setGroup} />}
+      </div>
+      {tab === "leaderboard" && <Leaderboard period={r.period} group={group} />}
+      {tab === "competitions" && <Competitions list={r.competitions} setList={(l) => set({ competitions: l })} onEdit={setEditing} onNew={() => setEditing("new")} />}
+      {tab === "points" && <PointsAndBadges r={r} set={set} />}
+      <CompetitionModal
+        item={editing}
+        onClose={() => setEditing(null)}
+        onSave={(c, isNew) => {
+          set({ competitions: isNew ? [c, ...r.competitions] : r.competitions.map((x) => (x.id === c.id ? c : x)) })
+          setTab("competitions")
+          toast(isNew ? `${c.name} scheduled` : `${c.name} saved`, { description: isNew ? "Students see it in Ranking and get a notification." : undefined })
         }}
       />
-    </Page>
+    </div>
   )
 }
 
-function NewCompetition({ open, onOpenChange, onCreate }: { open: boolean; onOpenChange: (o: boolean) => void; onCreate: (c: (typeof COMPETITIONS)[number]) => void }) {
-  const [name, setName] = useState("")
-  const [metric, setMetric] = useState("consistency")
-  const [start, setStart] = useState("1 Nov")
-  const [end, setEnd] = useState("30 Nov")
-  const [prize, setPrize] = useState("")
+function LeaderboardControls({ period, setPeriod, group, setGroup }: { period: string; setPeriod: (v: string) => void; group: string; setGroup: (v: string) => void }) {
+  const { coach } = useCoach()
+  const groups = useGroups(coach)
   return (
-    <AdminModal open={open} onOpenChange={onOpenChange} title="New competition" subtitle="Only verified broker trades count. Amounts are never shown, only percentages and scores." footer={<><AdminButton
-            disabled={!name.trim()}
-            onClick={() => {
-              onCreate({ id: `c${Date.now()}`, name: name.trim(), metric, start, end, prize: prize || "Bragging rights", entrants: 0, status: "scheduled" })
-              onOpenChange(false)
-              setName("")
-            }}>
-            Create
-          </AdminButton></>}>
-        
-        <div className="grid gap-3">
-          <Field label="Name">
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="November discipline cup" />
-          </Field>
-          <Field label="Ranks by">
-            <NativeSelect value={metric} onChange={(e) => setMetric(e.target.value)}>
-              {RANK_METRICS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
+    <>
+      <div className="flex-1" />
+      <AdminSegmented size="sm" label="Period" value={period} onChange={setPeriod} options={PERIODS} className="w-[300px] max-sm:w-full" />
+      <AdminFilter label="Group" ariaLabel="Group" value={group} onValueChange={setGroup} options={[{ value: "all", label: "All groups" }, ...groups.map((g) => ({ value: g.id, label: g.name }))]} />
+    </>
+  )
+}
+
+function Leaderboard({ period, group }: { period: string; group: string }) {
+  const rows = BOARD.filter((b) => group === "all" || b.group === group)
+    .map((b) => ({ ...b, shown: Math.round(period === "week" ? b.points * b.week : period === "all" ? b.points * b.all : b.points) }))
+    .sort((a, b) => b.shown - a.shown)
+  return (
+    <AdminTable minWidth={760} scrollLabel="Leaderboard" footer={<AdminTableFooter>Ranks by points: lessons, journal entries and rules kept. Students can opt out.</AdminTableFooter>}>
+      <AdminTableHead>
+        <AdminTh width={64}>#</AdminTh>
+        <AdminTh>Student</AdminTh>
+        <AdminTh width={200}>Tier</AdminTh>
+        <AdminTh width={130} align="end">Points</AdminTh>
+        <AdminTh width={140} align="end">Rules kept</AdminTh>
+        <AdminTh width={110} align="end">Move</AdminTh>
+      </AdminTableHead>
+      <tbody>
+        {rows.length === 0 && (
+          <tr className="border-t border-a-border">
+            <td colSpan={6} className="px-5 py-10 text-center t-body-m text-a-text-2">No one in this group has points yet.</td>
+          </tr>
+        )}
+        {rows.map((l, i) => (
+          <AdminTr key={l.name}>
+            <AdminTd className={cn("tabular-nums", i < 3 && "text-a-text-accent")}>{i + 1}</AdminTd>
+            <AdminTd>
+              <div className="flex items-center gap-2.5 text-a-text">
+                <Avatar className="size-8"><AvatarFallback>{l.initials}</AvatarFallback></Avatar>
+                {l.name}
+              </div>
+            </AdminTd>
+            <AdminTd>{l.tier}</AdminTd>
+            <AdminTd align="end" className="text-a-text">{l.shown.toLocaleString("en")}</AdminTd>
+            <AdminTd align="end">{l.rules}%</AdminTd>
+            <AdminTd align="end" className={l.change > 0 ? "text-a-success" : l.change < 0 ? "text-a-danger" : ""}>{l.change > 0 ? `+${l.change}` : l.change < 0 ? `−${Math.abs(l.change)}` : "0"}</AdminTd>
+          </AdminTr>
+        ))}
+      </tbody>
+    </AdminTable>
+  )
+}
+
+// ---------- Competitions
+
+function Competitions({ list, setList, onEdit, onNew }: { list: Competition[]; setList: (l: Competition[]) => void; onEdit: (c: Competition) => void; onNew: () => void }) {
+  if (list.length === 0) return <EmptyState icon={Trophy} title="No competitions yet" description="Run one for a month: pick what ranks students and a prize." actions={<AdminButton onClick={onNew}><Plus /> New competition</AdminButton>} />
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
+      {list.map((c) => {
+        const st = competitionState(c)
+        return (
+          <Panel key={c.id} className="gap-4">
+            <div className="flex items-center gap-2">
+              <h2 className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 t-heading-m text-a-text">
+                {c.name}
+                {st.status === "upcoming" && <Tag tone="accent" dot>Starts in {st.days} {st.days === 1 ? "day" : "days"}</Tag>}
+                {st.status === "running" && <Tag tone="success" dot>Running · {st.days} {st.days === 1 ? "day" : "days"} left</Tag>}
+                {st.status === "ended" && <Tag>Ended</Tag>}
+              </h2>
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<AdminButton aria-label={`Actions for ${c.name}`} hierarchy="ghost" size="md" iconOnly className="-mr-2" />}>
+                  <MoreHorizontal />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onEdit(c)}>{st.status === "ended" ? "View" : "Edit"}</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => {
+                      const before = list
+                      setList(list.filter((x) => x.id !== c.id))
+                      toast(`${c.name} deleted`, { action: { label: "Undo", onClick: () => setList(before) } })
+                    }}>
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <dl className="grid grid-cols-3 gap-4 px-1">
+              {([["Ranks by", metricName(c.metric)], ["Prize", c.prize], ["Entrants", String(c.entrants)]] as const).map(([k, v]) => (
+                <div key={k} className="grid min-w-0 gap-1.5">
+                  <dt className="t-mono-label-s text-a-text-2">{k}</dt>
+                  <dd className="truncate t-body-l text-a-text" title={v}>{v}</dd>
+                </div>
               ))}
-            </NativeSelect>
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Starts">
-              <Input value={start} onChange={(e) => setStart(e.target.value)} />
-            </Field>
-            <Field label="Ends">
-              <Input value={end} onChange={(e) => setEnd(e.target.value)} />
-            </Field>
+            </dl>
+            <p className="t-caption text-a-text-2">{st.status === "ended" ? `Ended ${dayLabel(c.end)}${c.winner ? ` · Winner: ${c.winner}` : ""}` : `${dayLabel(c.start)} – ${dayLabel(c.end)}`}</p>
+          </Panel>
+        )
+      })}
+    </div>
+  )
+}
+
+function CompetitionModal({ item, onClose, onSave }: { item: Competition | "new" | null; onClose: () => void; onSave: (c: Competition, isNew: boolean) => void }) {
+  const { coach } = useCoach()
+  const tiers = useTiers(coach).filter((t) => !isFreeTier(t))
+  const groups = useGroups(coach)
+  const blank: Competition = { id: "", name: "", metric: "rules", start: "2026-11-15", end: "2026-11-30", prize: "", entrants: 0, who: "everyone", picked: [], nicknames: true }
+  const [c, setC] = useState<Competition>(blank)
+  const [key, setKey] = useState<string | null>(null)
+  const [tried, setTried] = useState(false)
+  const k = item === null ? null : item === "new" ? "new" : item.id
+  // Open with this competition's values each time (derived state, no effect).
+  if (k !== key && k !== null) {
+    setKey(k)
+    setC(item === "new" ? blank : { ...(item as Competition) })
+    setTried(false)
+  }
+  if (k === null && key !== null) setKey(null)
+  const isNew = item === "new"
+  const ended = !isNew && item !== null && competitionState(item).status === "ended"
+  const set = (p: Partial<Competition>) => setC((v) => ({ ...v, ...p }))
+  const errors = { name: c.name.trim() ? "" : "Give it a name", dates: c.end < c.start ? "It can't end before it starts" : "", who: c.who === "pick" && !(c.picked?.length) ? "Pick at least one tier or group" : "" }
+  const submit = () => {
+    setTried(true)
+    if (Object.values(errors).some(Boolean)) return
+    onSave({ ...c, status: ({ upcoming: "scheduled", running: "running", ended: "ended" } as const)[competitionState(c).status], id: isNew ? `c${Date.now()}` : c.id, name: c.name.trim(), prize: c.prize.trim() || "Bragging rights" }, isNew)
+    onClose()
+  }
+  const toggle = (id: string, on: boolean) => set({ picked: on ? [...(c.picked ?? []), id] : (c.picked ?? []).filter((x) => x !== id) })
+
+  return (
+    <AdminModal
+      open={item !== null}
+      onOpenChange={(o) => !o && onClose()}
+      title={isNew ? "New competition" : ended ? c.name : "Edit competition"}
+      subtitle="Students see it in Ranking and get a notification."
+      className="sm:max-w-[560px]"
+      bodyClassName="gap-5"
+      footer={
+        <>
+          <AdminButton hierarchy="ghost" onClick={onClose}>{ended ? "Close" : "Cancel"}</AdminButton>
+          {!ended && <AdminButton onClick={submit}>{isNew ? "Create competition" : "Save competition"}</AdminButton>}
+        </>
+      }>
+      <fieldset disabled={ended} className="contents">
+        <div className="contents" onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); submit() } }}>
+          <AdminField label="Name" error={tried ? errors.name : undefined}>
+            <input value={c.name} maxLength={60} onChange={(e) => set({ name: e.target.value })} placeholder="November discipline cup" className={cn(adminControl, "h-11")} />
+          </AdminField>
+          <div className="grid gap-1.5">
+            <span className="t-caption text-a-text">Ranks by</span>
+            <AdminSegmented label="Ranks by" value={c.metric} onChange={(v) => set({ metric: v })} options={COMPETITION_METRICS} />
           </div>
-          <Field label="Prize">
-            <Input value={prize} onChange={(e) => setPrize(e.target.value)} placeholder="A free month of Trading Desk" />
-          </Field>
+          <div className="grid grid-cols-2 items-start gap-3 max-sm:grid-cols-1">
+            <AdminField label="Starts" error={tried ? errors.dates : undefined}>
+              <input type="date" value={c.start} onChange={(e) => set({ start: e.target.value })} className={cn(adminControl, "h-11")} />
+            </AdminField>
+            <AdminField label="Ends">
+              <input type="date" value={c.end} onChange={(e) => set({ end: e.target.value })} className={cn(adminControl, "h-11")} />
+            </AdminField>
+          </div>
+          <div className="grid gap-1.5">
+            <span className="t-caption text-a-text">Who can enter</span>
+            <AdminSegmented label="Who can enter" value={c.who} onChange={(v) => set({ who: v })} options={[{ value: "everyone", label: "Everyone" }, { value: "pick", label: "Pick tiers or groups" }]} />
+            {c.who === "pick" && (
+              <div className="mt-1 flex flex-wrap gap-x-5 gap-y-2">
+                {[...tiers.map((t) => ({ id: t.id, name: t.name })), ...groups.map((g) => ({ id: g.id, name: g.name }))].map((o) => (
+                  <label key={o.id} className="flex items-center gap-2.5 t-body-m text-a-text">
+                    <Checkbox checked={(c.picked ?? []).includes(o.id)} onCheckedChange={(v) => toggle(o.id, !!v)} />
+                    {o.name}
+                  </label>
+                ))}
+                {tried && errors.who && <span className="w-full t-caption text-a-danger">{errors.who}</span>}
+              </div>
+            )}
+          </div>
+          <AdminField label="Prize" optional>
+            <input value={c.prize} onChange={(e) => set({ prize: e.target.value })} placeholder="A free month of Trading Desk" className={cn(adminControl, "h-11")} />
+          </AdminField>
+          <span className="h-px bg-a-border" aria-hidden />
+          <label className="flex items-center justify-between gap-4">
+            <span className="grid"><span className="t-body-m text-a-text">Nicknames instead of real names</span><span className="t-caption text-a-text-2">They still see their own position</span></span>
+            <Switch checked={c.nicknames} onCheckedChange={(v) => set({ nicknames: v })} />
+          </label>
         </div>
-        
-      
-</AdminModal>
+      </fieldset>
+    </AdminModal>
+  )
+}
+
+// ---------- Points & badges
+
+function PointsAndBadges({ r, set }: { r: RankingSetup; set: (p: Partial<RankingSetup>) => void }) {
+  const [adding, setAdding] = useState(false)
+  const badges = r.badges ?? ADMIN_BADGES
+  return (
+    <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <AdminTable minWidth={420} scrollLabel="Points per action">
+        <AdminTableHead>
+          <AdminTh>What ranks students</AdminTh>
+          <AdminTh width={130} align="end">Points</AdminTh>
+          <AdminTh width={90} align="end">On</AdminTh>
+        </AdminTableHead>
+        <tbody>
+          {r.points.map((p, i) => (
+            <AdminTr key={p.action}>
+              <AdminTd className={cn("text-a-text", !p.on && "text-a-text-2")}>{p.action}</AdminTd>
+              <AdminTd align="end">
+                <PointsCell label={p.action} value={p.points} onChange={(n) => set({ points: r.points.map((x, j) => (j === i ? { ...x, points: n } : x)) })} />
+              </AdminTd>
+              <AdminTd align="end">
+                <Switch checked={p.on} onCheckedChange={(v) => set({ points: r.points.map((x, j) => (j === i ? { ...x, on: v } : x)) })} aria-label={`${p.action} on`} />
+              </AdminTd>
+            </AdminTr>
+          ))}
+        </tbody>
+      </AdminTable>
+      <Panel className="gap-3">
+        <PanelHeader title="Badges" />
+        <ul className="flex flex-col gap-3">
+          {badges.map((b) => (
+            <li key={b.id} className="flex items-center gap-3">
+              <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-a-accent-soft text-a-text-accent"><Star className="size-4" /></span>
+              <span className="grid min-w-0 flex-1">
+                <span className="truncate t-body-m text-a-text">{b.name}</span>
+                <span className="truncate t-caption text-a-text-2">{b.text}</span>
+              </span>
+              <span className="shrink-0 t-caption text-a-text-2 tabular-nums">{b.earned} students</span>
+            </li>
+          ))}
+        </ul>
+        <div>
+          <AdminButton hierarchy="ghost" size="md" onClick={() => setAdding(true)}><Plus /> New badge</AdminButton>
+        </div>
+      </Panel>
+      <BadgeModal open={adding} onClose={() => setAdding(false)} onAdd={(b) => (set({ badges: [...badges, b] }), toast(`${b.name} added`))} />
+    </div>
+  )
+}
+
+/** A number that reads as text until you select it: then an input. */
+function PointsCell({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
+  const [edit, setEdit] = useState(false)
+  const [draft, setDraft] = useState("")
+  const done = () => {
+    setEdit(false)
+    const n = Math.floor(Number(draft))
+    if (draft.trim() !== "" && Number.isFinite(n) && n >= 0) onChange(n)
+  }
+  if (edit)
+    return (
+      <input
+        autoFocus
+        type="number"
+        min={0}
+        aria-label={`Points for ${label}`}
+        value={draft}
+        onFocus={(e) => e.currentTarget.select()}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={done}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault()
+            done()
+          }
+          if (e.key === "Escape") setEdit(false)
+        }}
+        className="h-7 w-20 rounded-a-md border border-a-border-focus bg-a-field px-2 text-right t-body-m text-a-text tabular-nums outline-none"
+      />
+    )
+  return (
+    <button type="button" aria-label={`${label}: ${value} points. Change`} onClick={() => (setDraft(String(value)), setEdit(true))} className="-mr-1.5 rounded-a-sm px-1.5 py-1 t-body-m text-a-text-2 tabular-nums outline-none transition-colors duration-300 hover:bg-a-hover hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:min-h-10">
+      {value}
+    </button>
+  )
+}
+
+function BadgeModal({ open, onClose, onAdd }: { open: boolean; onClose: () => void; onAdd: (b: (typeof ADMIN_BADGES)[number]) => void }) {
+  const [name, setName] = useState("")
+  const [text, setText] = useState("")
+  const [tried, setTried] = useState(false)
+  const close = () => {
+    onClose()
+    setTimeout(() => (setName(""), setText(""), setTried(false)), 200)
+  }
+  const add = () => {
+    setTried(true)
+    if (!name.trim() || !text.trim()) return
+    onAdd({ id: `b${Date.now()}`, name: name.trim(), text: text.trim(), earned: 0 })
+    close()
+  }
+  return (
+    <AdminModal open={open} onOpenChange={(o) => !o && close()} title="New badge" subtitle="Students get it when they do what you describe." className="sm:max-w-[480px]" bodyClassName="gap-4" footer={<><AdminButton hierarchy="ghost" onClick={close}>Cancel</AdminButton><AdminButton onClick={add}>Add badge</AdminButton></>}>
+      <AdminField label="Name" error={tried && !name.trim() ? "Give it a name" : undefined}>
+        <input value={name} maxLength={40} onChange={(e) => setName(e.target.value)} placeholder="Early bird" className={cn(adminControl, "h-11")} />
+      </AdminField>
+      <AdminField label="How it's earned" error={tried && !text.trim() ? "Say how a student earns it" : undefined}>
+        <input value={text} maxLength={80} onChange={(e) => setText(e.target.value)} placeholder="Joined 5 live sessions" className={cn(adminControl, "h-11")} />
+      </AdminField>
+    </AdminModal>
   )
 }

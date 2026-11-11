@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { FIRST_WEEK, MAX_CUSTOM_QUESTIONS, NO_QUESTIONS, resetAsNewStudent, useOnboardingSettings, type CustomQuestion, type FirstWeekItem, type OnboardingSettings } from "@/lib/data/student-start"
 import { setStored } from "@/lib/prototype-store"
@@ -112,11 +112,11 @@ function SettingsPage({ title, text, children }: { title: string; text: string; 
 }
 
 /** Table inside a bordered panel surface (Figma "Table"). */
-function DataCard({ children, className }: { children: React.ReactNode; className?: string }) {
+function DataCard({ children, className, rowHeight, scrollLabel }: { children: React.ReactNode; className?: string; /** Names the sideways-scrolling table so the keyboard can reach it. */ scrollLabel?: string; /** Rows that hold one line are 53 high in Figma (the table standard is 61 for two lines). */ rowHeight?: 45 | 53 }) {
   return (
-    <div className={cn("overflow-hidden rounded-a-lg border border-a-border bg-a-panel", className)}>
+    <div className={cn("overflow-hidden rounded-a-lg border border-a-border bg-a-panel", rowHeight === 53 && "[&_td]:h-[53px]", rowHeight === 45 && "[&_td]:h-[45px]", className)}>
       <div className="overflow-x-auto">
-        <Table>{children}</Table>
+        <Table scrollLabel={scrollLabel}>{children}</Table>
       </div>
     </div>
   )
@@ -145,6 +145,18 @@ function Segmented<T extends string>({ value, onChange, options, label }: { valu
   )
 }
 
+/** A field with something fixed before or after what you type: "https://", ".traderhub.io", a button. One 44px control. */
+function Affix({ before, after, children }: { before?: React.ReactNode; after?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex h-11 items-stretch overflow-hidden rounded-a-md border border-a-border-subtle bg-a-field transition-colors duration-300 focus-within:border-a-border-focus hover:border-a-border-strong">
+      {before && <span className="flex items-center border-r border-a-border-subtle px-3 t-body-m text-a-text-2">{before}</span>}
+      {children}
+      {after}
+    </div>
+  )
+}
+const bareInput = "min-w-0 flex-1 bg-transparent px-3 t-body-l text-a-text outline-none placeholder:text-a-text-3"
+
 const RowMenu = ({ label, items }: { label: string; items: { text: string; onClick: () => void }[] }) => (
   <DropdownMenu>
     <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={label} />}>
@@ -164,25 +176,29 @@ const handleOf = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "")
 
 // ---------- ADM-45
 
+type GeneralSettings = { name: string; short: string; tz: string; currency: string; from: string; replyTo: string }
+
 function General() {
   const { coach } = useCoach()
   const handle = handleOf(coach.name)
+  const fallback: GeneralSettings = { name: coach.name, short: coach.name, tz: "lisbon", currency: "eur", from: `${coach.coachName} · ${coach.name}`, replyTo: `${coach.slug}@${handle}.trading` }
+  const [g, setG] = useCommunityData<GeneralSettings>(coach.slug, "general", fallback)
+  const set = (p: Partial<GeneralSettings>) => setG((x) => ({ ...x, ...p }))
   return (
     <SettingsPage title="General" text="What students see as your name and how we reach you.">
       <Panel>
         <PanelHeader title="Business" />
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid items-start gap-4 sm:grid-cols-2">
           <Field label="Business name">
-            <Input defaultValue={coach.name} />
+            <Input value={g.name} onChange={(e) => set({ name: e.target.value })} />
           </Field>
-          <Field label="Short name">
-            <Input defaultValue={coach.name} />
-            <span className="t-caption text-a-text-2">Used in the menu and e-mails</span>
+          <Field label="Short name" hint="Used in the menu and e-mails">
+            {(f) => <Input {...f} value={g.short} onChange={(e) => set({ short: e.target.value })} />}
           </Field>
         </div>
         <div className="flex items-start gap-3">
           <Avatar className="size-10">
-            <AvatarFallback>{coach.name[0]}</AvatarFallback>
+            <AvatarFallback>{(g.name || coach.name)[0]}</AvatarFallback>
           </Avatar>
           <div className="grid gap-1">
             <AdminButton hierarchy="secondary" size="md" className="justify-self-start" onClick={() => toast("Logo is changed in Design", { description: "Pick a file there and you see it on your site at once." })}>
@@ -193,7 +209,7 @@ function General() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Time zone">
-            <NativeSelect defaultValue="lisbon" aria-label="Time zone" className="h-9 w-full">
+            <NativeSelect value={g.tz} onChange={(e) => set({ tz: e.target.value })} aria-label="Time zone" className="h-9 w-full">
               <option value="lisbon">Europe/Lisbon</option>
               <option value="zurich">Europe/Zurich</option>
               <option value="london">Europe/London</option>
@@ -202,7 +218,7 @@ function General() {
             </NativeSelect>
           </Field>
           <Field label="Currency">
-            <NativeSelect defaultValue="eur" aria-label="Currency" className="h-9 w-full">
+            <NativeSelect value={g.currency} onChange={(e) => set({ currency: e.target.value })} aria-label="Currency" className="h-9 w-full">
               <option value="eur">EUR · €</option>
               <option value="chf">CHF · Fr.</option>
               <option value="usd">USD · $</option>
@@ -213,12 +229,12 @@ function General() {
       </Panel>
       <Panel>
         <PanelHeader title="Sender" />
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid items-start gap-4 sm:grid-cols-2">
           <Field label="From name">
-            <Input defaultValue={`${coach.coachName} · ${coach.name}`} />
+            <Input value={g.from} onChange={(e) => set({ from: e.target.value })} />
           </Field>
           <Field label="Reply-to">
-            <Input defaultValue={`${coach.slug}@${handle}.trading`} />
+            <Input value={g.replyTo} onChange={(e) => set({ replyTo: e.target.value })} />
           </Field>
         </div>
         <p className="t-caption text-a-success">Students reply to this address. Verified · SPF and DKIM ok.</p>
@@ -238,6 +254,7 @@ function Domain() {
   const [d, setD] = useCommunityData<Domain>(coach.slug, "domain-v2", fallback)
   const [value, setValue] = useState(d.domain)
   const [checking, setChecking] = useState(false)
+  const [address, setAddress] = useCommunityData<string>(coach.slug, "web-address", handle)
   const copy = (v: string) => {
     void navigator.clipboard?.writeText(v).catch(() => {})
     toast(`${v} copied`)
@@ -248,31 +265,37 @@ function Domain() {
     <SettingsPage title="Your web address" text="Where students find your site and log in.">
       <Panel>
         <PanelHeader title="Your web address" />
-        <div className="flex h-9 items-stretch overflow-hidden rounded-a-md border border-a-border bg-a-field">
-          <span className="flex items-center border-r border-a-border px-3 t-body-m text-a-text-2">https://</span>
-          <Input aria-label="Web address" defaultValue={handle} className="h-full flex-1 rounded-none border-0 bg-transparent" />
-          <span className="flex items-center t-caption text-a-text-3">.traderhub.io</span>
-          <div className="flex items-center px-1">
-            <AdminButton hierarchy="secondary" size="md" onClick={() => copy(`${handle}.traderhub.io`)}>
-              Copy
-            </AdminButton>
-          </div>
-        </div>
+        <Affix
+          before="https://"
+          after={
+            <>
+              <span className="flex items-center t-caption text-a-text-3">.traderhub.io</span>
+              <span className="flex items-center px-1.5">
+                <AdminButton hierarchy="secondary" size="md" onClick={() => copy(`${address || handle}.traderhub.io`)}>
+                  Copy
+                </AdminButton>
+              </span>
+            </>
+          }>
+          <input aria-label="Web address" value={address} onChange={(e) => setAddress(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} className={bareInput} />
+        </Affix>
       </Panel>
       <Panel>
         <PanelHeader title="Use your own domain" actions={<Tag>Optional</Tag>} />
         <Field label="Domain">
-          <div className="flex h-9 items-stretch overflow-hidden rounded-a-md border border-a-border bg-a-field">
-            <span className="flex items-center border-r border-a-border px-3 t-body-m text-a-text-2">https://</span>
-            <Input aria-label="Domain" value={value} onChange={(e) => setValue(e.target.value.toLowerCase())} placeholder={`academy.${handle}.trading`} className="h-full flex-1 rounded-none border-0 bg-transparent" />
-            {d.step === 0 && (
-              <div className="flex items-center px-1">
-                <AdminButton size="md" disabled={!value.includes(".")} onClick={() => setD({ domain: value, step: 1 })}>
-                  Connect
-                </AdminButton>
-              </div>
-            )}
-          </div>
+          <Affix
+            before="https://"
+            after={
+              d.step === 0 && (
+                <span className="flex items-center px-1.5">
+                  <AdminButton size="md" disabled={!value.includes(".")} onClick={() => setD({ domain: value, step: 1 })}>
+                    Connect
+                  </AdminButton>
+                </span>
+              )
+            }>
+            <input aria-label="Domain" value={value} onChange={(e) => setValue(e.target.value.toLowerCase())} placeholder={`academy.${handle}.trading`} className={bareInput} />
+          </Affix>
         </Field>
         {d.step === 0 ? (
           <p className="t-caption text-a-text-2">Students see only your address, never ours. Tip: use a sub-address like academy.yourname.com, so your website keeps working.</p>
@@ -282,7 +305,7 @@ function Domain() {
               <ShieldCheck className="size-3.5" /> Your domain is verified and secured with HTTPS automatically.
             </p>
             <p className="t-body-m text-a-text-2">Add these two records at your domain provider. We check every few minutes.</p>
-            <DataCard className="bg-a-field">
+            <DataCard className="bg-a-field" rowHeight={45} scrollLabel="DNS records">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead>Type</TableHead>
@@ -381,13 +404,13 @@ function Emails() {
 
   return (
     <SettingsPage title="Every e-mail students get" text="Turn e-mails on or off and change the words.">
-      <DataCard>
+      <DataCard rowHeight={53}>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead>E-mail</TableHead>
             <TableHead>When</TableHead>
             <TableHead className="w-24">On</TableHead>
-            <TableHead className="w-16" />
+            <TableHead className="w-16"><span className="sr-only">Actions</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -457,13 +480,13 @@ function Legal() {
   const page = LEGAL_PAGES.find((l) => l.id === sel)
   return (
     <SettingsPage title="Legal pages" text="Linked in the footer of your site and at checkout.">
-      <DataCard>
+      <DataCard rowHeight={53}>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead>Page</TableHead>
             <TableHead>Source</TableHead>
             <TableHead>Updated</TableHead>
-            <TableHead className="w-16" />
+            <TableHead className="w-16"><span className="sr-only">Actions</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -512,6 +535,8 @@ const BUILT_IN = [
   { id: "goal", title: "Your account size", meta: "Choice · optional", required: false },
 ] as const
 
+const OLD_MESSAGE = "Welcome! Start with the first lesson of Foundations, then book your first live session."
+
 function useOnboarding() {
   const { coach } = useCoach()
   const s = useOnboardingSettings(coach.slug)
@@ -529,7 +554,7 @@ function StudentOnboarding() {
       <Panel>
         <PanelHeader title="Welcome" />
         <Field label="Message">
-          <Textarea rows={2} value={s.message} onChange={(e) => set({ message: e.target.value })} />
+          <Input value={s.message === OLD_MESSAGE ? `Welcome to ${coach.name}. Two minutes and you're in.` : s.message} onChange={(e) => set({ message: e.target.value })} />
         </Field>
         <div className="flex items-center gap-3">
           <div className="grid aspect-video w-24 shrink-0 place-items-center rounded-a-sm bg-gradient-to-br from-a-raised to-a-selected t-caption text-a-text-3">{s.video ? "" : "No video"}</div>
@@ -729,7 +754,7 @@ function Team() {
             <TableHead>Person</TableHead>
             <TableHead>Role</TableHead>
             <TableHead>Can do</TableHead>
-            <TableHead className="w-12" />
+            <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -774,7 +799,7 @@ function Team() {
       </DataCard>
       <Panel>
         <PanelHeader title="Roles" />
-        <DataCard className="bg-a-field">
+        <DataCard className="bg-a-field" scrollLabel="What each role can do">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead>Role</TableHead>
@@ -888,13 +913,13 @@ function Plan() {
           </AdminButton>
         </div>
       </Panel>
-      <DataCard>
+      <DataCard rowHeight={53}>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead>Invoice from us</TableHead>
             <TableHead className="text-right">Amount</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="w-32" />
+            <TableHead className="w-32"><span className="sr-only">Actions</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

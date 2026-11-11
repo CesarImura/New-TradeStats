@@ -41,13 +41,14 @@ export type CatalogueOffer = { id: string; name: string; kind: PartnerKind; offe
 export const COACH_SHARE = 60
 
 export const CATALOGUE: CatalogueOffer[] = [
+  { id: "tradeify", name: "Tradeify", kind: "prop", offer: "20% off any evaluation", text: "Futures evaluation with instant funding", commission: "12% of the fee" },
+  { id: "tradingview", name: "TradingView", kind: "tool", offer: "30 days of Premium free", text: "The charts used in the lessons", commission: "$30 per paid sign-up" },
+  { id: "topstep", name: "Topstep", kind: "prop", offer: "First month at €49", text: "Futures combine with a daily loss limit", commission: "15% of the fee" },
+  { id: "edgewonk", name: "Edgewonk", kind: "tool", offer: "15% off yearly", text: "A trading journal with deep statistics", commission: "20% of the first year" },
+  { id: "ninjatrader", name: "NinjaTrader", kind: "tool", offer: "Free license for 3 months", text: "Futures platform with a built-in simulator", commission: "$25 per funded account" },
   { id: "ic-markets", name: "IC Markets", kind: "broker", offer: "Lower fees on every trade", text: "Raw spreads on forex and futures CFDs", commission: "Up to $6 per lot" },
   { id: "pepperstone", name: "Pepperstone", kind: "broker", offer: "Cashback on the first 10 lots", text: "Fast execution, cTrader and MT5", commission: "Up to $5 per lot" },
   { id: "ftmo", name: "FTMO", kind: "prop", offer: "10% off the challenge", text: "Two-step evaluation, up to 90% profit split", commission: "10% of the fee" },
-  { id: "tradeify", name: "Tradeify", kind: "prop", offer: "20% off any evaluation", text: "Futures evaluation with instant funding", commission: "12% of the fee" },
-  { id: "topstep", name: "Topstep", kind: "prop", offer: "50% off the first month", text: "Futures combine with a daily loss limit", commission: "15% of the fee" },
-  { id: "tradingview", name: "TradingView", kind: "tool", offer: "$15 credit on any paid plan", text: "The charts used in the lessons", commission: "$30 per paid sign-up" },
-  { id: "edgewonk", name: "Edgewonk", kind: "tool", offer: "20% off the first year", text: "A trading journal with deep statistics", commission: "20% of the first year" },
 ]
 
 export const catalogueUrl = (coachSlug: string, c: CatalogueOffer) => `https://go.tradestats.app/${coachSlug}/${c.id}`
@@ -112,9 +113,9 @@ export function saveOffers(coach: Coach, update: (o: PartnerOffer[]) => PartnerO
 
 // ---------- the coach's own affiliate program
 
-export type AffiliateProgram = { on: boolean; commission: number; cookieDays: number; payout: "monthly" | "with-platform" }
+export type AffiliateProgram = { on: boolean; commission: number; cookieDays: number; payout: "monthly" | "with-platform"; /** Who gets a link to share. */ share?: "everyone" | "paid" }
 
-export const DEFAULT_AFFILIATE: AffiliateProgram = { on: true, commission: 20, cookieDays: 30, payout: "monthly" }
+export const DEFAULT_AFFILIATE: AffiliateProgram = { on: true, commission: 20, cookieDays: 60, payout: "with-platform", share: "paid" }
 
 export function useAffiliate(coach: Coach) {
   return useStored<AffiliateProgram>(`${coach.slug}:affiliate`, DEFAULT_AFFILIATE)

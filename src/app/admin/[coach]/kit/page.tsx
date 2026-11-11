@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Switch } from "@/components/ui/switch"
 import {
   AdminButton, AdminDrawer, AdminField, AdminFilter, AdminModal, AdminPageHeader, AdminProgress, AdminSearch, AdminSegmented, AdminTabs, AdminToolbar, AdminUnderlineTabs,
-  Callout, CellDot, CellPerson, CellProgress, CellStack, Dropzone, EmptyState, FileItem, LessonCard, MediaCard, Metric, OptionCard, Panel, SortableRow, StatPanel, StepIndicator, Tag, adminControl,
+  AdminVideoPlayer, Callout, CellDot, CellPerson, CellProgress, CellStack, Dropzone, EmptyState, FileItem, LessonCard, MediaCard, Metric, OptionCard, Panel, SortableRow, StatPanel, StepIndicator, Tag, adminControl,
 } from "@/components/admin/ui"
 
 const TONES = ["neutral", "accent", "success", "warning", "danger", "info"] as const
@@ -90,6 +90,10 @@ export default function KitGallery() {
           <SortableRow title="Active" description="One line" active />
           <SortableRow title="Dragging" description="One line" dragging />
         </div>
+      </Block>
+      <Block title="Video player · play, scrub, volume, subtitles, speed, quality, full screen">
+        <AdminVideoPlayer seconds={842} startAt={192} resetKey="kit" className="aspect-video w-full max-w-2xl" />
+        <AdminVideoPlayer seconds={842} resetKey="kit-bare" controls={false} className="aspect-video w-full max-w-xs" />
       </Block>
       <Block title="Data · progress, steps, metrics, cells">
         <div className="grid w-full max-w-60 gap-3">{(["default", "accent", "success", "danger"] as const).map((t) => <AdminProgress key={t} tone={t} value={60} label={t} />)}</div>

@@ -92,3 +92,24 @@ Checks: `tsc` clean, ESLint 0 errors in admin (the old `frame.tsx:92` is the onl
 - 13 dialogs and sheets moved to `AdminModal` and `AdminDrawer` (Downloads, Community, Partners x2, Coupons, Ranking, Settings x3, Messages, Import, Charts, Groups, Calendar event). Left on the shadcn Sheet on purpose: the student profile and the calendar booking sheet, which have their own headers; they follow the layer for radius and shadow. Livestreams keeps its form dialog.
 - The old `.border-dashed` colour overrides in `admin-v2.ts` and `ts-system.ts` are gone: they blocked hover and active edges on dashed components.
 - Touch: with a coarse pointer buttons, tabs, segmented options, filters and search are at least 40 px (`pointer-coarse:`), checked with a touch emulation.
+
+---
+
+## Admin v2: fluxos refeitos em 10/11/2026
+
+Students, tabelas (Admin / Table), Calendar, Community, Journal & feedback, Downloads, Livestreams, Charts, AI assistant, Sales & payments (8 abas), Partners, Ranking, Settings e Onboarding foram refeitos ou ajustados 1:1 com o Figma XWHeEdjEiY6gWmrsg0vFIZ. Os detalhes de cada tela estão em `docs/components.md` §17 a §31.
+
+### Regras para novas telas e componentes
+1. Só tokens `a-*` e utilitários `t-*`. Nenhuma cor, texto, espaço ou raio solto. O Figma manda.
+2. Reusar `components/admin/ui`: AdminButton, AdminTable, AdminTabs, AdminSegmented, AdminFilter, AdminField + adminControl (h-11), AdminModal, AdminDrawer (520), Panel, Tag, Callout, EmptyState, StatPanel, OptionCard, SortableRow. Não criar um segundo design system.
+3. Página: contêiner de 1200 px, `gap-4`, cabeçalho cujas ações seguem a aba, abas em AdminTabs.
+4. Tabela: AdminTable com larguras por coluna; linha de 61 px (duas linhas) ou 53 px (uma); `scrollLabel` quando rola e não há nada focável.
+5. Estados: hover, `focus-visible` com anel, disabled a 40%, selecionado com borda ativa e fundo raised, alvos de 40 px em `pointer-coarse`.
+6. Ação reversível: desfazer por toast com id único. Validação inline curta. Ctrl/⌘+Enter salva em modais.
+7. Movimento: ease-out, só transform/opacity, nada de `transition-all`, sempre `motion-reduce`, `motion/react`.
+8. Reiniciar modal ou drawer: estado derivado no render, não effect.
+9. Texto em inglês, curto, com a mesma palavra para a mesma coisa.
+10. Testar em 1920, 1440, 1280, 1100, 1000, 768, 390 e 320 px com axe. Editor (`components/admin/design`) e Student não se tocam.
+
+### Decisões
+Tier grátis fora das abas de Sales; Access sem override por módulo; dados de exemplo alinhados ao Figma; onboarding só pergunta as opções do Figma; o passo de marca do setup reusa os controles do editor Design.

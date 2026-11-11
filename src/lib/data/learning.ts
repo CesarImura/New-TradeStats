@@ -50,6 +50,8 @@ export type Course = {
   area: string
   status: Status
   scheduledFor?: string
+  /** When it goes live, as local date and time ("2026-10-29T09:00"); `scheduledFor` is the same day for display. */
+  scheduledAt?: string
   /** Tier ids that get this course. Empty means every tier. */
   tiers: string[]
   /** Index into the brand's series colours, for the cover. */

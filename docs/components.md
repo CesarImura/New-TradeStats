@@ -241,3 +241,129 @@ Um arquivo de componente passa de ~600 linhas? Divida por responsabilidade, sem 
 - **Colunas que só cabem em tela larga:** no menu lateral aberto, `md:` (768px) não é largura de conteúdo de verdade. Mostrar a coluna extra só em `lg:`.
 - **Carrossel horizontal no celular:** estender até a borda da tela (`max-sm:-mr-4 max-sm:pr-4`) para o card cortado indicar que há mais.
 - **CSS global:** edição em `globals.css` às vezes não recompila no dev server. Preferir classes Tailwind ou `lib/theme/css.ts`.
+
+## 17. Player de vídeo do Admin (regra de 10/11)
+
+- **Um só player:** `AdminVideoPlayer` (`components/admin/ui/video-player.tsx`, exportado por `@/components/admin/ui`). Qualquer vídeo mostrado no Admin (aula, preview do aluno, gravação de live, novas telas) usa esse componente; não desenhar player, barra de progresso ou botão de tela cheia à mão.
+- **Props:** `seconds` (duração), `poster` ou `background`, `resetKey` (muda quando outro vídeo ocupa o quadro), `startAt`, `controls` (false = só o quadro, para pôr marcadores por cima via `children`), `resumeKey` (guarda onde o espectador parou e abre ali, com "Resumed at 03:12 · Start over"), `chapters` (marcas na barra, nome na prévia e ao lado do tempo), `next` (cartão "Up next" com contagem de 5 s ao fim), `onProgress(seconds)` (pausa, salto e fim). A proporção vem do `className` (`aspect-video`, `aspect-[2.72]`...); o componente reserva esse espaço mesmo quando o vídeo vira mini player.
+- **Adaptadores:** quem tem um modelo próprio faz um wrapper fino (`PlayerFrame` em `content/course-parts.tsx` traduz aula e curso: duração, miniatura, capítulos, próxima aula e chave de retomada). Nunca copiar a lógica do player.
+- **O que ele traz:** play e pausa (clique na imagem, Espaço, K), tempo e barra (arrastar, setas, Home, End, J e L) com prévia ao passar o mouse (quadro, tempo e capítulo), toque duplo nas laterais para pular 10 s (ondulação), volume (botão, barra ao passar o mouse, M, ↑ e ↓), legendas (C), engrenagem com velocidade, qualidade, volume e lista de atalhos (< > e ?), tela cheia (F, duplo clique no meio; API nativa e, se falhar, painel por cima), mini player simulado (I, botão; flutua no canto e o lugar fica marcado), carregamento simulado, aviso curto do que a tecla fez e, em tela cheia, barra que some após 2,4 s parado. Preferências em `proto:player-prefs`, posições em `proto:video-resume`.
+- **Dados:** velocidades, qualidades, idiomas, falas de legenda de exemplo, lista de atalhos e as funções de retomada ficam em `ui/video-player-options.ts`; na V1 só esse arquivo troca por dados reais. Menus em `ui/video-player-menu.tsx`, ondulação e "Up next" em `ui/video-player-parts.tsx`. Os menus ficam dentro do quadro (não em portal), para valer em tela cheia.
+- **Teclas do player são do player:** o Admin tem atalhos de uma tecla (C abre New course); o player para a propagação das teclas que usa.
+- **Performance:** tempo, barra, prévia e legenda são escritos por ref (`transform` e texto), sem renderizar a cada quadro; só `transform` e `opacity` animam; movimento reduzido tira as transições.
+- **Ao vivo:** `live` (e `liveLabel`, por exemplo o tempo de transmissão) troca a barra e o tempo por um marcador LIVE (vira "Back to live" ao pausar); sem pular, velocidade, retomada, capítulos nem "Up next". Volume, legendas, qualidade, tela cheia e mini player continuam. A prévia do estúdio de livestream usa essa variante.
+- **Teclas de letra** (C, M, F, I, K, J, L, ?, < >) funcionam com o foco em qualquer controle do player; espaço, enter e setas ficam com o botão ou o controle focado. Botão que fica desabilitado ao ser clicado tira o foco do player: usar `aria-disabled`.
+- **Ainda fora do padrão:** a miniatura do vídeo de boas-vindas nas configurações.
+
+## 18. Currículo do curso: seleção, busca, desfazer (regra de 10/11)
+
+- **Seleção em massa:** caixa no canto da miniatura (aparece ao passar o mouse ou focar; sempre visível em tela de toque), tecla X na aula focada, ou "Select lessons" no menu do módulo. Com aulas marcadas, o clique no card marca em vez de abrir, e a barra `LessonSelectionBar` (Move to, Hide, Delete, limpar) aparece embaixo; Esc limpa. A barra é uma região viva que anuncia a contagem.
+- **Busca:** o campo aparece em cursos com 8 aulas ou mais; filtra por título, esconde módulos sem resultado, mostra "n of N lessons" e um estado vazio com "Clear search". Durante a busca o arrastar e Alt + setas ficam desligados (a ordem exibida não é a real).
+- **Desfazer:** toda mudança do currículo passa por `undoable()` (mover aula ou módulo, renomear módulo, apagar, ações em massa) e usa um único toast (`UNDO_TOAST`): uma nova mudança substitui o aviso anterior, então Desfazer sempre volta a última coisa. Títulos de aula salvos ao digitar usam `useRenameUndo` (aviso ao sair do campo com nome novo).
+- **Teclado:** Alt + ← → move a aula, X marca; o card mostra a dica ao receber foco por teclado (`aria-keyshortcuts` também).
+- **Escolhas do espectador que ficam entre visitas:** `useStoredChoice` (`lib/use-stored-choice.ts`, sem erro de hidratação) guarda a visão grade ou lista do Content em `proto:content-view`.
+- **Agendar:** o Review and publish usa data e hora nativas (`type=date` e `type=time`, tema escuro), com o dia mínimo hoje; passado bloqueia o botão e avisa. O curso guarda `scheduledAt` (local) e `scheduledFor` (rótulo "Thu 29 Oct").
+
+## 19. Ordenar à mão: o padrão do Sortable row (alinhado em 10/11)
+
+- **Referência:** `Admin / Sortable row` (Figma 748:38223) e Design → Menu (`menu-sort.tsx`). Toda lista ordenada à mão usa as peças de `ui/reorder.tsx`: `ReorderHandle` (a alça é um botão: arrastar, ou focar e usar as setas), `SortHint` (frase que a alça aponta com `aria-describedby`) e `useMoveFeedback` (o item que mudou mostra a borda ativa por ~1 s e um `role=status` diz a posição a leitores de tela).
+- **Estados do item:** repouso (alça e menu em terciário), hover (fundo suave, alça sobe para primário), ativo/selecionado (borda laranja, fundo `a-muted`), arrastando (borda laranja, fundo mais forte; nas miniaturas, borda laranja e 60% de opacidade), desabilitado (40%). Aula selecionada e aula recém-movida usam a mesma borda laranja do estado ativo.
+- **Onde cai:** `dropLine` (linha fina no vão, nunca a borda do item); `axis="x"` é a linha vertical para grades de cards. Soltar leva o lugar do item alvo: arrastar para frente cai depois, para trás cai antes. A linha mostra o lado certo.
+- **Teclado:** alça focada + setas (↑ ↓ nas listas; ← → ↑ ↓ na grade de aulas). O foco continua na alça depois de mover. Alt + ← → no card da aula e X para selecionar seguem valendo.
+- **Desfazer:** cada movimento é uma mudança só, com um único aviso "Undo" (`UNDO_TOAST` no currículo; `quiz-undo` nas perguntas).
+- **Onde já vale:** módulos e aulas do currículo, perguntas do quiz (as linhas fechadas são `SortableRow` com `handle`). Novas listas ordenáveis usam `SortableRow handle={...}`; não inventar outra alça.
+
+## 20. Students: lista, seleção em massa, drawer e modais (regra de 10/11)
+
+- **Referência:** Figma 518:7152 (01 List, 02 Selected, 03 Profile, 04 Import or invite, 05 Message, 06 No results, 07 Activity, 08 Notes). Código em `students/`: `students.tsx` (lista), `student-profile.tsx` (drawer), `import-dialog.tsx`, `student-message.tsx`.
+- **Barra de seleção:** com linhas marcadas ela toma o lugar da toolbar (mesmo lugar, 48px, `role=region` "Selected students"): checkbox que limpa, "{n} selected", link "Select all {total}" (só enquanto faltar gente; vale para todas as páginas), Send a message, Move to tier, Add to group, Export, X. Mudar filtro ou busca volta à página 1.
+- **Sem resultados:** `EmptyState` repete o termo buscado (“…”), oferece "Clear filters" (só se há filtro) e "Invite a student".
+- **Drawer do aluno** (`AdminDrawer`, 540px, corpo `gap-5`): cabeçalho (avatar 40, nome Heading L, e-mail · joined/invited), três métricas com divisores, `Callout` do motivo (danger se vermelho, warning se amarelo, com menu "Review"), `AdminUnderlineTabs` Overview / Activity / Notes (sempre abre em Overview), rodapé Pause access (danger, vira "Resume access") · Open journal · Send a message (no celular a primária vai para a primeira linha, largura total).
+- **Linha rótulo/valor** (`Row`): em repouso é texto puro como no Figma; quando dá para mudar (tier, grupo, extra access), o valor é um botão que abre menu, com fundo só no hover/foco. Alvo de toque 40px.
+- **Activity:** eventos com `StepIndicator` (erro para falha de pagamento) e o gráfico de 12 semanas, com as 3 semanas mais cheias em laranja; aluno que nunca entrou mostra frase em vez de gráfico inventado.
+- **Notes:** nota privada com ⌘/Ctrl+Enter e botão Add note dentro do campo (sem mexer o layout), notas fixadas embaixo; vão para `useCommunityData("student-notes")`.
+- **Importar:** três passos (Choose, Check columns ou Access, Invite). Planilha: tabela de colunas com selects (exige uma coluna E-mail; duas colunas com o mesmo destino avisam e bloqueiam); lista de e-mails e link usam Tier e Group. No celular a coluna Example some para o select caber.
+- **Mensagem:** chips dos destinatários que se tiram (a partir de 2), Subject, Message ({first} vira o primeiro nome), canais em rádio (Discord só liga se todos têm Discord ligado), "Send to N", ⌘/Ctrl+Enter envia de qualquer ponto do modal.
+- **Ícone Blocked:** o "Not available" do Carbon são dois traços; `Blocked` agora é círculo com barra desenhado na mesma grade de 32px e traço 2.
+
+## 21. Tabelas, Calendar e Community (regra de 10/11)
+
+- **Tabela:** toda tabela do Admin é `AdminTable` (ou `ui/table.tsx`, o mesmo visual para telas escritas como `<Table><TableHeader>…`): painel com raio e corte, cabeçalho de 32px (mono 10px), linhas com 1px acima e hover, rolagem lateral em vez de espremer. `Table bare` quando o pai já é o painel. Nada de `<table>` solta nem de `@/components/ui/table` no Admin.
+- **Toolbar:** `AdminToolbar` tem `min-w-0`; sem isso uma linha de abas larga estoura a tela dentro de um grid.
+- **Calendar** (Figma 532:7850): `calendar/calendar-views.tsx` tem a semana (56px por hora, eventos recuados 4px, evento de 30 min mostra só o título, eventos que se cruzam dividem a coluna, linha do agora na coluna de hoje) e o mês. É separado do `CalendarSurface`, que continua sendo só do aluno. Tipos: live laranja, 1:1 verde, notícia vermelha, chamada em grupo e workshop neutros (barra de 2px à esquerda e fundo suave). O formulário de evento é modal (`OptionCard` por tipo, Who can join, Starts, Length, Reminders; o resto fica em "More options"). Availability: horas por dia (editor aberto ao clicar nas horas ou em "+ Window", fim antes do início avisa), Call settings, linha com os próximos horários. News: tabela com filtros de impacto e período, o interruptor No trade não abre o drawer. Chamada 1:1: drawer de 440px com quando, onde, pergunta, chamadas do mês e Reschedule/Cancel/Start.
+- **Community** (Figma 534:7152): abas `AdminTabs`; Announcements em tabela com menu "⋯" (fixar, apagar); New announcement é um drawer de 480px (Who gets it, When, Post in, Pin); Spaces é lista ordenável com `SortableRow` (arrastar, ou alça + ↑ ↓, com desfazer), tag de quem vê e contagem de posts, ao lado do painel de regras (clicar edita, regra vazia some); Discord: aviso de conectado com Review, papel por tier (sem papel por padrão) e o que o bot posta; desconectado mostra o estado vazio com "Connect Discord".
+
+## 22. Journal & feedback (regra de 10/11)
+
+- **Referência:** Figma 525:7152 (01 Requests, 02 Answer, 03 Recording, 04 Answered, 05 Rules, 06 New strategy, 07 Nothing waiting). Código em `journal/`.
+- **Requests e Answered:** `AdminTable` com Student, Question, Trade (o R em verde ou vermelho), Rules, Waiting e o botão Answer; Answered troca por Your answer (texto, nota de voz, vídeo…), Status (Seen / Not seen yet), Sent e o menu "⋯" (abrir, lembrar quem ainda não viu). Filtros: busca, Tier e Sort em Requests; busca, Type e período em Answered. Sem pedido na fila: estado vazio com "See answered" e "Journal rules", e o número Waiting diz "All caught up".
+- **Página de resposta:** não tem botão Voltar (como no Figma). Abrir um pedido põe `?request=` na URL: o Voltar do navegador e o Esc trazem a lista. Gravar vídeo ou voz mostra só Skip e Next request no topo; os botões do rodapé quebram linha no celular.
+- **Rules:** esquerda, "Who gets the journal" (Everyone, Paid tiers, Pick tiers com caixas por tier), "Required for every trade" (um interruptor por linha) e Tags (New tag com campo na hora); direita, "Strategies and their rules" com cartões (nome, Kept %, menu "⋯", regras com marca). New strategy é modal (nome, Who sees it, regras; "Remove rule" tira a última).
+
+## 23. Downloads (regra de 10/11)
+
+- **Referência:** Figma 532:7152 (01 List, 02 Upload a file, 03 No files yet). Código em `downloads/downloads-admin.tsx`.
+- **Lista:** abas All (com o total), Indicators, Templates, Tools (checklists, planos e outros) e Lesson files; as linhas de arquivo de aula vêm do Content (somente leitura: o menu "⋯" só tem "Open in Content"). Colunas: arquivo (ícone, título, tipo), Category, Version, Who gets it, Updated (relativo, a data inteira no `title`), Downloads. Menu "⋯" nos arquivos próprios: Edit e Delete com desfazer. O rodapé diz de onde vêm os arquivos de aula.
+- **Módulo desligado:** aviso `Callout` warning com "Review", que leva ao Design. Sem nenhum arquivo: estado vazio com "Upload a file".
+- **Upload e edição:** drawer de 480px. Primeiro o arquivo (`Dropzone`, depois `FileItem` "Completed" com lixeira para trocar), depois título, descrição, categoria e versão, e Who gets it (Everyone ou Pick tiers, que exige um tier) com Notify students.
+
+## 24. Livestreams (regra de 10/11)
+
+- **Referência:** Figma 533:7152 (01 Coming up, 02 Schedule, 03 Connect OBS, 04 Live, 05 Save as a lesson, 06 vazio). Código em `livestreams/`.
+- **Lista:** destaque do próximo (ou do que está ao vivo) com "Next live · in 2 h 14 min", quantos disseram que vão, o último ao vivo, Open studio, Copy the link e Edit; abas Coming up, Live now e Recordings (cada uma com a sua tabela de linhas de 53px, e a de gravações com "Save as a lesson"). O menu "⋯" abre o studio, copia o link, edita e apaga (com desfazer; só quem ainda não começou).
+- **Agendar e editar:** o mesmo modal de 560px (título, o que é, onde aparece, quem pode ver, início, duração, "Add it to a course as a lesson"). "Pick tiers" exige um tier. `Livestream` ganhou `planned`, `where` e `lesson` (todos opcionais; o lado do aluno não os usa).
+- **Studio:** três estados na mesma página, com seta de voltar e a etiqueta de estado no topo. Antes: prévia "Looking for OBS…" e o painel Connect OBS (servidor, chave com olho, copiar, "New key", Check the connection); Go live só liga com OBS conectado. Ao vivo: player, três números (assistindo, pico, mensagens) e o chat de 380px. Depois: gravação (some o botão enquanto processa), números e chat replay.
+- **Save as a lesson:** modal de 520px (curso, módulo, título, chat replay); salvar põe uma aula em rascunho no módulo e a linha da gravação passa a dizer "Lesson in {curso}".
+
+## 25. Charts (Figma 533:8375)
+
+- Lista: Callout de aviso quando o módulo Charts está desligado (link "Review" para Design), abas "Your charts" / "Settings", busca de 220px, grade de cards. Estado vazio mantém as abas para a Settings continuar acessível.
+- `ChartCard`: capa de 200px com gráfico desenhado em SVG (velas e volume determinísticos por id, linhas de nível); tag "Pinned"; menu ⋯ com Pin, Open TradingView e Archive (com Undo). Tags: símbolo, intervalo (`CoachChart.interval`), "N levels" e quem vê. Título em `h2` (ordem de headings do axe).
+- `NewChart` (modal 640): título obrigatório, símbolo/timeframe, níveis (Support/Resistance/Target + nome + preço), nota, quem vê (Everyone ou Pick tiers, exige ao menos um tier), link do TradingView. O card novo entra logo abaixo dos fixados.
+- Settings: Default watchlist (tags removíveis + Add), Markets you trade, chart type, Timeframe (mantido, não está no Figma), Indicators, Who sees it. Persistido por `useCommunityData`.
+- Removidos: preview ao vivo do TradingView e setas de reordenar a watchlist.
+
+## 26. AI assistant (Figma 534:8164)
+
+- Cinco abas (`AdminTabs`): Personality, Knowledge, Features & quotas, Test & correct, Questions (1.4k). Cabeçalho com tag V2, "Test it" (abre a aba de teste) e "Publish changes".
+- Personality: só aqui aparece o `StatPanel`; "Corrections" = 12 + correções salvas. Tone e Answer length são `AdminSegmented`; "Never talk about" são tags removíveis + Add (sem duplicados, Esc cancela). Foi retirado o aviso "Always on, can't be changed" porque não está no Figma.
+- Knowledge: `AdminTable` (Source / Status / Updated / Use it). Ligar uma fonte mostra "Learning…" por ~2 s e depois "Learned". Upload por botão ou arrastar; acima de 50 MB é recusado com aviso. Arquivos enviados ficam salvos.
+- Features & quotas: colunas são os tiers pagos. Número vira input ao selecionar (vazio = —, 0 = Unlimited). "Answer questions" grava em `ai.quotas`, que o chat do aluno lê; as outras linhas gravam em `ai.limits`.
+- Test & correct: conversa com resposta seed (CPI), "Good answer", "Correct it" (Ctrl/⌘+Enter salva) e lista "Your corrections" ao lado.
+- Questions: tabela de histórico com `CellPerson` e `Tag` de resultado. Usa `AdminTable scrollLabel` (região rolável focável para o teclado).
+- Dados: `AI_FEATURES`, `AI_LIMITS`, `AI_KNOWLEDGE`, `AI_QUESTIONS` em `lib/data/people.ts`; `AiSetup` em `lib/data/ai.ts` (`never`, `on`, `limits`, `uploaded` novos; `avoid` e `features` antigos saíram).
+
+## 27. Sales & payments (Figma 535:7152)
+
+- Oito abas (`AdminTabs`): Overview, Tiers & prices, Groups, Access, Sales page, Coupons, Transactions, Payouts. As ações do cabeçalho seguem a aba (Sales page + New tier; New group; Reset to template + Open page; New coupon; só Sales page). Os botões "New …" do cabeçalho avisam a aba por um contador (`newSignal`).
+- Sem tier grátis (decisão do Flavio, nota do Figma): as abas listam só os tiers pagos (`isFreeTier`); o tier de R$0 continua nos dados.
+- Tiers: cards de preço, "Most popular" com borda laranja, ⋯ (editar, preview como o tier, destacar, esconder). O tier abre numa gaveta `AdminDrawer` com abas Plan e Sales page; cursos gravam direto no Content, as linhas da página de vendas só ao salvar.
+- Groups: tabela; a gaveta do grupo tem "When courses open" (regra por curso, grava direto no Access).
+- Access: uma grade conteúdo × tier com bolinhas (`role=checkbox`). Cursos gravam no catálogo; features em `access.features` (`ACCESS_FEATURES`). Overrides por módulo deixaram de ter tela.
+- Sales page: lista de blocos com arrastar, ⋯ (mostrar/esconder, mover, remover com Undo), "+ Block" recoloca blocos removidos; a prévia é a página real em iframe e o bloco editado ganha borda tracejada. "Reset to template" tem Undo.
+- Coupons: tabela, ⋯ (copiar, pausar, apagar com Undo), modal com validações. Formato novo `Coupon` em `lib/data/people.ts`, guardado em `coupons-v2`; o checkout lê o mesmo formato (`couponLabel`, `couponEnded`).
+- Transactions: filtros com contagens do mês, busca, mês, Invoice ou "Answer the dispute"; o ⋯ (tentar de novo, reembolsar) ficou além do Figma.
+- Payouts: conectado (métricas, conta, histórico) ou o passo a passo de 3 etapas (`payouts-v2`) com aviso do que fica bloqueado.
+
+## 28. Partners (Figma 537:7152)
+
+- Duas abas com contagem (`Offers 3`, `Affiliate program`). Cabeçalho: Offers → "Add my own link" + "Add from catalogue"; Affiliate → "Save".
+- Offers: cards com logo (cor por tipo), nome, interruptor, texto, tag de quem vê e cliques. Clicar no nome abre o editor (modal com validação, Remove com Undo). Catálogo: busca, linhas com "Added" ou "Add".
+- Affiliate program: o rascunho só vale com "Save" (sem mudança: "Nothing to save"); desligado mostra o estado vazio com "Turn on the program" (grava na hora). `AffiliateProgram.share` é novo.
+
+## 29. Ranking (Figma 537:7989)
+
+- Leaderboard: período em `AdminSegmented`, filtro de grupo, tabela com o rodapé; Competitions: cards (estado calculado por data, `competitionState`, "hoje" do protótipo é `RANK_TODAY`); modal de criar/editar (competição encerrada abre só para ver); Points & badges: pontos clicáveis, liga/desliga por ação, "New badge".
+- A escolha global "o que ranqueia" e o apelido global saíram da tela: cada competição tem o seu critério e o seu apelido. `normalizeRanking` troca dados salvos no formato antigo. O aluno vê a próxima competição se nenhuma estiver rodando.
+
+## 30. Settings (Figma 538:7152)
+
+- Já seguia o menu em grupos; ajustados o campo com prefixo/sufixo (`Affix`, 44 px), o alinhamento do General, a altura das linhas de uma linha (53 px, `DataCard rowHeight`) e o Welcome em uma linha.
+- General e Web address agora salvam (`general`, `web-address`). Tabelas rolantes sem nada focável levam `scrollLabel`.
+
+## 31. Onboarding (Figma 521:7152)
+
+- Moldura nova (`OnbFrame`) com os tokens do Admin: barra de 69 px, cartão 480/600/960. Telas: Sign up, Verify (código em 6 caixas), About you (três perguntas, Skip), Book a setup call (30 min), Welcome (também mostra "Call booked"), Setup em 3 passos (trilho, formulário, prévia ao vivo Desktop/Phone) e You're live.
+- O passo "Review and publish" é o último do wizard (a rota `/setup/publish` redireciona para ele); publicar leva a `/setup/invite`.
+- As perguntas mostram só as opções do Figma; as outras (`ask` ausente em `suggest.ts`) continuam valendo para o roteamento e os módulos, e comunidade e diário começam ligados.
+- Dentro do passo de marca continuam os controles do editor Design (logo, cor, cartões de template).

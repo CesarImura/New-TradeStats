@@ -7,7 +7,7 @@ import { AdminButton } from "./button"
 
 /** Toolbar row of the Admin screens (Figma "Toolbar"): tabs on the left, search, filters and view toggle on the right, 8px apart. */
 export function AdminToolbar({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="admin-toolbar" className={cn("flex flex-wrap items-center gap-2", className)} {...props} />
+  return <div data-slot="admin-toolbar" className={cn("flex min-w-0 flex-wrap items-center gap-2", className)} {...props} />
 }
 
 /** Admin / Field with a search icon and an optional trailing hint ("⌘K"): 32px, field fill, 1px border, radius md. */
@@ -31,14 +31,27 @@ export function AdminSearch({ value, onChange, placeholder, label, hint, classNa
   )
 }
 
-/** Admin / Filter: a 32px bordered select, "Label | value ⌄". `label` is optional ("All tiers" alone is fine). */
-export function AdminFilter({ label, value, onValueChange, options, ariaLabel, className }: { label?: string; value: string; onValueChange: (v: string) => void; options: readonly { value: string; label: string }[]; ariaLabel?: string; className?: string }) {
+/**
+ * Admin / Filter (Figma 578:539): a 32px bordered select, "Label | value ⌄", or "▢ value ⌄" with an `icon` and no label.
+ * Caption text (12/16, the same as the tabs), 12px left and 10px right padding, 8px between parts, a 14px chevron.
+ * Hover darkens the border, open fills the field and uses the active border, focus shows the ring. The `!` classes
+ * beat the global field rule (44px, 14px text) that every select trigger in the Admin gets.
+ */
+export function AdminFilter({ label, icon, value, onValueChange, options, ariaLabel, className }: { label?: string; icon?: React.ReactNode; value: string; onValueChange: (v: string) => void; options: readonly { value: string; label: string }[]; ariaLabel?: string; className?: string }) {
   return (
     <Select items={options as { value: string; label: string }[]} value={value} onValueChange={(v) => v != null && onValueChange(String(v))}>
       <SelectTrigger
         aria-label={ariaLabel ?? label}
-        className={cn("h-8! pointer-coarse:h-10! shrink-0 gap-2 rounded-a-md! border-a-border! bg-transparent! pr-2.5 pl-3 t-caption text-a-text hover:border-a-border-strong! data-popup-open:border-[var(--admin-color-border-active)]! data-popup-open:bg-a-raised!", className)}
+        className={cn(
+          "h-8! pointer-coarse:h-10! shrink-0 gap-2 rounded-a-md! border-a-border! bg-transparent! pr-2.5! pl-3! t-caption! text-a-text! duration-200 hover:border-a-border-strong! disabled:opacity-40 data-popup-open:border-[var(--admin-color-border-active)]! data-popup-open:bg-a-raised! [&>svg:last-child]:text-a-icon",
+          className
+        )}
       >
+        {icon && (
+          <span aria-hidden className="mr-0.5 text-a-icon [&_svg]:size-3.5">
+            {icon}
+          </span>
+        )}
         {label && (
           <>
             <span className="text-a-text-2">{label}</span>

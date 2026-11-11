@@ -17,7 +17,7 @@ export function AdminField({ label, optional, hint, error, className, children }
   const id = useId()
   const note = error ?? hint
   const head = (
-    <span className="flex items-baseline gap-1.5 t-caption text-a-text-2">
+    <span className="flex items-baseline gap-1.5 t-caption text-a-text">
       {label}
       {optional && <span className="text-a-text-3">Optional</span>}
       {typeof children !== "function" && hint && !error && <span className="ml-auto text-a-text-3">{hint}</span>}

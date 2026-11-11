@@ -85,30 +85,39 @@ export const GROUPS = [
   { id: "mastermind", name: "Funded mastermind", start: "5 Oct 2026", end: "30 Nov 2026", seats: 12, members: 12, waiting: 7, tiers: ["desk", "vip"] },
 ]
 
-export const COUPONS = [
-  { code: "BLACKFRIDAY", discount: "40% for 3 months", uses: "0 of 200", expires: "30 Nov 2026", active: true },
-  { code: "WELCOME10", discount: "€10 off first month", uses: "86", expires: "never", active: true },
-  { code: "YOUTUBE", discount: "7-day free trial", uses: "212", expires: "never", active: true },
-  { code: "SUMMER", discount: "25% for 1 month", uses: "48 of 50", expires: "31 Aug 2026", active: false },
+/** A discount code. `tiers` empty means every tier; `ends` is an ISO date or empty for no end. */
+export type Coupon = { /** `discount` and `active` are what the checkout reads; they follow the fields below. */ discount: string; active: boolean; code: string; kind: "percent" | "amount"; amount: number; duration: "first" | "3" | "forever"; tiers: string[]; used: number; limit?: number; ends?: string; paused?: boolean }
+export const COUPONS: Coupon[] = [
+  { discount: "20% off · first payment", active: true, code: "AUTUMN20", kind: "percent", amount: 20, duration: "first", tiers: [], used: 34, limit: 100, ends: "2026-11-30" },
+  { discount: "€50 off · forever", active: true, code: "DESK50", kind: "amount", amount: 50, duration: "forever", tiers: ["desk"], used: 6, limit: 20 },
+  { discount: "30% off · 3 months", active: false, code: "BF2025", kind: "percent", amount: 30, duration: "3", tiers: [], used: 100, limit: 100, ends: "2025-12-01" },
 ]
+
+export const COUPON_TODAY = "2026-10-12"
+/** "20% off · first payment" */
+export const couponLabel = (c: Coupon) => `${c.kind === "percent" ? `${c.amount}%` : `€${c.amount}`} off · ${c.duration === "first" ? "first payment" : c.duration === "3" ? "3 months" : "forever"}`
+/** Out of date or out of uses. */
+export const couponEnded = (c: Coupon) => (!!c.ends && c.ends < COUPON_TODAY) || (c.limit !== undefined && c.used >= c.limit)
 
 export type Txn = { id: string; when: string; who: string; what: string; amount: number; status: "paid" | "failed" | "refunded" | "retrying" | "disputed" }
 export const TRANSACTIONS: Txn[] = [
-  { id: "x1", when: "Today 07:12", who: "Alex Moreau", what: "Inner Circle · monthly", amount: 49, status: "retrying" },
-  { id: "x2", when: "Today 06:40", who: "Noah Fischer", what: "Trading Desk · monthly", amount: 390, status: "paid" },
-  { id: "x3", when: "Sun 11 Oct", who: "Sara Kowalski", what: "Trading Desk · monthly", amount: 390, status: "paid" },
-  { id: "x4", when: "Sat 10 Oct", who: "Tom Okafor", what: "Trading Desk · monthly", amount: 129, status: "failed" },
-  { id: "x5", when: "Fri 9 Oct", who: "Lucía Gómez", what: "Core · monthly", amount: 149, status: "refunded" },
-  { id: "x6", when: "Thu 8 Oct", who: "Jonas Pereira", what: "1:1 VIP · quarterly", amount: 2400, status: "paid" },
-  { id: "x7", when: "Wed 7 Oct", who: "Jonas Weber", what: "1:1 VIP · monthly", amount: 390, status: "disputed" },
-  { id: "x8", when: "Wed 7 Oct", who: "Tariq Bello", what: "Core · monthly", amount: 149, status: "paid" },
+  { id: "x1", when: "Today 09:12", who: "Lena Ito", what: "1:1 VIP · instalment 2 of 3", amount: 130, status: "paid" },
+  { id: "x2", when: "Today 06:00", who: "Alex Moreau", what: "Inner Circle · monthly", amount: 49, status: "retrying" },
+  { id: "x3", when: "Yesterday", who: "Jonas Weber", what: "1:1 VIP", amount: 390, status: "disputed" },
+  { id: "x4", when: "Yesterday", who: "Mia Sørensen", what: "Trading Desk · monthly", amount: 129, status: "paid" },
+  { id: "x5", when: "2 d ago", who: "Tom Okafor", what: "Trading Desk · monthly", amount: 129, status: "failed" },
+  { id: "x6", when: "3 d ago", who: "Priya Nair", what: "Inner Circle · AUTUMN20", amount: 39.2, status: "paid" },
 ]
+/** Counts the Transactions filters show (the sample list above is only the newest few). */
+export const TXN_COUNTS = { all: 1204, failed: 2, disputed: 1, refunded: 4 }
 
 export const MONEY = {
   mrr: 37180,
   mrrChange: 6.2,
-  month: 17940,
-  fees: { label: "Our share (5%) and card fees", amount: 1420 },
+  month: 31204,
+  fees: { label: "Our share (5%) and card fees", amount: 1118 },
+  share: 1859,
+  mrrMore: 2180,
   nextPayout: { amount: 8412, date: "Mon 17 Nov" },
   churn: 3.1,
   trials: 14,
@@ -146,36 +155,36 @@ export const LEGAL = [
 
 // ---------- AI
 
+/** What the AI can do for students. `plan` is off until the coach turns it on. */
 export const AI_FEATURES = [
-  { id: "chat", name: "Ask anything", text: "Students chat with your AI about lessons and trading questions" },
-  { id: "trade", name: "Ask about a trade", text: "From a journal trade: what went right, which rule it broke" },
-  { id: "lesson", name: "Lesson summaries and quiz", text: "Summary, chapters and quiz in every lesson" },
-  { id: "weekly", name: "Weekly summary", text: "A short review of the student's week in the journal" },
-  { id: "briefing", name: "Briefing before a 1:1", text: "Only for you: what the student traded and asked" },
+  { id: "answer", name: "Answer questions", on: true },
+  { id: "journal", name: "Review a journal entry", on: true },
+  { id: "lesson", name: "Explain a lesson", on: true },
+  { id: "plan", name: "Pre-market plan", on: false },
 ]
+/** Questions per day, per student, for each paid tier in order. null means the tier doesn't get the feature, 0 means unlimited. */
+export const AI_LIMITS: Record<string, (number | null)[]> = {
+  answer: [20, 50, 0],
+  journal: [null, 5, 20],
+  lesson: [10, 30, 0],
+  plan: [null, null, 1],
+}
 
 export const AI_KNOWLEDGE = [
-  { id: "k1", name: "Foundations", kind: "Course", items: "8 lessons · transcripts", on: true },
-  { id: "k2", name: "Price action playbook", kind: "Course", items: "2 lessons · transcripts", on: true },
-  { id: "k3", name: "Live session recordings", kind: "Recordings", items: "24 recordings", on: true },
-  { id: "k4", name: "Northline rulebook.pdf", kind: "Document", items: "18 pages", on: true },
-  { id: "k5", name: "FAQ", kind: "FAQ", items: "32 questions", on: true },
-  { id: "k6", name: "Trading psychology", kind: "Course", items: "1 lesson · Inner Circle only", on: false },
+  { id: "k1", name: "Foundations", kind: "Course", items: "11 lessons", on: true, updated: "2 h ago" },
+  { id: "k2", name: "Price action playbook", kind: "Course", items: "4 lessons", on: true, updated: "yesterday" },
+  { id: "k3", name: "Risk rules.pdf", kind: "PDF", items: "12 pages", on: true, updated: "3 d ago" },
+  { id: "k4", name: "FAQ from Discord", kind: "Q&A list", items: "48 answers", on: true, updated: "now", learning: true },
+  { id: "k5", name: "Trading psychology", kind: "Course", items: "3 lessons", on: false, updated: "—" },
 ]
 
-export const AI_QUESTIONS = [
-  { q: "Where exactly do I put my stop on an ORB?", n: 41, lesson: "Stops that make sense", answered: true },
-  { q: "How many contracts for a 50K account?", n: 33, lesson: "Position sizing", answered: true },
-  { q: "Should I trade during CPI?", n: 27, lesson: "Daily loss limits", answered: true },
-  { q: "What's the difference between a failed breakout and a reversal?", n: 19, lesson: "Failed breakout reversal", answered: true },
-  { q: "Which prop firm do you recommend?", n: 16, lesson: "–", answered: false },
-  { q: "How do I handle overnight gaps?", n: 11, lesson: "–", answered: false },
-]
-
-export const AI_USAGE = [
-  { tier: "core", used: 2140, quota: 30 },
-  { tier: "desk", used: 1210, quota: 100 },
-  { tier: "vip", used: 220, quota: 0 },
+export type AiResult = "answered" | "handed" | "blocked"
+/** What students asked lately: who, what, where the answer came from, how it ended. */
+export const AI_QUESTIONS: { id: string; student: string; initials: string; q: string; from?: string; result: AiResult; ago: string }[] = [
+  { id: "q1", student: "Mia Sørensen", initials: "MS", q: "Where do I put my stop on an ORB?", from: "Foundations · Lesson 4", result: "answered", ago: "2 h" },
+  { id: "q2", student: "Alex Moreau", initials: "AM", q: "Can I trade during NFP?", from: "Your rules", result: "answered", ago: "3 h" },
+  { id: "q3", student: "Lena Ito", initials: "LI", q: "Is my position size right for 2k?", result: "handed", ago: "5 h" },
+  { id: "q4", student: "Jonas Weber", initials: "JW", q: "What's the best broker?", result: "blocked", ago: "1 d" },
 ]
 
 // ---------- Ranking
@@ -188,18 +197,32 @@ export const RANK_METRICS = [
   { id: "activity", name: "Activity", text: "Journal entries, reviews, lives attended" },
 ]
 
-export const COMPETITIONS = [
-  { id: "c1", name: "October consistency cup", metric: "consistency", start: "1 Oct", end: "31 Oct", prize: "Free month of Trading Desk", entrants: 64, status: "running" as const },
-  { id: "c2", name: "Rulebook November", metric: "discipline", start: "2 Nov", end: "30 Nov", prize: "1:1 call with Marco", entrants: 0, status: "scheduled" as const },
-  { id: "c3", name: "September sprint", metric: "return", start: "1 Sep", end: "30 Sep", prize: "€500 funded account", entrants: 81, status: "ended" as const },
+export type Competition = { id: string; name: string; metric: "rules" | "journal" | "points"; start: string; end: string; prize: string; entrants: number; winner?: string; who: "everyone" | "pick"; /** Tier and group ids when `who` is "pick". */ picked?: string[]; nicknames: boolean; /** Kept for the student side, which reads it. */ status?: "running" | "scheduled" | "ended" }
+export const COMPETITIONS: Competition[] = [
+  { id: "c1", name: "November discipline cup", metric: "rules", start: "2026-11-15", end: "2026-11-30", prize: "A free month", entrants: 64, who: "everyone", nicknames: true, status: "scheduled" },
+  { id: "c2", name: "October consistency cup", metric: "journal", start: "2026-10-01", end: "2026-10-31", prize: "Bragging rights", entrants: 52, winner: "Sara Kowalski", who: "everyone", nicknames: true, status: "ended" },
 ]
+export const RANK_TODAY = "2026-11-07"
+const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+/** "2026-11-15" → "Sat 15 Nov" */
+export const dayLabel = (iso: string) => {
+  const d = new Date(`${iso}T12:00:00Z`)
+  return Number.isNaN(d.getTime()) ? iso : `${WD[d.getUTCDay()]} ${d.getUTCDate()} ${MO[d.getUTCMonth()]}`
+}
+const daysBetween = (a: string, b: string) => Math.round((new Date(`${b}T12:00:00Z`).getTime() - new Date(`${a}T12:00:00Z`).getTime()) / 86400000)
+export type CompetitionState = { status: "upcoming" | "running" | "ended"; days: number }
+/** Where a competition is today: it starts in `days`, ends in `days`, or is over. */
+export const competitionState = (c: Competition): CompetitionState =>
+  c.end < RANK_TODAY ? { status: "ended", days: 0 } : c.start > RANK_TODAY ? { status: "upcoming", days: daysBetween(RANK_TODAY, c.start) } : { status: "running", days: daysBetween(RANK_TODAY, c.end) }
+
+export const COMPETITION_METRICS = [{ value: "rules", label: "Rules kept" }, { value: "journal", label: "Journal entries" }, { value: "points", label: "Points" }] as const
 
 export const POINTS = [
-  { action: "Finish a lesson", points: 10 },
-  { action: "Log a trade with notes", points: 5 },
-  { action: "Keep every rule for a day", points: 15 },
-  { action: "Attend a live session", points: 20 },
-  { action: "Ask for a review", points: 5 },
+  { action: "Finish a lesson", points: 10, on: true },
+  { action: "Log a trade in the journal", points: 5, on: true },
+  { action: "Keep every rule for a day", points: 20, on: true },
+  { action: "Join a livestream", points: 5, on: false },
 ]
 export const LEVELS = [
   { name: "Rookie", from: 0 },
@@ -207,6 +230,12 @@ export const LEVELS = [
   { name: "Disciplined", from: 750 },
   { name: "Pro", from: 2000 },
   { name: "Elite", from: 5000 },
+]
+/** The badges the admin lists, with how each is earned. */
+export const ADMIN_BADGES = [
+  { id: "b1", name: "First 10 trades", text: "Logged 10 journal entries", earned: 142 },
+  { id: "b2", name: "Rule keeper", text: "7 days with every rule kept", earned: 38 },
+  { id: "b3", name: "Course finisher", text: "Finished a course", earned: 61 },
 ]
 export const BADGES = [
   { name: "First trade logged", earned: 412 },

@@ -1,6 +1,6 @@
 "use client"
 
-import { useLayoutEffect, useState } from "react"
+import { useLayoutEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -12,7 +12,6 @@ import {
   Phone,
   PlayCircle,
   Search,
-  Bell,
   Menu,
   Wand2,
   UserPlus,
@@ -25,6 +24,8 @@ import { cn } from "@/lib/utils"
 import { AdminButton as Button } from "@/components/admin/ui"
 import { useCoach } from "@/components/coach/coach-provider"
 import { WorkspaceSwitcher } from "@/components/admin/workspace-switcher"
+import { NotificationsMenu } from "@/components/admin/notifications-menu"
+import { CommandPalette } from "@/components/admin/command-palette"
 import { DEMO_ADMIN } from "@/lib/data/account"
 import { adminNav } from "@/components/coach/nav"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -56,6 +57,14 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
   const isOpen = (href: string) => (href === base ? path === base : path.startsWith(href))
   const current = groups.flatMap((g) => g.items).find((i) => isOpen(i.href))
   const [drawer, setDrawer] = useState(false)
+  // Any way of leaving the screen (a link, the search, the browser's back) closes the menu drawer.
+  const [drawerPath, setDrawerPath] = useState(path)
+  if (drawerPath !== path) {
+    setDrawerPath(path)
+    setDrawer(false)
+  }
+  const [searchOpen, setSearchOpen] = useState(false)
+  const topbarRef = useRef<HTMLElement>(null) // the notifications panel hangs from the topbar
   // Lifted here so the sidebar and the drawer share one dismissal.
   const [invite, setInvite] = useState(true)
 
@@ -74,6 +83,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
     <SidebarProvider className="dark ts-ui ts-admin ts-admin-v2 bg-a-page font-a-sans text-a-text" style={{ "--sidebar-width": "255px" } as React.CSSProperties}>
       <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
       <BrandGradients />
+      <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} base={base} />
       <div className="flex min-h-svh w-full">
         <aside className="sticky top-0 hidden h-svh w-[271px] shrink-0 p-2 xl:block" aria-label="Main menu">
           <div className="flex h-full flex-col rounded-a-xl border border-a-border bg-a-page pt-5 pr-4 pb-4 pl-4">{menu}</div>
@@ -91,7 +101,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
           </SheetContent>
         </Sheet>
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="ts-admin-bar sticky top-0 z-20 flex h-14 items-center gap-2 px-4 backdrop-blur-md md:px-8">
+          <header ref={topbarRef} className="ts-admin-bar sticky top-0 z-20 flex h-14 items-center gap-2 px-4 md:px-8">
             <Button hierarchy="ghost" iconOnly aria-label="Open menu" className="xl:hidden" onClick={() => setDrawer(true)}>
               <Menu />
             </Button>
@@ -100,20 +110,19 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
               type="button"
               className="hidden h-11 w-80 max-w-full items-center gap-2 rounded-a-md border border-a-border-subtle bg-a-field px-3 text-left text-a-text-3 t-body-l transition-colors duration-300 hover:border-a-border-strong focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:outline-none xl:flex"
               aria-label="Search"
+              aria-keyshortcuts="Meta+K Control+K"
+              onClick={() => setSearchOpen(true)}
             >
               <Search className="size-4 text-a-icon" />
               <span className="flex-1">Search</span>
               <kbd className="t-mono-meta rounded-a-xs bg-a-selected px-1.5 py-0.5 text-a-text-2">⌘K</kbd>
             </button>
             <div className="ml-auto flex items-center gap-2">
-              <Button hierarchy="secondary" iconOnly aria-label="Search" className="xl:hidden">
+              <Button hierarchy="secondary" iconOnly aria-label="Search" className="xl:hidden" onClick={() => setSearchOpen(true)}>
                 <Search />
               </Button>
               <HelpButton />
-              <Button hierarchy="secondary" iconOnly aria-label="Notifications" className="relative">
-                <Bell />
-                <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-a-accent-strong" />
-              </Button>
+              <NotificationsMenu base={base} anchorRef={topbarRef} paused={searchOpen} />
               <Avatar className="ml-1 size-8">
                 <AvatarFallback className="text-xs">{DEMO_ADMIN.initials}</AvatarFallback>
               </Avatar>

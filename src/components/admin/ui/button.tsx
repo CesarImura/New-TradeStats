@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 /**
  * Admin / Button (Figma 572:28569). Hierarchy × size, states by CSS.
  * Sizes as in Figma _Base Button: sm 24 (r6, 12px), md 28 (12px), lg 32 (13px), xl 36 (13px, default). `iconOnly` makes it square.
+ * Secondary and danger have a 1 px outline that Figma puts outside the size, so they are 2 px taller and wider than the same size without one (38 for xl).
  */
 const button = cva(
   "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-a-md t-body-m-medium outline-none select-none transition-colors duration-300 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:min-h-10 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -30,6 +31,16 @@ const button = cva(
       { iconOnly: true, size: "md", class: "w-7" },
       { iconOnly: true, size: "lg", class: "w-8" },
       { iconOnly: true, size: "xl", class: "w-9" },
+      ...(["secondary", "danger"] as const).flatMap((hierarchy) => [
+        { hierarchy, size: "sm" as const, class: "h-[26px] px-[9px]" },
+        { hierarchy, size: "md" as const, class: "h-[30px] px-[11px]" },
+        { hierarchy, size: "lg" as const, class: "h-[34px] px-[13px]" },
+        { hierarchy, size: "xl" as const, class: "h-[38px] px-[15px]" },
+        { hierarchy, iconOnly: true, size: "sm" as const, class: "h-[26px] w-[26px] px-0" },
+        { hierarchy, iconOnly: true, size: "md" as const, class: "h-[30px] w-[30px] px-0" },
+        { hierarchy, iconOnly: true, size: "lg" as const, class: "h-[34px] w-[34px] px-0" },
+        { hierarchy, iconOnly: true, size: "xl" as const, class: "h-[38px] w-[38px] px-0" },
+      ]),
     ],
     defaultVariants: { hierarchy: "primary", size: "xl", iconOnly: false },
   }

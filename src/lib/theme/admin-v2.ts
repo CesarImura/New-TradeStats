@@ -39,7 +39,7 @@ ${A} body { background: ${T("color-bg-page")}; font-family: ${T("font-family-pri
 ${adm(":is(h1, h2, h3)")} { letter-spacing: 0; }
 ${adm(":is(.font-mono, kbd, code)")} { font-family: ${T("font-family-mono")}; }
 
-${adm(".ts-admin-bar")} { background: color-mix(in srgb, ${T("color-bg-page")} 88%, transparent); }
+${adm(".ts-admin-bar")} { background: ${T("color-bg-page")}; }
 
 ${adm(".text-sm")} { font-size: 0.8125rem; line-height: 1.25rem; }
 ${adm(".text-xs")} { font-size: 0.75rem; line-height: 1rem; }

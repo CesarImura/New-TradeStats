@@ -5,7 +5,7 @@ import { AdminProgress } from "./progress-line"
 /** Admin / Cell stack (Figma 'Admin · Tables'): a title over an optional subtitle; the title is Regular or Medium. */
 export function CellStack({ title, subtitle, weight = "regular", className }: { title: React.ReactNode; subtitle?: React.ReactNode; weight?: "regular" | "medium"; className?: string }) {
   return (
-    <div className={cn("grid min-w-0", className)}>
+    <div className={cn("grid min-w-0 gap-0.5", className)}>
       <span className={cn("truncate text-a-text", weight === "medium" ? "t-body-m-medium" : "t-body-m")}>{title}</span>
       {subtitle && <span className="truncate t-caption text-a-text-2">{subtitle}</span>}
     </div>
@@ -33,11 +33,11 @@ export function CellProgress({ value, label, className }: { value: number; label
 }
 
 const DOT = { neutral: "bg-a-text-3", warning: "bg-a-warning-fill", danger: "bg-a-danger-fill", success: "bg-a-success-fill" } as const
-/** Admin / Cell dot: a status dot and its words. Tone never carries the meaning alone. */
+/** Admin / Cell dot (Figma 662:30140): a 7px status dot and its words in Caption, 6px apart. Tone never carries the meaning alone. */
 export function CellDot({ label, tone = "neutral", className }: { label: React.ReactNode; tone?: keyof typeof DOT; className?: string }) {
   return (
-    <span className={cn("flex items-center gap-2 t-body-m text-a-text-2", className)}>
-      <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", DOT[tone])} />
+    <span className={cn("flex items-center gap-1.5 t-caption text-a-text-2", className)}>
+      <span aria-hidden className={cn("size-[7px] shrink-0 rounded-full", DOT[tone])} />
       <span className="min-w-0 truncate">{label}</span>
     </span>
   )

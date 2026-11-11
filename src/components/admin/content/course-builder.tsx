@@ -58,7 +58,7 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
       // A video this browser can't read is still uploaded; it just has no frames to pick from.
     }
     const id = uid("u")
-    setUploads((u) => [...u.filter((x) => x.lessonId !== lessonId), { id, lessonId, title: lesson?.title ?? file.name, phase: "uploading", pct: 0 }])
+    setUploads((u) => [...u.filter((x) => x.lessonId !== lessonId), { id, lessonId, title: lesson?.title ?? file.name, phase: "uploading", pct: 0, file }])
     setTray(true)
     const tick = (pct: number) => {
       if (typeof navigator !== "undefined" && !navigator.onLine) return patchUpload(id, { phase: "failed", pct })
@@ -99,18 +99,18 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
   const current = view.k === "outline" ? undefined : lessons.find((l) => l.id === view.id)
   const first = lessons.find((l) => l.status === "published") ?? lessons[0]
   const tiers = course.tiers.length ? coach.tiers.filter((t) => course.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers"
-  const publishNow = (o: { when: "now" | "later"; date: string; channels: string[] }) => {
-    edit((c) => ({ ...c, status: o.when === "later" ? "scheduled" : "published", scheduledFor: o.when === "later" ? o.date : c.scheduledFor }))
-    toast.success(o.when === "later" ? `Scheduled for ${o.date}.` : `Published.${o.channels.length ? ` Students are told ${o.channels.join(", ").replace("app", "on the platform").replace("email", "by e-mail").replace("discord", "in Discord")}.` : ""}`)
+  const publishNow = (o: { when: "now" | "later"; date: string; at: string; channels: string[] }) => {
+    edit((c) => ({ ...c, status: o.when === "later" ? "scheduled" : "published", scheduledFor: o.when === "later" ? o.date : c.scheduledFor, scheduledAt: o.when === "later" ? o.at : c.scheduledAt }))
+    toast.success(o.when === "later" ? `Scheduled for ${o.date} at ${o.at.slice(11, 16)}.` : `Published.${o.channels.length ? ` Students are told ${o.channels.join(", ").replace("app", "on the platform").replace("email", "by e-mail").replace("discord", "in Discord")}.` : ""}`)
   }
 
   const header = (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
       <AdminButton hierarchy="secondary" size="xl" iconOnly aria-label="Back to Content" nativeButton={false} render={<Link href={`${base}/content`} />}><ArrowLeft /></AdminButton>
       <CourseCover course={course} className="h-10 w-16 shrink-0 rounded-a-sm border border-a-border" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-3">
-          <h1 className="t-heading-xl truncate text-a-text">{course.title}</h1>
+      <div className="flex min-w-[12rem] flex-1 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h1 className="t-heading-xl min-w-0 truncate text-a-text">{course.title}</h1>
           <Tag tone={tone(course.status)} dot>{course.status === "scheduled" && course.scheduledFor ? `Scheduled · ${course.scheduledFor}` : course.status}</Tag>
         </div>
         <p className="t-body-m text-a-text-2">{course.modules.length} {course.modules.length === 1 ? "module" : "modules"} · {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}{minutesOf(course) > 0 ? ` · ${fmtLength(minutesOf(course))}` : ""} · {course.soldSeparately ? "Sold on its own" : tiers}</p>
@@ -123,7 +123,7 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
   )
 
   return (
-    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
       {view.k === "outline" && (
         <>
           {header}
@@ -154,38 +154,45 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
         onDelete={() => (saveCatalog(coach, (cat) => ({ ...cat, courses: cat.courses.filter((c) => c.id !== course.id) })), toast("Course deleted."), router.push(`${base}/content`))}
       />
       <PublishReview course={course} uploads={uploads} open={publishing} onOpenChange={setPublishing} onOpenUploads={() => (setTray(true), setView({ k: "outline" }))} onOpenLesson={(id) => setView({ k: "lesson", id })} onPublish={publishNow} onSaveDraft={() => (edit((c) => ({ ...c, status: "draft" })), toast("Saved as a draft."))} />
-      <UploadTray uploads={uploads} open={tray} setOpen={setTray} onClear={() => setUploads((u) => u.filter((x) => x.phase !== "ready"))} />
+      <UploadTray course={course.title} onRetry={(u) => u.file && void startUpload(u.lessonId, u.file)} uploads={uploads} open={tray} setOpen={setTray} onClear={() => setUploads((u) => u.filter((x) => x.phase !== "ready"))} />
     </div>
   )
 }
 
-/** The uploads bar (340 px, bottom right): what is going up, and what is done. */
-function UploadTray({ uploads, open, setOpen, onClear }: { uploads: Upload[]; open: boolean; setOpen: (o: boolean) => void; onClear: () => void }) {
+/** The uploads bar (Figma 529:7414, 340 px, bottom right): what is going up, grouped by course, the failed ones first. */
+function UploadTray({ uploads, open, setOpen, onClear, course, onRetry }: { uploads: Upload[]; open: boolean; setOpen: (o: boolean) => void; onClear: () => void; course: string; onRetry: (u: Upload) => void }) {
   if (!uploads.length) return null
   const ready = uploads.filter((u) => u.phase === "ready").length
   const left = uploads.reduce((n, u) => n + (u.phase === "ready" || u.phase === "failed" ? 0 : (100 - u.pct) / 100 + (u.phase === "uploading" ? 0.2 : 0)), 0)
+  // Failed first (it needs you), what is still going up next, what is done last.
+  const rank = (u: Upload) => (u.phase === "failed" ? 0 : u.phase === "ready" ? 2 : 1)
+  const sorted = [...uploads].sort((a, b) => rank(a) - rank(b))
   return (
-    <aside aria-label="Uploads" className="fixed right-4 bottom-16 z-40 w-[340px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-a-lg border border-a-border-strong bg-a-panel shadow-[0_8px_32px_rgb(0_0_0/0.5)]">
-      <div className="flex items-center gap-3 px-4 py-3">
-        <div className="grid min-w-0 flex-1">
+    <aside aria-label="Uploads" className="fixed right-6 bottom-16 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-200 motion-safe:ease-out z-40 w-[340px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-a-lg border border-a-border-strong bg-a-raised shadow-[0_16px_40px_rgb(0_0_0/0.55)]">
+      <div className="flex items-center gap-2 px-3.5 py-3">
+        <div className="grid min-w-0 flex-1 gap-0.5">
           <span className="t-body-m text-a-text">{ready} of {uploads.length} ready</span>
           <span className="t-caption text-a-text-2">{ready === uploads.length ? "All done" : left > 0 ? `about ${Math.max(1, Math.round(left))} min left` : "Needs your attention"}</span>
         </div>
         {ready > 0 && ready === uploads.length && <AdminButton hierarchy="ghost" size="md" onClick={onClear}>Clear</AdminButton>}
-        <AdminButton hierarchy="ghost" size="md" iconOnly aria-label={open ? "Minimise uploads" : "Show uploads"} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <Minus /> : <Plus />}</AdminButton>
+        <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label={open ? "Minimise uploads" : "Show uploads"} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <Minus /> : <Plus />}</AdminButton>
       </div>
       {open && (
-        <ul className="grid max-h-72 gap-3.5 overflow-y-auto border-t border-a-border-subtle px-4 py-3">
-          {uploads.map((u) => (
-            <li key={u.id} className="grid gap-1.5">
-              <div className="flex items-baseline gap-3 t-body-m">
-                <span className="min-w-0 flex-1 truncate text-a-text">{u.title}</span>
-                <span className={cn("t-caption", u.phase === "failed" ? "text-a-danger" : u.phase === "ready" ? "text-a-success" : "text-a-text-2")}>{u.phase === "uploading" ? `Uploading ${u.pct}%` : u.phase === "failed" ? `Failed at ${u.pct}%` : PHASE_LABEL[u.phase]}</span>
-              </div>
-              <AdminProgress label={u.title} tone={u.phase === "failed" ? "danger" : u.phase === "ready" ? "success" : "accent"} value={u.phase === "uploading" || u.phase === "failed" ? u.pct : 100} />
-            </li>
-          ))}
-        </ul>
+        <div className="max-h-80 overflow-y-auto border-t border-a-selected">
+          <p className="px-3.5 pt-2.5 t-mono-label text-a-text-3">{course}</p>
+          <ul>
+            {sorted.map((u) => (
+              <li key={u.id} className="grid gap-1.5 px-3.5 py-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate t-caption text-a-text">{u.title}</span>
+                  <span className={cn("t-micro shrink-0", u.phase === "failed" ? "text-a-danger" : u.phase === "ready" ? "text-a-success" : "text-a-text-2")}>{u.phase === "uploading" ? `Uploading ${u.pct}%` : u.phase === "failed" ? `Failed at ${u.pct}%` : PHASE_LABEL[u.phase]}</span>
+                  {u.phase === "failed" && u.file && <AdminButton hierarchy="ghost" size="md" onClick={() => onRetry(u)}>Retry</AdminButton>}
+                </div>
+                {u.phase !== "ready" && <AdminProgress label={u.title} tone={u.phase === "failed" ? "danger" : "accent"} value={u.phase === "uploading" || u.phase === "failed" ? u.pct : 100} />}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </aside>
   )

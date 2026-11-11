@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useStoredChoice } from "@/lib/use-stored-choice"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -11,7 +12,7 @@ import {
   Eye,
   MoreHorizontal,
   Pencil,
-  Play,
+  PlayLine,
   Plus,
   Trash2,
   Upload,
@@ -20,7 +21,7 @@ import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageHeader } from "../kit"
-import { AdminButton, AdminFilter, AdminSearch, AdminTabs, AdminToolbar, AdminViewToggle, EmptyState, MediaCard, StatPanel, Tag } from "../ui"
+import { AdminButton, AdminFilter, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, AdminViewToggle, CellDot, CellStack, EmptyState, MediaCard, MediaCardStatus, StatPanel, Tag } from "../ui"
 import { CourseCover } from "./course-parts"
 import {
   DropdownMenu,
@@ -29,7 +30,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { STATUS_LABEL, allLessons, isSampleCourse, saveCatalog, uid, useCatalog, type Catalog, type Course, type Status } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
 import { NewCourse } from "./new-course"
@@ -50,13 +50,15 @@ const attentionOf = (c: Course): { tone: "warning" | "muted"; text: string; acti
   return c.status === "published" && waiting ? { tone: "warning", text: `${waiting} ${waiting === 1 ? "lesson isn't" : "lessons aren't"} ready`, action: "Review" } : null
 }
 const accessOf = (c: Course, tiers: { id: string; name: string }[]) => (c.soldSeparately ? "Sold on its own" : c.tiers.length ? tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers")
-const statusTone = (s: Status) => (s === "published" ? "success" : s === "scheduled" ? "warning" : "neutral")
+const statusTone = (s: Status) => (s === "published" ? "success" : s === "scheduled" ? "accent" : "neutral")
 const StatusTag = ({ course }: { course: Course }) => (
   <Tag tone={statusTone(course.status)} dot>
     {STATUS_LABEL[course.status]}
     {course.status === "scheduled" && course.scheduledFor ? ` · ${course.scheduledFor}` : ""}
   </Tag>
 )
+
+const VIEWS = ["grid", "list"] as const
 
 /** ADM-08: areas and courses as a board; drafts, scheduled and archived. */
 export function ContentBoard() {
@@ -74,7 +76,8 @@ export function ContentBoard() {
   const [q, setQ] = useState("")
   const [tierSel, setTierSel] = useState("all")
   const [sort, setSort] = useState("edited")
-  const [view, setView] = useState<"grid" | "list">("grid")
+  // The view the coach chose stays between visits.
+  const [view, setView] = useStoredChoice("proto:content-view", VIEWS, "grid")
 
   const edit = (fn: (c: Catalog) => Catalog) => saveCatalog(coach, fn)
   const inFilter = (c: Course, f: Filter) => (f === "all" ? c.status !== "archived" : f === "attention" ? needsAttention(c) : c.status === f)
@@ -142,7 +145,7 @@ export function ContentBoard() {
   )
 
   return (
-    <div className="mx-auto flex max-w-[1200px] flex-col gap-6">
+    <div className="mx-auto flex max-w-[1200px] flex-col gap-4">
       <PageHeader
         title="Content"
         text={catalog.courses.length === 0 ? "No courses yet" : `${catalog.courses.length} ${catalog.courses.length === 1 ? "course" : "courses"} · ${catalog.courses.reduce((n, c) => n + allLessons(c).length, 0)} lessons`}
@@ -153,8 +156,8 @@ export function ContentBoard() {
         }
       />
       {catalog.courses.length === 0 ? (
-        <EmptyState icon={Play} title="Create your first course" description="Start blank, upload a folder of videos or import links. Videos keep uploading while you work."
-          actions={<><AdminButton onClick={() => openWizard("blank")}><Plus /> New course</AdminButton><AdminButton hierarchy="secondary" onClick={() => openWizard("folder")}><Upload /> Upload a folder</AdminButton></>} className="py-14" />
+        <EmptyState icon={PlayLine} title="Create your first course" description="Start blank, upload a folder of videos or import links. Videos keep uploading while you work."
+          actions={<><AdminButton onClick={() => openWizard("blank")}><Plus /> New course</AdminButton><AdminButton hierarchy="secondary" onClick={() => openWizard("folder")}><Upload /> Upload a folder</AdminButton></>} />
       ) : (
         <>
       <StatPanel
@@ -170,7 +173,7 @@ export function ContentBoard() {
         Courses marked Sample are examples, so you can see how your courses look. Replace or delete them before you invite students.
       </SampleNotice>
 
-      <AdminToolbar>
+      <AdminToolbar className="min-h-[34px]">
         <AdminTabs
           label="Courses"
           value={filter}
@@ -183,96 +186,95 @@ export function ContentBoard() {
           }))}
         />
         <div className="flex-1" />
-        <AdminSearch value={q} onChange={setQ} placeholder="Search courses and lessons" hint="⌘K" className="w-[240px]" />
+        <AdminSearch value={q} onChange={setQ} placeholder="Search courses and lessons" hint="⌘K" className="w-[260px]" />
         <AdminFilter ariaLabel="Tier" value={tierSel} onValueChange={setTierSel} options={[{ value: "all", label: "All tiers" }, ...coach.tiers.map((t) => ({ value: t.id, label: t.name }))]} />
         <AdminFilter ariaLabel="Sort" value={sort} onValueChange={setSort} options={[{ value: "edited", label: "Last edited" }, { value: "name", label: "Name" }]} />
         <AdminViewToggle value={view} onChange={setView} />
       </AdminToolbar>
 
       {view === "list" && list.length > 0 && (
-        <div className="overflow-hidden rounded-a-lg border border-a-border bg-a-panel">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-10"><Checkbox aria-label="Select all courses" checked={picked.length > 0 && picked.length === list.length} onCheckedChange={(v) => setPicked(v ? list.map((c) => c.id) : [])} /></TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Attention</TableHead>
-                <TableHead>Access</TableHead>
-                <TableHead className="text-right">Lessons</TableHead>
-                <TableHead className="text-right">Students</TableHead>
-                <TableHead className="text-right">Done</TableHead>
-                <TableHead className="text-right">Edited</TableHead>
-                <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {list.map((c) => {
-                const live = c.status === "published"
-                const seed = [...c.id].reduce((n, ch) => n + ch.charCodeAt(0), 0)
-                const att = attentionOf(c)
-                return (
-                  <TableRow key={c.id} className="cursor-pointer" data-state={picked.includes(c.id) ? "selected" : undefined} onClick={() => router.push(`${base}/content/${c.id}`)}>
-                    <TableCell onClick={(e) => e.stopPropagation()}><Checkbox aria-label={`Select ${c.title}`} checked={picked.includes(c.id)} onCheckedChange={(v) => setPicked((p) => (v ? [...p, c.id] : p.filter((x) => x !== c.id)))} /></TableCell>
-                    <TableCell>
-                      <div className="flex min-w-0 items-center gap-3">
-                        <CourseCover course={c} className="h-8 w-12 shrink-0 rounded-a-xs border border-a-border" />
-                        <div className="grid min-w-0">
-                          <span className="truncate t-body-m text-a-text">{c.title}</span>
-                          <span className="truncate t-caption text-a-text-2">{c.tagline}</span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell><StatusTag course={c} /></TableCell>
-                    <TableCell>{att ? <span className="flex items-center gap-2 t-body-m text-a-text-2"><span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", att.tone === "warning" ? "bg-a-warning-fill" : "bg-a-text-3")} />{att.text}</span> : <span className="text-a-text-3">—</span>}</TableCell>
-                    <TableCell className="t-body-m text-a-text">{accessOf(c, coach.tiers)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{allLessons(c).length}</TableCell>
-                    <TableCell className="text-right tabular-nums">{live ? 80 + ((seed * 37) % 120) : "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums">{live ? `${20 + ((seed * 13) % 60)}%` : "—"}</TableCell>
-                    <TableCell className="text-right whitespace-nowrap text-a-text-3">{c.edited ?? "—"}</TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>{menu(c, "ghost")}</TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-          <div className="flex min-h-11 items-center gap-2 border-t border-a-border-subtle px-5 py-2 t-body-m text-a-text-2">
-            {picked.length === 0 ? (
-              <span>{list.length} {list.length === 1 ? "course" : "courses"} · select rows to publish or archive several</span>
-            ) : (
-              <>
-                <span className="flex-1 text-a-text">{picked.length} selected</span>
-                <AdminButton hierarchy="secondary" size="md" onClick={() => (picked.forEach((id) => setStatus(id, "published")), setPicked([]))}>Publish</AdminButton>
-                <AdminButton hierarchy="secondary" size="md" onClick={() => (picked.forEach((id) => setStatus(id, "archived")), setPicked([]))}>Archive</AdminButton>
-                <AdminButton hierarchy="ghost" size="md" onClick={() => setPicked([])}>Clear</AdminButton>
-              </>
-            )}
-          </div>
-        </div>
+        <AdminTable
+          minWidth={1100}
+          footer={
+            <AdminTableFooter>
+              {picked.length === 0 ? (
+                <span>{list.length} {list.length === 1 ? "course" : "courses"} · select rows to publish or archive several</span>
+              ) : (
+                <>
+                  <span className="mr-auto text-a-text">{picked.length} selected</span>
+                  {picked.length < list.length && <AdminButton hierarchy="ghost" size="sm" onClick={() => setPicked(list.map((c) => c.id))}>Select all</AdminButton>}
+                  <AdminButton hierarchy="secondary" size="sm" onClick={() => (picked.forEach((id) => setStatus(id, "published")), setPicked([]))}>Publish</AdminButton>
+                  <AdminButton hierarchy="secondary" size="sm" onClick={() => (picked.forEach((id) => setStatus(id, "archived")), setPicked([]))}>Archive</AdminButton>
+                  <AdminButton hierarchy="ghost" size="sm" onClick={() => setPicked([])}>Clear</AdminButton>
+                </>
+              )}
+            </AdminTableFooter>
+          }
+        >
+          <AdminTableHead>
+            <AdminTh>Course</AdminTh>
+            <AdminTh width={198}>Status</AdminTh>
+            <AdminTh width={184}>Attention</AdminTh>
+            <AdminTh width={166}>Access</AdminTh>
+            <AdminTh width={76} align="end">Lessons</AdminTh>
+            <AdminTh width={76} align="end">Students</AdminTh>
+            <AdminTh width={76} align="end">Done</AdminTh>
+            <AdminTh width={96} align="end">Edited</AdminTh>
+            <AdminTh width={60} align="end" />
+          </AdminTableHead>
+          <tbody>
+            {list.map((c) => {
+              const live = c.status === "published"
+              const seed = [...c.id].reduce((n, ch) => n + ch.charCodeAt(0), 0)
+              const att = attentionOf(c)
+              const on = picked.includes(c.id)
+              return (
+                <AdminTr key={c.id} selected={on} onClick={() => router.push(`${base}/content/${c.id}`)}>
+                  <AdminTd>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="relative h-9 w-14 shrink-0">
+                        <CourseCover course={c} className="size-full rounded-a-sm border border-a-border" />
+                        {/* The selection box sits on the picture: it shows on hover, on focus and once chosen, so the table has no extra column. */}
+                        <span onClick={(e) => e.stopPropagation()} className={cn("absolute inset-0 grid place-items-center rounded-a-sm bg-a-scrim opacity-0 transition-opacity duration-200 group-hover/row:opacity-100 focus-within:opacity-100", on && "opacity-100")}>
+                          <Checkbox aria-label={`Select ${c.title}`} checked={on} onCheckedChange={(v) => setPicked((p) => (v ? [...p, c.id] : p.filter((x) => x !== c.id)))} />
+                        </span>
+                      </span>
+                      <Link href={`${base}/content/${c.id}`} onClick={(e) => e.stopPropagation()} className="min-w-0 flex-1 rounded-a-xs outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">
+                        <CellStack title={c.title} subtitle={c.tagline} />
+                      </Link>
+                    </div>
+                  </AdminTd>
+                  <AdminTd><StatusTag course={c} /></AdminTd>
+                  <AdminTd>{att ? <CellDot tone={att.tone === "warning" ? "warning" : "neutral"} label={att.text} /> : <span className="text-a-text-3">—</span>}</AdminTd>
+                  <AdminTd><span className="line-clamp-2">{accessOf(c, coach.tiers)}</span></AdminTd>
+                  <AdminTd align="end">{allLessons(c).length}</AdminTd>
+                  <AdminTd align="end">{live ? 80 + ((seed * 37) % 120) : "—"}</AdminTd>
+                  <AdminTd align="end">{live ? `${20 + ((seed * 13) % 60)}%` : "—"}</AdminTd>
+                  <AdminTd align="end" className="whitespace-nowrap text-a-text-3">{c.edited ?? "—"}</AdminTd>
+                  <AdminTd align="end"><span onClick={(e) => e.stopPropagation()} className="inline-flex">{menu(c, "ghost")}</span></AdminTd>
+                </AdminTr>
+              )
+            })}
+          </tbody>
+        </AdminTable>
       )}
 
-      <div className={cn("grid gap-4 sm:grid-cols-2 xl:grid-cols-3", view === "list" && list.length > 0 && "hidden")}>
+      <div className={cn("grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 xl:grid-cols-3", view === "list" && list.length > 0 && "hidden")}>
         {list.map((c) => {
           const lessons = allLessons(c)
           const live = c.status === "published"
           const seed = [...c.id].reduce((n, ch) => n + ch.charCodeAt(0), 0)
           const att = attentionOf(c)
           return (
-            <MediaCard key={c.id} data-interactive className={cn(c.status === "archived" && "opacity-70")}
+            <MediaCard key={c.id} onClick={() => router.push(`${base}/content/${c.id}`)} className={cn(c.status === "archived" && "opacity-70")}
               cover={
                 <>
                   <Link href={`${base}/content/${c.id}`} aria-label={c.title} className="absolute inset-0 z-10 outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus" />
-                  <CourseCover course={c} className="aspect-[2.3] w-full">
-                    <span className="absolute top-3 left-3"><StatusTag course={c} /></span>
-                    {att && (
-                      <span className="absolute inset-x-3 bottom-3 flex items-center gap-2 rounded-a-md bg-a-page/80 px-3 py-2 t-body-m text-a-text backdrop-blur-sm">
-                        <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", att.tone === "warning" ? "bg-a-warning-fill" : "bg-a-text-3")} />
-                        <span className="min-w-0 flex-1 truncate">{att.text}</span>
-                        <span className="shrink-0 text-a-text-2">{att.action}</span>
-                      </span>
-                    )}
+                  <CourseCover course={c} className="size-full">
+                    <span className="absolute top-3 left-3 flex h-7 items-center"><StatusTag course={c} /></span>
+                    {att && <MediaCardStatus tone={att.tone === "warning" ? "warning" : "muted"} text={att.text} trailing={att.action} />}
                   </CourseCover>
-                  <span className="absolute top-2.5 right-2.5 z-20">{menu(c, "ghost")}</span>
+                  <span onClick={(e) => e.stopPropagation()} className="absolute top-3 right-3 z-20">{menu(c, "ghost")}</span>
                 </>
               }
               title={c.title} subtitle={c.tagline}
@@ -283,7 +285,7 @@ export function ContentBoard() {
         {list.length === 0 && (
           <button onClick={() => openWizard("blank")} className="grid place-items-center gap-1 rounded-a-lg border border-dashed border-a-border-strong p-10 text-center t-body-m text-a-text-2 outline-none transition-colors duration-300 hover:bg-a-hover sm:col-span-2 xl:col-span-3">
             <BookOpen className="size-5" />
-            {filter === "all" ? "No courses yet. Add your first one." : filter === "attention" ? "Nothing needs attention." : `Nothing ${STATUS_LABEL[filter as Status].toLowerCase()} here.`}
+            {q.trim() ? `No course or lesson matches “${q.trim()}”.` : filter === "all" ? "No courses yet. Add your first one." : filter === "attention" ? "Nothing needs attention." : `Nothing ${STATUS_LABEL[filter as Status].toLowerCase()} here.`}
           </button>
         )}
       </div>

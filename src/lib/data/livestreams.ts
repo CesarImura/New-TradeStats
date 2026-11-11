@@ -30,6 +30,12 @@ export type Livestream = {
   chat: ChatMessage[]
   /** After it ends: the recording is made, then it is ready to use. */
   recording?: "processing" | "ready"
+  /** Planned length in minutes (before it starts). */
+  planned?: number
+  /** Where students find it: the calendar and the Live page, or the Live page only. */
+  where?: "both" | "live"
+  /** Title of the course its recording was saved into as a lesson. */
+  lesson?: string
 }
 
 /** Where OBS sends the video. The same for every community: the platform's own streaming address. */
@@ -101,3 +107,15 @@ export function whenLabel(startsAt: string) {
 }
 
 export const STATE_LABEL: Record<StreamState, string> = { scheduled: "Before", live: "Live", ended: "After" }
+
+/** "in 2 h 14 min", "in 24 days": how long until a livestream starts, from the prototype's today. */
+export function untilLabel(startsAt: string, now = new Date(2026, 9, 12, 9, 0)) {
+  const mins = Math.round((new Date(startsAt).getTime() - now.getTime()) / 60000)
+  if (mins <= 0) return "now"
+  if (mins < 60) return `in ${mins} min`
+  if (mins < 48 * 60) return `in ${Math.floor(mins / 60)} h ${mins % 60} min`
+  return `in ${Math.round(mins / 1440)} days`
+}
+
+/** "1 h 30 min" */
+export const lengthLabel = (m: number) => (m < 60 ? `${m} min` : m % 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m / 60} h`)
