@@ -56,7 +56,7 @@ const BUTTONS = [
   { value: "pill", radius: "999px", label: "Pill" },
 ] as const
 
-export function AllWidgetsInspector({ draft, onReset, onBack, back, own, onClearOwn }: { draft: ThemeDraft; onReset: (keys: (keyof ThemeDraft)[]) => void; onBack: () => void; /** Where the arrow goes back to: the selected widget or the page. */ back: string; /** Widgets that keep their own style. */ own: number; /** Puts every widget on this page back to the style set here. */ onClearOwn: () => void }) {
+export function AllWidgetsInspector({ draft, onReset, onBack, back, own, onClearOwn }: { draft: ThemeDraft; onReset: (keys: (keyof ThemeDraft)[]) => void; onBack?: () => void; /** Where the arrow goes back to: the selected widget or the page. */ back: string; /** Widgets that keep their own style. */ own: number; /** Puts every widget on this page back to the style set here. */ onClearOwn: () => void }) {
   const { theme, change } = useDesign()
   const [fly, setFly] = useState<"header" | "charts" | null>(null)
   const root = useRef<HTMLDivElement>(null)
@@ -75,39 +75,22 @@ export function AllWidgetsInspector({ draft, onReset, onBack, back, own, onClear
     <div ref={root}>
       <InspectorTop>
         <div className="flex min-w-0 items-center gap-1">
-          <button type="button" onClick={onBack} aria-label={`Back to ${back}`} title={`Back to ${back}`} className="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
-            <ArrowLeft className="size-4" />
-          </button>
-          <span className="truncate text-[0.875rem] font-semibold">All widgets</span>
+          {onBack && (
+            <button type="button" onClick={onBack} aria-label={`Back to ${back}`} title={`Back to ${back}`} className="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
+              <ArrowLeft className="size-4" />
+            </button>
+          )}
+          <span className="truncate text-[0.875rem] font-semibold">Design all widgets</span>
         </div>
       </InspectorTop>
-      <p className="-mt-1 px-5 pb-3 text-xs leading-4 text-muted-foreground">Every page.{own ? ` ${own} widget${own === 1 ? " keeps its" : "s keep their"} own style.` : ""}</p>
+      <p className="-mt-1 px-5 pb-3 text-xs leading-4 text-muted-foreground">Corner radius, cards, buttons and charts of every widget, on every page.{own ? ` ${own} widget${own === 1 ? " keeps its" : "s keep their"} own style.` : ""}</p>
       {own > 0 && (
         <div className="px-5 pb-3">
-          <button type="button" onClick={onClearOwn} className="h-8 w-full rounded-md border border-border px-3 text-xs font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
+          <button type="button" onClick={onClearOwn} className="h-8 w-full rounded-md border border-white/[0.16] px-3 text-xs font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
             Use these settings on {own === 1 ? "that widget" : `all ${own}`} (this page)
           </button>
         </div>
       )}
-
-      <InspectorSection title="Card">
-        <Row label="Card" hint={SURFACES.find((s) => s.id === surface)?.hint} own={changed("widgetSet", "cardSurface")} onReset={() => onReset(["widgetSet", "cardSurface", "shadow"])} from="the look" stack>
-          {/* A choice of shape: pictures (the editor's rule), the rest in words. */}
-          <OptionTiles label="Card" cols={2} value={surface} onChange={(v) => set(SURFACES.find((s) => s.id === v)!.set, "surface")} options={SURFACES.map((s) => ({ value: s.id, label: s.label, hint: s.hint, art: <CardArt surface={s.id} /> }))} />
-        </Row>
-        {/* Only raised cards take a shadow: the row shows then, so it never does nothing. */}
-        {surface === "raised" && (
-          <Row label="Shadow" hint={SHADOWS.find((s) => s.value === (theme.shadow ?? "none"))?.hint} own={changed("shadow")} onReset={() => onReset(["shadow"])} from="the look" stack>
-            <OptionTiles label="Shadow" value={theme.shadow ?? "none"} onChange={(shadow) => set({ shadow }, "shadow")} options={SHADOWS.map((s) => ({ ...s, art: <CardArt shadow={s.value} /> }))} />
-          </Row>
-        )}
-        <Row label="Chart background" hint={PANELS.find((p) => p.value === panelStyleOf(theme))?.hint} own={changed("panelStyle")} onReset={() => onReset(["panelStyle"])} from="the look" stack>
-          <OptionTiles label="Chart background" value={panelStyleOf(theme)} onChange={(panelStyle) => set({ panelStyle }, "panel-style")} options={PANELS.map((p) => ({ ...p, art: <CardArt panel={p.value} /> }))} />
-        </Row>
-        <Row label="Outline" hint="A fine line round every card, the Star included" own={changed("borders")} onReset={() => onReset(["borders"])} from="the look">
-          <Segmented label="Outline on cards" value={theme.borders ? "yes" : "no"} options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} onChange={(v) => set({ borders: v === "yes" }, "borders")} />
-        </Row>
-      </InspectorSection>
 
       <InspectorSection title="Shape">
         {/* The slider carries its own name and value. */}
@@ -125,6 +108,25 @@ export function AllWidgetsInspector({ draft, onReset, onBack, back, own, onClear
         </Row>
         <Row label="Finish" hint={FINISHES.find((f) => f.value === widgetFinishOf(theme))?.hint} own={changed("widgetFinish")} onReset={() => onReset(["widgetFinish"])} from="the look">
           <Segmented label="Finish" value={widgetFinishOf(theme)} options={FINISHES.map((f) => ({ ...f }))} onChange={(widgetFinish) => set({ widgetFinish }, "widget-finish")} />
+        </Row>
+      </InspectorSection>
+
+      <InspectorSection title="Card">
+        <Row label="Card" hint={SURFACES.find((s) => s.id === surface)?.hint} own={changed("widgetSet", "cardSurface")} onReset={() => onReset(["widgetSet", "cardSurface", "shadow"])} from="the look" stack>
+          {/* A choice of shape: pictures (the editor's rule), the rest in words. */}
+          <OptionTiles label="Card" cols={2} value={surface} onChange={(v) => set(SURFACES.find((s) => s.id === v)!.set, "surface")} options={SURFACES.map((s) => ({ value: s.id, label: s.label, hint: s.hint, art: <CardArt surface={s.id} /> }))} />
+        </Row>
+        {/* Only raised cards take a shadow: the row shows then, so it never does nothing. */}
+        {surface === "raised" && (
+          <Row label="Shadow" hint={SHADOWS.find((s) => s.value === (theme.shadow ?? "none"))?.hint} own={changed("shadow")} onReset={() => onReset(["shadow"])} from="the look" stack>
+            <OptionTiles label="Shadow" value={theme.shadow ?? "none"} onChange={(shadow) => set({ shadow }, "shadow")} options={SHADOWS.map((s) => ({ ...s, art: <CardArt shadow={s.value} /> }))} />
+          </Row>
+        )}
+        <Row label="Chart background" hint={PANELS.find((p) => p.value === panelStyleOf(theme))?.hint} own={changed("panelStyle")} onReset={() => onReset(["panelStyle"])} from="the look" stack>
+          <OptionTiles label="Chart background" value={panelStyleOf(theme)} onChange={(panelStyle) => set({ panelStyle }, "panel-style")} options={PANELS.map((p) => ({ ...p, art: <CardArt panel={p.value} /> }))} />
+        </Row>
+        <Row label="Outline" hint="A fine line round every card, the Star included" own={changed("borders")} onReset={() => onReset(["borders"])} from="the look">
+          <Segmented label="Outline on cards" value={theme.borders ? "yes" : "no"} options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} onChange={(v) => set({ borders: v === "yes" }, "borders")} />
         </Row>
       </InspectorSection>
 
