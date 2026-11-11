@@ -13,7 +13,6 @@ import {
   FileDown,
   History,
   LayoutGrid,
-  Pencil,
   MoreHorizontal,
   Palette,
   PlayCircle,
@@ -276,9 +275,14 @@ export function DesignWorkspace() {
     ) : null
   const pagesContent = (
     <>
+    {/* The way to every widget's style (corner radius, cards, buttons, charts): the first thing in Pages, big enough to find. */}
     <div className="px-4 pb-3">
-      <Button variant="outline" size="sm" className="w-full" aria-pressed={scope === "all"} onClick={() => setScope(scope === "all" ? "one" : "all")}>
-        <Pencil /> Edit all widgets
+      <Button variant="secondary" aria-pressed={scope === "all"} onClick={() => setScope(scope === "all" ? "one" : "all")} className="h-auto w-full justify-start gap-3 rounded-xl border border-white/[0.16]! shadow-none! px-3 py-2.5 text-left aria-pressed:border-[color:var(--ring)]">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/[0.08]"><Palette className="size-4" /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[0.875rem] leading-5 font-semibold">Design all widgets</span>
+          <span className="block text-xs leading-4 font-normal text-muted-foreground">Corners, cards, buttons, charts</span>
+        </span>
       </Button>
     </div>
     <WidgetLibrary
