@@ -142,7 +142,7 @@ export type AdminStudent = {
 
 export const ADMIN_STUDENTS: AdminStudent[] = [
   { id: "s1", name: "Alex Moreau", initials: "AM", tier: "Core", group: "October cohort", progress: 62, lastActive: "today", health: "red", reason: "Payment failed" },
-  { id: "s2", name: "Mia Sørensen", initials: "MS", tier: "Trading Desk", progress: 81, lastActive: "today", health: "red", reason: "Broke daily loss limit twice" },
+  { id: "s2", name: "Mia Sørensen", initials: "MS", tier: "Trading Desk", progress: 81, lastActive: "today", health: "amber", reason: "Broke loss limit twice" },
   { id: "s3", name: "Tom Becker", initials: "TB", tier: "Core", progress: 23, lastActive: "9 days ago", health: "amber", reason: "Inactive for 9 days" },
   { id: "s4", name: "Lena Ito", initials: "LI", tier: "Core", group: "October cohort", progress: 35, lastActive: "yesterday", health: "amber", reason: "Stuck in Module 2 for 12 days" },
   { id: "s5", name: "Jonas Pereira", initials: "JP", tier: "1:1 VIP", progress: 94, lastActive: "today", health: "green" },

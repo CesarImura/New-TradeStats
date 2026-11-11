@@ -1,0 +1,370 @@
+/* Admin v2 design tokens, generated from the Figma "Admin" variable collection (file XWHeEdjEiY6gWmrsg0vFIZ,
+   collection 541:2). Names follow the Figma code syntax: --admin-<variable path with hyphens>. Do not edit by hand:
+   change the variable in Figma, then regenerate (docs/admin-v2.md). Tokens live on :root so portalled popups inherit them. */
+:root {
+  /* primitive */
+  --admin-primitive-amber-400: #fbbf24;
+  --admin-primitive-amber-soft: rgb(251 191 36 / 12%);
+  --admin-primitive-black-60: rgb(0 0 0 / 60%);
+  --admin-primitive-blue-400: #60a5fa;
+  --admin-primitive-blue-600: #2563eb;
+  --admin-primitive-blue-soft: rgb(96 165 250 / 12%);
+  --admin-primitive-extra-0a0a0d: #0a0a0d;
+  --admin-primitive-extra-0a0a0d-0: rgb(10 10 13 / 0%);
+  --admin-primitive-extra-0a0a0d-90: rgb(10 10 13 / 90%);
+  --admin-primitive-extra-0ea5e9: #0ea5e9;
+  --admin-primitive-extra-0ea5e9-55: rgb(14 165 233 / 55%);
+  --admin-primitive-extra-101014: #101014;
+  --admin-primitive-extra-10b981: #10b981;
+  --admin-primitive-extra-10b981-55: rgb(16 185 129 / 55%);
+  --admin-primitive-extra-121212: #121212;
+  --admin-primitive-extra-22c55e: #22c55e;
+  --admin-primitive-extra-2a1a10: #2a1a10;
+  --admin-primitive-extra-3b82f6: #3b82f6;
+  --admin-primitive-extra-444444: #444444;
+  --admin-primitive-extra-8b5cf6: #8b5cf6;
+  --admin-primitive-extra-8b5cf6-55: rgb(139 92 246 / 55%);
+  --admin-primitive-extra-a855f7: #a855f7;
+  --admin-primitive-extra-d9d9d9: #d9d9d9;
+  --admin-primitive-extra-e11d48: #e11d48;
+  --admin-primitive-extra-e11d48-55: rgb(225 29 72 / 55%);
+  --admin-primitive-extra-f4f4f5: #f4f4f5;
+  --admin-primitive-extra-f97316: #f97316;
+  --admin-primitive-extra-f97316-55: rgb(249 115 22 / 55%);
+  --admin-primitive-extra-ff5500-35: rgb(255 85 0 / 35%);
+  --admin-primitive-extra-ffffff-10: rgb(255 255 255 / 10%);
+  --admin-primitive-extra-ffffff-16: rgb(255 255 255 / 16%);
+  --admin-primitive-extra-ffffff-20: rgb(255 255 255 / 20%);
+  --admin-primitive-extra-ffffff-7: rgb(255 255 255 / 7%);
+  --admin-primitive-extra-ffffff-70: rgb(255 255 255 / 70%);
+  --admin-primitive-green-400: #4ade80;
+  --admin-primitive-green-600: #16a34a;
+  --admin-primitive-green-700: #15803d;
+  --admin-primitive-green-soft: rgb(74 222 128 / 12%);
+  --admin-primitive-ink-750: #262626;
+  --admin-primitive-ink-850: #181818;
+  --admin-primitive-ink-900: #111111;
+  --admin-primitive-ink-925: #0d0d0d;
+  --admin-primitive-ink-950: #0a0a0a;
+  --admin-primitive-orange-400: #ff8a3d;
+  --admin-primitive-orange-500: #ff5500;
+  --admin-primitive-orange-700: #cf4500;
+  --admin-primitive-orange-800: #b83d00;
+  --admin-primitive-orange-soft: rgb(255 85 0 / 12%);
+  --admin-primitive-radius-10: 10px;
+  --admin-primitive-radius-12: 12px;
+  --admin-primitive-radius-2: 2px;
+  --admin-primitive-radius-4: 4px;
+  --admin-primitive-radius-6: 6px;
+  --admin-primitive-radius-8: 8px;
+  --admin-primitive-radius-999: 999px;
+  --admin-primitive-red-40: rgb(243 90 90 / 40%);
+  --admin-primitive-red-400: #f35a5a;
+  --admin-primitive-red-600: #dc2626;
+  --admin-primitive-red-soft: rgb(243 90 90 / 12%);
+  --admin-primitive-space-10: 10px;
+  --admin-primitive-space-12: 12px;
+  --admin-primitive-space-14: 14px;
+  --admin-primitive-space-16: 16px;
+  --admin-primitive-space-18: 18px;
+  --admin-primitive-space-2: 2px;
+  --admin-primitive-space-20: 20px;
+  --admin-primitive-space-24: 24px;
+  --admin-primitive-space-28: 28px;
+  --admin-primitive-space-32: 32px;
+  --admin-primitive-space-4: 4px;
+  --admin-primitive-space-40: 40px;
+  --admin-primitive-space-48: 48px;
+  --admin-primitive-space-6: 6px;
+  --admin-primitive-space-72: 72px;
+  --admin-primitive-space-8: 8px;
+  --admin-primitive-white-02: rgb(255 255 255 / 2%);
+  --admin-primitive-white-04: rgb(255 255 255 / 4%);
+  --admin-primitive-white-06: rgb(255 255 255 / 6%);
+  --admin-primitive-white-08: rgb(255 255 255 / 8%);
+  --admin-primitive-white-09: rgb(255 255 255 / 9%);
+  --admin-primitive-white-100: #ffffff;
+  --admin-primitive-white-14: rgb(255 255 255 / 14%);
+  --admin-primitive-white-36: rgb(255 255 255 / 36%);
+  --admin-primitive-white-52: rgb(255 255 255 / 52%);
+  --admin-primitive-white-64: rgb(255 255 255 / 64%);
+  --admin-primitive-white-96: rgb(255 255 255 / 96%);
+
+  /* color */
+  --admin-color-accent-default: var(--admin-primitive-orange-700);
+  --admin-color-accent-hover: var(--admin-primitive-orange-800);
+  --admin-color-accent-soft: var(--admin-primitive-orange-soft);
+  --admin-color-accent-strong: var(--admin-primitive-orange-500);
+  --admin-color-bg-field: var(--admin-primitive-white-04);
+  --admin-color-bg-hover: var(--admin-primitive-white-04);
+  --admin-color-bg-muted: var(--admin-primitive-white-06);
+  --admin-color-bg-page: var(--admin-primitive-ink-950);
+  --admin-color-bg-panel: var(--admin-primitive-ink-900);
+  --admin-color-bg-raised: var(--admin-primitive-ink-850);
+  --admin-color-bg-scrim: var(--admin-primitive-black-60);
+  --admin-color-bg-selected: var(--admin-primitive-white-08);
+  --admin-color-bg-subtle: var(--admin-primitive-white-02);
+  --admin-color-bg-sunk: var(--admin-primitive-ink-925);
+  --admin-color-bg-track: var(--admin-primitive-ink-750);
+  --admin-color-border-active: var(--admin-color-accent-default);
+  --admin-color-border-danger: var(--admin-primitive-red-40);
+  --admin-color-border-default: var(--admin-primitive-white-08);
+  --admin-color-border-focus: var(--admin-primitive-orange-500);
+  --admin-color-border-strong: var(--admin-primitive-white-14);
+  --admin-color-border-subtle: var(--admin-primitive-white-06);
+  --admin-color-brand-gradient-end: #ff9003;
+  --admin-color-brand-gradient-start: #ff4701;
+  --admin-color-category-blue: #1d2f3f;
+  --admin-color-category-green: #1d3f2a;
+  --admin-color-category-olive: #3a3a1d;
+  --admin-color-category-orange: #3f2a1d;
+  --admin-color-category-rose: #3f1d27;
+  --admin-color-category-violet: #2a1d3f;
+  --admin-color-chart-bar-muted: rgb(255 255 255 / 60%);
+  --admin-color-chart-divider: rgb(255 255 255 / 16%);
+  --admin-color-chart-grid: var(--admin-primitive-white-09);
+  --admin-color-chart-line-muted: rgb(255 255 255 / 25%);
+  --admin-color-control-knob: var(--admin-primitive-white-100);
+  --admin-color-control-mark: var(--admin-color-text-on-accent);
+  --admin-color-control-off: var(--admin-primitive-ink-750);
+  --admin-color-control-on: var(--admin-color-accent-default);
+  --admin-color-highlight-base: #f6d9c6;
+  --admin-color-highlight-soft: #ffe0c2;
+  --admin-color-highlight-strong: #ff9e61;
+  --admin-color-icon-default: var(--admin-primitive-white-52);
+  --admin-color-icon-strong: var(--admin-primitive-white-96);
+  --admin-color-icon-subtle: rgb(255 255 255 / 36%);
+  --admin-color-status-danger: var(--admin-primitive-red-400);
+  --admin-color-status-danger-fill: var(--admin-primitive-red-600);
+  --admin-color-status-danger-soft: var(--admin-primitive-red-soft);
+  --admin-color-status-info: var(--admin-primitive-blue-400);
+  --admin-color-status-info-fill: var(--admin-primitive-extra-3b82f6);
+  --admin-color-status-info-soft: var(--admin-primitive-blue-soft);
+  --admin-color-status-success: var(--admin-primitive-green-400);
+  --admin-color-status-success-fill: var(--admin-primitive-green-600);
+  --admin-color-status-success-soft: var(--admin-primitive-green-soft);
+  --admin-color-status-warning: var(--admin-primitive-amber-400);
+  --admin-color-status-warning-fill: var(--admin-primitive-amber-400);
+  --admin-color-status-warning-soft: var(--admin-primitive-amber-soft);
+  --admin-color-text-accent: var(--admin-primitive-orange-400);
+  --admin-color-text-nav: var(--admin-primitive-white-64);
+  --admin-color-text-on-accent: var(--admin-primitive-white-100);
+  --admin-color-text-on-highlight: #0a0a0a;
+  --admin-color-text-primary: var(--admin-primitive-white-96);
+  --admin-color-text-secondary: var(--admin-primitive-white-52);
+  --admin-color-text-tertiary: var(--admin-primitive-white-36);
+
+  /* font */
+  --admin-font-family-cover: var(--ff-inter), "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --admin-font-family-mono: var(--ff-space-mono), "Space Mono", ui-monospace, monospace;
+  --admin-font-family-primary: var(--ff-inter), "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+
+  /* radius */
+  --admin-radius-10: var(--admin-primitive-radius-10);
+  --admin-radius-2xs: var(--admin-primitive-radius-2);
+  --admin-radius-full: var(--admin-primitive-radius-999);
+  --admin-radius-lg: var(--admin-primitive-radius-12);
+  --admin-radius-md: var(--admin-primitive-radius-8);
+  --admin-radius-sm: var(--admin-primitive-radius-6);
+  --admin-radius-xl: 16px;
+  --admin-radius-xs: var(--admin-primitive-radius-4);
+
+  /* size */
+  --admin-size-icon: 16px;
+
+  /* space */
+  --admin-space-10: var(--admin-primitive-space-10);
+  --admin-space-12: var(--admin-primitive-space-12);
+  --admin-space-14: var(--admin-primitive-space-14);
+  --admin-space-16: var(--admin-primitive-space-16);
+  --admin-space-18: var(--admin-primitive-space-18);
+  --admin-space-2: var(--admin-primitive-space-2);
+  --admin-space-20: var(--admin-primitive-space-20);
+  --admin-space-24: var(--admin-primitive-space-24);
+  --admin-space-28: var(--admin-primitive-space-28);
+  --admin-space-32: var(--admin-primitive-space-32);
+  --admin-space-4: var(--admin-primitive-space-4);
+  --admin-space-40: var(--admin-primitive-space-40);
+  --admin-space-48: var(--admin-primitive-space-48);
+  --admin-space-6: var(--admin-primitive-space-6);
+  --admin-space-72: var(--admin-primitive-space-72);
+  --admin-space-8: var(--admin-primitive-space-8);
+  --admin-space-gap-inline: var(--admin-space-6);
+  --admin-space-pad-button: var(--admin-space-14);
+  --admin-space-pad-button-sm: var(--admin-space-10);
+  --admin-space-pad-control: var(--admin-space-12);
+  --admin-space-pad-page: var(--admin-space-40);
+  --admin-space-pad-panel: var(--admin-space-20);
+
+  /* component */
+  --admin-component-button-danger-bg-hover: var(--admin-color-status-danger-soft);
+  --admin-component-button-danger-border: var(--admin-color-border-danger);
+  --admin-component-button-danger-content: var(--admin-color-status-danger);
+  --admin-component-button-gap: var(--admin-space-gap-inline);
+  --admin-component-button-ghost-bg-hover: var(--admin-color-bg-hover);
+  --admin-component-button-ghost-content-default: var(--admin-color-text-secondary);
+  --admin-component-button-ghost-content-hover: var(--admin-color-text-primary);
+  --admin-component-button-highlight-bg-default: var(--admin-color-control-knob);
+  --admin-component-button-highlight-bg-hover: var(--admin-color-highlight-soft);
+  --admin-component-button-highlight-content: var(--admin-color-text-on-highlight);
+  --admin-component-button-icon-default: var(--admin-size-icon);
+  --admin-component-button-icon-small: 14px;
+  --admin-component-button-pad-icon-lg: 8px;
+  --admin-component-button-pad-icon-md: 6px;
+  --admin-component-button-pad-icon-sm: 5px;
+  --admin-component-button-pad-icon-xl: 10px;
+  --admin-component-button-pad-x-lg: 12px;
+  --admin-component-button-pad-x-md: var(--admin-space-pad-button-sm);
+  --admin-component-button-pad-x-sm: 8px;
+  --admin-component-button-pad-x-xl: var(--admin-space-pad-button);
+  --admin-component-button-pad-y-lg: 7px;
+  --admin-component-button-pad-y-md: 6px;
+  --admin-component-button-pad-y-sm: 4px;
+  --admin-component-button-pad-y-xl: 9px;
+  --admin-component-button-primary-bg-default: var(--admin-color-accent-default);
+  --admin-component-button-primary-bg-hover: var(--admin-color-accent-hover);
+  --admin-component-button-primary-content: var(--admin-color-text-on-accent);
+  --admin-component-button-radius: var(--admin-radius-md);
+  --admin-component-button-radius-sm: var(--admin-radius-sm);
+  --admin-component-button-secondary-bg-hover: var(--admin-color-bg-hover);
+  --admin-component-button-secondary-border: var(--admin-color-border-strong);
+  --admin-component-button-secondary-content: var(--admin-color-text-primary);
+  --admin-component-chart-bar-bg-active: var(--admin-color-accent-default);
+  --admin-component-chart-bar-bg-danger: var(--admin-color-status-danger-fill);
+  --admin-component-chart-bar-bg-default: var(--admin-color-chart-line-muted);
+  --admin-component-chart-preview-placeholder: var(--admin-primitive-extra-d9d9d9);
+  --admin-component-content-note-highlight: var(--admin-primitive-extra-ff5500-35);
+  --admin-component-content-swatch-blue: var(--admin-primitive-extra-3b82f6);
+  --admin-component-content-swatch-green: var(--admin-primitive-extra-22c55e);
+  --admin-component-content-swatch-purple: var(--admin-primitive-extra-a855f7);
+  --admin-component-content-swatch-white: var(--admin-primitive-extra-f4f4f5);
+  --admin-component-course-cover-bg: var(--admin-primitive-extra-101014);
+  --admin-component-course-cover-breakdowns-accent: var(--admin-primitive-extra-10b981);
+  --admin-component-course-cover-breakdowns-glow: var(--admin-primitive-extra-10b981-55);
+  --admin-component-course-cover-fade-end: var(--admin-primitive-extra-0a0a0d-0);
+  --admin-component-course-cover-fade-start: var(--admin-primitive-extra-0a0a0d-90);
+  --admin-component-course-cover-foundations-accent: var(--admin-primitive-extra-f97316);
+  --admin-component-course-cover-foundations-glow: var(--admin-primitive-extra-f97316-55);
+  --admin-component-course-cover-glow-end: var(--admin-primitive-extra-0a0a0d);
+  --admin-component-course-cover-overlay: var(--admin-primitive-extra-ffffff-7);
+  --admin-component-course-cover-playbook-accent: var(--admin-primitive-extra-0ea5e9);
+  --admin-component-course-cover-playbook-glow: var(--admin-primitive-extra-0ea5e9-55);
+  --admin-component-course-cover-psychology-accent: var(--admin-primitive-extra-8b5cf6);
+  --admin-component-course-cover-psychology-glow: var(--admin-primitive-extra-8b5cf6-55);
+  --admin-component-course-cover-risk-lab-accent: var(--admin-primitive-extra-e11d48);
+  --admin-component-course-cover-risk-lab-glow: var(--admin-primitive-extra-e11d48-55);
+  --admin-component-course-cover-subtitle: var(--admin-primitive-extra-ffffff-70);
+  --admin-component-docs-section-bg: var(--admin-primitive-extra-444444);
+  --admin-component-docs-section-border: var(--admin-primitive-extra-ffffff-10);
+  --admin-component-file-icon-doc: var(--admin-primitive-blue-600);
+  --admin-component-file-icon-fold: var(--admin-primitive-extra-ffffff-20);
+  --admin-component-file-icon-label: var(--admin-color-text-on-accent);
+  --admin-component-file-icon-label-other: var(--admin-color-text-secondary);
+  --admin-component-file-icon-media: var(--admin-color-accent-default);
+  --admin-component-file-icon-other: var(--admin-primitive-extra-ffffff-16);
+  --admin-component-file-icon-pdf: var(--admin-primitive-red-600);
+  --admin-component-file-icon-sheet: var(--admin-primitive-green-700);
+  --admin-component-file-item-border: var(--admin-color-border-subtle);
+  --admin-component-file-item-meta-danger: var(--admin-color-status-danger);
+  --admin-component-file-item-meta-default: var(--admin-color-text-tertiary);
+  --admin-component-file-item-meta-success: var(--admin-color-status-success);
+  --admin-component-lesson-card-thumb-stop-1: var(--admin-primitive-extra-2a1a10);
+  --admin-component-lesson-card-thumb-stop-2: var(--admin-primitive-extra-121212);
+  --admin-component-nav-indicator: var(--admin-primitive-orange-500);
+  --admin-component-progress-item-title: var(--admin-color-text-primary);
+  --admin-component-progress-item-value-danger: var(--admin-color-status-danger-fill);
+  --admin-component-progress-item-value-default: var(--admin-color-text-secondary);
+  --admin-component-progress-item-value-success: var(--admin-color-status-success-fill);
+  --admin-component-sortable-row-bg-active: var(--admin-color-bg-muted);
+  --admin-component-sortable-row-bg-dragging: var(--admin-color-bg-selected);
+  --admin-component-sortable-row-bg-hover: var(--admin-color-bg-hover);
+  --admin-component-sortable-row-border-active: var(--admin-color-border-active);
+  --admin-component-step-indicator-error-bg: var(--admin-color-status-danger-fill);
+  --admin-component-step-indicator-error-content: var(--admin-color-text-on-accent);
+  --admin-component-step-indicator-success-bg: var(--admin-color-status-success-fill);
+  --admin-component-step-indicator-success-content: var(--admin-color-text-on-accent);
+  --admin-component-step-indicator-warning-bg: var(--admin-color-status-warning-fill);
+  --admin-component-step-indicator-warning-content: var(--admin-color-text-on-highlight);
+  --admin-component-tab-dot: var(--admin-color-status-warning-fill);
+}
+
+/* Tailwind mapping: short names (bg-a-panel, text-a-text-2, border-a-border, rounded-a-md…) for the Admin v2 tokens. */
+@theme inline {
+  --color-a-page: var(--admin-color-bg-page);
+  --color-a-panel: var(--admin-color-bg-panel);
+  --color-a-raised: var(--admin-color-bg-raised);
+  --color-a-sunk: var(--admin-color-bg-sunk);
+  --color-a-field: var(--admin-color-bg-field);
+  --color-a-hover: var(--admin-color-bg-hover);
+  --color-a-muted: var(--admin-color-bg-muted);
+  --color-a-selected: var(--admin-color-bg-selected);
+  --color-a-subtle: var(--admin-color-bg-subtle);
+  --color-a-track: var(--admin-color-bg-track);
+  --color-a-scrim: var(--admin-color-bg-scrim);
+  --color-a-border: var(--admin-color-border-default);
+  --color-a-border-strong: var(--admin-color-border-strong);
+  --color-a-border-subtle: var(--admin-color-border-subtle);
+  --color-a-border-danger: var(--admin-color-border-danger);
+  --color-a-border-focus: var(--admin-color-border-focus);
+  --color-a-border-active: var(--admin-color-border-active);
+  --color-a-text: var(--admin-color-text-primary);
+  --color-a-text-2: var(--admin-color-text-secondary);
+  --color-a-text-3: var(--admin-color-text-tertiary);
+  --color-a-text-nav: var(--admin-color-text-nav);
+  --color-a-text-accent: var(--admin-color-text-accent);
+  --color-a-on-accent: var(--admin-color-text-on-accent);
+  --color-a-on-highlight: var(--admin-color-text-on-highlight);
+  --color-a-accent: var(--admin-color-accent-default);
+  --color-a-accent-hover: var(--admin-color-accent-hover);
+  --color-a-accent-strong: var(--admin-color-accent-strong);
+  --color-a-accent-soft: var(--admin-color-accent-soft);
+  --color-a-icon: var(--admin-color-icon-default);
+  --color-a-icon-strong: var(--admin-color-icon-strong);
+  --color-a-icon-subtle: var(--admin-color-icon-subtle);
+  --color-a-danger: var(--admin-color-status-danger);
+  --color-a-danger-fill: var(--admin-color-status-danger-fill);
+  --color-a-danger-soft: var(--admin-color-status-danger-soft);
+  --color-a-success: var(--admin-color-status-success);
+  --color-a-success-fill: var(--admin-color-status-success-fill);
+  --color-a-success-soft: var(--admin-color-status-success-soft);
+  --color-a-warning: var(--admin-color-status-warning);
+  --color-a-warning-fill: var(--admin-color-status-warning-fill);
+  --color-a-warning-soft: var(--admin-color-status-warning-soft);
+  --color-a-info: var(--admin-color-status-info);
+  --color-a-info-fill: var(--admin-color-status-info-fill);
+  --color-a-info-soft: var(--admin-color-status-info-soft);
+  --radius-a-2xs: var(--admin-radius-2xs);
+  --radius-a-xs: var(--admin-radius-xs);
+  --radius-a-sm: var(--admin-radius-sm);
+  --radius-a-md: var(--admin-radius-md);
+  --radius-a-10: var(--admin-radius-10);
+  --radius-a-lg: var(--admin-radius-lg);
+  --radius-a-xl: var(--admin-radius-xl);
+  --font-a-sans: var(--admin-font-family-primary);
+  --font-a-mono: var(--admin-font-family-mono);
+}
+
+/* Admin text styles (Figma text styles Admin/*). Use these classes, never ad-hoc text-[13px]. */
+@utility t-display { font: 400 40px/1 var(--admin-font-family-primary); letter-spacing: -0.045em; }
+@utility t-title-l { font: 400 32px/1 var(--admin-font-family-primary); letter-spacing: -0.045em; }
+@utility t-title { font: 400 28px/1 var(--admin-font-family-primary); letter-spacing: -0.045em; }
+@utility t-heading-xl { font: 400 24px/28px var(--admin-font-family-primary); letter-spacing: -0.03em; }
+@utility t-heading-l { font: 400 22px/24px var(--admin-font-family-primary); letter-spacing: -0.03em; }
+@utility t-heading-m { font: 400 18px/24px var(--admin-font-family-primary); letter-spacing: -0.01em; }
+@utility t-heading-s { font: 400 16px/22px var(--admin-font-family-primary); letter-spacing: -0.01em; }
+@utility t-data-m { font: 400 20px/24px var(--admin-font-family-primary); letter-spacing: -0.02em; }
+@utility t-data-m-medium { font: 500 20px/24px var(--admin-font-family-primary); letter-spacing: -0.02em; }
+@utility t-data-s { font: 400 18px/22px var(--admin-font-family-primary); letter-spacing: -0.01em; }
+@utility t-body-xl { font: 400 16px/22px var(--admin-font-family-primary); letter-spacing: -0.01em; }
+@utility t-body-l { font: 400 14px/20px var(--admin-font-family-primary); letter-spacing: -0.01em; }
+@utility t-body-l-medium { font: 500 14px/20px var(--admin-font-family-primary); letter-spacing: -0.01em; }
+@utility t-body-m { font: 400 13px/18px var(--admin-font-family-primary); }
+@utility t-body-m-medium { font: 500 13px/18px var(--admin-font-family-primary); }
+@utility t-caption { font: 400 12px/16px var(--admin-font-family-primary); }
+@utility t-caption-medium { font: 500 12px/16px var(--admin-font-family-primary); }
+@utility t-micro { font: 400 11px/14px var(--admin-font-family-primary); }
+@utility t-micro-medium { font: 500 11px/14px var(--admin-font-family-primary); }
+@utility t-mono-label { font: 400 11px/14px var(--admin-font-family-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+@utility t-mono-label-s { font: 400 10px/12px var(--admin-font-family-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+@utility t-mono-data { font: 400 12px/16px var(--admin-font-family-mono); }
+@utility t-mono-meta { font: 400 10px/12px var(--admin-font-family-mono); letter-spacing: 0.02em; }

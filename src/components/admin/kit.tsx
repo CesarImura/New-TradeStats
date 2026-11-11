@@ -7,33 +7,37 @@ import { setStored, useStored } from "@/lib/prototype-store"
 import { SelectOptions } from "@/components/kit/select-field"
 import { ControlLabel } from "@/components/kit/control-label"
 import { cn } from "@/lib/utils"
+import { AdminPageHeader } from "@/components/admin/ui"
 
-/** Title row of an admin page: title, one plain sentence, the page's actions, and its video guide. */
+/** Title row of an admin page (Admin / Page header): title, one plain sentence, the page's actions, and its video guide. */
 export function PageHeader({ title, text, actions, guide }: { title: string; text?: React.ReactNode; actions?: React.ReactNode; guide?: string }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3">
-      <div className="grid gap-1">
-        <h1 className="text-[1.75rem] leading-9 font-semibold tracking-[-0.02em]">{title}</h1>
-        {text && <p className="max-w-2xl text-sm text-muted-foreground">{text}</p>}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {guide && (
-          <button
-            onClick={() => toast(`Video guide · ${guide}`, { description: "Plays here in the real product. It ends with the offer to let us set it up." })}
-            className="flex h-7 items-center gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <PlayCircle className="size-3.5" /> {guide}
-          </button>
-        )}
-        {actions}
-      </div>
-    </div>
+    <AdminPageHeader
+      title={title}
+      subtitle={text}
+      actions={
+        (guide || actions) && (
+          <>
+            {guide && (
+              <button
+                onClick={() => toast(`Video guide · ${guide}`, { description: "Plays here in the real product. It ends with the offer to let us set it up." })}
+                className="flex h-8 items-center gap-1.5 rounded-a-sm px-2 t-caption text-a-text-2 transition-colors duration-300 hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:outline-none"
+              >
+                <PlayCircle className="size-3.5" /> {guide}
+              </button>
+            )}
+            {actions}
+          </>
+        )
+      }
+    />
   )
 }
 
 /** The admin's page column. */
-export function Page({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
-  return <div className={cn("mx-auto flex w-full flex-col gap-6", wide ? "max-w-[1400px]" : "max-w-[1200px]")}>{children}</div>
+/** Admin v2 content is 1200 px wide (Figma "Stack"), capped by the shell. */
+export function Page({ children }: { children: React.ReactNode }) {
+  return <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8">{children}</div>
 }
 
 /** The admin's dropdown: the app's own (ui/select), with a native select's props and <option>s. Works in dialogs. */
@@ -47,10 +51,10 @@ export function SettingRow({ label, text, children, className }: { label: React.
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5 py-2.5", className)}>
       <div className="grid min-w-0 flex-1 basis-64 gap-0.5">
-        <span id={id} className="text-sm font-medium">
+        <span id={id} className="t-body-m-medium">
           {label}
         </span>
-        {text && <span className="text-xs text-muted-foreground">{text}</span>}
+        {text && <span className="t-caption text-a-text-2">{text}</span>}
       </div>
       <ControlLabel value={id}>
         <div className="flex shrink-0 items-center gap-2">{children}</div>
@@ -59,37 +63,15 @@ export function SettingRow({ label, text, children, className }: { label: React.
   )
 }
 
-/** Label above a control. */
-export function Field({ label, hint, children, className }: { label: string; hint?: React.ReactNode; children: React.ReactNode; className?: string }) {
-  return (
-    <label className={cn("grid gap-1", className)}>
-      <span className="flex items-baseline justify-between gap-3 text-xs font-medium text-muted-foreground">
-        {label}
-        {hint && <span className="text-xs font-normal text-muted-foreground">{hint}</span>}
-      </span>
-      {children}
-    </label>
-  )
-}
-
-export function Empty({ icon: Icon, title, text, action }: { icon: React.ComponentType<{ className?: string }>; title: string; text?: string; action?: React.ReactNode }) {
-  return (
-    <div className="grid place-items-center gap-2 rounded-lg border border-dashed px-6 py-12 text-center">
-      <Icon className="size-7 text-muted-foreground" />
-      <p className="font-medium">{title}</p>
-      {text && <p className="max-w-sm text-sm text-muted-foreground">{text}</p>}
-      {action && <div className="mt-2">{action}</div>}
-    </div>
-  )
-}
+export { AdminField as Field, EmptyState } from "@/components/admin/ui"
 
 /** Small mono label in our own TradeStats style. */
 export function Mono({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <span className={cn("font-[family-name:var(--coach-font-label)] text-[0.6875rem] tracking-[0.06em] uppercase", className)}>{children}</span>
+  return <span className={cn("t-mono-label", className)}>{children}</span>
 }
 
 export function HealthDot({ health, className }: { health: "red" | "amber" | "green"; className?: string }) {
-  return <span className={cn("inline-block size-2 shrink-0 rounded-full", health === "red" ? "bg-red-500" : health === "amber" ? "bg-amber-400" : "bg-emerald-500", className)} />
+  return <span className={cn("inline-block size-2 shrink-0 rounded-full", health === "red" ? "bg-a-danger-fill" : health === "amber" ? "bg-a-warning-fill" : "bg-a-success-fill", className)} />
 }
 
 /**

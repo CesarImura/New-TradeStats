@@ -1,22 +1,19 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { ChartCandlestick, Check, Inbox, Mic, Plus, Send, Sparkles, Square, Trash2, Video, X } from "@/components/icons"
+import { useEffect, useState } from "react"
+import { Check, ExternalLink, MoreHorizontal, Plus, Settings, X } from "@/components/icons"
 import { toast } from "sonner"
-import { TradeChart } from "@/components/charts/trade-chart"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { addFeedback, allTrades, useFeedback } from "@/lib/data/feedback"
+import { allTrades, useFeedback } from "@/lib/data/feedback"
 import { STUDENTS, tierFor } from "@/lib/data/people"
-import { STRATEGIES, TAGS, fmtPnl, fmtR } from "@/lib/data/trades"
+import { STRATEGIES, TAGS, fmtR } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
-import { Empty, Mono, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
+import { PageHeader, useCommunityData } from "../kit"
+import { AdminButton, AdminField, AdminFilter, AdminModal, AdminSearch, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, CellPerson, EmptyState, Panel, StatPanel, Tag, adminControl } from "../ui"
+import { AnswerPage } from "./journal-answer"
 
 /** Who sent which sample trade. In the prototype every student shares the same sample journal. */
 const OWNER: Record<string, string> = { t1: "s2", t2: "s5", t3: "s4", t4: "s1", t5: "s6", t6: "s7", t7: "s1" }
@@ -24,394 +21,396 @@ const AI_DRAFT: Record<string, string> = {
   t1: "The stop under the range low was fine. The problem is the entry: you bought 30 points above the range after the first push, so the stop had to be wide and the size small. Wait for the retest of the range high, or skip it.",
   t4: "Good read and a clean entry. Closing early before CPI talk is a valid reason, but then write it down as a rule before the trade, not during it. Next time: half off at 1R, rest to target.",
 }
+type Trades = ReturnType<typeof allTrades>
 
-/** ADM-05 feedback requests, ADM-06 give feedback, ADM-16 journal rules. */
+/** Journal & feedback (Figma 525:7152, 01 to 07): requests, answered, the rules of the journal, and the answer page. */
 export function JournalAdmin() {
   const { coach } = useCoach()
   const store = useFeedback(coach.slug)
   const trades = allTrades(store)
   const waiting = trades.filter((t) => t.review === "waiting").sort((a, b) => a.id.localeCompare(b.id))
   const answered = trades.filter((t) => t.review === "answered")
-  const [tab, setTab] = useState("requests")
+  const [tab, setTab] = useState<"requests" | "answered" | "rules">("requests")
+  const [q, setQ] = useState("")
+  const [tier, setTier] = useState("all")
+  const [sort, setSort] = useState("oldest")
+  const [kind, setKind] = useState("all")
+  const [since, setSince] = useState("30")
   const [openId, setOpenId] = useState<string | null>(null)
-  const open = trades.find((t) => t.id === openId) ?? waiting[0] ?? null
+  const open = trades.find((t) => t.id === openId) ?? null
 
+  // Opening a request is a page of its own: the browser's Back (and Esc) bring the list back, so the answer page needs no back button of its own.
+  const show = (id: string | null) => {
+    if (id) window.history.pushState({ journal: id }, "", `${window.location.pathname}?request=${id}`)
+    else if (new URLSearchParams(window.location.search).has("request")) window.history.back()
+    setOpenId(id)
+  }
+  useEffect(() => {
+    const sync = () => setOpenId(new URLSearchParams(window.location.search).get("request"))
+    sync()
+    window.addEventListener("popstate", sync)
+    return () => window.removeEventListener("popstate", sync)
+  }, [])
+  useEffect(() => {
+    if (!openId) return
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && !document.querySelector("[role=dialog]") && show(null)
+    window.addEventListener("keydown", esc)
+    return () => window.removeEventListener("keydown", esc)
+  })
+
+  if (open) {
+    const queue = trades.filter((x) => x.review === "waiting" && x.id !== open.id)
+    const go = () => (queue[0] ? setOpenId(queue[0].id) : show(null))
+    return <AnswerPage key={open.id} trade={open} student={STUDENTS.find((x) => x.id === OWNER[open.id])!} aiDraft={AI_DRAFT[open.id] ?? "Solid execution. The entry matched the setup; the exit came early. Write down what made you close."} readOnly={open.review !== "waiting"} hasNext={queue.length > 0} onBack={() => show(null)} onNext={go} onSkip={go} />
+  }
+
+  const searchLabel = tab === "answered" ? "Search answers" : "Search requests"
   return (
-    <Page wide>
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
       <PageHeader
         title="Journal & feedback"
-        text={`Trades your ${coach.wording.students.toLowerCase()} want you to look at, oldest first, and the rules their journal checks.`}
-        guide="Giving feedback · 2 min"
+        text="Journal, rules and feedback requests · 312 entries in the last 30 days"
+        actions={
+          tab === "rules" ? (
+            <AdminButton hierarchy="secondary" nativeButton={false} render={<a href={`/c/${coach.slug}/journal`} target="_blank" rel="noreferrer" />}>
+              <ExternalLink /> Preview as student
+            </AdminButton>
+          ) : (
+            <AdminButton hierarchy="secondary" onClick={() => setTab("rules")}>
+              <Settings /> Journal rules
+            </AdminButton>
+          )
+        }
       />
-      <Tabs value={tab} onValueChange={setTab} className="gap-5">
-        <TabsList>
-          <TabsTrigger value="requests">
-            Waiting for you <span className="text-muted-foreground tabular-nums">{waiting.length}</span>
-          </TabsTrigger>
-          <TabsTrigger value="answered">
-            Answered <span className="text-muted-foreground tabular-nums">{answered.length}</span>
-          </TabsTrigger>
-          <TabsTrigger value="rules">Journal rules</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="requests">
-          {waiting.length === 0 ? (
-            <Empty icon={Inbox} title="Nothing waiting" text={`When a ${coach.wording.student.toLowerCase()} presses “Please review” on a trade, it lands here.`} />
-          ) : (
-            <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-              <RequestList trades={waiting} active={open?.id} onPick={setOpenId} />
-              {open && open.review === "waiting" && <Review key={open.id} trade={open} onDone={() => setOpenId(null)} />}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="answered">
-          <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-            <RequestList trades={answered} active={openId ?? answered[0]?.id} onPick={setOpenId} />
-            {(() => {
-              const t = answered.find((x) => x.id === openId) ?? answered[0]
-              return t ? <Review key={t.id} trade={t} readOnly /> : null
-            })()}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="rules">
-          <JournalRules />
-        </TabsContent>
-      </Tabs>
-    </Page>
-  )
-}
-
-function RequestList({ trades, active, onPick }: { trades: ReturnType<typeof allTrades>; active?: string; onPick: (id: string) => void }) {
-  const { coach } = useCoach()
-  return (
-    <div className="grid content-start gap-2">
-      {trades.map((t) => {
-        const s = STUDENTS.find((x) => x.id === OWNER[t.id])!
-        const ask = t.thread.find((m) => m.from === "student")
-        return (
-          <button
-            key={t.id}
-            onClick={() => onPick(t.id)}
-            className={cn("grid gap-2 rounded-lg border bg-card p-3 text-left hover:border-white/20", active === t.id && "border-[var(--ts-interactive)] hover:border-[var(--ts-interactive)]")}
-          >
-            <span className="flex items-center gap-2">
-              <Avatar className="size-6">
-                <AvatarFallback className="text-[0.6875rem]">{s.initials}</AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium">{s.name}</span>
-              <span className="ml-auto text-xs text-muted-foreground">{ask?.when}</span>
-            </span>
-            <span className="flex items-center gap-2 text-sm">
-              <Badge variant="secondary" className="font-mono">
-                {t.symbol} {t.side}
-              </Badge>
-              <span className={cn("tabular-nums", t.r >= 0 ? "text-[var(--profit)]" : "text-[var(--loss)]")}>{fmtR(t.r)}</span>
-              <span className="truncate text-xs text-muted-foreground">{tierFor(coach, s.tier).name}</span>
-            </span>
-            {ask && <span className="line-clamp-2 text-sm text-muted-foreground">“{ask.text}”</span>}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-/** ADM-06 · Look at the trade on TradingView, answer with text, voice, video or a TradingView snapshot, mark done. */
-function Review({ trade: t, onDone, readOnly }: { trade: ReturnType<typeof allTrades>[number]; onDone?: () => void; readOnly?: boolean }) {
-  const { coach } = useCoach()
-  const s = STUDENTS.find((x) => x.id === OWNER[t.id])!
-  const [text, setText] = useState("")
-  const [snapshot, setSnapshot] = useState<string | null>(null)
-  const [recording, setRecording] = useState<null | "voice" | "video">(null)
-  const [secs, setSecs] = useState(0)
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  useEffect(() => () => {
-    if (timer.current) clearInterval(timer.current)
-  }, [])
-
-  const record = (kind: "voice" | "video") => {
-    if (recording) {
-      if (timer.current) clearInterval(timer.current)
-      addFeedback(coach.slug, t.id, { add: { from: "coach", kind: recording, text: `${recording === "voice" ? "Voice note" : "Video"} · 0:${String(Math.max(secs, 3)).padStart(2, "0")}`, when: "just now" } })
-      setRecording(null)
-      setSecs(0)
-      return
-    }
-    setRecording(kind)
-    timer.current = setInterval(() => setSecs((x) => x + 1), 1000)
-  }
-
-  const send = () => {
-    if (!text.trim()) return
-    addFeedback(coach.slug, t.id, { add: { from: "coach", kind: "text", text: text.trim(), when: "just now" } })
-    setText("")
-  }
-
-  return (
-    <div className="grid min-w-0 content-start gap-4 rounded-lg border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="grid gap-1">
-          <span className="flex items-center gap-2 text-sm text-muted-foreground">
-            {s.name} · {t.account} · {t.date} {t.time}
-          </span>
-          <span className="flex flex-wrap items-baseline gap-x-3 text-xl">
-            {t.symbol} {t.side}
-            <span className={cn("tabular-nums", t.r >= 0 ? "text-[var(--profit)]" : "text-[var(--loss)]")}>
-              {fmtR(t.r)} · {fmtPnl(t.pnl)}
-            </span>
-          </span>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-lg border bg-background">
-        <TradeChart trade={t} dark background="#0a0a0a" />
-      </div>
-      {!readOnly && <p className="-mt-2 text-xs text-muted-foreground">Mark it up with TradingView&apos;s drawing tools on the left, then share a snapshot with “TradingView snapshot” below.</p>}
-
-      <div className="grid gap-2 text-sm">
-        <div className="flex flex-wrap gap-1.5">
-          <Badge variant="outline">{t.setup}</Badge>
-          {t.tags.map((g) => (
-            <Badge key={g} variant="secondary">
-              {g}
-            </Badge>
-          ))}
-          {t.rulesBroken.map((r) => (
-            <Badge key={r} variant="destructive">
-              Broke: {r}
-            </Badge>
-          ))}
-        </div>
-        {t.note && <p className="text-muted-foreground">Note: “{t.note}”</p>}
-      </div>
-
-      <div className="grid gap-3 border-t pt-4">
-        {t.thread.map((m, i) => (
-          <div key={i} className={cn("flex gap-2.5", m.from === "coach" && "flex-row-reverse")}>
-            <Avatar className="size-7">
-              <AvatarFallback className="text-[0.6875rem]">{m.from === "coach" ? coach.mark : s.initials}</AvatarFallback>
-            </Avatar>
-            <div className={cn("grid max-w-[80%] gap-1 rounded-lg px-3 py-2 text-sm", m.from === "coach" ? "bg-[var(--ts-cta)]/10" : "bg-muted")}>
-              {m.kind === "text" ? (
-                <p>{m.text}</p>
-              ) : m.kind === "chart" ? (
-                <a href={m.link} target="_blank" rel="noreferrer" className="flex items-center gap-2 underline underline-offset-4">
-                  <ChartCandlestick className="size-4" /> {m.text}
-                </a>
-              ) : (
-                <span className="flex items-center gap-2">
-                  {m.kind === "voice" ? <Mic className="size-4" /> : <Video className="size-4" />} {m.text}
-                  <span className="flex h-4 items-end gap-0.5" aria-hidden>
-                    {[3, 7, 5, 9, 4, 8, 6, 3, 7, 5].map((h, j) => (
-                      <span key={j} className="w-0.5 bg-current opacity-60" style={{ height: `${h * 10}%` }} />
-                    ))}
-                  </span>
-                </span>
-              )}
-              <span className="text-[0.6875rem] text-muted-foreground">{m.when}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {!readOnly && (
-        <div className="grid gap-2">
-          {recording ? (
-            <div className="flex items-center gap-3 rounded-lg border border-[var(--ts-interactive)]/40 bg-[var(--ts-interactive)]/8 px-3 py-3 text-sm">
-              <span className="size-2 animate-pulse rounded-full bg-[var(--ts-interactive)]" />
-              Recording {recording === "voice" ? "a voice note" : "your screen and camera"} · 0:{String(secs).padStart(2, "0")}
-              <Button size="sm" className="ml-auto" onClick={() => record(recording)}>
-                <Square /> Stop and send
-              </Button>
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                aria-label="Cancel recording"
-                onClick={() => {
-                  if (timer.current) clearInterval(timer.current)
-                  setRecording(null)
-                  setSecs(0)
-                }}
-              >
-                <X />
-              </Button>
-            </div>
-          ) : snapshot !== null ? (
-            <form
-              className="flex gap-2"
-              onSubmit={(e) => {
-                e.preventDefault()
-                addFeedback(coach.slug, t.id, { add: { from: "coach", kind: "chart", text: `Marked-up chart · ${t.symbol}`, link: snapshot || "https://www.tradingview.com/x/", when: "just now" } })
-                setSnapshot(null)
-              }}
-            >
-              <Input autoFocus value={snapshot} onChange={(e) => setSnapshot(e.target.value)} placeholder="https://www.tradingview.com/x/…" aria-label="TradingView snapshot link" />
-              <Button type="submit" size="sm">
-                Share
-              </Button>
-            </form>
-          ) : (
-            <Textarea rows={3} aria-label="Your answer" value={text} onChange={(e) => setText(e.target.value)} placeholder={`Answer ${s.name.split(" ")[0]}…`} />
-          )}
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setText(AI_DRAFT[t.id] ?? "Solid execution. The entry matched the setup; the exit came early. Write down what made you close.")}>
-              <Sparkles /> AI first draft
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => record("voice")} disabled={!!recording}>
-              <Mic /> Voice note
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => record("video")} disabled={!!recording}>
-              <Video /> Short video
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setSnapshot(snapshot === null ? "" : null)} disabled={!!recording}>
-              <ChartCandlestick /> TradingView snapshot
-            </Button>
-            <div className="ml-auto flex gap-2">
-              <Button variant="outline" size="sm" disabled={!text.trim()} onClick={send}>
-                <Send /> Send
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  if (text.trim()) send()
-                  addFeedback(coach.slug, t.id, { done: true })
-                  toast(`Feedback sent to ${s.name}`, { description: "They get a notification and an e-mail." })
-                  onDone?.()
-                }}
-              >
-                <Check /> {text.trim() ? "Send and mark done" : "Mark done"}
-              </Button>
-            </div>
-          </div>
-        </div>
+      {tab !== "rules" && (
+        <StatPanel
+          stats={[
+            { label: "Waiting for you", value: waiting.length, delta: waiting.length ? "Oldest 2 days" : "All caught up", tone: waiting.length ? "neutral" : "success" },
+            { label: "Answered this week", value: answered.length, delta: "Median reply 6 h" },
+            { label: "Rules kept", value: "84%", delta: "+3 pp vs last 30 days", tone: "success" },
+            { label: "Journaling students", value: 121, delta: "60% of active students" },
+          ]}
+        />
       )}
+      <AdminToolbar>
+        <AdminTabs label="Journal" value={tab} onChange={setTab} tabs={[{ id: "requests", label: "Requests", count: waiting.length }, { id: "answered", label: "Answered", count: answered.length }, { id: "rules", label: "Rules" }]} />
+        {tab !== "rules" && (waiting.length > 0 || tab === "answered") && (
+          <>
+            <div className="flex-1" />
+            <AdminSearch value={q} onChange={setQ} placeholder={searchLabel} hint="⌘K" />
+            {tab === "requests" ? (
+              <>
+                <AdminFilter label="Tier" ariaLabel="Tier" value={tier} onValueChange={setTier} options={[{ value: "all", label: "All tiers" }, ...coach.tiers.map((t) => ({ value: t.id, label: t.name }))]} />
+                <AdminFilter label="Sort" ariaLabel="Sort" value={sort} onValueChange={setSort} options={[{ value: "oldest", label: "Oldest first" }, { value: "newest", label: "Newest first" }]} />
+              </>
+            ) : (
+              <>
+                <AdminFilter label="Type" ariaLabel="Type" value={kind} onValueChange={setKind} options={[{ value: "all", label: "All types" }, { value: "text", label: "Text" }, { value: "voice", label: "Voice note" }, { value: "video", label: "Video" }, { value: "chart", label: "Screenshot" }]} />
+                <AdminFilter ariaLabel="Period" value={since} onValueChange={setSince} options={[{ value: "7", label: "Last 7 days" }, { value: "30", label: "Last 30 days" }, { value: "all", label: "All time" }]} />
+              </>
+            )}
+          </>
+        )}
+      </AdminToolbar>
+
+      {tab === "requests" &&
+        (waiting.length === 0 ? (
+          <EmptyState
+            icon={Check}
+            title="Nothing waiting"
+            description="New feedback requests show up here. Students get a notification and an e-mail when you answer."
+            actions={
+              <>
+                <AdminButton hierarchy="secondary" onClick={() => setTab("answered")}>See answered</AdminButton>
+                <AdminButton hierarchy="ghost" onClick={() => setTab("rules")}>Journal rules</AdminButton>
+              </>
+            }
+          />
+        ) : (
+          <RequestsTable trades={waiting} onOpen={show} q={q} tier={tier} sort={sort} />
+        ))}
+      {tab === "answered" && (answered.length === 0 ? <EmptyState icon={Check} title="Nothing answered yet" description="Feedback you send shows up here." /> : <AnsweredTable trades={answered} onOpen={show} q={q} kind={kind} since={since} />)}
+      {tab === "rules" && <JournalRules />}
     </div>
   )
 }
 
-type Rules = { strategies: typeof STRATEGIES; required: Record<string, boolean>; tags: string[]; tiers: Record<string, boolean> }
+const ownerOf = (id: string) => STUDENTS.find((x) => x.id === OWNER[id])!
+
+/** Figma 525:7153: who, what they asked, the trade, the rules, how long it has waited. */
+function RequestsTable({ trades, onOpen, q, tier, sort }: { trades: Trades; onOpen: (id: string) => void; q: string; tier: string; sort: string }) {
+  const { coach } = useCoach()
+  const rows = trades
+    .map((t) => ({ t, s: ownerOf(t.id), ask: t.thread.find((m) => m.from === "student") }))
+    .filter(({ s, ask }) => (tier === "all" || s.tier === tier) && `${s.name} ${ask?.text ?? ""}`.toLowerCase().includes(q.toLowerCase()))
+  if (sort === "newest") rows.reverse()
+  if (rows.length === 0) return <EmptyState icon={Check} title="No requests match" description="Clear the search or the filters." />
+  return (
+    <AdminTable minWidth={1000} footer={<AdminTableFooter>{rows.length} {rows.length === 1 ? "request" : "requests"} · students get a notification and an e-mail when you answer</AdminTableFooter>}>
+      <AdminTableHead>
+        <AdminTh>Student</AdminTh>
+        <AdminTh width={284}>Question</AdminTh>
+        <AdminTh width={216}>Trade</AdminTh>
+        <AdminTh width={186}>Rules</AdminTh>
+        <AdminTh width={106} align="end">Waiting</AdminTh>
+        <AdminTh width={106} />
+      </AdminTableHead>
+      <tbody>
+        {rows.map(({ t, s, ask }) => (
+          <AdminTr key={t.id}>
+            <AdminTd><CellPerson initials={s.initials} name={s.name} subtitle={tierFor(coach, s.tier).name} /></AdminTd>
+            <AdminTd className="truncate text-a-text">{ask ? `“${ask.text}”` : "—"}</AdminTd>
+            <AdminTd className="whitespace-nowrap">
+              <span className="text-a-text">{t.symbol} · {t.side} · </span>
+              <span className={cn("tabular-nums", t.r > 0 ? "text-a-success" : t.r < 0 ? "text-a-danger" : "text-a-text")}>{fmtR(t.r)}</span>
+            </AdminTd>
+            <AdminTd>{t.rulesBroken.length ? <Tag tone="danger" dot className="max-w-full"><span className="truncate">Broke {t.rulesBroken[0]}</span></Tag> : t.r >= 0 ? <Tag tone="success" dot>All rules kept</Tag> : <span className="text-a-text-3">—</span>}</AdminTd>
+            <AdminTd align="end" className="whitespace-nowrap">{ask?.when}</AdminTd>
+            <AdminTd align="end"><AdminButton hierarchy="secondary" size="md" onClick={() => onOpen(t.id)}>Answer</AdminButton></AdminTd>
+          </AdminTr>
+        ))}
+      </tbody>
+    </AdminTable>
+  )
+}
+
+/** Figma 525:7839: what you answered, in which form, and whether the student has seen it. */
+function AnsweredTable({ trades, onOpen, q, kind, since }: { trades: Trades; onOpen: (id: string) => void; q: string; kind: string; since: string }) {
+  const { coach } = useCoach()
+  const days = (when?: string) => (!when || when === "today" || when === "just now" ? 0 : when === "yesterday" ? 1 : Number.parseInt(when) || 0)
+  const rows = trades
+    .map((t) => {
+      const ask = t.thread.find((m) => m.from === "student")
+      const reply = [...t.thread].reverse().find((m) => m.from === "coach")
+      return { t, s: ownerOf(t.id), ask, reply, seen: Number(t.id.slice(1)) % 3 !== 0 }
+    })
+    .filter(({ s, ask, reply }) => `${s.name} ${ask?.text ?? ""}`.toLowerCase().includes(q.toLowerCase()) && (kind === "all" || reply?.kind === kind) && (since === "all" || days(reply?.when) <= Number(since)))
+  if (rows.length === 0) return <EmptyState icon={Check} title="No answers match" description="Clear the search or the filters." />
+  return (
+    <AdminTable minWidth={960} footer={<AdminTableFooter>{rows.length} {rows.length === 1 ? "answer" : "answers"} · median reply 6 h</AdminTableFooter>}>
+      <AdminTableHead>
+        <AdminTh>Student</AdminTh>
+        <AdminTh width={284}>Question</AdminTh>
+        <AdminTh width={216}>Your answer</AdminTh>
+        <AdminTh width={186}>Status</AdminTh>
+        <AdminTh width={106} align="end">Sent</AdminTh>
+        <AdminTh width={56} />
+      </AdminTableHead>
+      <tbody>
+        {rows.map(({ t, s, ask, reply, seen }) => (
+          <AdminTr key={t.id} onClick={() => onOpen(t.id)}>
+            <AdminTd><CellPerson initials={s.initials} name={s.name} subtitle={tierFor(coach, s.tier).name} /></AdminTd>
+            <AdminTd className="truncate text-a-text">{ask ? `“${ask.text}”` : "—"}</AdminTd>
+            <AdminTd className="truncate text-a-text">{reply ? (reply.kind === "text" ? "Text" : reply.kind === "chart" ? "Screenshot + text" : reply.text) : "—"}</AdminTd>
+            <AdminTd><Tag tone={seen ? "success" : "neutral"} dot>{seen ? "Seen" : "Not seen yet"}</Tag></AdminTd>
+            <AdminTd align="end" className="whitespace-nowrap">{reply?.when ?? "—"}</AdminTd>
+            <AdminTd align="end" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Actions for ${s.name}`} />}><MoreHorizontal /></DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onOpen(t.id)}>Open answer</DropdownMenuItem>
+                  {!seen && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => toast(`Reminder sent to ${s.name}`, { description: "They get a notification." })}>Send a reminder</DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </AdminTd>
+          </AdminTr>
+        ))}
+      </tbody>
+    </AdminTable>
+  )
+}
+
+/* ---------- 05 Rules and 06 New strategy ---------- */
+
+type Strategy = (typeof STRATEGIES)[number] & { audience?: string[] }
+type Rules = { strategies: Strategy[]; required: Record<string, boolean>; tags: string[]; tiers: Record<string, boolean> }
 const DEFAULT_RULES: Rules = {
   strategies: STRATEGIES,
-  required: { setup: true, stop: true, screenshot: false, note: false, emotion: false },
+  required: { setup: true, stop: true, screenshot: false, note: false, emotion: true },
   tags: TAGS,
   tiers: {},
 }
 const REQUIRED = [
   { id: "setup", label: "Setup", text: "Which strategy the trade was" },
   { id: "stop", label: "Stop and target", text: "Planned before the trade" },
-  { id: "note", label: "A note", text: "One line on why" },
   { id: "emotion", label: "How they felt", text: "Calm, rushed, angry, bored" },
-  { id: "screenshot", label: "Screenshot", text: "Only for trades without a broker sync" },
+  { id: "screenshot", label: "Screenshot", text: "TradingView snapshot link" },
+  { id: "note", label: "A note", text: "One line on why" },
 ]
+const kept = (id: string) => 70 + ([...id].reduce((n, c) => n + c.charCodeAt(0), 0) % 25)
 
-/** ADM-16 · Strategies with their rules, required fields and tags, per tier. */
 function JournalRules() {
   const { coach } = useCoach()
   const [r, setR] = useCommunityData(coach.slug, "journal-rules", DEFAULT_RULES)
-  const [newTag, setNewTag] = useState("")
-  const editStrategy = (i: number, patch: Partial<Rules["strategies"][number]>) => setR((x) => ({ ...x, strategies: x.strategies.map((s, j) => (j === i ? { ...s, ...patch } : s)) }))
+  const [editing, setEditing] = useState<Strategy | "new" | null>(null)
+  const [newTag, setNewTag] = useState<string | null>(null)
+  const on = (id: string) => r.tiers[id] !== false
+  const paid = coach.tiers.filter((t) => t.price !== "€0")
+  const all = coach.tiers.every((t) => on(t.id))
+  const paidOnly = !all && paid.every((t) => on(t.id)) && coach.tiers.filter((t) => t.price === "€0").every((t) => !on(t.id))
+  const [pick, setPick] = useState(!all && !paidOnly)
+  const audience = pick ? "pick" : all ? "all" : paidOnly ? "paid" : "pick"
+  const setAudience = (v: string) => {
+    setPick(v === "pick")
+    if (v === "all") setR((x) => ({ ...x, tiers: {} }))
+    if (v === "paid") setR((x) => ({ ...x, tiers: Object.fromEntries(coach.tiers.filter((t) => t.price === "€0").map((t) => [t.id, false])) }))
+  }
+  const names = coach.tiers.filter((t) => on(t.id)).map((t) => t.name)
+  const sentence = names.length === 0 ? "Nobody has the journal." : `${names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`} ${names.length === 1 ? "students" : "students"} can journal and ask for feedback.`
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-      <div className="grid content-start gap-3">
-        <div className="flex items-center justify-between">
-          <div className="grid gap-0.5">
-            <h2 className="font-medium">Strategies and their rules</h2>
-            <p className="text-sm text-muted-foreground">Students pick one per trade. The journal shows how well each rule is kept.</p>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setR((x) => ({ ...x, strategies: [...x.strategies, { id: `s${Date.now()}`, name: "New strategy", rules: ["First rule"], trades: 0 }] }))}
-          >
-            <Plus /> Strategy
-          </Button>
-        </div>
-        {r.strategies.map((s, i) => (
-          <div key={s.id} className="grid gap-2 rounded-lg border bg-card p-3">
-            <div className="flex items-center gap-2">
-              <Input value={s.name} onChange={(e) => editStrategy(i, { name: e.target.value })} className="h-8 font-medium" aria-label="Strategy name" />
-              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{s.trades} trades</span>
-              <Button variant="ghost" size="icon-sm" aria-label={`Delete ${s.name}`} onClick={() => setR((x) => ({ ...x, strategies: x.strategies.filter((_, j) => j !== i) }))}>
-                <Trash2 />
-              </Button>
-            </div>
-            <div className="grid gap-1.5 pl-1">
-              {s.rules.map((rule, k) => (
-                <div key={k} className="flex items-center gap-2">
-                  <Mono className="w-5 text-muted-foreground">{String(k + 1).padStart(2, "0")}</Mono>
-                  <Input
-                    value={rule}
-                    onChange={(e) => editStrategy(i, { rules: s.rules.map((x, j) => (j === k ? e.target.value : x)) })}
-                    className="h-7 text-sm"
-                    aria-label={`Rule ${k + 1}`}
-                  />
-                  <Button variant="ghost" size="icon-xs" aria-label="Remove rule" onClick={() => editStrategy(i, { rules: s.rules.filter((_, j) => j !== k) })}>
-                    <X />
-                  </Button>
-                </div>
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-2">
+      <div className="flex min-w-0 flex-col gap-4">
+        <Panel className="gap-4">
+          <h2 className="t-heading-s text-a-text">Who gets the journal</h2>
+          <AdminSegmented label="Who gets the journal" value={audience} onChange={setAudience} options={[{ value: "all", label: "Everyone" }, { value: "paid", label: "Paid tiers" }, { value: "pick", label: "Pick tiers" }]} className="gap-1.5" />
+          {audience === "pick" && (
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {coach.tiers.map((t) => (
+                <label key={t.id} className="flex items-center gap-2 t-body-m text-a-text">
+                  <Checkbox checked={on(t.id)} onCheckedChange={(v) => setR((x) => ({ ...x, tiers: { ...x.tiers, [t.id]: !!v } }))} />
+                  {t.name}
+                </label>
               ))}
-              <button onClick={() => editStrategy(i, { rules: [...s.rules, ""] })} className="justify-self-start pl-7 text-xs text-muted-foreground hover:text-foreground">
-                + Add a rule
-              </button>
             </div>
-          </div>
-        ))}
-      </div>
+          )}
+          <p className="t-body-m text-a-text-2">{sentence}</p>
+        </Panel>
 
-      <div className="grid content-start gap-6">
-        <div className="grid gap-1">
-          <h2 className="font-medium">Required for every trade</h2>
-          <div className="divide-y rounded-lg border bg-card px-3">
-            {REQUIRED.map((f) => (
-              <SettingRow key={f.id} label={f.label} text={f.text}>
-                <Switch checked={!!r.required[f.id]} onCheckedChange={(v) => setR((x) => ({ ...x, required: { ...x.required, [f.id]: v } }))} />
-              </SettingRow>
-            ))}
-          </div>
-        </div>
+        <Panel className="gap-0 overflow-hidden p-0">
+          <h2 className="px-5 py-4 t-heading-s text-a-text">Required for every trade</h2>
+          {REQUIRED.map((f) => (
+            <label key={f.id} className="flex min-h-[60px] items-center justify-between gap-6 border-t border-a-border px-5 py-3">
+              <span className="grid gap-0.5">
+                <span className="t-body-m text-a-text">{f.label}</span>
+                <span className="t-caption text-a-text-2">{f.text}</span>
+              </span>
+              <Switch checked={!!r.required[f.id]} onCheckedChange={(v) => setR((x) => ({ ...x, required: { ...x.required, [f.id]: v } }))} />
+            </label>
+          ))}
+        </Panel>
 
-        <div className="grid gap-2">
-          <h2 className="font-medium">Tags</h2>
-          <div className="flex flex-wrap gap-1.5">
+        <Panel className="gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="t-heading-s text-a-text">Tags</h2>
+            <AdminButton hierarchy="secondary" size="md" onClick={() => setNewTag("")}><Plus /> New tag</AdminButton>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
             {r.tags.map((g) => (
-              <Badge key={g} variant="secondary" className="gap-1 pr-1">
+              <Tag key={g} className="gap-1 pr-1">
                 {g}
-                <button aria-label={`Remove ${g}`} onClick={() => setR((x) => ({ ...x, tags: x.tags.filter((y) => y !== g) }))} className="opacity-60 hover:opacity-100">
-                  <X className="size-3" />
-                </button>
-              </Badge>
+                <button type="button" aria-label={`Remove ${g}`} onClick={() => setR((x) => ({ ...x, tags: x.tags.filter((y) => y !== g) }))} className="grid size-4 place-items-center rounded-a-xs text-a-text-3 outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:size-6"><X className="size-3" /></button>
+              </Tag>
             ))}
+            {newTag !== null && (
+              <input autoFocus aria-label="New tag" value={newTag} placeholder="New tag" onChange={(e) => setNewTag(e.target.value)} onBlur={() => (newTag.trim() && !r.tags.includes(newTag.trim()) && setR((x) => ({ ...x, tags: [...x.tags, newTag.trim()] })), setNewTag(null))} onKeyDown={(e) => (e.key === "Enter" && e.currentTarget.blur()) || (e.key === "Escape" && setNewTag(null))} className="h-5 w-28 rounded-a-xs border border-a-border-focus bg-a-field px-2 t-mono-label-s text-a-text outline-none" />
+            )}
           </div>
-          <form
-            className="flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (newTag.trim()) setR((x) => ({ ...x, tags: [...x.tags, newTag.trim()] }))
-              setNewTag("")
-            }}
-          >
-            <Input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="New tag" className="h-8" />
-            <Button size="sm" variant="outline" type="submit">
-              Add
-            </Button>
-          </form>
-        </div>
+        </Panel>
+      </div>
 
-        <div className="grid gap-1">
-          <h2 className="font-medium">Who gets the journal</h2>
-          <div className="divide-y rounded-lg border bg-card px-3">
-            {coach.tiers.map((t) => (
-              <SettingRow key={t.id} label={t.name} text={r.tiers[t.id] === false ? "No journal" : "Journal, rules and feedback requests"}>
-                <Switch checked={r.tiers[t.id] !== false} onCheckedChange={(v) => setR((x) => ({ ...x, tiers: { ...x.tiers, [t.id]: v } }))} />
-              </SettingRow>
-            ))}
-          </div>
+      <Panel className="gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="t-heading-s text-a-text">Strategies and their rules</h2>
+          <AdminButton hierarchy="secondary" size="md" onClick={() => setEditing("new")}><Plus /> New strategy</AdminButton>
+        </div>
+        <p className="t-body-m text-a-text-2">Students pick one per trade. The journal shows how well each rule is kept.</p>
+        {r.strategies.length === 0 && <EmptyState compact title="No strategies yet. Add the first one." />}
+        {r.strategies.map((s) => (
+          <section key={s.id} className="grid gap-3 rounded-a-10 border border-a-border px-4 py-3.5">
+            <div className="flex items-center gap-2">
+              <h3 className="min-w-0 flex-1 truncate t-body-l text-a-text">{s.name}</h3>
+              <span className="t-caption text-a-text-2 tabular-nums">{s.trades > 0 ? `Kept ${kept(s.id)}%` : "No trades yet"}</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Actions for ${s.name}`} />}><MoreHorizontal /></DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setEditing(s)}>Edit</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onClick={() => (setR((x) => ({ ...x, strategies: x.strategies.filter((y) => y.id !== s.id) })), toast(`${s.name} deleted`))}>Delete</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <ul className="grid gap-2.5">
+              {s.rules.filter(Boolean).map((rule, k) => (
+                <li key={k} className="flex items-start gap-2.5 t-body-m text-a-text">
+                  <span aria-hidden className="mt-px grid size-4 shrink-0 place-items-center rounded-a-xs bg-a-accent text-a-on-accent"><Check className="size-3" /></span>
+                  {rule}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </Panel>
+
+      <StrategyModal strategy={editing} onClose={() => setEditing(null)} onSave={(s) => setR((x) => ({ ...x, strategies: x.strategies.some((y) => y.id === s.id) ? x.strategies.map((y) => (y.id === s.id ? s : y)) : [...x.strategies, s] }))} />
+    </div>
+  )
+}
+
+function StrategyModal({ strategy, onClose, onSave }: { strategy: Strategy | "new" | null; onClose: () => void; onSave: (s: Strategy) => void }) {
+  const { coach } = useCoach()
+  const [last, setLast] = useState<Strategy | "new" | null>(strategy)
+  const [name, setName] = useState("")
+  const [who, setWho] = useState<"all" | "tiers">("all")
+  const [tiers, setTiers] = useState<string[]>([])
+  const [rules, setRules] = useState<string[]>([""])
+  if (strategy && strategy !== last) {
+    setLast(strategy)
+    setName(strategy === "new" ? "" : strategy.name)
+    setWho(strategy !== "new" && strategy.audience?.length ? "tiers" : "all")
+    setTiers(strategy === "new" ? [] : (strategy.audience ?? []))
+    setRules(strategy === "new" ? [""] : strategy.rules.length ? strategy.rules : [""])
+  }
+  const shown = strategy ?? last
+  const isNew = shown === "new"
+  const save = () => {
+    const clean = rules.map((x) => x.trim()).filter(Boolean)
+    if (!name.trim() || !clean.length) return
+    onSave({ ...(shown && shown !== "new" ? shown : { id: `s${Date.now()}`, trades: 0 }), name: name.trim(), rules: clean, audience: who === "tiers" ? tiers : undefined })
+    toast(isNew ? "Strategy created" : "Strategy saved")
+    onClose()
+  }
+  return (
+    <AdminModal open={!!strategy} onOpenChange={(o) => !o && onClose()} title={isNew ? "New strategy" : "Edit strategy"} subtitle="Students pick it when they log a trade." className="sm:max-w-[560px]" bodyClassName="gap-5"
+      footer={
+        <div className="flex w-full items-center gap-2">
+          <AdminButton hierarchy="ghost" disabled={rules.length <= 1} onClick={() => setRules((r) => r.slice(0, -1))}>Remove rule</AdminButton>
+          <span aria-hidden className="h-px min-w-px flex-1" />
+          <AdminButton hierarchy="ghost" onClick={onClose}>Cancel</AdminButton>
+          <AdminButton disabled={!name.trim() || !rules.some((x) => x.trim())} onClick={save}>{isNew ? "Create strategy" : "Save"}</AdminButton>
+        </div>
+      }>
+      <div className="flex flex-col gap-4">
+        <AdminField label="Strategy name">
+          <input autoFocus={isNew} value={name} onChange={(e) => setName(e.target.value)} placeholder="Opening range break" className={cn(adminControl, "h-11")} />
+        </AdminField>
+        <div className="grid gap-1.5">
+          <span className="t-caption text-a-text">Who sees it</span>
+          <AdminSegmented label="Who sees it" value={who} onChange={(v) => (setWho(v), v === "tiers" && !tiers.length && setTiers(coach.tiers.slice(1).map((t) => t.id)))} options={[{ value: "all", label: "Everyone" }, { value: "tiers", label: "Pick tiers" }]} />
+          {who === "tiers" && (
+            <div className="flex flex-wrap gap-x-4 gap-y-2 pt-1">
+              {coach.tiers.map((t) => (
+                <label key={t.id} className="flex items-center gap-2 t-body-m text-a-text">
+                  <Checkbox checked={tiers.includes(t.id)} onCheckedChange={(v) => setTiers((x) => (v ? [...x, t.id] : x.filter((y) => y !== t.id)))} />
+                  {t.name}
+                </label>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-    </div>
+      <fieldset className="grid gap-2">
+        <legend className="mb-1 t-caption text-a-text">Rules</legend>
+        {rules.map((rule, i) => (
+          <input key={i} aria-label={`Rule ${i + 1}`} value={rule} placeholder={i === 0 ? "Wait for the 5-min range to close" : "Stop under the range low"} onChange={(e) => setRules((r) => r.map((x, j) => (j === i ? e.target.value : x)))} className={cn(adminControl, "h-11")} />
+        ))}
+        <AdminButton hierarchy="ghost" size="md" className="w-fit" onClick={() => setRules((r) => [...r, ""])}><Plus /> Add a rule</AdminButton>
+      </fieldset>
+    </AdminModal>
   )
 }

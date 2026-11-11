@@ -3,6 +3,7 @@
 import { useContext } from "react"
 import { addDays, addMonths, addWeeks, endOfMonth, format, isSameDay, isSameMonth, startOfMonth, startOfWeek } from "date-fns"
 import { ChevronLeft, ChevronRight } from "@/components/icons"
+import { AdminButton } from "@/components/admin/ui"
 import { Button } from "@/components/ui/button"
 import { ShellEditorContext } from "@/components/shells/student-shell"
 import { NOW, hhmm, isLiveNow, type Item, type ItemKind } from "@/lib/data/schedule"
@@ -28,6 +29,7 @@ export function CalendarSurface({
   eventStyle = "tinted",
   toolbar,
   onEmptySlot,
+  leading,
 }: {
   items: Item[]
   view: View
@@ -42,11 +44,14 @@ export function CalendarSurface({
   toolbar?: React.ReactNode
   /** Admin: click an empty time in the week view to create something there. */
   onEmptySlot?: (d: Date) => void
+  /** Admin: what sits at the start of the header row (the page tabs), so tabs and view controls share one row as in the Figma toolbar. */
+  leading?: React.ReactNode
 }) {
   const step = (dir: 1 | -1) => onCursor(view === "month" ? addMonths(cursor, dir) : addWeeks(cursor, dir))
   const weekStart = startOfWeek(cursor, { weekStartsOn: 1 })
   // On a phone the week grid is wider than the screen: students get the list instead (the coach, who clicks a time to create, keeps the grid).
   const phoneList = !onEmptySlot
+  const admin = !!onEmptySlot
   const listStart = isSameDay(weekStart, startOfWeek(NOW, { weekStartsOn: 1 })) ? NOW : weekStart
   const label =
     view === "month"
@@ -55,23 +60,54 @@ export function CalendarSurface({
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
+      {admin && (
+        <div className="flex flex-wrap items-center gap-2">
+          {leading}
+          <div className="flex-1" />
+          <AdminButton hierarchy="secondary" size="lg" onClick={() => onCursor(NOW)}>
+            Today
+          </AdminButton>
+          <AdminButton hierarchy="secondary" size="lg" iconOnly aria-label="Previous" onClick={() => step(-1)}>
+            <ChevronLeft />
+          </AdminButton>
+          <AdminButton hierarchy="secondary" size="lg" iconOnly aria-label="Next" onClick={() => step(1)}>
+            <ChevronRight />
+          </AdminButton>
+          <span className="t-body-m-medium px-1 text-a-text">{label}</span>
+          <div role="radiogroup" aria-label="View" className="flex items-center gap-1">
+            {(["week", "month"] as View[]).map((v) => (
+              <AdminButton key={v} role="radio" aria-checked={view === v} hierarchy={view === v ? "secondary" : "ghost"} size="lg" className="capitalize" onClick={() => onView(v)}>
+                {v}
+              </AdminButton>
+            ))}
+          </div>
+        </div>
+      )}
+      {!admin && (
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1">
+        <div className={cn("flex items-center gap-1", admin && "order-2")}>
+          {admin ? (
+            <Button variant="outline" size="sm" onClick={() => onCursor(NOW)}>
+              Today
+            </Button>
+          ) : null}
           <Button variant="outline" size="icon-sm" aria-label="Previous" onClick={() => step(-1)}>
             <ChevronLeft />
           </Button>
           <Button variant="outline" size="icon-sm" aria-label="Next" onClick={() => step(1)}>
             <ChevronRight />
           </Button>
-          <Button variant="outline" size="sm" onClick={() => onCursor(NOW)}>
-            Today
-          </Button>
+          {!admin && (
+            <Button variant="outline" size="sm" onClick={() => onCursor(NOW)}>
+              Today
+            </Button>
+          )}
         </div>
-        <span className="min-w-36 font-heading text-lg">{label}</span>
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          {toolbar}
+        <span className={cn("min-w-36 font-heading text-lg", admin && "order-3 min-w-0 font-sans text-sm")}>{label}</span>
+        <div className={cn("flex flex-wrap items-center gap-2", admin ? "order-4" : "ml-auto")}>
+          {!admin && toolbar}
           <div role="radiogroup" aria-label="View" className="flex rounded-lg bg-muted p-0.5">
-            {(["month", "week", "list"] as View[]).map((v) => (
+            {((admin ? ["week", "month", "list"] : ["month", "week", "list"]) as View[]).map((v) => (
               <button
                 key={v}
                 role="radio"
@@ -90,6 +126,7 @@ export function CalendarSurface({
           </div>
         </div>
       </div>
+      )}
 
       {view === "month" && <Month items={items} cursor={cursor} onSelect={onSelect} colorOf={colorOf} eventStyle={eventStyle} onDay={(d) => (onCursor(d), onView("week"))} />}
       {view === "week" && (
@@ -103,6 +140,7 @@ export function CalendarSurface({
         </div>
       )}
       {view === "list" && <List items={items} start={listStart} onSelect={onSelect} colorOf={colorOf} />}
+      {admin && <div className="flex flex-wrap items-center justify-between gap-2">{toolbar}</div>}
     </div>
   )
 }

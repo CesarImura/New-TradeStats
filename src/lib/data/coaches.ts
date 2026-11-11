@@ -154,9 +154,10 @@ export const COACHES: Coach[] = [
     modules: { courses: true, calendar: true, charts: true, community: true, journal: true, ranking: true, ai: true, downloads: true, partners: true },
     menu: ["courses", "charts", "calendar", "journal", "ranking", "community", "ai", "downloads", "partners"],
     tiers: [
-      { id: "free", name: "Free", price: "€0", cadence: "month", members: 1830 },
-      { id: "pro", name: "Pro", price: "€99", cadence: "month", members: 266 },
-      { id: "funded", name: "Funded Track", price: "€990", cadence: "once", members: 31 },
+      { id: "free", name: "Free community", price: "€0", cadence: "month", members: 12 },
+      { id: "core", name: "Inner Circle", price: "€49", cadence: "month", members: 142 },
+      { id: "desk", name: "Trading Desk", price: "€129", cadence: "month", members: 38 },
+      { id: "vip", name: "1:1 VIP", price: "€390", cadence: "month", members: 9 },
     ],
   },
   {

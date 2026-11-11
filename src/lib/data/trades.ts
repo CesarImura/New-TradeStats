@@ -174,11 +174,13 @@ export type CoachChart = {
   /** The coach's TradingView layout, idea or snapshot link. */
   link?: string
   archived?: boolean
+  /** Timeframe the chart was marked up on, as a label ("4h"). */
+  interval?: string
 }
 
 export const COACH_CHARTS: CoachChart[] = [
   {
-    id: "c1", title: "Levels for this week", symbol: { tv: "CAPITALCOM:US100", name: "NQ" }, when: "Sun 11 Oct", pinned: true, tiers: [],
+    id: "c1", title: "Levels for this week", symbol: { tv: "CAPITALCOM:US100", name: "NQ" }, when: "Sun 11 Oct", pinned: true, tiers: [], interval: "4h",
     note: "Above 30,800 I'm only looking for longs. Below 30,200 the weekly low is in play.",
     levels: [
       { label: "Weekly high", at: 30800, kind: "resistance" },
@@ -187,7 +189,7 @@ export const COACH_CHARTS: CoachChart[] = [
     ], link: "https://www.tradingview.com/chart/",
   },
   {
-    id: "c2", title: "CPI on Wednesday: no-trade zone", symbol: { tv: "CAPITALCOM:US500", name: "ES" }, when: "Mon 12 Oct", tiers: [],
+    id: "c2", title: "CPI on Wednesday: no-trade zone", symbol: { tv: "CAPITALCOM:US500", name: "ES" }, when: "Mon 12 Oct", tiers: [], interval: "1h",
     note: "Flat 10 minutes before and after. If we gap above 7,880, wait for the first pullback.",
     levels: [
       { label: "Gap level", at: 7880, kind: "resistance" },
@@ -196,7 +198,7 @@ export const COACH_CHARTS: CoachChart[] = [
     ]
   },
   {
-    id: "c3", title: "EURUSD into the ECB", symbol: { tv: "FX:EURUSD", name: "EURUSD" }, when: "Fri 9 Oct", tiers: ["desk", "vip"],
+    id: "c3", title: "EURUSD into the ECB", symbol: { tv: "FX:EURUSD", name: "EURUSD" }, when: "Fri 9 Oct", tiers: ["desk", "vip"], interval: "15m",
     note: "Range trade until Thursday. Breakout only after the press conference.",
     levels: [
       { label: "Range top", at: 1.0985, kind: "resistance" },

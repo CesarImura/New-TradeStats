@@ -1,36 +1,34 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Download, FileUp, Mail, MoreHorizontal, Search, Send, Users } from "@/components/icons"
+import { Download, Mail, Plus, Users, X } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
-import { cn } from "@/lib/utils"
-import { Empty, Field, HealthDot, NativeSelect, Page, PageHeader } from "../kit"
+import { EmptyState, PageHeader } from "../kit"
+import { AdminButton, AdminFilter, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, CellPerson, CellProgress, CellStack, StatPanel, Tag } from "../ui"
 import { SetupTip } from "../setup-checklist"
 import { ImportDialog } from "./import-dialog"
+import { MessageDialog } from "./student-message"
 import { StudentProfile } from "./student-profile"
 
-type Filter = "all" | "help" | "new" | "invited"
+export { MessageDialog } from "./student-message"
 
-/** ADM-02 students list, with import (ADM-03), profile (ADM-04) and messages (ADM-55). */
+type Filter = "all" | "help" | "invited" | "paused"
+const PAGE = 8
+
+/** Students (Figma 518:7152, 01 List, 02 Selected, 06 No results): the questions a coach asks as tabs, a table that opens a profile drawer, import, message. */
 export function StudentsPage() {
   const { coach } = useCoach()
   const [q, setQ] = useState("")
   const [filter, setFilter] = useState<Filter>("all")
   const [tier, setTier] = useState("")
   const [group, setGroup] = useState("")
+  const [page, setPage] = useState(0)
   const [picked, setPicked] = useState<string[]>([])
+  const [paused, setPaused] = useState<string[]>([])
   const [open, setOpen] = useState<Student | null>(null)
   const [importing, setImporting] = useState(false)
   const [message, setMessage] = useState<Student[] | null>(null)
@@ -40,265 +38,208 @@ export function StudentsPage() {
       STUDENTS.filter((s) => {
         if (q && !`${s.name} ${s.email}`.toLowerCase().includes(q.toLowerCase())) return false
         if (filter === "help" && s.health === "green") return false
-        if (filter === "new" && !/Oct 2026|Sep 2026/.test(s.joined)) return false
+        if (filter === "paused" && !paused.includes(s.id)) return false
         if (filter === "invited" && !s.joined.startsWith("invited")) return false
         if (tier && tierFor(coach, s.tier).id !== tier) return false
         if (group && s.group !== group) return false
         return true
       }).sort((a, b) => rank(a) - rank(b)),
-    [q, filter, tier, group, coach],
+    [q, filter, tier, group, coach, paused],
   )
-  const all = rows.length > 0 && rows.every((r) => picked.includes(r.id))
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE))
+  const at = Math.min(page, pages - 1)
+  const shown = rows.slice(at * PAGE, at * PAGE + PAGE)
   const counts = {
     all: STUDENTS.length,
     help: STUDENTS.filter((s) => s.health !== "green").length,
-    new: STUDENTS.filter((s) => /Oct 2026|Sep 2026/.test(s.joined)).length,
     invited: STUDENTS.filter((s) => s.joined.startsWith("invited")).length,
+    paused: paused.length,
   }
-  const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
+  const joinedThisMonth = STUDENTS.filter((s) => /Oct 2026|Sep 2026/.test(s.joined)).length
+  const onPage = shown.filter((r) => picked.includes(r.id)).length
   const selected = STUDENTS.filter((s) => picked.includes(s.id))
+  const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
+  /** Changing what is shown goes back to the first page and keeps the selection only for what is still listed. */
+  const refine = <T,>(set: (v: T) => void) => (v: T) => {
+    set(v)
+    setPage(0)
+  }
+  const filtering = !!(q || tier || group || filter !== "all")
+  const reset = () => {
+    setQ("")
+    setTier("")
+    setGroup("")
+    setFilter("all")
+    setPage(0)
+  }
+  const label = (n: number) => `${n} ${n === 1 ? "student" : "students"}`
 
   return (
-    <Page wide>
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
       <PageHeader
         title="Students"
-        text={`Everyone in ${coach.name}. Students who need you come first: failed payments, broken rules, nobody heard from them.`}
-        guide="Managing students · 2 min"
+        text={`${coach.name} · ${STUDENTS.length} students · ${joinedThisMonth} joined this month`}
         actions={
           <>
-            <Button variant="outline" onClick={() => toast("Export started", { description: "students.csv with the columns you see." })}>
+            <AdminButton onClick={() => toast("Export started", { description: "students.csv with the columns you see." })} hierarchy="secondary">
               <Download /> Export
-            </Button>
-            <Button onClick={() => setImporting(true)}>
-              <FileUp /> Import or invite
-            </Button>
+            </AdminButton>
+            <AdminButton onClick={() => setImporting(true)}>
+              <Plus /> Import or invite
+            </AdminButton>
           </>
         }
       />
       <SetupTip task="invite" />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
-          <TabsList>
-            {(
-              [
-                ["all", "All"],
-                ["help", "Needs help"],
-                ["new", "New"],
-                ["invited", "Invited"],
-              ] as const
-            ).map(([id, label]) => (
-              <TabsTrigger key={id} value={id}>
-                {label} <span className="text-muted-foreground tabular-nums">{counts[id]}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        <div className="relative ml-auto w-full sm:w-64">
-          <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or e-mail" className="pl-8" aria-label="Search students" />
-        </div>
-        <NativeSelect value={tier} onChange={(e) => setTier(e.target.value)} aria-label="Tier">
-          <option value="">All tiers</option>
-          {coach.tiers.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect value={group} onChange={(e) => setGroup(e.target.value)} aria-label="Group">
-          <option value="">All groups</option>
-          {GROUPS.map((g) => (
-            <option key={g.id} value={g.name}>
-              {g.name}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
+      <StatPanel
+        stats={[
+          { label: "Active this week", value: STUDENTS.filter((s) => s.activeDays > 0 && !s.joined.startsWith("invited")).length, delta: `${Math.round((STUDENTS.filter((s) => s.activeDays > 0).length / Math.max(STUDENTS.length, 1)) * 100)}% of all students` },
+          { label: "Need help", value: counts.help, delta: "Rules broken or stuck" },
+          { label: "Payment issues", value: STUDENTS.filter((s) => s.reason?.toLowerCase().includes("payment")).length, delta: "Retrying automatically" },
+          { label: "Invited", value: counts.invited, delta: "Haven't joined yet" },
+        ]}
+      />
 
-      {picked.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--ts-cta)]/30 bg-[var(--ts-cta)]/6 px-3 py-2 text-sm">
-          <span className="tabular-nums">{picked.length} selected</span>
-          <Button size="sm" variant="outline" onClick={() => setMessage(selected)}>
-            <Mail /> Message
-          </Button>
+      {/* While rows are selected the action bar takes the place of the toolbar: the same spot, so the table stays where the eye is. */}
+      {picked.length > 0 ? (
+        <div role="region" aria-label="Selected students" className="flex min-h-12 flex-wrap items-center gap-2 rounded-a-10 border border-a-border-strong bg-a-raised py-2 pr-2 pl-3.5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200">
+          <Checkbox checked={picked.length === rows.length} indeterminate={picked.length < rows.length} onCheckedChange={() => setPicked([])} aria-label="Clear the selection" />
+          <span role="status" aria-live="polite" className="t-body-m text-a-text">{picked.length} selected</span>
+          {picked.length < rows.length ? (
+            <>
+              <span aria-hidden className="t-body-m text-a-text-3">·</span>
+              <button type="button" onClick={() => setPicked(rows.map((r) => r.id))} className="rounded-a-xs t-body-m text-a-text-accent outline-none hover:underline focus-visible:ring-2 focus-visible:ring-a-border-focus">
+                Select all {rows.length}
+              </button>
+            </>
+          ) : null}
+          <span className="min-w-0 flex-1" />
+          <AdminButton hierarchy="secondary" size="md" onClick={() => setMessage(selected)}>
+            <Mail /> Send a message
+          </AdminButton>
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>Move to tier</DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Move to tier</DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
               {coach.tiers.map((t) => (
-                <DropdownMenuItem key={t.id} onClick={() => toast(`${picked.length} students move to ${t.name}`, { description: "Upgrades start now, downgrades at the end of the period." })}>
+                <DropdownMenuItem key={t.id} onClick={() => toast(`${label(picked.length)} move to ${t.name}`, { description: "Upgrades start now, downgrades at the end of the period." })}>
                   {t.name}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>Add to group</DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Add to group</DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
               {GROUPS.map((g) => (
-                <DropdownMenuItem key={g.id} onClick={() => toast(`${picked.length} students added to ${g.name}`)}>
+                <DropdownMenuItem key={g.id} onClick={() => toast(`${label(picked.length)} added to ${g.name}`)}>
                   {g.name}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setPicked([])}>
-            Clear
-          </Button>
+          <AdminButton hierarchy="secondary" size="md" onClick={() => toast("Export started", { description: `students.csv with ${label(picked.length)}.` })}>
+            Export
+          </AdminButton>
+          <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Clear selection" onClick={() => setPicked([])}>
+            <X />
+          </AdminButton>
         </div>
+      ) : (
+        <AdminToolbar>
+          <AdminTabs
+            label="Students"
+            value={filter}
+            onChange={(v) => refine(setFilter)(v as Filter)}
+            tabs={[
+              { id: "all", label: "All", count: counts.all },
+              { id: "help", label: "Needs help", count: counts.help },
+              { id: "invited", label: "Invited", count: counts.invited },
+              { id: "paused", label: "Paused", count: counts.paused },
+            ]}
+          />
+          <div className="flex-1" />
+          <AdminSearch value={q} onChange={refine(setQ)} placeholder="Search students" hint="⌘K" />
+          <AdminFilter label="Tier" value={tier} onValueChange={refine(setTier)} options={[{ value: "", label: "All tiers" }, ...coach.tiers.map((t) => ({ value: t.id, label: t.name }))]} />
+          <AdminFilter label="Group" value={group} onValueChange={refine(setGroup)} options={[{ value: "", label: "All groups" }, ...GROUPS.map((g) => ({ value: g.name, label: g.name }))]} />
+        </AdminToolbar>
       )}
 
       {rows.length === 0 ? (
-        <Empty icon={Users} title="No students match" text="Clear the search or the filters." />
+        <EmptyState
+          icon={Users}
+          title="No students match"
+          description={q ? `Nobody called “${q}”${tier ? ` in ${coach.tiers.find((t) => t.id === tier)?.name}` : ""}. Clear the search or the filters.` : "Clear the search or the filters."}
+          actions={
+            <>
+              {filtering && <AdminButton hierarchy="secondary" onClick={reset}>Clear filters</AdminButton>}
+              <AdminButton onClick={() => setImporting(true)}><Plus /> Invite a student</AdminButton>
+            </>
+          }
+        />
       ) : (
-        <div className="overflow-hidden rounded-lg border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-10 pl-3">
-                  <Checkbox checked={all} onCheckedChange={(v) => setPicked(v ? rows.map((r) => r.id) : [])} aria-label="Select all" />
-                </TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Tier and group</TableHead>
-                <TableHead className="hidden lg:table-cell">Progress</TableHead>
-                <TableHead className="hidden md:table-cell">Active</TableHead>
-                <TableHead className="hidden xl:table-cell">Journal</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-10" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((s) => (
-                <TableRow key={s.id} className="cursor-pointer" onClick={() => setOpen(s)} data-state={picked.includes(s.id) ? "selected" : undefined}>
-                  <TableCell className="pl-3" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox checked={picked.includes(s.id)} onCheckedChange={() => toggle(s.id)} aria-label={`Select ${s.name}`} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex min-w-44 items-center gap-2.5">
-                      <Avatar className="size-8">
-                        <AvatarFallback className="text-xs">{s.initials}</AvatarFallback>
-                      </Avatar>
-                      <div className="grid min-w-0">
-                        <span className="truncate font-medium">{s.name}</span>
-                        <span className="truncate text-xs text-muted-foreground">{s.email}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="grid">
-                      <span>{tierFor(coach, s.tier).name}</span>
-                      <span className="text-xs text-muted-foreground">{s.group ?? "No group"}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <div className="flex w-32 items-center gap-2">
-                      <Progress value={s.progress} className="flex-1" />
-                      <span className="w-8 text-right text-xs text-muted-foreground tabular-nums">{s.progress}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="grid">
-                      <span>{s.lastActive}</span>
-                      <ActivityDots days={s.activeDays} />
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden text-muted-foreground xl:table-cell">
-                    {s.broker ? `${s.trades30} trades · ${s.rules}% rules` : <span className="text-muted-foreground">No broker</span>}
-                  </TableCell>
-                  <TableCell>
-                    <span className="flex items-center gap-2">
-                      <HealthDot health={s.health} />
-                      <span className={cn("max-w-48 truncate", s.health === "green" && "text-muted-foreground")}>{s.reason ?? "All good"}</span>
-                    </span>
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={`Actions for ${s.name}`} />}>
-                        <MoreHorizontal />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setOpen(s)}>Open profile</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setMessage([s])}>Send a message</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast(`Viewing the platform as ${s.name}`, { description: "Opens the student side with their tier and group." })}>
-                          View the platform as {s.name.split(" ")[0]}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="destructive" onClick={() => toast(`${s.name}'s access paused`)}>
-                          Pause access
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <AdminTable
+          minWidth={1100}
+          footer={
+            <AdminTableFooter className="py-[10px]">
+              <span className="mr-auto tabular-nums">
+                Showing {shown.length} of {rows.length}
+              </span>
+              <AdminButton hierarchy="secondary" size="md" disabled={at === 0} onClick={() => setPage(at - 1)}>Previous</AdminButton>
+              <AdminButton hierarchy="secondary" size="md" disabled={at >= pages - 1} onClick={() => setPage(at + 1)}>Next</AdminButton>
+            </AdminTableFooter>
+          }
+        >
+          <AdminTableHead>
+            <AdminTh width={52}>
+              <Checkbox checked={onPage === shown.length && shown.length > 0} indeterminate={onPage > 0 && onPage < shown.length} onCheckedChange={(v) => setPicked((p) => (v ? [...new Set([...p, ...shown.map((r) => r.id)])] : p.filter((id) => !shown.some((r) => r.id === id))))} aria-label="Select all on this page" />
+            </AdminTh>
+            <AdminTh>Student</AdminTh>
+            <AdminTh width={216}>Tier and group</AdminTh>
+            <AdminTh width={166}>Course progress</AdminTh>
+            <AdminTh width={116} align="end">Rules kept</AdminTh>
+            <AdminTh width={216}>Status</AdminTh>
+            <AdminTh width={130} align="end">Last active</AdminTh>
+          </AdminTableHead>
+          <tbody>
+            {shown.map((s) => {
+              const on = picked.includes(s.id)
+              const invited = s.joined.startsWith("invited")
+              return (
+                <AdminTr key={s.id} selected={on} onClick={() => setOpen(s)}>
+                  <AdminTd onClick={(e) => e.stopPropagation()}>
+                    <Checkbox checked={on} onCheckedChange={() => toggle(s.id)} aria-label={`Select ${s.name}`} />
+                  </AdminTd>
+                  <AdminTd>
+                    <button type="button" onClick={(e) => (e.stopPropagation(), setOpen(s))} className="block w-full min-w-0 rounded-a-xs text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus" aria-label={`Open ${s.name}`}>
+                      <CellPerson initials={s.initials} name={s.name} subtitle={s.email} />
+                    </button>
+                  </AdminTd>
+                  <AdminTd>
+                    <CellStack title={tierFor(coach, s.tier).name} subtitle={s.group ?? "No group"} />
+                  </AdminTd>
+                  <AdminTd>
+                    <CellProgress label={`${s.name} course progress`} value={s.progress} />
+                  </AdminTd>
+                  <AdminTd align="end">{s.broker ? `${s.rules}%` : <span className="text-a-text-3">—</span>}</AdminTd>
+                  <AdminTd>
+                    <Tag tone={invited ? "neutral" : s.health === "red" ? "danger" : s.health === "amber" ? "warning" : "success"} dot className="max-w-full">
+                      <span className="truncate">{s.reason ?? "All good"}</span>
+                    </Tag>
+                  </AdminTd>
+                  <AdminTd align="end" className="whitespace-nowrap">{s.lastActive === "never" ? <span className="text-a-text-3">—</span> : s.lastActive}</AdminTd>
+                </AdminTr>
+              )
+            })}
+          </tbody>
+        </AdminTable>
       )}
 
-      <StudentProfile student={open} onOpenChange={(o) => !o && setOpen(null)} onMessage={(s) => setMessage([s])} />
+      <StudentProfile student={open} paused={!!open && paused.includes(open.id)} onOpenChange={(o) => !o && setOpen(null)} onMessage={(s) => setMessage([s])} onPause={(s) => { const on = paused.includes(s.id); setPaused((p) => (on ? p.filter((x) => x !== s.id) : [...p, s.id])); toast(on ? `${s.name} has access again` : `Access paused for ${s.name}`, { description: on ? "Everything is back as it was." : "Keeps the account and the journal. Nothing is deleted." }) }} />
       <ImportDialog open={importing} onOpenChange={setImporting} />
       <MessageDialog to={message} onClose={() => setMessage(null)} />
-    </Page>
+    </div>
   )
 }
 
 const rank = (s: Student) => (s.health === "red" ? 0 : s.health === "amber" ? 1 : 2)
-
-/** Last 14 days, one dot per day the student was active. */
-function ActivityDots({ days }: { days: number }) {
-  return (
-    <span className="mt-1 flex gap-0.5" aria-label={`Active ${days} of the last 14 days`}>
-      {Array.from({ length: 14 }, (_, i) => (
-        <span key={i} className={cn("h-1.5 w-1 rounded-[1px] bg-white/10", i >= 14 - days && "bg-[var(--ts-cta)]/80")} />
-      ))}
-    </span>
-  )
-}
-
-/** ADM-55. One student or a selection, by e-mail and in the platform. */
-export function MessageDialog({ to, onClose }: { to: Student[] | null; onClose: () => void }) {
-  const { coach } = useCoach()
-  const [subject, setSubject] = useState("")
-  const [body, setBody] = useState("")
-  const [email, setEmail] = useState(true)
-  const names = to?.map((s) => s.name.split(" ")[0]).join(", ")
-  return (
-    <Dialog open={!!to} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Message {to?.length === 1 ? to[0].name : `${to?.length} students`}</DialogTitle>
-          <DialogDescription>{to && to.length > 1 ? names : "Arrives in their notifications"}{email ? " and by e-mail" : ""}, from {coach.coachName}.</DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-3">
-          <Field label="Subject">
-            <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Quick check-in" />
-          </Field>
-          <Field label="Message" hint="{first} becomes their first name">
-            <Textarea rows={5} value={body} onChange={(e) => setBody(e.target.value)} placeholder={"Hi {first},\n\n"} />
-          </Field>
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={email} onCheckedChange={(v) => setEmail(!!v)} /> Also send by e-mail
-          </label>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            disabled={!body.trim()}
-            onClick={() => {
-              toast(`Message sent to ${to?.length === 1 ? to[0].name : `${to?.length} students`}`)
-              setSubject("")
-              setBody("")
-              onClose()
-            }}
-          >
-            <Send /> Send
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-

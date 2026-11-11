@@ -170,7 +170,6 @@ ${ui(":is(.rounded-md, .rounded-sm).border:not([data-slot])")} { border-radius: 
 ${ui(`:is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-md, .rounded-sm).border:not([data-slot], ${CUSTOM_BORDER})`)} { border-color: ${TS.panelBorder}; }
 ${ui(`:is(.rounded-lg, .rounded-xl).border:is(button, a):not(${CUSTOM_BORDER}):hover`)} { border-color: #3a3a40; }
 ${ui(".rounded-lg.border.bg-card, .rounded-xl.border.bg-card")} { background-color: var(--card); }
-${ui(".border-dashed")} { border-color: #34343a; }
 
 /* Tags: small, square, quiet. */
 ${ui("[data-slot=badge]")} { border-radius: 3px; height: 1.125rem; padding-inline: 0.3125rem; font-size: 0.6875rem; font-weight: 500; }
@@ -257,8 +256,8 @@ ${ui("[data-slot=sidebar][data-collapsible=icon] [data-slot=sidebar-group-label]
  * Components can use the tokens directly: --adm-ground, --adm-canvas,
  * --adm-surface, --adm-raised, --adm-hover, --adm-line.
  */
-const A = ":root:has(.ts-admin)"
-const adm = (sel: string) => `${A} ${sel}:not(${COACH}, ${COACH} *)`
+export const A = ":root:has(.ts-admin)"
+export const adm = (sel: string) => `${A} ${sel}:not(${COACH}, ${COACH} *)`
 /** A border that carries a state or a brand colour (selected, error, accent): panel strokes never replace it. A transparent one is not. */
 const STATE_BORDER = CUSTOM_BORDER.replace('[class*="border-transparent"], ', "")
 /** A box that is itself a link or button. */
@@ -354,7 +353,6 @@ ${adm(`:is(.rounded-md, .rounded-sm).border:not([data-slot])`)} { border-radius:
 ${adm(`:is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-md, .rounded-sm).border:not([data-slot], .border-dashed, ${CUSTOM_BORDER})`)} { border-color: transparent; }
 ${adm(`:is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-md, .rounded-sm).border:not([data-slot], .border-dashed, ${CUSTOM_BORDER}):not([class*="bg-"])`)} { background-color: ${ADMIN.surface}; }
 ${adm(`:is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-md, .rounded-sm).border:is(button, a):not(${CUSTOM_BORDER}):hover`)} { background-color: ${ADMIN.hover}; border-color: transparent; }
-${adm(".border-dashed")} { border-color: rgb(255 255 255 / 0.12); }
 ${adm(".bg-card")} { background-color: ${ADMIN.surface}; }
 ${adm(":is(.bg-muted, .bg-secondary):not([data-slot=button], [data-slot=tabs-list])")} { background-color: ${ADMIN.surface}; }
 

@@ -22,6 +22,8 @@ export type TierExtra = {
   trial: number
   installments: boolean
   hidden: boolean
+  /** People leave their e-mail and hear first when a seat opens. */
+  waitlist?: boolean
   role: string
   /** One line under the name on the sales page. */
   description: string
@@ -42,9 +44,19 @@ const FEATURES = [
   ["Everything in the tiers before", "1:1 call every month", "Personal trading plan", "Direct line to the coach"],
 ]
 
-export function blankExtra(i: number): TierExtra {
-  return { trial: i === 0 ? 7 : 0, installments: false, hidden: false, role: "", description: "", features: FEATURES[Math.min(i, 2)], featured: i === 1 }
+/** What the sample communities' known tiers start with (Figma Sales · Tiers & prices). */
+const SEED_BY_ID: Record<string, Partial<TierExtra>> = {
+  core: { trial: 0, yearly: "€490", features: ["All courses", "Community and lives", "Journal feedback · 2 / month"], featured: false },
+  desk: { trial: 7, yearly: "€1,290", features: ["Everything in Inner Circle", "Daily desk call", "Journal feedback · unlimited"], featured: true },
+  vip: { trial: 0, installments: true, hidden: true, features: ["Everything in Trading Desk", "4 calls a month", "Private channel"], featured: false },
 }
+
+export function blankExtra(i: number, id?: string): TierExtra {
+  return { trial: i === 0 ? 7 : 0, installments: false, hidden: false, role: "", description: "", features: FEATURES[Math.min(i, 2)], featured: i === 1, ...(id ? SEED_BY_ID[id] : undefined) }
+}
+
+/** The free tier isn't sold: the Sales tabs list only the paid ones (no free tier, visitors see the paywall first). */
+export const isFreeTier = (t: { price: string }) => (Number(t.price.replace(/[^\d.]/g, "")) || 0) === 0
 
 /** The coach's tiers with every edit made in Sales & payments. */
 export function useTiers(coach: Coach): TierInfo[] {
@@ -55,14 +67,14 @@ export function useTiers(coach: Coach): TierInfo[] {
 
 function mergeTiers(coach: Coach, extra: Record<string, TierExtra>, added: Tier[]): TierInfo[] {
   return [...coach.tiers, ...added].map((t, i) => {
-    const x = { ...blankExtra(i), ...extra[t.id] }
+    const x = { ...blankExtra(i, t.id), ...extra[t.id] }
     const { name, price, cadence, ...rest } = x
     return { ...t, ...rest, name: name ?? t.name, price: price ?? t.price, cadence: cadence ?? t.cadence }
   })
 }
 
 export function saveTier(slug: string, id: string, index: number, patch: Partial<TierExtra>) {
-  setStored<Record<string, TierExtra>>(`${slug}:tier-extra`, (all) => ({ ...all, [id]: { ...blankExtra(index), ...all[id], ...patch } }), NO_EXTRA)
+  setStored<Record<string, TierExtra>>(`${slug}:tier-extra`, (all) => ({ ...all, [id]: { ...blankExtra(index, id), ...all[id], ...patch } }), NO_EXTRA)
 }
 
 export function addTier(slug: string): Tier {
@@ -90,12 +102,14 @@ export type Group = {
   waitlist: boolean
   channel: boolean
   ranking: boolean
+  /** One line under the name in the groups table. */
+  description?: string
 }
 
 const SEED_GROUPS = [
-  { id: "oct", name: "October cohort", start: "2026-10-01", end: "2026-12-17", seats: 30, members: 24, waiting: 0, tiers: [0, 1] },
-  { id: "nov", name: "November cohort", start: "2026-11-02", end: "2027-01-21", seats: 30, members: 11, waiting: 0, tiers: [0, 1] },
-  { id: "mastermind", name: "Funded mastermind", start: "2026-10-05", end: "2026-11-30", seats: 12, members: 12, waiting: 7, tiers: [1, 2] },
+  { id: "oct", name: "October cohort", description: "Students who joined in October.", start: "2026-10-01", end: "2026-12-17", seats: 30, members: 24, waiting: 0, tiers: [0, 1] },
+  { id: "nov", name: "November cohort", description: "Joins at checkout until 2 Nov.", start: "2026-11-02", end: "2027-01-21", seats: 30, members: 11, waiting: 0, tiers: [0, 1] },
+  { id: "mastermind", name: "Funded mastermind", description: "Futures traders, US session.", start: "2026-10-05", end: "2026-11-30", seats: 12, members: 12, waiting: 7, tiers: [1, 2] },
 ]
 
 const groupCache = new Map<string, Group[]>()
@@ -153,7 +167,17 @@ export type AccessSettings = {
   modules: Record<string, string[]>
   /** "courseId/groupId" → when the group gets it. Missing means "tier". */
   groups: Record<string, GroupRule>
+  /** Which tiers get each feature of the community ("journal", "live", "charts", "ai"). Missing means the defaults below. */
+  features?: Record<string, string[]>
 }
+
+/** Features that follow a tier, in the order the Access tab lists them. Charts and the AI start with the higher tiers. */
+export const ACCESS_FEATURES = [
+  { id: "journal", name: "Journal feedback", from: 0 },
+  { id: "live", name: "Livestreams", from: 0 },
+  { id: "charts", name: "Charts", from: 1 },
+  { id: "ai", name: "AI assistant", from: 1 },
+]
 
 const NO_ACCESS: AccessSettings = { locked: "show", modules: {}, groups: {} }
 

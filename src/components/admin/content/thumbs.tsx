@@ -3,9 +3,9 @@
 import { useRef } from "react"
 import { ImagePlus, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
 import { pictureFrom } from "@/lib/images"
 import { cn } from "@/lib/utils"
+import { AdminButton } from "@/components/admin/ui"
 
 /** The admin keeps its own neutral look, so a course without a cover shows its colour in these tints. */
 export const COVER_TINTS = ["#f97316", "#0ea5e9", "#8b5cf6", "#10b981", "#e11d48"]
@@ -37,18 +37,18 @@ export function PictureField({ value, color, onChange, label, empty, className }
     }
   }
   return (
-    <div className="flex items-center gap-4 rounded-xl border p-3 bg-card">
-      <Tile src={value} color={color} className={cn("aspect-video w-36 shrink-0 rounded-lg", className)} />
-      <div className="grid min-w-0 flex-1 gap-2">
-        <span className="text-xs text-muted-foreground">{value ? `Your ${label.toLowerCase()} picture.` : empty}</span>
+    <div className="flex flex-wrap items-center gap-4 rounded-a-10 border border-a-border p-3">
+      <Tile src={value} color={color} className={cn("aspect-video w-36 shrink-0 rounded-a-md", className)} />
+      <div className="grid min-w-[10rem] flex-1 gap-2">
+        <span className="t-caption text-a-text-2">{value ? `Your ${label.toLowerCase()} picture.` : empty}</span>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => input.current?.click()}>
+          <AdminButton onClick={() => input.current?.click()} hierarchy="secondary" size="md">
             <ImagePlus /> {value ? "Change" : "Add a picture"}
-          </Button>
+          </AdminButton>
           {value && (
-            <Button variant="ghost" size="sm" onClick={() => onChange(undefined)}>
+            <AdminButton onClick={() => onChange(undefined)} hierarchy="ghost" size="md">
               <Trash2 /> Remove
-            </Button>
+            </AdminButton>
           )}
         </div>
       </div>

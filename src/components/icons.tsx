@@ -67,23 +67,28 @@ import {
   InProgress as CInProgress,
   Information as CInformation,
   Launch as CLaunch,
+  ListBulleted as CListBulleted,
   Link as CLink,
   Locked as CLocked,
   Logout as CLogout,
   MagicWand as CMagicWand,
   Maximize as CMaximize,
+  Minimize as CMinimize,
   Meter as CMeter,
+  Menu as CMenu,
   Microphone as CMicrophone,
   Mobile as CMobile,
   Notebook as CNotebook,
   Notification as CNotification,
   OverflowMenuHorizontal as COverflowMenuHorizontal,
   Pin as CPin,
+  Play as CPlayLine,
   PlayFilledAlt as CPlayFilledAlt,
   PlayOutline as CPlayOutline,
   Purchase as CPurchase,
   Quotes as CQuotes,
   Radio as CRadio,
+  RadioButtonChecked as CRadioButtonChecked,
   RecentlyViewed as CRecentlyViewed,
   Renew as CRenew,
   Reply as CReply,
@@ -120,13 +125,23 @@ import {
   View as CView,
   ViewOff as CViewOff,
   Wallet as CWallet,
+  Store as CStore,
+  Ticket as CTicket,
+  UserAdmin as CUserAdmin,
   Warning as CWarning,
   WarningAlt as CWarningAlt,
   SettingsAdjust as CSettingsAdjust,
   ChartColumn as CChartColumn,
   Home as CHome,
   ColorPalette as CColorPalette,
+  Currency as CCurrency,
   ClosedCaption as CClosedCaption,
+  Keyboard as CKeyboard,
+  Popup as CPopup,
+  Restart as CRestart,
+  VolumeDown as CVolumeDown,
+  VolumeMute as CVolumeMute,
+  VolumeUp as CVolumeUp,
   PauseFilled as CPauseFilled,
   RotateClockwise as CRotateClockwise,
   Phone as CPhone,
@@ -181,6 +196,7 @@ export const ChevronDown = i(CChevronDown, "ChevronDown")
 export const ChevronDownIcon = ChevronDown
 export const ChevronLeft = i(CChevronLeft, "ChevronLeft")
 export const ChevronRight = i(CChevronRight, "ChevronRight")
+export const ClosedCaption = i(CClosedCaption, "ClosedCaption")
 export const ChevronRightIcon = ChevronRight
 export const ChevronUpIcon = i(CChevronUp, "ChevronUp")
 export const ChevronsUpDown = i(CChevronSort, "ChevronsUpDown")
@@ -219,6 +235,22 @@ export const Hourglass = i(CHourglass, "Hourglass")
 export const ImagePlus = i(CImage, "ImagePlus")
 export const Inbox = i(CEmail, "Inbox")
 export const Info = i(CInformation, "Info")
+export const VolumeUp = i(CVolumeUp, "VolumeUp")
+export const VolumeDown = i(CVolumeDown, "VolumeDown")
+export const VolumeMute = i(CVolumeMute, "VolumeMute")
+export const Miniplayer = i(CPopup, "Miniplayer")
+export const KeyboardIcon = i(CKeyboard, "Keyboard")
+export const Replay = i(CRestart, "Replay")
+/** Carbon has no circle-with-a-slash (its "Not available" is two dashes), so this one is drawn on the same 32 grid and 2px line. */
+const CBlocked = forwardRef<SVGSVGElement, { size?: number } & React.SVGProps<SVGSVGElement>>(function CBlocked({ size = 24, ...p }, ref) {
+  return (
+    <svg ref={ref} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={2} focusable="false" {...p}>
+      <circle cx="16" cy="16" r="13" />
+      <path d="M7 25 25 7" />
+    </svg>
+  )
+})
+export const Blocked = i(CBlocked, "Blocked")
 export const InfoIcon = Info
 export const Landmark = i(CBuilding, "Landmark")
 export const LayoutDashboard = i(CDashboard, "LayoutDashboard")
@@ -231,12 +263,14 @@ export const Lock = i(CLocked, "Lock")
 export const LogOut = i(CLogout, "LogOut")
 export const Mail = i(CEmail, "Mail")
 export const Maximize = i(CMaximize, "Maximize")
+export const Minimize = i(CMinimize, "Minimize")
 export const Medal = i(CBadge, "Medal")
 export const Megaphone = i(CBullhorn, "Megaphone")
 export const MessageCircle = i(CChat, "MessageCircle")
 export const MessageSquareReply = i(CReply, "MessageSquareReply")
 export const MessageSquareText = i(CChat, "MessageSquareText")
 export const MessagesSquare = i(CForum, "MessagesSquare")
+export const Menu = i(CMenu, "Menu")
 export const Mic = i(CMicrophone, "Mic")
 export const Minus = i(CSubtract, "Minus")
 export const Monitor = i(CScreen, "Monitor")
@@ -250,10 +284,15 @@ export const Pencil = i(CEdit, "Pencil")
 export const Pin = i(CPin, "Pin")
 export const PinOff = i(CUnlink, "PinOff")
 export const Play = i(CPlayFilledAlt, "Play")
+export const PlayOutline = i(CPlayOutline, "PlayOutline")
+/** The outlined triangle (Carbon "Play"); `Play` is the filled one. */
+export const PlayLine = i(CPlayLine, "PlayLine")
 export const PlayCircle = i(CPlayOutline, "PlayCircle")
 export const Plus = i(CAdd, "Plus")
 export const Quote = i(CQuotes, "Quote")
+export const ListBulleted = i(CListBulleted, "ListBulleted")
 export const Radio = i(CRadio, "Radio")
+export const RadioButtonChecked = i(CRadioButtonChecked, "RadioButtonChecked")
 export const RefreshCw = i(CRenew, "RefreshCw")
 export const RotateCcw = i(CReset, "RotateCcw")
 export const Search = i(CSearch, "Search")
@@ -281,8 +320,13 @@ export const Upload = i(CUpload, "Upload")
 export const User = i(CUser, "User")
 export const Users = i(CUserMultiple, "Users")
 export const UserPlus = i(CUserFollow, "UserPlus")
+export const Currency = i(CCurrency, "Currency")
 export const Video = i(CVideo, "Video")
 export const Wallet = i(CWallet, "Wallet")
+export const Store = i(CStore, "Store")
+export const Ticket = i(CTicket, "Ticket")
+export const UserAdmin = i(CUserAdmin, "UserAdmin")
+export const ShieldCheck = i(CSecurity, "ShieldCheck")
 export const Wand2 = i(CMagicWand, "Wand2")
 export const Wrench = i(CTools, "Wrench")
 export const X = i(CClose, "X")

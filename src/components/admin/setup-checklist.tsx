@@ -1,20 +1,15 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
-import { ArrowRight, Check, CircleDashed, Info, Lightbulb, X } from "@/components/icons"
+import { ArrowRight, Info, Lightbulb, X } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { useTiers } from "@/lib/data/access"
 import type { CustomCommunity } from "@/lib/data/communities"
 import { allLessons, isSampleCourse, useCatalog, type Catalog } from "@/lib/data/learning"
 import { isSampleEvent, useSchedule } from "@/lib/data/schedule"
 import { useCustomCommunities } from "@/lib/data/use-communities"
 import { setStored, useHistory, useStored } from "@/lib/prototype-store"
-import { cn } from "@/lib/utils"
+import { AdminButton } from "@/components/admin/ui"
 
 /**
  * The getting-started checklist on the Overview, and the short how-to at the top of each screen it
@@ -120,91 +115,6 @@ export function useSetupTasks(): Task[] {
   ]
 }
 
-function TaskRow({ task }: { task: Task }) {
-  return (
-    <Link
-      href={task.href}
-      className={cn(
-        "group flex items-start gap-2.5 rounded-lg border p-3 text-left text-sm transition-colors outline-none hover:bg-muted focus-visible:border-[var(--ts-interactive)] focus-visible:shadow-[0_0_0_3px_rgb(255_85_0/0.25)]",
-        task.done && "text-muted-foreground",
-      )}
-    >
-      {task.done ? <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden /> : <CircleDashed className="mt-0.5 size-4 shrink-0" aria-hidden />}
-      <span className="grid min-w-0 flex-1 gap-0.5">
-        <span className={cn("font-medium", !task.done && "text-foreground")}>
-          {task.label}
-          <span className="sr-only">{task.done ? " (done)" : " (to do)"}</span>
-        </span>
-        <span className="text-xs text-muted-foreground">{task.text}</span>
-      </span>
-      {!task.done && <ArrowRight className="mt-0.5 size-4 shrink-0 text-muted-foreground group-hover:text-foreground" aria-hidden />}
-    </Link>
-  )
-}
-
-/** ADM-01 · Getting started: what it takes to open, then what can wait. */
-export function SetupChecklist() {
-  const tasks = useSetupTasks()
-  const [open, setOpen] = useState(false)
-  const needed = tasks.filter((t) => t.required)
-  const later = tasks.filter((t) => !t.required)
-  const done = tasks.filter((t) => t.done).length
-  const neededLeft = needed.filter((t) => !t.done).length
-
-  if (done === tasks.length && !open)
-    return (
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Check className="size-4 text-primary" aria-hidden /> Getting started is done
-          </CardTitle>
-          <CardDescription>All {tasks.length} steps are complete.</CardDescription>
-          <CardAction>
-            <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
-              Show the list
-            </Button>
-          </CardAction>
-        </CardHeader>
-      </Card>
-    )
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Getting started</CardTitle>
-        <CardDescription>
-          {neededLeft > 0 ? `${neededLeft} of ${needed.length} still needed to open your platform. The rest can wait.` : `Your platform is open. ${later.filter((t) => t.done).length} of ${later.length} next steps done.`}
-        </CardDescription>
-        <CardAction className="w-20 sm:w-40">
-          <Progress value={(done / tasks.length) * 100} aria-label={`${done} of ${tasks.length} done`} />
-        </CardAction>
-      </CardHeader>
-      <CardContent className="grid gap-5">
-        <section className="grid gap-2" aria-labelledby="gs-needed">
-          <h3 id="gs-needed" className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            To open your platform {neededLeft > 0 && <Badge variant="outline">Needed</Badge>}
-          </h3>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {needed.map((t) => (
-              <TaskRow key={t.id} task={t} />
-            ))}
-          </div>
-        </section>
-        <section className="grid gap-2" aria-labelledby="gs-later">
-          <h3 id="gs-later" className="text-xs font-medium text-muted-foreground">
-            When you&apos;re ready
-          </h3>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {later.map((t) => (
-              <TaskRow key={t.id} task={t} />
-            ))}
-          </div>
-        </section>
-      </CardContent>
-    </Card>
-  )
-}
-
 /** The how-to for each step, a few plain lines; shown at the top of its screen until done or closed. */
 const TIPS: Partial<Record<TaskId, { title: string; steps: string[]; action?: string }>> = {
   membership: { title: "Your first membership", steps: ["Open a tier to set its name, price and trial.", "Free tiers work without payouts.", "Add a second tier any time; students upgrade and pay the difference."] },
@@ -235,19 +145,18 @@ export function SetupTip({ task }: { task: TaskId }) {
           ))}
         </ol>
         {tip.action && (
-          <Button size="sm" variant="outline" className="mt-1 w-fit" nativeButton={false} render={<Link href={t.href} />}>
+          <AdminButton className="mt-1 w-fit" nativeButton={false} render={<Link href={t.href} />} hierarchy="secondary" size="lg">
             {tip.action} <ArrowRight />
-          </Button>
+          </AdminButton>
         )}
       </div>
-      <Button
-        size="icon-sm"
-        variant="ghost"
+      <AdminButton
+        
+        
         aria-label="Close this how-to"
-        onClick={() => setStored<TaskId[]>(`${coach.slug}:setup-tips-closed`, (c) => [...c, task], NO_TIPS)}
-      >
+        onClick={() => setStored<TaskId[]>(`${coach.slug}:setup-tips-closed`, (c) => [...c, task], NO_TIPS)} hierarchy="ghost" size="md" iconOnly>
         <X />
-      </Button>
+      </AdminButton>
     </aside>
   )
 }
@@ -261,7 +170,7 @@ export function SampleNotice({ show = true, children }: { show?: boolean; childr
   const wizard = useWizardCommunity(coach.slug)
   if (!show || !wizard) return null
   return (
-    <p className="flex items-start gap-2 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
+    <p className="flex items-start gap-2 rounded-lg border border-dashed border-a-border-strong px-3 py-2 text-xs text-muted-foreground">
       <Info className="mt-px size-3.5 shrink-0" aria-hidden />
       <span>{children}</span>
     </p>

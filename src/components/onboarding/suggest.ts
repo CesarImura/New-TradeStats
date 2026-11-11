@@ -3,32 +3,32 @@ import type { Account, Audience } from "@/lib/data/communities"
 import type { TemplateId } from "@/lib/theme/types"
 
 export const AUDIENCES: { id: Audience; label: string; text: string }[] = [
-  { id: "starting", label: "Just starting", text: "No paying students yet" },
-  { id: "small", label: "Under 100", text: "A small group" },
-  { id: "growing", label: "100 – 500", text: "Growing" },
-  { id: "large", label: "500 or more", text: "An established community" },
+  { id: "starting", label: "Nothing yet", text: "" },
+  { id: "small", label: "1 to 50", text: "" },
+  { id: "growing", label: "50 to 500", text: "" },
+  { id: "large", label: "More than 500", text: "" },
 ]
 
 /** Where the coach runs things today. "Platforms" hold paying members we'd move over. */
-export const TOOLS = [
-  { id: "discord", label: "Discord" },
+export const TOOLS: { id: string; label: string; platform?: boolean; ask?: boolean }[] = [
+  { id: "discord", label: "Discord", ask: true },
+  { id: "kajabi", label: "Kajabi", platform: true, ask: true },
+  { id: "whop", label: "Whop", platform: true, ask: true },
+  { id: "none", label: "Nothing", ask: true },
   { id: "telegram", label: "Telegram" },
-  { id: "whop", label: "Whop", platform: true },
   { id: "skool", label: "Skool", platform: true },
-  { id: "kajabi", label: "Kajabi or Teachable", platform: true },
   { id: "patreon", label: "Patreon", platform: true },
   { id: "youtube", label: "YouTube only" },
-  { id: "none", label: "Nothing yet" },
 ]
 
-export const OFFERS: { id: string; label: string; module?: ModuleId }[] = [
-  { id: "courses", label: "Video courses", module: "courses" },
-  { id: "live", label: "Live trading sessions", module: "calendar" },
+export const OFFERS: { id: string; label: string; module?: ModuleId; ask?: boolean }[] = [
+  { id: "courses", label: "Courses", module: "courses", ask: true },
+  { id: "live", label: "Live trading", module: "calendar", ask: true },
+  { id: "calls", label: "1:1 coaching", module: "calendar", ask: true },
+  { id: "signals", label: "Signals", ask: true },
   { id: "charts", label: "Chart analysis", module: "charts" },
   { id: "community", label: "Community chat", module: "community" },
   { id: "journal", label: "Trade reviews", module: "journal" },
-  { id: "calls", label: "1:1 coaching calls", module: "calendar" },
-  { id: "signals", label: "Signals or alerts" },
 ]
 
 type Answers = NonNullable<Account["answers"]>
@@ -43,7 +43,8 @@ export function routeFor(a: Answers): "B" | "C" {
 
 /** Modules the wizard switches on, from what the coach offers. AI is on for everyone. */
 export function suggestedModules(a?: Answers): Record<ModuleId, boolean> {
-  const on = new Set<ModuleId>(["courses", "ai"])
+  // The three questions don't ask about these, so they start on for everyone.
+  const on = new Set<ModuleId>(["courses", "ai", "community", "journal"])
   for (const o of a?.offers ?? []) {
     const m = OFFERS.find((x) => x.id === o)?.module
     if (m) on.add(m)
