@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
  * 600 px card centred in what is left) and the product illustration on the right. The illustration is decorative
  * and only shows from 1024 px; below that the form takes the whole width.
  */
-export function SignupFrame({ children }: { children: React.ReactNode }) {
+export function SignupFrame({ children, action, aside }: { children: React.ReactNode; /** On the right of the logo bar (Design: Save and exit). */ action?: React.ReactNode; /** Replaces the illustration (Design: the live canvas, full height from 1280 px). */ aside?: React.ReactNode }) {
   useLayoutEffect(() => {
     const html = document.documentElement
     const had = html.classList.contains("dark")
@@ -24,19 +24,24 @@ export function SignupFrame({ children }: { children: React.ReactNode }) {
     <div className="ts-ui ts-onb flex min-h-svh bg-a-page text-a-text">
       <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS }} />
       <div className="flex min-w-0 flex-1 flex-col lg:max-w-[742px]">
-        <header className="flex items-center gap-6 px-4 py-5 sm:px-8">
+        <header className="flex items-center justify-between gap-6 px-4 py-5 sm:px-8">
           <SignupLogo />
+          {action}
         </header>
         <main className="flex flex-1 flex-col items-center justify-center px-4 pb-8 sm:px-8">
           <div className="flex w-full max-w-[600px] flex-col gap-5 py-6 sm:p-10">{children}</div>
         </main>
       </div>
+      {aside ? (
+        <aside className="sticky top-0 hidden h-svh min-w-0 flex-1 pl-8 xl:flex">{aside}</aside>
+      ) : (
       <aside aria-hidden className="hidden min-w-0 flex-1 p-8 lg:flex">
         <div className="relative min-h-0 flex-1 overflow-hidden rounded-a-xl bg-a-panel">
           {/* eslint-disable-next-line @next/next/no-img-element -- static decorative art, sized by its box */}
           <img src="/onboarding/signup-hero.webp" alt="" className="absolute inset-0 size-full object-cover object-left" />
         </div>
       </aside>
+      )}
     </div>
   )
 }
