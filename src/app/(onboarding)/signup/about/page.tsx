@@ -1,87 +1,99 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Choice, OnbFrame, OnbTitle, mono } from "@/components/onboarding/frame"
-import { AUDIENCES, OFFERS, TOOLS, routeFor } from "@/components/onboarding/suggest"
+import { ChoiceChip, SignupFrame, SignupTitle } from "@/components/onboarding/signup-frame"
 import { AdminButton } from "@/components/admin/ui"
 import { setAccount, type Audience } from "@/lib/data/communities"
-import { cn } from "@/lib/utils"
 
 /**
- * Onboarding · 03 About you (Figma 521:7240). Three questions on one screen. The answers pick the route
- * (setup call or the wizard) and preselect a template and modules.
+ * Sign up · 04 About you (Figma 939:58985). Three optional questions as chips. The answers preselect the look and the
+ * modules (suggest.ts); nothing here changes the route any more: everyone names their platform next.
  */
+const MEMBERS: { id: string; label: string; audience: Audience }[] = [
+  { id: "none", label: "None yet", audience: "starting" },
+  { id: "under-100", label: "Under 100", audience: "small" },
+  { id: "100-500", label: "100–500", audience: "growing" },
+  { id: "500-1500", label: "500–1,500", audience: "large" },
+  { id: "1500", label: "1,500+", audience: "large" },
+]
+const TOOLS = [
+  { id: "none", label: "Nothing yet" },
+  { id: "discord", label: "Discord" },
+  { id: "whop", label: "Whop" },
+  { id: "skool", label: "Skool" },
+  { id: "kajabi", label: "Kajabi" },
+  { id: "other", label: "Other" },
+]
+const OFFERS = [
+  { id: "courses", label: "Courses" },
+  { id: "calls", label: "Mentoring / 1:1" },
+  { id: "live", label: "Live trading" },
+  { id: "community", label: "Community" },
+  { id: "other", label: "Other" },
+]
+
 export default function About() {
   const router = useRouter()
-  const [audience, setAudience] = useState<Audience>()
+  const [members, setMembers] = useState<string>()
   const [tools, setTools] = useState<string[]>([])
   const [offers, setOffers] = useState<string[]>([])
 
-  const toggle = (list: string[], id: string, set: (l: string[]) => void, only?: string) => {
-    if (list.includes(id)) return set(list.filter((x) => x !== id))
-    // "Nothing" can't be picked together with a tool.
-    if (id === only) return set([id])
-    set([...list.filter((x) => x !== only), id])
+  // "Nothing yet" can't sit next to a tool.
+  const toggle = (list: string[], id: string, only?: string) => (list.includes(id) ? list.filter((x) => x !== id) : id === only ? [id] : [...list.filter((x) => x !== only), id])
+
+  const next = (skip?: boolean) => {
+    const m = MEMBERS.find((x) => x.id === members)
+    setAccount({ answers: skip ? undefined : { audience: m?.audience ?? "starting", members, tools, offers } })
+    router.push("/signup/name")
   }
 
-  const ready = audience && tools.length > 0 && offers.length > 0
-
-  const next = () => {
-    if (!audience) return
-    const answers = { audience, tools, offers }
-    const route = routeFor(answers)
-    setAccount({ answers, route })
-    router.push(route === "B" ? "/signup/call" : "/setup")
-  }
+  const question = (label: string, children: React.ReactNode, multi?: boolean) => (
+    <div className="flex flex-col gap-2" role={multi ? "group" : "radiogroup"} aria-label={label}>
+      <span className="t-body-m-medium text-a-text">{label}</span>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  )
 
   return (
-    <OnbFrame size="lg" right={<><span className={cn(mono, "hidden text-a-text-3 sm:inline")}>Step 3 of 4</span><Link href="/signup/verify" className="rounded-a-xs outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">← Back</Link></>}>
-      <div className="grid gap-6">
-        <OnbTitle eyebrow="About you" title="Tell us where you are today." text="So we can start you off in the right place. You can change everything later." />
-
-        <Question title="What do you offer your students?" hint="Pick all that apply">
-          <div className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">
-            {OFFERS.filter((o) => o.ask).map((o) => (
-              <Choice key={o.id} multi checked={offers.includes(o.id)} onClick={() => toggle(offers, o.id, setOffers)} title={o.label} />
-            ))}
-          </div>
-        </Question>
-
-        <Question title="How many paying students do you have?">
-          <div className="grid grid-cols-2 gap-2 max-sm:grid-cols-1" role="radiogroup" aria-label="How many paying students do you have?">
-            {AUDIENCES.map((a) => (
-              <Choice key={a.id} checked={audience === a.id} onClick={() => setAudience(a.id)} title={a.label} />
-            ))}
-          </div>
-        </Question>
-
-        <Question title="What do you use today?">
-          <div className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">
-            {TOOLS.filter((t) => t.ask).map((t) => (
-              <Choice key={t.id} multi checked={tools.includes(t.id)} onClick={() => toggle(tools, t.id, setTools, "none")} title={t.label} />
-            ))}
-          </div>
-        </Question>
-
-        <div className="flex items-center justify-end gap-2">
-          <AdminButton hierarchy="ghost" onClick={() => (setAccount({ route: "C" }), router.push("/setup"))}>Skip</AdminButton>
-          <AdminButton className="min-w-28" disabled={!ready} onClick={next}>Continue</AdminButton>
+    <SignupFrame>
+      <div className="flex flex-col gap-5">
+        <SignupTitle title="Tell us about your coaching." text="Help us tailor TraderHub for you. All optional." />
+        <div className="flex flex-col gap-6">
+          {question(
+            "How many members do you have today?",
+            MEMBERS.map((o) => (
+              <ChoiceChip key={o.id} checked={members === o.id} onClick={() => setMembers((m) => (m === o.id ? undefined : o.id))}>
+                {o.label}
+              </ChoiceChip>
+            )),
+          )}
+          {question(
+            "Where do you run your community today?",
+            TOOLS.map((o) => (
+              <ChoiceChip key={o.id} multi checked={tools.includes(o.id)} onClick={() => setTools((l) => toggle(l, o.id, "none"))}>
+                {o.label}
+              </ChoiceChip>
+            )),
+            true,
+          )}
+          {question(
+            "What do you offer?",
+            OFFERS.map((o) => (
+              <ChoiceChip key={o.id} multi checked={offers.includes(o.id)} onClick={() => setOffers((l) => toggle(l, o.id))}>
+                {o.label}
+              </ChoiceChip>
+            )),
+            true,
+          )}
+        </div>
+        <div className="flex items-center gap-4">
+          <AdminButton onClick={() => next()}>Continue</AdminButton>
+          <AdminButton hierarchy="ghost" onClick={() => next(true)}>
+            Skip
+          </AdminButton>
         </div>
       </div>
-    </OnbFrame>
-  )
-}
-
-function Question({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <fieldset className="grid gap-2.5">
-      <legend className="grid gap-0.5">
-        <span className="t-body-m text-a-text">{title}</span>
-        {hint && <span className="t-caption text-a-text-3">{hint}</span>}
-      </legend>
-      {children}
-    </fieldset>
+    </SignupFrame>
   )
 }

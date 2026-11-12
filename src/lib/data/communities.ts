@@ -32,6 +32,8 @@ export type CustomCommunity = Coach & {
     trial?: number
     /** The coach went past the first-membership step (the tier it starts with is only a suggestion until then). */
     membership?: boolean
+    /** Language picked at sign-up (admin and student platform). */
+    language?: string
   }
 }
 
@@ -44,12 +46,14 @@ export type Account = {
   /** Pre-approved by us: skips the questions (route A). */
   approved: boolean
   verified: boolean
-  answers?: { audience: Audience; tools: string[]; offers: string[] }
+  answers?: { audience: Audience; tools: string[]; offers: string[]; members?: string }
   /** A: pre-approved, B: setup call, C: wizard on their own. */
   route?: "A" | "B" | "C"
   call?: { date: string; time: string }
   /** The community the wizard is building. */
   setupSlug?: string
+  /** Sign-up phase 1: came in through Log in or Create account (where Verify goes next). */
+  mode?: "login" | "create"
   step?: number
 }
 
