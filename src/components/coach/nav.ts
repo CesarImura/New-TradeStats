@@ -1,4 +1,5 @@
 import {
+  Send,
   BookOpen,
   CalendarDays,
   ChartCandlestick,
@@ -63,11 +64,13 @@ export function studentNav(coach: Coach, base: string): NavItem[] {
 }
 
 /** The admin menu is the same for every community, in our words, not the coach's. */
-export function adminNav(_coach: Coach, base: string): { group: string; items: NavItem[] }[] {
+export function adminNav(coach: Coach, base: string): { group: string; items: NavItem[] }[] {
+  // A platform still being set up (onboarding v2) opens on Getting started instead of the Overview.
+  const draft = (coach as { status?: string }).status === "setup"
   return [
     {
       group: "Today",
-      items: [{ id: "overview", label: "Overview", href: base, icon: LayoutDashboard, screens: "ADM-01" }],
+      items: [draft ? { id: "getting-started", label: "Getting started", href: `${base}/getting-started`, icon: Send, screens: "ONB" } : { id: "overview", label: "Overview", href: base, icon: LayoutDashboard, screens: "ADM-01" }],
     },
     {
       group: "Coaching",

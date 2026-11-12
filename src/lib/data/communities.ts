@@ -34,6 +34,11 @@ export type CustomCommunity = Coach & {
     membership?: boolean
     /** Language picked at sign-up (admin and student platform). */
     language?: string
+    /** Getting started (onboarding v2): which setup steps are finished. Payouts also count from the Payouts screen. */
+    design?: boolean
+    firstCourse?: boolean
+    firstTier?: boolean
+    legal?: boolean
   }
 }
 

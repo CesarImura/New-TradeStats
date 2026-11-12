@@ -1,7 +1,7 @@
 import { LOOKS } from "@/components/admin/design/looks"
 import { COACHES, DEFAULT_WORDING } from "@/lib/data/coaches"
 import { customCommunities, saveCommunity, setAccount, slugify, type Account } from "@/lib/data/communities"
-import { EMPTY, mergeOverrides, setDraft } from "@/lib/prototype-store"
+import { EMPTY, mergeOverrides, setDraft, setStored } from "@/lib/prototype-store"
 import { suggestedModules, suggestedTemplate } from "./suggest"
 
 /** Words that can't be a platform address. */
@@ -48,6 +48,8 @@ export function createCommunity({ name, coachName, language, account }: { name: 
   // Start on the look that fits, as picking it in Design would.
   const look = LOOKS.find((l) => l.template === template)
   if (look) setDraft(slug, mergeOverrides(EMPTY, { theme: { template: look.template, ...look.set } }))
+  // A new platform has no courses yet: Content opens on "No courses yet" (not on the prototype's sample catalog).
+  setStored(`catalog:${slug}`, { areas: ["Core"], courses: [] }, null)
   setAccount({ setupSlug: slug, step: undefined })
   return slug
 }

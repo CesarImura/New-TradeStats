@@ -77,7 +77,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
     }
   }, [])
 
-  const menu = <SidebarBody groups={groups} base={base} studentBase={studentBase} isOpen={isOpen} invite={invite} onDismissInvite={() => setInvite(false)} />
+  const menu = <SidebarBody groups={groups} base={base} studentBase={studentBase} isOpen={isOpen} invite={invite && (coach as { status?: string }).status !== "setup"} onDismissInvite={() => setInvite(false)} />
 
   return (
     <SidebarProvider className="dark ts-ui ts-admin ts-admin-v2 bg-a-page font-a-sans text-a-text" style={{ "--sidebar-width": "255px" } as React.CSSProperties}>
