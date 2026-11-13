@@ -19,8 +19,8 @@ export function LauncherOnboarding() {
         <span className={`${mono} text-[#ff5500]`}>New · Coach onboarding · ONB-01 to ONB-16</span>
         <h2 className="max-w-[40ch] text-lg leading-6 font-medium tracking-[-0.01em]">Sign up as a coach and build a platform from zero.</h2>
         <p className="max-w-[56ch] text-sm text-white/55">
-          Sign-up, e-mail code, three questions that pick the route (setup call or wizard), then seven steps with a live preview, publish and
-          invite. The result is a real community you can open on both sides.
+          Sign-up, e-mail code, a few questions and the platform&apos;s name, then Getting started: design, a first course, a tier, payouts and
+          legal pages, each with a guided tour, and go live. The result is a real community you can open on both sides.
         </p>
         <div className="mt-auto flex flex-wrap gap-2">
           <Link
@@ -31,7 +31,7 @@ export function LauncherOnboarding() {
             Start as a new coach <ArrowRight className="size-3.5" />
           </Link>
           {inProgress && (
-            <Link href="/setup" className="inline-flex h-7 items-center gap-1.5 rounded-[4px] border border-[#2a2a2f] bg-[#222226] px-2.5 text-[0.8125rem] font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_1px_1px_rgb(0_0_0/0.4)] hover:bg-[#2e2e33]">
+            <Link href={`/admin/${inProgress.slug}/getting-started`} className="inline-flex h-7 items-center gap-1.5 rounded-[4px] border border-[#2a2a2f] bg-[#222226] px-2.5 text-[0.8125rem] font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_1px_1px_rgb(0_0_0/0.4)] hover:bg-[#2e2e33]">
               Resume setup <RotateCcw className="size-3.5" />
             </Link>
           )}

@@ -361,9 +361,11 @@ Um arquivo de componente passa de ~600 linhas? Divida por responsabilidade, sem 
 - Já seguia o menu em grupos; ajustados o campo com prefixo/sufixo (`Affix`, 44 px), o alinhamento do General, a altura das linhas de uma linha (53 px, `DataCard rowHeight`) e o Welcome em uma linha.
 - General e Web address agora salvam (`general`, `web-address`). Tabelas rolantes sem nada focável levam `scrollLabel`.
 
-## 31. Onboarding (Figma 521:7152)
+## 31. Onboarding (Figma 939:59751, seção "sign up"; substitui o fluxo 521:7152 desde 12/11)
 
-- Moldura nova (`OnbFrame`) com os tokens do Admin: barra de 69 px, cartão 480/600/960. Telas: Sign up, Verify (código em 6 caixas), About you (três perguntas, Skip), Book a setup call (30 min), Welcome (também mostra "Call booked"), Setup em 3 passos (trilho, formulário, prévia ao vivo Desktop/Phone) e You're live.
-- O passo "Review and publish" é o último do wizard (a rota `/setup/publish` redireciona para ele); publicar leva a `/setup/invite`.
-- As perguntas mostram só as opções do Figma; as outras (`ask` ausente em `suggest.ts`) continuam valendo para o roteamento e os módulos, e comunidade e diário começam ligados.
-- Dentro do passo de marca continuam os controles do editor Design (logo, cor, cartões de template).
+- Cadastro em `app/(onboarding)/signup`: Log in, Create account, Verify (6 caixas), About you (chips, tudo opcional), Name your platform (nome, como os alunos chamam, idioma, termos). A moldura é `SignupFrame` (coluna de 742 px, cartão de 600, ilustração à direita a partir de 1024; `action` põe um botão na barra e `aside` troca a ilustração). `call` e `welcome` redirecionam para About you.
+- Name your platform cria a plataforma em rascunho (`setup-community.ts`: status "setup", endereço sugerido, catálogo vazio, look das respostas) e abre `/admin/<slug>/getting-started`, que substitui o Overview no menu enquanto ela é rascunho.
+- Getting started: cinco itens (Design, curso, tier, payouts, legal) e Go live (`TimelineStep` em `admin/ui`). Go live confirma o endereço e publica; You're live abre com `?live=1` (link para copiar e convites por e-mail em chips).
+- Design (`/setup`, `onboarding/design-setup.tsx`): Brand, Look e Layout no mesmo rascunho do editor Design; à direita a plataforma real num iframe em escala (esqueleto no passo Brand). Finish marca `setup.design`.
+- Tours (`admin/tour`): o passo mostrado é o ÚLTIMO cujo alvo `data-tour="…"` está na tela; condições ficam em atributos (`data-picked`, `data-named`, `data-state`, `data-ready`, `data-complete`) e no seletor. Pausar (Skip ou Do it later) guarda onde parou; Getting started mostra "Paused at …" e Resume. O último passo marca o item. Ao mexer em telas com alvo de tour, manter os atributos `data-tour`.
+- O wizard antigo (`onboarding/wizard.tsx`, `steps.tsx`, `/setup/invite`, `/setup/publish`) não é mais usado pelo fluxo; as dicas antigas (`SetupTip`) de curso, tier e payouts não aparecem mais (o tour cobre).

@@ -49,7 +49,8 @@ export function useSetupTasks(): Task[] {
   const live = !wizard || wizard.status === "live"
   // A published course with a published lesson; for a community made in setup, one of its own (not a sample course).
   const lessons = (c: Catalog) => c.courses.some((x) => x.status === "published" && allLessons(x).some((l) => l.status === "published") && !(wizard && isSampleCourse(coach, x.id)))
-  const inSetup = !live ? "/setup" : undefined
+  // Not live yet: everything leads to Getting started (admin/getting-started).
+  const inSetup = !live ? `${base}/getting-started` : undefined
 
   return [
     {
@@ -101,7 +102,8 @@ export function useSetupTasks(): Task[] {
       label: "Invite your first students",
       text: "A join link, e-mails or an import",
       // The invite page is where e-mail invites are sent and counted; the Students import is visual only in the prototype.
-      href: wizard ? `/setup/invite?c=${wizard.slug}` : `${base}/students`,
+      // You're live is where e-mail invites are sent and counted (Getting started · ?live=1).
+      href: wizard ? `${base}/getting-started?live=1` : `${base}/students`,
       done: wizard ? (wizard.setup?.invited ?? 0) > 0 : coach.tiers.some((t) => t.members > 0),
     },
     {
