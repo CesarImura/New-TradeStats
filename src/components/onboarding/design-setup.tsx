@@ -16,9 +16,9 @@ import { mergeOverrides, type Overrides } from "@/lib/prototype-store"
 import { onColor } from "@/lib/theme/derive"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import { TEMPLATES } from "@/lib/theme/templates"
-import type { BackgroundStyle, CoachTheme, Mode } from "@/lib/theme/types"
+import type { CoachTheme, Mode } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
-import { ChoiceChip, SignupFrame, SignupTitle, ghostOut } from "./signup-frame"
+import { SignupFrame, SignupTitle, ghostOut } from "./signup-frame"
 
 /**
  * Getting started · Design your platform (Figma 959:63835 Brand, 977:7158 Look, 987:7523 Layout). Three short steps on
@@ -327,18 +327,10 @@ const THEMES = [
   { id: "pulse", name: "Pulse", text: "Bold, community first", img: "/onboarding/look-pulse.webp" },
 ] as const
 
-const BACKGROUNDS: { id: BackgroundStyle; label: string }[] = [
-  { id: "plain", label: "Plain" },
-  { id: "grid", label: "Grid" },
-  { id: "dots", label: "Dots" },
-  { id: "glow", label: "Glow" },
-  { id: "gradient", label: "Gradient" },
-  { id: "image", label: "Image" },
-]
 
 function LookStep({ theme, change, onBack, onNext }: { theme: CoachTheme; change: Change; onBack: () => void; onNext: () => void }) {
   return (
-    <StepCard title="Your look" text="Pick a theme, light or dark, and a background." onBack={onBack} next={onNext}>
+    <StepCard title="Your look" text="Pick a theme, light or dark. Backgrounds and more are in Design." onBack={onBack} next={onNext}>
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-3">
           <span id="theme-label" className="t-caption text-a-text">
@@ -369,22 +361,6 @@ function LookStep({ theme, change, onBack, onNext }: { theme: CoachTheme; change
               />
             )
           })}
-        </div>
-      </div>
-      <div className="flex flex-col gap-2">
-        <span id="bg-label" className="t-caption text-a-text">
-          Background
-        </span>
-        <div role="radiogroup" aria-labelledby="bg-label" className="flex flex-wrap gap-2">
-          {BACKGROUNDS.map((b) => (
-            <ChoiceChip
-              key={b.id}
-              checked={theme.background === b.id}
-              onClick={() => change({ theme: b.id === "image" ? { background: "image", bgImage: theme.bgImage ?? "preset:candles" } : { background: b.id } }, "background")}
-            >
-              {b.label}
-            </ChoiceChip>
-          ))}
         </div>
       </div>
     </StepCard>
