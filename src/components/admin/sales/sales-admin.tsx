@@ -33,7 +33,14 @@ type Tab = (typeof TABS)[number]["id"] | "affiliates"
 export function SalesAdmin() {
   const { coach } = useCoach()
   const asked = useSearchParams().get("tab")
-  const [tab, setTab] = useState<Tab>(TABS.some((t) => t.id === asked) || asked === "affiliates" ? (asked as Tab) : "overview")
+  const pick = (v: string | null): Tab => (TABS.some((t) => t.id === v) || v === "affiliates" ? (v as Tab) : "overview")
+  const [tab, setTab] = useState<Tab>(pick(asked))
+  // Visited pages stay mounted: a link to another ?tab= (Getting started → Payouts) must still switch the tab.
+  const [seen, setSeen] = useState(asked)
+  if (asked !== seen) {
+    setSeen(asked)
+    if (asked) setTab(pick(asked))
+  }
   const [newTier, setNewTier] = useState(0)
   const [newGroup, setNewGroup] = useState(0)
   const [newCoupon, setNewCoupon] = useState(0)

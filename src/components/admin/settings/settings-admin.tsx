@@ -32,7 +32,14 @@ type TabId = (typeof GROUPS)[number]["tabs"][number][0]
 /** ADM-45 to ADM-52. */
 export function SettingsAdmin() {
   const initial = useSearchParams().get("tab")
-  const [tab, setTab] = useState<TabId>((GROUPS.flatMap((g) => g.tabs.map((t) => t[0])) as TabId[]).includes(initial as TabId) ? (initial as TabId) : "general")
+  const pick = (v: string | null): TabId => ((GROUPS.flatMap((g) => g.tabs.map((t) => t[0])) as TabId[]).includes(v as TabId) ? (v as TabId) : "general")
+  const [tab, setTab] = useState<TabId>(pick(initial))
+  // Visited pages stay mounted: a link to another ?tab= (Getting started → Legal) must still switch the tab.
+  const [seen, setSeen] = useState(initial)
+  if (initial !== seen) {
+    setSeen(initial)
+    if (initial) setTab(pick(initial))
+  }
   const { coach } = useCoach()
   return (
     <Page>

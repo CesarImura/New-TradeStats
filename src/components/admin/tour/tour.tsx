@@ -94,16 +94,17 @@ export function TourLayer() {
 
 /** The last step of the tour whose target is on screen, followed as the page changes. */
 function useActiveStep(tour: Tour | undefined, on: boolean) {
-  const [id, setId] = useState<string | null>(null)
+  // Kept with the tour it belongs to: tours share step ids ("done"), so a stale id must never carry over.
+  const [found, setFound] = useState<{ tour: string; id: string | null } | null>(null)
   useEffect(() => {
     if (!tour || !on) return
     let frame = 0
     const check = () => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
-        let found: string | null = null
-        for (const s of tour.steps) if (visible(document.querySelector(s.target))) found = s.id
-        setId(found)
+        let hit: string | null = null
+        for (const s of tour.steps) if (visible(document.querySelector(s.target))) hit = s.id
+        setFound({ tour: tour.id, id: hit })
       })
     }
     check()
@@ -119,7 +120,7 @@ function useActiveStep(tour: Tour | undefined, on: boolean) {
       removeEventListener("focusout", check)
     }
   }, [tour, on])
-  return on && tour ? tour.steps.find((s) => s.id === id) : undefined
+  return on && tour && found?.tour === tour.id ? tour.steps.find((s) => s.id === found.id) : undefined
 }
 
 /** On screen, and not inside a dialog or drawer that is closing (Base UI keeps it for its exit animation). */
