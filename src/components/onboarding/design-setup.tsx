@@ -569,8 +569,20 @@ const pageBg = (frame: HTMLIFrameElement) => {
   return b && b !== "rgba(0, 0, 0, 0)" ? b : getComputedStyle(doc.documentElement).backgroundColor
 }
 
-/** No scrollbars inside the preview: it is a picture of the platform, not a page to scroll. */
-const PREVIEW_CSS = "html,body,*{scrollbar-width:none!important}::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}"
+/**
+ * Injected into the preview. No scrollbars: it is a picture of the platform, not a page to scroll. And the View Transition
+ * used for swaps (onboarding-2, Natural connect): the menu, header, title and every widget that is still there after the
+ * change glides to its new place and size; the rest crossfades with a little blur.
+ */
+const PREVIEW_CSS = `html,body,*{scrollbar-width:none!important}::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+[data-slot=widget],header,nav,h1{view-transition-name:match-element}
+@keyframes onbvt-in{from{opacity:0;filter:blur(6px)}}
+@keyframes onbvt-out{to{opacity:0;filter:blur(6px)}}
+::view-transition-group(*){animation-duration:560ms;animation-timing-function:cubic-bezier(0.77,0,0.175,1)}
+::view-transition-old(*){animation:onbvt-out 260ms cubic-bezier(0.23,1,0.32,1) both}
+::view-transition-new(*){animation:onbvt-in 420ms cubic-bezier(0.23,1,0.32,1) 80ms both}
+::view-transition-old(root){animation:onbvt-out 240ms cubic-bezier(0.23,1,0.32,1) both}
+::view-transition-new(root){animation:onbvt-in 460ms cubic-bezier(0.23,1,0.32,1) 60ms both}`
 
 function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; step: number; coach: Coach; theme: CoachTheme; typing: boolean; swapRef: React.RefObject<(apply: () => void | Promise<void>) => void> }) {
   const box = useRef<HTMLDivElement>(null)
@@ -602,7 +614,27 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
       if (busy.current) return
       busy.current = true
       void (async () => {
-        // Picks that arrive while the new page is fading in start one more round.
+        const doc = el.contentDocument as (Document & { startViewTransition?: (cb: () => Promise<void>) => { finished: Promise<void> } }) | null
+        // Where the browser can, the swap is a View Transition inside the preview: elements morph, nothing goes blank.
+        if (doc?.startViewTransition) {
+          while (queued.current) {
+            const vt = doc.startViewTransition(async () => {
+              while (queued.current) {
+                const run = queued.current
+                queued.current = null
+                await run()
+                await settled(el)
+              }
+            })
+            await vt.finished.catch(() => {})
+            shell.style.transition = "background-color 360ms ease"
+            shell.style.backgroundColor = pageBg(el)
+          }
+          busy.current = false
+          return
+        }
+        // Otherwise: the page blurs out, the change lands unseen, the new page comes back. Picks that arrive while it
+        // fades in start one more round.
         while (queued.current) {
           shell.style.transition = ""
           shell.style.backgroundColor = pageBg(el)
@@ -680,11 +712,9 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
               ref={frame}
               onLoad={(e) => {
                 const doc = e.currentTarget.contentDocument
-                if (doc && !doc.getElementById("onb-preview-css")) {
-                  const css = doc.createElement("style")
-                  css.id = "onb-preview-css"
+                if (doc?.head) {
+                  const css = doc.getElementById("onb-preview-css") ?? doc.head.appendChild(Object.assign(doc.createElement("style"), { id: "onb-preview-css" }))
                   css.textContent = PREVIEW_CSS
-                  doc.head.appendChild(css)
                 }
                 if (screen.current) screen.current.style.backgroundColor = pageBg(e.currentTarget)
               }}
