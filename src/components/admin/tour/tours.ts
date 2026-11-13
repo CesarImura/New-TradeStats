@@ -24,6 +24,8 @@ export type TourStep = {
   later?: boolean
   /** The last step: the tour is done; its button goes back to Getting started. */
   final?: boolean
+  /** What the pill says on this (final) step, if not the tour's done title. */
+  pill?: string
 }
 
 export type Tour = {
@@ -48,6 +50,8 @@ const setSetup = (slug: string, patch: NonNullable<CustomCommunity["setup"]>) =>
 }
 
 const t = (key: string) => `[data-tour="${key}"]`
+/** No drawer open (one that is closing doesn't count). */
+const NO_DRAWER = `body:not(:has([data-slot="sheet-content"]:not([data-ending-style]):not([data-closed])))`
 
 export const TOURS: Record<TourId, Tour> = {
   course: {
@@ -88,7 +92,7 @@ export const TOURS: Record<TourId, Tour> = {
       { id: "new", target: t("tier-new"), part: 0, title: "Create your first tier", body: "Start with one. You can add more tiers anytime.", hint: "Click New tier" },
       { id: "plan", target: t("tier-plan"), part: 1, side: "left", title: "Name it and set a price", body: "Type a name and a monthly price. Students see both on your sales page.", hint: "Then click Sales page" },
       { id: "page", target: t("tier-page"), part: 2, side: "left", title: "Choose what it unlocks", body: "Your first course is already checked. Add a line or two for your sales page.", hint: "Click Save tier" },
-      { id: "done", target: `body:not(:has([data-slot="sheet-content"])) ${t("tier-card")}[data-ready]`, part: 2, final: true, title: "Your first tier is ready", body: "Next, connect payouts so students can pay you.", hint: "" },
+      { id: "done", target: `${NO_DRAWER} ${t("tier-card")}[data-ready]`, part: 2, final: true, title: "Your first tier is ready", body: "Next, connect payouts so students can pay you.", hint: "" },
     ],
   },
   payouts: {
@@ -99,7 +103,15 @@ export const TOURS: Record<TourId, Tour> = {
     parts: ["You are", "Bank account", "Identity check"],
     complete: (slug) => setSetup(slug, { payouts: "connected" }),
     done: (c) => c?.setup?.payouts === "connected",
-    steps: [],
+    steps: [
+      { id: "start", target: t("payouts-start"), part: 0, title: "Connect payouts", body: "This is how the money from your sales reaches you. Three short steps, about 5 minutes.", hint: "Click Start" },
+      { id: "next", target: t("payouts-next"), part: 1, title: "Pick up where you left off", body: "What you entered is saved. Carry on with the next step.", hint: "Click Continue" },
+      { id: "you", target: t("payouts-you"), part: 0, side: "left", title: "Tell us who gets paid", body: "Pick person or company and your country. Use your name exactly as on your ID.", hint: "Then click Continue" },
+      { id: "bank", target: t("payouts-bank"), part: 1, side: "left", title: "Add your bank account", body: "Your money arrives here every Monday. The account must be in your name.", hint: "Then click Save" },
+      { id: "id", target: t("payouts-id"), part: 2, side: "left", title: "Check your identity", body: "Our payment partner checks your ID once. It usually takes a few minutes.", hint: "Upload it, then click Submit" },
+      { id: "review", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="review"]`, part: 2, final: true, pill: "ID in review", title: "We’re checking your ID", body: "Usually a few minutes, sometimes up to 2 days. Keep setting up; we’ll e-mail you when it’s done.", hint: "" },
+      { id: "done", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="connected"]`, part: 2, final: true, title: "Payouts are connected", body: "You’ll get paid every Monday. Next, add your legal pages.", hint: "" },
+    ],
   },
   legal: {
     id: "legal",

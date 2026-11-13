@@ -42,7 +42,7 @@ export function useSetupTasks(): Task[] {
   const catalog = useCatalog(coach)
   const savedCatalog = useStored<Catalog | null>(`catalog:${coach.slug}`, null)
   const schedule = useSchedule(coach)
-  const payouts = useStored<Connected | null>(`${coach.slug}:payouts`, null)
+  const payouts = useStored<Connected | null>(`${coach.slug}:payouts-v2`, null)
   const discord = useStored<Connected | null>(`${coach.slug}:discord`, null)
   const history = useHistory(coach.slug)
 

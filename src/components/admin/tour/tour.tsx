@@ -77,7 +77,7 @@ export function TourLayer() {
   return createPortal(
     <>
       {state.started && step && <Spotlight key={tour.id} step={step} tour={tour} onSkip={pause} onFinish={finish} />}
-      <Pill tour={tour} done={!!state.done} progress={progress} open={state.panel} onToggle={() => (state.done ? finish() : set((s) => (s ? { ...s, panel: !s.panel } : s)))} />
+      <Pill tour={tour} done={!!state.done} label={state.done ? step?.pill ?? tour.doneTitle : tour.title} progress={progress} open={state.panel} onToggle={() => (state.done ? finish() : set((s) => (s ? { ...s, panel: !s.panel } : s)))} />
       {state.panel && !state.done && <Panel tour={tour} part={state.at ? part : 0} resumed={!!state.at} onStart={() => set((s) => (s ? { ...s, started: true, panel: false } : s))} />}
     </>,
     document.body,
@@ -114,7 +114,9 @@ function useActiveStep(tour: Tour | undefined, on: boolean) {
   return on && tour ? tour.steps.find((s) => s.id === id) : undefined
 }
 
-const visible = (el: Element | null): el is HTMLElement => !!el && (el as HTMLElement).getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden"
+/** On screen, and not inside a dialog or drawer that is closing (Base UI keeps it for its exit animation). */
+const visible = (el: Element | null): el is HTMLElement =>
+  !!el && (el as HTMLElement).getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden" && !el.closest("[data-ending-style], [data-closed]")
 
 /** Where the target is, kept in step with scrolling, resizing and layout changes. */
 function useBox(selector: string) {
@@ -264,7 +266,7 @@ function Arrow({ side, offset }: { side: Side; offset: number }) {
 }
 
 /** Course tour pill (Figma: 36 px, panel fill, the progress ring and the tour's name). Opens and closes the panel. */
-function Pill({ tour, done, progress, open, onToggle }: { tour: Tour; done: boolean; progress: number; open: boolean; onToggle: () => void }) {
+function Pill({ label, progress, open, onToggle }: { tour: Tour; done: boolean; label: string; progress: number; open: boolean; onToggle: () => void }) {
   const { right, bottom } = useCorner()
   return (
     <button
@@ -277,13 +279,13 @@ function Pill({ tour, done, progress, open, onToggle }: { tour: Tour; done: bool
     >
       {open ? (
         <>
-          {done ? tour.doneTitle : tour.title}
+          {label}
           <Ring value={progress} />
         </>
       ) : (
         <>
           <Ring value={progress} />
-          {done ? tour.doneTitle : tour.title}
+          {label}
         </>
       )}
     </button>
