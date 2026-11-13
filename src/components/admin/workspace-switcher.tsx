@@ -51,7 +51,6 @@ export function WorkspaceSwitcher() {
               <SidebarMenuButton
                 size="lg"
                 className="ts-switcher h-12 rounded-[10px] bg-white/[0.04] hover:bg-white/[0.07] data-popup-open:bg-white/[0.07] group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:shadow-none"
-                aria-label={`Current community: ${coach.name}. Switch community`}
               />
             }
           >
@@ -62,6 +61,8 @@ export function WorkspaceSwitcher() {
                 {coach.org} · {current?.role ?? "Owner"}
               </span>
             </span>
+            {/* The name read out is the visible text (community, org, role) plus this, so voice control matches what is on screen. */}
+            <span className="sr-only">Switch community</span>
             <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
           </PopoverTrigger>
           <PopoverContent align="start" side="bottom" className="w-(--anchor-width) min-w-72 p-0">

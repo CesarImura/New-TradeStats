@@ -115,13 +115,13 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
             <button
               type="button"
               className="hidden h-11 w-80 max-w-full items-center gap-2 rounded-a-md border border-a-border-subtle bg-a-field px-3 text-left text-a-text-3 t-body-l transition-colors duration-300 hover:border-a-border-strong focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:outline-none xl:flex"
-              aria-label="Search"
               aria-keyshortcuts="Meta+K Control+K"
               onClick={() => setSearchOpen(true)}
             >
               <Search className="size-4 text-a-icon" />
               <span className="flex-1">Search</span>
-              <kbd className="t-mono-meta rounded-a-xs bg-a-selected px-1.5 py-0.5 text-a-text-2">⌘K</kbd>
+              {/* The shortcut is announced through aria-keyshortcuts; the name is the visible "Search". */}
+              <kbd aria-hidden className="t-mono-meta rounded-a-xs bg-a-selected px-1.5 py-0.5 text-a-text-2">⌘K</kbd>
             </button>
             <div className="ml-auto flex items-center gap-2">
               <Button hierarchy="secondary" iconOnly aria-label="Search" className="xl:hidden" onClick={() => setSearchOpen(true)}>
