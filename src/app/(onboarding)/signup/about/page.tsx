@@ -87,9 +87,12 @@ export default function About() {
             true,
           )}
         </div>
-        <div className="flex items-center gap-4">
-          <AdminButton onClick={() => next()}>Continue</AdminButton>
-          <AdminButton hierarchy="ghost" onClick={() => next(true)}>
+        {/* Figma 939:58985: Continue then Skip, on the right. */}
+        <div className="flex items-center justify-end gap-4 pt-2">
+          <AdminButton size="xl" onClick={() => next()}>
+            Continue
+          </AdminButton>
+          <AdminButton size="xl" hierarchy="ghost" className="pr-0" onClick={() => next(true)}>
             Skip
           </AdminButton>
         </div>

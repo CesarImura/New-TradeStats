@@ -83,8 +83,11 @@ export default function NamePlatform() {
           </span>
         </label>
         {tried && !terms && <p className="-mt-3 t-caption text-a-danger">Accept the terms to continue.</p>}
-        <div>
-          <AdminButton type="submit">Continue</AdminButton>
+        {/* Figma 950:8284: Continue on the right, 8 px more above it. */}
+        <div className="flex justify-end pt-2">
+          <AdminButton type="submit" size="xl">
+            Continue
+          </AdminButton>
         </div>
       </form>
     </SignupFrame>
