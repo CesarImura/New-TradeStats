@@ -4,18 +4,21 @@ import { useId } from "react"
 import { cn } from "@/lib/utils"
 
 /**
- * The Traderhub logo (Figma: Admin / Logo, mark 23 x 24.5). The only mark to use anywhere: the "T" with a gradient
- * from top to bottom. One-colour versions keep the same shape and the same top-to-bottom gradient, in black, grey or
- * white. Never the flat orange "T" or the "TradeStats" wordmark (both retired on 13/11).
+ * The Traderhub logo (Figma: Admin / Logo 1096:2456, mark 23 x 24.5). The only mark to use anywhere: the "T" with a
+ * gradient from top to bottom (#FF4701 → #FF9003). Tones match the Figma: brand (white wordmark, dark backgrounds),
+ * brand-light (black wordmark, light backgrounds), and the one-colour white, gray (#757575) and black, flat on mark and
+ * wordmark. Never the flat orange "T" or the "TradeStats" wordmark (both retired on 13/11).
  */
-export type LogoTone = "brand" | "black" | "gray" | "white"
+export type LogoTone = "brand" | "brand-light" | "black" | "gray" | "white"
 
 /** Top and bottom of the gradient per tone. Brand reads the Figma tokens (color/brand-gradient-start and -end). */
+const BRAND: [string, string] = ["var(--admin-color-brand-gradient-start)", "var(--admin-color-brand-gradient-end)"]
 const STOPS: Record<LogoTone, [string, string]> = {
-  brand: ["var(--admin-color-brand-gradient-start)", "var(--admin-color-brand-gradient-end)"],
-  black: ["#000000", "#3d3d3d"],
-  gray: ["#5c5c5c", "#a1a1a1"],
-  white: ["#ffffff", "#cfcfcf"],
+  brand: BRAND,
+  "brand-light": BRAND,
+  black: ["#0a0a0a", "#0a0a0a"],
+  gray: ["#757575", "#757575"],
+  white: ["#ffffff", "#ffffff"],
 }
 
 const PATH = "M15.264 0V8.02976L7.63283 0H0V8.25179H15.0558L7.5279 16.6155V24.5333H15.264V8.25179H23V0H15.264Z"
@@ -48,5 +51,5 @@ export function Logo({ tone = "brand", size = 25, className, wordClassName }: { 
   )
 }
 
-/** The wordmark in the one-colour versions follows the mark's colour. */
-const WORD: Record<Exclude<LogoTone, "brand">, string> = { black: "text-black", gray: "text-neutral-500", white: "text-white" }
+/** Wordmark colour per tone (Figma component/logo/wordmark/* and mono/*). */
+const WORD: Record<Exclude<LogoTone, "brand">, string> = { "brand-light": "text-[#0a0a0a]", black: "text-[#0a0a0a]", gray: "text-[#757575]", white: "text-white" }

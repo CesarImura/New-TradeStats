@@ -374,6 +374,6 @@ Um arquivo de componente passa de ~600 linhas? Divida por responsabilidade, sem 
 
 - Único logo: o "T" com gradiente de cima para baixo (`--admin-color-brand-gradient-start` #ff4701 → `-end` #ff9003) e a palavra "Traderhub" em Heading M, 10 px de distância (Figma Admin / Logo, marca 23 × 24,5).
 - Sempre pelo componente `components/brand/logo.tsx`: `<Logo />` (marca + palavra) ou `<LogoMark />` (só o "T"). Não copiar o SVG.
-- Versões de uma cor: `tone="black" | "gray" | "white"`, mesmo formato e mesmo gradiente vertical, só que nesses tons.
+- Tons (iguais ao Figma Admin / Logo): `brand` (texto branco, fundo escuro, oficial), `brand-light` (texto preto, fundo claro) e os de uma cor `white`, `gray` (#757575) e `black`, chapados na marca e no texto.
 - Proibido: o "T" chapado laranja (`M2 3h20v6h-7v12H9V9H2z`) e a palavra "TradeStats" na interface.
 - Ícone da aba: `src/app/icon.svg` e `src/app/favicon.ico`, gerados do mesmo "T".
