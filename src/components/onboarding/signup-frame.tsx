@@ -1,7 +1,8 @@
 "use client"
 
-import { useLayoutEffect } from "react"
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
 import { TS_SYSTEM_CSS } from "@/lib/theme/ts-system"
 import { cn } from "@/lib/utils"
 
@@ -10,7 +11,36 @@ import { cn } from "@/lib/utils"
  * 600 px card centred in what is left) and the product illustration on the right. The illustration is decorative
  * and only shows from 1024 px; below that the form takes the whole width.
  */
-export function SignupFrame({ children, action, aside }: { children: React.ReactNode; /** On the right of the logo bar (Design: Save and exit). */ action?: React.ReactNode; /** Replaces the illustration (Design: the live canvas, full height from 1280 px). */ aside?: React.ReactNode }) {
+/** Inside the sign-up layout the frame is drawn once (SignupShell); each page only brings its card. */
+const InShell = createContext<{ go: (href: string, dir?: 1 | -1) => void } | null>(null)
+
+/**
+ * Moving between sign-up pages (and out to Getting started): the card leaves toward the side it isn't heading to, then the
+ * next one comes in from the other (Midday). Outside the sign-up layout it is a plain navigation.
+ */
+export function useSignupGo() {
+  const router = useRouter()
+  const shell = useContext(InShell)
+  return shell?.go ?? ((href: string) => router.push(href))
+}
+
+/** The motion shared by the sign-up pages and the Design steps. Reduced motion keeps short fades only. */
+export const ONB_BASE_CSS = `
+@keyframes onb-in{from{opacity:0;filter:blur(5px);transform:translate3d(var(--dx,0px),var(--dy,0px),0)}}
+@keyframes onb-fade{from{opacity:0}}
+@keyframes onb-pop{0%{transform:scale(0.94)}100%{transform:scale(1)}}
+@keyframes onb-hero{from{opacity:0;transform:scale(0.985)}}
+.onb-page>*>*{animation:onb-in 340ms cubic-bezier(0.2,0.8,0.2,1) both;animation-delay:calc((sibling-index() - 1) * 50ms)}
+.onb-page .text-a-danger{animation:onb-fade 200ms ease-out both}
+.onb-hero{animation:onb-hero 700ms cubic-bezier(0.23,1,0.32,1) 120ms both}
+@media (prefers-reduced-motion:reduce){
+  .onb-page>*>*{animation:onb-fade 200ms ease-out both!important;animation-delay:0ms!important}
+  .onb-hero{animation:onb-fade 200ms ease-out both}
+}
+`
+
+/** html.dark while the onboarding is open (the admin colours are dark only). */
+function useDark() {
   useLayoutEffect(() => {
     const html = document.documentElement
     const had = html.classList.contains("dark")
@@ -19,30 +49,91 @@ export function SignupFrame({ children, action, aside }: { children: React.React
       if (!had) html.classList.remove("dark")
     }
   }, [])
+}
 
+/** The left column: logo bar, then the 600 px card centred in what is left. */
+function Column({ action, children }: { action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col lg:max-w-[max(742px,38.65vw)]">
+      <header className="flex items-center justify-between gap-6 px-4 py-5 sm:px-8">
+        <SignupLogo />
+        {action}
+      </header>
+      <main className="flex flex-1 flex-col items-center justify-center px-4 pb-8 sm:px-8">{children}</main>
+    </div>
+  )
+}
+
+function Hero() {
+  return (
+    <aside aria-hidden className="hidden min-w-0 flex-1 p-8 lg:flex">
+      <div className="onb-hero relative min-h-0 flex-1 overflow-hidden rounded-a-xl bg-a-panel">
+        {/* eslint-disable-next-line @next/next/no-img-element -- static decorative art (vector, sharp at any size), sized by its box */}
+        <img src="/onboarding/signup-hero.svg" alt="" className="absolute inset-0 size-full object-cover object-left" />
+      </div>
+    </aside>
+  )
+}
+
+/**
+ * Sign up · phase 1 (Figma 939:59751, screens 01 to 05): the form column on the left (742 px: the logo bar, then a
+ * 600 px card centred in what is left) and the product illustration on the right. The illustration is decorative
+ * and only shows from 1024 px; below that the form takes the whole width. Under the sign-up layout only the card is
+ * drawn here (the shell keeps the rest still between pages).
+ */
+export function SignupFrame({ children, action, aside }: { children: React.ReactNode; /** On the right of the logo bar (Design: Save and exit). */ action?: React.ReactNode; /** Replaces the illustration (Design: the live canvas, full height from 1280 px). */ aside?: React.ReactNode }) {
+  const shell = useContext(InShell)
+  useDark()
+  if (shell) return <>{children}</>
   return (
     <div className="ts-ui ts-onb flex min-h-svh bg-a-page text-a-text">
-      <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS }} />
-      <div className="flex min-w-0 flex-1 flex-col lg:max-w-[max(742px,38.65vw)]">
-        <header className="flex items-center justify-between gap-6 px-4 py-5 sm:px-8">
-          <SignupLogo />
-          {action}
-        </header>
-        <main className="flex flex-1 flex-col items-center justify-center px-4 pb-8 sm:px-8">
-          <div className="flex w-full max-w-[600px] flex-col gap-5 py-6 sm:p-10">{children}</div>
-        </main>
-      </div>
-      {aside ? (
-        <aside className="sticky top-0 hidden h-svh min-w-0 flex-1 pl-8 xl:flex">{aside}</aside>
-      ) : (
-      <aside aria-hidden className="hidden min-w-0 flex-1 p-8 lg:flex">
-        <div className="relative min-h-0 flex-1 overflow-hidden rounded-a-xl bg-a-panel">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static decorative art (vector, sharp at any size), sized by its box */}
-          <img src="/onboarding/signup-hero.svg" alt="" className="absolute inset-0 size-full object-cover object-left" />
-        </div>
-      </aside>
-      )}
+      <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS + ONB_BASE_CSS }} />
+      <Column action={action}>
+        <div className="flex w-full max-w-[600px] flex-col gap-5 py-6 sm:p-10">{children}</div>
+      </Column>
+      {aside ? <aside className="sticky top-0 hidden h-svh min-w-0 flex-1 pl-8 xl:flex">{aside}</aside> : <Hero />}
     </div>
+  )
+}
+
+/**
+ * The sign-up layout: logo bar and illustration stay put while the pages change; the card in the middle leaves and
+ * enters (staggered, a few pixels from the side, with a blur).
+ */
+export function SignupShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const page = useRef<HTMLDivElement>(null)
+  const [dir, setDir] = useState<1 | -1>(1)
+  const leaving = useRef(false)
+  useDark()
+  const go = useCallback(
+    (href: string, to: 1 | -1 = 1) => {
+      const el = page.current
+      if (leaving.current) return
+      setDir(to)
+      if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return router.push(href)
+      leaving.current = true
+      el.animate([{ opacity: 1, filter: "blur(0px)", transform: "translateX(0)" }, { opacity: 0, filter: "blur(4px)", transform: `translateX(${to * -12}px)` }], { duration: 160, easing: "cubic-bezier(0.23, 1, 0.32, 1)", fill: "forwards" }).onfinish = () => router.push(href)
+    },
+    [router],
+  )
+  // A new page is in: the next exit can run.
+  useEffect(() => {
+    leaving.current = false
+  }, [pathname])
+  return (
+    <InShell.Provider value={{ go }}>
+      <div className="ts-ui ts-onb flex min-h-svh bg-a-page text-a-text">
+        <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS + ONB_BASE_CSS }} />
+        <Column>
+          <div ref={page} key={pathname} className="onb-page flex w-full max-w-[600px] flex-col gap-5 py-6 sm:p-10" style={{ "--dx": `${dir * 12}px` } as React.CSSProperties}>
+            {children}
+          </div>
+        </Column>
+        <Hero />
+      </div>
+    </InShell.Provider>
   )
 }
 

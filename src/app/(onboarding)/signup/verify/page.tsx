@@ -1,10 +1,9 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { ArrowLeft, Loader2 } from "@/components/icons"
-import { SignupFrame, SignupTitle } from "@/components/onboarding/signup-frame"
+import { SignupFrame, SignupTitle, useSignupGo } from "@/components/onboarding/signup-frame"
 import { AdminButton } from "@/components/admin/ui"
 import { account, customCommunities, setAccount } from "@/lib/data/communities"
 import { useAccount } from "@/lib/data/use-communities"
@@ -15,7 +14,7 @@ import { useAccount } from "@/lib/data/use-communities"
  * everyone else goes on to About you.
  */
 export default function Verify() {
-  const router = useRouter()
+  const go = useSignupGo()
   const acc = useAccount()
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""))
   const [checking, setChecking] = useState(false)
@@ -37,8 +36,8 @@ export default function Verify() {
       setAccount({ verified: true })
       const a = account()
       const mine = a?.setupSlug ? customCommunities().find((c) => c.slug === a.setupSlug) : undefined
-      if (a?.mode === "login" && mine) router.push(mine.status === "live" ? `/admin/${mine.slug}` : `/admin/${mine.slug}/getting-started`)
-      else router.push("/signup/about")
+      if (a?.mode === "login" && mine) go(mine.status === "live" ? `/admin/${mine.slug}` : `/admin/${mine.slug}/getting-started`)
+      else go("/signup/about")
     }, 600)
   }
 
@@ -59,7 +58,7 @@ export default function Verify() {
   return (
     <SignupFrame>
       <div className="flex flex-col gap-5">
-        <AdminButton hierarchy="ghost" className="-ml-2 w-fit" onClick={() => router.push(back)}>
+        <AdminButton hierarchy="ghost" className="-ml-2 w-fit" onClick={() => go(back, -1)}>
           <ArrowLeft /> Back
         </AdminButton>
         <SignupTitle title="Enter the 6-digit code" text={<>We sent it to {acc?.email || "your e-mail"}.</>} />
@@ -75,7 +74,10 @@ export default function Verify() {
               autoComplete={i === 0 ? "one-time-code" : "off"}
               autoFocus={i === 0}
               aria-label={`Digit ${i + 1}`}
-              disabled={checking}
+              readOnly={checking}
+              data-filled={d ? "" : undefined}
+              data-checking={checking ? "" : undefined}
+              style={{ "--i": i } as React.CSSProperties}
               onChange={(e) => set(i, e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Backspace" && !d && i > 0) refs.current[i - 1]?.focus()
@@ -84,7 +86,7 @@ export default function Verify() {
                 if (e.key === "Enter") verify()
               }}
               onFocus={(e) => e.target.select()}
-              className="h-16 w-0 min-w-0 flex-1 rounded-a-10 border border-a-border-strong bg-a-subtle text-center t-heading-xl text-a-text outline-none transition-[background-color,border-color] duration-300 ease-out hover:bg-a-hover focus:border-a-border-active focus:bg-a-raised disabled:opacity-40"
+              className="h-16 w-0 min-w-0 flex-1 rounded-a-10 border border-a-border-strong bg-a-subtle text-center t-heading-xl text-a-text outline-none transition-[background-color,border-color] duration-300 ease-out hover:bg-a-hover focus:border-a-border-active focus:bg-a-raised data-[filled]:animate-[onb-pop_180ms_cubic-bezier(0.23,1,0.32,1)] data-[checking]:border-a-border-active data-[checking]:[transition-delay:calc(var(--i)*60ms)] motion-reduce:animate-none"
             />
           ))}
         </div>
@@ -106,7 +108,7 @@ export default function Verify() {
               Send a new code
             </button>
           )}
-          <button className="ml-auto rounded-a-xs outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus" onClick={() => router.push(back)}>
+          <button className="ml-auto rounded-a-xs outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus" onClick={() => go(back, -1)}>
             Change e-mail
           </button>
         </div>

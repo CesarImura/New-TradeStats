@@ -1,8 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { ChoiceChip, SignupFrame, SignupTitle } from "@/components/onboarding/signup-frame"
+import { ChoiceChip, SignupFrame, SignupTitle, useSignupGo } from "@/components/onboarding/signup-frame"
 import { AdminButton } from "@/components/admin/ui"
 import { setAccount, type Audience } from "@/lib/data/communities"
 
@@ -34,7 +33,7 @@ const OFFERS = [
 ]
 
 export default function About() {
-  const router = useRouter()
+  const go = useSignupGo()
   const [members, setMembers] = useState<string>()
   const [tools, setTools] = useState<string[]>([])
   const [offers, setOffers] = useState<string[]>([])
@@ -45,7 +44,7 @@ export default function About() {
   const next = (skip?: boolean) => {
     const m = MEMBERS.find((x) => x.id === members)
     setAccount({ answers: skip ? undefined : { audience: m?.audience ?? "starting", members, tools, offers } })
-    router.push("/signup/name")
+    go("/signup/name")
   }
 
   const question = (label: string, children: React.ReactNode, multi?: boolean) => (

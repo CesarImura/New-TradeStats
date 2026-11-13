@@ -1,10 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { SelectField } from "@/components/kit/select-field"
 import { createCommunity } from "@/components/onboarding/setup-community"
-import { SignupFrame, SignupTitle } from "@/components/onboarding/signup-frame"
+import { SignupFrame, SignupTitle, useSignupGo } from "@/components/onboarding/signup-frame"
 import { AdminButton, AdminField, adminControl } from "@/components/admin/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { account } from "@/lib/data/communities"
@@ -27,7 +26,7 @@ const LANGUAGES = [
  * platform as a draft and opens Getting started.
  */
 export default function NamePlatform() {
-  const router = useRouter()
+  const go = useSignupGo()
   const acc = useAccount()
   const first = acc?.name.trim().split(/\s+/)[0] ?? ""
   const [name, setName] = useState("")
@@ -43,7 +42,7 @@ export default function NamePlatform() {
     setTried(true)
     if (errors.name || errors.call || !terms) return
     const slug = createCommunity({ name: name.trim(), coachName: callAs.trim(), language, account: account() })
-    router.push(`/admin/${slug}/getting-started`)
+    go(`/admin/${slug}/getting-started`)
   }
 
   return (
