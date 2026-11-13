@@ -77,17 +77,20 @@ function Flow({ community, step }: { community: CustomCommunity; step: Step }) {
   useEffect(() => {
     changeRef.current = change
   })
-  const swapRef = useRef<(apply: () => void | Promise<void>) => void>((apply) => void apply())
+  const swapRef = useRef<(apply: () => void | Promise<void>, kind?: SwapKind) => void>((apply) => void apply())
   const pendingRef = useRef<Partial<Overrides> | null>(null)
   const smooth: Change = (patch, key) => {
     pendingRef.current = pendingRef.current ? mergeOverrides({ theme: {}, content: {}, ...pendingRef.current } as Overrides, patch) : patch
     setPending(pendingRef.current)
-    swapRef.current(() => {
-      const all = pendingRef.current
-      pendingRef.current = null
-      if (all) changeRef.current(all, key)
-      setPending(null)
-    })
+    swapRef.current(
+      () => {
+        const all = pendingRef.current
+        pendingRef.current = null
+        if (all) changeRef.current(all, key)
+        setPending(null)
+      },
+      key === "mode" ? "mode" : "look",
+    )
   }
   // Leaving a step: the card fades out toward the side the coach is not heading to, then the next step comes in.
   const card = useRef<HTMLDivElement>(null)
@@ -535,6 +538,8 @@ const FIG = { w: 1103, left: 96, top: 150, screen: 917, screenH: 959 }
 const BASE = 1440 // the platform is drawn at a desktop width, then scaled
 const ZOOM = [2, 1.6, 1] // Brand, Look, Layout
 
+/** A light/dark switch only recolours the page; anything else (theme, background, layout, page) also moves things. */
+type SwapKind = "mode" | "look"
 const reduced = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches
 const EASE_OUT = "cubic-bezier(0.23, 1, 0.32, 1)"
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -582,9 +587,14 @@ const PREVIEW_CSS = `html,body,*{scrollbar-width:none!important}::-webkit-scroll
 ::view-transition-old(*){animation:onbvt-out 260ms cubic-bezier(0.23,1,0.32,1) both}
 ::view-transition-new(*){animation:onbvt-in 420ms cubic-bezier(0.23,1,0.32,1) 80ms both}
 ::view-transition-old(root){animation:onbvt-out 240ms cubic-bezier(0.23,1,0.32,1) both}
-::view-transition-new(root){animation:onbvt-in 460ms cubic-bezier(0.23,1,0.32,1) 60ms both}`
+::view-transition-new(root){animation:onbvt-in 460ms cubic-bezier(0.23,1,0.32,1) 60ms both}
+html[data-onb-swap=mode] :is([data-slot=widget],header,nav,h1){view-transition-name:none}
+html[data-onb-swap=mode] *,html[data-onb-swap=mode] *::before,html[data-onb-swap=mode] *::after{transition:none!important}
+@keyframes onbvt-reveal{from{clip-path:circle(0% at 0% 0%)}to{clip-path:circle(150% at 0% 0%)}}
+html[data-onb-swap=mode]::view-transition-old(root){animation:none}
+html[data-onb-swap=mode]::view-transition-new(root){animation:onbvt-reveal 600ms cubic-bezier(0.32,0.72,0,1) both}`
 
-function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; step: number; coach: Coach; theme: CoachTheme; typing: boolean; swapRef: React.RefObject<(apply: () => void | Promise<void>) => void> }) {
+function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; step: number; coach: Coach; theme: CoachTheme; typing: boolean; swapRef: React.RefObject<(apply: () => void | Promise<void>, kind?: SwapKind) => void> }) {
   const box = useRef<HTMLDivElement>(null)
   const screen = useRef<HTMLDivElement>(null)
   const frame = useRef<HTMLIFrameElement>(null)
@@ -605,11 +615,14 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
    */
   const busy = useRef(false)
   const queued = useRef<(() => void | Promise<void>) | null>(null)
+  // Only light/dark in the queue: the new mode is revealed from the corner nearest the switch, nothing blurs or moves.
+  const modeOnly = useRef(true)
   const swap = useCallback(
-    (apply: () => void | Promise<void>) => {
+    (apply: () => void | Promise<void>, kind: SwapKind = "look") => {
       const el = frame.current
       const shell = screen.current
       if (!el || !shell || step === 0 || reduced()) return void apply()
+      modeOnly.current = (busy.current && queued.current ? modeOnly.current : true) && kind === "mode"
       queued.current = apply
       if (busy.current) return
       busy.current = true
@@ -618,6 +631,8 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
         // Where the browser can, the swap is a View Transition inside the preview: elements morph, nothing goes blank.
         if (doc?.startViewTransition) {
           while (queued.current) {
+            const mode = modeOnly.current
+            if (mode) doc.documentElement.dataset.onbSwap = "mode"
             const vt = doc.startViewTransition(async () => {
               while (queued.current) {
                 const run = queued.current
@@ -625,10 +640,13 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
                 await run()
                 await settled(el)
               }
+              // The space around the page follows in step with the page itself.
+              shell.style.transition = `background-color ${mode ? 600 : 460}ms ${mode ? "cubic-bezier(0.32,0.72,0,1)" : "ease"}`
+              shell.style.backgroundColor = pageBg(el)
             })
             await vt.finished.catch(() => {})
-            shell.style.transition = "background-color 360ms ease"
-            shell.style.backgroundColor = pageBg(el)
+            delete doc.documentElement.dataset.onbSwap
+            modeOnly.current = true
           }
           busy.current = false
           return
