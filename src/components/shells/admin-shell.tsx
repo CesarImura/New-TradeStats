@@ -274,7 +274,7 @@ function NavLink({ href, label, icon: Icon, active, collapsed }: { href: string;
         active ? "border-a-border bg-a-panel text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-[var(--admin-component-nav-indicator)] [html[data-admin-sb=collapsed]_.admin-side_&]:after:hidden" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text"
       )}
     >
-      <Icon className={cn("size-4 shrink-0", active ? "fill-[url(#admin-icon-grad)]" : "text-a-icon")} />
+      <Icon className={cn("size-4 shrink-0", active ? "fill-[url(#admin-icon-grad)]" : "text-a-text-nav")} />
       <span className="min-w-0 overflow-hidden whitespace-nowrap transition-opacity duration-150 ease-out [html[data-admin-sb=collapsed]_.admin-side_&]:opacity-0">{label}</span>
     </Link>
   )
