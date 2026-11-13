@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
+import { Children, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
@@ -70,6 +70,11 @@ function Flow({ community, step }: { community: CustomCommunity; step: Step }) {
   const theme = useMemo(() => resolveTheme(coach, working.theme), [coach, working.theme])
   const index = STEPS.indexOf(step)
   const exit = `/admin/${community.slug}/getting-started`
+  // Which way the coach moved, so the new step comes in from that side (adjusting state while rendering).
+  const [seen, setSeen] = useState({ index, dir: 1 })
+  if (seen.index !== index) setSeen({ index, dir: index > seen.index ? 1 : -1 })
+  // While the name is being typed, the preview shows a caret after it (Love the onboarding).
+  const [typing, setTyping] = useState(false)
 
   const go = (to: Step) => router.push(`${pathname}?step=${to}`)
   const finish = () => {
@@ -84,11 +89,14 @@ function Flow({ community, step }: { community: CustomCommunity; step: Step }) {
           Save and exit
         </AdminButton>
       }
-      aside={<Canvas slug={community.slug} step={index} coach={coach} theme={theme} />}
+      aside={<Canvas slug={community.slug} step={index} coach={coach} theme={theme} typing={typing} />}
     >
-      {step === "brand" && <BrandStep community={community} coach={coach} theme={theme} change={change} onNext={() => go("look")} />}
-      {step === "look" && <LookStep theme={theme} change={change} onBack={() => go("brand")} onNext={() => go("layout")} />}
-      {step === "layout" && <LayoutStep theme={theme} change={change} onBack={() => go("look")} onNext={finish} />}
+      <style dangerouslySetInnerHTML={{ __html: MOTION_CSS }} />
+      <div key={step} className="contents" style={{ "--dx": `${seen.dir * 12}px` } as React.CSSProperties}>
+        {step === "brand" && <BrandStep community={community} coach={coach} theme={theme} change={change} onNext={() => go("look")} onTyping={setTyping} />}
+        {step === "look" && <LookStep theme={theme} change={change} onBack={() => go("brand")} onNext={() => go("layout")} />}
+        {step === "layout" && <LayoutStep theme={theme} change={change} onBack={() => go("look")} onNext={finish} />}
+      </div>
     </SignupFrame>
   )
 }
@@ -107,9 +115,17 @@ function StepCard({ title, text, children, onBack, next, nextLabel = "Continue",
       }}
       className="flex flex-col gap-6"
     >
-      <SignupTitle title={title} text={text} />
-      <div className="flex flex-col gap-6">{children}</div>
-      <div className="flex items-center gap-4 pt-2">
+      <div className="onb-in" style={{ "--i": 0 } as React.CSSProperties}>
+        <SignupTitle title={title} text={text} />
+      </div>
+      <div className="flex flex-col gap-6">
+        {Children.toArray(children).map((c, i) => (
+          <div key={i} className="onb-in" style={{ "--i": i + 1 } as React.CSSProperties}>
+            {c}
+          </div>
+        ))}
+      </div>
+      <div className="onb-in flex items-center gap-4 pt-2" style={{ "--i": Children.count(children) + 1 } as React.CSSProperties}>
         {onBack && (
           <AdminButton type="button" hierarchy="ghost" size="xl" onClick={onBack} className="pl-0">
             <ArrowLeft /> Back
@@ -125,7 +141,7 @@ function StepCard({ title, text, children, onBack, next, nextLabel = "Continue",
 
 // ---------- 01 Brand
 
-function BrandStep({ community, coach, theme, change, onNext }: { community: CustomCommunity; coach: Coach; theme: CoachTheme; change: Change; onNext: () => void }) {
+function BrandStep({ community, coach, theme, change, onNext, onTyping }: { community: CustomCommunity; coach: Coach; theme: CoachTheme; change: Change; onNext: () => void; onTyping: (on: boolean) => void }) {
   const file = useRef<HTMLInputElement>(null)
   const name = coach.name
   const initial = (name.trim()[0] ?? "T").toUpperCase()
@@ -149,7 +165,7 @@ function BrandStep({ community, coach, theme, change, onNext }: { community: Cus
       <AdminField label="Platform name" error={name.trim().length < 2 ? "Give your platform a name." : undefined}>
         {(f) => (
           <span className="relative block">
-            <input {...f} maxLength={MAX} value={name} onChange={(e) => setName(e.target.value)} className={cn(adminControl, "h-11 pr-16")} />
+            <input {...f} maxLength={MAX} value={name} onChange={(e) => setName(e.target.value)} onFocus={() => onTyping(true)} onBlur={() => onTyping(false)} className={cn(adminControl, "h-11 pr-16")} />
             <span aria-hidden className="pointer-events-none absolute inset-y-0 right-3 flex items-center t-caption text-a-text-3 tabular-nums">
               {name.length}/{MAX}
             </span>
@@ -488,8 +504,18 @@ const FIG = { w: 1103, left: 96, top: 150, screen: 917, screenH: 959 }
 const BASE = 1440 // the platform is drawn at a desktop width, then scaled
 const ZOOM = [2, 1.6, 1] // Brand, Look, Layout
 
-function Canvas({ slug, step, coach, theme }: { slug: string; step: number; coach: Coach; theme: CoachTheme }) {
+function Canvas({ slug, step, coach, theme, typing }: { slug: string; step: number; coach: Coach; theme: CoachTheme; typing: boolean }) {
   const box = useRef<HTMLDivElement>(null)
+  const frame = useRef<HTMLIFrameElement>(null)
+  // A theme, mode, background or layout change swaps the whole page at once: a short blur bridges it.
+  const look = [theme.template, theme.mode, theme.background, theme.nav.layout, theme.nav.frame, theme.widgetSet, theme.primary].join("|")
+  const lastLook = useRef(look)
+  useEffect(() => {
+    if (lastLook.current === look) return
+    lastLook.current = look
+    if (step === 0 || matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    frame.current?.animate([{ filter: "blur(0px)", opacity: 1 }, { filter: "blur(6px)", opacity: 0.6, offset: 0.3 }, { filter: "blur(0px)", opacity: 1 }], { duration: 520, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" })
+  }, [look, step])
   const [size, setSize] = useState({ w: 0, h: 0 })
   const [page, setPage] = useState<"home" | "courses">("home")
   useEffect(() => {
@@ -516,13 +542,17 @@ function Canvas({ slug, step, coach, theme }: { slug: string; step: number; coac
         <>
           <div
             aria-hidden
-            className="absolute overflow-hidden bg-a-page transition-transform duration-500 ease-out motion-reduce:transition-none"
+            className="onb-cam absolute overflow-hidden bg-a-page"
             style={{ left: FIG.left * k, top: FIG.top * k, width: BASE, height, transform: `scale(${scale})`, transformOrigin: "0 0", borderRadius: (16 * k) / base }}
           >
-            <iframe key={src} src={src} title="Preview of your platform" tabIndex={-1} className="pointer-events-none size-full border-0" />
-            <div className={cn("absolute inset-0 transition-opacity duration-300 ease-out", step === 0 ? "opacity-100" : "pointer-events-none opacity-0")}>
-              <Skeleton coach={coach} theme={theme} />
-            </div>
+            {/* Under the skeleton the real platform waits, blurred; leaving Brand it comes into focus as the skeleton dissolves. */}
+            <iframe
+              ref={frame}
+              key={src}
+              // Switching Home and Courses loads another page: it comes in with a short blur instead of popping.
+              onLoad={(e) => !matchMedia("(prefers-reduced-motion: reduce)").matches && e.currentTarget.animate([{ opacity: 0, filter: "blur(4px)" }, { opacity: 1, filter: "blur(0px)" }], { duration: 400, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" })}
+              src={src} title="Preview of your platform" tabIndex={-1} className={cn("onb-frame pointer-events-none size-full border-0", step === 0 && "onb-frame-off")} />
+            <Skeleton coach={coach} theme={theme} typing={typing} gone={step !== 0} />
           </div>
           {step === 2 && (
             <PillSegmented
@@ -533,7 +563,7 @@ function Canvas({ slug, step, coach, theme }: { slug: string; step: number; coac
                 { value: "home", label: coach.wording.home },
                 { value: "courses", label: coach.wording.courses },
               ]}
-              className="absolute bg-a-page"
+              className="onb-in absolute bg-a-page [--d:450ms] [--dx:0px] [--dy:-6px]"
               // Figma: 60 px above the screen, on its left edge.
               style={{ left: FIG.left * k, top: FIG.top * k - 60 }}
             />
@@ -557,39 +587,59 @@ function Ring({ step }: { step: number }) {
   )
 }
 
-/** Brand step: the platform as a skeleton, only the name and the logo (or its initial) in the brand colour are real. */
-function Skeleton({ coach, theme }: { coach: Coach; theme: CoachTheme }) {
-  const bar = "rounded-full bg-a-muted"
+/**
+ * Brand step: the platform as a skeleton; only the name and the logo (or its initial) in the brand colour are real, and
+ * they follow the form as it is filled (the name letter by letter, with a caret while typing). It assembles block by block
+ * when it appears and dissolves the same way, top left first, when the coach moves on (Dashboard skeleton loading).
+ */
+function Skeleton({ coach, theme, typing, gone }: { coach: Coach; theme: CoachTheme; typing: boolean; gone: boolean }) {
+  const bar = "onb-shimmer rounded-full bg-a-muted"
+  const name = coach.name || "Your platform"
+  const block = (i: number) => ({ "data-skel": "", style: { "--i": i } as React.CSSProperties })
   return (
-    <div className="flex size-full bg-a-sunk">
-      <aside className="flex w-[230px] shrink-0 flex-col border-r border-a-border-subtle bg-a-page">
+    <div className={cn("onb-skel absolute inset-0 flex", gone && "onb-skel-gone pointer-events-none")}>
+      <aside className="flex w-[230px] shrink-0 flex-col border-r border-a-border-subtle bg-a-page" {...block(0)}>
         <div className="flex h-[70px] items-center gap-3 px-4">
-          <span className="grid size-[26px] shrink-0 place-items-center overflow-hidden rounded-a-sm t-caption" style={{ background: coach.logo ? undefined : theme.primary, color: onColor(theme.primary) }}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- the coach's upload, a data URL */}
-            {coach.logo ? <img src={coach.logo} alt="" className="size-full object-cover" /> : (coach.name.trim()[0] ?? "T").toUpperCase()}
+          <span className="onb-mark grid size-[26px] shrink-0 place-items-center overflow-hidden rounded-a-sm t-caption" style={{ background: coach.logo ? undefined : theme.primary, color: onColor(theme.primary) }}>
+            {coach.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element -- the coach's upload, a data URL
+              <img key={coach.logo.slice(-24)} src={coach.logo} alt="" className="onb-char size-full object-cover" />
+            ) : (
+              <span key={(coach.name.trim()[0] ?? "T").toUpperCase()} className="onb-char">
+                {(coach.name.trim()[0] ?? "T").toUpperCase()}
+              </span>
+            )}
           </span>
-          <span className="min-w-0 flex-1 truncate t-body-m-medium text-a-text">{coach.name || "Your platform"}</span>
+          <span className="flex min-w-0 flex-1 items-center truncate t-body-m-medium text-a-text">
+            {[...name].map((c, i) => (
+              <span key={`${i}${c}`} className="onb-char whitespace-pre">
+                {c}
+              </span>
+            ))}
+            {typing && <span aria-hidden className="onb-caret ml-px inline-block h-4 w-px bg-a-text" />}
+          </span>
           <ChevronsUpDown className="size-3.5 text-a-icon" />
         </div>
         <div className="flex flex-col gap-3.5 px-4 pt-3">
           {[60, 44, 48, 38, 47, 62, 43, 54, 50].map((w, i) => (
-            <span key={i} className="flex items-center gap-3">
+            <span key={i} className="flex items-center gap-3" {...block(i + 1)}>
               <span className="size-3 rounded-full bg-a-muted" />
               <span className={cn("h-2.5", bar)} style={{ width: `${w}%` }} />
             </span>
           ))}
         </div>
       </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col bg-a-sunk" {...block(1)}>
         <div className="flex h-[70px] items-center border-b border-a-border-subtle px-5">
           <PanelLeft className="size-4 text-a-icon" />
         </div>
         <div className="flex flex-col gap-3 px-8 pt-6">
-          <span className={cn("h-2 w-24", bar)} />
-          <span className={cn("h-4 w-[45%]", bar)} />
+          <span className={cn("h-2 w-24", bar)} {...block(2)} />
+          <span className={cn("h-4 w-[45%]", bar)} {...block(3)} />
           <div className="mt-2 grid grid-cols-3 gap-2">
             {Array.from({ length: 6 }, (_, i) => (
-              <div key={i} className="flex h-[180px] flex-col gap-3 rounded-a-sm bg-a-panel p-3">
+              // Diagonal order: each card one beat after the one above or to its left.
+              <div key={i} className="flex h-[180px] flex-col gap-3 rounded-a-sm bg-a-panel p-3" {...block(4 + (i % 3) + Math.floor(i / 3))}>
                 <span className={cn("h-1.5 w-1/3", bar)} />
                 <span className={cn("h-4 w-1/3", bar)} />
                 <span className={cn("h-1.5 w-3/4", bar)} />
@@ -602,3 +652,34 @@ function Skeleton({ coach, theme }: { coach: Coach; theme: CoachTheme }) {
     </div>
   )
 }
+
+/**
+ * The Design flow's motion (references: Love the onboarding, Midday, Dashboard skeleton loading, Damn Good UI cards).
+ * Text and blocks come in with a blur, a few pixels from the side the coach is heading to; the camera moves on a strong
+ * ease-in-out; the skeleton dissolves into the real platform. Reduced motion keeps only short fades.
+ */
+const MOTION_CSS = `
+@keyframes onb-in{from{opacity:0;filter:blur(5px);transform:translate3d(var(--dx,0px),var(--dy,0px),0)}}
+@keyframes onb-char{from{opacity:0;filter:blur(4px);transform:translateX(-3px)}}
+@keyframes onb-blink{50%{opacity:0}}
+@keyframes onb-shimmer{from{background-position:150% 0}to{background-position:-50% 0}}
+@keyframes onb-fade{from{opacity:0}}
+.onb-in{animation:onb-in 340ms cubic-bezier(0.2,0.8,0.2,1) both;animation-delay:calc(var(--i,0) * 50ms + var(--d,0ms))}
+.onb-char{display:inline-block;animation:onb-char 280ms cubic-bezier(0.2,0.8,0.2,1) both}
+.onb-caret{animation:onb-blink 1s steps(1) infinite}
+.onb-mark{transition:background-color 300ms ease}
+.onb-shimmer{background-image:linear-gradient(90deg,transparent 0%,rgb(255 255 255/0.05) 50%,transparent 100%);background-size:200% 100%;background-repeat:no-repeat;animation:onb-shimmer 1.8s linear infinite}
+.onb-cam{transition:transform 700ms cubic-bezier(0.77,0,0.175,1)}
+.onb-frame{transition:filter 600ms cubic-bezier(0.2,0.8,0.2,1) 180ms,opacity 600ms cubic-bezier(0.2,0.8,0.2,1) 180ms}
+.onb-frame-off{filter:blur(8px);opacity:0.4;transition-delay:0ms}
+.onb-skel [data-skel]{animation:onb-in 360ms cubic-bezier(0.2,0.8,0.2,1) backwards;animation-delay:calc(var(--i,0) * 45ms);transition:opacity 360ms cubic-bezier(0.2,0.8,0.2,1),filter 360ms cubic-bezier(0.2,0.8,0.2,1),transform 360ms cubic-bezier(0.2,0.8,0.2,1);transition-delay:calc(var(--i,0) * 40ms)}
+.onb-skel-gone [data-skel]{opacity:0;filter:blur(6px);transform:scale(0.98)}
+@media (prefers-reduced-motion:reduce){
+  .onb-in{animation:onb-fade 200ms ease-out both!important;animation-delay:0ms!important}
+  .onb-skel [data-skel]{animation:onb-fade 200ms ease-out backwards!important;animation-delay:0ms!important}
+  .onb-char{animation:none}
+  .onb-caret,.onb-shimmer{animation:none}
+  .onb-cam{transition:none}
+  .onb-frame,.onb-skel [data-skel]{transition:opacity 200ms ease-out!important;transition-delay:0ms!important;filter:none!important;transform:none!important}
+}
+`
