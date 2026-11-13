@@ -90,7 +90,7 @@ function Flow({ community, step }: { community: CustomCommunity; step: Step }) {
         if (all) changeRef.current(all, key)
         setPending(null)
       },
-      key === "mode" ? "mode" : "look",
+      key === "layout" ? "move" : "recolor",
     )
   }
   // Leaving a step: the card fades out toward the side the coach is not heading to, then the next step comes in.
@@ -549,13 +549,19 @@ const ZOOM = [2, 1.6, 1] // Brand, Look, Layout
 /** The camera's move between steps. Any inline transition on the screen must keep it, or the zoom stops animating. */
 const CAM = "transform 820ms cubic-bezier(0.65,0,0.35,1)"
 
-/** A light/dark switch only recolours the page; anything else (theme, background, layout, page) also moves things. */
-type SwapKind = "mode" | "look"
+/**
+ * What a pick does to the preview. "recolor" (theme, light or dark, background, colours) changes how the page looks
+ * but not where things are: one even fade of the live page, the same for all of them. "move" (layout, Home/Courses)
+ * rearranges it: a View Transition lets what stays glide to its new place.
+ */
+type SwapKind = "recolor" | "move"
 const reduced = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches
 const EASE_OUT = "cubic-bezier(0.23, 1, 0.32, 1)"
+/** Every swap in the preview moves on this curve. */
+const SWAP_EASE = "cubic-bezier(0.65, 0, 0.35, 1)"
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
-/** Resolves once the page in the frame has re-rendered and gone quiet for a moment (or after 700 ms at most). */
+/** Resolves once the page in the frame has re-rendered and gone quiet for a moment (or after 600 ms at most). */
 function settled(frame: HTMLIFrameElement) {
   const doc = frame.contentDocument
   if (!doc?.documentElement) return wait(220)
@@ -571,10 +577,21 @@ function settled(frame: HTMLIFrameElement) {
       clearTimeout(quiet)
       quiet = setTimeout(end, 90)
     })
-    mo.observe(doc.documentElement, { subtree: true, childList: true, attributes: true, characterData: true })
-    quiet = setTimeout(end, 160)
-    const cap = setTimeout(end, 700)
+    // Structure, theme and classes only: the widgets' live counters and clock keep changing text and inline styles.
+    mo.observe(doc.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["class", "data-coach", "data-bg", "data-theme", "data-nav-fill", "data-nav-marker"] })
+    quiet = setTimeout(end, 140)
+    const cap = setTimeout(end, 600)
   })
+}
+
+/** Resolves once the frame's fonts and images are ready, so nothing pops in after the page fades back (500 ms cap). */
+function painted(frame: HTMLIFrameElement) {
+  const doc = frame.contentDocument
+  if (!doc) return Promise.resolve()
+  // Only pictures on screen: lazy ones further down never load while the preview shows the top of the page.
+  const h = doc.defaultView?.innerHeight ?? 0
+  const images = [...doc.images].filter((i) => !i.complete && i.getBoundingClientRect().top < h).map((i) => i.decode().catch(() => {}))
+  return Promise.race([Promise.all([doc.fonts?.ready, ...images]).then(() => {}), wait(400)])
 }
 
 /** The page's own background, so the screen keeps its colour while the page in it fades out and in. */
@@ -600,11 +617,7 @@ const PREVIEW_CSS = `html,body,*{scrollbar-width:none!important}::-webkit-scroll
 ::view-transition-old(*),::view-transition-new(*){height:100%;object-fit:none;object-position:left top}
 ::view-transition-old(root){animation:onbvt-out 420ms cubic-bezier(0.65,0,0.35,1) both}
 ::view-transition-new(root){animation:onbvt-in 520ms cubic-bezier(0.65,0,0.35,1) both}
-html[data-onb-swap=mode] :is([data-slot=widget],header,nav,h1){view-transition-name:none}
-html[data-onb-swap=mode] *,html[data-onb-swap=mode] *::before,html[data-onb-swap=mode] *::after{transition:none!important}
-@keyframes onbvt-reveal{from{clip-path:circle(0% at 0% 0%)}to{clip-path:circle(150% at 0% 0%)}}
-html[data-onb-swap=mode]::view-transition-old(root){animation:none}
-html[data-onb-swap=mode]::view-transition-new(root){animation:onbvt-reveal 600ms cubic-bezier(0.32,0.72,0,1) both}`
+html[data-onb-swap] *,html[data-onb-swap] *::before,html[data-onb-swap] *::after{transition:none!important}`
 
 function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; step: number; coach: Coach; theme: CoachTheme; typing: boolean; swapRef: React.RefObject<(apply: () => void | Promise<void>, kind?: SwapKind) => void> }) {
   const box = useRef<HTMLDivElement>(null)
@@ -627,60 +640,56 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
    */
   const busy = useRef(false)
   const queued = useRef<(() => void | Promise<void>) | null>(null)
-  // Only light/dark in the queue: the new mode is revealed from the corner nearest the switch, nothing blurs or moves.
-  const modeOnly = useRef(true)
+  // Whether anything in the queue moves things (then the round is a View Transition, otherwise a fade).
+  const moving = useRef(false)
   const swap = useCallback(
-    (apply: () => void | Promise<void>, kind: SwapKind = "look") => {
+    (apply: () => void | Promise<void>, kind: SwapKind = "recolor") => {
       const el = frame.current
       const shell = screen.current
       if (!el || !shell || step === 0 || reduced()) return void apply()
-      modeOnly.current = (busy.current && queued.current ? modeOnly.current : true) && kind === "mode"
+      moving.current = (busy.current && queued.current ? moving.current : false) || kind === "move"
       queued.current = apply
       if (busy.current) return
       busy.current = true
+      const drain = async () => {
+        while (queued.current) {
+          const run = queued.current
+          queued.current = null
+          await run()
+          await settled(el)
+        }
+        await painted(el)
+      }
       void (async () => {
-        const doc = el.contentDocument as (Document & { startViewTransition?: (cb: () => Promise<void>) => { finished: Promise<void> } }) | null
-        // Where the browser can, the swap is a View Transition inside the preview: elements morph, nothing goes blank.
-        if (doc?.startViewTransition) {
-          while (queued.current) {
-            const mode = modeOnly.current
-            if (mode) doc.documentElement.dataset.onbSwap = "mode"
-            const vt = doc.startViewTransition(async () => {
-              while (queued.current) {
-                const run = queued.current
-                queued.current = null
-                await run()
-                await settled(el)
-              }
-              // The space around the page follows in step with the page itself.
-              shell.style.transition = `${CAM}, background-color ${mode ? 600 : 460}ms ${mode ? "cubic-bezier(0.32,0.72,0,1)" : "ease"}`
+        while (queued.current) {
+          const doc = el.contentDocument as (Document & { startViewTransition?: (cb: () => Promise<void>) => { finished: Promise<void> } }) | null
+          const move = moving.current && !!doc?.startViewTransition
+          moving.current = false
+          if (doc?.documentElement) doc.documentElement.dataset.onbSwap = ""
+          if (move) {
+            // Layout and page: what stays glides to its new place and size, the rest crossfades.
+            const vt = doc!.startViewTransition!(async () => {
+              await drain()
+              shell.style.transition = `${CAM}, background-color 460ms ${SWAP_EASE}`
               shell.style.backgroundColor = pageBg(el)
             })
             await vt.finished.catch(() => {})
-            delete doc.documentElement.dataset.onbSwap
-            modeOnly.current = true
+          } else {
+            // Theme, light or dark, background, colours: the live page fades to its own background, the change lands
+            // unseen, and the new look fades in. No snapshots, so it stays sharp at any zoom, and all of them match.
+            shell.style.transition = CAM
+            shell.style.backgroundColor = pageBg(el)
+            const out = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: SWAP_EASE, fill: "forwards" })
+            await out.finished.catch(() => {})
+            await drain()
+            shell.style.transition = `${CAM}, background-color 420ms ${SWAP_EASE}`
+            shell.style.backgroundColor = pageBg(el)
+            const back = el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 420, easing: SWAP_EASE })
+            out.cancel()
+            await back.finished.catch(() => {})
           }
-          busy.current = false
-          return
-        }
-        // Otherwise: the page fades out, the change lands unseen, the new page comes back. Picks that arrive while it
-        // fades in start one more round.
-        while (queued.current) {
-          shell.style.transition = ""
-          shell.style.backgroundColor = pageBg(el)
-          const out = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: "cubic-bezier(0.65,0,0.35,1)", fill: "forwards" })
-          await out.finished.catch(() => {})
-          while (queued.current) {
-            const run = queued.current
-            queued.current = null
-            await run()
-            await settled(el)
-          }
-          shell.style.transition = `${CAM}, background-color 360ms ease`
-          shell.style.backgroundColor = pageBg(el)
-          const back = el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 480, easing: "cubic-bezier(0.65,0,0.35,1)" })
-          out.cancel()
-          await back.finished.catch(() => {})
+          const now = el.contentDocument?.documentElement
+          if (now) delete now.dataset.onbSwap
         }
         busy.current = false
       })()
@@ -762,7 +771,7 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
             <PillSegmented
               label="Preview page"
               value={page}
-              onChange={(to) => (setPage(to), swap(() => goTo(to)))}
+              onChange={(to) => (setPage(to), swap(() => goTo(to), "move"))}
               options={[
                 { value: "home", label: coach.wording.home },
                 { value: "courses", label: coach.wording.courses },
