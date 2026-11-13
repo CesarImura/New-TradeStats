@@ -15,6 +15,7 @@ import { pictureFrom } from "@/lib/images"
 import { mergeOverrides, type Overrides } from "@/lib/prototype-store"
 import { onColor } from "@/lib/theme/derive"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
+import { TEMPLATES } from "@/lib/theme/templates"
 import type { BackgroundStyle, CoachTheme, Mode } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { ChoiceChip, SignupFrame, SignupTitle } from "./signup-frame"
@@ -477,7 +478,10 @@ function LayoutStep({ theme, change, live, onBack, onNext }: { theme: CoachTheme
   const pick = (l: Layout) => {
     // Cards layouts go back to the look's own spacing; the other two set theirs.
     const density = l.density ?? LOOKS.find((x) => x.template === theme.template)?.set.density ?? theme.density
-    change({ theme: { nav: { layout: l.nav, frame: l.floating ? "floating" : "classic" }, widgetSet: l.set, density } }, "layout")
+    // A header menu always names its pages (Pulse's icon-only rail reads as icons with no names up there); a side menu
+    // goes back to the look's own style.
+    const style = l.nav === "top" ? "labels" : (TEMPLATES[theme.template]?.theme.nav.style ?? theme.nav.style)
+    change({ theme: { nav: { layout: l.nav, style, frame: l.floating ? "floating" : "classic" }, widgetSet: l.set, density } }, "layout")
   }
 
   return (
