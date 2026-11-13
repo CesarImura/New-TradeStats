@@ -1,19 +1,18 @@
+import { Logo } from "@/components/brand/logo"
 import { LauncherCards } from "@/components/onboarding/launcher-cards"
 import { LauncherOnboarding } from "@/components/onboarding/launcher-section"
 
 const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] uppercase tracking-[0.06em]"
 
-/** Prototype launcher, in our own TradeStats look. */
+/** Prototype launcher, in our own look (Traderhub logo, components/brand/logo.tsx). */
 export default function Launcher() {
   return (
     <div className="ts-ui min-h-svh bg-[#0a0a0b] font-[family-name:var(--ff-geist)] text-[0.8125rem] text-white">
       <div className="mx-auto flex max-w-[1180px] flex-col gap-6 px-4 py-8 md:px-6 md:py-10">
         <header className="flex flex-col gap-3">
-          <div className="flex items-center gap-2.5">
-            <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
-              <path fill="#ff5500" d="M2 3h20v6h-7v12H9V9H2z" />
-            </svg>
-            <span className={mono}>TradeStats · Coach platform · Prototype</span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Logo />
+            <span className={`${mono} text-[#a8a8b1]`}>Coach platform · Prototype</span>
           </div>
           <h1 className="text-2xl leading-8 font-medium tracking-[-0.01em]">
             One platform, every coach&apos;s own.

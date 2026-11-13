@@ -369,3 +369,11 @@ Um arquivo de componente passa de ~600 linhas? Divida por responsabilidade, sem 
 - Design (`/setup`, `onboarding/design-setup.tsx`): Brand, Look e Layout no mesmo rascunho do editor Design; à direita a plataforma real num iframe em escala (esqueleto no passo Brand). Finish marca `setup.design`.
 - Tours (`admin/tour`): o passo mostrado é o ÚLTIMO cujo alvo `data-tour="…"` está na tela; condições ficam em atributos (`data-picked`, `data-named`, `data-state`, `data-ready`, `data-complete`) e no seletor. Pausar (Skip ou Do it later) guarda onde parou; Getting started mostra "Paused at …" e Resume. O último passo marca o item. Ao mexer em telas com alvo de tour, manter os atributos `data-tour`.
 - O wizard antigo (`wizard.tsx`, `wizard-design.tsx`, `steps.tsx`, `look-steps.tsx`, `invite.tsx`, `publish.tsx`, `/setup/invite`, `/setup/publish`) foi apagado em 13/11 com o ok do Gustavo; `/signup/call` e `/signup/welcome` só redirecionam links antigos; as dicas antigas (`SetupTip`) de curso, tier e payouts não aparecem mais (o tour cobre).
+
+## Logo Traderhub (13/11)
+
+- Único logo: o "T" com gradiente de cima para baixo (`--admin-color-brand-gradient-start` #ff4701 → `-end` #ff9003) e a palavra "Traderhub" em Heading M, 10 px de distância (Figma Admin / Logo, marca 23 × 24,5).
+- Sempre pelo componente `components/brand/logo.tsx`: `<Logo />` (marca + palavra) ou `<LogoMark />` (só o "T"). Não copiar o SVG.
+- Versões de uma cor: `tone="black" | "gray" | "white"`, mesmo formato e mesmo gradiente vertical, só que nesses tons.
+- Proibido: o "T" chapado laranja (`M2 3h20v6h-7v12H9V9H2z`) e a palavra "TradeStats" na interface.
+- Ícone da aba: `src/app/icon.svg` e `src/app/favicon.ico`, gerados do mesmo "T".

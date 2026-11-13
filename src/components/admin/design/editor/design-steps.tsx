@@ -3,7 +3,6 @@
 import { Check } from "@/components/icons"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
-import { mono } from "@/components/onboarding/frame"
 import { themeToCss } from "@/lib/theme/css"
 import { onColor } from "@/lib/theme/derive"
 import { TEMPLATES } from "@/lib/theme/templates"
@@ -17,6 +16,9 @@ import { CAN_SAVE_TEMPLATE } from "./save-template"
 import { card } from "../states"
 import { useConfirmSwitch } from "./switch-look"
 import { SECTION_LABEL } from "../panels/settings-panel"
+
+/** Small mono label in our own product style (was in the retired onboarding/frame.tsx). */
+const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] uppercase tracking-[0.06em]"
 
 /**
  * Design's own panels (brand, looks, menu), shared by the Design workspace

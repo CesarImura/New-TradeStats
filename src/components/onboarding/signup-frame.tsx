@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useLayoutEffect, use
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { TS_SYSTEM_CSS } from "@/lib/theme/ts-system"
+import { Logo } from "@/components/brand/logo"
 import { cn } from "@/lib/utils"
 
 /**
@@ -160,20 +161,11 @@ export function SignupShell({ children }: { children: React.ReactNode }) {
   )
 }
 
-/** Admin / Logo on its own page (the shell's gradient defs are not here, so it carries its own). */
+/** Admin / Logo (the shared brand mark, see components/brand/logo.tsx). */
 function SignupLogo() {
   return (
-    <Link href="/" aria-label="Traderhub" className="flex items-center gap-2.5 rounded-a-xs outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">
-      <svg width="23" height="25" viewBox="0 0 23 25" fill="none" aria-hidden className="shrink-0">
-        <defs>
-          <linearGradient id="onb-logo-grad" gradientUnits="userSpaceOnUse" x1="11.5" y1="0" x2="11.5" y2="24.5333">
-            <stop style={{ stopColor: "var(--admin-color-brand-gradient-start)" }} />
-            <stop offset="1" style={{ stopColor: "var(--admin-color-brand-gradient-end)" }} />
-          </linearGradient>
-        </defs>
-        <path d="M15.264 0V8.02976L7.63283 0H0V8.25179H15.0558L7.5279 16.6155V24.5333H15.264V8.25179H23V0H15.264Z" fill="url(#onb-logo-grad)" />
-      </svg>
-      <span className="t-heading-m text-a-text">Traderhub</span>
+    <Link href="/" aria-label="Traderhub" className="flex items-center rounded-a-xs outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">
+      <Logo />
     </Link>
   )
 }

@@ -23,6 +23,7 @@ import { TS_ADMIN_V2_CSS } from "@/lib/theme/admin-v2"
 import { cn } from "@/lib/utils"
 import { AdminButton as Button } from "@/components/admin/ui"
 import { useCoach } from "@/components/coach/coach-provider"
+import { Logo } from "@/components/brand/logo"
 import { WorkspaceSwitcher } from "@/components/admin/workspace-switcher"
 import { TourLayer } from "@/components/admin/tour/tour"
 import { NotificationsMenu } from "@/components/admin/notifications-menu"
@@ -143,8 +144,8 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
 type Groups = ReturnType<typeof adminNav>
 
 /**
- * Brand gradient (Figma: brand gradient start to end, top to bottom). One hidden <svg> holds the gradients so the
- * logo and the active nav icon can paint with url(#…) from both the sidebar and the drawer. It is not display:none,
+ * Brand gradient (Figma: brand gradient start to end, top to bottom). One hidden <svg> holds the gradient so the
+ * active nav icon can paint with url(#…) from both the sidebar and the drawer. It is not display:none,
  * because a gradient inside a hidden svg does not render.
  */
 function BrandGradients() {
@@ -157,9 +158,6 @@ function BrandGradients() {
   return (
     <svg aria-hidden width="0" height="0" className="pointer-events-none absolute size-0">
       <defs>
-        <linearGradient id="admin-logo-grad" gradientUnits="userSpaceOnUse" x1="11.5" y1="0" x2="11.5" y2="24.5333">
-          {stops}
-        </linearGradient>
         {/* Carbon icons draw on a 32 grid; their shapes span roughly 2 to 30. */}
         <linearGradient id="admin-icon-grad" gradientUnits="userSpaceOnUse" x1="16" y1="2" x2="16" y2="30">
           {stops}
@@ -169,14 +167,11 @@ function BrandGradients() {
   )
 }
 
-/** Admin / Logo: gradient mark (23 x 24.5) and the wordmark. */
+/** Admin / Logo: the shared brand mark and wordmark (components/brand/logo.tsx). */
 function AdminLogo() {
   return (
-    <Link href="/" aria-label="Traderhub" className="flex items-center gap-2.5 px-2">
-      <svg width="23" height="25" viewBox="0 0 23 25" fill="none" aria-hidden className="shrink-0">
-        <path d="M15.264 0V8.02976L7.63283 0H0V8.25179H15.0558L7.5279 16.6155V24.5333H15.264V8.25179H23V0H15.264Z" fill="url(#admin-logo-grad)" />
-      </svg>
-      <span className="t-heading-m text-a-text">Traderhub</span>
+    <Link href="/" aria-label="Traderhub" className="flex items-center px-2">
+      <Logo />
     </Link>
   )
 }

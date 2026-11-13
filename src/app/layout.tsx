@@ -5,7 +5,7 @@ import { fontVariables } from "@/lib/fonts"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "TradeStats Coach Platform · Prototype",
+  title: "Traderhub · Coach platform · Prototype",
   description: "Clickable prototype of the white-label coach platform.",
 }
 
