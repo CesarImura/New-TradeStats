@@ -484,7 +484,7 @@ function LayoutStep({ theme, change, onBack, onNext }: { theme: CoachTheme; chan
 // ---------- The canvas on the right
 
 /** Figma: the canvas is 1103 px wide; the product screen sits at (96, 150) and is 917 px wide on the last step. */
-const FIG = { w: 1103, left: 96, top: 150, screen: 917 }
+const FIG = { w: 1103, left: 96, top: 150, screen: 917, screenH: 959 }
 const BASE = 1440 // the platform is drawn at a desktop width, then scaled
 const ZOOM = [2, 1.6, 1] // Brand, Look, Layout
 
@@ -500,11 +500,13 @@ function Canvas({ slug, step, coach, theme }: { slug: string; step: number; coac
     return () => ro.disconnect()
   }, [])
 
-  // Figma geometry at 1:1 on a canvas of 1103 px or more; narrower canvases scale it down.
-  const k = Math.min(1, size.w / FIG.w)
+  // Figma's geometry, scaled with the canvas (1:1 at 1103 px, larger on big screens so the screen still fills it).
+  const k = size.w / FIG.w
   const base = (FIG.screen * k) / BASE // scale on the last step
   const scale = base * ZOOM[step]
-  const height = size.h ? Math.max(900, (size.h - FIG.top * k) / base + 40) : 900
+  // The screen keeps Figma's proportions (917 × 959 on the last step): a 1440 px wide platform, 1506 px tall. On big
+  // canvases it grows with them, so it always runs off the bottom instead of leaving an empty strip under the page.
+  const height = Math.round((FIG.screenH / FIG.screen) * BASE)
   const src = `/c/${slug}${step === 2 && page === "courses" ? "/courses" : ""}?preview=draft`
 
   return (

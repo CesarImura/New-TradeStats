@@ -2,7 +2,7 @@ import { LOOKS } from "@/components/admin/design/looks"
 import { COACHES, DEFAULT_WORDING } from "@/lib/data/coaches"
 import { customCommunities, saveCommunity, setAccount, slugify, type Account } from "@/lib/data/communities"
 import { EMPTY, mergeOverrides, setDraft, setStored } from "@/lib/prototype-store"
-import { suggestedModules, suggestedTemplate } from "./suggest"
+import { suggestedModules } from "./suggest"
 
 /** Words that can't be a platform address. */
 const RESERVED = ["admin", "app", "www", "help", "api", "login", "signup", "setup", "tradestats", "traderhub"]
@@ -26,7 +26,8 @@ export function suggestAddress(name: string, ownSlug?: string) {
  */
 export function createCommunity({ name, coachName, language, account }: { name: string; coachName: string; language: string; account: Account | null }) {
   const slug = suggestAddress(name)
-  const template = suggestedTemplate(account?.answers)
+  // Every platform starts on Terminal (Design · Look shows it picked); the answers only choose the modules.
+  const template = "terminal" as const
   saveCommunity({
     slug,
     org: account?.name || coachName,

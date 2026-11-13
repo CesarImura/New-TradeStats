@@ -37,8 +37,8 @@ export function SignupFrame({ children, action, aside }: { children: React.React
       ) : (
       <aside aria-hidden className="hidden min-w-0 flex-1 p-8 lg:flex">
         <div className="relative min-h-0 flex-1 overflow-hidden rounded-a-xl bg-a-panel">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static decorative art, sized by its box */}
-          <img src="/onboarding/signup-hero.webp" alt="" className="absolute inset-0 size-full object-cover object-left" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- static decorative art (vector, sharp at any size), sized by its box */}
+          <img src="/onboarding/signup-hero.svg" alt="" className="absolute inset-0 size-full object-cover object-left" />
         </div>
       </aside>
       )}
