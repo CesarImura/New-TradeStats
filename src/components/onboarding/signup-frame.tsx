@@ -26,11 +26,11 @@ export function useSignupGo() {
 
 /** The motion shared by the sign-up pages and the Design steps. Reduced motion keeps short fades only. */
 export const ONB_BASE_CSS = `
-@keyframes onb-in{from{opacity:0;filter:blur(5px);transform:translate3d(var(--dx,0px),var(--dy,0px),0)}}
+@keyframes onb-in{from{opacity:0;transform:translate3d(var(--dx,0px),var(--dy,0px),0)}}
 @keyframes onb-fade{from{opacity:0}}
 @keyframes onb-pop{0%{transform:scale(0.94)}100%{transform:scale(1)}}
 @keyframes onb-hero{from{opacity:0;transform:scale(0.985)}}
-.onb-page>*>*{animation:onb-in 340ms cubic-bezier(0.2,0.8,0.2,1) both;animation-delay:calc((sibling-index() - 1) * 50ms)}
+.onb-page>*>*{animation:onb-in 480ms cubic-bezier(0.23,1,0.32,1) both;animation-delay:calc((sibling-index() - 1) * 45ms)}
 .onb-page .text-a-danger{animation:onb-fade 200ms ease-out both}
 .onb-hero{animation:onb-hero 700ms cubic-bezier(0.23,1,0.32,1) 120ms both}
 @media (prefers-reduced-motion:reduce){
@@ -98,7 +98,7 @@ export function SignupFrame({ children, action, aside }: { children: React.React
 
 /**
  * The sign-up layout: logo bar and illustration stay put while the pages change; the card in the middle leaves and
- * enters (staggered, a few pixels from the side, with a blur).
+ * enters (staggered, a few pixels from the side, no blur).
  */
 export function SignupShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -114,7 +114,7 @@ export function SignupShell({ children }: { children: React.ReactNode }) {
       setDir(to)
       if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return router.push(href)
       leaving.current = true
-      el.animate([{ opacity: 1, filter: "blur(0px)", transform: "translateX(0)" }, { opacity: 0, filter: "blur(4px)", transform: `translateX(${to * -12}px)` }], { duration: 160, easing: "cubic-bezier(0.23, 1, 0.32, 1)", fill: "forwards" }).onfinish = () => router.push(href)
+      el.animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${to * -8}px)` }], { duration: 200, easing: "cubic-bezier(0.23, 1, 0.32, 1)", fill: "forwards" }).onfinish = () => router.push(href)
     },
     [router],
   )

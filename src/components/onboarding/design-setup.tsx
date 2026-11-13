@@ -98,7 +98,7 @@ function Flow({ community, step }: { community: CustomCommunity; step: Step }) {
   const leave = (dir: 1 | -1, then: () => void) => {
     const el = card.current
     if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return then()
-    el.animate([{ opacity: 1, filter: "blur(0px)", transform: "translateX(0)" }, { opacity: 0, filter: "blur(4px)", transform: `translateX(${dir * -12}px)` }], { duration: 160, easing: "cubic-bezier(0.23, 1, 0.32, 1)", fill: "forwards" }).onfinish = then
+    el.animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${dir * -8}px)` }], { duration: 220, easing: EASE_OUT, fill: "forwards" }).onfinish = then
   }
   const index = STEPS.indexOf(step)
   const exit = `/admin/${community.slug}/getting-started`
@@ -581,17 +581,17 @@ const pageBg = (frame: HTMLIFrameElement) => {
 /**
  * Injected into the preview. No scrollbars: it is a picture of the platform, not a page to scroll. And the View Transition
  * used for swaps (onboarding-2, Natural connect): the menu, header, title and every widget that is still there after the
- * change glides to its new place and size; the rest crossfades with a little blur.
+ * change glides to its new place and size; the rest crossfades. No blur: a slow, even crossfade reads as calmer.
  */
 const PREVIEW_CSS = `html,body,*{scrollbar-width:none!important}::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
 [data-slot=widget],header,nav,h1{view-transition-name:match-element}
-@keyframes onbvt-in{from{opacity:0;filter:blur(6px)}}
-@keyframes onbvt-out{to{opacity:0;filter:blur(6px)}}
-::view-transition-group(*){animation-duration:560ms;animation-timing-function:cubic-bezier(0.77,0,0.175,1)}
-::view-transition-old(*){animation:onbvt-out 260ms cubic-bezier(0.23,1,0.32,1) both}
-::view-transition-new(*){animation:onbvt-in 420ms cubic-bezier(0.23,1,0.32,1) 80ms both}
-::view-transition-old(root){animation:onbvt-out 240ms cubic-bezier(0.23,1,0.32,1) both}
-::view-transition-new(root){animation:onbvt-in 460ms cubic-bezier(0.23,1,0.32,1) 60ms both}
+@keyframes onbvt-in{from{opacity:0}}
+@keyframes onbvt-out{to{opacity:0}}
+::view-transition-group(*){animation-duration:640ms;animation-timing-function:cubic-bezier(0.65,0,0.35,1)}
+::view-transition-old(*){animation:onbvt-out 420ms cubic-bezier(0.65,0,0.35,1) both}
+::view-transition-new(*){animation:onbvt-in 520ms cubic-bezier(0.65,0,0.35,1) 60ms both}
+::view-transition-old(root){animation:onbvt-out 420ms cubic-bezier(0.65,0,0.35,1) both}
+::view-transition-new(root){animation:onbvt-in 520ms cubic-bezier(0.65,0,0.35,1) both}
 html[data-onb-swap=mode] :is([data-slot=widget],header,nav,h1){view-transition-name:none}
 html[data-onb-swap=mode] *,html[data-onb-swap=mode] *::before,html[data-onb-swap=mode] *::after{transition:none!important}
 @keyframes onbvt-reveal{from{clip-path:circle(0% at 0% 0%)}to{clip-path:circle(150% at 0% 0%)}}
@@ -613,7 +613,7 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
   }, [])
 
   /**
-   * Swapping what the preview shows (a theme, light or dark, a background, a layout, the page): the page blurs out to
+   * Swapping what the preview shows (a theme, light or dark, a background, a layout, the page): the page fades out to
    * its own background, the change lands while it can't be seen, and once the frame has re-rendered the new page comes
    * back into focus (Midday). A second pick during a swap joins it instead of starting another.
    */
@@ -655,12 +655,12 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
           busy.current = false
           return
         }
-        // Otherwise: the page blurs out, the change lands unseen, the new page comes back. Picks that arrive while it
+        // Otherwise: the page fades out, the change lands unseen, the new page comes back. Picks that arrive while it
         // fades in start one more round.
         while (queued.current) {
           shell.style.transition = ""
           shell.style.backgroundColor = pageBg(el)
-          const out = el.animate([{ opacity: 1, filter: "blur(0px)", transform: "scale(1)" }, { opacity: 0, filter: "blur(10px)", transform: "scale(0.985)" }], { duration: 200, easing: EASE_OUT, fill: "forwards" })
+          const out = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: "cubic-bezier(0.65,0,0.35,1)", fill: "forwards" })
           await out.finished.catch(() => {})
           while (queued.current) {
             const run = queued.current
@@ -670,7 +670,7 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
           }
           shell.style.transition = "background-color 360ms ease"
           shell.style.backgroundColor = pageBg(el)
-          const back = el.animate([{ opacity: 0, filter: "blur(10px)", transform: "scale(0.985)" }, { opacity: 1, filter: "blur(0px)", transform: "scale(1)" }], { duration: 420, easing: EASE_OUT })
+          const back = el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 480, easing: "cubic-bezier(0.65,0,0.35,1)" })
           out.cancel()
           await back.finished.catch(() => {})
         }
@@ -729,7 +729,7 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
             className="onb-cam absolute overflow-hidden bg-a-page"
             style={{ left: FIG.left * k, top: FIG.top * k, width: BASE, height, transform: `scale(${scale})`, transformOrigin: "0 0", borderRadius: (16 * k) / base }}
           >
-            {/* Under the skeleton the real platform waits, blurred; leaving Brand it comes into focus as the skeleton dissolves. */}
+            {/* Under the skeleton the real platform waits, hidden; leaving Brand it fades in as the skeleton dissolves. */}
             <iframe
               ref={frame}
               onLoad={(e) => {
@@ -849,34 +849,34 @@ function Skeleton({ coach, theme, typing, gone }: { coach: Coach; theme: CoachTh
 
 /**
  * The Design flow's motion (references: Love the onboarding, Midday, Dashboard skeleton loading, Damn Good UI cards).
- * Text and blocks come in with a blur, a few pixels from the side the coach is heading to; the camera moves on a strong
- * ease-in-out; the skeleton dissolves into the real platform. Reduced motion keeps only short fades.
+ * Text and blocks fade in a few pixels from the side the coach is heading to (no blur, Gustavo 13/11); the camera moves
+ * on a gentle ease-in-out; the skeleton dissolves into the real platform. Reduced motion keeps only short fades.
  */
 const MOTION_CSS = `
-@keyframes onb-in{from{opacity:0;filter:blur(5px);transform:translate3d(var(--dx,0px),var(--dy,0px),0)}}
-@keyframes onb-char{from{opacity:0;filter:blur(4px);transform:translateX(-3px)}}
+@keyframes onb-in{from{opacity:0;transform:translate3d(var(--dx,0px),var(--dy,0px),0)}}
+@keyframes onb-char{from{opacity:0;transform:translateY(2px)}}
 @keyframes onb-blink{50%{opacity:0}}
 @keyframes onb-shimmer{from{background-position:150% 0}to{background-position:-50% 0}}
 @keyframes onb-fade{from{opacity:0}}
-.onb-in{animation:onb-in 340ms cubic-bezier(0.2,0.8,0.2,1) both;animation-delay:calc(var(--i,0) * 50ms + var(--d,0ms))}
-.onb-char{display:inline-block;animation:onb-char 280ms cubic-bezier(0.2,0.8,0.2,1) both}
+.onb-in{animation:onb-in 480ms cubic-bezier(0.23,1,0.32,1) both;animation-delay:calc(var(--i,0) * 45ms + var(--d,0ms))}
+.onb-char{display:inline-block;animation:onb-char 240ms cubic-bezier(0.23,1,0.32,1) both}
 .onb-caret{animation:onb-blink 1s steps(1) infinite}
 .onb-mark{transition:background-color 300ms ease}
 .onb-shimmer{background-image:linear-gradient(90deg,transparent 0%,rgb(255 255 255/0.05) 50%,transparent 100%);background-size:200% 100%;background-repeat:no-repeat;animation:onb-shimmer 1.8s linear infinite}
-.onb-cam{transition:transform 700ms cubic-bezier(0.77,0,0.175,1)}
-.onb-pill{opacity:0;filter:blur(4px);transform:translateY(-6px);transition:opacity 220ms cubic-bezier(0.23,1,0.32,1),filter 220ms cubic-bezier(0.23,1,0.32,1),transform 220ms cubic-bezier(0.23,1,0.32,1)}
-.onb-pill-on{opacity:1;filter:none;transform:none;transition-duration:340ms;transition-delay:450ms}
-.onb-frame{transition:filter 600ms cubic-bezier(0.2,0.8,0.2,1) 180ms,opacity 600ms cubic-bezier(0.2,0.8,0.2,1) 180ms}
-.onb-frame-off{filter:blur(8px);opacity:0.4;transition-delay:0ms}
-.onb-skel [data-skel]{animation:onb-in 360ms cubic-bezier(0.2,0.8,0.2,1) backwards;animation-delay:calc(var(--i,0) * 45ms);transition:opacity 360ms cubic-bezier(0.2,0.8,0.2,1),filter 360ms cubic-bezier(0.2,0.8,0.2,1),transform 360ms cubic-bezier(0.2,0.8,0.2,1);transition-delay:calc(var(--i,0) * 40ms)}
-.onb-skel-gone [data-skel]{opacity:0;filter:blur(6px);transform:scale(0.98)}
+.onb-cam{transition:transform 820ms cubic-bezier(0.65,0,0.35,1)}
+.onb-pill{opacity:0;transform:translateY(-4px);transition:opacity 260ms cubic-bezier(0.23,1,0.32,1),transform 260ms cubic-bezier(0.23,1,0.32,1)}
+.onb-pill-on{opacity:1;transform:none;transition-duration:420ms;transition-delay:480ms}
+.onb-frame{transition:opacity 640ms cubic-bezier(0.65,0,0.35,1) 160ms}
+.onb-frame-off{opacity:0;transition-delay:0ms}
+.onb-skel [data-skel]{animation:onb-in 420ms cubic-bezier(0.23,1,0.32,1) backwards;animation-delay:calc(var(--i,0) * 40ms);transition:opacity 480ms cubic-bezier(0.65,0,0.35,1);transition-delay:calc(var(--i,0) * 30ms)}
+.onb-skel-gone [data-skel]{opacity:0}
 @media (prefers-reduced-motion:reduce){
   .onb-in{animation:onb-fade 200ms ease-out both!important;animation-delay:0ms!important}
   .onb-skel [data-skel]{animation:onb-fade 200ms ease-out backwards!important;animation-delay:0ms!important}
   .onb-char{animation:none}
   .onb-caret,.onb-shimmer{animation:none}
   .onb-cam{transition:none}
-  .onb-pill{transform:none!important;filter:none!important;transition:opacity 200ms ease-out!important}
-  .onb-frame,.onb-skel [data-skel]{transition:opacity 200ms ease-out!important;transition-delay:0ms!important;filter:none!important;transform:none!important}
+  .onb-pill{transform:none!important;transition:opacity 200ms ease-out!important}
+  .onb-frame,.onb-skel [data-skel]{transition:opacity 200ms ease-out!important;transition-delay:0ms!important;transform:none!important}
 }
 `
