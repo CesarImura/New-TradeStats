@@ -1,6 +1,6 @@
 "use client"
 
-import { Children, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
+import { Children, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
@@ -12,6 +12,7 @@ import { LOOKS } from "@/components/admin/design/looks"
 import { updateCommunity, type CustomCommunity } from "@/lib/data/communities"
 import { useAccount, useCustomCommunities } from "@/lib/data/use-communities"
 import { pictureFrom } from "@/lib/images"
+import { mergeOverrides, type Overrides } from "@/lib/prototype-store"
 import { onColor } from "@/lib/theme/derive"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import type { BackgroundStyle, CoachTheme, Mode } from "@/lib/theme/types"
@@ -68,6 +69,33 @@ function Flow({ community, step }: { community: CustomCommunity; step: Step }) {
   const { working, change } = editor
   const coach = useMemo(() => resolveCoach(community, working.content), [community, working.content])
   const theme = useMemo(() => resolveTheme(coach, working.theme), [coach, working.theme])
+  // A pick in Look or Layout shows in the form at once, while the preview hides the old page, swaps it and brings the new
+  // one in (Canvas.swap). Picks made during the swap pile up and land together.
+  const [pending, setPending] = useState<Partial<Overrides> | null>(null)
+  const formTheme = useMemo(() => (pending ? resolveTheme(coach, mergeOverrides(working, pending).theme) : theme), [pending, coach, working, theme])
+  const changeRef = useRef(change)
+  useEffect(() => {
+    changeRef.current = change
+  })
+  const swapRef = useRef<(apply: () => void | Promise<void>) => void>((apply) => void apply())
+  const pendingRef = useRef<Partial<Overrides> | null>(null)
+  const smooth: Change = (patch, key) => {
+    pendingRef.current = pendingRef.current ? mergeOverrides({ theme: {}, content: {}, ...pendingRef.current } as Overrides, patch) : patch
+    setPending(pendingRef.current)
+    swapRef.current(() => {
+      const all = pendingRef.current
+      pendingRef.current = null
+      if (all) changeRef.current(all, key)
+      setPending(null)
+    })
+  }
+  // Leaving a step: the card fades out toward the side the coach is not heading to, then the next step comes in.
+  const card = useRef<HTMLDivElement>(null)
+  const leave = (dir: 1 | -1, then: () => void) => {
+    const el = card.current
+    if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return then()
+    el.animate([{ opacity: 1, filter: "blur(0px)", transform: "translateX(0)" }, { opacity: 0, filter: "blur(4px)", transform: `translateX(${dir * -12}px)` }], { duration: 160, easing: "cubic-bezier(0.23, 1, 0.32, 1)", fill: "forwards" }).onfinish = then
+  }
   const index = STEPS.indexOf(step)
   const exit = `/admin/${community.slug}/getting-started`
   // Which way the coach moved, so the new step comes in from that side (adjusting state while rendering).
@@ -76,11 +104,12 @@ function Flow({ community, step }: { community: CustomCommunity; step: Step }) {
   // While the name is being typed, the preview shows a caret after it (Love the onboarding).
   const [typing, setTyping] = useState(false)
 
-  const go = (to: Step) => router.push(`${pathname}?step=${to}`)
-  const finish = () => {
-    updateCommunity(community.slug, { setup: { ...community.setup, design: true } })
-    router.push(exit)
-  }
+  const go = (to: Step) => leave(STEPS.indexOf(to) > index ? 1 : -1, () => router.push(`${pathname}?step=${to}`))
+  const finish = () =>
+    leave(1, () => {
+      updateCommunity(community.slug, { setup: { ...community.setup, design: true } })
+      router.push(exit)
+    })
 
   return (
     <SignupFrame
@@ -89,13 +118,13 @@ function Flow({ community, step }: { community: CustomCommunity; step: Step }) {
           Save and exit
         </AdminButton>
       }
-      aside={<Canvas slug={community.slug} step={index} coach={coach} theme={theme} typing={typing} />}
+      aside={<Canvas slug={community.slug} step={index} coach={coach} theme={theme} typing={typing} swapRef={swapRef} />}
     >
       <style dangerouslySetInnerHTML={{ __html: MOTION_CSS }} />
-      <div key={step} className="contents" style={{ "--dx": `${seen.dir * 12}px` } as React.CSSProperties}>
+      <div ref={card} key={step} className="flex flex-col" style={{ "--dx": `${seen.dir * 12}px` } as React.CSSProperties}>
         {step === "brand" && <BrandStep community={community} coach={coach} theme={theme} change={change} onNext={() => go("look")} onTyping={setTyping} />}
-        {step === "look" && <LookStep theme={theme} change={change} onBack={() => go("brand")} onNext={() => go("layout")} />}
-        {step === "layout" && <LayoutStep theme={theme} change={change} onBack={() => go("look")} onNext={finish} />}
+        {step === "look" && <LookStep theme={formTheme} change={smooth} onBack={() => go("brand")} onNext={() => go("layout")} />}
+        {step === "layout" && <LayoutStep theme={formTheme} change={smooth} live={change} onBack={() => go("look")} onNext={finish} />}
       </div>
     </SignupFrame>
   )
@@ -434,12 +463,14 @@ const PAIRS = [
   { name: "Blue and orange (colour-blind safe)", profit: "#3b82f6", loss: "#f97316" },
 ]
 
-function LayoutStep({ theme, change, onBack, onNext }: { theme: CoachTheme; change: Change; onBack: () => void; onNext: () => void }) {
+function LayoutStep({ theme, change, live, onBack, onNext }: { theme: CoachTheme; change: Change; live: Change; onBack: () => void; onNext: () => void }) {
   const active = layoutOf(theme)
   const set = !!(theme.trading?.profit && theme.trading.loss)
   const profit = set ? theme.trading!.profit : theme.palettes[theme.mode].profit
   const loss = set ? theme.trading!.loss : theme.palettes[theme.mode].loss
+  // A ready-made pair swaps the page like the other picks; a colour being picked or typed shows live.
   const write = (p: string, l: string) => change({ theme: { trading: { profit: p, loss: l } } }, "trading")
+  const writeLive = (p: string, l: string) => live({ theme: { trading: { profit: p, loss: l } } }, "trading")
   const pick = (l: Layout) => {
     // Cards layouts go back to the look's own spacing; the other two set theirs.
     const density = l.density ?? LOOKS.find((x) => x.template === theme.template)?.set.density ?? theme.density
@@ -459,13 +490,13 @@ function LayoutStep({ theme, change, onBack, onNext }: { theme: CoachTheme; chan
             <span className="flex items-center gap-1 t-body-m text-a-text-2">
               <ArrowUp aria-hidden className="size-4 text-a-success" /> Profit
             </span>
-            <ColorInput value={profit} onChange={(c) => write(c, loss)} label="Profit colour" />
+            <ColorInput value={profit} onChange={(c) => writeLive(c, loss)} label="Profit colour" />
           </div>
           <div className="flex min-w-0 flex-col gap-2">
             <span className="flex items-center gap-1 t-body-m text-a-text-2">
               <ArrowDown aria-hidden className="size-4 text-a-danger" /> Loss
             </span>
-            <ColorInput value={loss} onChange={(c) => write(profit, c)} label="Loss colour" />
+            <ColorInput value={loss} onChange={(c) => writeLive(profit, c)} label="Loss colour" />
           </div>
         </div>
         <div role="radiogroup" aria-label="Ready-made pairs" className="flex items-center gap-2.5">
@@ -504,18 +535,47 @@ const FIG = { w: 1103, left: 96, top: 150, screen: 917, screenH: 959 }
 const BASE = 1440 // the platform is drawn at a desktop width, then scaled
 const ZOOM = [2, 1.6, 1] // Brand, Look, Layout
 
-function Canvas({ slug, step, coach, theme, typing }: { slug: string; step: number; coach: Coach; theme: CoachTheme; typing: boolean }) {
+const reduced = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches
+const EASE_OUT = "cubic-bezier(0.23, 1, 0.32, 1)"
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/** Resolves once the page in the frame has re-rendered and gone quiet for a moment (or after 700 ms at most). */
+function settled(frame: HTMLIFrameElement) {
+  const doc = frame.contentDocument
+  if (!doc?.documentElement) return wait(220)
+  return new Promise<void>((done) => {
+    let quiet: ReturnType<typeof setTimeout>
+    const end = () => {
+      mo.disconnect()
+      clearTimeout(quiet)
+      clearTimeout(cap)
+      done()
+    }
+    const mo = new MutationObserver(() => {
+      clearTimeout(quiet)
+      quiet = setTimeout(end, 90)
+    })
+    mo.observe(doc.documentElement, { subtree: true, childList: true, attributes: true, characterData: true })
+    quiet = setTimeout(end, 160)
+    const cap = setTimeout(end, 700)
+  })
+}
+
+/** The page's own background, so the screen keeps its colour while the page in it fades out and in. */
+const pageBg = (frame: HTMLIFrameElement) => {
+  const doc = frame.contentDocument
+  if (!doc?.body) return ""
+  const b = getComputedStyle(doc.body).backgroundColor
+  return b && b !== "rgba(0, 0, 0, 0)" ? b : getComputedStyle(doc.documentElement).backgroundColor
+}
+
+/** No scrollbars inside the preview: it is a picture of the platform, not a page to scroll. */
+const PREVIEW_CSS = "html,body,*{scrollbar-width:none!important}::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}"
+
+function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; step: number; coach: Coach; theme: CoachTheme; typing: boolean; swapRef: React.RefObject<(apply: () => void | Promise<void>) => void> }) {
   const box = useRef<HTMLDivElement>(null)
+  const screen = useRef<HTMLDivElement>(null)
   const frame = useRef<HTMLIFrameElement>(null)
-  // A theme, mode, background or layout change swaps the whole page at once: a short blur bridges it.
-  const look = [theme.template, theme.mode, theme.background, theme.nav.layout, theme.nav.frame, theme.widgetSet, theme.primary].join("|")
-  const lastLook = useRef(look)
-  useEffect(() => {
-    if (lastLook.current === look) return
-    lastLook.current = look
-    if (step === 0 || matchMedia("(prefers-reduced-motion: reduce)").matches) return
-    frame.current?.animate([{ filter: "blur(0px)", opacity: 1 }, { filter: "blur(6px)", opacity: 0.6, offset: 0.3 }, { filter: "blur(0px)", opacity: 1 }], { duration: 520, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" })
-  }, [look, step])
   const [size, setSize] = useState({ w: 0, h: 0 })
   const [page, setPage] = useState<"home" | "courses">("home")
   useEffect(() => {
@@ -526,14 +586,83 @@ function Canvas({ slug, step, coach, theme, typing }: { slug: string; step: numb
     return () => ro.disconnect()
   }, [])
 
+  /**
+   * Swapping what the preview shows (a theme, light or dark, a background, a layout, the page): the page blurs out to
+   * its own background, the change lands while it can't be seen, and once the frame has re-rendered the new page comes
+   * back into focus (Midday). A second pick during a swap joins it instead of starting another.
+   */
+  const busy = useRef(false)
+  const queued = useRef<(() => void | Promise<void>) | null>(null)
+  const swap = useCallback(
+    (apply: () => void | Promise<void>) => {
+      const el = frame.current
+      const shell = screen.current
+      if (!el || !shell || step === 0 || reduced()) return void apply()
+      queued.current = apply
+      if (busy.current) return
+      busy.current = true
+      void (async () => {
+        // Picks that arrive while the new page is fading in start one more round.
+        while (queued.current) {
+          shell.style.transition = ""
+          shell.style.backgroundColor = pageBg(el)
+          const out = el.animate([{ opacity: 1, filter: "blur(0px)", transform: "scale(1)" }, { opacity: 0, filter: "blur(10px)", transform: "scale(0.985)" }], { duration: 200, easing: EASE_OUT, fill: "forwards" })
+          await out.finished.catch(() => {})
+          while (queued.current) {
+            const run = queued.current
+            queued.current = null
+            await run()
+            await settled(el)
+          }
+          shell.style.transition = "background-color 360ms ease"
+          shell.style.backgroundColor = pageBg(el)
+          const back = el.animate([{ opacity: 0, filter: "blur(10px)", transform: "scale(0.985)" }, { opacity: 1, filter: "blur(0px)", transform: "scale(1)" }], { duration: 420, easing: EASE_OUT })
+          out.cancel()
+          await back.finished.catch(() => {})
+        }
+        busy.current = false
+      })()
+    },
+    [step],
+  )
+  useEffect(() => {
+    swapRef.current = swap
+  }, [swap, swapRef])
+
+  // Home and Courses: the link inside the preview is followed, so the platform changes page without reloading.
+  const at = useRef<"home" | "courses">("home")
+  const goTo = useCallback(
+    (to: "home" | "courses") => {
+      at.current = to
+      const doc = frame.current?.contentDocument
+      const href = to === "courses" ? `/c/${slug}/courses` : `/c/${slug}`
+      const link = doc?.querySelector<HTMLAnchorElement>(`a[href="${href}"]`)
+      if (link) link.click()
+      else if (frame.current) frame.current.src = `${href}?preview=draft`
+      // Done once the frame is on the new page (client navigation takes a moment), or after 1.5 s at most.
+      return new Promise<void>((done) => {
+        const t0 = performance.now()
+        const check = () => (frame.current?.contentWindow?.location.pathname === href || performance.now() - t0 > 1500 ? done() : setTimeout(check, 40))
+        check()
+      })
+    },
+    [slug],
+  )
+  // Back from Layout: the preview returns to Home (the toggle at once, the frame right after).
+  if (step !== 2 && page !== "home") setPage("home")
+  useEffect(() => {
+    if (step !== 2 && at.current !== "home") goTo("home")
+  }, [step, goTo])
+
   // Figma's geometry, scaled with the canvas (1:1 at 1103 px, larger on big screens so the screen still fills it).
   const k = size.w / FIG.w
   const base = (FIG.screen * k) / BASE // scale on the last step
   const scale = base * ZOOM[step]
   // The screen keeps Figma's proportions (917 × 959 on the last step): a 1440 px wide platform, 1506 px tall. On big
   // canvases it grows with them, so it always runs off the bottom instead of leaving an empty strip under the page.
-  const height = Math.round((FIG.screenH / FIG.screen) * BASE)
-  const src = `/c/${slug}${step === 2 && page === "courses" ? "/courses" : ""}?preview=draft`
+  // On canvases taller than Figma's it reaches past the bottom edge too; the page's own background fills what the page
+  // doesn't (the screen takes it from the page).
+  const height = Math.round(Math.max((FIG.screenH / FIG.screen) * BASE, base ? (size.h - FIG.top * k) / base + 24 : 0))
 
   return (
     // The Editor's canvas (the same grey as the Design workspace) with its dot grid.
@@ -541,6 +670,7 @@ function Canvas({ slug, step, coach, theme, typing }: { slug: string; step: numb
       {size.w > 0 && (
         <>
           <div
+            ref={screen}
             aria-hidden
             className="onb-cam absolute overflow-hidden bg-a-page"
             style={{ left: FIG.left * k, top: FIG.top * k, width: BASE, height, transform: `scale(${scale})`, transformOrigin: "0 0", borderRadius: (16 * k) / base }}
@@ -548,26 +678,38 @@ function Canvas({ slug, step, coach, theme, typing }: { slug: string; step: numb
             {/* Under the skeleton the real platform waits, blurred; leaving Brand it comes into focus as the skeleton dissolves. */}
             <iframe
               ref={frame}
-              key={src}
-              // Switching Home and Courses loads another page: it comes in with a short blur instead of popping.
-              onLoad={(e) => !matchMedia("(prefers-reduced-motion: reduce)").matches && e.currentTarget.animate([{ opacity: 0, filter: "blur(4px)" }, { opacity: 1, filter: "blur(0px)" }], { duration: 400, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" })}
-              src={src} title="Preview of your platform" tabIndex={-1} className={cn("onb-frame pointer-events-none size-full border-0", step === 0 && "onb-frame-off")} />
+              onLoad={(e) => {
+                const doc = e.currentTarget.contentDocument
+                if (doc && !doc.getElementById("onb-preview-css")) {
+                  const css = doc.createElement("style")
+                  css.id = "onb-preview-css"
+                  css.textContent = PREVIEW_CSS
+                  doc.head.appendChild(css)
+                }
+                if (screen.current) screen.current.style.backgroundColor = pageBg(e.currentTarget)
+              }}
+              src={`/c/${slug}?preview=draft`}
+              title="Preview of your platform"
+              tabIndex={-1}
+              scrolling="no"
+              className={cn("onb-frame pointer-events-none size-full border-0", step === 0 && "onb-frame-off")}
+            />
             <Skeleton coach={coach} theme={theme} typing={typing} gone={step !== 0} />
           </div>
-          {step === 2 && (
+          {/* Figma: 60 px above the screen, on its left edge. It comes in once the camera has settled on Layout and fades out
+              when the coach goes back; meanwhile it can't be reached. */}
+          <div inert={step !== 2} aria-hidden={step !== 2 || undefined} className={cn("onb-pill absolute", step === 2 && "onb-pill-on")} style={{ left: FIG.left * k, top: FIG.top * k - 60 }}>
             <PillSegmented
               label="Preview page"
               value={page}
-              onChange={setPage}
+              onChange={(to) => (setPage(to), swap(() => goTo(to)))}
               options={[
                 { value: "home", label: coach.wording.home },
                 { value: "courses", label: coach.wording.courses },
               ]}
-              className="onb-in absolute bg-a-page [--d:450ms] [--dx:0px] [--dy:-6px]"
-              // Figma: 60 px above the screen, on its left edge.
-              style={{ left: FIG.left * k, top: FIG.top * k - 60 }}
+              className="bg-a-page"
             />
-          )}
+          </div>
           <Ring step={step} />
         </>
       )}
@@ -670,6 +812,8 @@ const MOTION_CSS = `
 .onb-mark{transition:background-color 300ms ease}
 .onb-shimmer{background-image:linear-gradient(90deg,transparent 0%,rgb(255 255 255/0.05) 50%,transparent 100%);background-size:200% 100%;background-repeat:no-repeat;animation:onb-shimmer 1.8s linear infinite}
 .onb-cam{transition:transform 700ms cubic-bezier(0.77,0,0.175,1)}
+.onb-pill{opacity:0;filter:blur(4px);transform:translateY(-6px);transition:opacity 220ms cubic-bezier(0.23,1,0.32,1),filter 220ms cubic-bezier(0.23,1,0.32,1),transform 220ms cubic-bezier(0.23,1,0.32,1)}
+.onb-pill-on{opacity:1;filter:none;transform:none;transition-duration:340ms;transition-delay:450ms}
 .onb-frame{transition:filter 600ms cubic-bezier(0.2,0.8,0.2,1) 180ms,opacity 600ms cubic-bezier(0.2,0.8,0.2,1) 180ms}
 .onb-frame-off{filter:blur(8px);opacity:0.4;transition-delay:0ms}
 .onb-skel [data-skel]{animation:onb-in 360ms cubic-bezier(0.2,0.8,0.2,1) backwards;animation-delay:calc(var(--i,0) * 45ms);transition:opacity 360ms cubic-bezier(0.2,0.8,0.2,1),filter 360ms cubic-bezier(0.2,0.8,0.2,1),transform 360ms cubic-bezier(0.2,0.8,0.2,1);transition-delay:calc(var(--i,0) * 40ms)}
@@ -680,6 +824,7 @@ const MOTION_CSS = `
   .onb-char{animation:none}
   .onb-caret,.onb-shimmer{animation:none}
   .onb-cam{transition:none}
+  .onb-pill{transform:none!important;filter:none!important;transition:opacity 200ms ease-out!important}
   .onb-frame,.onb-skel [data-skel]{transition:opacity 200ms ease-out!important;transition-delay:0ms!important;filter:none!important;transform:none!important}
 }
 `
