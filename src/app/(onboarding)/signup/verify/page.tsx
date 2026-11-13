@@ -84,7 +84,7 @@ export default function Verify() {
                 if (e.key === "Enter") verify()
               }}
               onFocus={(e) => e.target.select()}
-              className="h-16 w-14 min-w-0 rounded-a-10 border border-a-border-strong bg-a-subtle text-center t-heading-xl text-a-text outline-none transition-[background-color,border-color] duration-300 ease-out hover:bg-a-hover focus:border-a-border-active focus:bg-a-raised disabled:opacity-40 max-sm:w-auto max-sm:flex-1"
+              className="h-16 w-0 min-w-0 flex-1 rounded-a-10 border border-a-border-strong bg-a-subtle text-center t-heading-xl text-a-text outline-none transition-[background-color,border-color] duration-300 ease-out hover:bg-a-hover focus:border-a-border-active focus:bg-a-raised disabled:opacity-40"
             />
           ))}
         </div>
