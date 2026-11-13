@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, Suspense, useLayoutEffect, useRef, useState } from "react"
+import { Fragment, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -16,7 +16,8 @@ import {
   Wand2,
   UserPlus,
   X,
-  PanelLeftIcon,
+  ChevronLeft,
+  ChevronRight,
 } from "@/components/icons"
 import { TS_ADMIN_CSS, TS_SYSTEM_CSS } from "@/lib/theme/ts-system"
 import { TS_ADMIN_V2_CSS } from "@/lib/theme/admin-v2"
@@ -40,8 +41,50 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { SidebarProvider } from "@/components/ui/sidebar"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 const ADMIN_CSS = TS_SYSTEM_CSS + TS_ADMIN_CSS + TS_ADMIN_V2_CSS
+
+/**
+ * Desktop sidebar size (Figma Admin / Sidebar, Size=Expanded | Collapsed), kept per browser. CSS reads it from
+ * <html data-admin-sb> through arbitrary variants on html[data-admin-sb=collapsed] (scoped to .admin-side, so the drawer never collapses); React reads it for tooltips, labels and the switcher.
+ */
+const SIDEBAR_KEY = "admin:sidebar"
+const sidebarListeners = new Set<() => void>()
+function readCollapsed() {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) === "collapsed"
+  } catch {
+    return false
+  }
+}
+/** The size lives on <html data-admin-sb> (set before first paint by the root layout), so CSS draws it without waiting for React. */
+function markCollapsed(collapsed: boolean) {
+  document.documentElement.setAttribute("data-admin-sb", collapsed ? "collapsed" : "expanded")
+}
+function setCollapsedStored(collapsed: boolean) {
+  markCollapsed(collapsed)
+  try {
+    localStorage.setItem(SIDEBAR_KEY, collapsed ? "collapsed" : "expanded")
+  } catch {}
+  sidebarListeners.forEach((l) => l())
+}
+function subscribeSidebar(l: () => void) {
+  sidebarListeners.add(l)
+  const onStorage = (e: StorageEvent) => {
+    if (e.key !== SIDEBAR_KEY) return
+    markCollapsed(readCollapsed())
+    l()
+  }
+  window.addEventListener("storage", onStorage)
+  return () => {
+    sidebarListeners.delete(l)
+    window.removeEventListener("storage", onStorage)
+  }
+}
+function useSidebarCollapsed() {
+  return useSyncExternalStore(subscribeSidebar, readCollapsed, () => false)
+}
 
 /**
  * The admin area, Admin v2 (Figma "Admin / Sidebar" + "Admin / Topbar").
@@ -79,7 +122,9 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
     }
   }, [])
 
-  const menu = <SidebarBody groups={groups} base={base} studentBase={studentBase} isOpen={isOpen} invite={invite && (coach as { status?: string }).status !== "setup"} onDismissInvite={() => setInvite(false)} />
+  const showInvite = invite && (coach as { status?: string }).status !== "setup"
+  const menu = <SidebarBody groups={groups} base={base} studentBase={studentBase} isOpen={isOpen} invite={showInvite} onDismissInvite={() => setInvite(false)} />
+  const sideMenu = (collapsed: boolean) => <SidebarBody groups={groups} base={base} studentBase={studentBase} isOpen={isOpen} invite={showInvite} onDismissInvite={() => setInvite(false)} collapsed={collapsed} />
 
   return (
     <SidebarProvider className="dark ts-ui ts-admin ts-admin-v2 bg-a-page font-a-sans text-a-text" style={{ "--sidebar-width": "255px" } as React.CSSProperties}>
@@ -91,11 +136,9 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
         <TourLayer />
       </Suspense>
       <div className="flex min-h-svh w-full">
-        <aside className="sticky top-0 hidden h-svh w-[271px] shrink-0 p-2 xl:block" aria-label="Main menu">
-          <div className="flex h-full flex-col rounded-a-xl border border-a-border bg-a-page pt-5 pr-4 pb-4 pl-4">{menu}</div>
-        </aside>
+        <DesktopSidebar>{sideMenu}</DesktopSidebar>
         <Sheet open={drawer} onOpenChange={setDrawer}>
-          <SheetContent side="left" showCloseButton={false} className="w-[min(320px,calc(100vw-48px))] gap-0 border-a-border bg-a-page p-0 sm:max-w-none">
+          <SheetContent side="left" showCloseButton={false} className="w-[min(320px,calc(100vw-48px))] gap-0 data-[side=left]:w-[min(320px,calc(100vw-48px))] border-a-border bg-a-page p-0 sm:max-w-none">
             <SheetHeader className="sr-only">
               <SheetTitle>Menu</SheetTitle>
               <SheetDescription>Admin navigation</SheetDescription>
@@ -141,6 +184,46 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
   )
 }
 
+/**
+ * Desktop sidebar (xl and up). Its own component so collapsing re-renders only the menu, not the topbar, the tours
+ * or the page.
+ */
+function DesktopSidebar({ children }: { children: (collapsed: boolean) => React.ReactNode }) {
+  const collapsed = useSidebarCollapsed()
+  // Transitions switch on after the first paint, so a stored "collapsed" does not animate in on load.
+  const [animate, setAnimate] = useState(false)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setAnimate(true)))
+    return () => cancelAnimationFrame(id)
+  }, [])
+  // A 255px card, or 64px collapsed (icons only). Only the width animates; the page beside it reflows with it.
+  return (
+    <aside
+      className={cn(
+        "admin-side sticky top-0 z-30 hidden h-svh w-[271px] shrink-0 p-2 [html[data-admin-sb=collapsed]_&]:w-20 xl:block",
+        animate && "transition-[width] duration-200 ease-out motion-reduce:transition-none"
+      )}
+      aria-label="Main menu"
+    >
+      <TooltipProvider delay={0}>
+        <div className="flex h-full flex-col overflow-hidden rounded-a-xl border border-a-border bg-a-page pt-5 pr-4 pb-4 pl-4 [html[data-admin-sb=collapsed]_.admin-side_&]:px-[11px]">{children(collapsed)}</div>
+      </TooltipProvider>
+      {/* Same round button in both sizes, on the card's right edge level with the logo (Figma Collapse / Expand). */}
+      <Button
+        hierarchy="secondary"
+        size="sm"
+        iconOnly
+        aria-label={collapsed ? "Expand menu" : "Collapse menu"}
+        aria-expanded={!collapsed}
+        onClick={() => setCollapsedStored(!collapsed)}
+        className="absolute top-7 -right-[5px] rounded-full bg-a-panel text-a-text-2 hover:bg-a-hover hover:text-a-text active:scale-[0.97] transition-[background-color,color,scale]"
+      >
+        {collapsed ? <ChevronRight /> : <ChevronLeft />}
+      </Button>
+    </aside>
+  )
+}
+
 type Groups = ReturnType<typeof adminNav>
 
 /**
@@ -167,59 +250,76 @@ function BrandGradients() {
   )
 }
 
-/** Admin / Logo: the shared brand mark and wordmark (components/brand/logo.tsx). */
+/** Admin / Logo: the shared brand mark and wordmark (components/brand/logo.tsx). Collapsed, the wordmark fades out and the card clips it. */
 function AdminLogo() {
   return (
     <Link href="/" aria-label="Traderhub" className="flex items-center px-2">
-      <Logo />
+      <Logo wordClassName="whitespace-nowrap transition-opacity duration-150 ease-out [html[data-admin-sb=collapsed]_.admin-side_&]:opacity-0" />
     </Link>
   )
 }
 
-/** Sidebar content, shared by the desktop card and the drawer. Nav item: 36px, radius md, 16px icon. */
-function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvite }: { groups: Groups; base: string; studentBase: string; isOpen: (href: string) => boolean; invite: boolean; onDismissInvite: () => void }) {
+/**
+ * Admin / Nav item (Figma 581:631, State x Icon Only). Expanded: 36px tall, label, a bar on the right when active.
+ * Collapsed (desktop only): 40 x 40, icon only, the label in a tooltip. The icon keeps its place (card padding and
+ * item padding swap together), so only the width moves.
+ */
+function NavLink({ href, label, icon: Icon, active, collapsed }: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; active?: boolean; collapsed: boolean }) {
+  const link = (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "relative flex h-9 shrink-0 items-center gap-3 rounded-a-md border px-2 t-body-l outline-none transition-[height,background-color,border-color,color] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus [html[data-admin-sb=collapsed]_.admin-side_&]:h-10 [html[data-admin-sb=collapsed]_.admin-side_&]:px-3",
+        active ? "border-a-border bg-a-panel text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-[var(--admin-component-nav-indicator)] [html[data-admin-sb=collapsed]_.admin-side_&]:after:hidden" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text"
+      )}
+    >
+      <Icon className={cn("size-4 shrink-0", active ? "fill-[url(#admin-icon-grad)]" : "text-a-icon")} />
+      <span className="min-w-0 overflow-hidden whitespace-nowrap transition-opacity duration-150 ease-out [html[data-admin-sb=collapsed]_.admin-side_&]:opacity-0">{label}</span>
+    </Link>
+  )
+  // Always wrapped (disabled while expanded), so collapsing does not remount every link.
+  return (
+    <Tooltip disabled={!collapsed}>
+      <TooltipTrigger render={link} />
+      <TooltipContent side="right" sideOffset={10} className="rounded-a-sm bg-a-panel t-caption text-a-text shadow-lg ring-1 ring-a-border [&>div:last-child]:hidden">
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+/** Sidebar content, shared by the desktop card and the drawer (the drawer is never collapsed). */
+function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvite, collapsed = false }: { groups: Groups; base: string; studentBase: string; isOpen: (href: string) => boolean; invite: boolean; onDismissInvite: () => void; collapsed?: boolean }) {
   return (
     <>
-      <div className="flex items-center justify-between pr-1">
+      <div className="flex items-center pr-1">
         <AdminLogo />
-        <PanelLeftIcon aria-hidden className="size-4 text-a-icon" />
       </div>
-      <nav aria-label="Admin" className="-mx-1 mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 pb-2">
+      <nav aria-label="Admin" className="-mx-1 mt-2 flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-1 pb-2">
         {groups.map((g, i) => (
           <div key={g.group} className="flex flex-col gap-0.5">
-            {/* The first page (Overview) sits on its own at the top, like a home link. */}
-            {i > 0 ? <span className="t-mono-label-s px-2 pt-5 pb-2 text-a-text-3">{g.group}</span> : <span className="h-2" />}
-            {g.items.map((item) => {
-              const active = isOpen(item.href)
-              return (
-                <Fragment key={item.id}>
-                <Link
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "relative flex h-9 items-center gap-3 rounded-a-md border px-2 t-body-l outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
-                    active ? "border-a-border bg-a-panel text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-[var(--admin-component-nav-indicator)]" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text"
-                  )}
-                >
-                  <item.icon className={cn("size-4 shrink-0", active ? "fill-[url(#admin-icon-grad)]" : "text-a-icon")} />
-                  <span className="truncate">{item.label}</span>
-                </Link>
+            {/* The first page (Overview) sits on its own at the top, like a home link. Collapsed, a group's name turns into a line in the same space. */}
+            {i > 0 ? (
+              <span className="t-mono-label-s relative whitespace-nowrap px-2 pt-5 pb-2 text-a-text-3 transition-colors duration-150 ease-out after:absolute after:inset-x-1 after:bottom-[calc(50%-10px)] after:h-px after:bg-a-border after:opacity-0 after:transition-opacity after:duration-150 [html[data-admin-sb=collapsed]_.admin-side_&]:text-transparent [html[data-admin-sb=collapsed]_.admin-side_&]:after:opacity-100">
+                {g.group}
+              </span>
+            ) : (
+              <span className="h-2" />
+            )}
+            {g.items.map((item) => (
+              <Fragment key={item.id}>
+                <NavLink href={item.href} label={item.label} icon={item.icon} active={isOpen(item.href)} collapsed={collapsed} />
                 {/* Platform: View as student sits right under Design (Figma Admin / Sidebar). */}
-                {item.id === "design" && (
-                  <Link href={studentBase} className="flex h-9 items-center gap-3 rounded-a-md border border-transparent px-2 t-body-l text-a-text-nav outline-none transition-colors duration-300 hover:bg-a-hover hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
-                    <Eye className="size-4 shrink-0 text-a-icon" />
-                    <span className="truncate">View as student</span>
-                  </Link>
-                )}
-                </Fragment>
-              )
-            })}
+                {item.id === "design" && <NavLink href={studentBase} label="View as student" icon={Eye} collapsed={collapsed} />}
+              </Fragment>
+            ))}
           </div>
         ))}
       </nav>
       <div className="flex flex-col gap-2 pt-2">
-        {invite && <InviteCard href={`${base}/settings?tab=team`} onDismiss={onDismissInvite} />}
-        <WorkspaceSwitcher />
+        {invite && !collapsed && <InviteCard href={`${base}/settings?tab=team`} onDismiss={onDismissInvite} />}
+        <WorkspaceSwitcher compact={collapsed} />
       </div>
     </>
   )
@@ -228,7 +328,7 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
 /** A quiet card above the footer links, as in ElevenLabs. Dismissed for this visit only. */
 function InviteCard({ href, onDismiss }: { href: string; onDismiss: () => void }) {
   return (
-    <div className="relative rounded-a-lg bg-a-subtle p-3 [@media(max-height:820px)]:hidden">
+    <div className="relative rounded-a-lg bg-a-subtle p-3 [html[data-admin-sb=collapsed]_.admin-side_&]:hidden [@media(max-height:820px)]:hidden">
       <button type="button" onClick={onDismiss} aria-label="Dismiss" className="absolute top-2 right-2 text-muted-foreground after:absolute after:-inset-[5px] after:content-[''] hover:text-foreground">
         <X className="size-3.5" />
       </button>

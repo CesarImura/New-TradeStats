@@ -12,6 +12,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${fontVariables} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        {/* Admin sidebar size, before first paint, so a collapsed sidebar does not load wide and then jump (admin-shell.tsx). */}
+        <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem("admin:sidebar")==="collapsed")document.documentElement.setAttribute("data-admin-sb","collapsed")}catch(e){}` }} />
+      </head>
       <body className="min-h-full">
         <TooltipProvider>{children}</TooltipProvider>
         <Toaster />
