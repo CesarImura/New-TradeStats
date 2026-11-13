@@ -1,16 +1,19 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Check, MoreHorizontal, Plus, X } from "@/components/icons"
+import { Check, MoreHorizontal, Plus, Tag as TagIcon, X } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
-import { addTier, isFreeTier, per, saveTier, setPreviewAs, useTiers, type TierExtra, type TierInfo } from "@/lib/data/access"
+import { addTier, amount, isFreeTier, per, saveTier, setPreviewAs, useTiers, type TierExtra, type TierInfo } from "@/lib/data/access"
 import { saveCatalog, useCatalog } from "@/lib/data/learning"
+import { setStored, useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
-import { AdminButton, AdminDrawer, AdminSegmented, AdminUnderlineTabs, Callout, Panel, Tag, adminControl } from "../ui"
+import { AdminButton, AdminDrawer, AdminSegmented, AdminUnderlineTabs, Callout, EmptyState, Panel, Tag, adminControl } from "../ui"
+
+const NO_EXTRA: Record<string, TierExtra> = {}
 
 const cadenceOf = (c: string) => (c === "once" ? "once" : c === "quarter" ? "quarter" : "month")
 
@@ -18,11 +21,14 @@ const cadenceOf = (c: string) => (c === "once" ? "once" : c === "quarter" ? "qua
 const subline = (t: TierInfo) => (t.yearly ? `${t.yearly} / year · 2 months free` : t.installments ? "One payment or 3 instalments" : t.trial ? `${t.trial}-day free trial` : "No trial")
 
 /** Sales · 02 Tiers & prices (Figma 535:7431) and 03 Edit tier (535:7677): price cards, and the tier opens in a drawer. */
-export function Tiers({ newSignal }: { newSignal: number }) {
+export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => void }) {
   const { coach } = useCoach()
   const all = useTiers(coach)
-  const tiers = all.filter((t) => !isFreeTier(t))
+  // Saved at least once (a tier just added and cancelled is not "ready" for the Getting started tour).
+  const saved = useStored(`${coach.slug}:tier-extra`, NO_EXTRA)
   const [open, setOpen] = useState<string | null>(null)
+  // The first tier, being created: the page behind the drawer still says "No tiers yet" until it's saved.
+  const tiers = all.filter((t) => !isFreeTier(t) && !(t.id === open && all.length === 1 && !saved[t.id]))
   const index = all.findIndex((t) => t.id === open)
   const tier = all[index] ?? null
 
@@ -39,11 +45,31 @@ export function Tiers({ newSignal }: { newSignal: number }) {
     toast(said)
   }
 
+  // A new platform has no tier yet (Figma 1036:2805).
+  if (tiers.length === 0)
+    return (
+      <>
+        <EmptyState
+          icon={TagIcon}
+          title="No tiers yet"
+          description="A tier is what students pay to join. Create one to start selling."
+          actions={
+            onNew && (
+              <AdminButton data-tour="tier-new" onClick={onNew}>
+                <Plus /> New tier
+              </AdminButton>
+            )
+          }
+        />
+        <TierEditor tier={tier} index={index} onClose={() => setOpen(null)} />
+      </>
+    )
+
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {tiers.map((t) => (
-          <Panel key={t.id} className={cn("gap-0 p-0", t.featured && "border-a-accent-strong")}>
+        {tiers.map((t, i) => (
+          <Panel key={t.id} data-tour={i === 0 ? "tier-card" : undefined} data-ready={saved[t.id] ? true : undefined} className={cn("gap-0 p-0", t.featured && "border-a-accent-strong")}>
             <div className="flex flex-1 flex-col gap-3 p-5 pb-4">
               <div className="flex items-start gap-2">
                 <h2 className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 t-heading-m text-a-text">
@@ -113,13 +139,22 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
   const [x, setX] = useState<TierExtra | null>(null)
   const [key, setKey] = useState<string | undefined>()
   const [tab, setTab] = useState<"plan" | "page">("plan")
+  const saved = useStored(`${coach.slug}:tier-extra`, NO_EXTRA)
+  // The platform's very first tier, just added (Getting started · Create a tier, Figma 1036:3177): the coach types the
+  // name and price, there's no trial, one sales line to fill, and the extra options wait for later.
+  const fresh = !!tier && !saved[tier.id] && tier.members === 0 && allTiers.length <= 1
   // Open on Plan with this tier's values every time (derived state, no effect).
   if (tier?.id !== key) {
     setKey(tier?.id)
-    setX(tier ? { ...tier, features: [...tier.features] } : null)
+    setX(tier ? (fresh ? { ...tier, name: "", price: "", trial: 0, features: [""] } : { ...tier, features: [...tier.features] }) : null)
     setTab("plan")
   }
   const set = (p: Partial<TierExtra>) => setX((v) => (v ? { ...v, ...p } : v))
+  // Closing the first tier without saving it drops it, so the page goes back to "No tiers yet".
+  const close = () => {
+    if (fresh && tier) setStored<{ id: string }[]>(`${coach.slug}:tiers-added`, (a) => a.filter((t) => t.id !== tier.id), [])
+    onClose()
+  }
 
   // Course access lives on the course (Content), so the Access tab and the course builder show the same thing.
   const has = (courseTiers: string[]) => !!tier && (courseTiers.length === 0 || courseTiers.includes(tier.id))
@@ -145,22 +180,23 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
   return (
     <AdminDrawer
       open={!!tier}
-      onOpenChange={(o) => !o && onClose()}
-      title={x?.name || "Tier"}
-      subtitle={tier?.members ? `${tier.members} members · changes apply to new members` : "Not on sale yet."}
+      onOpenChange={(o) => !o && close()}
+      title={fresh ? "New tier" : x?.name || "Tier"}
+      subtitle={fresh ? "What students pay to join your platform" : tier?.members ? `${tier.members} members · changes apply to new members` : "Not on sale yet."}
       bodyClassName="gap-5"
       footer={
         <>
-          <AdminButton hierarchy="ghost" onClick={onClose}>Cancel</AdminButton>
-          <AdminButton disabled={!x?.name?.trim()} onClick={save}>Save tier</AdminButton>
+          <AdminButton hierarchy="ghost" onClick={close}>Cancel</AdminButton>
+          <AdminButton disabled={!x?.name?.trim() || !amount(x.price ?? "")} onClick={save}>Save tier</AdminButton>
         </>
       }>
       <AdminUnderlineTabs label="Tier sections" value={tab} onChange={setTab} tabs={[{ id: "plan", label: "Plan" }, { id: "page", label: "Sales page" }]} />
       {x && tier && tab === "plan" && (
         <div className="flex flex-col gap-5">
+          <div data-tour="tier-plan" className="flex flex-col gap-5">
           <label className="grid gap-1.5">
             <span className="t-caption text-a-text">Name</span>
-            <input value={x.name ?? ""} onChange={(e) => set({ name: e.target.value })} className={cn(adminControl, "h-11")} />
+            <input value={x.name ?? ""} onChange={(e) => set({ name: e.target.value })} placeholder={fresh ? "e.g. Inner Circle" : undefined} className={cn(adminControl, "h-11")} />
           </label>
           <div className="grid grid-cols-2 items-start gap-3">
             <div className="grid gap-1.5">
@@ -173,6 +209,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
               <span className="t-caption text-a-text-3">Usually two months free</span>
             </div>
           </div>
+          </div>
           <div className="grid gap-1.5">
             <span className="t-caption text-a-text">Billing</span>
             <AdminSegmented label="Billing" value={cadenceOf(x.cadence ?? "month")} onChange={(v) => set({ cadence: v })} options={[{ value: "month", label: "Monthly" }, { value: "once", label: "One payment" }, { value: "quarter", label: "Every 3 months" }]} />
@@ -180,10 +217,10 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
           <div className="grid gap-1.5">
             <span className="t-caption text-a-text">Free trial</span>
             <AdminSegmented label="Free trial" value={x.trial === 14 ? "14" : x.trial === 7 ? "7" : "0"} onChange={(v) => set({ trial: Number(v) })} options={[{ value: "0", label: "No trial" }, { value: "7", label: "7 days" }, { value: "14", label: "14 days" }]} />
-            <span className="t-caption text-a-text-3">Card needed; first payment after the trial</span>
+            <span className="t-caption text-a-text-3">{x.trial ? "Card needed; first payment after the trial" : "Students pay when they join"}</span>
           </div>
-          <span className="h-px bg-a-border" aria-hidden />
-          <div className="flex flex-col gap-3.5">
+          {!fresh && <span className="h-px bg-a-border" aria-hidden />}
+          <div className={cn("flex flex-col gap-3.5", fresh && "hidden")}>
             {([
               ["Mark as most popular", "Highlighted on the sales page", !!x.featured, (v: boolean) => set({ featured: v })],
               ["Hidden · link only", "Not on the sales page; only people with the link can join", x.hidden, (v: boolean) => set({ hidden: v })],
@@ -199,7 +236,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
       )}
 
       {x && tier && tab === "page" && (
-        <div className="flex flex-col gap-5">
+        <div data-tour="tier-page" className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <span className="t-caption text-a-text">Courses it unlocks</span>
             {catalog.courses.filter((c) => c.status !== "archived").map((c) => {

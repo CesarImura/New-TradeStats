@@ -84,7 +84,12 @@ export const TOURS: Record<TourId, Tour> = {
     parts: ["Start a new tier", "Name and price", "What it unlocks"],
     complete: (slug) => setSetup(slug, { firstTier: true }),
     done: (c) => !!c?.setup?.firstTier,
-    steps: [],
+    steps: [
+      { id: "new", target: t("tier-new"), part: 0, title: "Create your first tier", body: "Start with one. You can add more tiers anytime.", hint: "Click New tier" },
+      { id: "plan", target: t("tier-plan"), part: 1, side: "left", title: "Name it and set a price", body: "Type a name and a monthly price. Students see both on your sales page.", hint: "Then click Sales page" },
+      { id: "page", target: t("tier-page"), part: 2, side: "left", title: "Choose what it unlocks", body: "Your first course is already checked. Add a line or two for your sales page.", hint: "Click Save tier" },
+      { id: "done", target: `body:not(:has([data-slot="sheet-content"])) ${t("tier-card")}[data-ready]`, part: 2, final: true, title: "Your first tier is ready", body: "Next, connect payouts so students can pay you.", hint: "" },
+    ],
   },
   payouts: {
     id: "payouts",

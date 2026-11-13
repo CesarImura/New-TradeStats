@@ -57,7 +57,7 @@ export function TourLayer() {
       return
     }
     const at = state.at ? tour.steps.findIndex((x) => x.id === state.at) : -1
-    if (stepIndex > at) {
+    if (state.started && stepIndex > at) {
       const q = new URLSearchParams(location.search)
       q.delete("tour")
       set((s) => (s ? { ...s, at: step.id, path: `${pathname}${q.size ? `?${q}` : ""}` } : s))

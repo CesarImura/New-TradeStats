@@ -71,7 +71,7 @@ export function SalesAdmin() {
         <AdminTabs label="Sales sections" tabs={TABS} value={tab as (typeof TABS)[number]["id"]} onChange={setTab} />
       </div>
       {tab === "overview" && <RevenueOverview onProblems={() => setTab("transactions")} />}
-      {tab === "tiers" && <Tiers newSignal={newTier} />}
+      {tab === "tiers" && <Tiers newSignal={newTier} onNew={() => setNewTier((n) => n + 1)} />}
       {tab === "groups" && <Groups newSignal={newGroup} />}
       {tab === "access" && <AccessOverview />}
       {tab === "page" && <SalesPageEditor resetSignal={resetPage} />}

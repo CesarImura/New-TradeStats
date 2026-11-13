@@ -126,6 +126,7 @@ const TIPS: Partial<Record<TaskId, { title: string; steps: string[]; action?: st
 }
 
 const NO_TIPS: TaskId[] = []
+const GUIDED: TaskId[] = ["course", "membership", "payouts"]
 
 /** The short how-to for a checklist step, on the screen it leads to. Closing it keeps it closed. */
 export function SetupTip({ task }: { task: TaskId }) {
@@ -133,6 +134,8 @@ export function SetupTip({ task }: { task: TaskId }) {
   const t = useSetupTasks().find((x) => x.id === task)
   const closed = useStored<TaskId[]>(`${coach.slug}:setup-tips-closed`, NO_TIPS)
   const tip = TIPS[task]
+  // The first course, tier and payouts have their own guided tour from Getting started (admin/tour): no how-to box.
+  if (GUIDED.includes(task)) return null
   if (!tip || !t || t.done || closed.includes(task)) return null
   return (
     <aside className="flex items-start gap-3 rounded-lg border bg-card p-4 text-sm" aria-label={tip.title}>
