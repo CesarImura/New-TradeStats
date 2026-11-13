@@ -301,7 +301,7 @@ function useCorner() {
   useEffect(() => {
     let frame = 0
     const tick = () => {
-      const d = document.querySelector('[data-slot="sheet-content"][data-side="right"]')
+      const d = document.querySelector('[data-slot="sheet-content"][data-side="right"]:not([data-ending-style]):not([data-closed])')
       const bar = document.querySelector("[data-proto-bar]")
       const right = d ? innerWidth - d.getBoundingClientRect().left + 24 : 32
       const bottom = bar && !d ? Math.max(32, innerHeight - bar.getBoundingClientRect().top + 12) : 32

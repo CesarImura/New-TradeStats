@@ -118,10 +118,16 @@ export const TOURS: Record<TourId, Tour> = {
     title: "Add your legal pages",
     doneTitle: "Legal pages added",
     saved: "What you entered is saved.",
-    parts: ["Imprint", "Templates"],
+    parts: ["Start with the imprint", "Fill in your imprint", "Check the templates"],
     complete: (slug) => setSetup(slug, { legal: true }),
     done: (c) => !!c?.setup?.legal,
-    steps: [],
+    steps: [
+      { id: "start", target: t("legal-imprint-setup"), part: 0, title: "Add your legal pages", body: "Students see them in your footer and at checkout. Start with the imprint. We have templates for the rest.", hint: "Click Set up next to Imprint" },
+      { id: "next", target: t("legal-next"), part: 2, title: "Check the templates", body: "Privacy policy, terms and risk disclaimer come pre-filled with your details. Read each one and change what doesn’t fit.", hint: "Click Set up" },
+      { id: "imprint", target: t("legal-imprint"), part: 1, side: "left", title: "Fill in your imprint", body: "The law asks who runs the platform and how to reach you.", hint: "Then click Save" },
+      { id: "template", target: t("legal-template"), part: 2, side: "left", title: "Check the templates", body: "Privacy policy, terms and risk disclaimer come pre-filled with your details. Read each one and change what doesn’t fit.", hint: "Then click Use this text" },
+      { id: "done", target: `${NO_DRAWER} ${t("legal-table")}[data-complete]`, part: 2, final: true, title: "Your legal pages are ready", body: "Students find them in your footer and at checkout. One step left: go live.", hint: "" },
+    ],
   },
 }
 
