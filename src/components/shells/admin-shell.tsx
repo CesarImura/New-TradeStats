@@ -1,11 +1,11 @@
 "use client"
 
-import { Suspense, useLayoutEffect, useRef, useState } from "react"
+import { Fragment, Suspense, useLayoutEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   CalendarCheck,
-  ExternalLink,
+  Eye,
   LifeBuoy,
   Mail,
   MessageCircle,
@@ -192,8 +192,8 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
             {g.items.map((item) => {
               const active = isOpen(item.href)
               return (
+                <Fragment key={item.id}>
                 <Link
-                  key={item.id}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
@@ -204,6 +204,14 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
                   <item.icon className={cn("size-4 shrink-0", active ? "fill-[url(#admin-icon-grad)]" : "text-a-icon")} />
                   <span className="truncate">{item.label}</span>
                 </Link>
+                {/* Platform: View as student sits right under Design (Figma Admin / Sidebar). */}
+                {item.id === "design" && (
+                  <Link href={studentBase} className="flex h-9 items-center gap-3 rounded-a-md border border-transparent px-2 t-body-l text-a-text-nav outline-none transition-colors duration-300 hover:bg-a-hover hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
+                    <Eye className="size-4 shrink-0 text-a-icon" />
+                    <span className="truncate">View as student</span>
+                  </Link>
+                )}
+                </Fragment>
               )
             })}
           </div>
@@ -212,10 +220,6 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
       <div className="flex flex-col gap-2 pt-2">
         {invite && <InviteCard href={`${base}/settings?tab=team`} onDismiss={onDismissInvite} />}
         <WorkspaceSwitcher />
-        <Link href={studentBase} className="flex h-9 items-center gap-3 rounded-a-md px-2 t-body-m text-a-text-nav transition-colors duration-300 hover:bg-a-hover hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:outline-none">
-          <ExternalLink className="size-4 text-a-icon" />
-          View as student
-        </Link>
       </div>
     </>
   )
