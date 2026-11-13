@@ -1,11 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { ArrowLeft } from "@/components/icons"
 import { SignupFrame, SignupTitle, useSignupGo } from "@/components/onboarding/signup-frame"
 import { AdminButton, AdminField, adminControl } from "@/components/admin/ui"
-import { setAccount } from "@/lib/data/communities"
+import { account, setAccount } from "@/lib/data/communities"
 import { cn } from "@/lib/utils"
+
+const noop = () => () => {}
+/** The name and e-mail of an account that hasn't confirmed its code yet, as one stable string. */
+const unfinished = () => {
+  const a = account()
+  return a && a.mode === "create" && !a.verified ? `${a.name}\n${a.email}` : ""
+}
 
 /** Sign up · 02 Create account (Figma 939:57971). Name and e-mail; the code on the next screen proves the address. */
 export default function CreateAccount() {
@@ -13,6 +20,15 @@ export default function CreateAccount() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [tried, setTried] = useState(false)
+  // Back from the code (or Change e-mail): what was typed comes back, read once on the client.
+  const saved = useSyncExternalStore(noop, unfinished, () => "")
+  const [seeded, setSeeded] = useState(false)
+  if (saved && !seeded) {
+    setSeeded(true)
+    const [n, m] = saved.split("\n")
+    setName(n)
+    setEmail(m)
+  }
   const errors = {
     name: !name.trim() ? "Tell us your name." : undefined,
     email: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? "That e-mail doesn't look right." : undefined,
