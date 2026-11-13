@@ -22,8 +22,8 @@ const modulesOf = (c: Course) => c.modules.map((m) => ({ ...m, lessons: m.lesson
 
 /** The coach's catalogue, the student's progress and tier: what every widget here reads. */
 function useLearning() {
-  const { coach } = useCoach()
-  const catalog = useCatalog(coach)
+  const { coach, preview } = useCoach()
+  const catalog = useCatalog(coach, preview)
   const progress = useProgress(coach.slug)
   const tier = useViewerTier(coach)
   const courses = studentCourses(catalog)

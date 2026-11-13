@@ -306,8 +306,20 @@ const START_PROGRESS: Progress = { done: ["l1", "l2", "l3", "l4"], notes: {}, qu
 const catalogKey = (slug: string) => `catalog:${slug}`
 const progressKey = (slug: string) => `progress:${slug}`
 
-export function useCatalog(coach: Coach) {
-  return useStored<Catalog>(catalogKey(coach.slug), seedFor(coach))
+/**
+ * The coach's catalogue. `sampleIfEmpty` (the Design preview): while nothing is published yet, the sample catalogue
+ * stands in, so the coach sees how a full platform will look. Nothing is written.
+ */
+export function useCatalog(coach: Coach, sampleIfEmpty = false) {
+  const catalog = useStored<Catalog>(catalogKey(coach.slug), seedFor(coach))
+  if (sampleIfEmpty && !catalog.courses.some((c) => c.status === "published")) return sampleFor(coach)
+  return catalog
+}
+/** The sample catalogue only (never the coach's uploads), memoised per platform. */
+const sampleFor = (coach: Coach): Catalog => {
+  const key = `${coach.slug}:sample`
+  if (!SEEDS.has(key)) SEEDS.set(key, withEdited(seed(coach)))
+  return SEEDS.get(key)!
 }
 
 export function useProgress(slug: string) {

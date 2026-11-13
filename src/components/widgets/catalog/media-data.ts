@@ -139,8 +139,8 @@ export const SHAPE_OF: Record<Source, Shape> = { courses: "portrait", lessons: "
 
 /** The posters a source gives, from the coach's catalogue, the student's progress or the coach's files. */
 export function useMediaItems(source: Source): { items: MediaItem[]; title: string; href: string } {
-  const { coach, base } = useCoach()
-  const catalog = useCatalog(coach)
+  const { coach, base, preview } = useCoach()
+  const catalog = useCatalog(coach, preview)
   const progress = useProgress(coach.slug)
   const tier = useViewerTier(coach)
   const files = useDownloads(coach)

@@ -45,8 +45,8 @@ const COLUMNS: Record<string, string> = {
 export function StudentCourses({ props = {} }: { props?: Record<string, string | boolean> } = {}) {
   const columns = COLUMNS[(props.columns as string) ?? "auto"] ?? COLUMNS.auto
   const card = (props.card as string) ?? "cover"
-  const { coach, base } = useCoach()
-  const catalog = useCatalog(coach)
+  const { coach, base, preview } = useCoach()
+  const catalog = useCatalog(coach, preview)
   const progress = useProgress(coach.slug)
   const tier = useStudentTier()
   const access = useAccess(coach.slug)
