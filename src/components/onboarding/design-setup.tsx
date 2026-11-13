@@ -541,6 +541,8 @@ function LayoutStep({ theme, change, live, onBack, onNext }: { theme: CoachTheme
 const FIG = { w: 1103, left: 96, top: 150, screen: 917, screenH: 959 }
 const BASE = 1440 // the platform is drawn at a desktop width, then scaled
 const ZOOM = [2, 1.6, 1] // Brand, Look, Layout
+/** The camera's move between steps. Any inline transition on the screen must keep it, or the zoom stops animating. */
+const CAM = "transform 820ms cubic-bezier(0.65,0,0.35,1)"
 
 /** A light/dark switch only recolours the page; anything else (theme, background, layout, page) also moves things. */
 type SwapKind = "mode" | "look"
@@ -587,9 +589,10 @@ const PREVIEW_CSS = `html,body,*{scrollbar-width:none!important}::-webkit-scroll
 [data-slot=widget],header,nav,h1{view-transition-name:match-element}
 @keyframes onbvt-in{from{opacity:0}}
 @keyframes onbvt-out{to{opacity:0}}
-::view-transition-group(*){animation-duration:640ms;animation-timing-function:cubic-bezier(0.65,0,0.35,1)}
+::view-transition-group(*){overflow:clip;animation-duration:640ms;animation-timing-function:cubic-bezier(0.65,0,0.35,1)}
 ::view-transition-old(*){animation:onbvt-out 420ms cubic-bezier(0.65,0,0.35,1) both}
 ::view-transition-new(*){animation:onbvt-in 520ms cubic-bezier(0.65,0,0.35,1) 60ms both}
+::view-transition-old(*),::view-transition-new(*){height:100%;object-fit:none;object-position:left top}
 ::view-transition-old(root){animation:onbvt-out 420ms cubic-bezier(0.65,0,0.35,1) both}
 ::view-transition-new(root){animation:onbvt-in 520ms cubic-bezier(0.65,0,0.35,1) both}
 html[data-onb-swap=mode] :is([data-slot=widget],header,nav,h1){view-transition-name:none}
@@ -645,7 +648,7 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
                 await settled(el)
               }
               // The space around the page follows in step with the page itself.
-              shell.style.transition = `background-color ${mode ? 600 : 460}ms ${mode ? "cubic-bezier(0.32,0.72,0,1)" : "ease"}`
+              shell.style.transition = `${CAM}, background-color ${mode ? 600 : 460}ms ${mode ? "cubic-bezier(0.32,0.72,0,1)" : "ease"}`
               shell.style.backgroundColor = pageBg(el)
             })
             await vt.finished.catch(() => {})
@@ -668,7 +671,7 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
             await run()
             await settled(el)
           }
-          shell.style.transition = "background-color 360ms ease"
+          shell.style.transition = `${CAM}, background-color 360ms ease`
           shell.style.backgroundColor = pageBg(el)
           const back = el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 480, easing: "cubic-bezier(0.65,0,0.35,1)" })
           out.cancel()
@@ -863,7 +866,7 @@ const MOTION_CSS = `
 .onb-caret{animation:onb-blink 1s steps(1) infinite}
 .onb-mark{transition:background-color 300ms ease}
 .onb-shimmer{background-image:linear-gradient(90deg,transparent 0%,rgb(255 255 255/0.05) 50%,transparent 100%);background-size:200% 100%;background-repeat:no-repeat;animation:onb-shimmer 1.8s linear infinite}
-.onb-cam{transition:transform 820ms cubic-bezier(0.65,0,0.35,1)}
+.onb-cam{transition:${CAM}}
 .onb-pill{opacity:0;transform:translateY(-4px);transition:opacity 260ms cubic-bezier(0.23,1,0.32,1),transform 260ms cubic-bezier(0.23,1,0.32,1)}
 .onb-pill-on{opacity:1;transform:none;transition-duration:420ms;transition-delay:480ms}
 .onb-frame{transition:opacity 640ms cubic-bezier(0.65,0,0.35,1) 160ms}
