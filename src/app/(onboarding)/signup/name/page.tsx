@@ -51,7 +51,7 @@ export default function NamePlatform() {
       <form onSubmit={submit} noValidate className="flex flex-col gap-5">
         <SignupTitle title="Name your platform" text="Students see this name. You can change it later." />
         <div className="flex flex-col gap-4">
-          <AdminField label="Platform name" hint="We suggest your web address from this name. You confirm it when you go live." error={tried ? errors.name : undefined}>
+          <AdminField label="Platform name" error={tried ? errors.name : undefined}>
             {(f) => (
               <span className="relative block">
                 <input {...f} autoFocus maxLength={MAX} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Lio Trading Floor" className={cn(adminControl, "h-11 pr-16")} />
@@ -65,7 +65,7 @@ export default function NamePlatform() {
             {(f) => <input {...f} value={callAs} onChange={(e) => setCall(e.target.value)} placeholder="First name or nickname" className={cn(adminControl, "h-11")} />}
           </AdminField>
           <AdminField label="Language" hint="Used in your admin and on your students’ platform.">
-            {(f) => <SelectField id={f.id} value={language} onValueChange={setLanguage} options={LANGUAGES} className={cn(adminControl, "h-11 w-full justify-between")} />}
+            {(f) => <SelectField id={f.id} value={language} onValueChange={setLanguage} options={LANGUAGES} className={cn(adminControl, "h-11! w-full justify-between")} />}
           </AdminField>
         </div>
         <label className="flex items-center gap-2.5 t-body-m text-a-text-2">
