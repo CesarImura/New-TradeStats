@@ -75,10 +75,10 @@ export function GettingStarted() {
                 { icon: CalendarDays, label: "Book a setup call" },
                 { icon: Wrench, label: "Have us set it up" },
               ].map(({ icon: Icon, label }) => (
-                <button key={label} type="button" onClick={() => toast(`${label}: opens our help in the real product.`)} className="group flex items-center gap-3 rounded-a-sm py-2 text-left t-body-m text-a-text outline-none transition-colors duration-300 hover:text-a-text-accent focus-visible:ring-2 focus-visible:ring-a-border-focus">
+                <button key={label} type="button" onClick={() => toast(`${label}: opens our help in the real product.`)} className="group flex items-center gap-3 rounded-a-sm py-2 text-left t-body-m text-a-text outline-none transition-colors duration-150 hover:text-a-text-accent focus-visible:ring-2 focus-visible:ring-a-border-focus">
                   <Icon aria-hidden className="size-4 text-a-text-accent" />
                   <span className="flex-1">{label}</span>
-                  <ChevronRight aria-hidden className="size-4 text-a-icon transition-transform duration-300 ease-out group-hover:translate-x-0.5" />
+                  <ChevronRight aria-hidden className="size-4 text-a-icon transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
                 </button>
               ))}
             </div>

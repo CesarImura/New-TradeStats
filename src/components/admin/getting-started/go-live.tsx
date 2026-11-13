@@ -79,7 +79,7 @@ export function GoLiveModal({ open, onOpenChange }: { open: boolean; onOpenChang
         <label htmlFor={id} className="t-caption text-a-text">
           Web address
         </label>
-        <div className={cn("flex h-11 items-stretch overflow-hidden rounded-a-md border bg-a-field transition-colors duration-300 hover:border-a-border-strong focus-within:border-a-border-focus", taken || tooShort ? "border-a-border-danger" : "border-a-border-subtle")}>
+        <div className={cn("flex h-11 items-stretch overflow-hidden rounded-a-md border bg-a-field transition-colors duration-150 hover:border-a-border-strong focus-within:border-a-border-focus", taken || tooShort ? "border-a-border-danger" : "border-a-border-subtle")}>
           <span className="flex items-center border-r border-a-border-subtle px-3 t-body-l text-a-text-3">https://</span>
           <input id={id} value={value} onChange={(e) => setAddress(e.target.value.toLowerCase())} aria-invalid={taken || tooShort || undefined} aria-describedby={`${id}-hint`} className="min-w-0 flex-1 bg-transparent px-3 t-body-l text-a-text outline-none" />
           <span className="flex items-center pr-3 t-body-l text-a-text-3">{HOST}</span>

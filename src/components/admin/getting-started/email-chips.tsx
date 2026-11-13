@@ -53,7 +53,7 @@ export function EmailChips({ chips, onChange, labelId, hintId }: { chips: Chip[]
   return (
     <div
       onClick={(e) => e.target === e.currentTarget && input.current?.focus()}
-      className="flex min-h-11 cursor-text flex-wrap items-center gap-1.5 rounded-a-md border border-a-border bg-a-field p-2 transition-colors duration-300 focus-within:border-a-border-focus hover:border-a-border-strong"
+      className="flex min-h-11 cursor-text flex-wrap items-center gap-1.5 rounded-a-md border border-a-border bg-a-field p-2 transition-colors duration-150 focus-within:border-a-border-focus hover:border-a-border-strong"
     >
       {chips.map((c) => {
         const bad = !valid(c.email)
@@ -77,11 +77,11 @@ export function EmailChips({ chips, onChange, labelId, hintId }: { chips: Chip[]
             className="h-7 min-w-40 rounded-a-sm border border-a-border-focus bg-a-panel px-2 t-body-m text-a-text outline-none"
           />
         ) : (
-          <span key={c.id} className={cn("group inline-flex h-7 items-center gap-1 rounded-a-sm border pr-1 pl-2 transition-colors duration-300", bad ? "border-a-danger bg-a-panel" : "border-a-border-subtle bg-a-panel hover:border-a-border hover:bg-a-field")}>
+          <span key={c.id} className={cn("group inline-flex h-7 items-center gap-1 rounded-a-sm border pr-1 pl-2 transition-colors duration-150", bad ? "border-a-danger bg-a-panel" : "border-a-border-subtle bg-a-panel hover:border-a-border hover:bg-a-field")}>
             <button type="button" onClick={() => setEditing(c.id)} title="Edit" aria-label={`${c.email}${bad ? ", doesn't look like an e-mail" : ""}. Edit`} className={cn("max-w-56 truncate rounded-a-xs t-body-m outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus", bad ? "text-a-danger" : "text-a-text")}>
               {c.email}
             </button>
-            <button type="button" onClick={() => remove(c.id)} aria-label={`Remove ${c.email}`} className="grid size-5 place-items-center rounded-a-xs text-a-text-3 outline-none transition-colors duration-300 hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:size-8">
+            <button type="button" onClick={() => remove(c.id)} aria-label={`Remove ${c.email}`} className="grid size-5 place-items-center rounded-a-xs text-a-text-3 outline-none transition-colors duration-150 hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:size-8">
               <X className="size-4" />
             </button>
           </span>

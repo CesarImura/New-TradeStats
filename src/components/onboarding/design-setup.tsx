@@ -275,7 +275,7 @@ function Swatch({ color, checked, onClick, label }: { color?: string; checked: b
       title={label}
       onClick={onClick}
       className={cn(
-        "relative size-6 shrink-0 rounded-full outline-none transition-[box-shadow,scale] duration-300 ease-out after:absolute after:-inset-2 after:content-[''] hover:scale-110 focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97]",
+        "relative size-6 shrink-0 rounded-full outline-none transition-[box-shadow,scale] duration-150 ease-out after:absolute after:-inset-2 after:content-[''] hover:scale-110 focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97]",
         checked && "ring-2 ring-a-icon-strong",
       )}
       style={{ background: color }}
@@ -292,7 +292,7 @@ function ColorInput({ value, onChange, label, className }: { value: string; onCh
     setDraft(null)
   }
   return (
-    <div className={cn("flex h-9 items-center gap-2.5 rounded-a-md border border-a-border bg-a-field py-1.5 pr-3 pl-2 transition-colors duration-300 focus-within:border-a-border-focus hover:border-a-border-strong", className)}>
+    <div className={cn("flex h-9 items-center gap-2.5 rounded-a-md border border-a-border bg-a-field py-1.5 pr-3 pl-2 transition-colors duration-150 focus-within:border-a-border-focus hover:border-a-border-strong", className)}>
       <ColorPicker value={value} onChange={onChange} label={label}>
         <button type="button" className="size-[22px] shrink-0 rounded-a-sm outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus" style={{ background: value }} />
       </ColorPicker>
@@ -393,7 +393,7 @@ function PillSegmented<T extends string>({ value, onChange, options, label, clas
           aria-checked={o.value === value}
           tabIndex={o.value === value ? 0 : -1}
           onClick={() => onChange(o.value)}
-          className={cn("h-[30px] rounded-a-sm px-3 t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:h-10", o.value === value ? "bg-a-panel text-a-text" : "text-a-text-2 hover:text-a-text")}
+          className={cn("h-[30px] rounded-a-sm px-3 t-body-m outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:h-10", o.value === value ? "bg-a-panel text-a-text" : "text-a-text-2 hover:text-a-text")}
         >
           {o.label}
         </button>
@@ -411,7 +411,7 @@ function SelectionCard({ checked, onSelect, title, description, img, radius }: {
       aria-checked={checked}
       onClick={onSelect}
       className={cn(
-        "flex min-w-0 flex-col gap-3 rounded-a-lg border p-2 text-left outline-none transition-[background-color,border-color,scale] duration-300 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.99]",
+        "flex min-w-0 flex-col gap-3 rounded-a-lg border p-2 text-left outline-none transition-[background-color,border-color,scale] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.99]",
         checked ? "border-a-border-active bg-a-raised" : "border-a-border hover:border-a-border-strong",
       )}
     >
@@ -419,7 +419,7 @@ function SelectionCard({ checked, onSelect, title, description, img, radius }: {
       <img src={img} alt="" className={cn("h-[100px] w-full border border-a-border-subtle object-cover object-left-top", radius)} />
       <span className="flex items-center gap-2">
         <span className="min-w-0 flex-1 truncate t-body-m-medium text-a-text">{title}</span>
-        <span aria-hidden className={cn("grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-300", checked ? "border-a-border-active" : "border-a-border-strong")}>
+        <span aria-hidden className={cn("grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-150", checked ? "border-a-border-active" : "border-a-border-strong")}>
           <span className={cn("size-2 rounded-full bg-a-accent transition-transform duration-200 ease-out motion-reduce:transition-none", checked ? "scale-100" : "scale-0")} />
         </span>
       </span>
@@ -500,7 +500,7 @@ function LayoutStep({ theme, change, live, onBack, onNext }: { theme: CoachTheme
                 title={p.name}
                 onClick={() => write(p.profit, p.loss)}
                 className={cn(
-                  "relative flex size-6 shrink-0 overflow-hidden rounded-full outline-none transition-[box-shadow,scale] duration-300 ease-out hover:scale-110 focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97]",
+                  "relative flex size-6 shrink-0 overflow-hidden rounded-full outline-none transition-[box-shadow,scale] duration-150 ease-out hover:scale-110 focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97]",
                   on && "ring-2 ring-a-icon-strong",
                 )}
               >

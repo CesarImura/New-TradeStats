@@ -189,7 +189,7 @@ export function ChoiceChip({ checked, onClick, children, multi }: { checked: boo
       aria-checked={checked}
       onClick={onClick}
       className={cn(
-        "inline-flex h-9 items-center rounded-full border px-3.5 t-body-m text-a-text outline-none transition-[background-color,border-color,scale] duration-300 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97] pointer-coarse:min-h-10",
+        "inline-flex h-9 items-center rounded-full border px-3.5 t-body-m text-a-text outline-none transition-[background-color,border-color,scale] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97] pointer-coarse:min-h-10",
         checked ? "border-a-border-active bg-a-accent-soft" : "border-a-border bg-a-field hover:border-a-border-focus",
       )}
     >

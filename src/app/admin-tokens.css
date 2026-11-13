@@ -86,6 +86,7 @@
   --admin-primitive-white-100: #ffffff;
   --admin-primitive-white-14: rgb(255 255 255 / 14%);
   --admin-primitive-white-36: rgb(255 255 255 / 36%);
+  --admin-primitive-white-46: rgb(255 255 255 / 46%);
   --admin-primitive-white-52: rgb(255 255 255 / 52%);
   --admin-primitive-white-64: rgb(255 255 255 / 64%);
   --admin-primitive-white-96: rgb(255 255 255 / 96%);
@@ -152,7 +153,8 @@
   --admin-color-text-on-highlight: #0a0a0a;
   --admin-color-text-primary: var(--admin-primitive-white-96);
   --admin-color-text-secondary: var(--admin-primitive-white-52);
-  --admin-color-text-tertiary: var(--admin-primitive-white-36);
+  /* 46% (was 36%): at least 4.5:1 on the page (#0a0a0a) and on fields (#141414), WCAG AA. Gustavo 13/11; Figma to follow. */
+  --admin-color-text-tertiary: var(--admin-primitive-white-46);
 
   /* font */
   --admin-font-family-cover: var(--ff-inter), "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
