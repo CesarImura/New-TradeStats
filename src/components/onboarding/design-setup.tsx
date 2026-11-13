@@ -18,7 +18,7 @@ import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import { TEMPLATES } from "@/lib/theme/templates"
 import type { BackgroundStyle, CoachTheme, Mode } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
-import { ChoiceChip, SignupFrame, SignupTitle } from "./signup-frame"
+import { ChoiceChip, SignupFrame, SignupTitle, ghostOut } from "./signup-frame"
 
 /**
  * Getting started · Design your platform (Figma 959:63835 Brand, 977:7158 Look, 987:7523 Layout). Three short steps on
@@ -95,9 +95,14 @@ function Flow({ community, step }: { community: CustomCommunity; step: Step }) {
   }
   // Leaving a step: the card fades out toward the side the coach is not heading to, then the next step comes in.
   const card = useRef<HTMLDivElement>(null)
-  const leave = (dir: 1 | -1, then: () => void) => {
+  // Between steps the old card fades out over the new one (no empty gap); leaving the flow it fades out first.
+  const leave = (dir: 1 | -1, then: () => void, overlap = true) => {
     const el = card.current
     if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return then()
+    if (overlap) {
+      ghostOut(el, dir)
+      return then()
+    }
     el.animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${dir * -8}px)` }], { duration: 220, easing: EASE_OUT, fill: "forwards" }).onfinish = then
   }
   const index = STEPS.indexOf(step)
@@ -113,7 +118,7 @@ function Flow({ community, step }: { community: CustomCommunity; step: Step }) {
     leave(1, () => {
       updateCommunity(community.slug, { setup: { ...community.setup, design: true } })
       router.push(exit)
-    })
+    }, false)
 
   return (
     <SignupFrame
@@ -861,7 +866,7 @@ const MOTION_CSS = `
 @keyframes onb-blink{50%{opacity:0}}
 @keyframes onb-shimmer{from{background-position:150% 0}to{background-position:-50% 0}}
 @keyframes onb-fade{from{opacity:0}}
-.onb-in{animation:onb-in 480ms cubic-bezier(0.23,1,0.32,1) both;animation-delay:calc(var(--i,0) * 45ms + var(--d,0ms))}
+.onb-in{animation:onb-in 480ms cubic-bezier(0.23,1,0.32,1) both;animation-delay:calc(min(var(--i,0), 6) * 45ms + var(--d,0ms))}
 .onb-char{display:inline-block;animation:onb-char 240ms cubic-bezier(0.23,1,0.32,1) both}
 .onb-caret{animation:onb-blink 1s steps(1) infinite}
 .onb-mark{transition:background-color 300ms ease}

@@ -30,7 +30,8 @@ export const ONB_BASE_CSS = `
 @keyframes onb-fade{from{opacity:0}}
 @keyframes onb-pop{0%{transform:scale(0.94)}100%{transform:scale(1)}}
 @keyframes onb-hero{from{opacity:0;transform:scale(0.985)}}
-.onb-page>*>*{animation:onb-in 480ms cubic-bezier(0.23,1,0.32,1) both;animation-delay:calc((sibling-index() - 1) * 45ms)}
+.onb-page>*>*{animation:onb-in 480ms cubic-bezier(0.23,1,0.32,1) both;animation-delay:calc((min(sibling-index(), 7) - 1) * 45ms)}
+.onb-ghost,.onb-ghost *{animation:none!important;transition:none!important}
 .onb-page .text-a-danger{animation:onb-fade 200ms ease-out both}
 .onb-hero{animation:onb-hero 700ms cubic-bezier(0.23,1,0.32,1) 120ms both}
 @media (prefers-reduced-motion:reduce){
@@ -38,6 +39,23 @@ export const ONB_BASE_CSS = `
   .onb-hero{animation:onb-fade 200ms ease-out both}
 }
 `
+
+/**
+ * The card that is leaving, as a still copy laid over the page: it fades a few pixels away while the next card is
+ * already coming in underneath, so there is never an empty column between two screens.
+ */
+export function ghostOut(el: HTMLElement, dir: 1 | -1) {
+  const r = el.getBoundingClientRect()
+  const ghost = el.cloneNode(true) as HTMLElement
+  ghost.classList.add("onb-ghost")
+  ghost.setAttribute("aria-hidden", "true")
+  ghost.inert = true
+  ghost.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"))
+  Object.assign(ghost.style, { position: "fixed", left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, margin: "0", zIndex: "5", pointerEvents: "none" })
+  ;(el.closest(".ts-onb") ?? document.body).appendChild(ghost)
+  el.style.opacity = "0"
+  ghost.animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${dir * -10}px)` }], { duration: 320, easing: "cubic-bezier(0.65, 0, 0.35, 1)", fill: "forwards" }).onfinish = () => ghost.remove()
+}
 
 /** html.dark while the onboarding is open (the admin colours are dark only). */
 function useDark() {
@@ -114,7 +132,8 @@ export function SignupShell({ children }: { children: React.ReactNode }) {
       setDir(to)
       if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return router.push(href)
       leaving.current = true
-      el.animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${to * -8}px)` }], { duration: 200, easing: "cubic-bezier(0.23, 1, 0.32, 1)", fill: "forwards" }).onfinish = () => router.push(href)
+      ghostOut(el, to)
+      router.push(href)
     },
     [router],
   )
@@ -122,6 +141,10 @@ export function SignupShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     leaving.current = false
   }, [pathname])
+  // The sign-up pages are few and light: load them up front so a screen change never waits on the network.
+  useEffect(() => {
+    for (const href of ["/signup", "/signup/create", "/signup/verify", "/signup/about", "/signup/name"]) router.prefetch(href)
+  }, [router])
   return (
     <InShell.Provider value={{ go }}>
       <div className="ts-ui ts-onb flex min-h-svh bg-a-page text-a-text">
