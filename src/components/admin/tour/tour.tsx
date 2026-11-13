@@ -24,7 +24,7 @@ export function useTourState() {
 
 /**
  * Getting started · the tour layer (Figma: Tour overlay, Spotlight ring, Coachmark, Course tour pill and panel).
- * Mounted once in the admin shell. Opening a page with `?tour=<id>` starts that tour with its panel open; the pill
+ * Mounted once in the admin shell. Opening a page with `?tour=<id>` starts that tour at once (coachmark on its first target); the pill
  * stays in the corner until the tour is done, so it can be resumed from any page.
  */
 export function TourLayer() {
@@ -35,10 +35,11 @@ export function TourLayer() {
   const { state, set, tour } = useTourState()
   const asked = params.get("tour")
 
-  // ?tour=… (from Getting started): open that tour's panel, or resume it, then drop the parameter.
+  // ?tour=… (from Getting started): the tour starts at once, coachmark on the first target (Figma 1014:8741…), or
+  // resumes where it was; the panel stays folded into the pill. Then the parameter is dropped.
   useEffect(() => {
     if (!isTourId(asked)) return
-    set((s) => (s?.id === asked ? { ...s, started: !!s.at, panel: !s.at } : { id: asked, started: false, panel: true }))
+    set((s) => (s?.id === asked ? { ...s, started: true, panel: false } : { id: asked, started: true, panel: false }))
     const rest = new URLSearchParams(params.toString())
     rest.delete("tour")
     router.replace(`${pathname}${rest.size ? `?${rest}` : ""}`, { scroll: false })
