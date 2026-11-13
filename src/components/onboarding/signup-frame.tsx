@@ -23,7 +23,7 @@ export function SignupFrame({ children, action, aside }: { children: React.React
   return (
     <div className="ts-ui ts-onb flex min-h-svh bg-a-page text-a-text">
       <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS }} />
-      <div className="flex min-w-0 flex-1 flex-col lg:max-w-[742px]">
+      <div className="flex min-w-0 flex-1 flex-col lg:max-w-[max(742px,38.65vw)]">
         <header className="flex items-center justify-between gap-6 px-4 py-5 sm:px-8">
           <SignupLogo />
           {action}
