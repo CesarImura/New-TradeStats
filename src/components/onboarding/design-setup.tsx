@@ -685,7 +685,7 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
       const href = to === "courses" ? `/c/${slug}/courses` : `/c/${slug}`
       const link = doc?.querySelector<HTMLAnchorElement>(`a[href="${href}"]`)
       if (link) link.click()
-      else if (frame.current) frame.current.src = `${href}?preview=draft`
+      else if (frame.current) frame.current.src = `${href}?preview=draft&modules=all`
       // Done once the frame is on the new page (client navigation takes a moment), or after 1.5 s at most.
       return new Promise<void>((done) => {
         const t0 = performance.now()
@@ -733,7 +733,7 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
                 }
                 if (screen.current) screen.current.style.backgroundColor = pageBg(e.currentTarget)
               }}
-              src={`/c/${slug}?preview=draft`}
+              src={`/c/${slug}?preview=draft&modules=all`}
               title="Preview of your platform"
               tabIndex={-1}
               scrolling="no"
