@@ -8,7 +8,8 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { setStored, useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
 import { AdminButton, StepIndicator } from "../ui"
-import { isTourId, TOURS, tourKey, type Side, type Tour, type TourState, type TourStep } from "./tours"
+import { useSetupSteps } from "../getting-started/use-setup-steps"
+import { isTourId, TOURS, tourKey, type Side, type Tour, type TourId, type TourState, type TourStep } from "./tours"
 
 const NONE: TourState = null
 type Box = { x: number; y: number; w: number; h: number; open?: boolean }
@@ -44,6 +45,23 @@ export function TourLayer() {
     rest.delete("tour")
     router.replace(`${pathname}${rest.size ? `?${rest}` : ""}`, { scroll: false })
   }, [asked, params, pathname, router, set])
+
+  // Coming in another way (the side menu, a tab): while that Getting started item is the one to do next and no tour
+  // is on, its tour starts as soon as its first target is on screen (Content's New course, the Tiers tab's New tier,
+  // the Payouts tab's Start, Legal's Set up). A tour the coach skipped keeps its state, so it doesn't come back.
+  const { community, current } = useSetupSteps()
+  useEffect(() => {
+    if (state || !community || !isTourId(current ?? null)) return
+    const id = current as TourId
+    const first = TOURS[id].steps[0].target
+    const check = () => {
+      if (visible(document.querySelector(first))) set({ id, started: true, panel: false })
+    }
+    check()
+    const mo = new MutationObserver(check)
+    mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-state", "hidden", "class"] })
+    return () => mo.disconnect()
+  }, [state, community, current, set])
 
   // Followed even while paused: doing the last thing by hand still completes the item.
   const step = useActiveStep(tour, !!state)
