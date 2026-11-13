@@ -14,10 +14,6 @@ const MAX = 40
 const LANGUAGES = [
   { value: "en", label: "English" },
   { value: "de", label: "Deutsch" },
-  { value: "es", label: "Español" },
-  { value: "pt", label: "Português" },
-  { value: "fr", label: "Français" },
-  { value: "it", label: "Italiano" },
 ]
 
 /**
