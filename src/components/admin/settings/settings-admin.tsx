@@ -526,14 +526,17 @@ function Legal() {
                 <TableCell className="text-a-text-2">{source(l.id)}</TableCell>
                 <TableCell className="text-a-text-2">{updated(l.id)}</TableCell>
                 <TableCell className="text-right">
+                  {/* One page at a time, in order (Figma 1049:2788): Set up on the next one, Edit on those done. */}
                   {isSet(l.id) ? (
                     <AdminButton hierarchy="ghost" size="md" onClick={() => setSel(l.id)}>
                       Edit
                     </AdminButton>
                   ) : (
-                    <AdminButton hierarchy="secondary" size="md" data-tour={l.id === "imprint" ? "legal-imprint-setup" : l.id === nextOpen ? "legal-next" : undefined} onClick={() => setSel(l.id)}>
-                      Set up
-                    </AdminButton>
+                    l.id === nextOpen && (
+                      <AdminButton hierarchy="secondary" size="md" data-tour={l.id === "imprint" ? "legal-imprint-setup" : "legal-next"} onClick={() => setSel(l.id)}>
+                        Set up
+                      </AdminButton>
+                    )
                   )}
                 </TableCell>
               </TableRow>

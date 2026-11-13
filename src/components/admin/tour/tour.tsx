@@ -46,6 +46,14 @@ export function TourLayer() {
 
   // Followed even while paused: doing the last thing by hand still completes the item.
   const step = useActiveStep(tour, !!state)
+
+  // The panel folds back into the pill when the coach goes to another page (the pill stays).
+  const lastPath = useRef(pathname)
+  useEffect(() => {
+    if (lastPath.current === pathname) return
+    lastPath.current = pathname
+    set((s) => (s?.panel && !asked ? { ...s, panel: false } : s))
+  }, [pathname, asked, set])
   const stepIndex = tour && step ? tour.steps.indexOf(step) : -1
 
   // Remember the furthest step (Getting started says "Paused at …"); the last one completes the item.
