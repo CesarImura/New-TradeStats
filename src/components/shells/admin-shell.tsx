@@ -1,6 +1,6 @@
 "use client"
 
-import { useLayoutEffect, useRef, useState } from "react"
+import { Suspense, useLayoutEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils"
 import { AdminButton as Button } from "@/components/admin/ui"
 import { useCoach } from "@/components/coach/coach-provider"
 import { WorkspaceSwitcher } from "@/components/admin/workspace-switcher"
+import { TourLayer } from "@/components/admin/tour/tour"
 import { NotificationsMenu } from "@/components/admin/notifications-menu"
 import { CommandPalette } from "@/components/admin/command-palette"
 import { DEMO_ADMIN } from "@/lib/data/account"
@@ -84,6 +85,10 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
       <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
       <BrandGradients />
       <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} base={base} />
+      {/* Getting started tours: the coachmark, the pill and its panel (only while one is in progress). */}
+      <Suspense fallback={null}>
+        <TourLayer />
+      </Suspense>
       <div className="flex min-h-svh w-full">
         <aside className="sticky top-0 hidden h-svh w-[271px] shrink-0 p-2 xl:block" aria-label="Main menu">
           <div className="flex h-full flex-col rounded-a-xl border border-a-border bg-a-page pt-5 pr-4 pb-4 pl-4">{menu}</div>

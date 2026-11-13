@@ -314,7 +314,7 @@ export function Curriculum({ course, edit, uploads, onOpen, onUpload, onReview }
                   const isPicked = selection.includes(l.id)
                   return (
                     <ContextMenu key={l.id}>
-                    <ContextMenuTrigger render={<li draggable={!searching} data-lesson={l.id} data-picked={isPicked || undefined} onKeyDown={(e) => onLessonKey(e, m, l)} onDragStart={(e) => (e.stopPropagation(), setDrag({ kind: "lesson", id: l.id }))} onDragEnd={() => (setDrag(null), setTarget(null))}
+                    <ContextMenuTrigger render={<li draggable={!searching} data-lesson={l.id} data-tour={l.id === course.modules.flatMap((x) => x.lessons)[0]?.id ? "course-first-lesson" : undefined} data-picked={isPicked || undefined} onKeyDown={(e) => onLessonKey(e, m, l)} onDragStart={(e) => (e.stopPropagation(), setDrag({ kind: "lesson", id: l.id }))} onDragEnd={() => (setDrag(null), setTarget(null))}
                       onDragOver={(e) => {
                         if (drag?.kind !== "lesson") return
                         e.preventDefault()
@@ -354,7 +354,7 @@ export function Curriculum({ course, edit, uploads, onOpen, onUpload, onReview }
                     </ContextMenu>
                   )
                 })}
-                <li className="min-w-0">
+                <li className="min-w-0" data-tour={course.modules.every((x) => x.lessons.length === 0) && mi === 0 ? "course-add-lesson" : undefined}>
                   <button type="button" onClick={() => addLesson(m.id)} className="flex aspect-[1.78] w-full flex-col items-center justify-center gap-1 rounded-a-md border border-dashed border-a-border-strong text-a-text-2 outline-none transition-colors duration-300 hover:bg-a-hover hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
                     <Plus className="size-4" aria-hidden />
                     <span className="t-body-m">Add lesson</span>

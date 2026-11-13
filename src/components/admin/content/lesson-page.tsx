@@ -26,7 +26,7 @@ export function LessonPage({ course, lesson, upload, saved, onChange, onPick, on
     onChange(v === "hidden" ? { status: "draft", freePreview: false } : v === "scheduled" ? { status: "scheduled", unlockAt: lesson.unlockAt ?? "Thu 15 Oct", freePreview: false } : { status: "published", freePreview: v === "free" })
 
   return (
-    <div className="flex flex-col gap-4">
+    <div data-tour="lesson" className="flex flex-col gap-4">
       <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
         <AdminButton hierarchy="secondary" size="xl" iconOnly aria-label="Back to the course" onClick={onBack}>
           <ArrowLeft />
@@ -39,12 +39,14 @@ export function LessonPage({ course, lesson, upload, saved, onChange, onPick, on
           </p>
         </div>
         <span className="t-caption text-a-text-3">{saved ? "Saved" : ""}</span>
+        <span data-tour="lesson-visibility" data-state={vis === "hidden" ? "hidden" : "visible"} className="rounded-a-md">
         <AdminFilter
           label="Visibility"
           value={vis}
           onValueChange={(v) => setVis(v as Visibility)}
           options={(Object.keys(VISIBILITY_LABEL) as Visibility[]).map((v) => ({ value: v, label: VISIBILITY_LABEL[v] }))}
         />
+        </span>
         <AdminButton hierarchy="secondary" onClick={onPreview}>
           <ExternalLink /> Preview as student
         </AdminButton>

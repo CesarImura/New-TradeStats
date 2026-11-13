@@ -34,13 +34,16 @@ export function LessonTab({ course, lesson, upload, t, onChange, onPick, next }:
           {upload.phase === "failed" && <AdminButton hierarchy="secondary" size="md" className="w-fit" onClick={() => input.current?.click()}>Retry</AdminButton>}
         </div>
       ) : (
-        <Dropzone label="Video" accept="video/*" title="Drop the video, or click to upload" hint="AI writes the transcript, chapters and a summary while it uploads. You can pick the thumbnail from the video." className="aspect-[1.78] py-0" onFiles={(f) => onPick(f[0])} />
+        <div data-tour="lesson-video" className="flex flex-col"><Dropzone label="Video" accept="video/*" title="Drop the video, or click to upload" hint="AI writes the transcript, chapters and a summary while it uploads. You can pick the thumbnail from the video." className="aspect-[1.78] py-0" onFiles={(f) => onPick(f[0])} /></div>
       )}
       {picker}
 
+      {/* The Getting started tour waits for a real name ("New lesson" is the placeholder title). */}
+      <div data-tour="lesson-title" data-named={lesson.title.trim() && lesson.title !== "New lesson" ? true : undefined}>
       <AdminField label="Title" className="grid-cols-[minmax(0,1fr)]">
         {(p) => <input {...p} value={lesson.title} onChange={(e) => onChange({ title: e.target.value })} {...rename} className={cn(adminControl, "h-11")} />}
       </AdminField>
+      </div>
       <AdminField label="Summary" className="grid-cols-[minmax(0,1fr)]">
         {(p) => (
           <>

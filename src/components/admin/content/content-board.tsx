@@ -157,7 +157,7 @@ export function ContentBoard() {
       />
       {catalog.courses.length === 0 ? (
         <EmptyState icon={PlayLine} title="Create your first course" description="Start blank, upload a folder of videos or import links. Videos keep uploading while you work."
-          actions={<><AdminButton onClick={() => openWizard("blank")}><Plus /> New course</AdminButton><AdminButton hierarchy="secondary" onClick={() => openWizard("folder")}><Upload /> Upload a folder</AdminButton></>} />
+          actions={<><AdminButton data-tour="course-new" onClick={() => openWizard("blank")}><Plus /> New course</AdminButton><AdminButton hierarchy="secondary" onClick={() => openWizard("folder")}><Upload /> Upload a folder</AdminButton></>} />
       ) : (
         <>
       <StatPanel
@@ -266,7 +266,7 @@ export function ContentBoard() {
           const seed = [...c.id].reduce((n, ch) => n + ch.charCodeAt(0), 0)
           const att = attentionOf(c)
           return (
-            <MediaCard key={c.id} onClick={() => router.push(`${base}/content/${c.id}`)} className={cn(c.status === "archived" && "opacity-70")}
+            <MediaCard key={c.id} data-tour={c.id === list[0]?.id ? "course-card" : undefined} onClick={() => router.push(`${base}/content/${c.id}`)} className={cn(c.status === "archived" && "opacity-70")}
               cover={
                 <>
                   <Link href={`${base}/content/${c.id}`} aria-label={c.title} className="absolute inset-0 z-10 outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus" />

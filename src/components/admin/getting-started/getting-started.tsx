@@ -9,6 +9,8 @@ import { AdminPageHeader, Callout, Panel, PanelHeader, TimelineStep } from "@/co
 import { cn } from "@/lib/utils"
 import { GoLiveModal, LiveModal } from "./go-live"
 import { useSetupSteps } from "./use-setup-steps"
+import { useTourState } from "../tour/tour"
+import { TOURS, isTourId } from "../tour/tours"
 
 /**
  * Admin · Getting started (Figma 958:6684 and the "done" states 991:7443, 1028:76858, 1046:675, 1049:2, 1050:2).
@@ -20,6 +22,9 @@ export function GettingStarted() {
   const { coach } = useCoach()
   const { steps, doneCount, total, current, community } = useSetupSteps()
   const [goLive, setGoLive] = useState(false)
+  // A tour left half way (Skip or Do it later): its item says where, and Resume goes back there (Figma 1066:1047).
+  const { state: tour } = useTourState()
+  const paused = tour && !tour.done && tour.at ? TOURS[tour.id].steps.find((x) => x.id === tour.at) : undefined
   const live = community?.status === "live"
   const intro = live ? "Your platform is live. Next, bring in your first students." : doneCount === total ? "Everything is set up. Go live to open your platform to students." : "Your platform is a draft. Finish these five steps, then go live."
 
@@ -30,6 +35,7 @@ export function GettingStarted() {
         <ol aria-label="Setup steps" className="flex w-full min-w-0 flex-1 flex-col">
           {steps.map((s, i) => {
             const state = s.done ? "done" : s.id === current ? "current" : "upcoming"
+            const resume = paused && isTourId(s.id) && tour?.id === s.id && !s.done
             return (
               <TimelineStep
                 key={s.id}
@@ -38,10 +44,10 @@ export function GettingStarted() {
                 first={i === 0}
                 last={i === steps.length - 1}
                 title={s.title}
-                description={s.description}
-                action={s.action}
+                description={resume ? `Paused at “${paused.title}”. ${TOURS[tour.id].saved}` : s.description}
+                action={resume ? "Resume" : s.action}
                 disabledHint="Finish the steps above first"
-                onAction={() => (s.id === "live" ? setGoLive(true) : router.push(s.href))}
+                onAction={() => (s.id === "live" ? setGoLive(true) : router.push(resume && tour.path ? `${tour.path}${tour.path.includes("?") ? "&" : "?"}tour=${tour.id}` : s.href))}
                 onEdit={s.id === "live" ? undefined : () => router.push(s.href.replace(/[?&]tour=\w+/, ""))}
               />
             )

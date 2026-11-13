@@ -48,6 +48,8 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
   const [access, setAccess] = useState<Access>("all")
   const [tiers, setTiers] = useState<string[]>([])
   const [method, setMethod] = useState<Method>(initialMethod)
+  /** The coach chose how to add videos (the Getting started tour waits for it); "Upload a folder" chose already. */
+  const [picked, setPicked] = useState(initialMethod !== "blank")
   const [found, setFound] = useState<Found[]>([])
   const [skipped, setSkipped] = useState<string[]>([])
   const [links, setLinks] = useState("")
@@ -58,6 +60,7 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
     if (open) {
       setStep("course")
       setMethod(initialMethod)
+      setPicked(initialMethod !== "blank")
     }
   }
   const idx = STEPS.findIndex((s) => s.id === step)
@@ -188,9 +191,9 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
               <div key={step} className={cn("flex min-h-0 flex-1 flex-col gap-4 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200 motion-safe:ease-out", dir === "back" ? "motion-safe:slide-in-from-left-2" : "motion-safe:slide-in-from-right-2")}>
                 {step === "course" && (
                   <>
-                    <AdminField label="Title">
+                    <div data-tour="course-title"><AdminField label="Title">
                       {(p) => <input {...p} ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && next()} placeholder="e.g. Order flow basics" className={cn(adminControl, "h-11")} />}
-                    </AdminField>
+                    </AdminField></div>
                     <AdminField label="Short description" optional hint="Students see it under the title. Up to 80 characters.">
                       {(p) => <input {...p} value={tagline} maxLength={80} placeholder="e.g. Read price like a trader" onChange={(e) => setTagline(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && next()} className={cn(adminControl, "h-11")} />}
                     </AdminField>
@@ -210,7 +213,7 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
                 )}
 
                 {step === "access" && (
-                  <div role="radiogroup" aria-label="Who can watch" onKeyDown={radioArrows} className="flex flex-1 flex-col gap-4">
+                  <div role="radiogroup" aria-label="Who can watch" data-tour="course-access" onKeyDown={radioArrows} className="flex flex-col gap-4">
                     <h3 className="t-mono-label text-a-text-2">Who can watch</h3>
                     {([["all", "All tiers", "Everyone with any paid or free tier"], ["tiers", "Pick tiers", "Only the tiers you choose"]] as const).map(([v, label, text]) => (
                       <div key={v} className="flex flex-col">
@@ -238,16 +241,16 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
 
                 {step === "content" && (
                   <>
-                    <div role="radiogroup" aria-label="How to add content" onKeyDown={radioArrows} className="grid gap-2.5 sm:grid-cols-3">
+                    <div role="radiogroup" aria-label="How to add content" data-tour="course-method" data-picked={picked || undefined} onKeyDown={radioArrows} className="grid gap-2.5 sm:grid-cols-3">
                       {([["blank", "Start blank", "Empty course, add lessons later"], ["folder", "Upload a folder", "Subfolders become modules"], ["links", "Import links", "YouTube, Vimeo or Loom"]] as const).map(([v, label, text]) => (
-                        <OptionCard key={v} checked={method === v} onSelect={() => setMethod(v)} title={label} description={text} />
+                        <OptionCard key={v} checked={method === v} onSelect={() => (setMethod(v), setPicked(true))} title={label} description={text} />
                       ))}
                     </div>
                     {method === "folder" && rows.length === 0 && (
-                      <Dropzone label="Folder of videos" title="Drop a folder of videos or browse" hint="MP4, MOV or WebM · each subfolder becomes a module" icon={<ArrowUp className="size-[22px]" />} directory size="md" onFiles={readFolder} />
+                      <div data-tour="course-folder-drop" data-picked={picked || undefined} className="flex flex-col"><Dropzone label="Folder of videos" title="Drop a folder of videos or browse" hint="MP4, MOV or WebM · each subfolder becomes a module" icon={<ArrowUp className="size-[22px]" />} directory size="md" onFiles={readFolder} /></div>
                     )}
                     {method === "blank" && (
-                      <div className="flex flex-col gap-3 rounded-a-10 border border-a-border px-4 py-4">
+                      <div data-tour="course-blank" data-picked={picked || undefined} className="flex flex-col gap-3 rounded-a-10 border border-a-border px-4 py-4">
                         <div className="flex flex-col gap-0.5">
                           <span className="t-body-l text-a-text">An empty course, ready to fill</span>
                           <span className="t-caption text-a-text-2">You land on the course page. Add modules and lessons there, one by one or by dropping files.</span>
@@ -259,7 +262,7 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
                       </div>
                     )}
                     {method === "links" && (
-                      <textarea value={links} onChange={(e) => setLinks(e.target.value)} placeholder="One link per line" aria-label="Links" className={cn(adminControl, "min-h-[96px] resize-y py-3")} />
+                      <textarea data-tour="course-links" data-picked={picked || undefined} value={links} onChange={(e) => setLinks(e.target.value)} placeholder="One link per line" aria-label="Links" className={cn(adminControl, "min-h-[96px] resize-y py-3")} />
                     )}
                     {method === "links" && rows.length === 0 && <p className="-mt-2 t-caption text-a-text-3">Paste YouTube, Vimeo or Loom links. Each link becomes a lesson.</p>}
                     {rows.length > 0 && (
@@ -270,7 +273,7 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
                         {skippedNow.length > 0 && (
                           <Callout tone="warning"><span className="block truncate">{skippedNow[0]} {method === "links" ? "is not a YouTube, Vimeo or Loom link and will be skipped" : "is not a video and will be skipped"}{skippedNow.length > 1 ? ` (+${skippedNow.length - 1})` : ""}</span></Callout>
                         )}
-                        <div ref={modulesRef} className="flex scroll-mt-2 flex-col gap-4">
+                        <div ref={modulesRef} data-tour="course-folder" className="flex scroll-mt-2 flex-col gap-4">
                           {Object.entries(groups).map(([name, items], gi) => {
                             const isOpen = !shut.includes(name)
                             return (
@@ -313,7 +316,7 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
               <AdminButton hierarchy="ghost" onClick={() => finish(true)}>Save as draft</AdminButton>
               <div className="ml-auto flex flex-wrap justify-end gap-2">
                 {idx === 0 ? <AdminButton hierarchy="secondary" onClick={() => onOpenChange(false)}>Cancel</AdminButton> : <AdminButton hierarchy="secondary" onClick={() => go(STEPS[idx - 1].id, "back")}>Back</AdminButton>}
-                <AdminButton onClick={next}>{step === "content" ? (method === "folder" && rows.length ? "Upload and create" : "Create course") : <>Continue <ArrowRight /></>}</AdminButton>
+                <AdminButton onClick={next}>{step === "content" ? (method === "folder" && rows.length ? "Upload and create" : method === "links" && rows.length ? "Import and create" : "Create course") : <>Continue <ArrowRight /></>}</AdminButton>
               </div>
             </footer>
           </div>
