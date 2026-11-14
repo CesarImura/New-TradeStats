@@ -58,7 +58,13 @@ export function TimelineStep({
             <h2 className={cn("t-body-l", state === "upcoming" ? "text-a-text-2" : "text-a-text")}>
               <span className="sr-only">{state === "done" ? "Done: " : state === "current" ? "Next: " : ""}</span>
               {title}
-              {tag && <Tag className="ml-2 align-middle">{tag}</Tag>}
+              {tag && (
+                <>
+                  {/* Read as "Create a tier, Skipped", not "Create a tierSkipped". */}
+                  <span className="sr-only">, </span>
+                  <Tag className="ml-2 align-middle">{tag}</Tag>
+                </>
+              )}
             </h2>
             <p className={cn("t-body-m", state === "upcoming" ? "text-a-text-3" : "text-a-text-2")}>{description}</p>
           </div>

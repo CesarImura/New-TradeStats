@@ -109,7 +109,7 @@ function WeeklyActivity({ s }: { s: Student }) {
                 <span className={cn("block w-full rounded-t-a-xs transition-colors duration-300", w.hot ? "bg-a-accent-strong" : "bg-a-track")} style={{ height: `${Math.max(2, (w.total / ceil) * 100)}%` }} />
               </span>
               <span className="t-micro text-a-text-3 tabular-nums">{i + 1}</span>
-              <span className="sr-only">{`${w.lessons} lessons, ${w.trades} trades`}</span>
+              <span className="sr-only">{`${w.lessons} ${w.lessons === 1 ? "lesson" : "lessons"}, ${w.trades} ${w.trades === 1 ? "trade" : "trades"}`}</span>
             </li>
           ))}
         </ul>

@@ -69,7 +69,7 @@ export function PublishReview({ course, uploads, open, onOpenChange, onOpenUploa
   )
 
   return (
-    <AdminModal open={open} onOpenChange={onOpenChange} title="Review and publish" subtitle={`${course.title} · ${lessons.length} lessons`} className="sm:max-w-[600px]" bodyClassName="gap-5"
+    <AdminModal open={open} onOpenChange={onOpenChange} title="Review and publish" subtitle={`${course.title} · ${lessons.length} ${lessons.length === 1 ? "lesson" : "lessons"}`} className="sm:max-w-[600px]" bodyClassName="gap-5"
       footer={
         <>
           <AdminButton hierarchy="ghost" onClick={() => (onSaveDraft(), onOpenChange(false))}>Save as draft</AdminButton>

@@ -53,6 +53,9 @@ const attentionOf = (c: Course, prelaunch = false): { tone: "warning" | "muted";
 }
 const accessOf = (c: Course, tiers: { id: string; name: string }[]) => (c.soldSeparately ? "Sold on its own" : c.tiers.length ? tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") || "No tier yet" : tiers.length ? "All tiers" : "No tier yet")
 const statusTone = (s: Status) => (s === "published" ? "success" : s === "scheduled" ? "accent" : "neutral")
+/** "1 lesson", "3 lessons". */
+const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`
+
 /** On a platform that isn't live yet, a draft with a visible lesson says "Ready for launch" (it opens with Go live). */
 const StatusTag = ({ course, prelaunch = false }: { course: Course; prelaunch?: boolean }) => (
   <Tag tone={prelaunch && readyForLaunch(course) ? "accent" : statusTone(course.status)} dot>
@@ -154,7 +157,7 @@ export function ContentBoard() {
     <div className="mx-auto flex max-w-[1200px] flex-col gap-4">
       <PageHeader
         title="Content"
-        text={catalog.courses.length === 0 ? "No courses yet" : `${catalog.courses.length} ${catalog.courses.length === 1 ? "course" : "courses"} · ${catalog.courses.reduce((n, c) => n + allLessons(c).length, 0)} lessons`}
+        text={catalog.courses.length === 0 ? "No courses yet" : `${catalog.courses.length} ${catalog.courses.length === 1 ? "course" : "courses"} · ${plural(catalog.courses.reduce((n, c) => n + allLessons(c).length, 0), "lesson")}`}
         actions={
           <AdminButton onClick={() => openWizard("blank")}>
             <Plus /> New course
@@ -255,8 +258,8 @@ export function ContentBoard() {
                   <AdminTd>{att ? <CellDot tone={att.tone === "warning" ? "warning" : "neutral"} label={att.text} /> : <span className="text-a-text-3">—</span>}</AdminTd>
                   <AdminTd><span className="line-clamp-2">{accessOf(c, allTiers)}</span></AdminTd>
                   <AdminTd align="end">{allLessons(c).length}</AdminTd>
-                  <AdminTd align="end">{live ? 80 + ((seed * 37) % 120) : "—"}</AdminTd>
-                  <AdminTd align="end">{live ? `${20 + ((seed * 13) % 60)}%` : "—"}</AdminTd>
+                  <AdminTd align="end">{live && !wizard ? 80 + ((seed * 37) % 120) : "—"}</AdminTd>
+                  <AdminTd align="end">{live && !wizard ? `${20 + ((seed * 13) % 60)}%` : "—"}</AdminTd>
                   <AdminTd align="end" className="whitespace-nowrap text-a-text-3">{c.edited ?? "—"}</AdminTd>
                   <AdminTd align="end"><span onClick={(e) => e.stopPropagation()} className="inline-flex">{menu(c, "ghost")}</span></AdminTd>
                 </AdminTr>
@@ -286,7 +289,7 @@ export function ContentBoard() {
               }
               title={c.title} subtitle={c.tagline}
               meta={<>{sample(c.id) && <Tag>Sample</Tag>}<span className="min-w-0 flex-1 truncate text-a-text-2">{accessOf(c, allTiers)}</span>{c.edited && <span className="shrink-0 text-a-text-3">Edited {c.edited}</span>}</>}
-              stats={[[String(lessons.length), "Lessons"], [live ? String(80 + ((seed * 37) % 120)) : "—", "Students"], [live ? `${20 + ((seed * 13) % 60)}%` : "—", "Completed"]]} />
+              stats={[[String(lessons.length), "Lessons"], [live && !wizard ? String(80 + ((seed * 37) % 120)) : "—", "Students"], [live && !wizard ? `${20 + ((seed * 13) % 60)}%` : "—", "Completed"]]} />
           )
         })}
         {list.length === 0 && (

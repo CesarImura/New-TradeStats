@@ -347,7 +347,8 @@ export const studentCourses = (c: Catalog) => c.courses.filter((x) => x.status =
 export const allLessons = (c: Course) => c.modules.flatMap((m) => m.lessons)
 export const openLessons = (c: Course) => allLessons(c).filter((l) => l.status === "published")
 /** A draft course with at least one visible lesson: on a platform that isn't live yet, it opens with Go live (Flavio, 14/11). */
-export const readyForLaunch = (c: Course) => c.status === "draft" && openLessons(c).length > 0
+/** A draft that opens with Go live: a visible lesson with a video, the same rule as Getting started's course step (QA 14/11). */
+export const readyForLaunch = (c: Course) => c.status === "draft" && openLessons(c).some((l) => !!l.video)
 
 export function courseStats(c: Course, p: Progress) {
   const open = openLessons(c)

@@ -328,6 +328,12 @@ function Arrow({ side, offset }: { side: Side; offset: number }) {
 /** Course tour pill (Figma: 36 px, panel fill, the progress ring and the tour's name). Opens and closes the panel. */
 function Pill({ label, progress, open, onToggle }: { tour: Tour; done: boolean; label: string; progress: number; open: boolean; onToggle: () => void }) {
   const { right, bottom } = useCorner()
+  // Toasts stack above the pill while it is on screen, so a toast never covers it (QA 14/11). 36 px pill + 12 px gap.
+  useEffect(() => {
+    const root = document.documentElement.style
+    root.setProperty("--admin-toast-bottom", `${bottom + 48}px`)
+    return () => void root.removeProperty("--admin-toast-bottom")
+  }, [bottom])
   return (
     <button
       type="button"
