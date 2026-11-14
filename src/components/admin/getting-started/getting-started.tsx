@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils"
 import { GoLiveModal, LiveModal } from "./go-live"
 import { useSetupSteps } from "./use-setup-steps"
 import { useTourState } from "../tour/tour"
-import { TOURS, isTourId } from "../tour/tours"
+import { TOURS, isTourId, type TourId } from "../tour/tours"
+import { useCatalog } from "@/lib/data/learning"
 
 /**
  * Admin · Getting started (Figma 958:6684 and the "done" states 991:7443, 1028:76858, 1046:675, 1049:2, 1050:2).
@@ -26,6 +27,10 @@ export function GettingStarted() {
   // One tour runs at a time; any other left half way was paused where it was (Flavio, 14/11).
   const { pausedAt } = useTourState()
   const live = community?.status === "live"
+  // "Your … is saved" only when something is (QA 14/11): a tier exists only once it was saved; a course once it was created.
+  const catalog = useCatalog(coach)
+  const savedLine = (id: TourId) =>
+    id === "course" ? (catalog.courses.length ? TOURS.course.saved : "Resume picks up where you left off.") : id === "tier" ? "Resume picks up where you left off." : TOURS[id].saved
   const intro = live ? "Your platform is live. Next, bring in your first students." : doneCount === total ? "Everything is set up. Go live to open your platform to students." : "Your platform is a draft. Do these five steps in any order, then go live."
 
   return (
@@ -46,7 +51,7 @@ export function GettingStarted() {
                 first={i === 0}
                 last={i === steps.length - 1}
                 title={s.title}
-                description={paused && isTourId(s.id) ? `Paused at “${paused.title}”. ${TOURS[s.id].saved}` : s.description}
+                description={paused && isTourId(s.id) ? `Paused at “${paused.title}”. ${savedLine(s.id)}` : s.description}
                 action={resume ? "Resume" : s.action}
                 disabledHint="Finish the five steps first"
                 onSkip={s.id === "live" || total - doneCount < 2 ? undefined : () => skip(s.id)}

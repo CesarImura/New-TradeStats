@@ -34,6 +34,14 @@ export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => v
   const index = all.findIndex((t) => t.id === open)
   const tier = all[index] ?? null
 
+  // A tier added and never saved is left behind by a reload while its drawer was open (QA 14/11): on arrival it goes away,
+  // so the page says "No tiers yet" again and the tier tour finds its New tier button.
+  useEffect(() => {
+    setStored<{ id: string }[]>(`${coach.slug}:tiers-added`, (a) => (a.some((t) => !saved[t.id]) ? a.filter((t) => saved[t.id]) : a), [])
+    // Only on arrival: later, a tier just added is open in the drawer until it is saved or closed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coach.slug])
+
   // "New tier" lives in the page header: each click adds one and opens it.
   const seen = useRef(newSignal)
   useEffect(() => {

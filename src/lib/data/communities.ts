@@ -133,13 +133,30 @@ export function renameSlug(from: string, to: string) {
     KEY,
     customCommunities().map((x) => (x.slug === from ? { ...x, slug: to } : x)),
   )
-  for (const kind of ["pub", "draft", "history"]) {
+  // Everything stored for the platform moves with it (QA 14/11: going live under a new address lost the tiers, payouts,
+  // legal pages, tours and catalog). Keys are `proto:<slug>:<thing>` or `proto:<kind>:<slug>`.
+  for (const key of platformKeys(from)) {
     try {
-      const v = localStorage.getItem(`proto:${kind}:${from}`)
-      if (v) localStorage.setItem(`proto:${kind}:${to}`, v)
-      localStorage.removeItem(`proto:${kind}:${from}`)
+      const v = localStorage.getItem(key)
+      const next = key.split(":").map((part, i) => (i > 0 && i < 3 && part === from ? to : part)).join(":")
+      if (v !== null && localStorage.getItem(next) === null) localStorage.setItem(next, v)
+      localStorage.removeItem(key)
     } catch {}
   }
+}
+
+/** Every stored key of one platform: `proto:<slug>:…` and `proto:<kind>:<slug>` (draft, published, history, catalog…). */
+function platformKeys(slug: string) {
+  const keys: string[] = []
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i)
+      if (!k?.startsWith("proto:")) continue
+      const parts = k.split(":")
+      if (parts[1] === slug || (parts.length === 3 && parts[2] === slug)) keys.push(k)
+    }
+  } catch {}
+  return keys
 }
 
 export function deleteCommunity(slug: string) {
@@ -147,9 +164,9 @@ export function deleteCommunity(slug: string) {
     KEY,
     customCommunities().filter((x) => x.slug !== slug),
   )
-  for (const kind of ["pub", "draft", "history"]) {
+  for (const key of platformKeys(slug)) {
     try {
-      localStorage.removeItem(`proto:${kind}:${slug}`)
+      localStorage.removeItem(key)
     } catch {}
   }
 }
