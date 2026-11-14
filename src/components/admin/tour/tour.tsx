@@ -181,8 +181,10 @@ function useBox(selector: string) {
     const tick = () => {
       const el = document.querySelector(selector)
       const r = el && visible(el) ? el.getBoundingClientRect() : null
-      // A menu opened from the target (Visibility): the coachmark steps aside so it never covers the options.
-      const open = !!el && (el.getAttribute("aria-expanded") === "true" || !!el.querySelector('[aria-expanded="true"]'))
+      // A menu opened from the target (Visibility): the coachmark steps aside so it never covers the options. Only popups
+      // count (`aria-haspopup`): an open section of the editor's inspector is not a menu and must not hide the coachmark.
+      const POPUP = '[aria-haspopup][aria-expanded="true"]'
+      const open = !!el && (el.matches(POPUP) || !!el.querySelector(POPUP))
       const next = r ? `${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)},${Math.round(r.height)},${open}` : ""
       if (next !== last) {
         last = next
@@ -228,7 +230,7 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
   const hole = { x: box.x - PAD, y: box.y - PAD, w: box.w + PAD * 2, h: box.h + PAD * 2 }
   const inDialog = !!document.querySelector(step.target)?.closest("[role=dialog]")
   const { side, x, y, arrow } = place(hole, h, step.side)
-  const Hint = { bottom: ArrowUp, top: ArrowDown, right: ArrowLeft, left: ArrowRight }[side]
+  const Hint = side ? { bottom: ArrowUp, top: ArrowDown, right: ArrowLeft, left: ArrowRight }[side] : ArrowRight
   const progressIndex = step.part
 
   return (
@@ -251,7 +253,7 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
         className={cn("absolute flex flex-col gap-2 rounded-a-lg border border-a-border bg-a-panel p-4 shadow-[0_12px_32px_rgb(0_0_0/0.5)] transition-opacity duration-200 ease-out motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-[0.97] motion-safe:duration-200 motion-safe:ease-out", box.open ? "pointer-events-none opacity-0" : "pointer-events-auto")}
         style={{ left: x, top: y, width: W }}
       >
-        <Arrow side={side} offset={arrow} />
+        {side && <Arrow side={side} offset={arrow} />}
         <div className="flex items-center gap-3">
           <h2 className="min-w-0 flex-1 t-heading-s text-a-text">{step.title}</h2>
           <span aria-label={`Part ${progressIndex + 1} of ${tour.parts.length}`} className="flex shrink-0 gap-0.5">
@@ -294,8 +296,12 @@ function place(hole: Box, h: number, want: Side = "bottom") {
     right: hole.x + hole.w + GAP + W < vw - 16,
     left: hole.x - GAP - W > 16,
   }
-  const side = fits[want] ? want : (["bottom", "right", "left", "top"] as Side[]).find((s) => fits[s]) ?? "bottom"
   const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
+  const found = fits[want] ? want : (["bottom", "right", "left", "top"] as Side[]).find((s) => fits[s])
+  // A target that fills the screen (the editor's canvas) leaves no room around it: the coachmark sits inside it, at its top
+  // left, without the arrow (the ring already shows what it means), instead of falling off the screen.
+  if (!found) return { side: undefined, x: clamp(hole.x + 24, 16, vw - W - 16), y: clamp(hole.y + 24, 16, vh - h - 16), arrow: 0 }
+  const side = found
   if (side === "bottom" || side === "top") {
     const x = clamp(hole.x + hole.w / 2 - W / 2, 16, vw - W - 16)
     const y = side === "bottom" ? hole.y + hole.h + GAP : hole.y - GAP - h

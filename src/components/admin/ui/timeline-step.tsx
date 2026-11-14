@@ -1,4 +1,4 @@
-import { Pencil } from "@/components/icons"
+import { Pencil, PlayCircle } from "@/components/icons"
 import { cn } from "@/lib/utils"
 import { AdminButton } from "./button"
 import { StepIndicator } from "./step-indicator"
@@ -22,6 +22,7 @@ export function TimelineStep({
   first,
   last,
   disabledHint,
+  guide,
 }: {
   step: number
   state: "done" | "current" | "open" | "upcoming"
@@ -36,6 +37,8 @@ export function TimelineStep({
   last?: boolean
   /** Shown on hover over an Upcoming action (why it can't be clicked yet). */
   disabledHint?: string
+  /** Done step only (Figma Show Guide): an extra, optional way in, before the edit icon ("Tour the design editor"). */
+  guide?: { label: string; onClick: () => void }
 }) {
   const line = "w-0.5 flex-1 rounded-full"
   return (
@@ -55,10 +58,19 @@ export function TimelineStep({
             <p className={cn("t-body-m", state === "upcoming" ? "text-a-text-3" : "text-a-text-2")}>{description}</p>
           </div>
           {state === "done"
-            ? onEdit && (
-                <AdminButton hierarchy="ghost" iconOnly aria-label={`Edit ${title.toLowerCase()}`} title="Edit" onClick={onEdit} className="text-a-text-3">
-                  <Pencil />
-                </AdminButton>
+            ? (guide || onEdit) && (
+                <span className="flex shrink-0 items-center gap-2">
+                  {guide && (
+                    <AdminButton hierarchy="ghost" onClick={guide.onClick} className="text-a-text-2">
+                      <PlayCircle /> {guide.label}
+                    </AdminButton>
+                  )}
+                  {onEdit && (
+                    <AdminButton hierarchy="ghost" iconOnly aria-label={`Edit ${title.toLowerCase()}`} title="Edit" onClick={onEdit} className="text-a-text-3">
+                      <Pencil />
+                    </AdminButton>
+                  )}
+                </span>
               )
             : action && (
                 <span className="flex shrink-0 items-center gap-2" title={state === "upcoming" ? disabledHint : undefined}>

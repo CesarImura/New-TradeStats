@@ -19,7 +19,7 @@ import { TOURS, isTourId } from "../tour/tours"
  */
 export function GettingStarted() {
   const router = useRouter()
-  const { coach } = useCoach()
+  const { coach, base } = useCoach()
   const { steps, doneCount, total, current, community, skip } = useSetupSteps()
   const [goLive, setGoLive] = useState(false)
   // A tour left half way (Skip or Do it later): its item says where, and Resume goes back there (Figma 1066:1047).
@@ -52,6 +52,8 @@ export function GettingStarted() {
                 onSkip={s.id === "live" || total - doneCount < 2 ? undefined : () => skip(s.id)}
                 onAction={() => (s.id === "live" ? setGoLive(true) : router.push(resume && at?.path ? `${at.path}${at.path.includes("?") ? "&" : "?"}tour=${s.id}` : s.href))}
                 onEdit={s.id === "live" ? undefined : () => router.push(s.href.replace(/[?&]tour=\w+/, ""))}
+                // Optional, once Design is done (Flavio, 14/11): a short tour of the full design editor. Not one of the five.
+                guide={s.id === "design" && s.done && !live && !TOURS.editor.done(community) ? { label: "Tour the design editor", onClick: () => router.push(`${base}/design?tour=editor`) } : undefined}
               />
             )
           })}

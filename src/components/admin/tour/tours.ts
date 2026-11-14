@@ -6,7 +6,7 @@ import { customCommunities, updateCommunity, type CustomCommunity } from "@/lib/
  * is the LAST one whose target is on screen (`target` is a CSS selector, so a step can also say "this field, once named"
  * with an attribute). Doing the thing changes the screen, the next target appears, and the tour moves on by itself.
  */
-export type TourId = "course" | "tier" | "payouts" | "legal"
+export type TourId = "course" | "tier" | "payouts" | "legal" | "editor"
 export type Side = "bottom" | "right" | "left" | "top"
 
 export type TourStep = {
@@ -127,6 +127,22 @@ export const TOURS: Record<TourId, Tour> = {
       { id: "imprint", target: t("legal-imprint"), part: 1, side: "left", title: "Fill in your imprint", body: "The law asks who runs the platform and how to reach you.", hint: "Then click Save" },
       { id: "template", target: t("legal-template"), part: 2, side: "left", title: "Check the templates", body: "Privacy policy, terms and risk disclaimer come pre-filled with your details. Read each one and change what doesn’t fit.", hint: "Then click Use this text" },
       { id: "done", target: `${NO_DRAWER} ${t("legal-table")}[data-complete]`, part: 2, final: true, title: "Your legal pages are ready", body: "Students find them in your footer and at checkout. One step left: go live.", hint: "" },
+    ],
+  },
+  editor: {
+    // Optional (Flavio, 14/11; Figma "Tour · Design editor" 1237:58014…): offered on Getting started once Design is done, so the
+    // coach sees the full editor once. Not one of the five items; it only stops offering itself when done.
+    id: "editor",
+    title: "Explore the design editor",
+    doneTitle: "Editor explored",
+    saved: "Nothing is lost.",
+    parts: ["Your design editor", "Pages and widgets", "Preview and publish"],
+    complete: (slug) => setSetup(slug, { editorTour: true }),
+    done: (c) => !!c?.setup?.editorTour,
+    steps: [
+      { id: "editor", target: t("editor-panel"), part: 0, side: "right", title: "This is your design editor", body: "Everything from setup lives here, with many more options: fonts, backgrounds, the menu and every widget.", hint: "Click Widgets in the side menu" },
+      { id: "widgets", target: `body:has(${t("editor-widgets")}) ${t("editor-canvas")}`, part: 1, side: "left", title: "Pages and widgets", body: "Add widgets from the side menu. On your page, click a widget to change it or drag it to move it.", hint: "Click a widget on your page" },
+      { id: "done", target: t("editor-inspector"), part: 2, side: "left", final: true, title: "Preview, then publish", body: "Change the widget here. Preview shows your platform as a student. Before you go live, changes stay in draft; after, Publish puts them online.", hint: "" },
     ],
   },
 }

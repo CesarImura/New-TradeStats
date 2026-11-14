@@ -274,8 +274,9 @@ export function DesignWorkspace() {
     ) : null
   const pagesContent = (
     <>
-    {/* The way to every widget's style (corner radius, cards, buttons, charts): the first thing in Pages, big enough to find. */}
-    <div className="px-4 pb-3">
+    {/* The way to every widget's style (corner radius, cards, buttons, charts): the first thing in Pages, big enough to find.
+        `data-tour="editor-widgets"`: step 2 of the design editor tour (Getting started → Tour the design editor). */}
+    <div className="px-4 pb-3" data-tour="editor-widgets">
       {/* Admin / Editor Design all card: a bordered panel, an icon tile, the name and what it holds; the active edge while it is open. */}
       <button
         type="button"
@@ -483,7 +484,7 @@ export function DesignWorkspace() {
           <div className={cn("grid min-h-0 gap-2 p-2", leftOpen ? (inspector ? "grid-cols-[346px_minmax(0,1fr)_336px]" : "grid-cols-[346px_minmax(0,1fr)]") : inspector ? "grid-cols-[66px_minmax(0,1fr)_336px]" : "grid-cols-[66px_minmax(0,1fr)]")}>
             {/* One card: the section rail and the panel, with a divider between. The same editor as the library's themes, with Design's own
                 sections (brand, look, menu, pages) around the theme's. */}
-            <aside className="flex min-h-0 flex-col overflow-hidden rounded-a-xl border border-a-border bg-a-page">
+            <aside data-tour="editor-panel" className="flex min-h-0 flex-col overflow-hidden rounded-a-xl border border-a-border bg-a-page">
               <RevealContext.Provider value={pick.reveal}>
                 <SettingsPanel
                   tabs={tabs}
@@ -504,7 +505,7 @@ export function DesignWorkspace() {
             </aside>
 
             {/* The platform on its dotted field. On Pages it's the widget grid; elsewhere, click a part to change it. */}
-            <section className="relative grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] overflow-hidden rounded-a-xl border border-a-border" style={canvasDots()}>
+            <section data-tour="editor-canvas" className="relative grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] overflow-hidden rounded-a-xl border border-a-border" style={canvasDots()}>
               <div className="relative min-h-0 min-w-0 overflow-hidden">
                 {step !== "join" && step !== "course" && (
                   <>
@@ -569,7 +570,7 @@ export function DesignWorkspace() {
             {/* The inspector: a card of its own, as in Framer; the canvas between the cards gives way. Only open when there is something
                 to edit: a selected widget, every widget's style, or a Join or course screen. */}
             {inspector && (
-              <aside aria-label="Inspector" className="min-h-0 overflow-y-auto rounded-a-xl border border-a-border bg-a-page [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <aside aria-label="Inspector" data-tour="editor-inspector" className="min-h-0 overflow-y-auto rounded-a-xl border border-a-border bg-a-page [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <RevealContext.Provider value={pick.reveal}>{inspector}</RevealContext.Provider>
               </aside>
             )}

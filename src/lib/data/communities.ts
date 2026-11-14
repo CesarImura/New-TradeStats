@@ -41,6 +41,8 @@ export type CustomCommunity = Coach & {
     legal?: boolean
     /** Getting started items the coach put off with "Skip for now" (ids of use-setup-steps). */
     skipped?: string[]
+    /** The coach took the short tour of the design editor (optional, offered on Getting started; not one of the five). */
+    editorTour?: boolean
   }
 }
 
