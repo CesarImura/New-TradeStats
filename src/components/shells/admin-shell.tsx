@@ -130,6 +130,10 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
     <SidebarProvider className="dark ts-ui ts-admin ts-admin-v2 bg-a-page font-a-sans text-a-text" style={{ "--sidebar-width": "255px" } as React.CSSProperties}>
       <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
       <BrandGradients />
+      {/* First Tab stop: jump past the menu to the page (QA 14/11). */}
+      <a href="#admin-main" className="sr-only z-50 rounded-a-md bg-a-accent-strong px-3 py-2 t-body-m-medium text-a-on-accent focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">
+        Skip to content
+      </a>
       <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} base={base} />
       {/* Getting started tours: the coachmark, the pill and its panel (only while one is in progress). */}
       <Suspense fallback={null}>
@@ -177,7 +181,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
               </Avatar>
             </div>
           </header>
-          <main className="mx-auto w-full max-w-[1264px] min-w-0 flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10 xl:pt-12">{children}</main>
+          <main id="admin-main" tabIndex={-1} className="mx-auto w-full max-w-[1264px] outline-none min-w-0 flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10 xl:pt-12">{children}</main>
         </div>
       </div>
     </SidebarProvider>

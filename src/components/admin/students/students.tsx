@@ -211,7 +211,8 @@ export function StudentsPage() {
                     <Checkbox checked={on} onCheckedChange={() => toggle(s.id)} aria-label={`Select ${s.name}`} />
                   </AdminTd>
                   <AdminTd>
-                    <button type="button" onClick={(e) => (e.stopPropagation(), setOpen(s))} className="block w-full min-w-0 rounded-a-xs text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus" aria-label={`Open ${s.name}`}>
+                    <button type="button" onClick={(e) => (e.stopPropagation(), setOpen(s))} className="block w-full min-w-0 rounded-a-xs text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">
+                      <span className="sr-only">Open </span>
                       <CellPerson initials={s.initials} name={s.name} subtitle={s.email} />
                     </button>
                   </AdminTd>

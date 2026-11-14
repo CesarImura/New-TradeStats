@@ -39,6 +39,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast: "cn-toast",
+          // Sonner colours the description from its own theme, which can disagree with the page (dark Admin, light theme): follow the toast text instead.
+          description: "!text-(--normal-text) opacity-80",
         },
       }}
       {...props}

@@ -22,16 +22,18 @@ function meta(i: Item) {
 }
 
 const ROW = 56 // px per hour
-const label = (i: Item) => `${i.title}, ${KIND_LABEL[i.kind]}, ${format(i.start, "EEEE d MMMM")} ${hhmm(i.start)}`
+/** Read after the visible text, so the name starts with what is on screen (WCAG 2.5.3). */
+const more = (i: Item) => `, ${KIND_LABEL[i.kind]}, ${format(i.start, "EEEE d MMMM")} ${hhmm(i.start)}`
 
 function EventBlock({ item, onSelect, className, style }: { item: Item; onSelect: (i: Item, el?: HTMLElement) => void; className?: string; style?: React.CSSProperties }) {
   // A 30 minute slot is 24px tall: only the title fits (Figma 557:26777).
   const short = typeof style?.height === "number" && style.height < 44
   return (
-    <button type="button" aria-label={label(item)} title={`${hhmm(item.start)} ${item.title}`} onClick={(e) => (e.stopPropagation(), onSelect(item, e.currentTarget))} style={style}
+    <button type="button" title={`${hhmm(item.start)} ${item.title}`} onClick={(e) => (e.stopPropagation(), onSelect(item, e.currentTarget))} style={style}
       className={cn("absolute flex min-w-0 flex-col items-start overflow-hidden rounded-a-sm border-l-2 px-2 text-left outline-none transition-[filter] duration-200 hover:brightness-125 focus-visible:ring-2 focus-visible:ring-a-border-focus", short ? "justify-center py-0" : "gap-0.5 py-1.5", TONE[item.kind], className)}>
       <span className="w-full truncate t-caption text-a-text">{item.title}</span>
       {!short && <span className="w-full truncate t-micro text-a-text-2">{meta(item)}</span>}
+      <span className="sr-only">{more(item)}</span>
     </button>
   )
 }
@@ -141,10 +143,11 @@ export function AdminMonth({ items, cursor, onSelect, onDay }: { items: Item[]; 
                 <div key={+d} onClick={() => onDay(d)} className={cn("flex min-h-28 cursor-pointer flex-col gap-1 border-a-border p-1.5 transition-colors duration-300 hover:bg-a-hover", i % 7 > 0 && "border-l", i >= 7 && "border-t", !isSameMonth(d, cursor) && "bg-a-subtle")}>
                   <span className={cn("t-caption tabular-nums", isSameDay(d, NOW) ? "grid size-5 place-items-center self-start rounded-full bg-a-accent-strong text-a-on-accent" : isSameMonth(d, cursor) ? "px-1 text-a-text" : "px-1 text-a-text-3")}>{d.getDate()}</span>
                   {list.slice(0, 3).map((x) => (
-                    <button key={x.key} type="button" aria-label={label(x)} onClick={(e) => (e.stopPropagation(), onSelect(x, e.currentTarget))}
+                    <button key={x.key} type="button" onClick={(e) => (e.stopPropagation(), onSelect(x, e.currentTarget))}
                       className={cn("flex w-full min-w-0 items-center gap-1.5 rounded-a-xs border-l-2 px-1.5 py-0.5 text-left outline-none hover:brightness-125 focus-visible:ring-2 focus-visible:ring-a-border-focus", TONE[x.kind])}>
                       <span className="shrink-0 t-micro text-a-text-2 tabular-nums">{hhmm(x.start)}</span>
                       <span className="truncate t-micro text-a-text">{x.title}</span>
+                      <span className="sr-only">{more(x)}</span>
                     </button>
                   ))}
                   {list.length > 3 && <span className="px-1.5 t-micro text-a-text-3">+{list.length - 3} more</span>}

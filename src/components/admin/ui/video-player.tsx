@@ -414,7 +414,7 @@ export function AdminVideoPlayer({ seconds, startAt = 0, resetKey = "", resumeKe
     const act = keys[k]
     if (!act) return
     e.preventDefault()
-    // The shell has one-key shortcuts (C opens New course); a key the player uses is the player's.
+    // A key the player uses is the player's: it never reaches the shell's shortcuts (⌘K).
     e.stopPropagation()
     act()
   }

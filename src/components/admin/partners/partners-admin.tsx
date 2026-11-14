@@ -105,7 +105,8 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
       {offers.map((o) => (
         <Panel key={o.id} className="gap-3 p-[19px]">
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => setEditing(o)} aria-label={`Edit ${o.name}`} className="-m-1 flex min-w-0 flex-1 items-center gap-3 rounded-a-md p-1 text-left outline-none transition-colors duration-300 hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus">
+            <button type="button" onClick={() => setEditing(o)} className="-m-1 flex min-w-0 flex-1 items-center gap-3 rounded-a-md p-1 text-left outline-none transition-colors duration-300 hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus">
+              <span className="sr-only">Edit </span>
               <Logo name={o.name} kind={o.kind} />
               <span className="grid min-w-0 flex-1">
                 <span className="truncate t-body-l-medium text-a-text">{o.name}</span>
