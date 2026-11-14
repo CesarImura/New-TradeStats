@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useId, useRef, useState } from "r
 import { ArrowRight, Check, ChevronDown, GraduationCap, Image as ImageIcon, LayoutGrid, Monitor, Palette, PanelLeftIcon, RotateCcw, Search, Smartphone, Tablet, TriangleAlert, Type, UserPlus, Wand2, X } from "@/components/icons"
 import type { ThemeDraft } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
+import { AdminButton, AdminSegmentGroup } from "@/components/admin/ui"
 import { widgetFinishOf, widgetSetOf, type CoachTheme } from "@/lib/theme/types"
 import { DesignField, useDesign } from "../fields/design-fields"
 import { ChartPanelField, FOCUS, HeaderPartsField, LogoColoursField, NumbersField, StylePresetField, SurfaceField } from "../fields/settings-fields"
@@ -20,14 +21,11 @@ import { ChartPanelField, FOCUS, HeaderPartsField, LogoColoursField, NumbersFiel
 export type SettingsGroup = { title: string; note?: string; fields: string[]; keys: (keyof ThemeDraft)[]; words: string; folded?: boolean }
 /** A section: groups of fields, or its own content (the admin's Look, Menu and Pages). */
 /**
- * The section rail's orange (the admin's selection colour, fixed whatever the coach's theme): open section = a
- * gradient bar, gradient icon and a faint orange wash and edge; hover = a grey wash and edge, as everywhere in
- * the sidebar (states.ts); keyboard focus = an orange ring. Darker stops in light mode so the icon keeps 3:1 on a white panel.
+ * The section rail (Figma Admin / Editor Rail): Nav items, as in the Admin's sidebar. The open section is a panel-filled box with the
+ * brand-gradient icon (the gradient's ends are the Admin's `brand/gradient` tokens, fixed whatever the coach's theme); the rest are
+ * quiet and take the hover fill. Keyboard focus is the kit's focus ring.
  */
-const RAIL_TONE =
-  "[--rail-a:#c2410c] [--rail-b:#d9480f] [--rail-glow:rgb(234_88_12/0.35)] [--rail-wash:rgb(234_88_12/0.10)] [--rail-edge:rgb(234_88_12/0.30)] [--rail-hover:rgb(0_0_0/0.04)] [--rail-hover-edge:rgb(0_0_0/0.1)] [--rail-ring:#c2410c] " +
-  // Monochrome in the dark editor: the open section is white, like every selection in Design (one accent, the editor's own).
-  "dark:[--rail-a:#ffffff] dark:[--rail-b:#d4d4d8] dark:[--rail-glow:rgb(255_255_255/0.25)] dark:[--rail-wash:rgb(255_255_255/0.07)] dark:[--rail-edge:rgb(255_255_255/0.16)] dark:[--rail-hover:rgb(255_255_255/0.04)] dark:[--rail-hover-edge:rgb(255_255_255/0.1)] dark:[--rail-ring:rgb(255_255_255/0.7)]"
+const RAIL_TONE = "[--rail-a:var(--admin-color-brand-gradient-start)] [--rail-b:var(--admin-color-brand-gradient-end)]"
 
 /** A block's title in Design, the TradeStats way: small mono capitals, spaced, quiet. */
 export const SECTION_LABEL = "font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] font-medium tracking-[0.08em] text-muted-foreground uppercase"
@@ -194,7 +192,10 @@ export function SettingsPanel({
   merge,
   collapsed,
   onRail,
+  caption,
 }: {
+  /** A line under the section's name: what is happening to the draft ("Northline Trading · saved as you type"). */
+  caption?: string
   /** Only the icon rail shows (narrow screens); the host opens the panel again from `onRail`. */
   collapsed?: boolean
   /** A rail icon was clicked (with which section it opens and whether it was already open). */
@@ -228,7 +229,7 @@ export function SettingsPanel({
   return (
     <div className="flex min-h-0 flex-1">
       {/* The sections, as an icon rail: always in view, one click each. */}
-      <nav aria-label="Settings" className={cn("flex w-16 shrink-0 flex-col items-center gap-2 overflow-y-auto border-r border-white/[0.16] py-3 [scrollbar-width:none]", RAIL_TONE)}>
+      <nav aria-label="Settings" className={cn("flex w-16 shrink-0 flex-col items-center gap-3 overflow-y-auto border-r border-a-border p-3 [scrollbar-width:none]", RAIL_TONE)}>
         {/* The open section's icon is drawn in the orange gradient (Carbon icons are filled shapes in a 32 box). */}
         <svg aria-hidden width="0" height="0" className="absolute">
           <linearGradient id={grad} x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
@@ -254,56 +255,62 @@ export function SettingsPanel({
                 setSearching(false)
               }}
               className={cn(
-                // Icons only (the name is the tooltip), 36px square: the rail gives its room to the page.
-                "group relative grid size-11 place-items-center rounded-xl transition-[background-color,color,box-shadow,transform,scale] duration-150 ease-out outline-none active:scale-[0.94]",
-                "focus-visible:shadow-[0_0_0_2px_var(--rail-ring)]",
-                on
-                  ? "bg-[linear-gradient(180deg,var(--rail-wash),transparent)] font-medium text-foreground shadow-[inset_0_0_0_1px_var(--rail-edge)] focus-visible:shadow-[inset_0_0_0_1px_var(--rail-edge),0_0_0_2px_var(--rail-ring)]"
-                  : "text-muted-foreground hover:bg-[var(--rail-hover)] hover:text-foreground hover:shadow-[inset_0_0_0_1px_var(--rail-hover-edge)]",
+                // Icons only (the name is the tooltip): the Admin's Nav item at 40 px, so the rail gives its room to the page.
+                "group relative grid size-10 shrink-0 place-items-center rounded-a-md border outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
+                on ? "border-a-border bg-a-panel text-a-text" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text",
               )}
             >
-              {/* The open section: an orange bar on the left edge, in the gradient, with a soft glow. */}
-              <span aria-hidden className={cn("absolute top-1/2 -left-2.5 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-[linear-gradient(180deg,var(--rail-a),var(--rail-b))] shadow-[0_0_8px_var(--rail-glow)] transition-opacity duration-150", on ? "opacity-100" : "opacity-0")} />
               <span
-                className={cn("grid size-5 place-items-center transition-transform duration-150 ease-out [&_svg]:size-5", on ? "[&_svg]:[fill:var(--rail-icon)]" : "group-hover:-translate-y-px")}
+                className={cn("grid size-4 place-items-center [&_svg]:size-4", on && "[&_svg]:[fill:var(--rail-icon)]")}
                 style={on ? ({ "--rail-icon": `url(#${grad})` } as React.CSSProperties) : undefined}
               >
                 {t.icon}
               </span>
-              {dirty && <span aria-label="changed" className="absolute top-1 right-1 size-1.5 rounded-full bg-muted-foreground" />}
+              {dirty && <span aria-label="changed" className="absolute top-1 right-1 size-1.5 rounded-full bg-a-text-3" />}
             </button>
           )
         })}
       </nav>
 
       <div className={cn("flex min-w-0 flex-1 flex-col", collapsed && "hidden")}>
-        {/* The section's name, or a search across every section. */}
-        <div className="flex h-14 shrink-0 items-center gap-2 pr-3 pl-5">
-          {searching ? (
-            <label className="flex min-w-0 flex-1 items-center gap-2">
-              <Search className="size-4 shrink-0 text-muted-foreground" />
-              <input
-                autoFocus
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                onKeyDown={(e) => e.key === "Escape" && (e.stopPropagation(), setQ(""), setSearching(false))}
-                placeholder={current.search ?? "Find a setting…"}
-                aria-label={current.search?.replace("…", "") ?? "Find a setting"}
-                className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-foreground outline-none placeholder:text-muted-foreground"
-              />
-            </label>
-          ) : (
-            <h2 className="min-w-0 flex-1 truncate text-[0.875rem] font-semibold text-foreground">{sub ? merge!.label : (current.heading ?? current.label)}</h2>
-          )}
-          {/* One search, in the same place in every section: in Pages it finds widgets, elsewhere any setting. */}
-          <IconButton label={searching ? "Close search" : (current.search?.replace("…", "") ?? "Find a setting")} onClick={() => (setSearching(!searching), setQ(""))}>
-            {searching ? <X className="size-4" /> : <Search className="size-4" />}
-          </IconButton>
+        {/* The section's name (Heading S) with a caption of what is happening to the draft, or a search across every section. */}
+        <div className={cn("flex shrink-0 flex-col gap-1 px-5 pt-5", sub ? "pb-3" : "pb-4")}>
+          <div className="flex min-h-[22px] items-center gap-2">
+            {searching ? (
+              <label className="flex min-w-0 flex-1 items-center gap-2">
+                <Search className="size-4 shrink-0 text-a-icon" />
+                <input
+                  autoFocus
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  onKeyDown={(e) => e.key === "Escape" && (e.stopPropagation(), setQ(""), setSearching(false))}
+                  placeholder={current.search ?? "Find a setting…"}
+                  aria-label={current.search?.replace("…", "") ?? "Find a setting"}
+                  className="min-w-0 flex-1 bg-transparent t-body-m text-a-text outline-none placeholder:text-a-text-3"
+                />
+              </label>
+            ) : (
+              <h2 className="min-w-0 flex-1 truncate t-heading-s text-a-text">{sub ? merge!.label : (current.heading ?? current.label)}</h2>
+            )}
+            {/* One search, in the same place in every section: in Pages it finds widgets, elsewhere any setting. */}
+            <AdminButton
+              hierarchy="ghost"
+              size="sm"
+              iconOnly
+              className="-mr-1"
+              aria-label={searching ? "Close search" : (current.search?.replace("…", "") ?? "Find a setting")}
+              title={searching ? "Close search" : (current.search?.replace("…", "") ?? "Find a setting")}
+              onClick={() => (setSearching(!searching), setQ(""))}
+            >
+              {searching ? <X /> : <Search />}
+            </AdminButton>
+          </div>
+          {caption && !searching && <p className="truncate t-caption text-a-text-3">{caption}</p>}
         </div>
 
-        {/* A merged section's parts as pills (the TradeStats tabs): one click between Brand, Look, Type and Background. */}
+        {/* A merged section's parts as tabs: one click between Brand, Look, Type and Background. */}
         {sub && (
-          <div role="tablist" aria-label={merge!.label} className="flex shrink-0 gap-0.5 overflow-x-auto px-4 pb-4 [scrollbar-width:none]">
+          <div role="tablist" aria-label={merge!.label} className="flex shrink-0 gap-0.5 overflow-x-auto px-4 pb-3 [scrollbar-width:none]">
             {sub.map((t) => (
               <button
                 key={t.id}
@@ -312,8 +319,8 @@ export function SettingsPanel({
                 aria-selected={t.id === current.id}
                 onClick={() => onTab(t.id)}
                 className={cn(
-                  "h-8 shrink-0 rounded-full px-2.5 text-[0.8125rem] transition-[background-color,color] duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]",
-                  t.id === current.id ? "bg-foreground font-medium text-background" : "text-muted-foreground hover:bg-white/6 hover:text-foreground",
+                  "h-[26px] shrink-0 rounded-a-sm px-2.5 t-caption outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:h-10",
+                  t.id === current.id ? "bg-a-raised text-a-text" : "text-a-text-2 hover:bg-a-hover hover:text-a-text",
                 )}
               >
                 {t.label}
@@ -321,6 +328,7 @@ export function SettingsPanel({
             ))}
           </div>
         )}
+        <div aria-hidden className="h-px shrink-0 bg-a-border-subtle" />
         <TabContext.Provider value={(id) => (onTab(id), setQ(""), setSearching(false))}>
         <PanelSearch.Provider value={ownSearch ? q.trim().toLowerCase() : ""}>
         <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" {...bodyProps}>
@@ -415,30 +423,9 @@ const DEVICES: { value: Device; label: string; icon: React.ReactNode }[] = [
   { value: "tablet", label: "Tablet", icon: <Tablet className="size-4" /> },
   { value: "phone", label: "Phone", icon: <Smartphone className="size-4" /> },
 ]
-/** The screen size to preview, as three icons: the one on is raised. */
+/** The screen size to preview, as three icons in the Admin's Segmented group. */
 export function DeviceSwitch({ value, onChange }: { value: Device; onChange: (d: Device) => void }) {
-  return (
-    <div role="radiogroup" aria-label="Screen size" className="flex h-9 shrink-0 items-center gap-0.5 rounded-lg border bg-background p-[3px]">
-      {DEVICES.map((d) => (
-        <button
-          key={d.value}
-          type="button"
-          role="radio"
-          aria-checked={value === d.value}
-          aria-label={d.label}
-          title={d.label}
-          onClick={() => onChange(d.value)}
-          className={cn(
-            "grid h-full w-9 place-items-center rounded-md transition-colors duration-150",
-            FOCUS,
-            value === d.value ? "bg-muted text-foreground shadow-[0_0_0_1px_var(--border),0_1px_2px_0_rgb(0_0_0/0.12)]" : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {d.icon}
-        </button>
-      ))}
-    </div>
-  )
+  return <AdminSegmentGroup label="Screen size" value={value} onChange={onChange} options={DEVICES.map((d) => ({ value: d.value, icon: d.icon, title: d.label }))} />
 }
 
 /** The theme's colour pairs against WCAG AA: a small pill, the failing pairs listed under it on click. */

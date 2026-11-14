@@ -11,6 +11,7 @@ import { useCustomCommunities } from "@/lib/data/use-communities"
 import { resolveCoach } from "@/lib/theme/resolve"
 import { cn } from "@/lib/utils"
 import { EditorBar, useDraftEditor } from "./editor-shell"
+import { canvasDots } from "./canvas-bg"
 
 /** Every page is laid out at real desktop width on the canvas; its height is its own (FRAME.h until measured, never below MIN_H). */
 const FRAME = { w: 1280, h: 820 }
@@ -261,7 +262,7 @@ export function PagesCanvas() {
 
   return (
     // A screen of its own over the admin, like the Design workspace: the same bar, the same colours.
-    <div role="dialog" aria-modal aria-label="All pages" className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-background [--background:#0b0b0c] [--border:rgb(255_255_255/0.08)] [--ring:rgb(244_244_245/0.6)]">
+    <div role="dialog" aria-modal aria-label="All pages" className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-a-page font-[family-name:var(--admin-font-family-primary)] [--background:var(--admin-color-bg-page)] [--border:var(--admin-color-border-default)] [--ring:var(--admin-color-border-focus)]">
       <EditorBar
         slug={slug}
         title="All pages"
@@ -276,12 +277,8 @@ export function PagesCanvas() {
 
       <div
         ref={view}
-        className={cn("relative min-h-[70svh] touch-none overflow-clip bg-[#2b2b2e] select-none [overflow-anchor:none] lg:min-h-0", panning ? "cursor-grabbing" : "cursor-grab")}
-        style={{
-          backgroundImage: "radial-gradient(circle, color-mix(in oklab, var(--foreground) 13%, transparent) 1px, transparent 1.4px)",
-          backgroundSize: `${dot}px ${dot}px`,
-          backgroundPosition: `${cam.x}px ${cam.y}px`,
-        }}
+        className={cn("relative mx-2 mb-2 min-h-[70svh] touch-none overflow-clip rounded-a-xl border border-a-border select-none [overflow-anchor:none] lg:min-h-0", panning ? "cursor-grabbing" : "cursor-grab")}
+        style={canvasDots(dot, `${cam.x}px ${cam.y}px`)}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

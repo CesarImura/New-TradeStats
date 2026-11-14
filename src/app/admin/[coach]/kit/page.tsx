@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Switch } from "@/components/ui/switch"
 import {
   AdminButton, AdminDrawer, AdminField, AdminFilter, AdminModal, AdminPageHeader, AdminProgress, AdminSearch, AdminSegmented, AdminTabs, AdminToolbar, AdminUnderlineTabs,
-  AdminMenu, AdminMenuContent, AdminMenuGroup, AdminMenuItem, AdminMenuLabel, AdminMenuSeparator, AdminMenuTrigger, TimelineStep,
+  AdminFilterButton, AdminSegmentGroup, AdminMenu, AdminMenuContent, AdminMenuGroup, AdminMenuItem, AdminMenuLabel, AdminMenuSeparator, AdminMenuTrigger, TimelineStep,
   AdminVideoPlayer, Callout, CellDot, CellPerson, CellProgress, CellStack, Dropzone, EmptyState, FileItem, LessonCard, MediaCard, Metric, OptionCard, Panel, SortableRow, StatPanel, StepIndicator, Tag, adminControl,
 } from "@/components/admin/ui"
 
@@ -110,6 +110,13 @@ export default function KitGallery() {
         <div className="w-full max-w-60"><LessonCard picture={<div className="aspect-[1.78] w-full bg-a-raised" />} time="12:40" title="How price moves" mark="Free preview" markClassName="text-a-text-3" /></div>
         <div className="w-full max-w-xl"><EmptyState icon={Download} title="Nothing here yet" description="Describe what will appear." actions={<AdminButton>Create</AdminButton>} /></div>
         <Panel className="w-full max-w-72"><p className="t-body-m text-a-text-2">Panel content</p></Panel>
+      </Block>
+      <Block title="Segmented group · labels, icons only; filter button">
+        <div className="grid w-60 gap-3">
+          <AdminSegmentGroup fill label="Add or on this page" value={seg} onChange={setSeg} options={[{ value: "a", label: "Add" }, { value: "b", label: "On this page" }]} />
+          <AdminSegmentGroup label="Device" value={seg} onChange={setSeg} options={[{ value: "a", icon: <Plus />, title: "One" }, { value: "b", icon: <Download />, title: "Two" }, { value: "c", icon: <MoreHorizontal />, title: "Three" }]} />
+          <AdminFilterButton label="Page" value="Home" />
+        </div>
       </Block>
       <Block title="Menu · items, group label, danger, active (K6)">
         <AdminMenu>

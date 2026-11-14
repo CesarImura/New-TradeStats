@@ -16,6 +16,7 @@ import { themeToCss } from "@/lib/theme/css"
 import { widgetFinishOf, widgetSetOf, type CoachTheme } from "@/lib/theme/types"
 import { GAP, ROW_HEIGHT, stackOrder, uid, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
+import { AdminButton, Callout } from "@/components/admin/ui"
 import { resolve, type PickTarget } from "@/lib/design-pick"
 import { ShellEditorContext, StudentShell } from "@/components/shells/student-shell"
 import type { AddOptions } from "../panels/builder-panels"
@@ -490,6 +491,7 @@ export function ArrangeCanvas({
   const area = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLDivElement>(null)
   const [areaWidth, setAreaWidth] = useState(0)
+  const [areaHeight, setAreaHeight] = useState(0)
   const [canvasHeight, setCanvasHeight] = useState(0)
   useEffect(() => {
     const a = area.current
@@ -497,6 +499,7 @@ export function ArrangeCanvas({
     if (!a || !c) return
     const ro = new ResizeObserver(() => {
       setAreaWidth(a.clientWidth)
+      setAreaHeight(a.clientHeight)
       setCanvasHeight(c.offsetHeight)
     })
     ro.observe(a)
@@ -509,7 +512,10 @@ export function ArrangeCanvas({
   const logicalWidth = shellOn && device === "desktop" ? 1440 : DEVICE_WIDTH[device]
   // Zoom, as in Framer and Figma: "fit" fills the width; a number is a fixed scale and the workspace scrolls both ways.
   const [zoom, setZoom] = useState<number | "fit">("fit")
-  const fit = areaWidth ? Math.min(1, (areaWidth - 96) / logicalWidth) : 1
+  // Fit shows the whole page above the zoom bar (Figma: 64 above, 64 below): by width, and by height down to 40 %, below which a long page scrolls instead.
+  const fitWidth = areaWidth ? Math.min(1, (areaWidth - 96) / logicalWidth) : 1
+  const fitHeight = areaHeight && canvasHeight ? (areaHeight - 128) / canvasHeight : 1
+  const fit = Math.min(fitWidth, Math.max(fitHeight, 0.4))
   const scale = hold ?? (zoom === "fit" ? fit : zoom)
   useEffect(() => {
     scaleNow.current = scale
@@ -739,19 +745,18 @@ export function ArrangeCanvas({
       {/* The workspace: a mid grey round the page, so the page (in the coach's colours) always stands out from the editor's black panels. */}
       <div
         ref={area}
-        className={cn("h-full min-w-0 overflow-auto bg-[#2b2b2e] px-12 pt-16 pb-28 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", spaceDown && "cursor-grab active:cursor-grabbing")}
+        className={cn("h-full min-w-0 overflow-auto px-12 pt-16 pb-28 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", spaceDown && "cursor-grab active:cursor-grabbing")}
         onClick={() => setSelected(null)}
         onPointerDownCapture={startPan}
       >
         {device !== "desktop" && (
-          <div className="mx-auto mb-3 flex max-w-xl items-center gap-2 rounded-[6px] border bg-card px-3 py-2 text-xs text-muted-foreground">
-            <Info className="size-4 shrink-0" />
+          <Callout icon={<Info className="size-4" />} className="mx-auto mb-3 max-w-xl bg-a-panel">
             This is how the page reflows on {device === "tablet" ? "tablets" : "phones"}. Arrange widgets on desktop; the order here follows it, top to bottom and left to right.
-          </div>
+          </Callout>
         )}
         <div className="relative mx-auto" style={{ width: logicalWidth * scale, height: canvasHeight * scale, minWidth: logicalWidth * scale, transition: easeScale ? "width 180ms var(--ease-out), min-width 180ms var(--ease-out)" : undefined }}>
           {/* The frame's outline is drawn here, at screen size, with no drop shadow: a blurred shadow on a dark grey shows as banded strips beside the frame. */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 ring-1 ring-white/[0.08]" style={{ borderRadius: device === "desktop" ? 12 : 28 }} />
+          <div aria-hidden className="pointer-events-none absolute inset-0 ring-1 ring-a-border" style={{ borderRadius: device === "desktop" ? 12 : 28 }} />
           <DataModeProvider value={data}>
             <BodyCtx.Provider value={body}>
             <div
@@ -789,28 +794,28 @@ export function ArrangeCanvas({
           </DataModeProvider>
         </div>
       </div>
-      {/* The floating bar under the page (Framer, Figma): zoom, fit, and arranging the page. */}
-      <div role="toolbar" aria-label="Canvas" className="absolute bottom-4 left-1/2 z-30 flex h-10 -translate-x-1/2 items-center gap-0.5 rounded-xl border border-white/10 bg-[#141416] p-1 text-white shadow-[0_12px_32px_-12px_rgb(0_0_0/0.8)]">
-        <button type="button" className={BAR} aria-label="Zoom out" title="Zoom out (⌘ −)" onClick={() => stepZoom(-1)}>
-          <Minus className="size-4" />
-        </button>
-        <button type="button" className={cn(BAR, "w-14 text-xs tabular-nums")} title="Fit to screen (⌘ 0)" aria-label={`Zoom ${Math.round(scale * 100)}%. Fit to screen`} onClick={() => setZoom("fit")}>
+      {/* The floating bar under the page (Figma Admin / Editor Zoom): a Panel with ghost buttons, 16 px from the bottom. */}
+      <div role="toolbar" aria-label="Canvas" className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-0.5 rounded-a-md border border-a-border bg-a-panel p-1">
+        <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Zoom out" title="Zoom out (⌘ −)" onClick={() => stepZoom(-1)}>
+          <Minus />
+        </AdminButton>
+        <AdminButton hierarchy="ghost" size="md" className="min-w-12 t-mono-data tabular-nums" title="Fit to screen (⌘ 0)" aria-label={`Zoom ${Math.round(scale * 100)}%. Fit to screen`} onClick={() => setZoom("fit")}>
           {Math.round(scale * 100)}%
-        </button>
-        <button type="button" className={BAR} aria-label="Zoom in" title="Zoom in (⌘ +)" onClick={() => stepZoom(1)}>
-          <Plus className="size-4" />
-        </button>
-        <span aria-hidden className="mx-1 h-5 w-px bg-white/12" />
-        <button type="button" className={cn(BAR, "px-2.5 text-xs", zoom === "fit" && "text-white")} aria-pressed={zoom === "fit"} title="Fit the page to the screen (⌘ 0)" onClick={() => setZoom("fit")}>
+        </AdminButton>
+        <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Zoom in" title="Zoom in (⌘ +)" onClick={() => stepZoom(1)}>
+          <Plus />
+        </AdminButton>
+        <span aria-hidden className="mx-1 h-5 w-px bg-a-border" />
+        <AdminButton hierarchy="ghost" size="md" className={cn(zoom === "fit" && "text-a-text")} aria-pressed={zoom === "fit"} title="Fit the page to the screen (⌘ 0)" onClick={() => setZoom("fit")}>
           Fit
-        </button>
+        </AdminButton>
         {/* Only when the page has empty space: one click closes it (one undo step). */}
         {arrange.gaps && device === "desktop" && (
           <>
-            <span aria-hidden className="mx-1 h-5 w-px bg-white/12" />
-            <button type="button" data-fill-gaps className={cn(BAR, "px-2.5 text-xs")} title="Close the empty space between cards" onClick={arrange.fillAll}>
+            <span aria-hidden className="mx-1 h-5 w-px bg-a-border" />
+            <AdminButton hierarchy="ghost" size="md" data-fill-gaps title="Close the empty space between cards" onClick={arrange.fillAll}>
               Fill gaps
-            </button>
+            </AdminButton>
           </>
         )}
       </div>
@@ -869,5 +874,4 @@ const ShellFrame = memo(function ShellFrame({ children }: { children: React.Reac
 /** Zoom steps for − and +, as in Figma. */
 const ZOOMS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.25, 1.5, 2]
 /** One button of the floating canvas bar: 32px, white on near-black, a lighter fill on hover. */
-const BAR = "grid h-8 min-w-8 grid-flow-col place-items-center rounded-lg text-white/70 outline-none transition-[background-color,color,scale] duration-150 ease-out hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70 active:scale-[0.96]"
 

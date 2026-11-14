@@ -4,23 +4,17 @@ import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useSta
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import {
-  ArrowLeft,
   ArrowRight,
   Check,
-  ChevronDown,
   ExternalLink,
   Eye,
   FileDown,
   History,
   LayoutGrid,
-  MoreHorizontal,
   Palette,
   PlayCircle,
-  Redo2,
   RotateCcw,
   Trash2,
-  Undo2,
-  Users,
   Wand2,
 } from "@/components/icons"
 import { toast } from "sonner"
@@ -30,7 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { AdminButton, AdminFilterButton, AdminMenu, AdminMenuContent, AdminMenuGroup, AdminMenuItem, AdminMenuLabel, AdminMenuSeparator, AdminMenuTrigger, Callout } from "@/components/admin/ui"
 import type { DataMode } from "@/components/widgets/parts/shared"
 import { getDemoCoach } from "@/lib/data/coaches"
 import { keepVersion } from "@/lib/prototype-store"
@@ -59,6 +53,8 @@ import { BackToPlaybook, CourseInspector, CoursePageLink, CourseSections } from 
 import type { CourseSectionId } from "@/lib/data/course-page"
 import { JoinInspector } from "../panels/join-panels"
 import { PreviewFrame } from "./preview-frame"
+import { EditorTopBar } from "./top-bar"
+import { canvasDots } from "./canvas-bg"
 
 /** Design's sections, in the order a coach goes through them; the theme ones are the library's theme editor's. */
 type Step = "brand" | "look" | "type" | "shape" | "widgets" | "page" | "menu" | "pages" | "course" | "join"
@@ -93,10 +89,6 @@ const FLASH: Partial<Record<PickTarget, string[]>> = {
 type Scope = "one" | "all"
 
 /** Sections that now live in Pages, as All widgets (every widget's style, Shape's settings included): old links and clicks open it there. */
-/** The page menu's rows: roomy, and the open one filled and bold (not only a tick). */
-const MENU_ITEM = "h-9 gap-2.5 rounded-lg px-2.5 text-[0.875rem]"
-const MENU_ON = "bg-white/[0.09] font-semibold text-foreground"
-const MENU_LABEL = "px-2.5 pt-1.5 pb-1 text-[0.6875rem] font-medium tracking-wide text-muted-foreground uppercase"
 const IN_PAGES = (s: string) => s === "widgets" || s === "shape"
 /** Who the canvas and the preview show the platform to (the Preview popover). */
 const PREVIEW_AS: { value: DataMode; label: string; hint: string }[] = [
@@ -154,6 +146,9 @@ export function DesignWorkspace() {
   // The widget being dragged in from the gallery, with what was chosen in its details (if it came from there).
   const [incoming, setIncoming] = useState<{ type: string; opts?: AddOptions } | null>(null)
   const [menu, setMenu] = useState<"versions" | "guide" | "template" | "reset" | null>(null)
+  // A publish that did not go through (the store says why): shown until the draft changes again. Compared by reference, so no effect clears it.
+  const [failedFor, setFailedFor] = useState<unknown>(null)
+  const failed = failedFor !== null && failedFor === working
 
   // Selecting another widget always starts on This widget: changing every widget is a choice made each time.
   const select = (id: string | null) => {
@@ -241,6 +236,11 @@ export function DesignWorkspace() {
   const checks = auditTheme(theme)
   const tierLabel = tier === "default" ? "Everyone" : (arrange.tierName ?? tier)
   const sel = arrange.selWidget
+  const doPublish = () => {
+    // Publishing changes this community only; in the prototype say so in the same toast, since templates are designed here too.
+    const ok = editor.publish(CAN_SAVE_TEMPLATE ? { description: `${coach.name} only. The ${TEMPLATES[theme.template].name} template didn't change.`, action: { label: "Save as template", onClick: () => setMenu("template") } } : undefined)
+    setFailedFor(ok ? null : working)
+  }
   const resetTheme = (keys: (keyof typeof working.theme)[]) => commit({ ...working, theme: without(working.theme, keys) }, "reset")
   const own = arrange.layout.items.filter((x) => x.style && Object.values(x.style).some((v) => v !== undefined)).length
   const count = { total: arrange.layout.items.length, own }
@@ -336,180 +336,147 @@ export function DesignWorkspace() {
     <DesignProvider value={{ coach, theme, working, change, commit, keepVersion: (label) => keepVersion(slug, label, working), undo: editor.undo, openPage: (id) => (setPage(id), select(null), go("pages")) }}>
       <StepCtx.Provider value={{ go }}>
         <ThumbStyles />
-        {/* A screen of its own, over the admin: one menu (the editor's sections) instead of two side by side. */}
-        {/* The editor's selection colour is white here (--ts-interactive), not the admin's orange: orange is a brand colour many
-            coaches use, and a selection must never look like content. */}
-        <div role="dialog" aria-modal aria-label="Design" data-design-ws className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-background [--background:#0b0b0c] [--border:rgb(255_255_255/0.08)] [--ring:rgb(244_244_245/0.6)] [--ts-interactive:#f4f4f5] lg:overflow-hidden">
-          {/* Top bar, three groups (Framer, Webflow): where you are on the left; the page, its layout and the device in the middle;
-              undo, more, preview and publish on the right. */}
-          <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/[0.16] px-4 max-lg:grid-cols-[auto_minmax(0,1fr)_auto] max-lg:gap-2 max-sm:h-auto max-sm:grid-cols-[auto_minmax(0,1fr)] max-sm:py-2 [&_[data-slot=button]]:h-9 [&_[data-slot=button][data-size^=icon]]:w-9 [&_[data-slot=button]]:text-[0.8125rem] [&_[data-slot=button]_svg]:size-4">
-            <div className="flex min-w-0 items-center gap-2">
-            {fromSetup ? (
-              <Button size="sm" nativeButton={false} render={<Link href="/setup" />}>
-                <ArrowLeft /> Back to setup
-              </Button>
-            ) : (
-              <Button variant="ghost" size="sm" nativeButton={false} render={<Link href={`/admin/${slug}`} />} title="Back to the admin">
-                <ArrowLeft /> Admin
-              </Button>
-            )}
-            <span className="px-1 text-[0.8125rem] font-semibold max-lg:hidden">Design</span>
-            </div>
-            {/* The same in every section: the canvas shows this page in all of them, so its name is always in sight. */}
-            <div className="flex min-w-0 items-center justify-center gap-2 max-sm:col-span-2 max-sm:row-start-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger render={<Button variant="ghost" className="min-w-0 gap-1.5 px-2.5 text-[0.875rem] font-semibold" aria-label={`Page: ${here}. Change page`} title="The page you are editing" />}>
-                  <span className="truncate">{here}</span>
-                  <ChevronDown className="size-4 text-muted-foreground" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-60 p-1.5">
-                  {/* The platform's pages; the page inside a course sits under Playbook, which it belongs to. */}
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel className={MENU_LABEL}>Pages</DropdownMenuLabel>
-                    {pages.map((p) => (
-                      <Fragment key={p.id}>
-                        <DropdownMenuItem
-                          className={cn(MENU_ITEM, step !== "join" && step !== "course" && p.id === page && MENU_ON)}
-                          aria-current={step !== "join" && step !== "course" && p.id === page ? "page" : undefined}
-                          onClick={() => {
-                            setPage(p.id)
-                            select(null)
-                            if (step === "join" || step === "course") go("pages")
-                          }}
-                        >
-                          <span className="flex-1 truncate">{p.label}</span>
-                          {step !== "join" && step !== "course" && p.id === page && <Check className="size-4" />}
-                        </DropdownMenuItem>
-                        {p.id === "courses" && (
-                          <DropdownMenuItem
-                            className={cn(MENU_ITEM, "pl-7 text-[0.875rem]", step === "course" ? MENU_ON : "text-muted-foreground")}
-                            aria-current={step === "course" ? "page" : undefined}
-                            onClick={() => (select(null), go("course"))}
+        {/* A screen of its own, over the admin (Figma 14/11): the Admin's page colour, a top bar with no fill, and the sections, the
+            canvas and the inspector as three floating cards 8 px apart. The panel's controls select in the editor's own colour
+            (--ts-interactive); the vars below keep the frame's colours out of the canvas (.hb-canvas never reads them). */}
+        <div role="dialog" aria-modal aria-label="Design" data-design-ws className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-a-page font-[family-name:var(--admin-font-family-primary)] [--background:var(--admin-color-bg-page)] [--border:var(--admin-color-border-default)] [--ring:var(--admin-color-border-focus)] [--ts-interactive:#f4f4f5] lg:overflow-hidden">
+          <EditorTopBar
+            back={fromSetup ? { href: "/setup", label: "Back to setup" } : { href: `/admin/${slug}`, label: "Admin" }}
+            // The same in every section: the canvas shows this page in all of them, so its name is always in sight.
+            center={
+              <>
+                <AdminMenu>
+                  <AdminMenuTrigger render={<AdminFilterButton label="Page" value={here} aria-label={`Page: ${here}. Change page`} title="The page you are editing" />} />
+                  <AdminMenuContent align="center" className="w-60">
+                    {/* The platform's pages; the page inside a course sits under Playbook, which it belongs to. */}
+                    <AdminMenuGroup>
+                      <AdminMenuLabel>Pages</AdminMenuLabel>
+                      {pages.map((p) => {
+                        const on = step !== "join" && step !== "course" && p.id === page
+                        return (
+                          <Fragment key={p.id}>
+                            <AdminMenuItem
+                              active={on}
+                              onClick={() => {
+                                setPage(p.id)
+                                select(null)
+                                if (step === "join" || step === "course") go("pages")
+                              }}
+                            >
+                              <span className="flex-1 truncate">{p.label}</span>
+                              {on && <Check className="size-4" />}
+                            </AdminMenuItem>
+                            {p.id === "courses" && (
+                              <AdminMenuItem active={step === "course"} className={cn("pl-8", step !== "course" && "text-a-text-2")} onClick={() => (select(null), go("course"))}>
+                                <span className="flex-1 truncate">Course page</span>
+                                {step === "course" && <Check className="size-4" />}
+                              </AdminMenuItem>
+                            )}
+                          </Fragment>
+                        )
+                      })}
+                    </AdminMenuGroup>
+                    <AdminMenuSeparator />
+                    {/* The screens people pass through to join aren't pages of the platform: apart from them. */}
+                    <AdminMenuGroup>
+                      <AdminMenuLabel>Join</AdminMenuLabel>
+                      {JOIN_SCREENS.map((j) => {
+                        const on = step === "join" && j.id === joinScreen
+                        return (
+                          <AdminMenuItem
+                            key={j.id}
+                            active={on}
+                            onClick={() => {
+                              setJoinScreen(j.id)
+                              select(null)
+                              go("join")
+                            }}
                           >
-                            <span className="flex-1 truncate">Course page</span>
-                            {step === "course" && <Check className="size-4" />}
-                          </DropdownMenuItem>
-                        )}
-                      </Fragment>
-                    ))}
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator className="mx-0 my-1.5" />
-                  {/* The screens people pass through to join aren't pages of the platform: apart from them. */}
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel className={MENU_LABEL}>Join</DropdownMenuLabel>
-                    {JOIN_SCREENS.map((j) => (
-                      <DropdownMenuItem
-                        key={j.id}
-                        className={cn(MENU_ITEM, step === "join" && j.id === joinScreen && MENU_ON)}
-                        aria-current={step === "join" && j.id === joinScreen ? "page" : undefined}
-                        onClick={() => {
-                          setJoinScreen(j.id)
-                          select(null)
-                          go("join")
-                        }}
-                      >
-                        <span className="flex-1 truncate">{j.label}</span>
-                        {step === "join" && j.id === joinScreen && <Check className="size-4" />}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <span aria-hidden className="h-5 w-px bg-white/10" />
-              <DeviceSwitch value={device} onChange={setDevice} />
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-1 max-sm:flex-nowrap max-sm:gap-0">
-              {/* Next to Publish, which it is about: whether students already see these changes. */}
-              <span className={cn("mr-1 inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs whitespace-nowrap", editor.dirty ? "bg-white/[0.06] text-foreground" : "text-muted-foreground")} title={editor.dirty ? "Students still see the last published design" : "Students see this design"}>
-                <span className={cn("size-1.5 rounded-full", editor.dirty ? "bg-amber-500" : "bg-emerald-500")} />
-                <span className="max-lg:sr-only">{editor.dirty ? "Not published yet" : "Live"}</span>
-              </span>
-              {/* Only when something is hard to read: a check that passes needs no room in the bar. */}
-              {checks.some((c) => !c.pass) && <Readability fails={checks.filter((c) => !c.pass)} total={checks.length} />}
-              <Button variant="ghost" size="icon-sm" onClick={editor.undo} disabled={!editor.canUndo} aria-label="Undo" title="Undo (⌘Z)">
-                <Undo2 />
-              </Button>
-              <Button variant="ghost" size="icon-sm" onClick={editor.redo} disabled={!editor.canRedo} aria-label="Redo" title="Redo (⇧⌘Z)">
-                <Redo2 />
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More" />}>
-                  <MoreHorizontal />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuItem onClick={() => setMenu("versions")}>
-                    <History /> Earlier versions
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setMenu("guide")}>
-                    <PlayCircle /> 2-minute guide
-                  </DropdownMenuItem>
-                  <DropdownMenuItem render={<Link href={`/admin/${slug}/design/pages/all${fromSetup ? "?from=setup" : ""}`} />}>
-                    <LayoutGrid /> All pages side by side
-                  </DropdownMenuItem>
-                  {CAN_SAVE_TEMPLATE && (
-                    <DropdownMenuItem onClick={() => setMenu("template")}>
-                      <FileDown /> Save as template…
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setMenu("reset")}>
-                    <RotateCcw /> Reset to the original design…
-                  </DropdownMenuItem>
-                  <DropdownMenuItem variant="destructive" disabled={!editor.dirty} onClick={editor.discard}>
-                    <Trash2 /> Discard changes
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                            <span className="flex-1 truncate">{j.label}</span>
+                            {on && <Check className="size-4" />}
+                          </AdminMenuItem>
+                        )
+                      })}
+                    </AdminMenuGroup>
+                  </AdminMenuContent>
+                </AdminMenu>
+                <span aria-hidden className="h-5 w-px bg-a-border" />
+                <DeviceSwitch value={device} onChange={setDevice} />
+              </>
+            }
+            // Only when something is hard to read: a check that passes needs no room in the bar.
+            extra={checks.some((c) => !c.pass) ? <Readability fails={checks.filter((c) => !c.pass)} total={checks.length} /> : null}
+            status={failed ? { kind: "failed" } : editor.dirty ? { kind: "unpublished", changes: editor.changes } : { kind: "published" }}
+            history={{ undo: editor.undo, redo: editor.redo, canUndo: editor.canUndo, canRedo: editor.canRedo }}
+            moreItems={
+              <>
+                <AdminMenuItem onClick={() => setMenu("versions")}>
+                  <History /> Earlier versions
+                </AdminMenuItem>
+                <AdminMenuItem onClick={() => setMenu("guide")}>
+                  <PlayCircle /> 2-minute guide
+                </AdminMenuItem>
+                <AdminMenuItem render={<Link href={`/admin/${slug}/design/pages/all${fromSetup ? "?from=setup" : ""}`} />}>
+                  <LayoutGrid /> All pages side by side
+                </AdminMenuItem>
+                {CAN_SAVE_TEMPLATE && (
+                  <AdminMenuItem onClick={() => setMenu("template")}>
+                    <FileDown /> Save as template…
+                  </AdminMenuItem>
+                )}
+                <AdminMenuSeparator />
+                <AdminMenuItem onClick={() => setMenu("reset")}>
+                  <RotateCcw /> Reset to the original design…
+                </AdminMenuItem>
+                <AdminMenuItem tone="danger" disabled={!editor.dirty} onClick={editor.discard}>
+                  <Trash2 /> Discard changes
+                </AdminMenuItem>
+              </>
+            }
+            preview={
               <Popover>
-                <PopoverTrigger render={<Button variant="outline" size="sm" title="Choose who to preview as, and open your platform" />}>
+                <PopoverTrigger render={<AdminButton hierarchy="secondary" title="Choose who to preview as, and open your platform" />}>
                   <Eye /> <span className="max-sm:sr-only">Preview</span>
                 </PopoverTrigger>
                 <PopoverContent align="end" className="ts-ui ts-admin w-80">
                   <Row label="Preview as" hint={PREVIEW_AS.find((o) => o.value === data)?.hint} stack>
                     <Segmented label="Preview data" value={data} onChange={setData} options={PREVIEW_AS} />
                   </Row>
-                  <Button variant="outline" size="sm" className="w-full" nativeButton={false} render={<a href={src} target="_blank" rel="noreferrer" />}>
+                  <AdminButton hierarchy="secondary" className="w-full" nativeButton={false} render={<a href={src} target="_blank" rel="noreferrer" />}>
                     <ExternalLink /> Open in a new tab
-                  </Button>
+                  </AdminButton>
                 </PopoverContent>
               </Popover>
-              <Button
-                size="sm"
-                disabled={!editor.dirty}
-                onClick={() => {
-                  // Publishing changes this community only; in the prototype say so in the same toast, since templates are designed here too.
-                  editor.publish(CAN_SAVE_TEMPLATE ? { description: `${coach.name} only. The ${TEMPLATES[theme.template].name} template didn't change.`, action: { label: "Save as template", onClick: () => setMenu("template") } } : undefined)
-                }}
-              >
-                Publish
-              </Button>
-            </div>
-            <ResetDialog
-              open={menu === "reset"}
-              onOpenChange={(o) => setMenu(o ? "reset" : null)}
-              name={coach.name}
-              onReset={(pagesToo) => {
-                const content = { ...working.content }
-                if (pagesToo) delete content.pages
-                commit({ theme: {}, content }, "reset-original")
-                toast("Back to the original design", { description: pagesToo ? "Pages too." : "Pages kept.", action: { label: "Undo", onClick: editor.undo } })
-              }}
-            />
-            <VersionsSheet slug={slug} open={menu === "versions"} onOpenChange={(o) => setMenu(o ? "versions" : null)} />
-            {/* Mounted only while open, so it starts from the design's current template each time. */}
-            {menu === "template" && <SaveTemplateDialog coach={coach} theme={theme} open onOpenChange={(o) => setMenu(o ? "template" : null)} />}
-            <GuideDialog
-              title="Designing your platform"
-              text="Your brand and a look first; then type and background to fine-tune; then your menu and pages. In Widgets, select a widget to move, size, fill and style it, for that widget or all of them. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."
-              open={menu === "guide"}
-              onOpenChange={(o) => setMenu(o ? "guide" : null)}
-            />
-          </div>
+            }
+            onPublish={doPublish}
+            publishDisabled={!editor.dirty}
+          />
+          <ResetDialog
+            open={menu === "reset"}
+            onOpenChange={(o) => setMenu(o ? "reset" : null)}
+            name={coach.name}
+            onReset={(pagesToo) => {
+              const content = { ...working.content }
+              if (pagesToo) delete content.pages
+              commit({ theme: {}, content }, "reset-original")
+              toast("Back to the original design", { description: pagesToo ? "Pages too." : "Pages kept.", action: { label: "Undo", onClick: editor.undo } })
+            }}
+          />
+          <VersionsSheet slug={slug} open={menu === "versions"} onOpenChange={(o) => setMenu(o ? "versions" : null)} />
+          {/* Mounted only while open, so it starts from the design's current template each time. */}
+          {menu === "template" && <SaveTemplateDialog coach={coach} theme={theme} open onOpenChange={(o) => setMenu(o ? "template" : null)} />}
+          <GuideDialog
+            title="Designing your platform"
+            text="Your brand and a look first; then type and background to fine-tune; then your menu and pages. In Widgets, select a widget to move, size, fill and style it, for that widget or all of them. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."
+            open={menu === "guide"}
+            onOpenChange={(o) => setMenu(o ? "guide" : null)}
+          />
 
           {/* Below 1280px the left sidebar keeps only its icons, so the page has room; an icon opens it again. */}
-          <div className={cn("grid min-h-0", leftOpen ? "grid-cols-[344px_minmax(0,1fr)]" : "grid-cols-[64px_minmax(0,1fr)]")}>
-            {/* The one panel: the same editor as the library's themes, with Design's own sections (brand, look, menu, pages) around the theme's. */}
-            <aside className="flex min-h-0 flex-col border-r border-white/[0.16]">
+          <div className={cn("grid min-h-0 gap-2 p-2", leftOpen ? (inspector ? "grid-cols-[346px_minmax(0,1fr)_336px]" : "grid-cols-[346px_minmax(0,1fr)]") : inspector ? "grid-cols-[66px_minmax(0,1fr)_336px]" : "grid-cols-[66px_minmax(0,1fr)]")}>
+            {/* One card: the section rail and the panel, with a divider between. The same editor as the library's themes, with Design's own
+                sections (brand, look, menu, pages) around the theme's. */}
+            <aside className="flex min-h-0 flex-col overflow-hidden rounded-a-xl border border-a-border bg-a-page">
               <RevealContext.Provider value={pick.reveal}>
                 <SettingsPanel
                   tabs={tabs}
@@ -521,6 +488,7 @@ export function DesignWorkspace() {
                   bodyProps={{ onPointerOver: pick.onPanelHover, onPointerLeave: pick.onPanelLeave }}
                   // Brand, Look, Type and Background are one place, Theme, with its parts as pills.
                   merge={{ id: "theme", label: "Theme", icon: <Palette />, of: ["brand", "look", "type", "page"] }}
+                  caption={`${coach.name} · saved as you type`}
                   collapsed={!leftOpen}
                   // On a narrow screen the open section's icon folds the panel away again; any other icon opens it.
                   onRail={(_, wasOpen) => setLeftOpen(narrow && wasOpen && leftOpen ? false : true)}
@@ -528,70 +496,76 @@ export function DesignWorkspace() {
               </RevealContext.Provider>
             </aside>
 
-            {/* The platform. On Pages it's the widget grid; elsewhere, click a part to change it. */}
-            <section className={cn("relative grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] overflow-hidden bg-[#2b2b2e]", inspector ? "grid-cols-[minmax(0,1fr)_336px]" : "grid-cols-[minmax(0,1fr)]")}>
+            {/* The platform on its dotted field. On Pages it's the widget grid; elsewhere, click a part to change it. */}
+            <section className="relative grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] overflow-hidden rounded-a-xl border border-a-border" style={canvasDots()}>
               <div className="relative min-h-0 min-w-0 overflow-hidden">
-                {step !== "join" && step !== "course" && (<>
-                {/* In the canvas's corner: whose layout of this page is on the canvas. Each tier can have its own; until then it uses Everyone's. */}
-                <div className="absolute top-3 left-3 z-30 flex h-10 items-center rounded-xl border border-white/10 bg-[#141416] p-1 text-white shadow-[0_12px_32px_-12px_rgb(0_0_0/0.8)]">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <button
-                          type="button"
-                          aria-label={`Layout for ${tierLabel}. Change tier`}
-                          title={arrange.inherits ? `${tierLabel} uses the Everyone layout. Changing the page gives ${tierLabel} its own.` : "Each tier can have its own layout of this page"}
-                          className="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs text-white/70 outline-none transition-[background-color,color,scale] duration-150 ease-out hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70 active:scale-[0.96] data-[popup-open]:bg-white/10"
+                {step !== "join" && step !== "course" && (
+                  <>
+                    {/* In the canvas's corner: whose layout of this page is on the canvas. Each tier can have its own; until then it uses Everyone's. */}
+                    <div className="absolute top-4 left-4 z-30">
+                      <AdminMenu>
+                        <AdminMenuTrigger
+                          render={
+                            <AdminFilterButton
+                              label="Layout for"
+                              value={
+                                <>
+                                  {tierLabel}
+                                  {tier !== "default" && <span className="text-a-text-3"> · {arrange.inherits ? "uses Everyone" : "own layout"}</span>}
+                                </>
+                              }
+                              aria-label={`Layout for ${tierLabel}. Change tier`}
+                              title={arrange.inherits ? `${tierLabel} uses the Everyone layout. Changing the page gives ${tierLabel} its own.` : "Each tier can have its own layout of this page"}
+                              className="bg-a-page"
+                            />
+                          }
                         />
-                      }
-                    >
-                      <Users className="size-3.5" />
-                      <span>Layout for</span>
-                      <span className="font-medium text-white">{tierLabel}</span>
-                      {tier !== "default" && <span className="text-white/50">· {arrange.inherits ? "uses Everyone" : "own layout"}</span>}
-                      <ChevronDown className="size-3.5 text-white/50" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-64">
-                      {[{ id: "default", name: "Everyone" }, ...coach.tiers].map((t) => (
-                        <DropdownMenuItem
-                          key={t.id}
-                          onClick={() => {
-                            setTier(t.id)
-                            select(null)
-                          }}
-                        >
-                          <span className="flex-1">
-                            {t.name}
-                            {t.id !== "default" && (coach.pages?.[page] ?? {})[t.id] ? <span className="text-muted-foreground"> · own layout</span> : null}
-                          </span>
-                          {t.id === tier && <Check className="size-3.5" />}
-                        </DropdownMenuItem>
-                      ))}
-                      {tier !== "default" && !arrange.inherits && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={arrange.useDefault}>Use the Everyone layout for {tierLabel}</DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                </>)}
-                {step === "join" || step === "course" ? <PreviewFrame src={src} device={device} desktopWidth={1100} /> : (
-                <ArrangeCanvas arrange={arrange} coach={coach} theme={theme} device={device} data={data} incoming={incoming} onDropped={() => setIncoming(null)} allWidgets={scope === "all"} shell onPick={pick.pick} />
+                        <AdminMenuContent align="start" className="w-64">
+                          {[{ id: "default", name: "Everyone" }, ...coach.tiers].map((t) => (
+                            <AdminMenuItem
+                              key={t.id}
+                              active={t.id === tier}
+                              onClick={() => {
+                                setTier(t.id)
+                                select(null)
+                              }}
+                            >
+                              <span className="flex-1">
+                                {t.name}
+                                {t.id !== "default" && (coach.pages?.[page] ?? {})[t.id] ? <span className="text-a-text-3"> · own layout</span> : null}
+                              </span>
+                              {t.id === tier && <Check className="size-3.5" />}
+                            </AdminMenuItem>
+                          ))}
+                          {tier !== "default" && !arrange.inherits && (
+                            <>
+                              <AdminMenuSeparator />
+                              <AdminMenuItem onClick={arrange.useDefault}>Use the Everyone layout for {tierLabel}</AdminMenuItem>
+                            </>
+                          )}
+                        </AdminMenuContent>
+                      </AdminMenu>
+                    </div>
+                  </>
+                )}
+                {/* Publishing failed: the draft is safe. A callout over the canvas, blurred so the page shows through it. */}
+                {failed && (
+                  <Callout tone="danger" className="absolute top-4 left-1/2 z-40 w-[min(42rem,calc(100%-2rem))] -translate-x-1/2 backdrop-blur-a-overlay" action={<AdminButton hierarchy="secondary" size="md" onClick={doPublish}>Try again</AdminButton>}>
+                    We couldn&apos;t publish {editor.changes > 0 ? `your ${editor.changes} ${editor.changes === 1 ? "change" : "changes"}` : "your changes"}. They are still saved, so you can try again.
+                  </Callout>
+                )}
+                {step === "join" || step === "course" ? <PreviewFrame src={src} device={device} desktopWidth={1100} name={coach.name} /> : (
+                  <ArrangeCanvas arrange={arrange} coach={coach} theme={theme} device={device} data={data} incoming={incoming} onDropped={() => setIncoming(null)} allWidgets={scope === "all"} shell onPick={pick.pick} />
                 )}
               </div>
-              {/* The inspector: a column of its own, as in Framer; the page between the sidebars gives way. */}
-              {/* Only open when there is something to edit: a selected widget, every widget's style, or a Join or course screen. */}
-              {inspector && (
-                <aside
-                  aria-label="Inspector"
-                  className="col-start-2 row-start-1 min-h-0 overflow-y-auto border-l border-white/[0.16] bg-background [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                >
-                  <RevealContext.Provider value={pick.reveal}>{inspector}</RevealContext.Provider>
-                </aside>
-              )}
             </section>
+            {/* The inspector: a card of its own, as in Framer; the canvas between the cards gives way. Only open when there is something
+                to edit: a selected widget, every widget's style, or a Join or course screen. */}
+            {inspector && (
+              <aside aria-label="Inspector" className="min-h-0 overflow-y-auto rounded-a-xl border border-a-border bg-a-page [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <RevealContext.Provider value={pick.reveal}>{inspector}</RevealContext.Provider>
+              </aside>
+            )}
           </div>
         </div>
       </StepCtx.Provider>

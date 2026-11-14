@@ -101,6 +101,14 @@ Checks: `tsc` clean, ESLint 0 errors in admin (the old `frame.tsx:92` is the onl
 - Blur: `--blur-a-overlay: 16px` in the Tailwind mapping, so `backdrop-blur-a-overlay` is Admin/Blur/Overlay.
 - `/admin/<coach>/kit` shows all of them.
 
+## Editor frame (14/11, stage 2A)
+- `design-workspace.tsx`: Admin page colour, a top bar with no fill (`editor/top-bar.tsx`, one `EditorTopBar` for the workspace and the all-pages overview; `EditorBar` wraps it), then three floating cards 8 px apart: sections (rail 64 + panel 280, one card with a divider), the dotted canvas (`editor/canvas-bg.ts`; token `--admin-component-editor-canvas-dot`; the grey fill is not a Figma variable) and the inspector (336).
+- Status is a `Tag` with a dot (Warning "N changes · saved", Danger "Publish failed", Success "Published · up to date"). A publish that fails (the store returns false) shows the danger Callout over the canvas with "Try again" (blur from `backdrop-blur-a-overlay`); the failure clears when the draft changes.
+- The page and tier switchers are `AdminFilterButton` + `AdminMenu`; the device switch is `AdminSegmentGroup` (new kit part: Figma "Admin / Segmented", the grouped one; `AdminSegmented` stays for Figma "Segmented option").
+- The rail items are Admin Nav items (panel fill + border, brand-gradient icon). The panel title is Heading S with a caption ("<platform> · saved as you type").
+- Fit now also fits the page's height down to 40 %; the zoom bar is a Panel with ghost buttons. `PreviewFrame` shows "Loading the preview" until the frame loads.
+- Measured at 1920 × 1080 against Figma "Pages · 01 Pages": sidebar 8,64 346×1008; canvas 362,64 1550×1008; rail 64; top bar 56.
+
 ---
 
 ## Admin v2: fluxos refeitos em 10/11/2026

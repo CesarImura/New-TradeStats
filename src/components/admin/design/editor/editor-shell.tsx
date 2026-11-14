@@ -1,13 +1,12 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { ArrowLeft, ExternalLink, History, MoreHorizontal, PlayCircle, Redo2, Trash2, Undo2 } from "@/components/icons"
+import { ExternalLink, History, PlayCircle, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { cn } from "@/lib/utils"
+import { AdminButton, AdminMenuItem, AdminMenuSeparator } from "@/components/admin/ui"
+import { EditorTopBar, type PublishStatus } from "./top-bar"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import {
@@ -115,6 +114,8 @@ export function useDraftEditor(slug: string) {
     change,
     undo: doUndo,
     canUndo: undo.length > 0,
+    /** Steps made in this session (0 after a reload, when the draft is still there): the status says "N changes" only when it knows. */
+    changes: undo.length,
     redo: doRedo,
     canRedo: redo.length > 0,
     discard: () => {
@@ -135,9 +136,8 @@ export function useDraftEditor(slug: string) {
 }
 
 /**
- * Top bar of the Design workspace: the way back (to setup, or from the all-pages
- * overview to the workspace), what you're looking at (`children`: page and
- * tier), status, and the draft actions.
+ * Top bar of the all-pages overview: the same `EditorTopBar` as the Design workspace, with the screen's name in the middle's place.
+ * `failed`: the last publish did not go through (the draft is kept).
  */
 export function EditorBar({
   slug,
@@ -146,6 +146,8 @@ export function EditorBar({
   editor,
   guide,
   previewHref,
+  failed,
+  onPublish,
   children,
 }: {
   slug: string
@@ -156,67 +158,49 @@ export function EditorBar({
   guide: { title: string; text: string }
   /** The student page to open in a new tab, showing the draft. */
   previewHref: string
+  failed?: boolean
+  onPublish?: () => void
   children?: React.ReactNode
 }) {
   // Opened from the setup wizard: keep the way back, everywhere in Design.
   const fromSetup = useSearchParams().get("from") === "setup"
   const way = fromSetup ? { href: "/setup", label: "Back to setup" } : back
   const [menu, setMenu] = useState<"versions" | "guide" | null>(null)
-  // The same bar as the Design workspace: where you are on the left, the screen in the middle, status and actions on the right.
+  const status: PublishStatus = failed ? { kind: "failed" } : editor.dirty ? { kind: "unpublished", changes: editor.changes } : { kind: "published" }
   return (
-    <div
-      className="grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/[0.16] px-4 max-sm:grid-cols-[auto_minmax(0,1fr)_auto] [&_[data-slot=button]]:h-9 [&_[data-slot=button][data-size^=icon]]:w-9 [&_[data-slot=button]]:text-[0.8125rem] [&_[data-slot=button]_svg]:size-4"
-      data-design-slug={slug}
-    >
-      <div className="flex min-w-0 items-center gap-2">
-        {way && (
-          <Button size="sm" variant={fromSetup ? "default" : "ghost"} nativeButton={false} render={<Link href={way.href} />}>
-            <ArrowLeft /> {way.label}
-          </Button>
-        )}
-      </div>
-      <div className="flex min-w-0 items-center justify-center gap-2">
-        <span className="truncate px-2.5 text-[0.875rem] font-semibold">{title}</span>
-        {children}
-      </div>
-      <div className="flex items-center justify-end gap-1">
-        <span className={cn("mr-1 inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs whitespace-nowrap", editor.dirty ? "bg-white/[0.06] text-foreground" : "text-muted-foreground")} title={editor.dirty ? "Students still see the last published design" : "Students see this design"}>
-          <span className={cn("size-1.5 rounded-full", editor.dirty ? "bg-amber-500" : "bg-emerald-500")} />
-          <span className="max-lg:sr-only">{editor.dirty ? "Not published yet" : "Live"}</span>
-        </span>
-        <Button variant="ghost" size="icon-sm" onClick={editor.undo} disabled={!editor.canUndo} aria-label="Undo" title="Undo (⌘Z)">
-          <Undo2 />
-        </Button>
-        <Button variant="ghost" size="icon-sm" onClick={editor.redo} disabled={!editor.canRedo} aria-label="Redo" title="Redo (⇧⌘Z)">
-          <Redo2 />
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More" />}>
-            <MoreHorizontal />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuItem onClick={() => setMenu("versions")}>
+    <>
+      <EditorTopBar
+        slug={slug}
+        title={title}
+        back={way}
+        center={children}
+        status={status}
+        history={{ undo: editor.undo, redo: editor.redo, canUndo: editor.canUndo, canRedo: editor.canRedo }}
+        moreItems={
+          <>
+            <AdminMenuItem onClick={() => setMenu("versions")}>
               <History /> Earlier versions
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setMenu("guide")}>
+            </AdminMenuItem>
+            <AdminMenuItem onClick={() => setMenu("guide")}>
               <PlayCircle /> 2-minute guide
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" disabled={!editor.dirty} onClick={editor.discard}>
+            </AdminMenuItem>
+            <AdminMenuSeparator />
+            <AdminMenuItem tone="danger" disabled={!editor.dirty} onClick={editor.discard}>
               <Trash2 /> Discard changes
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button variant="outline" size="sm" nativeButton={false} render={<a href={previewHref} target="_blank" rel="noreferrer" />} title={editor.dirty ? "Preview your draft in a new tab" : "Preview in a new tab"}>
-          <ExternalLink /> <span className="max-sm:sr-only">Preview</span>
-        </Button>
-        <Button size="sm" disabled={!editor.dirty} onClick={() => editor.publish()}>
-          Publish
-        </Button>
-      </div>
+            </AdminMenuItem>
+          </>
+        }
+        preview={
+          <AdminButton hierarchy="secondary" nativeButton={false} render={<a href={previewHref} target="_blank" rel="noreferrer" />} title={editor.dirty ? "Preview your draft in a new tab" : "Preview in a new tab"}>
+            <ExternalLink /> <span className="max-sm:sr-only">Preview</span>
+          </AdminButton>
+        }
+        onPublish={onPublish ?? (() => editor.publish())}
+        publishDisabled={!editor.dirty}
+      />
       <VersionsSheet slug={slug} open={menu === "versions"} onOpenChange={(o) => setMenu(o ? "versions" : null)} />
       <GuideDialog title={guide.title} text={guide.text} open={menu === "guide"} onOpenChange={(o) => setMenu(o ? "guide" : null)} />
-    </div>
+    </>
   )
 }
 

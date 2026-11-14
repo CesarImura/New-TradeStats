@@ -1,6 +1,6 @@
 "use client"
 
-import { Search } from "@/components/icons"
+import { ChevronDown, Search } from "@/components/icons"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { AdminButton } from "./button"
@@ -87,5 +87,36 @@ export function AdminViewToggle<T extends string>({ value, onChange, label = "Vi
         </AdminButton>
       ))}
     </div>
+  )
+}
+
+/**
+ * The look of Admin / Filter for something that opens a menu rather than a list of values (the editor's page and tier switchers):
+ * "Label | value ⌄", 32 px, same border, hover and open states as `AdminFilter`. Use it as the `render` of an `AdminMenuTrigger`.
+ */
+export function AdminFilterButton({ label, value, icon, className, ...props }: Omit<React.ComponentProps<"button">, "value"> & { label?: string; value: React.ReactNode; icon?: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        "inline-flex h-8 pointer-coarse:h-10 max-w-full shrink-0 items-center gap-2 rounded-a-md border border-a-border pr-2.5 pl-3 t-caption text-a-text outline-none transition-colors duration-200 hover:border-a-border-strong focus-visible:ring-2 focus-visible:ring-a-border-focus disabled:opacity-40 aria-expanded:border-a-border-strong aria-expanded:bg-a-hover data-popup-open:border-a-border-strong data-popup-open:bg-a-hover",
+        className
+      )}
+      {...props}
+    >
+      {icon && (
+        <span aria-hidden className="mr-0.5 text-a-icon [&_svg]:size-3.5">
+          {icon}
+        </span>
+      )}
+      {label && (
+        <>
+          <span className="text-a-text-2">{label}</span>
+          <span aria-hidden className="h-3.5 w-px bg-a-border" />
+        </>
+      )}
+      <span className="min-w-0 truncate">{value}</span>
+      <ChevronDown aria-hidden className="size-3.5 shrink-0 text-a-icon" />
+    </button>
   )
 }

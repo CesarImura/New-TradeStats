@@ -267,6 +267,7 @@
   --admin-component-file-icon-pdf: var(--admin-primitive-red-600);
   --admin-component-file-icon-sheet: var(--admin-primitive-green-700);
   --admin-component-file-item-border: var(--admin-color-border-subtle);
+  --admin-component-editor-canvas-dot: var(--admin-color-border-default);
   --admin-component-file-item-meta-danger: var(--admin-color-status-danger);
   --admin-component-file-item-meta-default: var(--admin-color-text-tertiary);
   --admin-component-file-item-meta-success: var(--admin-color-status-success);
