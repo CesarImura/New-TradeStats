@@ -12,6 +12,7 @@ import { CATALOGUE, KIND_LABEL, PARTNER_KINDS, fromCatalogue, saveAffiliate, sav
 import { cn } from "@/lib/utils"
 import { PageHeader } from "../kit"
 import { AdminButton, AdminField, AdminFilter, AdminModal, AdminSearch, AdminSegmented, AdminTable, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, Callout, EmptyState, Panel, StatPanel, Tag, adminControl } from "../ui"
+import { useNewPlatform } from "../use-new-platform"
 
 const euro = (n: number) => `€${n.toLocaleString("en")}`
 
@@ -26,6 +27,7 @@ type Tab = "offers" | "affiliate"
 /** Partners (Figma 537:7152: 01 Offers, 02 Add from catalogue, 03 Affiliate program, 04 Off): offers from brokers, prop firms and tools, and the coach's own affiliate program. */
 export function PartnersAdmin() {
   const { coach, base } = useCoach()
+  const fresh = useNewPlatform()
   const offers = useOffers(coach)
   const program = useAffiliate(coach)
   const [tab, setTab] = useState<Tab>("offers")
@@ -68,7 +70,7 @@ export function PartnersAdmin() {
         <AdminTabs label="Partners sections" tabs={[{ id: "offers", label: "Offers", count: offers.length }, { id: "affiliate", label: "Affiliate program" }]} value={tab} onChange={setTab} />
       </div>
       {tab === "offers" && <Offers onAdd={setAdding} />}
-      {tab === "affiliate" && <Affiliates program={shown} set={(p) => setDraft((d) => ({ ...d, ...p }))} turnOn={() => (saveAffiliate(coach, { on: true }), setDraft((d) => Object.fromEntries(Object.entries(d).filter(([k]) => k !== "on"))), toast("Affiliate program is on"))} />}
+      {tab === "affiliate" && <Affiliates fresh={fresh} program={shown} set={(p) => setDraft((d) => ({ ...d, ...p }))} turnOn={() => (saveAffiliate(coach, { on: true }), setDraft((d) => Object.fromEntries(Object.entries(d).filter(([k]) => k !== "on"))), toast("Affiliate program is on"))} />}
       <CatalogueDialog open={adding === "catalogue"} onClose={() => setAdding(null)} />
       {adding === "own" && <OwnDialog onClose={() => setAdding(null)} />}
     </div>
@@ -267,17 +269,17 @@ const TOP = [
 ]
 const DAYS = [7, 30, 60, 90].map((d) => ({ value: String(d), label: `${d} days` }))
 
-function Affiliates({ program: p, set, turnOn }: { program: AffiliateProgram; set: (p: Partial<AffiliateProgram>) => void; turnOn: () => void }) {
+function Affiliates({ fresh, program: p, set, turnOn }: { fresh: boolean; program: AffiliateProgram; set: (p: Partial<AffiliateProgram>) => void; turnOn: () => void }) {
   if (!p.on)
     return <EmptyState icon={Handshake} title="The program is off" description="Switch it on and every student gets a link to share. You choose the commission." actions={<AdminButton onClick={turnOn}>Turn on the program</AdminButton>} />
   return (
     <div className="flex flex-col gap-4">
       <StatPanel
         stats={[
-          { label: "Students sharing", value: 46, delta: "of 199 members" },
-          { label: "Clicks · October", value: "1,204" },
-          { label: "Sign-ups", value: 31, delta: "2.6% of clicks" },
-          { label: "Earned by students", value: euro(1612), delta: "Paid with your platform payout" },
+          fresh ? { label: "Students sharing", value: 0, delta: "of 0 members" } : { label: "Students sharing", value: 46, delta: "of 199 members" },
+          fresh ? { label: "Clicks · this month", value: 0 } : { label: "Clicks · October", value: "1,204" },
+          fresh ? { label: "Sign-ups", value: 0 } : { label: "Sign-ups", value: 31, delta: "2.6% of clicks" },
+          { label: "Earned by students", value: euro(fresh ? 0 : 1612), delta: "Paid with your platform payout" },
         ]}
       />
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_440px]">
@@ -319,7 +321,12 @@ function Affiliates({ program: p, set, turnOn }: { program: AffiliateProgram; se
             <AdminTh width={116} align="end">Earned</AdminTh>
           </AdminTableHead>
           <tbody>
-            {TOP.map((t) => (
+            {fresh && (
+              <tr className="border-t border-a-border">
+                <td colSpan={3} className="px-5 py-8 text-center t-body-m text-a-text-2">No sign-ups yet.</td>
+              </tr>
+            )}
+            {(fresh ? [] : TOP).map((t) => (
               <AdminTr key={t.name}>
                 <AdminTd className="text-a-text">{t.name}</AdminTd>
                 <AdminTd align="end">{t.signups}</AdminTd>

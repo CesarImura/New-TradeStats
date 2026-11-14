@@ -4,6 +4,7 @@ import { addDays, addMinutes, addWeeks, differenceInCalendarDays, isBefore, star
 import type { Coach } from "./coaches"
 import { DEMO_STUDENT } from "./sample"
 import { setStored, useStored } from "@/lib/prototype-store"
+import { isSetupSlug } from "./communities"
 
 /**
  * Calendar: what the coach schedules (ADM-19 to ADM-22) and what students see
@@ -117,7 +118,7 @@ function seed(coach: Coach): Schedule {
 
 const SEEDS = new Map<string, Schedule>()
 const seedFor = (coach: Coach) => {
-  if (!SEEDS.has(coach.slug)) SEEDS.set(coach.slug, seed(coach))
+  if (!SEEDS.has(coach.slug)) SEEDS.set(coach.slug, isSetupSlug(coach.slug) ? { ...seed(coach), events: [], bookings: [] } : seed(coach))
   return SEEDS.get(coach.slug)!
 }
 /** Whether an event is one of the prototype's sample events rather than one the coach made. */

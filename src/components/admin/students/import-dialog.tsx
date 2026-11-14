@@ -140,7 +140,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
           {mode === "link" && (
             <div className="grid gap-2">
               <div className="flex gap-2">
-                <input readOnly aria-label="Invite link" value={`https://${coach.slug}.tradestats.app/join/${coach.tiers[0]?.id ?? "free"}-x8k2`} className={cn(adminControl, "h-11 min-w-0 flex-1 truncate")} />
+                <input readOnly aria-label="Invite link" value={`https://${coach.slug}.traderhub.io/join/${coach.tiers[0]?.id ?? "free"}-x8k2`} className={cn(adminControl, "h-11 min-w-0 flex-1 truncate")} />
                 <AdminButton hierarchy="secondary" size="xl" onClick={() => toast("Link copied")}>
                   <Link2 /> Copy
                 </AdminButton>

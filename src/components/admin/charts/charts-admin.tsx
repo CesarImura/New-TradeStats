@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { COACH_CHARTS, chartDefaults, INDICATORS, INTERVALS, MARKETS, type ChartSettings, type CoachChart, type Market } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { PageHeader, useCommunityData } from "../kit"
+import { useNewPlatform } from "../use-new-platform"
 import { AdminButton, AdminField, AdminFilter, AdminModal, AdminSearch, AdminSegmented, AdminTabs, Callout, EmptyState, Panel, Tag, adminControl } from "../ui"
 
 const TABS = [
@@ -19,12 +20,15 @@ const TABS = [
 type Tab = (typeof TABS)[number]["id"]
 
 /** Charts (Figma 533:8375, 01 Your charts, 02 Mark up a chart, 03 Settings, 04 No charts yet): the coach's marked-up charts and what the Charts section opens with. */
+const NO_CHARTS: CoachChart[] = []
+
 export function ChartsAdmin() {
   const { coach, base } = useCoach()
+  const fresh = useNewPlatform()
   const picked = (coach as { setup?: { markets?: Market[] } }).setup?.markets?.join() ?? ""
   const defaults = useMemo(() => chartDefaults(picked ? (picked.split(",") as Market[]) : undefined), [picked])
   const [s, setS] = useCommunityData<ChartSettings>(coach.slug, "charts", defaults)
-  const [charts, setCharts] = useCommunityData<CoachChart[]>(coach.slug, "coach-charts", COACH_CHARTS)
+  const [charts, setCharts] = useCommunityData<CoachChart[]>(coach.slug, "coach-charts", fresh ? NO_CHARTS : COACH_CHARTS)
   const [tab, setTab] = useState<Tab>("charts")
   const [q, setQ] = useState("")
   const [creating, setCreating] = useState(false)

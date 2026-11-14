@@ -11,6 +11,7 @@ import { DEFAULT_AI, aiAnswer, type AiReply, type AiSetup } from "@/lib/data/ai"
 import { AI_FEATURES, AI_KNOWLEDGE, AI_LIMITS, AI_QUESTIONS, type AiResult } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { PageHeader, useCommunityData } from "../kit"
+import { useNewPlatform } from "../use-new-platform"
 import { AdminButton, AdminField, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, AdminSegmented, CellPerson, EmptyState, FileIcon, Panel, PanelHeader, StatPanel, Tag, adminControl } from "../ui"
 
 const TABS = [
@@ -38,6 +39,7 @@ const MAX_MB = 50
 /** AI assistant (Figma 534:8164, 01 Personality, 02 Knowledge, 03 Features & quotas, 04 Test & correct, 05 Questions): what the coach's AI sounds like, what it knows, who gets what, and how it answers. */
 export function AiAdmin() {
   const { coach, base } = useCoach()
+  const isNew = useNewPlatform()
   const [stored, setAi] = useCommunityData(coach.slug, "ai", DEFAULT_AI)
   // Older saved setups lack the newer fields: fill them from the defaults.
   const ai: AiSetup = { ...DEFAULT_AI, ...stored, never: Array.isArray(stored.never) ? stored.never : DEFAULT_AI.never, on: { ...DEFAULT_AI.on, ...(stored.on ?? {}) }, limits: stored.limits ?? {}, uploaded: stored.uploaded ?? [] }
@@ -64,10 +66,10 @@ export function AiAdmin() {
       </div>
 
       {tab === "personality" && <Personality ai={ai} set={set} base={base} name={coach.wording.ai} />}
-      {tab === "knowledge" && <Knowledge ai={ai} set={set} />}
+      {tab === "knowledge" && <Knowledge ai={ai} set={set} sources={isNew ? [] : AI_KNOWLEDGE} />}
       {tab === "features" && <Features ai={ai} set={set} />}
       {tab === "test" && <TestChat corrections={ai.corrections} onCorrect={(c) => set({ corrections: [c, ...ai.corrections] })} />}
-      {tab === "questions" && <Questions />}
+      {tab === "questions" && <Questions rows={isNew ? [] : AI_QUESTIONS} />}
     </div>
   )
 }
@@ -172,11 +174,11 @@ function Personality({ ai, set, base, name }: { ai: AiSetup; set: (p: Partial<Ai
 
 const kindOf = (name: string) => (/\.pdf$/i.test(name) ? "PDF" : /\.(csv|txt)$/i.test(name) ? "Q&A list" : "Document")
 
-function Knowledge({ ai, set }: { ai: AiSetup; set: (p: Partial<AiSetup>) => void }) {
+function Knowledge({ ai, set, sources }: { ai: AiSetup; set: (p: Partial<AiSetup>) => void; sources: typeof AI_KNOWLEDGE }) {
   const input = useRef<HTMLInputElement>(null)
   const [over, setOver] = useState(false)
   // What is being learned right now, and when each source finished learning. The FAQ is mid-learning when you open the tab.
-  const [learning, setLearning] = useState<Record<string, boolean>>(() => Object.fromEntries(AI_KNOWLEDGE.filter((k) => k.learning).map((k) => [k.id, true])))
+  const [learning, setLearning] = useState<Record<string, boolean>>(() => Object.fromEntries(sources.filter((k) => k.learning).map((k) => [k.id, true])))
   const [fresh, setFresh] = useState<Record<string, boolean>>({})
   const timers = useRef<number[]>([])
   const learn = (id: string, ms = 2200) => {
@@ -189,7 +191,7 @@ function Knowledge({ ai, set }: { ai: AiSetup; set: (p: Partial<AiSetup>) => voi
     return () => (window.clearTimeout(first), t.forEach((x) => window.clearTimeout(x)))
   }, [])
 
-  const rows = [...AI_KNOWLEDGE.map((k) => ({ ...k, uploaded: false })), ...ai.uploaded.map((u) => ({ ...u, on: true, updated: "now", uploaded: true }))]
+  const rows = [...sources.map((k) => ({ ...k, uploaded: false })), ...ai.uploaded.map((u) => ({ ...u, on: true, updated: "now", uploaded: true }))]
   const isOn = (id: string, dflt: boolean) => ai.knowledge[id] ?? dflt
 
   const upload = (files: File[]) => {
@@ -216,7 +218,7 @@ function Knowledge({ ai, set }: { ai: AiSetup; set: (p: Partial<AiSetup>) => voi
           <Upload /> Add files
         </AdminButton>
       </div>
-      <AdminTable minWidth={680}>
+      {rows.length > 0 && <AdminTable minWidth={680}>
         <AdminTableHead>
           <AdminTh>Source</AdminTh>
           <AdminTh width={156}>Status</AdminTh>
@@ -250,7 +252,7 @@ function Knowledge({ ai, set }: { ai: AiSetup; set: (p: Partial<AiSetup>) => voi
             )
           })}
         </tbody>
-      </AdminTable>
+      </AdminTable>}
       <div onDragOver={(e) => (e.preventDefault(), !over && setOver(true))} onDragLeave={() => setOver(false)} onDrop={(e) => (e.preventDefault(), setOver(false), e.dataTransfer.files.length && upload([...e.dataTransfer.files]))} className={cn("rounded-a-lg transition-colors duration-300", over && "bg-a-accent-soft")}>
         <EmptyState
           icon={Upload}
@@ -486,7 +488,8 @@ const RESULT: Record<AiResult, { label: string; tone: "success" | "warning" | "n
   blocked: { label: "Not allowed", tone: "neutral" },
 }
 
-function Questions() {
+function Questions({ rows }: { rows: typeof AI_QUESTIONS }) {
+  if (rows.length === 0) return <EmptyState title="No questions yet" description="What students ask your AI shows up here, with where each answer came from." />
   return (
     <AdminTable minWidth={860} scrollLabel="Questions students asked">
       <AdminTableHead>
@@ -497,7 +500,7 @@ function Questions() {
         <AdminTh align="end">Asked</AdminTh>
       </AdminTableHead>
       <tbody>
-        {AI_QUESTIONS.map((r) => (
+        {rows.map((r) => (
           <AdminTr key={r.id}>
             <AdminTd><CellPerson initials={r.initials} name={r.student} /></AdminTd>
             <AdminTd className="text-a-text">{r.q}</AdminTd>

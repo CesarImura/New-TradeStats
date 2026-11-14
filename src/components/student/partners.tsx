@@ -35,7 +35,7 @@ export function StudentPartners({ props = {} }: { props?: Record<string, string 
   const visible = offers.filter((o) => access.locked === "show" || open(o))
   const kinds = PARTNER_KINDS.filter((k) => visible.some((o) => o.kind === k))
   const shown = visible.filter((o) => kind === "all" || o.kind === kind)
-  const link = `https://${coach.slug}.tradestats.app/?ref=${nick}`
+  const link = `https://${coach.slug}.traderhub.io/?ref=${nick}`
 
   return (
     <div className="flex flex-col page-gap">

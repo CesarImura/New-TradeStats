@@ -1,7 +1,7 @@
 {
   "terminal": {
     "name": "Terminal",
-    "blurb": "Dark, crisp, mono labels. Built on the TradeStats look.",
+    "blurb": "Dark, crisp, mono labels. Built on the TraderHub look.",
     "theme": {
       "template": "terminal",
       "mode": "dark",

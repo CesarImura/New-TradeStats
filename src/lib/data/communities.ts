@@ -116,6 +116,9 @@ export function customCommunities(): CustomCommunity[] {
   return read(KEY, NONE)
 }
 
+/** A platform made in setup (not one of the demo communities): it starts empty, with no sample students, files or sales. */
+export const isSetupSlug = (slug: string) => customCommunities().some((c) => c.slug === slug)
+
 export function saveCommunity(c: CustomCommunity) {
   const list = customCommunities()
   write(KEY, list.some((x) => x.slug === c.slug) ? list.map((x) => (x.slug === c.slug ? c : x)) : [...list, c])

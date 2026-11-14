@@ -350,7 +350,7 @@ function HelpButton() {
   const ways = [
     { icon: MessageCircle, label: "Chat with us", note: "Usually replies in a few minutes" },
     { icon: Phone, label: "WhatsApp", note: "+41 44 000 00 00" },
-    { icon: Mail, label: "E-mail", note: "help@tradestats.io" },
+    { icon: Mail, label: "E-mail", note: "help@traderhub.io" },
     { icon: CalendarCheck, label: "Book a call", note: "Pick a time that suits you" },
   ]
   return (

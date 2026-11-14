@@ -404,7 +404,7 @@ function Emails() {
       .replaceAll("{platform}", coach.name)
       .replaceAll("{first}", "Alex")
       .replaceAll("{coach}", coach.coachName)
-      .replaceAll("{link}", `${coach.slug}.tradestats.app/…`)
+      .replaceAll("{link}", `${coach.slug}.traderhub.io/…`)
       .replaceAll("{lesson}", "Daily loss limits")
       .replaceAll("{amount}", "€49")
       .replaceAll("{event}", "Live trading · NY open")

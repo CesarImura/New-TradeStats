@@ -1,5 +1,6 @@
 import { setStored, useStored } from "@/lib/prototype-store"
 import type { Coach } from "./coaches"
+import { isSetupSlug } from "./communities"
 
 /**
  * Livestreams: a coach schedules one, connects OBS, goes live, and ends it; the recording lands in Content.
@@ -39,7 +40,7 @@ export type Livestream = {
 }
 
 /** Where OBS sends the video. The same for every community: the platform's own streaming address. */
-export const STREAM_SERVER = "rtmps://live.tradestats.io:443/app"
+export const STREAM_SERVER = "rtmps://live.traderhub.io:443/app"
 
 const SEED = (): Livestream[] => [
   {
@@ -49,7 +50,7 @@ const SEED = (): Livestream[] => [
     startsAt: "2026-11-05T14:30",
     state: "scheduled",
     tiers: [],
-    key: "ts_live_9f3k2m8x7q1w4c6v5b0n",
+    key: "th_live_9f3k2m8x7q1w4c6v5b0n",
     peak: 0,
     viewers: 0,
     chat: [],
@@ -61,7 +62,7 @@ const SEED = (): Livestream[] => [
     startsAt: "2026-10-30T15:00",
     state: "ended",
     tiers: [],
-    key: "ts_live_2b7h4j9d3s8a1e6f5g0t",
+    key: "th_live_2b7h4j9d3s8a1e6f5g0t",
     minutes: 74,
     peak: 118,
     viewers: 0,
@@ -78,7 +79,7 @@ const cache = new Map<string, Livestream[]>()
 const seedFor = (coach: Coach) => {
   const hit = cache.get(coach.slug)
   if (hit) return hit
-  const list = SEED()
+  const list = isSetupSlug(coach.slug) ? [] : SEED()
   cache.set(coach.slug, list)
   return list
 }
@@ -98,7 +99,7 @@ export const patchLivestream = (coach: Coach, id: string, patch: Partial<Livestr
 
 const ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"
 /** A new stream key: long enough to be private. Only the coach sees it. */
-export const newStreamKey = () => "ts_live_" + Array.from({ length: 20 }, () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)]).join("")
+export const newStreamKey = () => "th_live_" + Array.from({ length: 20 }, () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)]).join("")
 
 /** "Thu 5 Nov, 14:30" */
 export function whenLabel(startsAt: string) {

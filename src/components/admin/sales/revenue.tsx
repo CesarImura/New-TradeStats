@@ -6,6 +6,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { isFreeTier } from "@/lib/data/access"
 import { MONEY, TRANSACTIONS } from "@/lib/data/people"
+import { useNewPlatform } from "../use-new-platform"
 import { AdminButton, AdminProgress, AdminSegmented, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, EmptyState, Panel, PanelHeader, StatPanel, Tag } from "../ui"
 
 /** Last six months. November is still running. */
@@ -22,9 +23,11 @@ const OCT = 4
 /** Sales · 01 Overview (Figma 535:7153): the month's numbers, what needs you, and what each tier brings in. */
 export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
   const { coach } = useCoach()
+  const fresh = useNewPlatform()
+  const months = fresh ? MONTHS.map((m) => ({ ...m, revenue: 0, members: 0 })) : MONTHS
   const paid = coach.tiers.filter((t) => !isFreeTier(t))
   const order = ["retrying", "failed", "disputed"]
-  const attention = TRANSACTIONS.filter((t) => order.includes(t.status)).sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status))
+  const attention = (fresh ? [] : TRANSACTIONS).filter((t) => order.includes(t.status)).sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status))
   const [metric, setMetric] = useState<"revenue" | "members">("revenue")
   const [hover, setHover] = useState<number | null>(null)
   const active = hover ?? OCT
@@ -37,9 +40,13 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
     <div className="flex flex-col gap-4">
       <StatPanel
         stats={[
-          { label: "Revenue · October", value: `€${MONEY.mrr.toLocaleString("en")}`, delta: `+${MONEY.mrrChange}% · €${MONEY.mrrMore.toLocaleString("en")} more`, tone: "success" },
+          fresh
+            ? { label: "Revenue · this month", value: "€0", delta: "No sales yet" }
+            : { label: "Revenue · October", value: `€${MONEY.mrr.toLocaleString("en")}`, delta: `+${MONEY.mrrChange}% · €${MONEY.mrrMore.toLocaleString("en")} more`, tone: "success" as const },
           { label: "Active members", value: paid.reduce((n, t) => n + t.members, 0).toLocaleString("en"), delta: "+14 this month" },
-          { label: "Next payout", value: `€${MONEY.nextPayout.amount.toLocaleString("en")}`, delta: `${MONEY.nextPayout.date} · Bank ••7` },
+          fresh
+            ? { label: "Next payout", value: "€0", delta: "Every Monday" }
+            : { label: "Next payout", value: `€${MONEY.nextPayout.amount.toLocaleString("en")}`, delta: `${MONEY.nextPayout.date} · Bank ••7` },
           { label: "Needs attention", value: attention.length, delta: `${attention.filter((t) => t.status !== "disputed").length} failed · ${attention.filter((t) => t.status === "disputed").length} disputed` },
         ]}
       />
@@ -47,14 +54,14 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
         <Panel>
           <PanelHeader title="Last 6 months, what students paid" actions={<AdminSegmented size="sm" label="Chart metric" value={metric} onChange={setMetric} options={[{ value: "revenue", label: "Revenue" }, { value: "members", label: "Members" }]} className="w-[168px]" />} />
           <ChartContainer config={{ [metric]: { label: metric === "revenue" ? "Revenue" : "Members", color: "var(--admin-color-accent-default)" } } satisfies ChartConfig} className="aspect-auto h-[230px] w-full">
-            <BarChart data={MONTHS} margin={{ top: 20, left: 0, right: 4 }} barCategoryGap="14%" onMouseMove={(st) => setHover(typeof st.activeTooltipIndex === "number" ? st.activeTooltipIndex : null)} onMouseLeave={() => setHover(null)}>
+            <BarChart data={months} margin={{ top: 20, left: 0, right: 4 }} barCategoryGap="14%" onMouseMove={(st) => setHover(typeof st.activeTooltipIndex === "number" ? st.activeTooltipIndex : null)} onMouseLeave={() => setHover(null)}>
               <CartesianGrid vertical={false} stroke="var(--admin-color-chart-grid)" />
               <YAxis tickLine={false} axisLine={false} width={44} tickFormatter={fmt} domain={metric === "revenue" ? [0, 40000] : [0, 200]} ticks={metric === "revenue" ? [0, 20000, 40000] : [0, 100, 200]} />
               <XAxis dataKey="month" tickLine={false} axisLine={false} />
               <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel formatter={(v) => <span className="tabular-nums">{metric === "revenue" ? `€${Number(v).toLocaleString("en")}` : v}</span>} />} />
               <Bar dataKey={metric} radius={[3, 3, 0, 0]} isAnimationActive={false}>
                 <LabelList dataKey={metric} position="top" formatter={(v: unknown) => fmt(Number(v))} className="fill-[var(--admin-color-text-secondary)] text-[11px]" />
-                {MONTHS.map((d, i) => (
+                {months.map((d, i) => (
                   <Cell key={d.month} fill={i === active ? "var(--admin-color-accent-default)" : "var(--admin-color-chart-bar-muted)"} fillOpacity={i === active ? 1 : 0.45} />
                 ))}
               </Bar>

@@ -2,6 +2,7 @@
 
 import type { Coach } from "./coaches"
 import { setStored, useStored } from "@/lib/prototype-store"
+import { isSetupSlug } from "./communities"
 
 /**
  * Partners: offers from brokers, prop firms and tools, and the coach's own
@@ -51,7 +52,7 @@ export const CATALOGUE: CatalogueOffer[] = [
   { id: "ftmo", name: "FTMO", kind: "prop", offer: "10% off the challenge", text: "Two-step evaluation, up to 90% profit split", commission: "10% of the fee" },
 ]
 
-export const catalogueUrl = (coachSlug: string, c: CatalogueOffer) => `https://go.tradestats.app/${coachSlug}/${c.id}`
+export const catalogueUrl = (coachSlug: string, c: CatalogueOffer) => `https://go.traderhub.io/${coachSlug}/${c.id}`
 
 /** The coach's own code: the coach's name and a number. */
 export const coachCode = (coach: Coach, n: number) => `${coach.coachName.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 6)}${n}`
@@ -80,6 +81,10 @@ const cache = new Map<string, PartnerOffer[]>()
 export function defaultOffers(coach: Coach): PartnerOffer[] {
   const hit = cache.get(coach.slug)
   if (hit) return hit
+  if (isSetupSlug(coach.slug)) {
+    cache.set(coach.slug, [])
+    return []
+  }
   const cat = (id: string) => CATALOGUE.find((c) => c.id === id)!
   const third = coach.tiers[2]?.id
   const list: PartnerOffer[] = [

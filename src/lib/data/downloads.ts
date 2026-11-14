@@ -2,6 +2,7 @@
 
 import type { Coach } from "./coaches"
 import { setStored, useStored } from "@/lib/prototype-store"
+import { isSetupSlug } from "./communities"
 
 /**
  * Downloads: files students can take beyond the ones attached to a lesson
@@ -70,7 +71,7 @@ const cache = new Map<string, DownloadItem[]>()
 export function defaultDownloads(coach: Coach): DownloadItem[] {
   const hit = cache.get(coach.slug)
   if (hit) return hit
-  const list = SEED(coach.tiers[1]?.id)
+  const list = isSetupSlug(coach.slug) ? [] : SEED(coach.tiers[1]?.id)
   cache.set(coach.slug, list)
   return list
 }

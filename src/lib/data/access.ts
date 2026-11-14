@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation"
 import type { Coach, Tier } from "./coaches"
 import type { Course } from "./learning"
 import { setStored, useStored } from "@/lib/prototype-store"
+import { isSetupSlug } from "./communities"
 
 /**
  * Tiers, groups and access (ADM-14, ADM-15, ADM-29 to ADM-31). One store per
@@ -141,7 +142,7 @@ export function defaultGroups(coach: Coach): Group[] {
   const hit = groupCache.get(coach.slug)
   if (hit) return hit
   const ids = coach.tiers.map((t) => t.id)
-  const list = SEED_GROUPS.map((g) => ({
+  const list = (isSetupSlug(coach.slug) ? [] : SEED_GROUPS).map((g) => ({
     ...g,
     tiers: [...new Set(g.tiers.map((i) => ids[Math.min(i, ids.length - 1)]).filter(Boolean))],
     waitlist: true,

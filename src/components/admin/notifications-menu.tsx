@@ -7,6 +7,7 @@ import { Bell } from "@/components/icons"
 import { AdminButton, AdminTabs, Tag } from "@/components/admin/ui"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { cn } from "@/lib/utils"
+import { useNewPlatform } from "./use-new-platform"
 
 type Filter = "all" | "payments" | "journal" | "students"
 type Notice = { id: string; title: string; detail: string; time: string; dot: string; filters: Filter[]; href: string }
@@ -20,6 +21,7 @@ const NOTICES: Notice[] = [
   { id: "n5", title: "Livestream starts in 1 hour", detail: "London open breakdown · 09:00", time: "1 d", dot: "bg-a-text-3", filters: [], href: "livestreams" },
   { id: "n6", title: "Payout delayed", detail: "Stripe needs a document from you", time: "2 d", dot: "bg-a-warning-fill", filters: ["payments"], href: "sales" },
 ]
+const NO_NOTICES: Notice[] = []
 const FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "payments", label: "Payments" },
@@ -37,8 +39,13 @@ export function NotificationsMenu({ base, anchorRef, paused = false }: { base: s
   if (paused && open) setOpen(false)
   const [filter, setFilter] = useState<Filter>("all")
   const [read, setRead] = useState<Set<string>>(() => new Set(["n5", "n6"]))
-  const unread = NOTICES.filter((n) => !read.has(n.id)).length
-  const shown = NOTICES.filter((n) => filter === "all" || n.filters.includes(filter))
+  // A platform made in setup has nothing yet: no sample payments or requests.
+  const fresh = useNewPlatform()
+  const notices = fresh ? NO_NOTICES : NOTICES
+  const unread = notices.filter((n) => !read.has(n.id)).length
+  const shown = notices.filter((n) => filter === "all" || n.filters.includes(filter))
+  // The tag counts what the list under the tabs holds, so it never says 4 above one row; the bell counts everything.
+  const unreadShown = shown.filter((n) => !read.has(n.id)).length
   const markRead = (...ids: string[]) => setRead((r) => new Set([...r, ...ids]))
 
   return (
@@ -56,8 +63,8 @@ export function NotificationsMenu({ base, anchorRef, paused = false }: { base: s
         <header className="flex shrink-0 items-center gap-2 px-4 py-3.5">
           <PopoverPrimitive.Title className="t-heading-s text-a-text">Notifications</PopoverPrimitive.Title>
           <PopoverPrimitive.Description className="sr-only">Payments, journal requests and live reminders</PopoverPrimitive.Description>
-          {unread > 0 && <Tag tone="accent" dot>{unread} new</Tag>}
-          <AdminButton hierarchy="ghost" size="md" className="ml-auto" disabled={unread === 0} onClick={() => markRead(...NOTICES.map((n) => n.id))}>
+          {unreadShown > 0 && <Tag tone="accent" dot>{unreadShown} new</Tag>}
+          <AdminButton hierarchy="ghost" size="md" className="ml-auto" disabled={unread === 0} onClick={() => markRead(...notices.map((n) => n.id))}>
             Mark all read
           </AdminButton>
         </header>

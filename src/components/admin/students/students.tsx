@@ -10,6 +10,7 @@ import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
 import { EmptyState, PageHeader } from "../kit"
 import { AdminButton, AdminFilter, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, CellPerson, CellProgress, CellStack, StatPanel, Tag } from "../ui"
 import { SetupTip } from "../setup-checklist"
+import { useNewPlatform } from "../use-new-platform"
 import { ImportDialog } from "./import-dialog"
 import { MessageDialog } from "./student-message"
 import { StudentProfile } from "./student-profile"
@@ -18,10 +19,13 @@ export { MessageDialog } from "./student-message"
 
 type Filter = "all" | "help" | "invited" | "paused"
 const PAGE = 8
+const NO_STUDENTS: Student[] = []
 
 /** Students (Figma 518:7152, 01 List, 02 Selected, 06 No results): the questions a coach asks as tabs, a table that opens a profile drawer, import, message. */
 export function StudentsPage() {
   const { coach } = useCoach()
+  const fresh = useNewPlatform()
+  const students = fresh ? NO_STUDENTS : STUDENTS
   const [q, setQ] = useState("")
   const [filter, setFilter] = useState<Filter>("all")
   const [tier, setTier] = useState("")
@@ -35,7 +39,7 @@ export function StudentsPage() {
 
   const rows = useMemo(
     () =>
-      STUDENTS.filter((s) => {
+      students.filter((s) => {
         if (q && !`${s.name} ${s.email}`.toLowerCase().includes(q.toLowerCase())) return false
         if (filter === "help" && s.health === "green") return false
         if (filter === "paused" && !paused.includes(s.id)) return false
@@ -44,20 +48,20 @@ export function StudentsPage() {
         if (group && s.group !== group) return false
         return true
       }).sort((a, b) => rank(a) - rank(b)),
-    [q, filter, tier, group, coach, paused],
+    [q, filter, tier, group, coach, paused, students],
   )
   const pages = Math.max(1, Math.ceil(rows.length / PAGE))
   const at = Math.min(page, pages - 1)
   const shown = rows.slice(at * PAGE, at * PAGE + PAGE)
   const counts = {
-    all: STUDENTS.length,
-    help: STUDENTS.filter((s) => s.health !== "green").length,
-    invited: STUDENTS.filter((s) => s.joined.startsWith("invited")).length,
+    all: students.length,
+    help: students.filter((s) => s.health !== "green").length,
+    invited: students.filter((s) => s.joined.startsWith("invited")).length,
     paused: paused.length,
   }
-  const joinedThisMonth = STUDENTS.filter((s) => /Oct 2026|Sep 2026/.test(s.joined)).length
+  const joinedThisMonth = students.filter((s) => /Oct 2026|Sep 2026/.test(s.joined)).length
   const onPage = shown.filter((r) => picked.includes(r.id)).length
-  const selected = STUDENTS.filter((s) => picked.includes(s.id))
+  const selected = students.filter((s) => picked.includes(s.id))
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
   /** Changing what is shown goes back to the first page and keeps the selection only for what is still listed. */
   const refine = <T,>(set: (v: T) => void) => (v: T) => {
@@ -78,7 +82,7 @@ export function StudentsPage() {
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
       <PageHeader
         title="Students"
-        text={`${coach.name} · ${STUDENTS.length} students · ${joinedThisMonth} joined this month`}
+        text={students.length === 0 ? `${coach.name} · No students yet` : `${coach.name} · ${label(students.length)} · ${joinedThisMonth} joined this month`}
         actions={
           <>
             <AdminButton onClick={() => toast("Export started", { description: "students.csv with the columns you see." })} hierarchy="secondary">
@@ -94,9 +98,9 @@ export function StudentsPage() {
 
       <StatPanel
         stats={[
-          { label: "Active this week", value: STUDENTS.filter((s) => s.activeDays > 0 && !s.joined.startsWith("invited")).length, delta: `${Math.round((STUDENTS.filter((s) => s.activeDays > 0).length / Math.max(STUDENTS.length, 1)) * 100)}% of all students` },
+          { label: "Active this week", value: students.filter((s) => s.activeDays > 0 && !s.joined.startsWith("invited")).length, delta: `${Math.round((students.filter((s) => s.activeDays > 0).length / Math.max(students.length, 1)) * 100)}% of all students` },
           { label: "Need help", value: counts.help, delta: "Rules broken or stuck" },
-          { label: "Payment issues", value: STUDENTS.filter((s) => s.reason?.toLowerCase().includes("payment")).length, delta: "Retrying automatically" },
+          { label: "Payment issues", value: students.filter((s) => s.reason?.toLowerCase().includes("payment")).length, delta: "Retrying automatically" },
           { label: "Invited", value: counts.invited, delta: "Haven't joined yet" },
         ]}
       />
@@ -165,7 +169,14 @@ export function StudentsPage() {
         </AdminToolbar>
       )}
 
-      {rows.length === 0 ? (
+      {students.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="No students yet"
+          description="Import a list or share your link. Everyone who joins shows up here with their progress."
+          actions={<AdminButton onClick={() => setImporting(true)}><Plus /> Import or invite</AdminButton>}
+        />
+      ) : rows.length === 0 ? (
         <EmptyState
           icon={Users}
           title="No students match"

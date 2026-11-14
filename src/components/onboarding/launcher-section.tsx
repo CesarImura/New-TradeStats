@@ -46,7 +46,7 @@ export function LauncherOnboarding() {
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">{c.name}</span>
                 <span className={`${mono} text-[0.6875rem] text-white/40`}>
-                  {c.status === "live" ? `${c.slug}.tradestats.app` : "Setting up"}
+                  {c.status === "live" ? `${c.slug}.traderhub.io` : "Setting up"}
                 </span>
               </span>
               <Link href={`/c/${c.slug}`} className={`${mono} text-white/70 hover:text-white`}>

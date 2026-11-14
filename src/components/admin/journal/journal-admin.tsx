@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { PageHeader, useCommunityData } from "../kit"
 import { AdminButton, AdminField, AdminFilter, AdminModal, AdminSearch, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, CellPerson, EmptyState, Panel, StatPanel, Tag, adminControl } from "../ui"
 import { AnswerPage } from "./journal-answer"
+import { useNewPlatform } from "../use-new-platform"
 
 /** Who sent which sample trade. In the prototype every student shares the same sample journal. */
 const OWNER: Record<string, string> = { t1: "s2", t2: "s5", t3: "s4", t4: "s1", t5: "s6", t6: "s7", t7: "s1" }
@@ -22,12 +23,14 @@ const AI_DRAFT: Record<string, string> = {
   t4: "Good read and a clean entry. Closing early before CPI talk is a valid reason, but then write it down as a rule before the trade, not during it. Next time: half off at 1R, rest to target.",
 }
 type Trades = ReturnType<typeof allTrades>
+const NO_TRADES: Trades = []
 
 /** Journal & feedback (Figma 525:7152, 01 to 07): requests, answered, the rules of the journal, and the answer page. */
 export function JournalAdmin() {
   const { coach } = useCoach()
   const store = useFeedback(coach.slug)
-  const trades = allTrades(store)
+  const fresh = useNewPlatform()
+  const trades = fresh ? NO_TRADES : allTrades(store)
   const waiting = trades.filter((t) => t.review === "waiting").sort((a, b) => a.id.localeCompare(b.id))
   const answered = trades.filter((t) => t.review === "answered")
   const [tab, setTab] = useState<"requests" | "answered" | "rules">("requests")

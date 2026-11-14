@@ -5,6 +5,7 @@ import { Download, MoreHorizontal, RotateCcw } from "@/components/icons"
 import { toast } from "sonner"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { TRANSACTIONS, TXN_COUNTS, type Txn } from "@/lib/data/people"
+import { useNewPlatform } from "../use-new-platform"
 import { AdminButton, AdminFilter, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, AdminToolbar, Tag } from "../ui"
 
 const TXN_TONE = { paid: "success", failed: "danger", retrying: "warning", refunded: "neutral", disputed: "danger" } as const
@@ -17,10 +18,11 @@ export function Transactions() {
   const [filter, setFilter] = useState<"all" | "failed" | "disputed" | "refunded">("all")
   const [month, setMonth] = useState("oct")
   const [q, setQ] = useState("")
+  const fresh = useNewPlatform()
   const [rows, setRows] = useState(TRANSACTIONS)
   // The list is the newest few; the counts are the whole month, moved by what you do here.
-  const count = (st: "failed" | "disputed" | "refunded") => TXN_COUNTS[st] + rows.filter((t) => t.status === st).length - TRANSACTIONS.filter((t) => t.status === st).length
-  const inMonth = month === "oct" ? rows : []
+  const count = (st: "failed" | "disputed" | "refunded") => fresh ? 0 : TXN_COUNTS[st] + rows.filter((t) => t.status === st).length - TRANSACTIONS.filter((t) => t.status === st).length
+  const inMonth = month === "oct" && !fresh ? rows : []
   const shown = inMonth.filter((t) => (filter === "all" || t.status === filter) && (!q.trim() || `${t.who} ${t.what}`.toLowerCase().includes(q.trim().toLowerCase())))
   const dispute = () => toast("Send proof", { description: "We add the login history and course progress for you." })
 
@@ -32,7 +34,7 @@ export function Transactions() {
           value={filter}
           onChange={setFilter}
           tabs={[
-            { id: "all", label: "All payments", count: TXN_COUNTS.all.toLocaleString("en") },
+            { id: "all", label: "All payments", count: fresh ? 0 : TXN_COUNTS.all.toLocaleString("en") },
             { id: "failed", label: "Failed", count: count("failed") },
             { id: "disputed", label: "Disputed", count: count("disputed") },
             { id: "refunded", label: "Refunded", count: count("refunded") },
@@ -54,7 +56,7 @@ export function Transactions() {
         <tbody>
           {shown.length === 0 && (
             <tr className="border-t border-a-border">
-              <td colSpan={6} className="px-5 py-10 text-center t-body-m text-a-text-2">{month === "oct" ? "No payments match." : "Older months aren't in this prototype."}</td>
+              <td colSpan={6} className="px-5 py-10 text-center t-body-m text-a-text-2">{fresh ? "No payments yet. They show up here after your first sale." : month === "oct" ? "No payments match." : "Older months aren't in this prototype."}</td>
             </tr>
           )}
           {shown.map((t) => (
