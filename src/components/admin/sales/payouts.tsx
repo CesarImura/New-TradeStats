@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { AlertTriangle, ArrowUp, Loader2, X } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
+import { account } from "@/lib/data/communities"
 import { MONEY } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { useCommunityData } from "../kit"
@@ -177,7 +178,9 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
   // Open on the saved values every time (derived state, no effect).
   if (step !== key) {
     setKey(step)
-    setForm({ ...state, holder: state.holder ?? state.name })
+    // The legal name starts from the name given at sign-up (Flavio, 14/11); the coach checks it against the ID.
+    const name = state.name ?? (step !== null ? account()?.name : undefined)
+    setForm({ ...state, name, holder: state.holder ?? name })
     setTried(false)
     setFile(null)
   }

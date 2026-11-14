@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 import { Field, NativeSelect, Page, PageHeader, SettingRow, useCommunityData } from "../kit"
 import { AdminButton, AdminDrawer, AdminField, AdminModal, Panel, PanelHeader, Tag, adminControl } from "../ui"
 import { useWizardCommunity } from "../setup-checklist"
+import { account } from "@/lib/data/communities"
 
 /** Figma "Admin · 15 Settings": a menu of five groups (icon, mono label, pages) beside one page at a time. */
 const GROUPS = [
@@ -499,6 +500,8 @@ function Legal() {
   const fresh = !!useWizardCommunity(coach.slug)
   const [texts, setTexts] = useCommunityData<Record<string, string>>(coach.slug, "legal-v2", NO_TEXTS)
   const [imprint, setImprint] = useCommunityData<Imprint>(coach.slug, "legal-imprint", NO_IMPRINT)
+  // The legal name given in Payouts, if any: the imprint starts from it (Flavio, 14/11).
+  const [payouts] = useCommunityData<{ name?: string }>(coach.slug, "payouts-v2", {})
   const [dates, setDates] = useCommunityData<Record<string, string>>(coach.slug, "legal-dates", NO_DATES)
   const [sel, setSel] = useState<LegalId | null>(null)
   const isSet = (id: LegalId) => !fresh || (id === "imprint" ? !!imprint.name : texts[id] !== undefined)
@@ -559,6 +562,7 @@ function Legal() {
         page={LEGAL_PAGES.find((l) => l.id === sel) ?? null}
         first={!!sel && !isSet(sel)}
         imprint={!fresh && !imprint.name ? { name: `${coach.org}`, address: "", email: "" } : imprint}
+        legalName={payouts.name}
         text={sel && sel !== "imprint" ? texts[sel] ?? TEMPLATE[sel](coach.name) : ""}
         onClose={() => setSel(null)}
         onSaveImprint={(v) => (setImprint(v), saved("imprint"))}
@@ -570,7 +574,7 @@ function Legal() {
 }
 
 /** One legal page in a drawer: the imprint's fields, or a template's text (Figma 1049:3267, 1049:3728). */
-function LegalDrawer({ page, first, imprint, text, onClose, onSaveImprint, onSaveText, template }: { page: { id: LegalId; name: string; subtitle: string } | null; first: boolean; imprint: Imprint; text: string; template: string; onClose: () => void; onSaveImprint: (v: Imprint) => void; onSaveText: (id: Exclude<LegalId, "imprint">, v: string) => void }) {
+function LegalDrawer({ page, first, imprint, legalName, text, onClose, onSaveImprint, onSaveText, template }: { page: { id: LegalId; name: string; subtitle: string } | null; first: boolean; imprint: Imprint; legalName?: string; text: string; template: string; onClose: () => void; onSaveImprint: (v: Imprint) => void; onSaveText: (id: Exclude<LegalId, "imprint">, v: string) => void }) {
   const [form, setForm] = useState<Imprint>(imprint)
   const [body, setBody] = useState(text)
   const [key, setKey] = useState<string | null>(null)
@@ -578,7 +582,9 @@ function LegalDrawer({ page, first, imprint, text, onClose, onSaveImprint, onSav
   // Open on what was saved (derived state, no effect).
   if ((page?.id ?? null) !== key) {
     setKey(page?.id ?? null)
-    setForm(imprint)
+    // A blank imprint starts from what we know: the legal name from Payouts (or the sign-up name) and the sign-up e-mail.
+    const me = page ? account() : null
+    setForm({ ...imprint, name: imprint.name || legalName || me?.name || "", email: imprint.email || me?.email || "" })
     setBody(text)
     setTried(false)
   }
