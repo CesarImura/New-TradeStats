@@ -375,6 +375,15 @@ Um arquivo de componente passa de ~600 linhas? Divida por responsabilidade, sem 
 - Getting started: cinco itens (Design, curso, tier, payouts, legal) e Go live (`TimelineStep` em `admin/ui`). Go live confirma o endereço e publica; You're live abre com `?live=1` (link para copiar e convites por e-mail em chips).
 - Design (`/setup`, `onboarding/design-setup.tsx`): Brand, Look e Layout no mesmo rascunho do editor Design; à direita a plataforma real num iframe em escala (esqueleto no passo Brand). Finish marca `setup.design`.
 - Tours (`admin/tour`): o passo mostrado é o ÚLTIMO cujo alvo `data-tour="…"` está na tela; condições ficam em atributos (`data-picked`, `data-named`, `data-state`, `data-ready`, `data-complete`) e no seletor. Pausar (Skip ou Do it later) guarda onde parou; Getting started mostra "Paused at …" e Resume. O último passo marca o item. Ao mexer em telas com alvo de tour, manter os atributos `data-tour`.
+- Ajustes do Flavio (14/11, Figma "Admin · 01 Onboarding" 1090:57491):
+  - Ordem Design → Tier → Curso → Payouts → Legal, em qualquer ordem. O sugerido (borda laranja) é o primeiro não feito e não adiado; "Skip for now" guarda o item em `setup.skipped` (some quando só falta um). Go live fica travado e diz "Still open: …".
+  - Tier: "Courses it unlocks" na aba Plan (All courses ou Pick courses; Pick só com 2+ cursos), guardado no tier como `unlocks` e escrito em cada curso ao salvar (o acesso continua lido do curso). Tier antigo sem `unlocks` lê dos cursos (`tierUnlocks`). Billing tem Free: esconde preço, anual e trial; o card mostra "Free" (`cadence: "free"`; os tiers grátis de exemplo, preço 0, continuam fora de Sales).
+  - New course tem 2 passos (Course, Content); o acesso sai de `tiersForNewCourse` (tiers com All courses; `NO_TIER` quando todos escolheram cursos). O tour do curso não tem mais o passo Access.
+  - Plataforma em rascunho: curso em draft com aula visível é "Ready for launch" (`readyForLaunch`) e o Go live publica esses cursos.
+  - Nome legal do Payouts e Imprint começam do cadastro (`proto:account`); o Imprint usa o nome do Payouts quando houver.
+  - About you e Name your platform têm Back e guardam o que foi escolhido (`answers`, `nameDraft` na conta).
+  - Um tour por vez: abrir outro pausa o atual em `<slug>:tours-paused`; Getting started mostra "Paused at …" e Resume para cada um.
+  - Design: o preview é um card (32 px da borda, `rounded-a-xl`, borda) e o Brand avisa que tudo muda depois no editor.
 - O wizard antigo (`wizard.tsx`, `wizard-design.tsx`, `steps.tsx`, `look-steps.tsx`, `invite.tsx`, `publish.tsx`, `/setup/invite`, `/setup/publish`) foi apagado em 13/11 com o ok do Gustavo; `/signup/call` e `/signup/welcome` só redirecionam links antigos; as dicas antigas (`SetupTip`) de curso, tier e payouts não aparecem mais (o tour cobre).
 
 ## Logo Traderhub (13/11)
