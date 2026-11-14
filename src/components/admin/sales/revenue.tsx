@@ -46,7 +46,7 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
         <Panel>
           <PanelHeader title="Last 6 months, what students paid" actions={<AdminSegmented size="sm" label="Chart metric" value={metric} onChange={setMetric} options={[{ value: "revenue", label: "Revenue" }, { value: "members", label: "Members" }]} className="w-[168px]" />} />
-          <ChartContainer config={{ [metric]: { label: metric === "revenue" ? "Revenue" : "Members", color: "var(--admin-color-accent-strong)" } } satisfies ChartConfig} className="aspect-auto h-[230px] w-full">
+          <ChartContainer config={{ [metric]: { label: metric === "revenue" ? "Revenue" : "Members", color: "var(--admin-color-accent-default)" } } satisfies ChartConfig} className="aspect-auto h-[230px] w-full">
             <BarChart data={MONTHS} margin={{ top: 20, left: 0, right: 4 }} barCategoryGap="14%" onMouseMove={(st) => setHover(typeof st.activeTooltipIndex === "number" ? st.activeTooltipIndex : null)} onMouseLeave={() => setHover(null)}>
               <CartesianGrid vertical={false} stroke="var(--admin-color-chart-grid)" />
               <YAxis tickLine={false} axisLine={false} width={44} tickFormatter={fmt} domain={metric === "revenue" ? [0, 40000] : [0, 200]} ticks={metric === "revenue" ? [0, 20000, 40000] : [0, 100, 200]} />
@@ -55,7 +55,7 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
               <Bar dataKey={metric} radius={[3, 3, 0, 0]} isAnimationActive={false}>
                 <LabelList dataKey={metric} position="top" formatter={(v: unknown) => fmt(Number(v))} className="fill-[var(--admin-color-text-secondary)] text-[11px]" />
                 {MONTHS.map((d, i) => (
-                  <Cell key={d.month} fill={i === active ? "var(--admin-color-accent-strong)" : "var(--admin-color-chart-bar-muted)"} fillOpacity={i === active ? 1 : 0.45} />
+                  <Cell key={d.month} fill={i === active ? "var(--admin-color-accent-default)" : "var(--admin-color-chart-bar-muted)"} fillOpacity={i === active ? 1 : 0.45} />
                 ))}
               </Bar>
             </BarChart>

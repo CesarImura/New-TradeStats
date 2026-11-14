@@ -215,7 +215,7 @@ function ChartBar({ x = 0, y = 0, width = 0, height = 0 }: BarShapeProps) {
       <rect className="ov-layer ov-col" x={x - (slot - width) / 2 - 0.75} y={0} width={slot + 1.5} height="100%" fill="var(--admin-color-bg-raised)" opacity={0} />
       <path className="ov-layer ov-rest" d={d} fill="var(--admin-primitive-orange-800)" />
       <path className="ov-layer ov-grey" d={d} fill="var(--admin-color-bg-track)" opacity={0} />
-      <path className="ov-layer ov-active" d={d} fill="url(#overview-bar-active)" opacity={0} style={{ filter: "drop-shadow(0 0 12px rgb(255 85 0 / 0.45))" }} />
+      <path className="ov-layer ov-active" d={d} fill="var(--admin-color-accent-default)" opacity={0} style={{ filter: "drop-shadow(0 0 12px rgb(207 69 0 / 0.45))" }} />
     </g>
   )
 }
@@ -247,7 +247,7 @@ function RunningOverview() {
   }, [barM, lineM, range, share])
   const config = {
     bar: { label: barM.label, color: "var(--admin-color-bg-track)" },
-    line: { label: lineM.label, color: "var(--admin-color-accent-strong)" },
+    line: { label: lineM.label, color: "var(--admin-color-accent-default)" },
   } satisfies ChartConfig
   const headline = [
     { label: "Active students", value: "194", delta: "+6.2% vs last 30 days", tone: "success" as const, href: "students" },
@@ -302,7 +302,7 @@ function RunningOverview() {
           <AdminTabs label="Overview view" tabs={VIEWS.map((v) => ({ id: v.id, label: v.label }))} value={view} onChange={setView} />
           <div className="flex flex-wrap items-center gap-2">
             <ul className="mr-2 flex items-center gap-4 t-body-m text-a-text-2">
-              <li className="flex items-center gap-1.5"><span aria-hidden className="size-2 rounded-[2px] bg-a-accent-strong" />{barM.label}</li>
+              <li className="flex items-center gap-1.5"><span aria-hidden className="size-2 rounded-[2px] bg-a-accent" />{barM.label}</li>
               <li className="flex items-center gap-1.5"><span aria-hidden className="h-[3px] w-3.5 rounded-full bg-a-text" />{lineM.label}</li>
             </ul>
             <AdminFilter label="Tier" value={tier} onValueChange={setTier} options={Object.entries(tiers).map(([value, label]) => ({ value, label }))} />
@@ -314,12 +314,6 @@ function RunningOverview() {
           <div className="relative h-56 border-y border-a-border-subtle md:h-[238px] [&_.recharts-line]:pointer-events-none [&_.recharts-active-dot]:pointer-events-none [&_.ov-layer]:transition-opacity [&_.ov-layer]:duration-[400ms] [&_.ov-layer]:ease-[ease] motion-reduce:[&_.ov-layer]:transition-none [&:has(.ov-bar:hover)_.ov-rest]:!opacity-0 [&:has(.ov-bar:hover)_.ov-bar:not(:hover)_.ov-grey]:!opacity-100 [&_.ov-bar:hover_.ov-active]:!opacity-100 [&_.ov-bar:hover_.ov-col]:!opacity-100" style={{ backgroundImage: "radial-gradient(circle, var(--admin-color-chart-grid) 0.75px, transparent 1px)", backgroundSize: "16px 16px" }}>
             <ChartContainer config={config} className="aspect-auto h-full w-full [&_.recharts-surface]:overflow-visible [&_.recharts-wrapper]:overflow-visible">
               <ComposedChart data={data} margin={{ left: 0, right: 0, top: 4, bottom: 0 }} barCategoryGap="24%">
-                <defs>
-                  <linearGradient id="overview-bar-active" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#FF8529" />
-                    <stop offset="100%" stopColor="#FF5500" />
-                  </linearGradient>
-                </defs>
                 <XAxis xAxisId="bar" dataKey="i" hide />
                 <XAxis xAxisId="line" dataKey="i" type="number" domain={[0, Math.max(data.length - 1, 1)]} hide />
                 <YAxis yAxisId="bar" hide domain={[0, "auto"]} />
@@ -336,7 +330,7 @@ function RunningOverview() {
                   dot={(p: { cx?: number; cy?: number; index?: number }) =>
                     p.index === 0 || p.index === data.length - 1 ? <circle key={p.index} cx={p.cx} cy={p.cy} r={2} fill="var(--admin-color-text-primary)" /> : <g key={p.index} />
                   }
-                  activeDot={{ r: 4, fill: "var(--admin-color-text-primary)", stroke: "var(--admin-color-accent-strong)", strokeWidth: 2 }}
+                  activeDot={{ r: 4, fill: "var(--admin-color-text-primary)", stroke: "var(--admin-color-accent-default)", strokeWidth: 2 }}
                   isAnimationActive={false}
                 />
               </ComposedChart>
@@ -459,7 +453,7 @@ function OverviewTooltip({ bar, line, active, payload }: { bar: Metric; line: Me
   const d = payload?.[0]?.payload
   if (!active || !d) return null
   const rows = [
-    { key: "bar", name: bar.label, value: format(bar, d.bar), marker: "size-2 rounded-[2px] bg-a-accent-strong" },
+    { key: "bar", name: bar.label, value: format(bar, d.bar), marker: "size-2 rounded-[2px] bg-a-accent" },
     { key: "line", name: line.label, value: format(line, d.line), marker: "h-0.5 w-2 bg-a-text" },
   ]
   return (
