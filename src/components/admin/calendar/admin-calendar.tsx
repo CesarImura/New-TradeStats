@@ -370,7 +370,7 @@ function AvailabilityTab() {
           {coach.tiers.map((t) => (
             <label key={t.id} className="flex items-center justify-between gap-3 t-body-m text-a-text">
               {t.name}
-              <input type="number" min={0} aria-label={`Calls per month for ${t.name}`} value={a.perMonth[t.id] ?? 0} onChange={(x) => set({ perMonth: { ...a.perMonth, [t.id]: Math.max(0, Number(x.target.value)) } })} className={cn(adminControl, "h-8 w-16 px-2 text-center")} />
+              <input type="number" min={0} aria-label={`Calls per month for ${t.name}`} value={a.perMonth[t.id] ?? 0} onChange={(x) => set({ perMonth: { ...a.perMonth, [t.id]: Math.max(0, Number(x.target.value)) } })} className={cn(adminControl, "h-8 w-16 px-3 tabular-nums")} />
             </label>
           ))}
           <p className="t-caption text-a-text-3">By tier. 0 means the tier can&apos;t book.</p>

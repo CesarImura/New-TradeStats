@@ -56,7 +56,7 @@ export function RankingAdmin() {
         text="Leaderboard, competitions, points and badges"
         actions={
           <>
-            <Tag tone="warning" dot>V2</Tag>
+            <Tag tone="accent" dot>V2</Tag>
             <AdminButton onClick={() => setEditing("new")}>
               <Plus /> New competition
             </AdminButton>

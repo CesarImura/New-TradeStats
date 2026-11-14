@@ -53,7 +53,7 @@ export function AiAdmin() {
         text="Answers students 24/7 from your courses and notes"
         actions={
           <>
-            <Tag tone="warning" dot>V2</Tag>
+            <Tag tone="accent" dot>V2</Tag>
             <AdminButton hierarchy="secondary" onClick={() => setTab("test")}>
               <Play /> Test it
             </AdminButton>

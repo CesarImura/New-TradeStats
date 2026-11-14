@@ -13,7 +13,7 @@ import { newStreamKey, lengthLabel, saveLivestreams, untilLabel, useLivestreams,
 import { saveCatalog, uid, useCatalog, type Lesson } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
 import { PageHeader } from "../kit"
-import { AdminSelect, AdminButton, AdminField, AdminFilter, AdminModal, AdminSearch, AdminSegmented, AdminTable, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, EmptyState, Tag, adminControl } from "../ui"
+import { AdminSelect, AdminButton, AdminField, AdminModal, AdminSearch, AdminSegmented, AdminTable, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, EmptyState, Tag, adminControl } from "../ui"
 
 const LENGTHS = [30, 45, 60, 90, 120, 180].map((m) => ({ value: String(m), label: lengthLabel(m) }))
 type Tab = "upcoming" | "live" | "past"
