@@ -110,7 +110,7 @@ export function SignupFrame({ children, action, aside }: { children: React.React
       <Column action={action}>
         <div className="flex w-full max-w-[600px] flex-col gap-5 py-6 sm:p-10">{children}</div>
       </Column>
-      {aside ? <aside className="sticky top-0 hidden h-svh min-w-0 flex-1 pl-8 xl:flex">{aside}</aside> : <Hero />}
+      {aside ? <aside className="sticky top-0 hidden h-svh min-w-0 flex-1 p-8 xl:flex">{aside}</aside> : <Hero />}
     </div>
   )
 }

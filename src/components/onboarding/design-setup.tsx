@@ -199,7 +199,7 @@ function BrandStep({ community, coach, theme, change, onNext, onTyping }: { comm
   }
 
   return (
-    <StepCard title="Your brand" text="Add your logo and pick a colour. You’ll see it on your platform as you go." next={onNext} disabled={name.trim().length < 2}>
+    <StepCard title="Your brand" text="Add your logo and pick a colour. You can change all of this, and much more, later in the design editor." next={onNext} disabled={name.trim().length < 2}>
       <AdminField label="Platform name" error={name.trim().length < 2 ? "Give your platform a name." : undefined}>
         {(f) => (
           <span className="relative block">
@@ -712,8 +712,8 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
   const height = Math.round(Math.max((FIG.screenH / FIG.screen) * BASE, base ? (size.h - FIG.top * k) / base + 24 : 0))
 
   return (
-    // The Editor's canvas (the same grey as the Design workspace) with its dot grid.
-    <div ref={box} className="relative size-full overflow-hidden bg-[#2b2b2e] before:absolute before:inset-y-0 before:left-0 before:z-10 before:w-px before:bg-a-border" style={{ backgroundImage: "radial-gradient(circle, var(--admin-color-border-default) 1px, transparent 1.4px)", backgroundSize: "16px 16px" }}>
+    // The Editor's canvas (the same grey as the Design workspace) with its dot grid, as a floating card (Figma 1090:58764).
+    <div ref={box} className="relative size-full overflow-hidden rounded-a-xl border border-a-border bg-[#2b2b2e]" style={{ backgroundImage: "radial-gradient(circle, var(--admin-component-editor-canvas-dot) 1px, transparent 1.4px)", backgroundSize: "16px 16px" }}>
       {size.w > 0 && (
         <>
           <div
