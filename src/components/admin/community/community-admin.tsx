@@ -12,7 +12,7 @@ import { ANNOUNCEMENTS, DISCORD_ROLES } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { PageHeader, useCommunityData } from "../kit"
 import { SetupTip, useWizardCommunity } from "../setup-checklist"
-import { AdminButton, AdminDrawer, AdminField, AdminFilter, AdminModal, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, Callout, EmptyState, Panel, SortHint, SortableRow, Tag, adminControl, useMoveFeedback } from "../ui"
+import { AdminSelect, AdminButton, AdminDrawer, AdminField, AdminFilter, AdminModal, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, Callout, EmptyState, Panel, SortHint, SortableRow, Tag, adminControl, useMoveFeedback } from "../ui"
 import { dropLine } from "@/components/kit/drop-line"
 
 export type Announcement = (typeof ANNOUNCEMENTS)[number] & { tiers?: string[]; scheduled?: string; space?: string }
@@ -387,7 +387,7 @@ function SpaceDialog({ space, onClose, onSave }: { space: Space | "new" | null; 
       </AdminField>
       <div className="grid gap-1.5">
         <span className="t-caption text-a-text">Who sees it</span>
-        <AdminFilter ariaLabel="Who sees it" value={audience} onValueChange={setAudience} options={[{ value: "", label: "Everyone" }, ...coach.tiers.map((t) => ({ value: t.id, label: t.name }))]} className="w-full justify-between" />
+        <AdminSelect ariaLabel="Who sees it" value={audience} onValueChange={setAudience} options={[{ value: "", label: "Everyone" }, ...coach.tiers.map((t) => ({ value: t.id, label: t.name }))]} />
       </div>
     </AdminModal>
   )

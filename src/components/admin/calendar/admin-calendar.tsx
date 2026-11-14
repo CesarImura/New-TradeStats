@@ -31,7 +31,7 @@ import {
 import { cn } from "@/lib/utils"
 import { PageHeader } from "../kit"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
-import { AdminButton, AdminDrawer, AdminField, AdminFilter, AdminModal, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, Callout, EmptyState, OptionCard, Panel, StepIndicator, Tag, adminControl } from "../ui"
+import { AdminSelect, AdminButton, AdminDrawer, AdminField, AdminFilter, AdminModal, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, Callout, EmptyState, OptionCard, Panel, StepIndicator, Tag, adminControl } from "../ui"
 import { AdminMonth, AdminWeek, KIND_DOT } from "./calendar-views"
 
 const RANGE = { from: addDays(NOW, -45), to: addDays(NOW, 75) }
@@ -232,7 +232,7 @@ function EventModal({ event, isNew, onClose }: { event: CalEvent | null; isNew: 
               </AdminField>
               <div className="grid gap-1.5">
                 <span className="t-caption text-a-text">Length</span>
-                <AdminFilter ariaLabel="Length" value={String(e.minutes)} onValueChange={(v) => set({ minutes: Number(v) })} options={lengths} className="h-11! w-full justify-between" />
+                <AdminSelect ariaLabel="Length" value={String(e.minutes)} onValueChange={(v) => set({ minutes: Number(v) })} options={lengths} />
               </div>
             </div>
           </div>
@@ -363,7 +363,7 @@ function AvailabilityTab() {
         </div>
         <div className="grid gap-1.5">
           <span className="t-caption text-a-text">Book at least</span>
-          <AdminFilter ariaLabel="Book at least" value={String(a.noticeHours)} onValueChange={(v) => set({ noticeHours: Number(v) })} options={[...new Set([1, 2, 6, 12, 24, 48, a.noticeHours])].sort((x, y) => x - y).map((h) => ({ value: String(h), label: `${h} h ahead` }))} className="h-9! w-full justify-between" />
+          <AdminSelect ariaLabel="Book at least" value={String(a.noticeHours)} onValueChange={(v) => set({ noticeHours: Number(v) })} options={[...new Set([1, 2, 6, 12, 24, 48, a.noticeHours])].sort((x, y) => x - y).map((h) => ({ value: String(h), label: `${h} h ahead` }))} />
         </div>
         <div className="grid gap-2">
           <span className="t-caption text-a-text">Calls per month</span>

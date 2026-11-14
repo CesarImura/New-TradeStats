@@ -11,7 +11,7 @@ import { COACH_CHARTS, chartDefaults, INDICATORS, INTERVALS, MARKETS, type Chart
 import { cn } from "@/lib/utils"
 import { PageHeader, useCommunityData } from "../kit"
 import { useNewPlatform } from "../use-new-platform"
-import { AdminButton, AdminField, AdminFilter, AdminModal, AdminSearch, AdminSegmented, AdminTabs, Callout, EmptyState, Panel, Tag, adminControl } from "../ui"
+import { AdminSelect, AdminButton, AdminField, AdminModal, AdminSearch, AdminSegmented, AdminTabs, Callout, EmptyState, Panel, Tag, adminControl } from "../ui"
 
 const TABS = [
   { id: "charts", label: "Your charts" },
@@ -224,7 +224,7 @@ function Settings({ s, setS }: { s: ChartSettings; setS: (n: ChartSettings | ((c
         </div>
         <div className="grid gap-1.5">
           <span className="t-caption text-a-text">Timeframe</span>
-          <AdminFilter ariaLabel="Timeframe" value={s.interval} onValueChange={(v) => set({ interval: v })} options={INTERVALS.map((i) => ({ value: i.id, label: i.label }))} className="w-full justify-between" />
+          <AdminSelect ariaLabel="Timeframe" value={s.interval} onValueChange={(v) => set({ interval: v })} options={INTERVALS.map((i) => ({ value: i.id, label: i.label }))} />
         </div>
         <div className="grid gap-1.5">
           <span className="t-caption text-a-text">Indicators to start with</span>
@@ -312,11 +312,11 @@ function NewChart({ open, onOpenChange, onSave, symbols }: { open: boolean; onOp
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-1.5">
             <span className="t-caption text-a-text">Symbol</span>
-            <AdminFilter ariaLabel="Symbol" value={symbol} onValueChange={setSymbol} options={symbols.map((x) => ({ value: x.tv, label: x.name }))} className="h-11! w-full justify-between" />
+            <AdminSelect ariaLabel="Symbol" value={symbol} onValueChange={setSymbol} options={symbols.map((x) => ({ value: x.tv, label: x.name }))} />
           </div>
           <div className="grid gap-1.5">
             <span className="t-caption text-a-text">Timeframe</span>
-            <AdminFilter ariaLabel="Timeframe" value={interval} onValueChange={setInterval} options={INTERVALS.map((i) => ({ value: i.id, label: i.label }))} className="h-11! w-full justify-between" />
+            <AdminSelect ariaLabel="Timeframe" value={interval} onValueChange={setInterval} options={INTERVALS.map((i) => ({ value: i.id, label: i.label }))} />
           </div>
         </div>
         <fieldset className="grid gap-2">

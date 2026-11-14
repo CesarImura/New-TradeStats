@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 import { useCommunityData } from "../kit"
 import { useWizardCommunity } from "../setup-checklist"
 import { isFreeTier, useTiers } from "@/lib/data/access"
-import { AdminButton, AdminDrawer, AdminField, AdminFilter, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, Callout, Dropzone, OptionCard, Panel, PanelHeader, StatPanel, StepIndicator, Tag, adminControl } from "../ui"
+import { AdminSelect, AdminButton, AdminDrawer, AdminField, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, Callout, Dropzone, OptionCard, Panel, PanelHeader, StatPanel, StepIndicator, Tag, adminControl } from "../ui"
 
 type Payouts = { step: number; done: boolean; country?: string; kind?: "person" | "company"; iban?: string; /** Full legal name, as on the ID. */ name?: string; holder?: string; /** The ID is being checked (it clears by itself in the prototype). */ review?: boolean }
 const STEPS = [
@@ -230,7 +230,7 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
             <OptionCard checked={form.kind === "company"} onSelect={() => set({ kind: "company", name: form.name === account()?.name ? "" : form.name })} title="A company" description="You sell through a registered business" />
           </div>
           <AdminField label="Country">
-            {() => <AdminFilter ariaLabel="Country" value={form.country ?? "DE"} onValueChange={(v) => set({ country: v })} options={COUNTRIES} className="h-11! w-full justify-between" />}
+            {() => <AdminSelect ariaLabel="Country" value={form.country ?? "DE"} onValueChange={(v) => set({ country: v })} options={COUNTRIES} />}
           </AdminField>
           <AdminField label={form.kind === "company" ? "Company name" : "Full legal name"} hint={form.kind === "company" ? "Exactly as registered" : "Exactly as on your ID"} error={tried && !nameOk ? "Type the name as it is on your ID." : undefined}>
             {(p) => <input {...p} autoFocus value={form.name ?? ""} onChange={(e) => set({ name: e.target.value })} placeholder={form.kind === "company" ? "Your company’s name" : "Your legal name"} className={cn(adminControl, "h-11")} />}

@@ -7,7 +7,7 @@ import { Check, FileSpreadsheet, Link2 } from "@/components/icons"
 import { Checkbox } from "@/components/ui/checkbox"
 import { GROUPS } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
-import { AdminButton, AdminField, AdminFilter, AdminModal, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, Callout, Dropzone, FileItem, OptionCard, StepIndicator, adminControl } from "../ui"
+import { AdminSelect, AdminButton, AdminField, AdminFilter, AdminModal, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, Callout, Dropzone, FileItem, OptionCard, StepIndicator, adminControl } from "../ui"
 
 /** What a "sample" CSV from another platform looks like: the first row is what the coach sees in the Example column. */
 const SAMPLE_NAME = "students-export.csv"
@@ -184,10 +184,10 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
         <>
           <div className="grid gap-4 sm:grid-cols-2">
             <AdminField label="Tier">
-              {() => <AdminFilter ariaLabel="Tier" value={tier} onValueChange={setTier} options={coach.tiers.map((t) => ({ value: t.id, label: `${t.name} · ${t.price}` }))} className="w-full justify-between" />}
+              {() => <AdminSelect ariaLabel="Tier" value={tier} onValueChange={setTier} options={coach.tiers.map((t) => ({ value: t.id, label: `${t.name} · ${t.price}` }))} />}
             </AdminField>
             <AdminField label="Group" optional>
-              {() => <AdminFilter ariaLabel="Group" value={group} onValueChange={setGroup} options={[{ value: "", label: "No group" }, ...GROUPS.map((g) => ({ value: g.name, label: g.name }))]} className="w-full justify-between" />}
+              {() => <AdminSelect ariaLabel="Group" value={group} onValueChange={setGroup} options={[{ value: "", label: "No group" }, ...GROUPS.map((g) => ({ value: g.name, label: g.name }))]} />}
             </AdminField>
           </div>
           <InviteToggle invite={invite} setInvite={setInvite} coachName={coach.coachName} />

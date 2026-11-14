@@ -2,6 +2,7 @@
 
 import { useId } from "react"
 import { cn } from "@/lib/utils"
+import { SelectField } from "@/components/kit/select-field"
 
 /** Admin / Field control (Figma 'Admin · Forms'): 44px, radius md, field fill, subtle hairline; hover strong, focus orange, error red. */
 export const adminControl = "w-full rounded-a-md border border-a-border-subtle bg-a-field px-3 t-body-l text-a-text outline-none placeholder:text-a-text-3 transition-colors duration-300 hover:border-a-border-strong focus-visible:border-a-border-focus disabled:pointer-events-none disabled:opacity-40 aria-[invalid=true]:border-a-border-danger"
@@ -39,4 +40,12 @@ export function AdminField({ label, optional, hint, error, className, children }
       {note && <span id={`${id}-note`} className={cn("t-caption", error ? "text-a-danger" : "text-a-text-3")}>{note}</span>}
     </div>
   )
+}
+
+/**
+ * Admin / Select, the select of a form field: 44 px tall with the field's own border, fill and 15 px text, the same as the inputs around it.
+ * Pair it with `AdminField`. For a filter in a toolbar (32 px, 12 px text) use `AdminFilter`.
+ */
+export function AdminSelect({ ariaLabel, id, value, onValueChange, options, className }: { ariaLabel?: string; id?: string; value: string; onValueChange: (v: string) => void; options: readonly { value: string; label: string }[]; className?: string }) {
+  return <SelectField id={id} aria-label={ariaLabel} value={value} onValueChange={onValueChange} options={options} className={cn(adminControl, "h-11! w-full justify-between", className)} />
 }

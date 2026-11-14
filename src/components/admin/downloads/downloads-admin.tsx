@@ -13,7 +13,7 @@ import { DOWNLOAD_CATEGORIES, categoryLabel, daysAgo, saveDownloads, shortDate, 
 import { useCatalog } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
 import { PageHeader } from "../kit"
-import { AdminButton, AdminDrawer, AdminField, AdminFilter, AdminSearch, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, Callout, Dropzone, EmptyState, FileIcon, FileItem, Tag, adminControl } from "../ui"
+import { AdminSelect, AdminButton, AdminDrawer, AdminField, AdminFilter, AdminSearch, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, Callout, Dropzone, EmptyState, FileIcon, FileItem, Tag, adminControl } from "../ui"
 
 const TYPES: Record<string, string> = {
   pdf: "PDF",
@@ -214,7 +214,7 @@ function UploadDrawer({ item, onClose }: { item?: DownloadItem; onClose: () => v
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-1.5">
             <span className="t-caption text-a-text">Category</span>
-            <AdminFilter ariaLabel="Category" value={category} onValueChange={(v) => setCategory(v as DownloadCategory)} options={DOWNLOAD_CATEGORIES.map((c) => ({ value: c.id, label: c.label }))} className="h-11! w-full justify-between" />
+            <AdminSelect ariaLabel="Category" value={category} onValueChange={(v) => setCategory(v as DownloadCategory)} options={DOWNLOAD_CATEGORIES.map((c) => ({ value: c.id, label: c.label }))} />
           </div>
           <AdminField label="Version">
             <input value={`v${version}`} onChange={(e) => setVersion(e.target.value.replace(/^v+/i, ""))} inputMode="decimal" className={cn(adminControl, "h-11 tabular-nums")} />

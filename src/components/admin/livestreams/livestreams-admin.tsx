@@ -13,7 +13,7 @@ import { newStreamKey, lengthLabel, saveLivestreams, untilLabel, useLivestreams,
 import { saveCatalog, uid, useCatalog, type Lesson } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
 import { PageHeader } from "../kit"
-import { AdminButton, AdminField, AdminFilter, AdminModal, AdminSearch, AdminSegmented, AdminTable, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, EmptyState, Tag, adminControl } from "../ui"
+import { AdminSelect, AdminButton, AdminField, AdminFilter, AdminModal, AdminSearch, AdminSegmented, AdminTable, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, EmptyState, Tag, adminControl } from "../ui"
 
 const LENGTHS = [30, 45, 60, 90, 120, 180].map((m) => ({ value: String(m), label: lengthLabel(m) }))
 type Tab = "upcoming" | "live" | "past"
@@ -234,7 +234,7 @@ function ScheduleModal({ stream, onClose }: { stream: Livestream | "new" | null;
         </AdminField>
         <div className="grid gap-1.5">
           <span className="t-caption text-a-text">Where this livestream is</span>
-          <AdminFilter ariaLabel="Where this livestream is" value={where} onValueChange={setWhere} options={[{ value: "both", label: "Calendar and Live page" }, { value: "live", label: "Live page only" }]} className="h-11! w-full justify-between" />
+          <AdminSelect ariaLabel="Where this livestream is" value={where} onValueChange={setWhere} options={[{ value: "both", label: "Calendar and Live page" }, { value: "live", label: "Live page only" }]} />
         </div>
       </div>
       <hr className="m-0 h-px shrink-0 border-0 bg-a-border-subtle" />
@@ -259,7 +259,7 @@ function ScheduleModal({ stream, onClose }: { stream: Livestream | "new" | null;
           </AdminField>
           <div className="grid gap-1.5">
             <span className="t-caption text-a-text">Length</span>
-            <AdminFilter ariaLabel="Length" value={len} onValueChange={setLen} options={lengths} className="h-11! w-full justify-between" />
+            <AdminSelect ariaLabel="Length" value={len} onValueChange={setLen} options={lengths} />
           </div>
         </div>
       </div>
@@ -315,11 +315,11 @@ export function SaveLessonModal({ stream, onClose }: { stream: Livestream | null
       <div className="flex flex-col gap-4">
         <div className="grid gap-1.5">
           <span className="t-caption text-a-text">Course</span>
-          <AdminFilter ariaLabel="Course" value={courseId} onValueChange={(v) => (setCourseId(v), setModuleId(""))} options={catalog.courses.map((c) => ({ value: c.id, label: c.title }))} className="h-11! w-full justify-between" />
+          <AdminSelect ariaLabel="Course" value={courseId} onValueChange={(v) => (setCourseId(v), setModuleId(""))} options={catalog.courses.map((c) => ({ value: c.id, label: c.title }))} />
         </div>
         <div className="grid gap-1.5">
           <span className="t-caption text-a-text">Module</span>
-          <AdminFilter ariaLabel="Module" value={mod?.id ?? ""} onValueChange={setModuleId} options={(course?.modules ?? []).map((m, i) => ({ value: m.id, label: `${i + 1} · ${m.title}` }))} className="h-11! w-full justify-between" />
+          <AdminSelect ariaLabel="Module" value={mod?.id ?? ""} onValueChange={setModuleId} options={(course?.modules ?? []).map((m, i) => ({ value: m.id, label: `${i + 1} · ${m.title}` }))} />
         </div>
         <AdminField label="Title">
           <input value={title} onChange={(e) => setTitle(e.target.value)} className={cn(adminControl, "h-11")} />

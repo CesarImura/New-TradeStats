@@ -11,7 +11,7 @@ import { useTiers, isFreeTier } from "@/lib/data/access"
 import { CATALOGUE, KIND_LABEL, PARTNER_KINDS, fromCatalogue, saveAffiliate, saveOffers, useAffiliate, useOffers, type AffiliateProgram, type PartnerKind, type PartnerOffer } from "@/lib/data/partners"
 import { cn } from "@/lib/utils"
 import { PageHeader } from "../kit"
-import { AdminButton, AdminField, AdminFilter, AdminModal, AdminSearch, AdminSegmented, AdminTable, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, Callout, EmptyState, Panel, StatPanel, Tag, adminControl } from "../ui"
+import { AdminSelect, AdminButton, AdminField, AdminModal, AdminSearch, AdminSegmented, AdminTable, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, Callout, EmptyState, Panel, StatPanel, Tag, adminControl } from "../ui"
 import { useNewPlatform } from "../use-new-platform"
 
 const euro = (n: number) => `€${n.toLocaleString("en")}`
@@ -230,7 +230,7 @@ function OwnDialog({ item, onClose }: { item?: PartnerOffer; onClose: () => void
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tradeify" disabled={fixed} className={cn(adminControl, "h-11")} />
         </AdminField>
         <AdminField label="Kind">
-          {() => <AdminFilter ariaLabel="Kind" value={kind} onValueChange={(v) => setKind(v as PartnerKind)} options={PARTNER_KINDS.map((k) => ({ value: k, label: KIND_LABEL[k] }))} className="h-11! w-full justify-between" />}
+          {() => <AdminSelect ariaLabel="Kind" value={kind} onValueChange={(v) => setKind(v as PartnerKind)} options={PARTNER_KINDS.map((k) => ({ value: k, label: KIND_LABEL[k] }))} />}
         </AdminField>
       </div>
       <AdminField label="Offer" hint="What the student gets" error={tried ? errors.offer : undefined}>
@@ -302,7 +302,7 @@ function Affiliates({ fresh, program: p, set, turnOn }: { fresh: boolean; progra
               )}
             </AdminField>
             <AdminField label="Link stays valid" hint="If the friend joins within this time of clicking">
-              {() => <AdminFilter ariaLabel="Link stays valid" value={String(p.cookieDays)} onValueChange={(v) => set({ cookieDays: Number(v) })} options={DAYS} className="h-11! w-full justify-between" />}
+              {() => <AdminSelect ariaLabel="Link stays valid" value={String(p.cookieDays)} onValueChange={(v) => set({ cookieDays: Number(v) })} options={DAYS} />}
             </AdminField>
           </div>
           <div className="grid gap-1.5">
