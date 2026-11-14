@@ -7,6 +7,7 @@ import { setStored, useStored } from "@/lib/prototype-store"
 import { SelectOptions } from "@/components/kit/select-field"
 import { ControlLabel } from "@/components/kit/control-label"
 import { cn } from "@/lib/utils"
+import { useCustomCommunities } from "@/lib/data/use-communities"
 import { AdminPageHeader } from "@/components/admin/ui"
 
 /** Title row of an admin page (Admin / Page header): title, one plain sentence, the page's actions, and its video guide. */
@@ -78,7 +79,11 @@ export function HealthDot({ health, className }: { health: "red" | "amber" | "gr
  * Prototype data for one community, kept in the browser. `fallback` must be a
  * stable value (a module constant).
  */
-export function useCommunityData<T>(slug: string, key: string, fallback: T): [T, (next: T | ((c: T) => T)) => void] {
-  const value = useStored<T>(`${slug}:${key}`, fallback)
-  return [value, (next) => setStored<T>(`${slug}:${key}`, next, fallback)]
+export function useCommunityData<T>(slug: string, key: string, fallback: T, /** What a platform made in setup starts with instead of the sample `fallback` (a stable value). */ emptyInSetup?: T): [T, (next: T | ((c: T) => T)) => void] {
+  const stored = useStored<T>(`${slug}:${key}`, fallback)
+  const setup = useCustomCommunities().some((c) => c.slug === slug)
+  const empty = emptyInSetup ?? fallback
+  // Until the browser knows it is a setup platform the sample is what renders (it matches the server); then the untouched sample is swapped for the empty one.
+  const value = setup && stored === fallback ? empty : stored
+  return [value, (next) => setStored<T>(`${slug}:${key}`, next, setup ? empty : fallback)]
 }

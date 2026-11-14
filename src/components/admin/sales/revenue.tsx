@@ -43,7 +43,7 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
           fresh
             ? { label: "Revenue · this month", value: "€0", delta: "No sales yet" }
             : { label: "Revenue · October", value: `€${MONEY.mrr.toLocaleString("en")}`, delta: `+${MONEY.mrrChange}% · €${MONEY.mrrMore.toLocaleString("en")} more`, tone: "success" as const },
-          { label: "Active members", value: paid.reduce((n, t) => n + t.members, 0).toLocaleString("en"), delta: "+14 this month" },
+          { label: "Active members", value: paid.reduce((n, t) => n + t.members, 0).toLocaleString("en"), delta: fresh ? "No members yet" : "+14 this month" },
           fresh
             ? { label: "Next payout", value: "€0", delta: "Every Monday" }
             : { label: "Next payout", value: `€${MONEY.nextPayout.amount.toLocaleString("en")}`, delta: `${MONEY.nextPayout.date} · Bank ••7` },

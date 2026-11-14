@@ -72,7 +72,7 @@ export function JournalAdmin() {
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
       <PageHeader
         title="Journal & feedback"
-        text="Journal, rules and feedback requests · 312 entries in the last 30 days"
+        text={fresh ? "Journal, rules and feedback requests · No entries yet" : "Journal, rules and feedback requests · 312 entries in the last 30 days"}
         actions={
           tab === "rules" ? (
             <AdminButton hierarchy="secondary" nativeButton={false} render={<a href={`/c/${coach.slug}/journal`} target="_blank" rel="noreferrer" />}>
@@ -88,10 +88,10 @@ export function JournalAdmin() {
       {tab !== "rules" && (
         <StatPanel
           stats={[
-            { label: "Waiting for you", value: waiting.length, delta: waiting.length ? "Oldest 2 days" : "All caught up", tone: waiting.length ? "neutral" : "success" },
-            { label: "Answered this week", value: answered.length, delta: "Median reply 6 h" },
-            { label: "Rules kept", value: "84%", delta: "+3 pp vs last 30 days", tone: "success" },
-            { label: "Journaling students", value: 121, delta: "60% of active students" },
+            { label: "Waiting for you", value: waiting.length, delta: fresh ? "No requests yet" : waiting.length ? "Oldest 2 days" : "All caught up", tone: waiting.length || fresh ? "neutral" : "success" },
+            { label: "Answered this week", value: answered.length, delta: fresh ? "Shows once you answer" : "Median reply 6 h" },
+            fresh ? { label: "Rules kept", value: "—", delta: "Shows once students trade" } : { label: "Rules kept", value: "84%", delta: "+3 pp vs last 30 days", tone: "success" as const },
+            fresh ? { label: "Journaling students", value: 0, delta: "Shows once students journal" } : { label: "Journaling students", value: 121, delta: "60% of active students" },
           ]}
         />
       )}

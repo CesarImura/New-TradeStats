@@ -140,11 +140,11 @@ export function SetupTip({ task }: { task: TaskId }) {
   if (GUIDED.includes(task)) return null
   if (!tip || !t || t.done || closed.includes(task)) return null
   return (
-    <aside className="flex items-start gap-3 rounded-lg border bg-card p-4 text-sm" aria-label={tip.title}>
-      <Lightbulb className="mt-0.5 size-4 shrink-0 text-[var(--ts-interactive)]" aria-hidden />
+    <aside className="flex items-start gap-3 rounded-a-lg border border-a-border bg-a-panel p-4 t-body-m text-a-text" aria-label={tip.title}>
+      <Lightbulb className="mt-0.5 size-4 shrink-0 text-a-text-accent" aria-hidden />
       <div className="grid min-w-0 flex-1 gap-1.5">
-        <p className="font-medium">{tip.title}</p>
-        <ol className="grid list-decimal gap-1 pl-4 text-muted-foreground">
+        <p className="t-body-m-medium text-a-text">{tip.title}</p>
+        <ol className="grid list-decimal gap-1 pl-4 text-a-text-2">
           {tip.steps.map((s) => (
             <li key={s}>{s}</li>
           ))}

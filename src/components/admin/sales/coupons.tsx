@@ -33,11 +33,13 @@ export function NewCouponButton({ onClick }: { onClick: () => void }) {
   )
 }
 
+const NO_COUPONS: Coupon[] = []
+
 /** Sales · 07 Coupons (Figma 536:7402) and 08 New coupon (536:7623). */
 export function Coupons({ newSignal }: { newSignal: number }) {
   const { coach } = useCoach()
   const tiers = useTiers(coach)
-  const [saved, setList] = useCommunityData<Coupon[]>(coach.slug, "coupons", COUPONS)
+  const [saved, setList] = useCommunityData<Coupon[]>(coach.slug, "coupons", COUPONS, NO_COUPONS)
   // Saved before the redesign the list has no kind: start from the samples then.
   const list = Array.isArray(saved) && saved.every((c) => "kind" in c) ? saved : COUPONS
   const [open, setOpen] = useState(false)
@@ -48,7 +50,7 @@ export function Coupons({ newSignal }: { newSignal: number }) {
     setOpen(true)
   }, [newSignal])
 
-  const tierText = (c: Coupon) => (c.tiers.length === 0 ? "All tiers" : c.tiers.map((id) => tiers.find((t) => t.id === id)?.name ?? id).join(", "))
+  const tierText = (c: Coupon) => (c.tiers.length === 0 ? "All tiers" : c.tiers.flatMap((id) => tiers.find((t) => t.id === id)?.name ?? []).join(", ") || "No tier yet")
   const copy = (code: string) => {
     void navigator.clipboard?.writeText(code).catch(() => {})
     toast(`${code} copied`)

@@ -25,6 +25,7 @@ const DEFAULT_DISCORD: DiscordSetup = {
 }
 /** A community made in setup starts without Discord (the demo ones have it connected). */
 const NO_DISCORD: DiscordSetup = { ...DEFAULT_DISCORD, connected: false }
+const NO_ANNOUNCEMENTS: Announcement[] = []
 const SERVER_ROLES = ["@inner-circle", "@core", "@desk", "@vip", "@members", "@funded", "No role"]
 const CHANNELS = [
   { id: "platform", label: "Platform", post: "On the platform" },
@@ -46,7 +47,7 @@ type Tab = (typeof TABS)[number]["id"]
 /** Community (Figma 534:7152, 01 to 05): announcements, spaces and rules, and the Discord connection. */
 export function CommunityAdmin() {
   const { coach } = useCoach()
-  const [list, setList] = useCommunityData<Announcement[]>(coach.slug, "announcements", ANNOUNCEMENTS)
+  const [list, setList] = useCommunityData<Announcement[]>(coach.slug, "announcements", ANNOUNCEMENTS, NO_ANNOUNCEMENTS)
   const [spaces, setSpaces] = useCommunityData<Space[]>(coach.slug, "spaces", DEFAULT_SPACES)
   const [rules, setRules] = useCommunityData<string[]>(coach.slug, "rules", DEFAULT_RULES)
   const [d, setD] = useCommunityData(coach.slug, "discord", useWizardCommunity(coach.slug) ? NO_DISCORD : DEFAULT_DISCORD)

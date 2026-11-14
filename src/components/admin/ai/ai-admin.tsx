@@ -62,7 +62,7 @@ export function AiAdmin() {
         }
       />
       <div className="flex flex-wrap items-center gap-2">
-        <AdminTabs label="AI assistant" tabs={TABS} value={tab} onChange={setTab} />
+        <AdminTabs label="AI assistant" tabs={isNew ? TABS.map((t) => (t.id === "questions" ? { ...t, count: 0 } : t)) : TABS} value={tab} onChange={setTab} />
       </div>
 
       {tab === "personality" && <Personality ai={ai} set={set} base={base} name={coach.wording.ai} />}

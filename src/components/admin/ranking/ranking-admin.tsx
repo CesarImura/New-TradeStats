@@ -13,6 +13,7 @@ import { isFreeTier, useGroups, useTiers } from "@/lib/data/access"
 import { ADMIN_BADGES, COMPETITIONS, COMPETITION_METRICS, POINTS, competitionState, dayLabel, type Competition } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { PageHeader, useCommunityData } from "../kit"
+import { useNewPlatform } from "../use-new-platform"
 import { AdminButton, AdminField, AdminFilter, AdminModal, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, Callout, EmptyState, Panel, PanelHeader, Tag, adminControl } from "../ui"
 
 export type RankingSetup = { metric: string; period: string; nicknames: boolean; optOut: boolean; competitions: Competition[]; points: typeof POINTS; badges?: typeof ADMIN_BADGES }
@@ -34,6 +35,7 @@ const BOARD = [
   { name: "Alex Moreau", initials: "AM", tier: "Trading Desk", group: "oct", points: 1604, rules: 74, change: -2, week: 0.2, all: 3.7 },
   { name: "Priya Nair", initials: "PN", tier: "Inner Circle", group: "nov", points: 1511, rules: 90, change: 1, week: 0.26, all: 4.4 },
 ]
+const NEW_RANKING: RankingSetup = { ...DEFAULT_RANKING, competitions: [] }
 const PERIODS = [{ value: "week", label: "This week" }, { value: "month", label: "This month" }, { value: "all", label: "All time" }]
 const TABS = [{ id: "leaderboard", label: "Leaderboard" }, { id: "competitions", label: "Competitions" }, { id: "points", label: "Points & badges" }] as const
 type Tab = (typeof TABS)[number]["id"]
@@ -42,7 +44,8 @@ const metricName = (m: Competition["metric"]) => COMPETITION_METRICS.find((x) =>
 /** Ranking (Figma 537:7989: 01 Leaderboard, 02 Competitions, 03 New competition, 04 Points & badges). */
 export function RankingAdmin() {
   const { coach, base } = useCoach()
-  const [stored, setR] = useCommunityData(coach.slug, "ranking", DEFAULT_RANKING)
+  const fresh = useNewPlatform()
+  const [stored, setR] = useCommunityData(coach.slug, "ranking", DEFAULT_RANKING, NEW_RANKING)
   const r = normalizeRanking(stored)
   const [tab, setTab] = useState<Tab>("leaderboard")
   const [editing, setEditing] = useState<Competition | "new" | null>(null)
@@ -72,7 +75,7 @@ export function RankingAdmin() {
         <AdminTabs label="Ranking sections" tabs={TABS} value={tab} onChange={setTab} />
         {tab === "leaderboard" && <LeaderboardControls period={r.period} setPeriod={(v) => set({ period: v })} group={group} setGroup={setGroup} />}
       </div>
-      {tab === "leaderboard" && <Leaderboard period={r.period} group={group} />}
+      {tab === "leaderboard" && <Leaderboard period={r.period} group={group} fresh={fresh} />}
       {tab === "competitions" && <Competitions list={r.competitions} setList={(l) => set({ competitions: l })} onEdit={setEditing} onNew={() => setEditing("new")} />}
       {tab === "points" && <PointsAndBadges r={r} set={set} />}
       <CompetitionModal
@@ -100,8 +103,8 @@ function LeaderboardControls({ period, setPeriod, group, setGroup }: { period: s
   )
 }
 
-function Leaderboard({ period, group }: { period: string; group: string }) {
-  const rows = BOARD.filter((b) => group === "all" || b.group === group)
+function Leaderboard({ period, group, fresh }: { period: string; group: string; fresh: boolean }) {
+  const rows = (fresh ? [] : BOARD).filter((b) => group === "all" || b.group === group)
     .map((b) => ({ ...b, shown: Math.round(period === "week" ? b.points * b.week : period === "all" ? b.points * b.all : b.points) }))
     .sort((a, b) => b.shown - a.shown)
   return (
@@ -117,7 +120,7 @@ function Leaderboard({ period, group }: { period: string; group: string }) {
       <tbody>
         {rows.length === 0 && (
           <tr className="border-t border-a-border">
-            <td colSpan={6} className="px-5 py-10 text-center t-body-m text-a-text-2">No one in this group has points yet.</td>
+            <td colSpan={6} className="px-5 py-10 text-center t-body-m text-a-text-2">{fresh ? "No points yet. Students earn them with lessons, journal entries and rules kept." : "No one in this group has points yet."}</td>
           </tr>
         )}
         {rows.map((l, i) => (
