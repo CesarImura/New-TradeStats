@@ -7,7 +7,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
-import { addTier, amount, isFreeTier, per, saveTier, setPreviewAs, useTiers, type TierExtra, type TierInfo } from "@/lib/data/access"
+import { NO_TIER, addTier, amount, isFreeTier, per, saveTier, setPreviewAs, tierUnlocks, useTiers, type TierExtra, type TierInfo } from "@/lib/data/access"
 import { saveCatalog, useCatalog } from "@/lib/data/learning"
 import { setStored, useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
@@ -15,10 +15,12 @@ import { AdminButton, AdminDrawer, AdminSegmented, AdminUnderlineTabs, Callout, 
 
 const NO_EXTRA: Record<string, TierExtra> = {}
 
-const cadenceOf = (c: string) => (c === "once" ? "once" : c === "quarter" ? "quarter" : "month")
+const cadenceOf = (c: string) => (c === "once" ? "once" : c === "quarter" ? "quarter" : c === "free" ? "free" : "month")
+/** A tier the coach made free in Billing (Figma 1237:57060). The sample free tiers (price 0, not sold) stay out of Sales. */
+const madeFree = (t: { cadence?: string }) => t.cadence === "free"
 
 /** What sits under the price: the yearly price, how it can be paid, or the trial. */
-const subline = (t: TierInfo) => (t.yearly ? `${t.yearly} / year · 2 months free` : t.installments ? "One payment or 3 instalments" : t.trial ? `${t.trial}-day free trial` : "No trial")
+const subline = (t: TierInfo) => (madeFree(t) ? "Students join with their e-mail" : t.yearly ? `${t.yearly} / year · 2 months free` : t.installments ? "One payment or 3 instalments" : t.trial ? `${t.trial}-day free trial` : "No trial")
 
 /** Sales · 02 Tiers & prices (Figma 535:7431) and 03 Edit tier (535:7677): price cards, and the tier opens in a drawer. */
 export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => void }) {
@@ -28,7 +30,7 @@ export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => v
   const saved = useStored(`${coach.slug}:tier-extra`, NO_EXTRA)
   const [open, setOpen] = useState<string | null>(null)
   // The first tier, being created: the page behind the drawer still says "No tiers yet" until it's saved.
-  const tiers = all.filter((t) => !isFreeTier(t) && !(t.id === open && all.length === 1 && !saved[t.id]))
+  const tiers = all.filter((t) => (!isFreeTier(t) || madeFree(t)) && !(t.id === open && all.length === 1 && !saved[t.id]))
   const index = all.findIndex((t) => t.id === open)
   const tier = all[index] ?? null
 
@@ -90,8 +92,8 @@ export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => v
                 </DropdownMenu>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="t-display tabular-nums">{t.price}</span>
-                <span className="t-body-m text-a-text-2">{per(t.cadence)}</span>
+                <span className="t-display tabular-nums">{madeFree(t) ? "Free" : t.price}</span>
+                {!madeFree(t) && <span className="t-body-m text-a-text-2">{per(t.cadence)}</span>}
               </div>
               <span className="t-caption text-a-text-3">{subline(t)}</span>
               <span className="h-px bg-a-border" />
@@ -113,9 +115,9 @@ export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => v
           </Panel>
         ))}
       </div>
-      <Callout action={<AdminButton hierarchy="secondary" size="md" onClick={() => tiers[0] && setOpen(tiers[0].id)}>Review</AdminButton>}>
+      {!tiers.some(madeFree) && <Callout action={<AdminButton hierarchy="secondary" size="md" onClick={() => tiers[0] && setOpen(tiers[0].id)}>Review</AdminButton>}>
         No free tier: visitors see the paywall first. Free days on a paid tier work as a trial.
-      </Callout>
+      </Callout>}
       <TierEditor tier={tier} index={index} onClose={() => setOpen(null)} />
     </div>
   )
@@ -135,7 +137,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
   const { coach } = useCoach()
   const catalog = useCatalog(coach)
   const allTiers = useTiers(coach).map((t) => t.id)
-  const names = Object.fromEntries(useTiers(coach).map((t) => [t.id, t.name]))
+  const courses = catalog.courses.filter((c) => c.status !== "archived")
   const [x, setX] = useState<TierExtra | null>(null)
   const [key, setKey] = useState<string | undefined>()
   const [tab, setTab] = useState<"plan" | "page">("plan")
@@ -146,7 +148,8 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
   // Open on Plan with this tier's values every time (derived state, no effect).
   if (tier?.id !== key) {
     setKey(tier?.id)
-    setX(tier ? (fresh ? { ...tier, name: "", price: "", trial: 0, features: [""] } : { ...tier, features: [...tier.features] }) : null)
+    const unlocks = tierUnlocks(tier ?? { id: "" }, catalog.courses)
+    setX(tier ? (fresh ? { ...tier, name: "", price: "", trial: 0, features: [""], unlocks: "all" } : { ...tier, features: [...tier.features], unlocks }) : null)
     setTab("plan")
   }
   const set = (p: Partial<TierExtra>) => setX((v) => (v ? { ...v, ...p } : v))
@@ -156,23 +159,29 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
     onClose()
   }
 
-  // Course access lives on the course (Content), so the Access tab and the course builder show the same thing.
-  const has = (courseTiers: string[]) => !!tier && (courseTiers.length === 0 || courseTiers.includes(tier.id))
-  const toggleCourse = (id: string, on: boolean) =>
-    tier &&
+  // The tier keeps what it unlocks (Courses it unlocks, Plan tab); the courses keep who can watch them (Access tab and
+  // student side read the course), so saving writes the choice through to each course.
+  const free = cadenceOf(x?.cadence ?? "month") === "free"
+  const unlocks = x?.unlocks ?? "all"
+  const picked = unlocks === "all" ? [] : unlocks
+  const writeUnlocks = (id: string, u: "all" | string[]) =>
     saveCatalog(coach, (c) => ({
       ...c,
       courses: c.courses.map((co) => {
-        if (co.id !== id) return co
-        const current = co.tiers.length ? co.tiers : allTiers
-        const next = on ? [...new Set([...current, tier.id])] : current.filter((t) => t !== tier.id)
-        return { ...co, tiers: next.length === allTiers.length ? [] : next }
+        if (co.status === "archived") return co
+        const on = u === "all" || u.includes(co.id)
+        const current = co.tiers.length ? co.tiers.filter((t) => t !== NO_TIER) : allTiers
+        if (on === current.includes(id)) return co
+        const next = on ? [...new Set([...current, id])] : current.filter((t) => t !== id)
+        return { ...co, tiers: next.length === allTiers.length ? [] : next.length ? next : [NO_TIER] }
       }),
     }))
 
   const save = () => {
     if (!x || !tier) return
-    saveTier(coach.slug, tier.id, index, { ...x, features: x.features.map((f) => f.trim()).filter(Boolean) })
+    const patch = free ? { price: "€0", yearly: undefined, trial: 0 } : {}
+    saveTier(coach.slug, tier.id, index, { ...x, ...patch, features: x.features.map((f) => f.trim()).filter(Boolean) })
+    writeUnlocks(tier.id, unlocks)
     toast(`${x.name || tier.name} saved`)
     onClose()
   }
@@ -187,18 +196,18 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
       footer={
         <>
           <AdminButton hierarchy="ghost" onClick={close}>Cancel</AdminButton>
-          <AdminButton disabled={!x?.name?.trim() || !amount(x.price ?? "")} onClick={save}>Save tier</AdminButton>
+          <AdminButton disabled={!x?.name?.trim() || (!free && !amount(x.price ?? "")) || (unlocks !== "all" && picked.length === 0)} onClick={save}>Save tier</AdminButton>
         </>
       }>
       <AdminUnderlineTabs label="Tier sections" value={tab} onChange={setTab} tabs={[{ id: "plan", label: "Plan" }, { id: "page", label: "Sales page" }]} />
       {x && tier && tab === "plan" && (
         <div className="flex flex-col gap-5">
-          <div data-tour="tier-plan" className="flex flex-col gap-5">
+          <div data-tour="tier-plan" data-filled={x.name?.trim() && (free || amount(x.price ?? "")) ? true : undefined} data-free={free || undefined} className="flex flex-col gap-5">
           <label className="grid gap-1.5">
             <span className="t-caption text-a-text">Name</span>
             <input value={x.name ?? ""} onChange={(e) => set({ name: e.target.value })} placeholder={fresh ? "e.g. Inner Circle" : undefined} className={cn(adminControl, "h-11")} />
           </label>
-          <div className="grid grid-cols-2 items-start gap-3">
+          {!free && <div className="grid grid-cols-2 items-start gap-3">
             <div className="grid gap-1.5">
               <span className="t-caption text-a-text">Price</span>
               <Money label="Price" value={(x.price ?? "").replace(/^€/, "")} onChange={(v) => set({ price: `€${v}` })} />
@@ -208,16 +217,42 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
               <Money label="Yearly price" value={(x.yearly ?? "").replace(/^€/, "")} onChange={(v) => set({ yearly: v ? `€${v}` : undefined })} placeholder="—" />
               <span className="t-caption text-a-text-3">Usually two months free</span>
             </div>
-          </div>
-          </div>
+          </div>}
           <div className="grid gap-1.5">
             <span className="t-caption text-a-text">Billing</span>
-            <AdminSegmented label="Billing" value={cadenceOf(x.cadence ?? "month")} onChange={(v) => set({ cadence: v })} options={[{ value: "month", label: "Monthly" }, { value: "once", label: "One payment" }, { value: "quarter", label: "Every 3 months" }]} />
+            <AdminSegmented label="Billing" value={cadenceOf(x.cadence ?? "month")} onChange={(v) => set({ cadence: v })} options={[{ value: "month", label: "Monthly" }, { value: "once", label: "One payment" }, { value: "quarter", label: "Every 3 months" }, { value: "free", label: "Free" }]} />
           </div>
-          <div className="grid gap-1.5">
+          </div>
+          {!free && <div className="grid gap-1.5">
             <span className="t-caption text-a-text">Free trial</span>
             <AdminSegmented label="Free trial" value={x.trial === 14 ? "14" : x.trial === 7 ? "7" : "0"} onChange={(v) => set({ trial: Number(v) })} options={[{ value: "0", label: "No trial" }, { value: "7", label: "7 days" }, { value: "14", label: "14 days" }]} />
             <span className="t-caption text-a-text-3">{x.trial ? "Card needed; first payment after the trial" : "Students pay when they join"}</span>
+          </div>}
+          <div data-tour="tier-unlocks" className="grid gap-1.5">
+            <span className="t-caption text-a-text">Courses it unlocks</span>
+            <AdminSegmented
+              label="Courses it unlocks"
+              value={unlocks === "all" ? "all" : "pick"}
+              onChange={(v) => (v === "all" ? set({ unlocks: "all" }) : courses.length > 1 && set({ unlocks: courses.map((c) => c.id) }))}
+              options={[{ value: "all", label: "All courses" }, { value: "pick", label: "Pick courses" }]}
+              className={cn(courses.length < 2 && "[&_[data-value=pick]]:pointer-events-none [&_[data-value=pick]]:opacity-40")}
+            />
+            {unlocks === "all" ? (
+              <span className="t-caption text-a-text-3">Every course you add, now and later.{courses.length < 2 && " You can pick courses once you have more than one."}</span>
+            ) : (
+              <div className="mt-1.5 flex flex-col gap-2.5">
+                {courses.map((c) => (
+                  <label key={c.id} className="flex min-h-5 items-center gap-2.5 t-body-m text-a-text">
+                    <Checkbox checked={picked.includes(c.id)} onCheckedChange={(v) => set({ unlocks: v ? [...picked, c.id] : picked.filter((id) => id !== c.id) })} />
+                    <span className={cn("min-w-0 flex-1", c.status !== "published" && "text-a-text-2")}>
+                      {c.title}
+                      {c.status !== "published" && <span className="t-caption text-a-text-3"> · {c.status}</span>}
+                    </span>
+                  </label>
+                ))}
+                <span className="t-caption text-a-text-3">{picked.length ? "New courses you add later are not in this tier until you pick them." : "Pick at least one course, or choose All courses."}</span>
+              </div>
+            )}
           </div>
           {!fresh && <span className="h-px bg-a-border" aria-hidden />}
           <div className={cn("flex flex-col gap-3.5", fresh && "hidden")}>
@@ -236,23 +271,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
       )}
 
       {x && tier && tab === "page" && (
-        <div data-tour="tier-page" className="flex flex-col gap-5">
-          <div className="flex flex-col gap-2">
-            <span className="t-caption text-a-text">Courses it unlocks</span>
-            {catalog.courses.filter((c) => c.status !== "archived").map((c) => {
-              const only = c.tiers.length > 0 && !c.tiers.includes(tier.id) ? `${c.tiers.map((id) => names[id]).filter(Boolean).join(", ")} only` : ""
-              return (
-                <label key={c.id} className="flex min-h-5 items-center gap-2.5 t-body-m text-a-text">
-                  <Checkbox checked={has(c.tiers)} onCheckedChange={(v) => toggleCourse(c.id, !!v)} />
-                  <span className={cn("min-w-0 flex-1", c.status !== "published" && "text-a-text-2")}>
-                    {c.title}
-                    {c.status !== "published" && <span className="t-caption text-a-text-3"> · {c.status}</span>}
-                  </span>
-                  {only && <span className="t-caption text-a-text-3">{only}</span>}
-                </label>
-              )
-            })}
-          </div>
+        <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <span className="t-caption text-a-text">Sales page lines</span>
             {x.features.map((f, i) => (

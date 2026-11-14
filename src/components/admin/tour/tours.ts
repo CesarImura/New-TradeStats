@@ -90,9 +90,10 @@ export const TOURS: Record<TourId, Tour> = {
     done: (c) => !!c?.setup?.firstTier,
     steps: [
       { id: "new", target: t("tier-new"), part: 0, title: "Create your first tier", body: "Start with one. You can add more tiers anytime.", hint: "Click New tier" },
-      { id: "plan", target: t("tier-plan"), part: 1, side: "left", title: "Name it and set a price", body: "Type a name and a monthly price. Students see both on your sales page.", hint: "Then click Sales page" },
-      { id: "page", target: t("tier-page"), part: 2, side: "left", title: "Choose what it unlocks", body: "Your first course is already checked. Add a line or two for your sales page.", hint: "Click Save tier" },
-      { id: "done", target: `${NO_DRAWER} ${t("tier-card")}[data-ready]`, part: 2, final: true, title: "Your first tier is ready", body: "Next, connect payouts so students can pay you.", hint: "" },
+      { id: "plan", target: `${t("tier-plan")}:is(:not([data-filled]), :focus-within)`, part: 1, side: "left", title: "Name it and set a price", body: "Type a name and a monthly price. Students see both on your sales page.", hint: "Then choose what it unlocks" },
+      { id: "plan-free", target: `${t("tier-plan")}[data-free]:is(:not([data-filled]), :focus-within)`, part: 1, side: "left", title: "Name it and pick Free", body: "A free tier has no price or trial. Students join with their e-mail.", hint: "Then choose what it unlocks" },
+      { id: "unlocks", target: `body:has(${t("tier-plan")}[data-filled]:not(:focus-within)) ${t("tier-unlocks")}`, part: 2, side: "left", title: "Choose what it unlocks", body: "Keep All courses. Every course you add, now and later, is part of this tier.", hint: "Click Save tier" },
+      { id: "done", target: `${NO_DRAWER} ${t("tier-card")}[data-ready]`, part: 2, final: true, title: "Your first tier is ready", body: "Students see it on your sales page. You can change it anytime in Sales & payments.", hint: "" },
     ],
   },
   payouts: {

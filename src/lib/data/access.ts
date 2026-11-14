@@ -31,6 +31,11 @@ export type TierExtra = {
   features: string[]
   /** Marked "Most popular" on the sales page. */
   featured?: boolean
+  /**
+   * The courses this tier opens (Flavio, 14/11): "all" (every course, now and later) or the courses picked. Unset on
+   * tiers made before 14/11: read from the courses (a course with no tiers is open to all, see `tierUnlocks`).
+   */
+  unlocks?: "all" | string[]
 }
 
 export type TierInfo = Tier & Omit<TierExtra, "name" | "price" | "cadence">
@@ -81,6 +86,24 @@ export function addTier(slug: string): Tier {
   const t = { id: `t${Date.now()}`, name: "New tier", price: "€99", cadence: "month", members: 0 }
   setStored<Tier[]>(`${slug}:tiers-added`, (a) => [...a, t], NO_TIERS)
   return t
+}
+
+/** What a tier unlocks: its own choice, or (older tiers) what the courses say: every course open to it means "all". */
+export function tierUnlocks(t: { id: string; unlocks?: "all" | string[] }, courses: Pick<Course, "id" | "tiers" | "status">[]): "all" | string[] {
+  if (t.unlocks) return t.unlocks
+  const live = courses.filter((c) => c.status !== "archived")
+  const open = live.filter((c) => c.tiers.length === 0 || c.tiers.includes(t.id)).map((c) => c.id)
+  return open.length === live.length ? "all" : open
+}
+
+/**
+ * The tiers a new course is open to: those that unlock all courses (`[]` when that is every tier, as courses store it).
+ * When every tier picked its courses, the new course is in none of them yet (`NO_TIER`, an id no tier has).
+ */
+export const NO_TIER = "none"
+export function tiersForNewCourse(tiers: { id: string; unlocks?: "all" | string[] }[]) {
+  const all = tiers.filter((t) => (t.unlocks ?? "all") === "all").map((t) => t.id)
+  return all.length === tiers.length ? [] : all.length ? all : [NO_TIER]
 }
 
 export const amount = (price: string) => Number(price.replace(/[^\d.]/g, "")) || 0
