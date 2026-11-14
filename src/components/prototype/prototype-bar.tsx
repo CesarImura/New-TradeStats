@@ -95,6 +95,8 @@ export function PrototypeBar({ area }: { area: "student" | "admin" | "site" }) {
     <Popover>
       <div
         data-proto-bar
+        role="complementary"
+        aria-label="Prototype: switch between admin and student"
         className={cn(
           "fixed right-4 bottom-20 z-50 flex items-center gap-1 rounded-full bg-neutral-950 p-1 font-[family-name:var(--ff-geist)] text-white shadow-lg ring-1 ring-white/15 md:bottom-4",
           inEditor && "lg:right-auto lg:bottom-3 lg:left-2 lg:w-14 lg:flex-col lg:items-stretch lg:rounded-2xl",

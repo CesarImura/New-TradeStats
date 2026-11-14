@@ -433,6 +433,7 @@ function OwnBackground({ w, onChange }: { w: WidgetInstance; onChange: (patch: P
                     aria-label={b.name}
                     className={cn("grid rounded-[6px] p-0.5", card(own.image === `preset:${b.id}`))}
                   >
+                    {/* Exception: #0b0c10 is the student page ground under the background thumbnail, not an Admin colour. */}
                     <span className="aspect-[4/3] rounded-[4px] bg-[#0b0c10]" style={{ backgroundImage: b.css, backgroundSize: "cover", backgroundPosition: "center" }} />
                   </button>
                 ))}

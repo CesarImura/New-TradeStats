@@ -162,7 +162,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
           <ProfileMenu compact />
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className={cn(bg, floating && canvas)}>
+      <SidebarInset as={editor ? "div" : "main"} className={cn(bg, floating && canvas)}>
         {!editor && <PreviewAsBanner />}
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
         <header className={cn("sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 backdrop-blur", pad)}>

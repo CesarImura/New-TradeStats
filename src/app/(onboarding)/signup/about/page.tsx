@@ -2,7 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react"
 import { ArrowLeft } from "@/components/icons"
-import { ChoiceChip, SignupFrame, SignupTitle, useSignupGo } from "@/components/onboarding/signup-frame"
+import { ChoiceChip, SignupFrame, SignupTitle, useNeedsAccount, useSignupGo } from "@/components/onboarding/signup-frame"
 import { AdminButton } from "@/components/admin/ui"
 import { account, setAccount, type Audience } from "@/lib/data/communities"
 
@@ -38,6 +38,7 @@ const noop = () => () => {}
 const given = () => JSON.stringify(account()?.answers ?? null)
 
 export default function About() {
+  useNeedsAccount()
   const go = useSignupGo()
   const [members, setMembers] = useState<string>()
   const [tools, setTools] = useState<string[]>([])

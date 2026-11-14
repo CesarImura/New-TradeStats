@@ -361,10 +361,13 @@ function useCorner() {
   useEffect(() => {
     let frame = 0
     const tick = () => {
-      const d = document.querySelector('[data-slot="sheet-content"][data-side="right"]:not([data-ending-style]):not([data-closed])')
-      const bar = document.querySelector("[data-proto-bar]")
+      // A drawer on the right, or the design editor's inspector (QA 14/11): the pill sits to its left.
+      const d = document.querySelector('[data-slot="sheet-content"][data-side="right"]:not([data-ending-style]):not([data-closed]), [data-tour="editor-inspector"]')
+      // The prototype switch only matters when it is in the same corner (in the editor it sits bottom left).
+      const barBox = document.querySelector("[data-proto-bar]")?.getBoundingClientRect()
+      const bar = barBox && barBox.left > innerWidth / 2 ? barBox : undefined
       const right = d ? innerWidth - d.getBoundingClientRect().left + 24 : 32
-      const bottom = bar && !d ? Math.max(32, innerHeight - bar.getBoundingClientRect().top + 12) : 32
+      const bottom = bar && !d ? Math.max(32, innerHeight - bar.top + 12) : 32
       setCorner((c) => (Math.abs(c.right - right) > 1 || Math.abs(c.bottom - bottom) > 1 ? { right, bottom } : c))
       frame = requestAnimationFrame(tick)
     }

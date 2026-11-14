@@ -70,6 +70,7 @@ export function BackgroundControl({ theme, onChange, where = true }: { theme: Co
                 aria-pressed={theme.bgImage === `preset:${b.id}`}
                 className={cn("grid gap-1 p-1 text-left t-caption", card(theme.bgImage === `preset:${b.id}`))}
               >
+                {/* Exception: #0b0c10 is the student page ground under the background thumbnail, not an Admin colour. */}
                 <span className="aspect-[4/3] rounded-[4px] bg-[#0b0c10] ring-1 ring-white/10" style={{ backgroundImage: b.css, backgroundSize: "cover", backgroundPosition: "center" }} />
                 <span className="truncate px-0.5 text-muted-foreground">{b.name}</span>
               </button>

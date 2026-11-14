@@ -302,9 +302,10 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
   )
 }
 
-function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
+/** `as="div"` when the shell is drawn inside another page's <main> (the design editor's student preview). */
+function SidebarInset({ className, as: Tag = "main", ...props }: Omit<React.ComponentProps<"main">, "ref"> & { as?: "main" | "div" }) {
   return (
-    <main
+    <Tag
       data-slot="sidebar-inset"
       className={cn(
         "relative flex w-full flex-1 flex-col bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",

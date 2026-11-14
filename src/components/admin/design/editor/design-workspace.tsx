@@ -354,7 +354,7 @@ export function DesignWorkspace() {
             center={
               <>
                 <AdminMenu>
-                  <AdminMenuTrigger render={<AdminFilterButton label="Page" value={here} aria-label={`Page: ${here}. Change page`} title="The page you are editing" />} />
+                  <AdminMenuTrigger render={<AdminFilterButton label="Page" value={here} title="The page you are editing. Click to change page" />} />
                   <AdminMenuContent align="center" className="w-60">
                     {/* The platform's pages; the page inside a course sits under Playbook, which it belongs to. */}
                     <AdminMenuGroup>
@@ -522,7 +522,6 @@ export function DesignWorkspace() {
                                   {tier !== "default" && <span className="text-a-text-3"> · {arrange.inherits ? "uses Everyone" : "own layout"}</span>}
                                 </>
                               }
-                              aria-label={`Layout for ${tierLabel}. Change tier`}
                               title={arrange.inherits ? `${tierLabel} uses the Everyone layout. Changing the page gives ${tierLabel} its own.` : "Each tier can have its own layout of this page"}
                               className="bg-a-page"
                             />

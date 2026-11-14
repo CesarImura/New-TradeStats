@@ -111,7 +111,8 @@ export function AdminFilterButton({ label, value, icon, className, ...props }: O
       )}
       {label && (
         <>
-          <span className="text-a-text-2">{label}</span>
+          <span className="text-a-text-2">{label}</span>{" "}
+          {/* The space keeps "Page Home" apart for screen readers; a flex row doesn't draw it. */}
           <span aria-hidden className="h-3.5 w-px bg-a-border" />
         </>
       )}

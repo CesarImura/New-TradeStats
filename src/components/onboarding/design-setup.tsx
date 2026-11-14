@@ -30,7 +30,7 @@ const STEPS = ["brand", "look", "layout"] as const
 type Step = (typeof STEPS)[number]
 
 /** Brand colours offered first (content colours, the coach's own choice). */
-const BRAND = ["#ff5500", "#22c55e", "#3b82f6", "#a855f7", "#f4f4f5", "#e5484d", "#14b8a6", "#ec4899"]
+const BRAND = ["#cf4500", "#22c55e", "#3b82f6", "#a855f7", "#f4f4f5", "#e5484d", "#14b8a6", "#ec4899"]
 const MAX = 40
 const noop = () => () => {}
 

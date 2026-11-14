@@ -354,7 +354,7 @@ function WidgetDetails({
       </div>
       <div className="grid flex-1 content-start gap-6 px-1 pb-2">
         <div className="grid gap-3">
-          <div {...drag(variant)} title="Drag onto the page" className="group/card relative cursor-grab overflow-hidden rounded-xl border p-1.5 active:cursor-grabbing">
+          <div {...drag(variant)} title="Drag onto the page" className="group/card relative cursor-grab overflow-hidden rounded-xl border border-a-border bg-a-panel p-1.5 active:cursor-grabbing">
             <span aria-hidden className="pointer-events-none absolute top-3 right-3 z-10 flex items-center gap-1 rounded-a-sm bg-a-page/75 py-0.5 pr-2 pl-1 t-caption-medium text-white shadow-sm backdrop-blur-sm">
               <GripVertical className="size-3.5" /> Drag to page
             </span>

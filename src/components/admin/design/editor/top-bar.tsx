@@ -88,10 +88,13 @@ export function EditorTopBar({
             <AdminMenuContent align="end">{moreItems}</AdminMenuContent>
           </AdminMenu>
         </div>
-        {preview}
-        <AdminButton disabled={publishDisabled} onClick={onPublish}>
-          Publish
-        </AdminButton>
+        {/* `editor-publish`: the last step of the design editor tour points here. */}
+        <div data-tour="editor-publish" className="flex items-center gap-3 max-xl:gap-2 max-sm:gap-1">
+          {preview}
+          <AdminButton disabled={publishDisabled} onClick={onPublish}>
+            Publish
+          </AdminButton>
+        </div>
       </div>
     </div>
   )

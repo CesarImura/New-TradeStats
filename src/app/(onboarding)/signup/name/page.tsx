@@ -4,7 +4,7 @@ import { useState, useSyncExternalStore } from "react"
 import { ArrowLeft } from "@/components/icons"
 import { SelectField } from "@/components/kit/select-field"
 import { createCommunity } from "@/components/onboarding/setup-community"
-import { SignupFrame, SignupTitle, useSignupGo } from "@/components/onboarding/signup-frame"
+import { SignupFrame, SignupTitle, useNeedsAccount, useSignupGo } from "@/components/onboarding/signup-frame"
 import { AdminButton, AdminField, adminControl } from "@/components/admin/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { account, setAccount } from "@/lib/data/communities"
@@ -27,6 +27,7 @@ const noop = () => () => {}
 const drafted = () => JSON.stringify(account()?.nameDraft ?? null)
 
 export default function NamePlatform() {
+  useNeedsAccount()
   const go = useSignupGo()
   const acc = useAccount()
   const first = acc?.name.trim().split(/\s+/)[0] ?? ""

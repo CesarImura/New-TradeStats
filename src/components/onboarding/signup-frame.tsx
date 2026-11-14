@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { TS_SYSTEM_CSS } from "@/lib/theme/ts-system"
 import { Logo } from "@/components/brand/logo"
 import { cn } from "@/lib/utils"
+import { account } from "@/lib/data/communities"
 
 /**
  * Sign up · phase 1 (Figma 939:59751, screens 01 to 05): the form column on the left (742 px: the logo bar, then a
@@ -19,6 +20,14 @@ const InShell = createContext<{ go: (href: string, dir?: 1 | -1) => void } | nul
  * Moving between sign-up pages (and out to Getting started): the card leaves toward the side it isn't heading to, then the
  * next one comes in from the other (Midday). Outside the sign-up layout it is a plain navigation.
  */
+/** About and Name need the account made on Create: opened without one (a fresh tab, a typed URL) they send you back there. */
+export function useNeedsAccount() {
+  const router = useRouter()
+  useEffect(() => {
+    if (!account()) router.replace("/signup/create")
+  }, [router])
+}
+
 export function useSignupGo() {
   const router = useRouter()
   const shell = useContext(InShell)

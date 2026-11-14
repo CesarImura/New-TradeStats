@@ -104,15 +104,16 @@ export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => v
                 {!madeFree(t) && <span className="t-body-m text-a-text-2">{per(t.cadence)}</span>}
               </div>
               <span className="t-caption text-a-text-3">{subline(t)}</span>
-              <span className="h-px bg-a-border" />
-              <ul className="grid gap-2">
-                {t.features.map((f) => (
+              {/* No empty band when the tier has no sales lines yet (QA 14/11). */}
+              {t.features.some((f) => f.trim()) && <span className="h-px bg-a-border" />}
+              {t.features.some((f) => f.trim()) && <ul className="grid gap-2">
+                {t.features.filter((f) => f.trim()).map((f) => (
                   <li key={f} className="flex items-start gap-2 t-body-m">
                     <Check className="mt-0.5 size-4 shrink-0 text-a-success" />
                     {f}
                   </li>
                 ))}
-              </ul>
+              </ul>}
             </div>
             <div className="flex items-center justify-between border-t border-a-border px-5 py-3">
               <span className="t-caption text-a-text-2 tabular-nums">{t.members.toLocaleString("en")} members</span>
@@ -242,8 +243,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
               label="Courses it unlocks"
               value={unlocks === "all" ? "all" : "pick"}
               onChange={(v) => (v === "all" ? set({ unlocks: "all" }) : courses.length > 1 && set({ unlocks: courses.map((c) => c.id) }))}
-              options={[{ value: "all", label: "All courses" }, { value: "pick", label: "Pick courses" }]}
-              className={cn(courses.length < 2 && "[&_[data-value=pick]]:pointer-events-none [&_[data-value=pick]]:opacity-40")}
+              options={[{ value: "all", label: "All courses" }, { value: "pick", label: "Pick courses", disabled: courses.length < 2 }]}
             />
             {unlocks === "all" ? (
               <span className="t-caption text-a-text-3">Every course you add, now and later.{courses.length < 2 && " You can pick courses once you have more than one."}</span>

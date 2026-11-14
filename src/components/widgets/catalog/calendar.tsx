@@ -390,7 +390,7 @@ function sessionState(s: { open: number; close: number }, now: number) {
 function ImpactTicks({ impact = "low", big }: { impact?: CalEvent["impact"]; big?: boolean }) {
   const h = big ? [6, 10, 14] : [4, 7, 10]
   return (
-    <span className="flex shrink-0 items-end gap-[2px]" style={{ height: h[2] }} aria-label={`${impact} impact`}>
+    <span className="flex shrink-0 items-end gap-[2px]" style={{ height: h[2] }} role="img" aria-label={`${impact} impact`}>
       {h.map((px, i) => (
         <i key={i} className="rounded-[1px]" style={{ width: big ? 4 : 3, height: px, background: i < IMPACT[impact] ? "var(--foreground)" : TRACK }} />
       ))}

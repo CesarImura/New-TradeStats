@@ -55,11 +55,11 @@ export function TimelineStep({
       <div className="min-w-0 flex-1 py-1.5">
         <div className={cn("flex items-center gap-4 rounded-a-lg border py-4 pr-4 pl-5 max-sm:flex-wrap max-sm:gap-3", state === "current" ? "border-a-border-active bg-a-panel" : state === "done" || state === "open" ? "border-a-border-subtle bg-a-panel" : "border-a-border-subtle")}>
           <div className="flex min-w-0 flex-1 flex-col gap-1 max-sm:basis-full">
-            <h3 className={cn("t-body-l", state === "upcoming" ? "text-a-text-2" : "text-a-text")}>
+            <h2 className={cn("t-body-l", state === "upcoming" ? "text-a-text-2" : "text-a-text")}>
               <span className="sr-only">{state === "done" ? "Done: " : state === "current" ? "Next: " : ""}</span>
               {title}
               {tag && <Tag className="ml-2 align-middle">{tag}</Tag>}
-            </h3>
+            </h2>
             <p className={cn("t-body-m", state === "upcoming" ? "text-a-text-3" : "text-a-text-2")}>{description}</p>
           </div>
           {state === "done"

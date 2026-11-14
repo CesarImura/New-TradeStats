@@ -32,7 +32,8 @@ const HISTORY = [
   { d: "Mon 27 Oct", a: 7611 },
 ]
 const IBAN = /^[A-Z]{2}\d{2}[A-Z0-9 ]{10,30}$/
-const maskIban = (v: string) => { const s = v.replace(/\s/g, ""); return `${s.slice(0, 4)} •••• ${s.slice(-4, -1)} ${s.slice(-1)}`.trim() }
+/** Country and check digits, then the last four: "DE89 •••• 3000" (QA 14/11). */
+const maskIban = (v: string) => { const s = v.replace(/\s/g, "").toUpperCase(); return `${s.slice(0, 4)} •••• ${s.slice(-4)}` }
 
 /** Sales · 10 Payouts (Figma 536:8198) and 11 Connect payouts (536:8427). */
 export function Payouts() {

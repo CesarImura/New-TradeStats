@@ -628,7 +628,7 @@ export function ArrangeCanvas({
                     <span aria-hidden className="pointer-events-none absolute -inset-3 z-0 rounded-[calc(var(--radius)+12px)] border-2 border-dashed border-a-border-active/35 transition-opacity" />
                   )}
                   {layout.items.length === 0 && !arriving && (
-                    <div className="pointer-events-none grid min-h-48 place-items-center rounded-(--radius) border-2 border-dashed text-sm text-muted-foreground">
+                    <div className="pointer-events-none grid min-h-48 place-items-center rounded-(--radius) border-2 border-dashed t-body-l text-muted-foreground">
                       <span className="flex items-center gap-2">
                         <LayoutGrid className="size-4" /> Drag widgets from the gallery onto the page
                       </span>

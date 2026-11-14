@@ -384,7 +384,7 @@ Um arquivo de componente passa de ~600 linhas? Divida por responsabilidade, sem 
   - About you e Name your platform têm Back e guardam o que foi escolhido (`answers`, `nameDraft` na conta).
   - Um tour por vez: abrir outro pausa o atual em `<slug>:tours-paused`; Getting started mostra "Paused at …" e Resume para cada um.
   - Design: o preview é um card (32 px da borda, `rounded-a-xl`, borda) e o Brand avisa que tudo muda depois no editor.
-  - Tour do editor (O10, opcional, não conta nos cinco): o item Design concluído mostra "Tour the design editor" (`guide` do `TimelineStep`) até `setup.editorTour`. Três passos com `data-tour` no editor: `editor-panel` (o card do menu), `editor-canvas` com `editor-widgets` aberto (Widgets) e `editor-inspector` (final). Quando o alvo ocupa a tela, o coachmark fica dentro dele, sem seta; só um popup aberto (`aria-haspopup`) esconde o coachmark.
+  - Tour do editor (O10, opcional, não conta nos cinco): o item Design concluído mostra "Tour the design editor" (`guide` do `TimelineStep`) até `setup.editorTour`. Três passos com `data-tour` no editor: `editor-panel` (o card do menu), `editor-canvas` com `editor-widgets` aberto (Widgets) e, com o `editor-inspector` aberto, `editor-publish` (Preview e Publish, final). Quando o alvo ocupa a tela, o coachmark fica dentro dele, sem seta; só um popup aberto (`aria-haspopup`) esconde o coachmark.
 - O wizard antigo (`wizard.tsx`, `wizard-design.tsx`, `steps.tsx`, `look-steps.tsx`, `invite.tsx`, `publish.tsx`, `/setup/invite`, `/setup/publish`) foi apagado em 13/11 com o ok do Gustavo; `/signup/call` e `/signup/welcome` só redirecionam links antigos; as dicas antigas (`SetupTip`) de curso, tier e payouts não aparecem mais (o tour cobre).
 
 ## Logo Traderhub (13/11)

@@ -162,7 +162,7 @@ export function CourseInspector({ selected, onSelect }: { selected: CourseSectio
       <div className="grid gap-5 px-5 pb-5">
         <p className="t-caption text-muted-foreground">{section.hint}.</p>
         <Field label="Show on the page">
-          <div className="flex items-center justify-between rounded-lg border px-3 py-2">
+          <div className="flex items-center justify-between rounded-lg border border-a-border bg-a-field px-3 py-2">
             <span className="t-body-l">{section.on ? "Shown to students" : "Hidden"}</span>
             <Switch size="sm" className={SWITCH_OFF} checked={section.on} aria-label={`Show ${section.label}`} onCheckedChange={toggle} />
           </div>
