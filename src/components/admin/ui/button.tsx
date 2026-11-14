@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils"
 /**
  * Admin / Button (Figma 572:28569). Hierarchy × size, states by CSS.
  * Sizes as in Figma _Base Button: sm 24 (r6, 12px), md 28 (12px), lg 32 (13px), xl 36 (13px, default). `iconOnly` makes it square.
- * Secondary and danger have a 1 px outline that Figma puts outside the size, so they are 2 px taller and wider than the same size without one (38 for xl).
+ * Secondary and danger draw their 1 px outline inside the box, so every hierarchy has the same height (36 for xl, Figma 14/11).
+ * Open state (K7): a trigger whose menu is open (`aria-expanded` or `data-popup-open`) looks like Secondary Hover, for every hierarchy.
  */
 const button = cva(
   "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-a-md t-body-m-medium outline-none select-none transition-colors duration-300 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:min-h-10 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -13,9 +14,9 @@ const button = cva(
     variants: {
       hierarchy: {
         primary: "bg-[var(--admin-component-button-primary-bg-default)] text-[var(--admin-component-button-primary-content)] hover:bg-[var(--admin-component-button-primary-bg-hover)]",
-        secondary: "text-a-text shadow-[inset_0_0_0_1px_var(--admin-component-button-secondary-border)] hover:bg-a-hover",
-        ghost: "text-a-text-2 hover:bg-a-hover hover:text-a-text",
-        danger: "text-a-danger shadow-[inset_0_0_0_1px_var(--admin-component-button-danger-border)] hover:bg-a-danger-soft",
+        secondary: "text-a-text shadow-[inset_0_0_0_1px_var(--admin-component-button-secondary-border)] hover:bg-a-hover aria-expanded:bg-a-hover data-popup-open:bg-a-hover",
+        ghost: "text-a-text-2 hover:bg-a-hover hover:text-a-text aria-expanded:bg-a-hover aria-expanded:text-a-text data-popup-open:bg-a-hover data-popup-open:text-a-text",
+        danger: "text-a-danger shadow-[inset_0_0_0_1px_var(--admin-component-button-danger-border)] hover:bg-a-danger-soft aria-expanded:bg-a-danger-soft data-popup-open:bg-a-danger-soft",
         highlight: "bg-[var(--admin-component-button-highlight-bg-default)] text-[var(--admin-component-button-highlight-content)] hover:bg-[var(--admin-component-button-highlight-bg-hover)]",
       },
       size: {
@@ -31,16 +32,6 @@ const button = cva(
       { iconOnly: true, size: "md", class: "w-7" },
       { iconOnly: true, size: "lg", class: "w-8" },
       { iconOnly: true, size: "xl", class: "w-9" },
-      ...(["secondary", "danger"] as const).flatMap((hierarchy) => [
-        { hierarchy, size: "sm" as const, class: "h-[26px] px-[9px]" },
-        { hierarchy, size: "md" as const, class: "h-[30px] px-[11px]" },
-        { hierarchy, size: "lg" as const, class: "h-[34px] px-[13px]" },
-        { hierarchy, size: "xl" as const, class: "h-[38px] px-[15px]" },
-        { hierarchy, iconOnly: true, size: "sm" as const, class: "h-[26px] w-[26px] px-0" },
-        { hierarchy, iconOnly: true, size: "md" as const, class: "h-[30px] w-[30px] px-0" },
-        { hierarchy, iconOnly: true, size: "lg" as const, class: "h-[34px] w-[34px] px-0" },
-        { hierarchy, iconOnly: true, size: "xl" as const, class: "h-[38px] w-[38px] px-0" },
-      ]),
     ],
     defaultVariants: { hierarchy: "primary", size: "xl", iconOnly: false },
   }

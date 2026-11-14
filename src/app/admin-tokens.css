@@ -281,6 +281,7 @@
   --admin-component-sortable-row-bg-dragging: var(--admin-color-bg-selected);
   --admin-component-sortable-row-bg-hover: var(--admin-color-bg-hover);
   --admin-component-sortable-row-border-active: var(--admin-color-border-active);
+  --admin-component-sortable-row-border-default: var(--admin-color-border-default);
   --admin-component-step-indicator-error-bg: var(--admin-color-status-danger-fill);
   --admin-component-step-indicator-error-content: var(--admin-color-text-on-accent);
   --admin-component-step-indicator-success-bg: var(--admin-color-status-success-fill);
@@ -292,6 +293,7 @@
 
 /* Tailwind mapping: short names (bg-a-panel, text-a-text-2, border-a-border, rounded-a-md…) for the Admin v2 tokens. */
 @theme inline {
+  --blur-a-overlay: 16px; /* Admin/Blur/Overlay (Figma effect, blur 16): backdrop-blur-a-overlay */
   --color-a-page: var(--admin-color-bg-page);
   --color-a-panel: var(--admin-color-bg-panel);
   --color-a-raised: var(--admin-color-bg-raised);

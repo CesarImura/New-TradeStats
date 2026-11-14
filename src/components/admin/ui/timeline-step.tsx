@@ -6,8 +6,9 @@ import { StepIndicator } from "./step-indicator"
 /**
  * Admin / Timeline step (Figma 957:2923): one step of a vertical timeline (Getting started). The rail holds the step
  * indicator between two 2 px lines; the card sits 6 px in from the top and bottom so the indicator lines up with the
- * card's middle. Done = green check and an edit icon; Current = orange edge and the primary action; Upcoming = muted
- * text and the action disabled at 40 %. Steps unlock in order.
+ * card's middle. Done = green check and an edit icon; Current = orange edge, the primary action and, with `onSkip`, a
+ * "Skip for now" text button before it; Open (14/11) = a step you may start any time (panel card, secondary action);
+ * Upcoming = muted text and the action disabled at 40 %, for what is still locked (Go live).
  */
 export function TimelineStep({
   step,
@@ -17,17 +18,20 @@ export function TimelineStep({
   action,
   onAction,
   onEdit,
+  onSkip,
   first,
   last,
   disabledHint,
 }: {
   step: number
-  state: "done" | "current" | "upcoming"
+  state: "done" | "current" | "open" | "upcoming"
   title: string
   description: string
   action?: string
   onAction?: () => void
   onEdit?: () => void
+  /** Current step only: shows "Skip for now" before the action. */
+  onSkip?: () => void
   first?: boolean
   last?: boolean
   /** Shown on hover over an Upcoming action (why it can't be clicked yet). */
@@ -38,11 +42,11 @@ export function TimelineStep({
     <li className="flex gap-4">
       <div aria-hidden className="flex flex-col items-center gap-1.5">
         <span className={cn(line, first ? "bg-transparent" : "bg-a-border")} />
-        <StepIndicator step={step} state={state === "done" ? "success" : state} />
+        <StepIndicator step={step} state={state === "done" ? "success" : state === "open" ? "upcoming" : state} />
         <span className={cn(line, last ? "bg-transparent" : "bg-a-border")} />
       </div>
       <div className="min-w-0 flex-1 py-1.5">
-        <div className={cn("flex items-center gap-4 rounded-a-lg border py-4 pr-4 pl-5 max-sm:flex-wrap max-sm:gap-3", state === "current" ? "border-a-border-active bg-a-panel" : state === "done" ? "border-a-border-subtle bg-a-panel" : "border-a-border-subtle")}>
+        <div className={cn("flex items-center gap-4 rounded-a-lg border py-4 pr-4 pl-5 max-sm:flex-wrap max-sm:gap-3", state === "current" ? "border-a-border-active bg-a-panel" : state === "done" || state === "open" ? "border-a-border-subtle bg-a-panel" : "border-a-border-subtle")}>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <h3 className={cn("t-body-l", state === "upcoming" ? "text-a-text-2" : "text-a-text")}>
               <span className="sr-only">{state === "done" ? "Done: " : state === "current" ? "Next: " : ""}</span>
@@ -57,7 +61,12 @@ export function TimelineStep({
                 </AdminButton>
               )
             : action && (
-                <span title={state === "upcoming" ? disabledHint : undefined}>
+                <span className="flex shrink-0 items-center gap-2" title={state === "upcoming" ? disabledHint : undefined}>
+                  {state === "current" && onSkip && (
+                    <AdminButton hierarchy="ghost" onClick={onSkip}>
+                      Skip for now
+                    </AdminButton>
+                  )}
                   <AdminButton hierarchy={state === "current" ? "primary" : "secondary"} disabled={state === "upcoming"} onClick={onAction}>
                     {action}
                   </AdminButton>

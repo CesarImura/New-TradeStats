@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Switch } from "@/components/ui/switch"
 import {
   AdminButton, AdminDrawer, AdminField, AdminFilter, AdminModal, AdminPageHeader, AdminProgress, AdminSearch, AdminSegmented, AdminTabs, AdminToolbar, AdminUnderlineTabs,
+  AdminMenu, AdminMenuContent, AdminMenuGroup, AdminMenuItem, AdminMenuLabel, AdminMenuSeparator, AdminMenuTrigger, TimelineStep,
   AdminVideoPlayer, Callout, CellDot, CellPerson, CellProgress, CellStack, Dropzone, EmptyState, FileItem, LessonCard, MediaCard, Metric, OptionCard, Panel, SortableRow, StatPanel, StepIndicator, Tag, adminControl,
 } from "@/components/admin/ui"
 
@@ -87,8 +88,10 @@ export default function KitGallery() {
         </div>
         <div className="grid w-full max-w-xs gap-2">
           <SortableRow title="Default" description="One line" trailing={<Tag>New</Tag>} />
+          <SortableRow title="Hover" description="Hover me" />
           <SortableRow title="Active" description="One line" active />
           <SortableRow title="Dragging" description="One line" dragging />
+          <SortableRow title="Disabled" description="One line" disabled />
         </div>
       </Block>
       <Block title="Video player · play, scrub, volume, subtitles, speed, quality, full screen">
@@ -107,6 +110,28 @@ export default function KitGallery() {
         <div className="w-full max-w-60"><LessonCard picture={<div className="aspect-[1.78] w-full bg-a-raised" />} time="12:40" title="How price moves" mark="Free preview" markClassName="text-a-text-3" /></div>
         <div className="w-full max-w-xl"><EmptyState icon={Download} title="Nothing here yet" description="Describe what will appear." actions={<AdminButton>Create</AdminButton>} /></div>
         <Panel className="w-full max-w-72"><p className="t-body-m text-a-text-2">Panel content</p></Panel>
+      </Block>
+      <Block title="Menu · items, group label, danger, active (K6)">
+        <AdminMenu>
+          <AdminMenuTrigger render={<AdminButton hierarchy="secondary" aria-label="Open Admin menu">Menu</AdminButton>} />
+          <AdminMenuContent align="start">
+            <AdminMenuGroup>
+              <AdminMenuLabel>Pages</AdminMenuLabel>
+              <AdminMenuItem active>Home</AdminMenuItem>
+              <AdminMenuItem>Courses</AdminMenuItem>
+            </AdminMenuGroup>
+            <AdminMenuSeparator />
+            <AdminMenuItem tone="danger">Delete</AdminMenuItem>
+          </AdminMenuContent>
+        </AdminMenu>
+      </Block>
+      <Block title="Timeline step · done, current with Skip, open, upcoming (K4)">
+        <ol className="w-full max-w-2xl">
+          <TimelineStep step={1} state="done" title="Step title" description="Short line that says what to do." onEdit={() => {}} first />
+          <TimelineStep step={2} state="current" title="Step title" description="Short line that says what to do." action="Start" onAction={() => {}} onSkip={() => {}} />
+          <TimelineStep step={3} state="open" title="Step title" description="Short line that says what to do." action="Start" onAction={() => {}} />
+          <TimelineStep step={4} state="upcoming" title="Step title" description="Short line that says what to do." action="Start" last />
+        </ol>
       </Block>
       <Block title="Overlays · menu, modal, drawer">
         <DropdownMenu>

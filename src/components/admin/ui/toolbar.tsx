@@ -34,7 +34,7 @@ export function AdminSearch({ value, onChange, placeholder, label, hint, classNa
 /**
  * Admin / Filter (Figma 578:539): a 32px bordered select, "Label | value ⌄", or "▢ value ⌄" with an `icon` and no label.
  * Caption text (12/16, the same as the tabs), 12px left and 10px right padding, 8px between parts, a 14px chevron.
- * Hover darkens the border, open fills the field and uses the active border, focus shows the ring. The `!` classes
+ * Hover darkens the border; open is the one open state of the kit (K2/K7): hover fill (4 %) and the strong border, never orange; focus shows the ring. The `!` classes
  * beat the global field rule (44px, 14px text) that every select trigger in the Admin gets.
  */
 export function AdminFilter({ label, icon, value, onValueChange, options, ariaLabel, className }: { label?: string; icon?: React.ReactNode; value: string; onValueChange: (v: string) => void; options: readonly { value: string; label: string }[]; ariaLabel?: string; className?: string }) {
@@ -43,7 +43,7 @@ export function AdminFilter({ label, icon, value, onValueChange, options, ariaLa
       <SelectTrigger
         aria-label={ariaLabel ?? label}
         className={cn(
-          "h-8! pointer-coarse:h-10! shrink-0 gap-2 rounded-a-md! border-a-border! bg-transparent! pr-2.5! pl-3! t-caption! text-a-text! duration-200 hover:border-a-border-strong! disabled:opacity-40 data-popup-open:border-[var(--admin-color-border-active)]! data-popup-open:bg-a-raised! [&>svg:last-child]:text-a-icon",
+          "h-8! pointer-coarse:h-10! shrink-0 gap-2 rounded-a-md! border-a-border! bg-transparent! pr-2.5! pl-3! t-caption! text-a-text! duration-200 hover:border-a-border-strong! disabled:opacity-40 data-popup-open:border-a-border-strong! data-popup-open:bg-a-hover! [&>svg:last-child]:text-a-icon",
           className
         )}
       >

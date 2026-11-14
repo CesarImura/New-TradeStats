@@ -93,6 +93,14 @@ Checks: `tsc` clean, ESLint 0 errors in admin (the old `frame.tsx:92` is the onl
 - The old `.border-dashed` colour overrides in `admin-v2.ts` and `ts-system.ts` are gone: they blocked hover and active edges on dashed components.
 - Touch: with a coarse pointer buttons, tabs, segmented options, filters and search are at least 40 px (`pointer-coarse:`), checked with a touch emulation.
 
+## Kit pass for the editor (14/11, stage 1)
+- `AdminButton`: Secondary and Danger are now the same height as Primary (36 px xl, 32 lg, 28 md, 24 sm); the outline is drawn inside. A trigger whose menu is open (`aria-expanded` / `data-popup-open`) takes the Secondary Hover fill, for every hierarchy.
+- `AdminFilter` open = hover fill (4 %) + strong border, never orange. `SortableRow` has a default hairline (`--admin-component-sortable-row-border-default`, new token, alias of `color/border/default`; confirm the value when the Figma collection is next exported).
+- `TimelineStep` has an `open` state (a step you can start now, secondary action) and `onSkip` ("Skip for now" before the primary action on the current step).
+- `admin/ui/menu.tsx`: `AdminMenu`, `AdminMenuTrigger`, `AdminMenuContent`, `AdminMenuGroup`, `AdminMenuLabel` (mono capitals, must sit in a group), `AdminMenuItem` (`tone="danger"`, `active`), `AdminMenuSeparator`. Surface and item metrics come from the layer in `admin-v2.ts`.
+- Blur: `--blur-a-overlay: 16px` in the Tailwind mapping, so `backdrop-blur-a-overlay` is Admin/Blur/Overlay.
+- `/admin/<coach>/kit` shows all of them.
+
 ---
 
 ## Admin v2: fluxos refeitos em 10/11/2026
