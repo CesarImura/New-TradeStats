@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
+import { ArrowLeft } from "@/components/icons"
 import { ChoiceChip, SignupFrame, SignupTitle, useSignupGo } from "@/components/onboarding/signup-frame"
 import { AdminButton } from "@/components/admin/ui"
-import { setAccount, type Audience } from "@/lib/data/communities"
+import { account, setAccount, type Audience } from "@/lib/data/communities"
 
 /**
  * Sign up · 04 About you (Figma 939:58985). Three optional questions as chips. The answers preselect the look and the
@@ -32,18 +33,35 @@ const OFFERS = [
   { id: "other", label: "Other" },
 ]
 
+const noop = () => () => {}
+/** The answers given before (coming Back from Name your platform), as one stable string. */
+const given = () => JSON.stringify(account()?.answers ?? null)
+
 export default function About() {
   const go = useSignupGo()
   const [members, setMembers] = useState<string>()
   const [tools, setTools] = useState<string[]>([])
   const [offers, setOffers] = useState<string[]>([])
+  // Back from the next screen: the answers come back, read once on the client.
+  const saved = useSyncExternalStore(noop, given, () => "null")
+  const [seeded, setSeeded] = useState(false)
+  if (saved !== "null" && !seeded) {
+    setSeeded(true)
+    const a = JSON.parse(saved) as { members?: string; tools: string[]; offers: string[] }
+    setMembers(a.members)
+    setTools(a.tools)
+    setOffers(a.offers)
+  }
+  const save = (skip?: boolean) => {
+    const m = MEMBERS.find((x) => x.id === members)
+    setAccount({ answers: skip ? undefined : { audience: m?.audience ?? "starting", members, tools, offers } })
+  }
 
   // "Nothing yet" can't sit next to a tool.
   const toggle = (list: string[], id: string, only?: string) => (list.includes(id) ? list.filter((x) => x !== id) : id === only ? [id] : [...list.filter((x) => x !== only), id])
 
   const next = (skip?: boolean) => {
-    const m = MEMBERS.find((x) => x.id === members)
-    setAccount({ answers: skip ? undefined : { audience: m?.audience ?? "starting", members, tools, offers } })
+    save(skip)
     go("/signup/name")
   }
 
@@ -57,6 +75,9 @@ export default function About() {
   return (
     <SignupFrame>
       <div className="flex flex-col gap-5">
+        <AdminButton type="button" hierarchy="ghost" className="-ml-2 w-fit" onClick={() => (save(), go("/signup/create", -1))}>
+          <ArrowLeft /> Back
+        </AdminButton>
         <SignupTitle title="Tell us about your coaching." text="Help us tailor TraderHub for you. All optional." />
         <div className="flex flex-col gap-6">
           {question(

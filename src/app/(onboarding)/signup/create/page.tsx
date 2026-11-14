@@ -11,7 +11,8 @@ const noop = () => () => {}
 /** The name and e-mail of an account that hasn't confirmed its code yet, as one stable string. */
 const unfinished = () => {
   const a = account()
-  return a && a.mode === "create" && !a.verified ? `${a.name}\n${a.email}` : ""
+  // Also after the code, when the coach came Back from About you (Flavio, 14/11).
+  return a && a.mode === "create" && !a.setupSlug ? `${a.name}\n${a.email}` : ""
 }
 
 /** Sign up · 02 Create account (Figma 939:57971). Name and e-mail; the code on the next screen proves the address. */
@@ -38,9 +39,12 @@ export default function CreateAccount() {
     e.preventDefault()
     setTried(true)
     if (errors.name || errors.email) return
-    // A new account starts clean: no answers and no platform yet.
+    // A new account starts clean: no answers and no platform yet. Back from About you with the same e-mail keeps
+    // what was already answered.
+    const before = account()
+    const keep = before && !before.setupSlug && before.email === email.trim() ? { answers: before.answers, nameDraft: before.nameDraft } : {}
     setAccount(null)
-    setAccount({ name: name.trim(), email: email.trim(), approved: false, verified: false, mode: "create" })
+    setAccount({ name: name.trim(), email: email.trim(), approved: false, verified: false, mode: "create", ...keep })
     go("/signup/verify")
   }
 

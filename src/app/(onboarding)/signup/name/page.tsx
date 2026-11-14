@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
+import { ArrowLeft } from "@/components/icons"
 import { SelectField } from "@/components/kit/select-field"
 import { createCommunity } from "@/components/onboarding/setup-community"
 import { SignupFrame, SignupTitle, useSignupGo } from "@/components/onboarding/signup-frame"
 import { AdminButton, AdminField, adminControl } from "@/components/admin/ui"
 import { Checkbox } from "@/components/ui/checkbox"
-import { account } from "@/lib/data/communities"
+import { account, setAccount } from "@/lib/data/communities"
 import { useAccount } from "@/lib/data/use-communities"
 import { cn } from "@/lib/utils"
 
@@ -21,6 +22,10 @@ const LANGUAGES = [
  * confirmed at Go live), what students call the coach, the language, and the TraderHub terms. Continue makes the
  * platform as a draft and opens Getting started.
  */
+const noop = () => () => {}
+/** What was typed here before going Back, as one stable string. */
+const drafted = () => JSON.stringify(account()?.nameDraft ?? null)
+
 export default function NamePlatform() {
   const go = useSignupGo()
   const acc = useAccount()
@@ -30,6 +35,20 @@ export default function NamePlatform() {
   const [language, setLanguage] = useState("en")
   const [terms, setTerms] = useState(false)
   const [tried, setTried] = useState(false)
+  // Coming back to this screen: what was typed comes back, read once on the client.
+  const saved = useSyncExternalStore(noop, drafted, () => "null")
+  const [seeded, setSeeded] = useState(false)
+  if (saved !== "null" && !seeded) {
+    setSeeded(true)
+    const d = JSON.parse(saved) as { name: string; call?: string; language: string }
+    setName(d.name)
+    setCall(d.call)
+    setLanguage(d.language)
+  }
+  const back = () => {
+    setAccount({ nameDraft: { name, call, language } })
+    go("/signup/about", -1)
+  }
   const callAs = call ?? first
   const errors = { name: name.trim().length < 2 ? "Give your platform a name." : undefined, call: !callAs.trim() ? "Tell students what to call you." : undefined }
 
@@ -38,12 +57,16 @@ export default function NamePlatform() {
     setTried(true)
     if (errors.name || errors.call || !terms) return
     const slug = createCommunity({ name: name.trim(), coachName: callAs.trim(), language, account: account() })
+    setAccount({ nameDraft: undefined })
     go(`/admin/${slug}/getting-started`)
   }
 
   return (
     <SignupFrame>
       <form onSubmit={submit} noValidate className="flex flex-col gap-5">
+        <AdminButton type="button" hierarchy="ghost" className="-ml-2 w-fit" onClick={back}>
+          <ArrowLeft /> Back
+        </AdminButton>
         <SignupTitle title="Name your platform" text="Students see this name. You can change it later." />
         <div className="flex flex-col gap-4">
           <AdminField label="Platform name" error={tried ? errors.name : undefined}>

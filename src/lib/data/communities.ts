@@ -62,6 +62,8 @@ export type Account = {
   /** Sign-up phase 1: came in through Log in or Create account (where Verify goes next). */
   mode?: "login" | "create"
   step?: number
+  /** Name your platform, as typed before going Back (kept until the platform is made). */
+  nameDraft?: { name: string; call?: string; language: string }
 }
 
 const KEY = "proto:communities"
