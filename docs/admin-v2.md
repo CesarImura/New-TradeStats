@@ -17,7 +17,7 @@ The Admin follows the Figma file Tradehub (XWHeEdjEiY6gWmrsg0vFIZ), collection `
 
 ## Rules
 - Dark only. UI text in English. No gradients except media fades. States: Default / Hover / Disabled (opacity 0.4); hover transitions 0.3 s ease-out.
-- Editor (`admin/design`), Terminal and the student area are not touched by v2.
+- Editor (`admin/design`) now follows v2 (14/11): frame, controls and menus come from `admin/ui` and `a-*` tokens, Inter/Space Mono, orange selection on panel controls. Terminal and the student area are not touched by v2.
 - Inter is first in the font stack on every device (substitute for Helvetica Neue, which the web cannot ship); mono is Space Mono.
 
 ## Checks
@@ -109,7 +109,7 @@ Students, tabelas (Admin / Table), Calendar, Community, Journal & feedback, Down
 7. Movimento: ease-out, só transform/opacity, nada de `transition-all`, sempre `motion-reduce`, `motion/react`.
 8. Reiniciar modal ou drawer: estado derivado no render, não effect.
 9. Texto em inglês, curto, com a mesma palavra para a mesma coisa.
-10. Testar em 1920, 1440, 1280, 1100, 1000, 768, 390 e 320 px com axe. Editor (`components/admin/design`) e Student não se tocam.
+10. Testar em 1920, 1440, 1280, 1100, 1000, 768, 390 e 320 px com axe. O Editor (`components/admin/design`) usa o mesmo kit e os mesmos tokens (desde 14/11; marcas sobre o canvas ficam brancas e as regras do Admin não entram em `.hb-canvas`, mantendo a exclusão `:not(COACH)`). Student não se toca.
 
 ### Decisões
 Tier grátis fora das abas de Sales; Access sem override por módulo; dados de exemplo alinhados ao Figma; onboarding só pergunta as opções do Figma; o passo de marca do setup reusa os controles do editor Design.

@@ -185,8 +185,12 @@ Valem para todo widget e toda opção de estilo, existentes e novos, em todos os
 
 ## 12. Editor de Design: interface limpa (decisão de 31/10)
 
-- **Uma cor de seleção só do editor:** branco (`--ts-interactive` vale `#f4f4f5` dentro do workspace). Nunca laranja nem a cor do
-  coach para seleção, foco de tile, contorno do widget selecionado ou marcador de valor próprio. O painel é monocromático.
+- **Seleção do editor (decisão de 13/11, vale desde 14/11):** laranja (`a-*`, a mesma do Admin) nos controles do painel e do inspector.
+  As marcas sobre o canvas (contorno do widget selecionado, alças, foco de tile no canvas) continuam brancas, para não se confundirem com
+  a cor do coach. Nunca a cor do coach para seleção da interface.
+- **O editor usa o kit do Admin (`components/admin/ui`)**: AdminButton, AdminFilter, AdminSegmented, AdminTabs, AdminField, Tag, Panel, Menu
+  e os tokens `a-*`/`t-*`, na fonte do Admin (Inter e Space Mono). Nada de cor, texto, espaço ou raio solto em `admin/design`, exceto as
+  marcas sobre o canvas. As variáveis da moldura não descem para `.hb-canvas` e toda regra nova mantém a exclusão `:not(COACH)`.
 - **Inspector em três níveis:** Layout aberto (Size, Shows, Layout); Look fechado com resumo (Stand out, Card, Background); More
   style fechado dentro dele (Title, Bars, Numbers, Header). Coisa nova entra no nível mais fundo que fizer sentido.
 - **Palavras simples, em inglês:** a plataforma toda é em inglês. Sem jargão de design no primeiro nível; dica no `title`, não em
