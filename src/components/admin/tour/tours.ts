@@ -136,3 +136,9 @@ export const isTourId = (v: string | null): v is TourId => !!v && v in TOURS
 /** What the admin remembers about the tour in progress (per platform). */
 export type TourState = { id: TourId; started: boolean; panel: boolean; done?: boolean; /** The furthest step reached, for "Paused at …". */ at?: string; /** The page it was on, so Resume goes back there. */ path?: string } | null
 export const tourKey = (slug: string) => `${slug}:tour`
+/**
+ * One tour runs at a time (Flavio, 14/11): opening another pauses the one in progress, and its place is kept here so
+ * Getting started says "Paused at …" and Resume picks it up again.
+ */
+export type PausedTours = Partial<Record<TourId, { at: string; path?: string }>>
+export const pausedKey = (slug: string) => `${slug}:tours-paused`

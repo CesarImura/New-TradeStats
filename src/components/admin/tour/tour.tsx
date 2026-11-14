@@ -9,9 +9,10 @@ import { setStored, useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
 import { AdminButton, StepIndicator } from "../ui"
 import { useSetupSteps } from "../getting-started/use-setup-steps"
-import { isTourId, TOURS, tourKey, type Side, type Tour, type TourId, type TourState, type TourStep } from "./tours"
+import { isTourId, pausedKey, TOURS, tourKey, type PausedTours, type Side, type Tour, type TourId, type TourState, type TourStep } from "./tours"
 
 const NONE: TourState = null
+const NO_PAUSED: PausedTours = {}
 type Box = { x: number; y: number; w: number; h: number; open?: boolean }
 
 /** The tour in progress for this platform, and the ways to move it. */
@@ -20,7 +21,32 @@ export function useTourState() {
   const key = tourKey(coach.slug)
   const state = useStored<TourState>(key, NONE)
   const set = useCallback((next: TourState | ((s: TourState) => TourState)) => setStored<TourState>(key, next, NONE), [key])
-  return { state, set, tour: state ? TOURS[state.id] : undefined }
+  const paused = useStored<PausedTours>(pausedKey(coach.slug), NO_PAUSED)
+  // Start (or resume) a tour; the one in progress, if any, is paused where it was. Both are read from the store, not
+  // from this render: on a page that just loaded, the render may not have the saved state yet.
+  const open = useCallback(
+    (id: TourId) =>
+      set((cur) => {
+        if (cur?.id === id) return { ...cur, started: true, panel: false }
+        let kept: PausedTours[TourId]
+        setStored<PausedTours>(
+          pausedKey(coach.slug),
+          (p) => {
+            const next = { ...p }
+            kept = next[id]
+            delete next[id]
+            if (cur && !cur.done && cur.at) next[cur.id] = { at: cur.at, path: cur.path }
+            return next
+          },
+          NO_PAUSED,
+        )
+        return { id, started: true, panel: false, at: kept?.at, path: kept?.path }
+      }),
+    [set, coach.slug],
+  )
+  /** Where a tour stopped: the one in progress, or one paused when another was opened. */
+  const pausedAt = (id: TourId) => (state?.id === id ? (!state.done && state.at ? { at: state.at, path: state.path } : undefined) : paused[id])
+  return { state, set, open, pausedAt, tour: state ? TOURS[state.id] : undefined }
 }
 
 /**
@@ -33,18 +59,18 @@ export function TourLayer() {
   const pathname = usePathname()
   const params = useSearchParams()
   const { coach, base } = useCoach()
-  const { state, set, tour } = useTourState()
+  const { state, set, open, tour } = useTourState()
   const asked = params.get("tour")
 
   // ?tour=… (from Getting started): the tour starts at once, coachmark on the first target (Figma 1014:8741…), or
   // resumes where it was; the panel stays folded into the pill. Then the parameter is dropped.
   useEffect(() => {
     if (!isTourId(asked)) return
-    set((s) => (s?.id === asked ? { ...s, started: true, panel: false } : { id: asked, started: true, panel: false }))
+    open(asked)
     const rest = new URLSearchParams(params.toString())
     rest.delete("tour")
     router.replace(`${pathname}${rest.size ? `?${rest}` : ""}`, { scroll: false })
-  }, [asked, params, pathname, router, set])
+  }, [asked, open, params, pathname, router])
 
   // Coming in another way (the side menu, a tab): while that Getting started item is the one to do next and no tour
   // is on, its tour starts as soon as its first target is on screen (Content's New course, the Tiers tab's New tier,
@@ -55,13 +81,13 @@ export function TourLayer() {
     const id = current as TourId
     const first = TOURS[id].steps[0].target
     const check = () => {
-      if (visible(document.querySelector(first))) set({ id, started: true, panel: false })
+      if (visible(document.querySelector(first))) open(id)
     }
     check()
     const mo = new MutationObserver(check)
     mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-state", "hidden", "class"] })
     return () => mo.disconnect()
-  }, [state, community, current, set])
+  }, [state, community, current, open])
 
   // Followed even while paused: doing the last thing by hand still completes the item.
   const step = useActiveStep(tour, !!state)

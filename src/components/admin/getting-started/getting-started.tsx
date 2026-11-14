@@ -23,8 +23,8 @@ export function GettingStarted() {
   const { steps, doneCount, total, current, community, skip } = useSetupSteps()
   const [goLive, setGoLive] = useState(false)
   // A tour left half way (Skip or Do it later): its item says where, and Resume goes back there (Figma 1066:1047).
-  const { state: tour } = useTourState()
-  const paused = tour && !tour.done && tour.at ? TOURS[tour.id].steps.find((x) => x.id === tour.at) : undefined
+  // One tour runs at a time; any other left half way was paused where it was (Flavio, 14/11).
+  const { pausedAt } = useTourState()
   const live = community?.status === "live"
   const intro = live ? "Your platform is live. Next, bring in your first students." : doneCount === total ? "Everything is set up. Go live to open your platform to students." : "Your platform is a draft. Do these five steps in any order, then go live."
 
@@ -35,7 +35,9 @@ export function GettingStarted() {
         <ol aria-label="Setup steps" className="flex w-full min-w-0 flex-1 flex-col">
           {steps.map((s, i) => {
             const state = s.done ? "done" : s.id === current ? "current" : s.id === "live" ? "upcoming" : "open"
-            const resume = paused && isTourId(s.id) && tour?.id === s.id && !s.done
+            const at = isTourId(s.id) && !s.done ? pausedAt(s.id) : undefined
+            const paused = at && isTourId(s.id) ? TOURS[s.id].steps.find((x) => x.id === at.at) : undefined
+            const resume = !!paused
             return (
               <TimelineStep
                 key={s.id}
@@ -44,11 +46,11 @@ export function GettingStarted() {
                 first={i === 0}
                 last={i === steps.length - 1}
                 title={s.title}
-                description={resume ? `Paused at “${paused.title}”. ${TOURS[tour.id].saved}` : s.description}
+                description={paused && isTourId(s.id) ? `Paused at “${paused.title}”. ${TOURS[s.id].saved}` : s.description}
                 action={resume ? "Resume" : s.action}
                 disabledHint="Finish the five steps first"
                 onSkip={s.id === "live" || total - doneCount < 2 ? undefined : () => skip(s.id)}
-                onAction={() => (s.id === "live" ? setGoLive(true) : router.push(resume && tour.path ? `${tour.path}${tour.path.includes("?") ? "&" : "?"}tour=${tour.id}` : s.href))}
+                onAction={() => (s.id === "live" ? setGoLive(true) : router.push(resume && at?.path ? `${at.path}${at.path.includes("?") ? "&" : "?"}tour=${s.id}` : s.href))}
                 onEdit={s.id === "live" ? undefined : () => router.push(s.href.replace(/[?&]tour=\w+/, ""))}
               />
             )
