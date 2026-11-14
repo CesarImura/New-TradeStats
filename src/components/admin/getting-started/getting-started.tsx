@@ -21,7 +21,7 @@ import { useCatalog } from "@/lib/data/learning"
 export function GettingStarted() {
   const router = useRouter()
   const { coach, base } = useCoach()
-  const { steps, doneCount, total, current, community, skip } = useSetupSteps()
+  const { steps, doneCount, total, current, community, skip, skipped, allPutOff } = useSetupSteps()
   const [goLive, setGoLive] = useState(false)
   // A tour left half way (Skip or Do it later): its item says where, and Resume goes back there (Figma 1066:1047).
   // One tour runs at a time; any other left half way was paused where it was (Flavio, 14/11).
@@ -31,7 +31,7 @@ export function GettingStarted() {
   const catalog = useCatalog(coach)
   const savedLine = (id: TourId) =>
     id === "course" ? (catalog.courses.length ? TOURS.course.saved : "Resume picks up where you left off.") : id === "tier" ? "Resume picks up where you left off." : TOURS[id].saved
-  const intro = live ? "Your platform is live. Next, bring in your first students." : doneCount === total ? "Everything is set up. Go live to open your platform to students." : "Your platform is a draft. Do these five steps in any order, then go live."
+  const intro = live ? "Your platform is live. Next, bring in your first students." : doneCount === total ? "Everything is set up. Go live to open your platform to students." : allPutOff ? "Come back to these when you're ready. Go live opens once all five are done." : "Your platform is a draft. Do these five steps in any order, then go live."
 
   return (
     <div className="flex flex-col gap-6">
@@ -51,6 +51,7 @@ export function GettingStarted() {
                 first={i === 0}
                 last={i === steps.length - 1}
                 title={s.title}
+                tag={!s.done && s.id !== "live" && skipped.includes(s.id) && s.id !== current ? "Skipped" : undefined}
                 description={paused && isTourId(s.id) ? `Paused at “${paused.title}”. ${savedLine(s.id)}` : s.description}
                 action={resume ? "Resume" : s.action}
                 disabledHint="Finish the five steps first"

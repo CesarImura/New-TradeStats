@@ -56,5 +56,7 @@ export function useSetupSteps() {
   const skip = (id: SetupStepId) => {
     if (community) updateCommunity(community.slug, { setup: { ...community.setup, skipped: [...skipped.filter((x) => x !== id), id] } })
   }
-  return { community, steps, doneCount, total: items.length, current, skip, ready: open.length === 0 }
+  // Every item still open was put off: the suggestion goes back to the first one put off (QA 14/11, Gustavo).
+  const allPutOff = open.length > 0 && open.every((x) => skipped.includes(x.id))
+  return { community, steps, doneCount, total: items.length, current, skip, skipped, allPutOff, ready: open.length === 0 }
 }

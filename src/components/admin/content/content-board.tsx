@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { STATUS_LABEL, allLessons, isSampleCourse, readyForLaunch, saveCatalog, uid, useCatalog, type Catalog, type Course, type Status } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
+import { useTiers } from "@/lib/data/access"
 import { NewCourse } from "./new-course"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 
@@ -50,7 +51,7 @@ const attentionOf = (c: Course, prelaunch = false): { tone: "warning" | "muted";
   const waiting = allLessons(c).filter((l) => l.status === "draft" || !l.video).length
   return c.status === "published" && waiting ? { tone: "warning", text: `${waiting} ${waiting === 1 ? "lesson isn't" : "lessons aren't"} ready`, action: "Review" } : null
 }
-const accessOf = (c: Course, tiers: { id: string; name: string }[]) => (c.soldSeparately ? "Sold on its own" : c.tiers.length ? tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") || "No tier yet" : "All tiers")
+const accessOf = (c: Course, tiers: { id: string; name: string }[]) => (c.soldSeparately ? "Sold on its own" : c.tiers.length ? tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") || "No tier yet" : tiers.length ? "All tiers" : "No tier yet")
 const statusTone = (s: Status) => (s === "published" ? "success" : s === "scheduled" ? "accent" : "neutral")
 /** On a platform that isn't live yet, a draft with a visible lesson says "Ready for launch" (it opens with Go live). */
 const StatusTag = ({ course, prelaunch = false }: { course: Course; prelaunch?: boolean }) => (
@@ -68,6 +69,8 @@ export function ContentBoard() {
   const catalog = useCatalog(coach)
   // A community made in setup starts on the sample courses; they carry a "Sample" label until replaced.
   const wizard = useWizardCommunity(coach.slug)
+  // Tiers made in Sales (a new platform has none in its seed), so access says the real names (QA 14/11).
+  const allTiers = useTiers(coach)
   const sample = (id: string) => !!wizard && isSampleCourse(coach, id)
   const prelaunch = wizard?.status === "setup"
   const router = useRouter()
@@ -163,14 +166,15 @@ export function ContentBoard() {
           actions={<><AdminButton data-tour="course-new" onClick={() => openWizard("blank")}><Plus /> New course</AdminButton><AdminButton hierarchy="secondary" onClick={() => openWizard("folder")}><Upload /> Upload a folder</AdminButton></>} />
       ) : (
         <>
-      <StatPanel
+      {/* The sample numbers are for the demo platforms; a platform made at sign-up has no students yet (QA 14/11). */}
+      {!wizard && <StatPanel
         stats={[
           { label: "Enrolled students", value: "201", delta: "+12 vs last 30 days" },
           { label: "Active this week", value: 86, delta: "43% of enrolled" },
           { label: "Avg. completion", value: "44%", delta: "+3 pp vs last 30 days", tone: "success" },
           { label: "Where students stop", value: "Lesson 2", delta: "Price action playbook · 31% don't go past it" },
         ]}
-      />
+      />}
       <SetupTip task="course" />
       <SampleNotice show={catalog.courses.some((c) => sample(c.id))}>
         Courses marked Sample are examples, so you can see how your courses look. Replace or delete them before you invite students.
@@ -249,7 +253,7 @@ export function ContentBoard() {
                   </AdminTd>
                   <AdminTd><StatusTag course={c} prelaunch={prelaunch} /></AdminTd>
                   <AdminTd>{att ? <CellDot tone={att.tone === "warning" ? "warning" : "neutral"} label={att.text} /> : <span className="text-a-text-3">—</span>}</AdminTd>
-                  <AdminTd><span className="line-clamp-2">{accessOf(c, coach.tiers)}</span></AdminTd>
+                  <AdminTd><span className="line-clamp-2">{accessOf(c, allTiers)}</span></AdminTd>
                   <AdminTd align="end">{allLessons(c).length}</AdminTd>
                   <AdminTd align="end">{live ? 80 + ((seed * 37) % 120) : "—"}</AdminTd>
                   <AdminTd align="end">{live ? `${20 + ((seed * 13) % 60)}%` : "—"}</AdminTd>
@@ -281,7 +285,7 @@ export function ContentBoard() {
                 </>
               }
               title={c.title} subtitle={c.tagline}
-              meta={<>{sample(c.id) && <Tag>Sample</Tag>}<span className="min-w-0 flex-1 truncate text-a-text-2">{accessOf(c, coach.tiers)}</span>{c.edited && <span className="shrink-0 text-a-text-3">Edited {c.edited}</span>}</>}
+              meta={<>{sample(c.id) && <Tag>Sample</Tag>}<span className="min-w-0 flex-1 truncate text-a-text-2">{accessOf(c, allTiers)}</span>{c.edited && <span className="shrink-0 text-a-text-3">Edited {c.edited}</span>}</>}
               stats={[[String(lessons.length), "Lessons"], [live ? String(80 + ((seed * 37) % 120)) : "—", "Students"], [live ? `${20 + ((seed * 13) % 60)}%` : "—", "Completed"]]} />
           )
         })}

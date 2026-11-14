@@ -9,6 +9,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { allLessons, saveCatalog, uid, useCatalog, type Course, type Lesson, type Status } from "@/lib/data/learning"
 import { videoFrames } from "@/lib/video-frames"
 import { cn } from "@/lib/utils"
+import { useTiers } from "@/lib/data/access"
 import { AdminButton, AdminProgress, Tag } from "../ui"
 import { Curriculum } from "./curriculum"
 import { CourseCover, PHASE_LABEL, fmtLength, minutesOf, uploadQueue, type Upload } from "./course-parts"
@@ -24,6 +25,7 @@ const tone = (s: Status) => (s === "published" ? "success" : s === "scheduled" ?
 /** Course builder, as the Figma "Content" flow: curriculum (07), lesson (08 to 10), settings (11), publish review (12), preview (13). */
 export function CourseBuilder({ courseId }: { courseId: string }) {
   const { coach, base } = useCoach()
+  const allTiers = useTiers(coach)
   const router = useRouter()
   const catalog = useCatalog(coach)
   const course = catalog.courses.find((c) => c.id === courseId)
@@ -98,7 +100,7 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
   const lessons = allLessons(course)
   const current = view.k === "outline" ? undefined : lessons.find((l) => l.id === view.id)
   const first = lessons.find((l) => l.status === "published") ?? lessons[0]
-  const tiers = course.tiers.length ? coach.tiers.filter((t) => course.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers"
+  const tiers = course.tiers.length ? allTiers.filter((t) => course.tiers.includes(t.id)).map((t) => t.name).join(", ") || "No tier yet" : allTiers.length ? "All tiers" : "No tier yet"
   const publishNow = (o: { when: "now" | "later"; date: string; at: string; channels: string[] }) => {
     edit((c) => ({ ...c, status: o.when === "later" ? "scheduled" : "published", scheduledFor: o.when === "later" ? o.date : c.scheduledFor, scheduledAt: o.when === "later" ? o.at : c.scheduledAt }))
     toast.success(o.when === "later" ? `Scheduled for ${o.date} at ${o.at.slice(11, 16)}.` : `Published.${o.channels.length ? ` Students are told ${o.channels.join(", ").replace("app", "on the platform").replace("email", "by e-mail").replace("discord", "in Discord")}.` : ""}`)

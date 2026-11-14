@@ -59,7 +59,7 @@ export function EditorTopBar({
   return (
     <div
       data-design-slug={slug}
-      className={cn("grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 max-lg:grid-cols-[auto_minmax(0,1fr)_auto] max-lg:gap-2 max-sm:h-auto max-sm:grid-cols-[auto_minmax(0,1fr)] max-sm:px-4 max-sm:py-2", className)}
+      className={cn("grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 max-xl:grid-cols-[auto_minmax(0,1fr)_auto] max-xl:gap-2 max-sm:h-auto max-sm:grid-cols-[auto_minmax(0,1fr)] max-sm:px-4 max-sm:py-2", className)}
     >
       <div className="flex min-w-0 items-center gap-6">
         {back && (
@@ -70,9 +70,10 @@ export function EditorTopBar({
         <span className="t-body-m text-a-text max-lg:hidden">{title}</span>
       </div>
       {center ? <div className="flex min-w-0 items-center justify-center gap-4 max-sm:col-span-2 max-sm:row-start-2">{center}</div> : <span />}
-      <div className="flex flex-wrap items-center justify-end gap-3 max-sm:flex-nowrap max-sm:gap-1">
+      <div className="flex shrink-0 flex-nowrap items-center justify-end gap-3 max-xl:gap-2 max-sm:gap-1">
         {extra}
-        <PublishTag status={status} className="max-lg:hidden" />
+        {/* Below 1280 px the bar keeps one line (QA 14/11, Gustavo): the status tag goes, Preview and Publish stay. */}
+        <PublishTag status={status} className="max-xl:hidden" />
         <div className="flex items-center gap-0.5">
           <AdminButton hierarchy="ghost" iconOnly onClick={history.undo} disabled={!history.canUndo} aria-label="Undo" title="Undo (⌘Z)">
             <Undo2 />

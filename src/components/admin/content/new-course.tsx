@@ -43,6 +43,7 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
   const { coach } = useCoach()
   const [step, setStep] = useState<Step>("course")
   const [title, setTitle] = useState("")
+  const [titleTried, setTitleTried] = useState(false)
   const [tagline, setTagline] = useState("")
   const [cover, setCover] = useState<string | undefined>()
   const allTiers = useTiers(coach)
@@ -132,7 +133,8 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
   }
 
   const next = () => {
-    if (step === "course" && !title.trim()) return void toast.error("Give the course a title first.")
+    // An empty title is said under the field, which gets the focus (QA 14/11), not only in a toast.
+    if (step === "course" && !title.trim()) return void (setTitleTried(true), titleRef.current?.focus())
     if (step === "content") return finish(false)
     go(STEPS[idx + 1].id, "forward")
   }
@@ -188,8 +190,8 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
               <div key={step} className={cn("flex min-h-0 flex-1 flex-col gap-4 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200 motion-safe:ease-out", dir === "back" ? "motion-safe:slide-in-from-left-2" : "motion-safe:slide-in-from-right-2")}>
                 {step === "course" && (
                   <>
-                    <div data-tour="course-title"><AdminField label="Title">
-                      {(p) => <input {...p} ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && next()} placeholder="e.g. Order flow basics" className={cn(adminControl, "h-11")} />}
+                    <div data-tour="course-title"><AdminField label="Title" error={titleTried && !title.trim() ? "Give the course a title." : undefined}>
+                      {(p) => <input {...p} ref={titleRef} value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && next()} placeholder="e.g. Order flow basics" className={cn(adminControl, "h-11")} />}
                     </AdminField></div>
                     <AdminField label="Short description" optional hint="Students see it under the title. Up to 80 characters.">
                       {(p) => <input {...p} value={tagline} maxLength={80} placeholder="e.g. Read price like a trader" onChange={(e) => setTagline(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && next()} className={cn(adminControl, "h-11")} />}

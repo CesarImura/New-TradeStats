@@ -124,7 +124,7 @@ export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => v
         ))}
       </div>
       {!tiers.some(madeFree) && <Callout action={<AdminButton hierarchy="secondary" size="md" onClick={() => tiers[0] && setOpen(tiers[0].id)}>Review</AdminButton>}>
-        No free tier: visitors see the paywall first. Free days on a paid tier work as a trial.
+        No free tier yet: visitors see the paywall first. To let them in without paying, make a tier with Billing set to Free.
       </Callout>}
       <TierEditor tier={tier} index={index} onClose={() => setOpen(null)} />
     </div>
@@ -135,7 +135,7 @@ export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => v
 function Money({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
     <span className="flex h-11 items-center rounded-a-md border border-a-border-subtle bg-a-field pr-3 transition-colors duration-300 focus-within:border-a-border-focus hover:border-a-border-strong">
-      <input value={value} onChange={(e) => onChange(e.target.value.replace(/[^\d.,]/g, ""))} inputMode="decimal" placeholder={placeholder} aria-label={label} className="min-w-0 flex-1 bg-transparent px-3 t-body-l text-a-text tabular-nums outline-none placeholder:text-a-text-3" />
+      <input value={value} onChange={(e) => onChange(e.target.value.replace(/[^\d.,]/g, ""))} inputMode="decimal" maxLength={9} placeholder={placeholder} aria-label={label} className="min-w-0 flex-1 bg-transparent px-3 t-body-l text-a-text tabular-nums outline-none placeholder:text-a-text-3" />
       <span className="t-caption text-a-text-3">EUR</span>
     </span>
   )
@@ -213,9 +213,9 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
           <div data-tour="tier-plan" data-filled={x.name?.trim() && (free || amount(x.price ?? "")) ? true : undefined} data-free={free || undefined} className="flex flex-col gap-5">
           <label className="grid gap-1.5">
             <span className="t-caption text-a-text">Name</span>
-            <input value={x.name ?? ""} onChange={(e) => set({ name: e.target.value })} placeholder={fresh ? "e.g. Inner Circle" : undefined} className={cn(adminControl, "h-11")} />
+            <input value={x.name ?? ""} onChange={(e) => set({ name: e.target.value })} maxLength={60} placeholder={fresh ? "e.g. Inner Circle" : undefined} className={cn(adminControl, "h-11")} />
           </label>
-          {!free && <div className="grid grid-cols-2 items-start gap-3">
+          {!free && <div className="grid grid-cols-2 items-start gap-3 max-sm:grid-cols-1 [&>*]:min-w-0">
             <div className="grid gap-1.5">
               <span className="t-caption text-a-text">Price</span>
               <Money label="Price" value={(x.price ?? "").replace(/^€/, "")} onChange={(v) => set({ price: `€${v}` })} />

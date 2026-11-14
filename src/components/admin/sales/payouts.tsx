@@ -179,7 +179,8 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
   if (step !== key) {
     setKey(step)
     // The legal name starts from the name given at sign-up (Flavio, 14/11); the coach checks it against the ID.
-    const name = state.name ?? (step !== null ? account()?.name : undefined)
+    // Only a person's name: a company's registered name is never the coach's own (QA 14/11).
+    const name = state.name ?? (step !== null && (state.kind ?? "person") === "person" ? account()?.name : undefined)
     setForm({ ...state, name, holder: state.holder ?? name })
     setTried(false)
     setFile(null)
@@ -224,8 +225,8 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
         <div data-tour="payouts-you" className="flex flex-col gap-5">
           <div role="radiogroup" aria-label="Sell as" className="flex flex-col gap-2">
             <span className="t-caption text-a-text">Sell as</span>
-            <OptionCard checked={(form.kind ?? "person") === "person"} onSelect={() => set({ kind: "person" })} title="A person" description="You sell as yourself" />
-            <OptionCard checked={form.kind === "company"} onSelect={() => set({ kind: "company" })} title="A company" description="You sell through a registered business" />
+            <OptionCard checked={(form.kind ?? "person") === "person"} onSelect={() => set({ kind: "person", name: form.name || account()?.name })} title="A person" description="You sell as yourself" />
+            <OptionCard checked={form.kind === "company"} onSelect={() => set({ kind: "company", name: form.name === account()?.name ? "" : form.name })} title="A company" description="You sell through a registered business" />
           </div>
           <AdminField label="Country">
             {() => <AdminFilter ariaLabel="Country" value={form.country ?? "DE"} onValueChange={(v) => set({ country: v })} options={COUNTRIES} className="h-11! w-full justify-between" />}
