@@ -4,11 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { ExternalLink, History, PlayCircle, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { AdminButton, AdminMenuItem, AdminMenuSeparator } from "@/components/admin/ui"
+import { AdminButton, AdminDrawer, AdminMenuItem, AdminMenuSeparator, AdminModal } from "@/components/admin/ui"
 import { EditorTopBar, type PublishStatus } from "./top-bar"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import {
   EMPTY,
   mergeOverrides,
@@ -207,24 +204,18 @@ export function EditorBar({
 /** The short video guide for a Design screen, with the offer to set it up for the coach. */
 export function GuideDialog({ title, text, open, onOpenChange }: { title: string; text: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{text}</DialogDescription>
-        </DialogHeader>
-        <div className="grid aspect-video place-items-center rounded-lg bg-muted">
-          <PlayCircle className="size-12 text-muted-foreground" />
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Rather not do it yourself?{" "}
-          <button className="font-medium text-foreground underline underline-offset-4" onClick={() => toast("We'll be in touch to book your setup call.")}>
-            Let us set it up for you
-          </button>
-          .
-        </p>
-      </DialogContent>
-    </Dialog>
+    <AdminModal open={open} onOpenChange={onOpenChange} title={title} subtitle={text} className="sm:max-w-xl">
+      <div className="grid aspect-video place-items-center rounded-a-lg bg-a-subtle">
+        <PlayCircle className="size-12 text-a-text-3" />
+      </div>
+      <p className="t-body-m text-a-text-2">
+        Rather not do it yourself?{" "}
+        <button className="t-body-m-medium text-a-text underline underline-offset-4" onClick={() => toast("We'll be in touch to book your setup call.")}>
+          Let us set it up for you
+        </button>
+        .
+      </p>
+    </AdminModal>
   )
 }
 
@@ -232,39 +223,33 @@ export function GuideDialog({ title, text, open, onOpenChange }: { title: string
 export function VersionsSheet({ slug, open, onOpenChange }: { slug: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   const history = useHistory(slug)
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Earlier versions</SheetTitle>
-          <SheetDescription>Restoring a version opens it as a draft. Publish to make it live again.</SheetDescription>
-        </SheetHeader>
-        <div className="grid gap-2 px-4">
-          {history.length === 0 && <p className="text-sm text-muted-foreground">Nothing yet. Each time you publish, or switch to another look, the version before it is kept here.</p>}
-          {history.map((v, i) => (
-            <div key={v.at + i} className="flex items-center justify-between gap-3 rounded-lg border p-3">
-              <div className="grid">
-                <span className="text-sm">
-                  {JSON.stringify(v.snapshot) === JSON.stringify(EMPTY) ? "Original design" : v.label.startsWith("Before ") ? v.label : `Before: ${v.label.replace("Published ", "")}`}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {v.label.startsWith("Before ") && JSON.stringify(v.snapshot) === JSON.stringify(EMPTY) && `${v.label} · `}
-                  {new Date(v.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                </span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setDraft(slug, v.snapshot)
-                  toast("Version restored as a draft. Publish to make it live.")
-                }}
-              >
-                Restore
-              </Button>
+    <AdminDrawer open={open} onOpenChange={onOpenChange} title="Earlier versions" subtitle="Restoring a version opens it as a draft. Publish to make it live again.">
+      <div className="grid gap-2">
+        {history.length === 0 && <p className="t-body-m text-a-text-2">Nothing yet. Each time you publish, or switch to another look, the version before it is kept here.</p>}
+        {history.map((v, i) => (
+          <div key={v.at + i} className="flex items-center justify-between gap-3 rounded-a-lg border border-a-border p-3">
+            <div className="grid">
+              <span className="t-body-m text-a-text">
+                {JSON.stringify(v.snapshot) === JSON.stringify(EMPTY) ? "Original design" : v.label.startsWith("Before ") ? v.label : `Before: ${v.label.replace("Published ", "")}`}
+              </span>
+              <span className="t-caption text-a-text-2">
+                {v.label.startsWith("Before ") && JSON.stringify(v.snapshot) === JSON.stringify(EMPTY) && `${v.label} · `}
+                {new Date(v.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+              </span>
             </div>
-          ))}
-        </div>
-      </SheetContent>
-    </Sheet>
+            <AdminButton
+              hierarchy="secondary"
+              size="md"
+              onClick={() => {
+                setDraft(slug, v.snapshot)
+                toast("Version restored as a draft. Publish to make it live.")
+              }}
+            >
+              Restore
+            </AdminButton>
+          </div>
+        ))}
+      </div>
+    </AdminDrawer>
   )
 }

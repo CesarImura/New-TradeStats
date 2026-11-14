@@ -1,23 +1,22 @@
 /**
- * The Design sidebar's states, the same on every card, chip, swatch and choice (ts-system: orange is selection and
- * focus, never hover). Edges and fills are mixed from the foreground, so the same classes read on the dark admin
- * and on the light theme editors. Hover lifts the edge and the fill one step, in grey; selected is the orange edge, doubled
- * inside, with a faint orange wash; pressed shrinks a hair. 150ms ease-out on colour, edge and scale only, and none
- * for people who ask for less motion.
+ * The Design sidebar's states, the same on every card, chip, swatch and choice, in the Admin's tokens: a hairline edge at rest,
+ * the strong edge and the hover fill on hover, and the selected state in the Admin's orange (`border/active`), doubled inside, on
+ * a soft orange fill (Figma 14/11: selection in the panel and the inspector is orange; only the marks on the canvas stay white).
+ * Pressed shrinks a hair. 150 ms ease-out on colour, edge and scale only, and none for people who ask for less motion.
  */
 export const EASE = "transition-[background-color,border-color,box-shadow,color,opacity,transform,scale] duration-150 ease-out motion-reduce:transition-none"
 
 /** A card to pick (a layout, a font pair, a look, a width): a 1px edge at rest. */
-export const CARD = `${EASE} rounded-lg border border-[color-mix(in_oklab,var(--foreground)_13%,transparent)] outline-none active:scale-[0.985] motion-reduce:active:scale-100`
-export const CARD_IDLE = "hover:border-[color-mix(in_oklab,var(--foreground)_28%,transparent)] hover:bg-[color-mix(in_oklab,var(--foreground)_4%,transparent)]"
-export const CARD_ON = "border-[var(--ts-interactive)] bg-[color-mix(in_oklab,var(--ts-interactive)_6%,transparent)] shadow-[inset_0_0_0_1px_var(--ts-interactive)] hover:border-[var(--ts-interactive)]"
+export const CARD = `${EASE} rounded-a-lg border border-a-border outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.985] motion-reduce:active:scale-100`
+export const CARD_IDLE = "hover:border-a-border-strong hover:bg-a-hover"
+export const CARD_ON = "border-a-border-active bg-a-accent-soft shadow-[inset_0_0_0_1px_var(--admin-color-border-active)] hover:border-a-border-active"
 export const card = (on: boolean) => `${CARD} ${on ? CARD_ON : CARD_IDLE}`
 
 /** A chip to pick or switch on (filters, header parts). */
-export const CHIP = `${EASE} rounded-full border outline-none active:scale-[0.97] motion-reduce:active:scale-100`
-export const CHIP_IDLE = "border-[color-mix(in_oklab,var(--foreground)_13%,transparent)] text-muted-foreground hover:border-[color-mix(in_oklab,var(--foreground)_28%,transparent)] hover:bg-[color-mix(in_oklab,var(--foreground)_4%,transparent)] hover:text-foreground"
-export const CHIP_ON = "border-[var(--ts-interactive)] bg-[color-mix(in_oklab,var(--ts-interactive)_12%,transparent)] text-foreground"
+export const CHIP = `${EASE} rounded-full border outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97] motion-reduce:active:scale-100`
+export const CHIP_IDLE = "border-a-border text-a-text-2 hover:border-a-border-strong hover:bg-a-hover hover:text-a-text"
+export const CHIP_ON = "border-a-border-active bg-a-accent-soft text-a-text"
 export const chip = (on: boolean) => `${CHIP} ${on ? CHIP_ON : CHIP_IDLE}`
 
 /** A colour swatch: grows a little on hover; the chosen one gets an orange ring outside it. */
-export const SWATCH_ON = "outline-2 outline-offset-2 outline-[var(--ts-interactive)]"
+export const SWATCH_ON = "outline-2 outline-offset-2 outline-a-border-active"

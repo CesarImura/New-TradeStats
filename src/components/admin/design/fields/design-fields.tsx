@@ -189,7 +189,7 @@ function LogoField() {
         <div className="flex items-center gap-2 rounded-[4px] bg-muted p-2 text-xs">
           <span className="text-muted-foreground">From your logo</span>
           {suggested.map((c) => (
-            <button key={c} onClick={() => pickColor(c)} className="size-5 rounded-full ring-1 ring-[color:color-mix(in_oklab,var(--foreground)_14%,transparent)] ring-inset transition-transform hover:scale-110" style={{ background: c }} aria-label={`Use ${c}`} />
+            <button key={c} onClick={() => pickColor(c)} className="size-5 rounded-full ring-1 ring-a-border-strong ring-inset transition-transform hover:scale-110" style={{ background: c }} aria-label={`Use ${c}`} />
           ))}
         </div>
       )}
@@ -243,7 +243,7 @@ function FontsField() {
   const { theme, change } = useDesign()
   return (
     <div data-field="fonts" className="grid gap-1.5">
-      <span className="text-xs font-medium text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)]">Font pair</span>
+      <span className="text-xs font-medium text-a-text-2">Font pair</span>
       <div className="grid grid-cols-2 gap-2">
         {FONT_PAIRS.map((p) => {
           // The label font too: two pairs share a heading and body and differ only in their labels.
@@ -377,7 +377,7 @@ function ShadowsField() {
 function BordersField() {
   const { theme, change } = useDesign()
   return (
-    <label data-field="borders" className="flex items-center justify-between gap-3 text-xs font-medium text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)]">
+    <label data-field="borders" className="flex items-center justify-between gap-3 text-xs font-medium text-a-text-2">
       Outline on cards
       <Switch checked={theme.borders} onCheckedChange={(borders) => change({ theme: { borders } }, "borders")} />
     </label>
@@ -675,7 +675,7 @@ function MenuRow({ id }: { id: string }) {
   /** The way to the page itself: a pencil that opens it on the canvas, to arrange and edit its widgets. */
   const edit = (page: string, name: string) =>
     openPage && (
-      <Button variant="ghost" size="icon" style={{ width: 36, height: 36 }} className="size-9 shrink-0 bg-[color-mix(in_oklab,var(--foreground)_6%,transparent)] hover:bg-[color-mix(in_oklab,var(--foreground)_12%,transparent)]" aria-label={`Edit the ${name} page`} title={`Edit the ${name} page`} onClick={() => openPage(page)}>
+      <Button variant="ghost" size="icon" style={{ width: 36, height: 36 }} className="size-9 shrink-0 bg-a-muted hover:bg-a-selected" aria-label={`Edit the ${name} page`} title={`Edit the ${name} page`} onClick={() => openPage(page)}>
         <Pencil className="size-[1.125rem]" />
       </Button>
     )

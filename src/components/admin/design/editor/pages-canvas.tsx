@@ -321,7 +321,7 @@ export function PagesCanvas() {
                 <div
                   data-page={i}
                   className={cn(
-                    "size-full overflow-hidden rounded-[18px] bg-background shadow-[0_1px_2px_rgb(0_0_0/0.06),0_12px_40px_-12px_rgb(0_0_0/0.25)] ring-1 ring-black/10 transition-[box-shadow] dark:ring-white/10",
+                    "size-full overflow-hidden rounded-[18px] bg-background ring-1 ring-a-border transition-[box-shadow]",
                     !on && "hover:ring-[6px] hover:ring-primary/50",
                   )}
                 >

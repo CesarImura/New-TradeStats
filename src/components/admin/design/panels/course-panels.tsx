@@ -59,7 +59,7 @@ function CoursePageArt() {
 /** On Playbook's widgets panel: the way into the page inside a course, as a picture tile like the editor's other choices. */
 export function CoursePageLink({ onOpen }: { onOpen: () => void }) {
   return (
-    <div className="border-t border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] px-5 pt-4 pb-6">
+    <div className="border-t border-a-border-subtle px-5 pt-4 pb-6">
       <p className="mb-2.5 px-0.5 font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] font-medium tracking-[0.08em] text-muted-foreground uppercase">Other screen</p>
       <button
         type="button"
@@ -100,7 +100,7 @@ export function CourseSections({ selected, onSelect }: { selected: CourseSection
   }
   return (
     // The hairline under the title, like every other section.
-    <div className="grid gap-4 border-t border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] px-5 pt-6 pb-6">
+    <div className="grid gap-4 border-t border-a-border-subtle px-5 pt-6 pb-6">
       <p className="text-xs leading-4 text-muted-foreground">Select a section to edit it. Drag to move it, or switch it off.</p>
       <SortHint home={false} />
       <SortableMenu<CourseSectionId>
@@ -111,7 +111,7 @@ export function CourseSections({ selected, onSelect }: { selected: CourseSection
           const s = byId.get(id)!
           const on = selected === id
           return (
-            <div data-field={`course-${id}`} className={cn(menuRow(!s.on), "gap-1 py-2", on && "border-[var(--ts-interactive)] bg-white/[0.05] hover:border-[var(--ts-interactive)]")}>
+            <div data-field={`course-${id}`} className={cn(menuRow(!s.on), "gap-1 py-2", on && "border-a-border-active bg-a-accent-soft hover:border-a-border-active")}>
               <SortHandle />
               <button type="button" aria-pressed={on} onClick={() => onSelect(on ? null : id)} className="grid min-w-0 flex-1 rounded-md py-0.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
                 <span className={cn("text-sm font-medium", !s.on && "text-muted-foreground line-through")}>{s.label}</span>

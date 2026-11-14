@@ -64,7 +64,7 @@ export function GridWidget({ w, fixed = false, selected, available, onRemove, on
           {w.emphasis === "star" && " · Star"}
         </span>
         <span className="ml-auto" />
-        {rule && <span className="max-w-[45%] shrink-0 truncate rounded-[3px] bg-[var(--ts-interactive)] px-1.5 py-0.5 font-mono text-[0.6875rem] leading-none font-medium tracking-[0.04em] text-black uppercase">{rule}</span>}
+        {rule && <span className="max-w-[45%] shrink-0 truncate rounded-[3px] bg-[var(--ts-mark)] px-1.5 py-0.5 font-mono text-[0.6875rem] leading-none font-medium tracking-[0.04em] text-black uppercase">{rule}</span>}
         {/* The quick bar: the width in one click (selected only), duplicate and remove. On the card's own top edge, so it never
             covers the widget below; in the editor's colours, not the coach's, so it reads the same on every theme. */}
         <div

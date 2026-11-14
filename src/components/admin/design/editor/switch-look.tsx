@@ -2,8 +2,7 @@
 
 import { useState } from "react"
 import { History } from "@/components/icons"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AdminButton, AdminModal } from "@/components/admin/ui"
 import { useDesign } from "../fields/design-fields"
 
 /**
@@ -18,23 +17,18 @@ export function useConfirmSwitch() {
   const [pending, setPending] = useState<{ name: string; apply: () => void } | null>(null)
   const ask = (name: string, apply: () => void) => (keepVersion ? setPending({ name, apply }) : apply())
   const dialog = (
-    <Dialog open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Switch to {pending?.name}?</DialogTitle>
-          <DialogDescription>
-            Fonts, cards, widgets and spacing start again from {pending?.name}. Your name, logo, colours, menu and pages stay.
-          </DialogDescription>
-        </DialogHeader>
-        <p className="flex items-start gap-2 rounded-lg border p-3 text-xs text-muted-foreground">
-          <History className="mt-px size-3.5 shrink-0" />
-          Your design as it is now is saved in Earlier versions (the ⋯ menu), so you can bring it back at any time.
-        </p>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setPending(null)}>
+    <AdminModal
+      open={!!pending}
+      onOpenChange={(o) => !o && setPending(null)}
+      title={`Switch to ${pending?.name}?`}
+      subtitle={`Fonts, cards, widgets and spacing start again from ${pending?.name}. Your name, logo, colours, menu and pages stay.`}
+      className="sm:max-w-md"
+      footer={
+        <>
+          <AdminButton hierarchy="secondary" onClick={() => setPending(null)}>
             Keep my design
-          </Button>
-          <Button
+          </AdminButton>
+          <AdminButton
             onClick={() => {
               if (!pending) return
               keepVersion?.(`Before switching to ${pending.name}`)
@@ -43,10 +37,15 @@ export function useConfirmSwitch() {
             }}
           >
             Switch to {pending?.name}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AdminButton>
+        </>
+      }
+    >
+      <p className="flex items-start gap-2 rounded-a-lg border border-a-border p-3 t-caption text-a-text-2">
+        <History className="mt-px size-3.5 shrink-0" />
+        Your design as it is now is saved in Earlier versions (the ⋯ menu), so you can bring it back at any time.
+      </p>
+    </AdminModal>
   )
   return [ask, dialog] as const
 }

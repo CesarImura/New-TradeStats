@@ -25,24 +25,25 @@ const SortContext = createContext<Sort | null>(null)
 export const useSort = () => useContext(SortContext)
 
 /**
- * One menu row's frame, shared by Home, the modules and the coach's pages: room on both sides, a faint wash on
- * hover, an orange edge while one of its fields has focus. A hidden item keeps readable text on a dashed edge,
+ * One menu row's frame, shared by Home, the modules and the coach's pages: room on both sides, a faint fill on
+ * hover, the active (orange) edge while one of its fields has focus. A hidden item keeps readable text on a dashed edge,
  * so it reads as off without fading away (with its name struck through and its switch off).
  */
 export const menuRow = (hidden?: boolean) =>
   cn(
-    "flex items-center gap-2 rounded-lg border py-1 pr-2.5 pl-1 transition-[background-color,border-color] duration-150",
-    "hover:border-[color-mix(in_oklab,var(--foreground)_20%,transparent)] hover:bg-[color-mix(in_oklab,var(--foreground)_3%,transparent)]",
-    "focus-within:border-[color-mix(in_oklab,var(--ts-interactive)_45%,transparent)] focus-within:bg-[color-mix(in_oklab,var(--ts-interactive)_4%,transparent)] focus-within:hover:border-[color-mix(in_oklab,var(--ts-interactive)_45%,transparent)]",
+    // The Admin's Sortable row (component/sortable-row): a hairline edge at rest, a faint fill on hover, the active edge while a field has focus.
+    "flex items-center gap-2 rounded-a-md border border-[var(--admin-component-sortable-row-border-default)] py-1 pr-2.5 pl-1 transition-[background-color,border-color] duration-150",
+    "hover:bg-a-hover",
+    "focus-within:border-a-border-active focus-within:hover:border-a-border-active",
     hidden && "border-dashed bg-transparent",
   )
 /** A hidden item's name field: still readable (secondary text, not faded), and not editable while it is off. */
-export const HIDDEN_INPUT = "disabled:border-dashed disabled:bg-transparent disabled:text-muted-foreground disabled:opacity-100"
+export const HIDDEN_INPUT = "disabled:border-dashed disabled:bg-transparent disabled:text-a-text-2 disabled:opacity-100"
 
 /** An off switch in a menu row: a visible track edge and a grey thumb, so "hidden" is plain without looking broken. */
 export const SWITCH_OFF =
   // Marked important on these switches only: the admin's own switch styling (ts-system) would win otherwise.
-  "data-unchecked:border-[color-mix(in_oklab,var(--foreground)_45%,transparent)]! data-unchecked:bg-[color-mix(in_oklab,var(--foreground)_10%,transparent)]! *:data-unchecked:bg-muted-foreground!"
+  "data-unchecked:border-a-border-strong! data-unchecked:bg-a-selected! *:data-unchecked:bg-a-text-3!"
 
 /** How to reorder, for the line above the list (the handles point to it). */
 export function SortHint({ home = true }: { home?: boolean } = {}) {
@@ -176,8 +177,8 @@ function SortItem({ id, name, flash, onDrop, onMove, children }: { id: string; n
     if (!flash || reduce) return
     ref.current?.animate(
       [
-        { boxShadow: "0 0 0 2px rgb(255 255 255 / 0.9)", borderRadius: "8px" },
-        { boxShadow: "0 0 0 2px rgb(255 255 255 / 0)", borderRadius: "8px" },
+        { boxShadow: "0 0 0 2px var(--admin-color-border-active)", borderRadius: "8px" },
+        { boxShadow: "0 0 0 2px transparent", borderRadius: "8px" },
       ],
       { duration: 1200, easing: "ease-in" },
     )

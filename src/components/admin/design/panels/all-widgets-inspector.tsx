@@ -86,7 +86,7 @@ export function AllWidgetsInspector({ draft, onReset, onBack, back, own, onClear
       <p className="-mt-1 px-5 pb-3 text-xs leading-4 text-muted-foreground">Corner radius, cards, buttons and charts of every widget, on every page.{own ? ` ${own} widget${own === 1 ? " keeps its" : "s keep their"} own style.` : ""}</p>
       {own > 0 && (
         <div className="px-5 pb-3">
-          <button type="button" onClick={onClearOwn} className="h-8 w-full rounded-md border border-white/[0.16] px-3 text-xs font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
+          <button type="button" onClick={onClearOwn} className="h-8 w-full rounded-a-md border border-a-border-strong px-3 t-caption-medium outline-none transition-colors duration-300 hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus">
             Use these settings on {own === 1 ? "that widget" : `all ${own}`} (this page)
           </button>
         </div>

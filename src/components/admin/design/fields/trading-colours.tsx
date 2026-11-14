@@ -31,13 +31,13 @@ export function TradingColoursField() {
     <div data-field="trading" className="grid gap-3">
       <div className="grid grid-cols-2 gap-2">
         <div className="grid gap-1.5">
-          <span className="flex items-center gap-1 text-[0.8125rem] leading-5 text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)]">
+          <span className="flex items-center gap-1 text-[0.8125rem] leading-5 text-a-text-2">
             <ArrowUp className="size-3" style={{ color: profit }} /> Profit
           </span>
           <ColorField value={profit} onChange={(c) => write(c, loss)} label="Profit colour" />
         </div>
         <div className="grid gap-1.5">
-          <span className="flex items-center gap-1 text-[0.8125rem] leading-5 text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)]">
+          <span className="flex items-center gap-1 text-[0.8125rem] leading-5 text-a-text-2">
             <ArrowDown className="size-3" style={{ color: loss }} /> Loss
           </span>
           <ColorField value={loss} onChange={(c) => write(profit, c)} label="Loss colour" />
@@ -57,7 +57,7 @@ export function TradingColoursField() {
               onClick={() => write(s.profit, s.loss)}
               className={cn(
                 // Two rounded halves (no overflow-hidden), so the 24px click area (after) isn't clipped.
-                "relative flex size-5 rounded-full ring-1 ring-[color:color-mix(in_oklab,var(--foreground)_14%,transparent)] ring-inset transition-transform outline-none after:absolute after:-inset-0.5 after:content-[''] hover:scale-110 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
+                "relative flex size-5 rounded-full ring-1 ring-a-border-strong ring-inset transition-transform outline-none after:absolute after:-inset-0.5 after:content-[''] hover:scale-110 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
                 on && cn("scale-110 hover:scale-110", SWATCH_ON),
               )}
             >

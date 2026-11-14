@@ -169,14 +169,14 @@ export function WidgetInspector({
       {/* The widget's name and its actions; then one column, the Framer way: what it says first, then its size and its look. */}
       <InspectorTop menu={menu} onClose={onClose}>
         <span className="flex min-w-0 items-center gap-2.5">
-          <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] [&_svg]:size-4">
+          <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-a-muted [&_svg]:size-4">
             <def.icon />
           </span>
           <span className="truncate text-[0.875rem] font-semibold">{def.name}</span>
         </span>
       </InspectorTop>
       {pinned && (
-        <p className="m-4 mb-0 flex gap-2 rounded-[6px] bg-[color:color-mix(in_oklab,var(--foreground)_5%,transparent)] p-2.5 text-[0.6875rem] leading-4 text-muted-foreground">
+        <p className="m-4 mb-0 flex gap-2 rounded-[6px] bg-a-muted p-2.5 text-[0.6875rem] leading-4 text-muted-foreground">
           <Lock className="mt-px size-3.5 shrink-0" />
           The main part of this page. It always stays.
         </p>

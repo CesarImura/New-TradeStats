@@ -365,7 +365,7 @@ function Group({ group: g, section, draft, onReset, fields }: { group: SettingsG
     </>
   )
   return (
-    <section className="grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] px-5 pt-6 pb-6">
+    <section className="grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-a-border-subtle px-5 pt-6 pb-6">
       <div className="flex h-6 items-center gap-2">
         {g.folded && !section ? (
           <button type="button" aria-expanded={!shut} onClick={() => setOpen(!open)} className={cn("flex items-center gap-1 rounded hover:text-foreground", SECTION_LABEL, "text-muted-foreground", FOCUS)}>
@@ -376,7 +376,7 @@ function Group({ group: g, section, draft, onReset, fields }: { group: SettingsG
           <h3 className={SECTION_LABEL} title={g.note}>{title}</h3>
         )}
         {/* Changed from the look: the same orange dot as a widget's own value in the inspector. */}
-        {dirty && <span aria-label="changed" className="size-1.5 rounded-full bg-[color:var(--ts-interactive,#fff)]" />}
+        {dirty && <span aria-label="changed" className="size-1.5 rounded-full bg-a-accent-strong" />}
         <span className="flex-1" />
         {dirty && (
           <button type="button" onClick={() => onReset(g.keys)} className={cn("flex h-6 items-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground", FOCUS)}>
@@ -451,14 +451,14 @@ export function Readability({ fails, total }: { fails: { id: string; label: stri
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         title={bad ? "Colour pairs under WCAG AA" : `All ${total} colour pairs pass WCAG AA`}
-        className={cn("flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs whitespace-nowrap transition-colors duration-150 hover:bg-muted", FOCUS, bad ? "border-[#cf222e]/50 text-[#cf222e]" : "text-muted-foreground")}
+        className={cn("flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs whitespace-nowrap transition-colors duration-150 hover:bg-muted", FOCUS, bad ? "border-a-border-danger text-a-danger" : "border-a-border text-a-text-2")}
       >
         {bad ? <TriangleAlert className="size-3.5" /> : <Check className="size-3.5" />}
         {bad ? `${fails.length} hard to read` : "Readable"}
       </button>
       {open && (
-        <div className="absolute top-9 right-0 z-40 grid w-64 gap-2 rounded-xl border bg-popover p-3 text-popover-foreground shadow-[0_12px_32px_-12px_rgb(0_0_0/0.35)]">
-          <p className="text-[0.8125rem]">{bad ? `${fails.length} of ${total} colour pairs are under WCAG AA` : `All ${total} colour pairs pass WCAG AA, in this mode.`}</p>
+        <div className="absolute top-9 right-0 z-40 grid w-64 gap-2 rounded-a-lg border border-a-border-strong bg-a-raised p-3 text-a-text">
+          <p className="t-body-m">{bad ? `${fails.length} of ${total} colour pairs are under WCAG AA` : `All ${total} colour pairs pass WCAG AA, in this mode.`}</p>
           {bad && (
             <ul className="grid gap-1 text-xs text-muted-foreground">
               {fails.map((c) => (
@@ -514,9 +514,9 @@ export function ResetButton({ title, text, option, disabled, onReset }: { title:
         <RotateCcw className="size-3.5" /> Reset
       </button>
       {open && (
-        <div role="alertdialog" aria-label={title} className="absolute top-10 right-0 z-50 grid w-72 gap-2.5 rounded-xl border bg-popover p-3 text-popover-foreground shadow-[0_12px_32px_-12px_rgb(0_0_0/0.35)]">
-          <p className="text-sm font-medium">{title}</p>
-          <p className="text-[0.8125rem] text-muted-foreground">{text}</p>
+        <div role="alertdialog" aria-label={title} className="absolute top-10 right-0 z-50 grid w-72 gap-2.5 rounded-a-lg border border-a-border-strong bg-a-raised p-3 text-a-text">
+          <p className="t-body-m-medium">{title}</p>
+          <p className="t-body-m text-a-text-2">{text}</p>
           {option && (
             <label className="flex cursor-pointer items-start gap-2 text-[0.8125rem]">
               <input type="checkbox" checked={withOption} onChange={(e) => setWithOption(e.target.checked)} className="mt-0.5 accent-current" />
@@ -524,12 +524,12 @@ export function ResetButton({ title, text, option, disabled, onReset }: { title:
             </label>
           )}
           <div className="flex gap-1.5">
-            <button type="button" autoFocus onClick={() => (setOpen(false), onReset(withOption))} className={cn("h-8 flex-1 rounded-lg px-3 text-sm font-medium text-white", FOCUS)} style={{ background: "#cf222e" }}>
+            <AdminButton hierarchy="danger" size="lg" autoFocus className="flex-1" onClick={() => (setOpen(false), onReset(withOption))}>
               Reset
-            </button>
-            <button type="button" onClick={() => setOpen(false)} className={cn("h-8 flex-1 rounded-lg border px-3 text-sm hover:bg-muted", FOCUS)}>
+            </AdminButton>
+            <AdminButton hierarchy="secondary" size="lg" className="flex-1" onClick={() => setOpen(false)}>
               Keep
-            </button>
+            </AdminButton>
           </div>
         </div>
       )}

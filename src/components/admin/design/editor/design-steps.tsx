@@ -28,7 +28,7 @@ export function Section({ title, children }: { title?: string; children: React.R
   return (
     // minmax(0,1fr): a grid track never grows past the panel to fit a long word or a truncated line (they shrink instead).
     // The same block as the theme's groups (settings-panel.tsx): hairline on top, the same padding and title.
-    <section className="grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] px-5 pt-6 pb-6">
+    <section className="grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-a-border-subtle px-5 pt-6 pb-6">
       {title && <h3 className={cn(SECTION_LABEL, "flex h-6 items-center")}>{title}</h3>}
       {children}
     </section>
@@ -144,9 +144,9 @@ export function LookCard({ look, theme, selected, fits, onSelect }: { look: Look
       <span className="grid px-0.5">
         <span className="flex items-center gap-1 text-xs font-medium">
           {look.name}
-          {selected && <Check className="size-3 text-[var(--ts-interactive)]" />}
+          {selected && <Check className="size-3 text-a-text-accent" />}
           {fits && (
-            <Badge variant="outline" className={cn(mono, "ml-auto h-5 border-[var(--ts-interactive)]/50 text-[0.6875rem] text-[var(--ts-interactive)]")}>
+            <Badge variant="outline" className={cn(mono, "ml-auto h-5 border-a-border-active text-[0.6875rem] text-a-text-accent")}>
               Fits you
             </Badge>
           )}

@@ -32,12 +32,12 @@ export function useReveal(ref: React.RefObject<HTMLElement | null>, open: () => 
  * faint fill and edge, hex codes in mono. Focus stays our orange ring.
  */
 
-const LABEL = "text-[0.8125rem] leading-5 text-[color:color-mix(in_oklab,var(--foreground)_60%,transparent)] select-none"
-const VALUE = "text-xs leading-5 tabular-nums text-muted-foreground"
-// The --ctl-* variables let a host restyle the fields (the library's theme editor sets them for its light chrome); unset, the admin's faint fill and edge apply.
-// A filled field with a faint edge and 6px corners (the Framer and Webflow inspectors): the fill carries it, the edge only firms up on hover.
+const LABEL = "t-body-m text-a-text select-none"
+const VALUE = "t-caption tabular-nums text-a-text-3"
+// A compact filled field (selects, hex, number cells) in the Admin's field tokens: hairline edge, field fill, the strong edge on hover, the focus edge on focus.
+// Text fields in the panel are the Admin's 44 px ones (the global field rule); this is the dense one.
 export const BOX =
-  "h-8 rounded-[8px] border border-[color:var(--ctl-line,color-mix(in_oklab,var(--foreground)_8%,transparent))] bg-[color:var(--ctl-box,color-mix(in_oklab,var(--foreground)_6%,transparent))] text-[0.8125rem] outline-none transition-colors hover:border-[color:var(--ctl-line-hover,color-mix(in_oklab,var(--foreground)_18%,transparent))] focus-within:border-[color:var(--ring)]"
+  "h-8 rounded-a-md border border-a-border bg-a-field t-body-m outline-none transition-colors duration-300 hover:border-a-border-strong focus-within:border-a-border-focus"
 
 /** A labelled row in the editor panel. `id` lets a click in the preview find it. */
 export function Field({ id, label, hint, children }: { id?: string; label: string; hint?: React.ReactNode; children: React.ReactNode }) {
@@ -144,10 +144,10 @@ export function SliderField({
         className="w-full"
       >
         <SliderPrimitive.Control className="group/slider relative flex h-[18px] w-full touch-none items-center select-none">
-          <SliderPrimitive.Track className="relative h-px w-full grow rounded-full bg-[color:var(--ctl-track,color-mix(in_oklab,var(--muted-foreground)_38%,transparent))]">
-            <SliderPrimitive.Indicator className="h-full bg-foreground" />
+          <SliderPrimitive.Track className="relative h-0.5 w-full grow rounded-full bg-a-track">
+            <SliderPrimitive.Indicator className="h-full rounded-full bg-a-text-3" />
           </SliderPrimitive.Track>
-          <SliderPrimitive.Thumb className="relative block size-[9px] shrink-0 cursor-grab rounded-[2px] bg-foreground transition-transform outline-none select-none before:absolute before:top-1/2 before:left-1/2 before:size-[18px] before:-translate-1/2 hover:scale-125 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)] active:cursor-grabbing data-[dragging]:scale-125" />
+          <SliderPrimitive.Thumb className="relative block size-2.5 shrink-0 cursor-grab rounded-full bg-a-text transition-transform outline-none select-none before:absolute before:top-1/2 before:left-1/2 before:size-[18px] before:-translate-1/2 hover:scale-125 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-a-border-focus active:cursor-grabbing data-[dragging]:scale-125" />
         </SliderPrimitive.Control>
       </SliderPrimitive.Root>
       {ends && (
@@ -176,7 +176,7 @@ export function Segmented<T extends string | number>({
   className?: string
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn(BOX, "flex items-stretch gap-0.5 p-0.5 focus-within:border-[color:var(--ctl-line,color-mix(in_oklab,var(--foreground)_8%,transparent))]", className)}>
+    <div role="radiogroup" aria-label={label} className={cn("flex items-stretch gap-0.5 rounded-a-md border border-a-border p-0.5", className)}>
       {options.map((o) => (
         <button
           key={String(o.value)}
@@ -187,10 +187,9 @@ export function Segmented<T extends string | number>({
           title={o.hint ?? o.name ?? (typeof o.label === "string" ? o.label : undefined)}
           onClick={() => onChange(o.value)}
           className={cn(
-            // after: the click area reaches 24px tall inside the box's padding; the look doesn't change.
-            "relative flex min-w-0 flex-[1_1_auto] items-center justify-center gap-1.5 overflow-hidden rounded-[6px] px-3 text-[0.8125rem] text-ellipsis after:absolute after:inset-x-0 after:-inset-y-px after:content-[''] font-medium whitespace-nowrap text-muted-foreground transition-[background-color,color,box-shadow] duration-150 ease-out outline-none hover:text-foreground focus-visible:outline-1 focus-visible:outline-[color:var(--ring)] [&_svg]:size-3.5",
-            // The chosen option is a raised chip: one step lighter, a hairline top light and a soft drop.
-            o.value === value && "bg-[color:var(--ctl-on,color-mix(in_oklab,var(--foreground)_13%,transparent))] text-foreground shadow-[var(--ctl-on-shadow,inset_0_1px_0_rgb(255_255_255/0.07),0_1px_2px_rgb(0_0_0/0.3))]",
+            // The Admin's Segmented item: 30 px, radius 6, secondary text; the chosen one takes the panel fill.
+            "relative flex h-[30px] min-w-0 flex-[1_1_auto] items-center justify-center gap-1.5 overflow-hidden rounded-a-sm px-3 t-body-m text-ellipsis whitespace-nowrap text-a-text-2 transition-colors duration-300 outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:min-h-10 [&_svg]:size-4",
+            o.value === value && "bg-a-panel text-a-text",
           )}
         >
           {o.label}
@@ -320,7 +319,7 @@ function ColorPickerPanel({ value, onChange }: { value: string; onChange: (c: st
           style={{ left: `${hsv.s * 100}%`, top: `${(1 - hsv.v) * 100}%`, background: value }}
         />
       </div>
-      <div className="h-px bg-[color:color-mix(in_oklab,var(--foreground)_12%,transparent)]" />
+      <div className="h-px bg-a-selected" />
 
       <div className="grid gap-3 p-3">
         <div className="flex items-center gap-2.5">
@@ -337,7 +336,7 @@ function ColorPickerPanel({ value, onChange }: { value: string; onChange: (c: st
                   // Escape closes the eyedropper without a colour.
                 }
               }}
-              className="grid size-6 shrink-0 place-items-center rounded-[3px] text-muted-foreground transition-colors hover:bg-[color:color-mix(in_oklab,var(--foreground)_8%,transparent)] hover:text-foreground"
+              className="grid size-6 shrink-0 place-items-center rounded-[3px] text-muted-foreground transition-colors hover:bg-a-selected hover:text-foreground"
             >
               <svg viewBox="0 0 16 16" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.25" aria-hidden>
                 <path d="M10.5 2.5a1.8 1.8 0 0 1 2.5 0l.5.5a1.8 1.8 0 0 1 0 2.5L12 7l-3-3 1.5-1.5Z" />
@@ -379,7 +378,7 @@ function ColorPickerPanel({ value, onChange }: { value: string; onChange: (c: st
           {mode === "hex" ? (
             <HexInput value={value} onChange={(hex) => set(hexToHsv(hex))} label="Hex code" className={cn(BOX, "w-0 min-w-0 flex-1 px-2")} />
           ) : (
-            <div className={cn(BOX, "flex min-w-0 flex-1 divide-x divide-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)]")}>
+            <div className={cn(BOX, "flex min-w-0 flex-1 divide-x divide-a-border")}>
               {(mode === "rgb"
                 ? (["R", "G", "B"] as const).map((n, i) => ({ n, v: rgb[i], max: 255, to: (x: number) => toHex(...(rgb.map((c, j) => (j === i ? x : c)) as [number, number, number])) }))
                 : (["H", "S", "L"] as const).map((n, i) => ({
@@ -482,7 +481,7 @@ export function ColorField({ value, onChange, label }: { value: string; onChange
         <button
           type="button"
           title="Pick any colour"
-          className="relative size-5 shrink-0 cursor-pointer rounded-[3px] ring-1 after:absolute after:-inset-0.5 after:content-[''] ring-[color:color-mix(in_oklab,var(--foreground)_16%,transparent)] ring-inset outline-none focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[color:var(--ring)]"
+          className="relative size-5 shrink-0 cursor-pointer rounded-[3px] ring-1 after:absolute after:-inset-0.5 after:content-[''] ring-a-border-strong ring-inset outline-none focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[color:var(--ring)]"
           style={{ background: value }}
         />
       </ColorPicker>
@@ -517,7 +516,7 @@ export function Swatches({
               aria-label={c}
               onClick={() => onChange(c)}
               className={cn(
-                "relative size-5 rounded-full ring-1 ring-[color:color-mix(in_oklab,var(--foreground)_14%,transparent)] ring-inset transition-transform outline-none after:absolute after:-inset-0.5 after:content-[''] hover:scale-110 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
+                "relative size-5 rounded-full ring-1 ring-a-border-strong ring-inset transition-transform outline-none after:absolute after:-inset-0.5 after:content-[''] hover:scale-110 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
                 on && cn("scale-110 hover:scale-110", SWATCH_ON),
               )}
               style={{ background: c }}
@@ -582,14 +581,14 @@ export function Row({
       <span title={hint} className={cn(LABEL, "truncate", own && "text-foreground")}>
         {label}
       </span>
-      {own && <span aria-label="Changed on this widget" className="size-1.5 shrink-0 rounded-full bg-[color:var(--ts-interactive,#fff)]" />}
+      {own && <span aria-label="Changed on this widget" className="size-1.5 shrink-0 rounded-full bg-a-accent-strong" />}
       {own && onReset && (
         <button
           type="button"
           onClick={onReset}
           aria-label={`${label}: back to ${from}`}
           title={`Back to ${from}`}
-          className="grid size-5 shrink-0 place-items-center rounded-[4px] text-muted-foreground opacity-0 transition-opacity duration-150 group-hover/row:opacity-100 hover:bg-[color:color-mix(in_oklab,var(--foreground)_8%,transparent)] hover:text-foreground focus-visible:opacity-100 focus-visible:outline-1 focus-visible:outline-[color:var(--ring)]"
+          className="grid size-5 shrink-0 place-items-center rounded-[4px] text-muted-foreground opacity-0 transition-opacity duration-150 group-hover/row:opacity-100 hover:bg-a-selected hover:text-foreground focus-visible:opacity-100 focus-visible:outline-1 focus-visible:outline-[color:var(--ring)]"
         >
           <RotateCcw className="size-3" />
         </button>
@@ -618,7 +617,7 @@ export function InspectorSection({ title, action, summary, defaultOpen = true, c
   const ref = useRef<HTMLElement>(null)
   useReveal(ref, () => setOpen(true))
   return (
-    <section ref={ref} className="border-t border-[color:color-mix(in_oklab,var(--foreground)_6%,transparent)] pt-1 first:border-t-0">
+    <section ref={ref} className="border-t border-a-border-subtle pt-1 first:border-t-0">
       <div className="flex h-11 items-center gap-1 pr-3 pl-4">
         <button
           type="button"

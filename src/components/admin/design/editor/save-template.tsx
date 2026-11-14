@@ -2,8 +2,7 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AdminButton, AdminModal } from "@/components/admin/ui"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -64,13 +63,22 @@ export function SaveTemplateDialog({ coach, theme, open, onOpenChange }: { coach
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Save as template</DialogTitle>
-          <DialogDescription>Prototype only. Replaces a starting template with the design you see here, unpublished changes included. Git keeps the old version.</DialogDescription>
-        </DialogHeader>
-
+    <AdminModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Save as template"
+      subtitle="Prototype only. Replaces a starting template with the design you see here, unpublished changes included. Git keeps the old version."
+      footer={
+        <>
+          <AdminButton hierarchy="secondary" onClick={() => onOpenChange(false)}>
+            Cancel
+          </AdminButton>
+          <AdminButton onClick={save} disabled={saving || !name.trim()}>
+            {saving ? "Saving…" : `Replace ${TEMPLATES[id].name}`}
+          </AdminButton>
+        </>
+      }
+    >
         <div className="grid gap-4">
           <div className="grid gap-2">
             <Label>Template to replace</Label>
@@ -97,7 +105,7 @@ export function SaveTemplateDialog({ coach, theme, open, onOpenChange }: { coach
             <Label htmlFor="tpl-blurb">One line about it</Label>
             <Textarea id="tpl-blurb" rows={2} value={blurb} onChange={(e) => setBlurb(e.target.value)} />
           </div>
-          <div className="grid gap-1 rounded-lg bg-muted/60 p-3 text-xs leading-5 text-muted-foreground">
+          <div className="grid gap-1 rounded-a-lg bg-a-subtle p-3 t-caption text-a-text-2">
             <span>
               <span className="font-medium text-foreground">Saved:</span> the look (colour, light/dark, greys for both modes and how they follow the brand, fonts, corners, depth, spacing, background, menu layout), the Home
               {arranged.length ? ` and ${arranged.length} arranged page${arranged.length === 1 ? "" : "s"} (${arranged.join(", ")})` : ""}.
@@ -108,15 +116,6 @@ export function SaveTemplateDialog({ coach, theme, open, onOpenChange }: { coach
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={save} disabled={saving || !name.trim()}>
-            {saving ? "Saving…" : `Replace ${TEMPLATES[id].name}`}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </AdminModal>
   )
 }

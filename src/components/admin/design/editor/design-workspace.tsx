@@ -22,9 +22,8 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { studentNav } from "@/components/coach/nav"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { AdminButton, AdminFilterButton, AdminMenu, AdminMenuContent, AdminMenuGroup, AdminMenuItem, AdminMenuLabel, AdminMenuSeparator, AdminMenuTrigger, Callout } from "@/components/admin/ui"
+import { AdminButton, AdminFilterButton, AdminMenu, AdminMenuContent, AdminMenuGroup, AdminMenuItem, AdminMenuLabel, AdminMenuSeparator, AdminMenuTrigger, AdminModal, Callout } from "@/components/admin/ui"
 import type { DataMode } from "@/components/widgets/parts/shared"
 import { getDemoCoach } from "@/lib/data/coaches"
 import { keepVersion } from "@/lib/prototype-store"
@@ -277,13 +276,21 @@ export function DesignWorkspace() {
     <>
     {/* The way to every widget's style (corner radius, cards, buttons, charts): the first thing in Pages, big enough to find. */}
     <div className="px-4 pb-3">
-      <Button variant="secondary" aria-pressed={scope === "all"} onClick={() => setScope(scope === "all" ? "one" : "all")} className="h-auto w-full justify-start gap-3 rounded-xl border border-white/[0.16]! shadow-none! px-3 py-2.5 text-left aria-pressed:border-[color:var(--ring)]">
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/[0.08]"><Palette className="size-4" /></span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[0.875rem] leading-5 font-semibold">Design all widgets</span>
-          <span className="block text-xs leading-4 font-normal text-muted-foreground">Corners, cards, buttons, charts</span>
+      {/* Admin / Editor Design all card: a bordered panel, an icon tile, the name and what it holds; the active edge while it is open. */}
+      <button
+        type="button"
+        aria-pressed={scope === "all"}
+        onClick={() => setScope(scope === "all" ? "one" : "all")}
+        className="flex w-full items-center gap-3 rounded-a-lg border border-a-border bg-a-panel px-3 py-2.5 text-left outline-none transition-colors duration-300 hover:border-a-border-strong hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus aria-pressed:border-a-border-active"
+      >
+        <span className="grid size-8 shrink-0 place-items-center rounded-a-md bg-a-muted text-a-icon">
+          <Palette className="size-4" />
         </span>
-      </Button>
+        <span className="min-w-0 flex-1">
+          <span className="block t-body-m-medium text-a-text">Design all widgets</span>
+          <span className="block t-caption text-a-text-3">Corners, cards, buttons, charts</span>
+        </span>
+      </button>
     </div>
     <WidgetLibrary
       key={page}
@@ -313,7 +320,7 @@ export function DesignWorkspace() {
     pages: {
       content:
         step === "join" ? (
-          <p className="border-t border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] px-5 pt-6 text-xs leading-5 text-muted-foreground">The Join screens have no widgets. Their words, layout and look are on the right.</p>
+          <p className="border-t border-a-border-subtle px-5 pt-6 text-xs leading-5 text-muted-foreground">The Join screens have no widgets. Their words, layout and look are on the right.</p>
         ) : step === "course" ? (
           <>
             <BackToPlaybook onBack={() => (setPage("courses"), select(null), go("pages"))} />
@@ -337,9 +344,9 @@ export function DesignWorkspace() {
       <StepCtx.Provider value={{ go }}>
         <ThumbStyles />
         {/* A screen of its own, over the admin (Figma 14/11): the Admin's page colour, a top bar with no fill, and the sections, the
-            canvas and the inspector as three floating cards 8 px apart. The panel's controls select in the editor's own colour
-            (--ts-interactive); the vars below keep the frame's colours out of the canvas (.hb-canvas never reads them). */}
-        <div role="dialog" aria-modal aria-label="Design" data-design-ws className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-a-page font-[family-name:var(--admin-font-family-primary)] [--background:var(--admin-color-bg-page)] [--border:var(--admin-color-border-default)] [--ring:var(--admin-color-border-focus)] [--ts-interactive:#f4f4f5] lg:overflow-hidden">
+            canvas and the inspector as three floating cards 8 px apart. The panel's controls select in the Admin's orange
+            (--ts-interactive); the marks on the canvas stay white (--ts-mark); the vars below keep the frame's colours out of the canvas (.hb-canvas never reads them). */}
+        <div role="dialog" aria-modal aria-label="Design" data-design-ws className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-a-page font-[family-name:var(--admin-font-family-primary)] [--background:var(--admin-color-bg-page)] [--border:var(--admin-color-border-default)] [--ring:var(--admin-color-border-focus)] [--ts-interactive:var(--admin-color-border-active)] [--ts-mark:#f4f4f5] lg:overflow-hidden">
           <EditorTopBar
             back={fromSetup ? { href: "/setup", label: "Back to setup" } : { href: `/admin/${slug}`, label: "Admin" }}
             // The same in every section: the canvas shows this page in all of them, so its name is always in sight.
@@ -670,8 +677,8 @@ function useFlash(panel: React.RefObject<HTMLDivElement | null>, reveal: { field
         for (const el of els)
           el.animate(
             [
-              { outline: "2px solid rgb(255 255 255 / 0.9)", outlineOffset: "6px", borderRadius: "4px" },
-              { outline: "2px solid rgb(255 255 255 / 0)", outlineOffset: "6px", borderRadius: "4px" },
+              { outline: "2px solid var(--admin-color-border-active)", outlineOffset: "6px", borderRadius: "4px" },
+              { outline: "2px solid transparent", outlineOffset: "6px", borderRadius: "4px" },
             ],
             { duration: 1600, easing: "ease-in" },
           )
@@ -686,31 +693,33 @@ function useFlash(panel: React.RefObject<HTMLDivElement | null>, reveal: { field
 function ResetDialog({ open, onOpenChange, name, onReset }: { open: boolean; onOpenChange: (o: boolean) => void; name: string; onReset: (pagesToo: boolean) => void }) {
   const [pagesToo, setPagesToo] = useState(false)
   return (
-    <Dialog open={open} onOpenChange={(o) => (onOpenChange(o), setPagesToo(false))}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Back to the original design?</DialogTitle>
-          <DialogDescription>Colours, type, shape, widgets and background go back to how {name} started. Your name, logo and menu stay. You can undo it (⌘Z).</DialogDescription>
-        </DialogHeader>
-        <label className="flex cursor-pointer items-center gap-2 text-[0.8125rem]">
-          <Checkbox checked={pagesToo} onCheckedChange={(v) => setPagesToo(!!v)} />
-          Also put every page&apos;s layout back
-        </label>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+    <AdminModal
+      open={open}
+      onOpenChange={(o) => (onOpenChange(o), setPagesToo(false))}
+      title="Back to the original design?"
+      subtitle={`Colours, type, shape, widgets and background go back to how ${name} started. Your name, logo and menu stay. You can undo it (⌘Z).`}
+      className="sm:max-w-sm"
+      footer={
+        <>
+          <AdminButton hierarchy="secondary" onClick={() => onOpenChange(false)}>
             Keep
-          </Button>
-          <Button
-            variant="destructive"
+          </AdminButton>
+          <AdminButton
+            hierarchy="danger"
             onClick={() => {
               onReset(pagesToo)
               onOpenChange(false)
             }}
           >
             Reset
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AdminButton>
+        </>
+      }
+    >
+      <label className="flex cursor-pointer items-center gap-2 t-body-m">
+        <Checkbox checked={pagesToo} onCheckedChange={(v) => setPagesToo(!!v)} />
+        Also put every page&apos;s layout back
+      </label>
+    </AdminModal>
   )
 }

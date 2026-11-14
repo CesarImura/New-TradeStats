@@ -239,7 +239,7 @@ export function WidgetLibrary({
           )}
         </div>
       </Flyout>
-      <div className="sticky top-0 z-10 grid border-t border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] bg-background px-5 pt-4 pb-3">
+      <div className="sticky top-0 z-10 grid border-t border-a-border-subtle bg-background px-5 pt-4 pb-3">
         <Segmented
           label="Gallery"
           value={view}
@@ -262,7 +262,7 @@ export function WidgetLibrary({
             const d = getWidget(w.type)!
             return (
               <button key={w.id} type="button" onClick={() => onSelect(w.id)} className={cn(LIST_ROW, "text-muted-foreground hover:text-foreground")}>
-                <span className="grid size-7 shrink-0 place-items-center rounded-md bg-[color:color-mix(in_oklab,var(--foreground)_6%,transparent)] [&_svg]:size-3.5">
+                <span className="grid size-7 shrink-0 place-items-center rounded-md bg-a-muted [&_svg]:size-3.5">
                   <d.icon />
                 </span>
                 <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-foreground">{d.name}</span>
@@ -282,8 +282,8 @@ export function WidgetLibrary({
           {sections.map((s) => {
             const first = getWidget(s.types[0])
             return (
-              <button key={s.title} type="button" aria-expanded={group === s.title} onClick={() => (setPicked(null), setGroup(group === s.title ? null : s.title))} className={cn(LIST_ROW, "text-muted-foreground hover:text-foreground", group === s.title && "bg-white/8 text-foreground")}>
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[color:color-mix(in_oklab,var(--foreground)_6%,transparent)] [&_svg]:size-4">{first && <first.icon />}</span>
+              <button key={s.title} type="button" aria-expanded={group === s.title} onClick={() => (setPicked(null), setGroup(group === s.title ? null : s.title))} className={cn(LIST_ROW, "text-muted-foreground hover:text-foreground", group === s.title && "bg-a-selected text-foreground")}>
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-a-muted [&_svg]:size-4">{first && <first.icon />}</span>
                 <span className="min-w-0 flex-1 truncate text-sm text-foreground">{s.title}</span>
                 <ChevronRight className="size-3.5" />
               </button>
@@ -296,7 +296,7 @@ export function WidgetLibrary({
 }
 
 /** A row of the gallery's lists (groups, On this page): 36px, a faint fill on hover. */
-const LIST_ROW = `flex h-11 w-full items-center gap-3 rounded-[10px] px-2.5 text-left outline-none hover:bg-[color:color-mix(in_oklab,var(--foreground)_6%,transparent)] focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] ${"transition-colors duration-150"}`
+const LIST_ROW = `flex h-11 w-full items-center gap-3 rounded-[10px] px-2.5 text-left outline-none hover:bg-a-muted focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] ${"transition-colors duration-150"}`
 
 /**
  * One widget from the gallery, before it is added: a big preview of the chosen layout, then what can be set for it
@@ -355,7 +355,7 @@ function WidgetDetails({
       <div className="grid flex-1 content-start gap-6 px-1 pb-2">
         <div className="grid gap-3">
           <div {...drag(variant)} title="Drag onto the page" className="group/card relative cursor-grab overflow-hidden rounded-xl border p-1.5 active:cursor-grabbing">
-            <span aria-hidden className="pointer-events-none absolute top-3 right-3 z-10 flex items-center gap-1 rounded-md bg-black/75 py-0.5 pr-2 pl-1 text-[0.6875rem] font-medium text-white shadow-sm backdrop-blur-sm">
+            <span aria-hidden className="pointer-events-none absolute top-3 right-3 z-10 flex items-center gap-1 rounded-a-sm bg-a-page/75 py-0.5 pr-2 pl-1 text-[0.6875rem] font-medium text-white shadow-sm backdrop-blur-sm">
               <GripVertical className="size-3.5" /> Drag to page
             </span>
             <div data-thumb className="pointer-events-none overflow-hidden rounded-lg">
@@ -431,7 +431,7 @@ function WidgetDetails({
           </div>
         )}
       </div>
-      <div className="sticky -bottom-5 -mx-4 flex gap-2 bg-[#111113] px-4 pt-3 pb-5">
+      <div className="sticky -bottom-5 -mx-4 flex gap-2 bg-a-page px-4 pt-3 pb-5">
         <Button variant="outline" className="flex-1" onClick={onBack}>
           Cancel
         </Button>
