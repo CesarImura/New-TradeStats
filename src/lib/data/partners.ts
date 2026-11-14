@@ -3,6 +3,9 @@
 import type { Coach } from "./coaches"
 import { setStored, useStored } from "@/lib/prototype-store"
 import { isSetupSlug } from "./communities"
+import { useEmptyIfSetup } from "./use-communities"
+
+const NO_OFFERS: PartnerOffer[] = []
 
 /**
  * Partners: offers from brokers, prop firms and tools, and the coach's own
@@ -81,10 +84,6 @@ const cache = new Map<string, PartnerOffer[]>()
 export function defaultOffers(coach: Coach): PartnerOffer[] {
   const hit = cache.get(coach.slug)
   if (hit) return hit
-  if (isSetupSlug(coach.slug)) {
-    cache.set(coach.slug, [])
-    return []
-  }
   const cat = (id: string) => CATALOGUE.find((c) => c.id === id)!
   const third = coach.tiers[2]?.id
   const list: PartnerOffer[] = [
@@ -109,11 +108,12 @@ export function defaultOffers(coach: Coach): PartnerOffer[] {
 }
 
 export function useOffers(coach: Coach) {
-  return useStored<PartnerOffer[]>(`${coach.slug}:partners`, defaultOffers(coach))
+  const sample = defaultOffers(coach)
+  return useEmptyIfSetup(coach.slug, useStored<PartnerOffer[]>(`${coach.slug}:partners`, sample), sample, NO_OFFERS)
 }
 
 export function saveOffers(coach: Coach, update: (o: PartnerOffer[]) => PartnerOffer[]) {
-  setStored<PartnerOffer[]>(`${coach.slug}:partners`, update, defaultOffers(coach))
+  setStored<PartnerOffer[]>(`${coach.slug}:partners`, update, isSetupSlug(coach.slug) ? NO_OFFERS : defaultOffers(coach))
 }
 
 // ---------- the coach's own affiliate program

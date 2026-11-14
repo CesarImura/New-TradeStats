@@ -1,6 +1,9 @@
 import { setStored, useStored } from "@/lib/prototype-store"
 import type { Coach } from "./coaches"
 import { isSetupSlug } from "./communities"
+import { useEmptyIfSetup } from "./use-communities"
+
+const NO_STREAMS: Livestream[] = []
 
 /**
  * Livestreams: a coach schedules one, connects OBS, goes live, and ends it; the recording lands in Content.
@@ -79,18 +82,19 @@ const cache = new Map<string, Livestream[]>()
 const seedFor = (coach: Coach) => {
   const hit = cache.get(coach.slug)
   if (hit) return hit
-  const list = isSetupSlug(coach.slug) ? [] : SEED()
+  const list = SEED()
   cache.set(coach.slug, list)
   return list
 }
 const keyOf = (coach: Coach) => `${coach.slug}:livestreams`
 
 export function useLivestreams(coach: Coach) {
-  return useStored<Livestream[]>(keyOf(coach), seedFor(coach))
+  const sample = seedFor(coach)
+  return useEmptyIfSetup(coach.slug, useStored<Livestream[]>(keyOf(coach), sample), sample, NO_STREAMS)
 }
 
 export function saveLivestreams(coach: Coach, update: (l: Livestream[]) => Livestream[]) {
-  setStored<Livestream[]>(keyOf(coach), update, seedFor(coach))
+  setStored<Livestream[]>(keyOf(coach), update, isSetupSlug(coach.slug) ? NO_STREAMS : seedFor(coach))
 }
 
 /** Change one livestream. */

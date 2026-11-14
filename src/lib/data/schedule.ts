@@ -5,6 +5,7 @@ import type { Coach } from "./coaches"
 import { DEMO_STUDENT } from "./sample"
 import { setStored, useStored } from "@/lib/prototype-store"
 import { isSetupSlug } from "./communities"
+import { useEmptyIfSetup } from "./use-communities"
 
 /**
  * Calendar: what the coach schedules (ADM-19 to ADM-22) and what students see
@@ -118,7 +119,7 @@ function seed(coach: Coach): Schedule {
 
 const SEEDS = new Map<string, Schedule>()
 const seedFor = (coach: Coach) => {
-  if (!SEEDS.has(coach.slug)) SEEDS.set(coach.slug, isSetupSlug(coach.slug) ? { ...seed(coach), events: [], bookings: [] } : seed(coach))
+  if (!SEEDS.has(coach.slug)) SEEDS.set(coach.slug, seed(coach))
   return SEEDS.get(coach.slug)!
 }
 /** Whether an event is one of the prototype's sample events rather than one the coach made. */
@@ -129,9 +130,18 @@ const START_STUDENT: StudentCal = { signups: ["ws1@2026-10-15"] }
 const scheduleKey = (slug: string) => `schedule:${slug}`
 const studentKey = (slug: string) => `studentcal:${slug}`
 
-export const useSchedule = (coach: Coach) => useStored<Schedule>(scheduleKey(coach.slug), seedFor(coach))
+/** A platform made in setup keeps the market news and the default hours, with no sample events or bookings. */
+const EMPTY_SCHEDULES = new Map<string, Schedule>()
+const emptyFor = (coach: Coach) => {
+  if (!EMPTY_SCHEDULES.has(coach.slug)) EMPTY_SCHEDULES.set(coach.slug, { ...seedFor(coach), events: [], bookings: [] })
+  return EMPTY_SCHEDULES.get(coach.slug)!
+}
+export const useSchedule = (coach: Coach) => {
+  const sample = seedFor(coach)
+  return useEmptyIfSetup(coach.slug, useStored<Schedule>(scheduleKey(coach.slug), sample), sample, emptyFor(coach))
+}
 export const useStudentCal = (slug: string) => useStored<StudentCal>(studentKey(slug), START_STUDENT)
-export const saveSchedule = (coach: Coach, fn: (s: Schedule) => Schedule) => setStored<Schedule>(scheduleKey(coach.slug), fn, seedFor(coach))
+export const saveSchedule = (coach: Coach, fn: (s: Schedule) => Schedule) => setStored<Schedule>(scheduleKey(coach.slug), fn, isSetupSlug(coach.slug) ? emptyFor(coach) : seedFor(coach))
 export const saveStudentCal = (slug: string, fn: (s: StudentCal) => StudentCal) => setStored<StudentCal>(studentKey(slug), fn, START_STUDENT)
 
 // ---------- time helpers

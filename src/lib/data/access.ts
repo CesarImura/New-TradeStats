@@ -5,6 +5,7 @@ import type { Coach, Tier } from "./coaches"
 import type { Course } from "./learning"
 import { setStored, useStored } from "@/lib/prototype-store"
 import { isSetupSlug } from "./communities"
+import { useEmptyIfSetup } from "./use-communities"
 
 /**
  * Tiers, groups and access (ADM-14, ADM-15, ADM-29 to ADM-31). One store per
@@ -136,13 +137,14 @@ const SEED_GROUPS = [
   { id: "mastermind", name: "Funded mastermind", description: "Futures traders, US session.", start: "2026-10-05", end: "2026-11-30", seats: 12, members: 12, waiting: 7, tiers: [1, 2] },
 ]
 
+const NO_GROUPS: Group[] = []
 const groupCache = new Map<string, Group[]>()
 /** Sample groups, with the coach's own tier ids. Stable per coach, as the store needs. */
 export function defaultGroups(coach: Coach): Group[] {
   const hit = groupCache.get(coach.slug)
   if (hit) return hit
   const ids = coach.tiers.map((t) => t.id)
-  const list = (isSetupSlug(coach.slug) ? [] : SEED_GROUPS).map((g) => ({
+  const list = SEED_GROUPS.map((g) => ({
     ...g,
     tiers: [...new Set(g.tiers.map((i) => ids[Math.min(i, ids.length - 1)]).filter(Boolean))],
     waitlist: true,
@@ -154,11 +156,12 @@ export function defaultGroups(coach: Coach): Group[] {
 }
 
 export function useGroups(coach: Coach) {
-  return useStored(`${coach.slug}:groups`, defaultGroups(coach))
+  const sample = defaultGroups(coach)
+  return useEmptyIfSetup(coach.slug, useStored(`${coach.slug}:groups`, sample), sample, NO_GROUPS)
 }
 
 export function saveGroups(coach: Coach, update: (g: Group[]) => Group[]) {
-  setStored(`${coach.slug}:groups`, update, defaultGroups(coach))
+  setStored(`${coach.slug}:groups`, update, isSetupSlug(coach.slug) ? NO_GROUPS : defaultGroups(coach))
 }
 
 export const isFull = (g: Group) => g.members >= g.seats
