@@ -209,7 +209,7 @@ export function StudentsPage() {
             <AdminTh width={216}>Tier and group</AdminTh>
             <AdminTh width={166}>Course progress</AdminTh>
             <AdminTh width={116} align="end">Rules kept</AdminTh>
-            <AdminTh width={216}>Status</AdminTh>
+            <AdminTh width={272}>Status</AdminTh>
             <AdminTh width={130} align="end">Last active</AdminTh>
           </AdminTableHead>
           <tbody>
