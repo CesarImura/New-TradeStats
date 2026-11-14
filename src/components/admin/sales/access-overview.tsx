@@ -10,7 +10,7 @@ import { AdminFilter, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, Tag
 function Dot({ on, label, onChange }: { on: boolean; label: string; onChange: (v: boolean) => void }) {
   return (
     <button type="button" role="checkbox" aria-checked={on} aria-label={label} onClick={() => onChange(!on)} className="grid size-6 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:size-10">
-      <span aria-hidden className={cn("size-3.5 rounded-full border-[1.5px] transition-colors duration-300", on ? "border-a-success-fill bg-a-success-fill shadow-[0_0_0_3px_var(--admin-color-success-soft,transparent)]" : "border-a-border-strong hover:border-a-text-2")} />
+      <span aria-hidden className={cn("size-3.5 rounded-full border-[1.5px] transition-colors duration-300", on ? "border-a-success-fill bg-a-success-fill shadow-[0_0_0_3px_var(--admin-color-success-soft,transparent)]" : "border-a-icon hover:border-a-text")} />
     </button>
   )
 }

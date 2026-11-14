@@ -12,7 +12,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { allTrades, useFeedback } from "@/lib/data/feedback"
-import { COACH_CHARTS, chartDefaults, fmtPnl, fmtPrice, fmtR, MARKETS, tvSymbol, type ChartSettings, type CoachChart, type Market } from "@/lib/data/trades"
+import { COACH_CHARTS, chartDefaults, fmtPnl, fmtPrice, fmtR, MARKETS, sideLabel, tvSymbol, type ChartSettings, type CoachChart, type Market } from "@/lib/data/trades"
 import { useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
 import { OwnTitle } from "@/components/student/own-title"
@@ -240,7 +240,7 @@ function MyTrades({ symbol, store }: { symbol: Sym; store: ReturnType<typeof use
             <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 text-xs tabular-nums max-sm:grid-cols-[auto_minmax(0,1fr)] max-sm:gap-y-0.5">
               <span className="text-muted-foreground">{t.date}</span>
               <span className="truncate">
-                <span className="text-muted-foreground">{t.side}</span> {fmtPrice(t.entry)} → {fmtPrice(t.exit)}
+                <span className="text-muted-foreground">{sideLabel(t.side)}</span> {fmtPrice(t.entry)} → {fmtPrice(t.exit)}
               </span>
               <span className={cn("text-right max-sm:col-start-2 max-sm:text-left", t.pnl >= 0 ? "text-profit" : "text-loss")}>
                 {fmtR(t.r)} · {fmtPnl(t.pnl)}

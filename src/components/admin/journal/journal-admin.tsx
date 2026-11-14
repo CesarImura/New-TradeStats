@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Switch } from "@/components/ui/switch"
 import { allTrades, useFeedback } from "@/lib/data/feedback"
 import { STUDENTS, tierFor } from "@/lib/data/people"
-import { STRATEGIES, TAGS, fmtR } from "@/lib/data/trades"
+import { STRATEGIES, TAGS, fmtR, sideLabel } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { PageHeader, useCommunityData } from "../kit"
 import { AdminButton, AdminField, AdminFilter, AdminModal, AdminSearch, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, CellPerson, EmptyState, Panel, StatPanel, Tag, adminControl } from "../ui"
@@ -149,12 +149,12 @@ function RequestsTable({ trades, onOpen, q, tier, sort }: { trades: Trades; onOp
   if (sort === "newest") rows.reverse()
   if (rows.length === 0) return <EmptyState icon={Check} title="No requests match" description="Clear the search or the filters." />
   return (
-    <AdminTable minWidth={1000} footer={<AdminTableFooter>{rows.length} {rows.length === 1 ? "request" : "requests"} · students get a notification and an e-mail when you answer</AdminTableFooter>}>
+    <AdminTable minWidth={1080} footer={<AdminTableFooter>{rows.length} {rows.length === 1 ? "request" : "requests"} · students get a notification and an e-mail when you answer</AdminTableFooter>}>
       <AdminTableHead>
         <AdminTh>Student</AdminTh>
         <AdminTh width={284}>Question</AdminTh>
         <AdminTh width={216}>Trade</AdminTh>
-        <AdminTh width={186}>Rules</AdminTh>
+        <AdminTh width={264}>Rules</AdminTh>
         <AdminTh width={106} align="end">Waiting</AdminTh>
         <AdminTh width={106} />
       </AdminTableHead>
@@ -164,10 +164,10 @@ function RequestsTable({ trades, onOpen, q, tier, sort }: { trades: Trades; onOp
             <AdminTd><CellPerson initials={s.initials} name={s.name} subtitle={tierFor(coach, s.tier).name} /></AdminTd>
             <AdminTd className="truncate text-a-text">{ask ? `“${ask.text}”` : "—"}</AdminTd>
             <AdminTd className="whitespace-nowrap">
-              <span className="text-a-text">{t.symbol} · {t.side} · </span>
+              <span className="text-a-text">{t.symbol} · {sideLabel(t.side)} · </span>
               <span className={cn("tabular-nums", t.r > 0 ? "text-a-success" : t.r < 0 ? "text-a-danger" : "text-a-text")}>{fmtR(t.r)}</span>
             </AdminTd>
-            <AdminTd>{t.rulesBroken.length ? <Tag tone="danger" dot className="max-w-full"><span className="truncate">Broke {t.rulesBroken[0]}</span></Tag> : t.r >= 0 ? <Tag tone="success" dot>All rules kept</Tag> : <span className="text-a-text-3">—</span>}</AdminTd>
+            <AdminTd>{t.rulesBroken.length ? <Tag tone="danger" dot className="max-w-full" title={`Broke ${t.rulesBroken[0]}`}><span className="truncate">Broke {t.rulesBroken[0]}</span></Tag> : t.r >= 0 ? <Tag tone="success" dot>All rules kept</Tag> : <span className="text-a-text-3">—</span>}</AdminTd>
             <AdminTd align="end" className="whitespace-nowrap">{ask?.when}</AdminTd>
             <AdminTd align="end"><AdminButton hierarchy="secondary" size="md" onClick={() => onOpen(t.id)}>Answer</AdminButton></AdminTd>
           </AdminTr>

@@ -9,7 +9,7 @@ import { addFeedback, type allTrades } from "@/lib/data/feedback"
 import type { STUDENTS } from "@/lib/data/people"
 import { tierFor } from "@/lib/data/people"
 import { pictureFrom } from "@/lib/images"
-import { fmtPnl, fmtPrice, fmtR } from "@/lib/data/trades"
+import { fmtPnl, fmtPrice, fmtR, sideLabel } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { AdminButton, Panel, Tag } from "../ui"
 
@@ -128,7 +128,7 @@ export function AnswerPage({ trade: t, student: s, aiDraft, readOnly, onBack, on
         <div className="flex min-w-0 flex-col gap-4">
           <Panel className="gap-4">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="t-heading-s text-a-text">{t.symbol} · {t.side}</h2>
+              <h2 className="t-heading-s text-a-text">{t.symbol} · {sideLabel(t.side)}</h2>
               <Tag tone={t.r >= 0 ? "success" : "danger"} dot>{fmtR(t.r)} · {fmtPnl(t.pnl)}</Tag>
               {t.rulesBroken[0] && <Tag tone="danger" dot>Broke {t.rulesBroken[0]}</Tag>}
               <span className="ml-auto t-caption text-a-text-3">{t.date} · {t.time}</span>

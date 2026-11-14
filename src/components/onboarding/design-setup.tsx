@@ -276,7 +276,7 @@ function Swatch({ color, checked, onClick, label }: { color?: string; checked: b
       onClick={onClick}
       className={cn(
         "relative size-6 shrink-0 rounded-full outline-none transition-[box-shadow,scale] duration-150 ease-out after:absolute after:-inset-2 after:content-[''] hover:scale-110 focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97]",
-        checked && "ring-2 ring-a-icon-strong",
+        checked && "outline-solid outline-2 outline-offset-2 outline-a-border-active",
       )}
       style={{ background: color }}
     />
@@ -501,7 +501,7 @@ function LayoutStep({ theme, change, live, onBack, onNext }: { theme: CoachTheme
                 onClick={() => write(p.profit, p.loss)}
                 className={cn(
                   "relative flex size-6 shrink-0 overflow-hidden rounded-full outline-none transition-[box-shadow,scale] duration-150 ease-out hover:scale-110 focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97]",
-                  on && "ring-2 ring-a-icon-strong",
+                  on && "outline-solid outline-2 outline-offset-2 outline-a-border-active",
                 )}
               >
                 <span className="h-full flex-1" style={{ background: p.profit }} />

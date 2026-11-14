@@ -101,6 +101,8 @@ export function tvSymbol(symbol: string) {
 }
 
 export const fmtPrice = (n: number) => (n < 10 ? n.toFixed(4) : n < 200 ? n.toFixed(2) : n.toLocaleString("en", { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
+/** "long" → "Long": the side of a trade is a word, shown capitalised everywhere. */
+export const sideLabel = (side: string) => side.charAt(0).toUpperCase() + side.slice(1)
 export const fmtR = (r: number) => `${r >= 0 ? "+" : "−"}${Math.abs(r).toFixed(1)}R`
 export const fmtPnl = (n: number) => `${n >= 0 ? "+" : "−"}€${Math.abs(n).toLocaleString("en")}`
 

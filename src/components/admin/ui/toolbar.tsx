@@ -22,7 +22,7 @@ export function AdminSearch({ value, onChange, placeholder, label, hint, classNa
         aria-label={label ?? placeholder}
         className="min-w-0 flex-1 bg-transparent t-body-m text-a-text outline-none placeholder:text-a-text-3"
       />
-      {hint && (
+      {hint && !value && (
         <span aria-hidden className="t-caption text-a-text-3">
           {hint}
         </span>

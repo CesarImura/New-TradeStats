@@ -24,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { aiTradeAnswer, askAi } from "@/lib/data/ai"
 import { addFeedback, allTrades, useFeedback } from "@/lib/data/feedback"
 import { AI_INSIGHT, DEMO_STUDENT, EQUITY, JOURNAL_DAYS, RULES, SETUPS } from "@/lib/data/sample"
-import { ACCOUNTS, BROKERS, STRATEGIES, fmtPnl, fmtR } from "@/lib/data/trades"
+import { ACCOUNTS, BROKERS, STRATEGIES, fmtPnl, fmtR, sideLabel } from "@/lib/data/trades"
 import { resolveColors } from "@/lib/theme/derive"
 import { heatCell } from "@/lib/theme/heat"
 import { SelectOptions } from "@/components/kit/select-field"
@@ -270,7 +270,7 @@ function TradeRows({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => vo
             <span className="block">{t.time}</span>
           </span>
           <span className="shrink-0 font-medium sm:w-28">
-            {t.symbol} <span className="font-normal text-muted-foreground">{t.side}</span>
+            {t.symbol} <span className="font-normal text-muted-foreground">{sideLabel(t.side)}</span>
           </span>
           <span className="hidden flex-1 truncate text-muted-foreground sm:block">{t.setup}</span>
           {/* On a phone the badges wrap and "Waiting for review" shortens, so they never cover the symbol or push the result out. */}
@@ -342,7 +342,7 @@ function MyFeedback({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => v
                   <AvatarFallback className="text-[0.6875rem]">{coach.mark}</AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium">{coach.coachName}</span>
-                <span className="text-xs text-muted-foreground">on your {t.symbol} {t.side} · {last.when}</span>
+                <span className="text-xs text-muted-foreground">on your {t.symbol} {sideLabel(t.side)} · {last.when}</span>
               </div>
               <p className="text-sm">
                 {last.kind !== "text" && (last.kind === "voice" ? <Mic className="mr-1 inline size-4" /> : <Video className="mr-1 inline size-4" />)}
@@ -361,7 +361,7 @@ function MyFeedback({ trades, onOpen }: { trades: T[]; onOpen: (id: string) => v
         {waiting.map((t) => (
           <button key={t.id} onClick={() => onOpen(t.id)} className="flex justify-between gap-2 py-1 text-left text-sm hover:underline">
             <span>
-              {t.symbol} {t.side} · {t.date}
+              {t.symbol} {sideLabel(t.side)} · {t.date}
             </span>
             <span className={cn("tabular-nums", t.r >= 0 ? "text-profit" : "text-loss")}>{fmtR(t.r)}</span>
           </button>
@@ -415,7 +415,7 @@ function TradeDetail({ trade: t, onClose }: { trade: T | null; onClose: () => vo
       <SheetContent className="w-full gap-0 overflow-y-auto sm:max-w-2xl">
         <SheetHeader className="border-b">
           <SheetTitle className="flex flex-wrap items-baseline gap-x-3 text-xl">
-            {t.symbol} {t.side}
+            {t.symbol} {sideLabel(t.side)}
             <span className={cn("tabular-nums", t.r >= 0 ? "text-profit" : "text-loss")}>
               {fmtR(t.r)} · {fmtPnl(t.pnl)}
             </span>
