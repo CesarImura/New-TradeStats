@@ -32,7 +32,7 @@ export const TILE_IDLE = "border-a-border hover:border-a-border-strong hover:bg-
 export type Option<T> = { value: T; label: string; hint?: string; art: React.ReactNode }
 
 /**
- * A choice as picture tiles (the reference's option cards): the art in a dark well, the name under it. The chosen one
+ * A choice as picture tiles (Figma Admin / Selection card: padding 8, radius 12, 12 between the art and the name, 8 between cards): the art in a dark well, the name under it. The chosen one
  * gets the orange edge and a warm wash rising from its foot; the others lift a step on hover.
  */
 export function OptionTiles<T extends string | number>({ label, value, options, onChange, cols = 3, id }: { label: string; value: T; options: Option<T>[]; onChange: (v: T) => void; cols?: 2 | 3 | 4; id?: string }) {
@@ -57,7 +57,7 @@ export function OptionTiles<T extends string | number>({ label, value, options, 
         onChange(options[i].value)
         ;(e.currentTarget.children[i] as HTMLElement | undefined)?.focus()
       }}
-      className={cn("grid gap-1.5", { 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4" }[cols])}
+      className={cn("grid gap-2", { 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4" }[cols])}
     >
       {options.map((o, i) => {
         const on = o.value === value
@@ -72,15 +72,15 @@ export function OptionTiles<T extends string | number>({ label, value, options, 
             title={o.hint}
             onClick={() => onChange(o.value)}
             className={cn(
-              "group/opt grid min-w-0 gap-1 rounded-a-lg border p-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97] motion-reduce:active:scale-100",
+              "group/opt grid min-w-0 gap-3 rounded-a-lg border p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97] motion-reduce:active:scale-100",
               EASE,
               on ? TILE_ON : TILE_IDLE,
             )}
           >
-            <span aria-hidden className="block overflow-hidden rounded-[7px]" style={{ ...well, background: PAGE }}>
+            <span aria-hidden className="grid aspect-[3/2] place-items-center overflow-hidden rounded-a-md" style={{ ...well, background: PAGE }}>
               <ArtCtx.Provider value={art}>{o.art}</ArtCtx.Provider>
             </span>
-            <span className={cn("truncate px-1 pb-0.5 t-body-m", on ? "text-a-text" : "text-a-text-2 group-hover/opt:text-a-text")}>{o.label}</span>
+            <span className="truncate t-body-m text-a-text">{o.label}</span>
           </button>
         )
       })}

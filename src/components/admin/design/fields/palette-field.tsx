@@ -77,9 +77,9 @@ export function PaletteField() {
             { value: "dark", label: "Dark" },
           ]}
         />
-        {mode !== theme.mode && <p className="text-xs text-muted-foreground">The preview is in {theme.mode} mode. Switch Light or dark in Brand to see these.</p>}
+        {mode !== theme.mode && <p className="t-caption text-muted-foreground">The preview is in {theme.mode} mode. Switch Light or dark in Brand to see these.</p>}
         <div className="grid grid-cols-[minmax(0,1fr)] gap-1.5">
-          <span className="text-xs text-muted-foreground">Greys follow</span>
+          <span className="t-caption text-muted-foreground">Greys follow</span>
           <Segmented
             label="Greys follow"
             value={theme.tint ?? "brand"}
@@ -91,7 +91,7 @@ export function PaletteField() {
               { value: "none", label: "Grey", hint: "Pure grey" },
             ]}
           />
-          <p className="text-[0.6875rem] text-muted-foreground">
+          <p className="t-caption text-muted-foreground">
             {(theme.tint ?? "brand") === "brand"
               ? "Each grey keeps its lightness but takes the coach's brand hue, so these show slightly recoloured."
               : theme.tint === "none"
@@ -107,8 +107,8 @@ export function PaletteField() {
               // The label beside a field that runs to the panel's edge; a changed colour's reset sits inside its field.
               <div key={key} className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] items-center gap-3">
                 <span className="grid min-w-0 gap-0.5">
-                  <span className={cn("truncate text-xs", changed && "font-medium")}>{label}</span>
-                  {hint && <span className="text-[0.6875rem] leading-tight text-muted-foreground">{hint}</span>}
+                  <span className={cn("truncate t-caption", changed && "font-medium")}>{label}</span>
+                  {hint && <span className="t-caption text-muted-foreground">{hint}</span>}
                 </span>
                 <div className="relative min-w-0">
                   <ColorField label={`${label} (${mode})`} value={toHex(palette[key], palette.background)} onChange={(c) => set(key, c)} />
@@ -128,7 +128,7 @@ export function PaletteField() {
             )
           })}
         </div>
-        <div className={cn("flex items-start gap-2 rounded-[4px] p-2 text-xs", failing.length ? "bg-amber-500/10" : "bg-muted")}>
+        <div className={cn("flex items-start gap-2 rounded-[4px] p-2 t-caption", failing.length ? "bg-amber-500/10" : "bg-muted")}>
           {failing.length ? <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-600" /> : <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />}
           <span className="grid gap-0.5">
             {failing.length ? (
@@ -143,7 +143,7 @@ export function PaletteField() {
           </span>
         </div>
         {anyEdited && (
-          <button type="button" onClick={resetMode} className="w-fit text-xs font-medium text-muted-foreground hover:text-foreground">
+          <button type="button" onClick={resetMode} className="w-fit t-caption-medium text-muted-foreground hover:text-foreground">
             Reset all {mode} colours to {TEMPLATES[theme.template].name}
           </button>
         )}

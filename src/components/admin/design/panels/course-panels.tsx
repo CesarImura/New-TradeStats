@@ -60,7 +60,7 @@ function CoursePageArt() {
 export function CoursePageLink({ onOpen }: { onOpen: () => void }) {
   return (
     <div className="border-t border-a-border-subtle px-5 pt-4 pb-6">
-      <p className="mb-2.5 px-0.5 font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] font-medium tracking-[0.08em] text-muted-foreground uppercase">Other screen</p>
+      <p className="mb-2.5 px-0.5 t-mono-label-s text-muted-foreground">Other screen</p>
       <button
         type="button"
         onClick={onOpen}
@@ -70,8 +70,8 @@ export function CoursePageLink({ onOpen }: { onOpen: () => void }) {
           <CoursePageArt />
         </span>
         <span className="grid min-w-0 flex-1 gap-0.5">
-          <span className="truncate text-[0.8125rem] font-semibold text-foreground">Course page</span>
-          <span className="truncate text-[0.6875rem] text-muted-foreground">Each course</span>
+          <span className="truncate t-body-m-medium text-foreground">Course page</span>
+          <span className="truncate t-caption text-muted-foreground">Each course</span>
         </span>
       </button>
     </div>
@@ -101,7 +101,7 @@ export function CourseSections({ selected, onSelect }: { selected: CourseSection
   return (
     // The hairline under the title, like every other section.
     <div className="grid gap-4 border-t border-a-border-subtle px-5 pt-6 pb-6">
-      <p className="text-xs leading-4 text-muted-foreground">Select a section to edit it. Drag to move it, or switch it off.</p>
+      <p className="t-caption text-muted-foreground">Select a section to edit it. Drag to move it, or switch it off.</p>
       <SortHint home={false} />
       <SortableMenu<CourseSectionId>
         items={list.map((s) => s.id)}
@@ -114,8 +114,8 @@ export function CourseSections({ selected, onSelect }: { selected: CourseSection
             <div data-field={`course-${id}`} className={cn(menuRow(!s.on), "gap-1 py-2", on && "border-a-border-active bg-a-accent-soft hover:border-a-border-active")}>
               <SortHandle />
               <button type="button" aria-pressed={on} onClick={() => onSelect(on ? null : id)} className="grid min-w-0 flex-1 rounded-md py-0.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
-                <span className={cn("text-sm font-medium", !s.on && "text-muted-foreground line-through")}>{s.label}</span>
-                <span className="text-xs text-muted-foreground">{s.hint}</span>
+                <span className={cn("t-body-l-medium", !s.on && "text-muted-foreground line-through")}>{s.label}</span>
+                <span className="t-caption text-muted-foreground">{s.hint}</span>
               </button>
               <Switch size="sm" className={SWITCH_OFF} checked={s.on} aria-label={`Show ${s.label}`} onCheckedChange={(v) => toggle(id, v)} />
             </div>
@@ -136,10 +136,10 @@ export function CourseInspector({ selected, onSelect }: { selected: CourseSectio
     return (
       <div>
         <InspectorTop>
-          <span className="truncate text-[0.875rem] font-semibold">Course page</span>
+          <span className="truncate t-body-l-medium">Course page</span>
         </InspectorTop>
         <div className="grid gap-3 px-5 pb-5">
-          <p className="text-xs leading-4 text-muted-foreground">The page inside a course, the same for every course. Select a section on the left to edit it.</p>
+          <p className="t-caption text-muted-foreground">The page inside a course, the same for every course. Select a section on the left to edit it.</p>
         </div>
       </div>
     )
@@ -157,13 +157,13 @@ export function CourseInspector({ selected, onSelect }: { selected: CourseSectio
   return (
     <div>
       <InspectorTop onClose={() => onSelect(null)}>
-        <span className="truncate text-[0.875rem] font-semibold">{section.label}</span>
+        <span className="truncate t-body-l-medium">{section.label}</span>
       </InspectorTop>
       <div className="grid gap-5 px-5 pb-5">
-        <p className="text-xs leading-4 text-muted-foreground">{section.hint}.</p>
+        <p className="t-caption text-muted-foreground">{section.hint}.</p>
         <Field label="Show on the page">
           <div className="flex items-center justify-between rounded-lg border px-3 py-2">
-            <span className="text-sm">{section.on ? "Shown to students" : "Hidden"}</span>
+            <span className="t-body-l">{section.on ? "Shown to students" : "Hidden"}</span>
             <Switch size="sm" className={SWITCH_OFF} checked={section.on} aria-label={`Show ${section.label}`} onCheckedChange={toggle} />
           </div>
         </Field>
@@ -203,7 +203,7 @@ export function CourseInspector({ selected, onSelect }: { selected: CourseSectio
                 ]}
               />
             </Field>
-            <p className="text-xs leading-4 text-muted-foreground">The picture of a lesson is its thumbnail (Admin → Content). Without one, the course cover shows.</p>
+            <p className="t-caption text-muted-foreground">The picture of a lesson is its thumbnail (Admin → Content). Without one, the course cover shows.</p>
           </>
         )}
       </div>

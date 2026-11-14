@@ -68,7 +68,7 @@ export function BackgroundControl({ theme, onChange, where = true }: { theme: Co
                 key={b.id}
                 onClick={() => onChange({ bgImage: `preset:${b.id}` }, "bg-image")}
                 aria-pressed={theme.bgImage === `preset:${b.id}`}
-                className={cn("grid gap-1 p-1 text-left text-[0.6875rem]", card(theme.bgImage === `preset:${b.id}`))}
+                className={cn("grid gap-1 p-1 text-left t-caption", card(theme.bgImage === `preset:${b.id}`))}
               >
                 <span className="aspect-[4/3] rounded-[4px] bg-[#0b0c10] ring-1 ring-white/10" style={{ backgroundImage: b.css, backgroundSize: "cover", backgroundPosition: "center" }} />
                 <span className="truncate px-0.5 text-muted-foreground">{b.name}</span>
@@ -77,7 +77,7 @@ export function BackgroundControl({ theme, onChange, where = true }: { theme: Co
             <button
               onClick={() => file.current?.click()}
               aria-pressed={!!uploaded}
-              className={cn("grid gap-1 p-1 text-left text-[0.6875rem]", card(!!uploaded))}
+              className={cn("grid gap-1 p-1 text-left t-caption", card(!!uploaded))}
             >
               <span className="grid aspect-[4/3] place-items-center rounded-[4px] border border-dashed bg-cover bg-center" style={uploaded ? { backgroundImage: `url("${uploaded}")` } : undefined}>
                 {!uploaded && <ImagePlus className="size-4 text-muted-foreground" />}
@@ -128,7 +128,7 @@ export function BackgroundControl({ theme, onChange, where = true }: { theme: Co
           />
         </Field>
       )}
-      {kind === "image" && <p className="text-xs text-muted-foreground">Cards and menus stay solid, so text and charts are always readable. Large images are made smaller for fast loading.</p>}
+      {kind === "image" && <p className="t-caption text-muted-foreground">Cards and menus stay solid, so text and charts are always readable. Large images are made smaller for fast loading.</p>}
     </div>
   )
 }

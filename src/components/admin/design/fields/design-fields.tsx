@@ -77,7 +77,7 @@ export function DesignField({ id }: { id: string }) {
 export function Group({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
   return (
     <section className={cn("grid gap-4 border-b px-4 pt-3 pb-5 last:border-b-0", className)}>
-      <h3 className="text-[0.6875rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{title}</h3>
+      <h3 className="t-mono-label-s text-muted-foreground">{title}</h3>
       {children}
     </section>
   )
@@ -112,7 +112,7 @@ function TemplateField() {
           />
         ))}
       </div>
-      <p className="text-xs text-muted-foreground">Switching keeps your name, logo, colours and menu. Style and layout start from the new template.</p>
+      <p className="t-caption text-muted-foreground">Switching keeps your name, logo, colours and menu. Style and layout start from the new template.</p>
       {dialog}
     </Field>
   )
@@ -153,7 +153,7 @@ function LogoField() {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={coach.logo} alt="Your logo" className="size-10 rounded-[6px] border object-contain p-1" />
         ) : (
-          <span className="grid size-10 place-items-center rounded-[6px] text-sm font-semibold" style={{ background: theme.primary, color: onColor(theme.primary) }}>
+          <span className="grid size-10 place-items-center rounded-[6px] t-body-l-medium" style={{ background: theme.primary, color: onColor(theme.primary) }}>
             {coach.mark}
           </span>
         )}
@@ -186,7 +186,7 @@ function LogoField() {
         />
       </div>
       {suggested.length > 0 && (
-        <div className="flex items-center gap-2 rounded-[4px] bg-muted p-2 text-xs">
+        <div className="flex items-center gap-2 rounded-[4px] bg-muted p-2 t-caption">
           <span className="text-muted-foreground">From your logo</span>
           {suggested.map((c) => (
             <button key={c} onClick={() => pickColor(c)} className="size-5 rounded-full ring-1 ring-a-border-strong ring-inset transition-transform hover:scale-110" style={{ background: c }} aria-label={`Use ${c}`} />
@@ -243,7 +243,7 @@ function FontsField() {
   const { theme, change } = useDesign()
   return (
     <div data-field="fonts" className="grid gap-1.5">
-      <span className="text-xs font-medium text-a-text-2">Font pair</span>
+      <span className="t-caption-medium text-a-text-2">Font pair</span>
       <div className="grid grid-cols-2 gap-2">
         {FONT_PAIRS.map((p) => {
           // The label font too: two pairs share a heading and body and differ only in their labels.
@@ -256,7 +256,7 @@ function FontsField() {
               className={cn("grid gap-1 p-2.5 text-left", card(on))}
             >
               <span className="text-xl leading-none" style={{ fontFamily: FONT_LIBRARY[p.heading].css }}>Aa</span>
-              <span className="truncate text-[0.6875rem] text-muted-foreground" style={{ fontFamily: FONT_LIBRARY[p.body].css }}>
+              <span className="truncate t-caption text-muted-foreground" style={{ fontFamily: FONT_LIBRARY[p.body].css }}>
                 {p.name} · {FONT_LIBRARY[p.heading].label}
               </span>
             </button>
@@ -269,7 +269,7 @@ function FontsField() {
             <SelectOptions
               value={theme.fonts[role]}
               onChange={(e) => change({ theme: { fonts: { [role]: e.target.value as FontId } } }, `font-${role}`)}
-              className="h-7 rounded-[4px] border bg-background px-2 text-xs"
+              className="h-7 rounded-[4px] border bg-background px-2 t-caption"
             >
               {Object.entries(FONT_LIBRARY).map(([id, f]) => (
                 <option key={id} value={id}>
@@ -279,7 +279,7 @@ function FontsField() {
             </SelectOptions>
           </Field>
         ))}
-        <p className="text-xs text-muted-foreground">Uploading your own font file comes later.</p>
+        <p className="t-caption text-muted-foreground">Uploading your own font file comes later.</p>
       </More>
     </div>
   )
@@ -347,9 +347,9 @@ function ButtonsField() {
         value={theme.buttonShape}
         onChange={(buttonShape) => change({ theme: { buttonShape } }, "buttons")}
         options={[
-          { value: "square", label: <span className="h-3.5 w-7 rounded-[2px] bg-current opacity-70" aria-label="Square" /> },
-          { value: "rounded", label: <span className="h-3.5 w-7 rounded-[5px] bg-current opacity-70" aria-label="Rounded" /> },
-          { value: "pill", label: <span className="h-3.5 w-7 rounded-full bg-current opacity-70" aria-label="Pill" /> },
+          { value: "square", label: <span className="h-2 w-4 rounded-a-2xs bg-a-text-2" aria-label="Square" /> },
+          { value: "rounded", label: <span className="h-2 w-4 rounded-a-xs bg-a-text-2" aria-label="Rounded" /> },
+          { value: "pill", label: <span className="h-2 w-4 rounded-full bg-a-text-2" aria-label="Pill" /> },
         ]}
       />
     </Field>
@@ -377,7 +377,7 @@ function ShadowsField() {
 function BordersField() {
   const { theme, change } = useDesign()
   return (
-    <label data-field="borders" className="flex items-center justify-between gap-3 text-xs font-medium text-a-text-2">
+    <label data-field="borders" className="flex items-center justify-between gap-3 t-caption-medium text-a-text-2">
       Outline on cards
       <Switch checked={theme.borders} onCheckedChange={(borders) => change({ theme: { borders } }, "borders")} />
     </label>
@@ -553,7 +553,7 @@ function NavMarkerField() {
             <span className={cn("h-2.5 w-full", markerLine[m.value])} />
             <span className="h-1.5 w-2/3 rounded-full bg-[color-mix(in_oklab,var(--a-ink)_20%,transparent)]" />
           </span>
-          <span className="px-0.5 text-xs font-medium">{m.label}</span>
+          <span className="px-0.5 t-caption-medium">{m.label}</span>
         </button>
       ))}
     </div>
@@ -606,12 +606,12 @@ function NavImageField() {
       <div className="grid gap-3">
         <div className="grid grid-cols-3 gap-2">
           {BACKDROPS.map((b) => (
-            <button key={b.id} type="button" onClick={() => set({ image: `preset:${b.id}` }, "nav-image")} aria-pressed={image === `preset:${b.id}`} className={cn("grid gap-1 p-1 text-left text-[0.6875rem]", card(image === `preset:${b.id}`))}>
+            <button key={b.id} type="button" onClick={() => set({ image: `preset:${b.id}` }, "nav-image")} aria-pressed={image === `preset:${b.id}`} className={cn("grid gap-1 p-1 text-left t-caption", card(image === `preset:${b.id}`))}>
               <span className="aspect-[4/3] rounded-[4px] bg-[#0b0c10] ring-1 ring-white/10" style={{ backgroundImage: b.css, backgroundSize: "cover", backgroundPosition: "center" }} />
               <span className="truncate px-0.5 text-muted-foreground">{b.name}</span>
             </button>
           ))}
-          <button type="button" onClick={() => file.current?.click()} aria-pressed={!!uploaded} className={cn("grid gap-1 p-1 text-left text-[0.6875rem]", card(!!uploaded))}>
+          <button type="button" onClick={() => file.current?.click()} aria-pressed={!!uploaded} className={cn("grid gap-1 p-1 text-left t-caption", card(!!uploaded))}>
             <span className="grid aspect-[4/3] place-items-center rounded-[4px] border border-dashed bg-cover bg-center" style={uploaded ? { backgroundImage: `url("${uploaded}")` } : undefined}>
               {!uploaded && <ImagePlus className="size-4 text-muted-foreground" />}
             </span>
@@ -637,7 +637,7 @@ function NavImageField() {
         {image && (
           <>
             <SliderField label="Image covered by" value={Math.max(NAV_MIN_DIM, theme.nav.imageDim ?? 80)} min={NAV_MIN_DIM} max={95} unit="%" onChange={(imageDim) => set({ imageDim }, "nav-image-dim")} />
-            <button type="button" onClick={() => set({ image: undefined, imageDim: undefined }, "nav-image")} className="flex h-7 w-fit items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+            <button type="button" onClick={() => set({ image: undefined, imageDim: undefined }, "nav-image")} className="flex h-7 w-fit items-center gap-1.5 t-caption text-muted-foreground hover:text-foreground">
               <X className="size-3.5" /> No image
             </button>
           </>
@@ -808,7 +808,7 @@ function TemplateCard({ id, selected, primary, onSelect }: { id: TemplateId; sel
           <span className="h-2 w-7 rounded-[var(--button-radius)] bg-primary" />
         </span>
       </span>
-      <span className="px-0.5 text-[0.6875rem] font-medium">{TEMPLATES[id].name}</span>
+      <span className="px-0.5 t-caption-medium">{TEMPLATES[id].name}</span>
     </button>
   )
 }

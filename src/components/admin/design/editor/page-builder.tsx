@@ -625,7 +625,7 @@ export function ArrangeCanvas({
                 >
                   {/* A widget is on its way from the gallery: the whole page takes it. */}
                   {incoming && (
-                    <span aria-hidden className="pointer-events-none absolute -inset-3 z-0 rounded-[calc(var(--radius)+12px)] border-2 border-dashed border-[var(--ts-mark)]/35 transition-opacity" />
+                    <span aria-hidden className="pointer-events-none absolute -inset-3 z-0 rounded-[calc(var(--radius)+12px)] border-2 border-dashed border-a-border-active/35 transition-opacity" />
                   )}
                   {layout.items.length === 0 && !arriving && (
                     <div className="pointer-events-none grid min-h-48 place-items-center rounded-(--radius) border-2 border-dashed text-sm text-muted-foreground">
@@ -688,7 +688,7 @@ export function ArrangeCanvas({
                           {item}
                         </div>
                         {allWidgets && (
-                          <span aria-hidden className="pointer-events-none absolute -inset-[4px] z-20 rounded-[calc(var(--radius)+4px)] border border-dashed border-[var(--ts-mark)]/50" />
+                          <span aria-hidden className="pointer-events-none absolute -inset-[4px] z-20 rounded-[calc(var(--radius)+4px)] border border-dashed border-a-border-active/50" />
                         )}
                         {/* The card's edges and corners: hit zones inside its own edge and on half the gap around it, so it resizes without being
                             selected first and neighbours' zones never overlap. Not for the page title and tool (as tall as their content). */}

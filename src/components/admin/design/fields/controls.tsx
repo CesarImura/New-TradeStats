@@ -32,7 +32,7 @@ export function useReveal(ref: React.RefObject<HTMLElement | null>, open: () => 
  * faint fill and edge, hex codes in mono. Focus stays our orange ring.
  */
 
-const LABEL = "t-body-m text-a-text select-none"
+const LABEL = "t-caption-medium text-a-text select-none"
 const VALUE = "t-caption tabular-nums text-a-text-3"
 // A compact filled field (selects, hex, number cells) in the Admin's field tokens: hairline edge, field fill, the strong edge on hover, the focus edge on focus.
 // Text fields in the panel are the Admin's 44 px ones (the global field rule); this is the dense one.
@@ -151,7 +151,7 @@ export function SliderField({
         </SliderPrimitive.Control>
       </SliderPrimitive.Root>
       {ends && (
-        <span className="flex justify-between text-[0.6875rem] text-muted-foreground">
+        <span className="flex justify-between t-caption text-muted-foreground">
           <span>{ends[0]}</span>
           <span>{ends[1]}</span>
         </span>
@@ -423,7 +423,7 @@ function NumberCell({ label, value, max, onChange }: { label: string; value: num
           setDraft(null)
         }
       }}
-      className="w-0 min-w-0 flex-1 bg-transparent text-center font-[family-name:var(--coach-font-label)] text-xs tabular-nums outline-none"
+      className="w-0 min-w-0 flex-1 bg-transparent text-center font-[family-name:var(--coach-font-label)] t-caption tabular-nums outline-none"
     />
   )
 }
@@ -450,7 +450,7 @@ function HexInput({ value, onChange, label, className }: { value: string; onChan
       }}
       spellCheck={false}
       aria-label={label}
-      className={cn("bg-transparent font-[family-name:var(--coach-font-label)] text-xs tracking-wide uppercase outline-none", className)}
+      className={cn("bg-transparent t-mono-data uppercase outline-none", className)}
     />
   )
 }
@@ -539,7 +539,7 @@ export function More({ label = "More options", children }: { label?: string; chi
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-fit items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+        className="flex w-fit items-center gap-1 t-caption-medium text-muted-foreground hover:text-foreground"
       >
         <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
         {open ? "Fewer options" : label}
@@ -623,11 +623,11 @@ export function InspectorSection({ title, action, summary, defaultOpen = true, c
           type="button"
           aria-expanded={open}
           onClick={() => setOpen(!open)}
-          className="flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-[6px] px-1 text-left font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] font-medium tracking-[0.08em] text-muted-foreground uppercase outline-none hover:text-foreground focus-visible:outline-1 focus-visible:outline-[color:var(--ring)]"
+          className="flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-[6px] px-1 text-left t-mono-label-s text-muted-foreground outline-none hover:text-foreground focus-visible:outline-1 focus-visible:outline-[color:var(--ring)]"
         >
           <ChevronDown className={cn("size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 ease-out", !open && "-rotate-90")} />
           <span className="shrink-0">{title}</span>
-          {summary && !open && <span className="ml-auto min-w-0 truncate pl-3 font-sans text-xs font-normal tracking-normal normal-case text-muted-foreground">{summary}</span>}
+          {summary && !open && <span className="ml-auto min-w-0 truncate pl-3 font-sans t-caption tracking-normal normal-case text-muted-foreground">{summary}</span>}
         </button>
         {action}
       </div>

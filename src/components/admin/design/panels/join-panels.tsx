@@ -42,7 +42,7 @@ function JoinLook() {
   return (
     <InspectorSection title="Look · all Join screens" defaultOpen={false} summary={custom ? "Custom" : "Platform"}>
       <div className="grid gap-4">
-        <p className="text-xs leading-4 text-muted-foreground">Shared by Log in, Sign up and Subscribe. The platform your members use after they join does not change.</p>
+        <p className="t-caption text-muted-foreground">Shared by Log in, Sign up and Subscribe. The platform your members use after they join does not change.</p>
         <Segmented
           label="Look of the Join screens"
           value={custom ? "custom" : "platform"}
@@ -117,7 +117,7 @@ export function JoinInspector({ screen }: { screen: JoinScreenId }) {
         aria-label={label}
         maxLength={key === "subtitle" ? 120 : 48}
         onChange={(e) => edit({ [key]: e.target.value || undefined }, key)}
-        className="h-8 text-[0.8125rem]"
+        className="h-8 t-body-m"
       />
     </Field>
   )
@@ -125,10 +125,10 @@ export function JoinInspector({ screen }: { screen: JoinScreenId }) {
   return (
     <div>
       <InspectorTop>
-        <span className="truncate text-[0.875rem] font-semibold">{info.label}</span>
+        <span className="truncate t-body-l-medium">{info.label}</span>
       </InspectorTop>
       <div className="grid gap-4 px-5 pb-5">
-        <p className="text-xs leading-4 text-muted-foreground">{info.hint}. Leave a field empty to keep the default words.</p>
+        <p className="t-caption text-muted-foreground">{info.hint}. Leave a field empty to keep the default words.</p>
         {text("title", "Title", def.title(coach.name))}
         {text("subtitle", "Subtitle", def.subtitle)}
         {def.button && text("button", "Button", def.button)}
@@ -149,7 +149,7 @@ export function JoinInspector({ screen }: { screen: JoinScreenId }) {
             </Field>
             {copy.layout === "split" && (
               <Field label="Picture">
-                <button type="button" onClick={() => file.current?.click()} className={cn("flex h-20 items-center justify-center gap-2 overflow-hidden rounded-md border border-dashed bg-cover bg-center text-xs text-muted-foreground", card(!!copy.sideImage))} style={copy.sideImage ? { backgroundImage: `url("${copy.sideImage}")` } : undefined}>
+                <button type="button" onClick={() => file.current?.click()} className={cn("flex h-20 items-center justify-center gap-2 overflow-hidden rounded-md border border-dashed bg-cover bg-center t-caption text-muted-foreground", card(!!copy.sideImage))} style={copy.sideImage ? { backgroundImage: `url("${copy.sideImage}")` } : undefined}>
                   {!copy.sideImage && (
                     <>
                       <ImagePlus className="size-4" /> Add a picture

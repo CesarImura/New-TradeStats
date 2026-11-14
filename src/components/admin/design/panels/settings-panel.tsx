@@ -28,7 +28,7 @@ export type SettingsGroup = { title: string; note?: string; fields: string[]; ke
 const RAIL_TONE = "[--rail-a:var(--admin-color-brand-gradient-start)] [--rail-b:var(--admin-color-brand-gradient-end)]"
 
 /** A block's title in Design, the TradeStats way: small mono capitals, spaced, quiet. */
-export const SECTION_LABEL = "font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] font-medium tracking-[0.08em] text-muted-foreground uppercase"
+export const SECTION_LABEL = "t-mono-label-s text-a-text-3"
 
 /** `hidden`: not in the rail, but its settings are still found by search (Design's widget style, which lives in Pages). */
 /** `search`: the header's search looks in this section's own content (Pages: widgets), with this placeholder, instead of in every setting. */
@@ -165,8 +165,8 @@ function NumbersLink() {
   const open = useContext(TabContext)
   return (
     <div className="grid gap-2" data-field="numbers-link">
-      <p className="text-xs text-muted-foreground">Set with the widgets, the only place they show.</p>
-      <button type="button" onClick={() => open("widgets")} className={cn("flex h-7 w-fit items-center gap-1.5 rounded-md border px-2.5 text-xs text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground", FOCUS)}>
+      <p className="t-caption text-muted-foreground">Set with the widgets, the only place they show.</p>
+      <button type="button" onClick={() => open("widgets")} className={cn("flex h-7 w-fit items-center gap-1.5 rounded-md border px-2.5 t-caption text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground", FOCUS)}>
         All widgets → Numbers <ArrowRight className="size-3.5" />
       </button>
     </div>
@@ -336,7 +336,7 @@ export function SettingsPanel({
             found.length ? (
               found.map(([t, g]) => <Group key={`${t.id}/${g.title}`} group={g} section={t.label} draft={draft} onReset={onReset} fields={fields} />)
             ) : (
-              <p className="px-5 py-6 text-[0.8125rem] text-muted-foreground">No setting matches “{q}”.</p>
+              <p className="px-5 py-6 t-body-m text-muted-foreground">No setting matches “{q}”.</p>
             )
           ) : (
             <>
@@ -379,7 +379,7 @@ function Group({ group: g, section, draft, onReset, fields }: { group: SettingsG
         {dirty && <span aria-label="changed" className="size-1.5 rounded-full bg-a-accent-strong" />}
         <span className="flex-1" />
         {dirty && (
-          <button type="button" onClick={() => onReset(g.keys)} className={cn("flex h-6 items-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground", FOCUS)}>
+          <button type="button" onClick={() => onReset(g.keys)} className={cn("flex h-6 items-center gap-1 rounded-md px-1.5 t-caption text-muted-foreground hover:bg-muted hover:text-foreground", FOCUS)}>
             <RotateCcw className="size-3" /> Reset
           </button>
         )}
@@ -391,7 +391,7 @@ function Group({ group: g, section, draft, onReset, fields }: { group: SettingsG
         return (
           <div key={f} className="grid gap-2">
             <div className={cn("grid gap-4", IDLE[f]?.(theme) && "opacity-55")}>{Own ? <Own /> : <DesignField id={f} />}</div>
-            {idle && <p className="text-xs text-muted-foreground">{idle}</p>}
+            {idle && <p className="t-caption text-muted-foreground">{idle}</p>}
           </div>
         )
       })}</div>}
@@ -451,7 +451,7 @@ export function Readability({ fails, total }: { fails: { id: string; label: stri
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         title={bad ? "Colour pairs under WCAG AA" : `All ${total} colour pairs pass WCAG AA`}
-        className={cn("flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs whitespace-nowrap transition-colors duration-150 hover:bg-muted", FOCUS, bad ? "border-a-border-danger text-a-danger" : "border-a-border text-a-text-2")}
+        className={cn("flex h-7 items-center gap-1.5 rounded-full border px-2.5 t-caption whitespace-nowrap transition-colors duration-150 hover:bg-muted", FOCUS, bad ? "border-a-border-danger text-a-danger" : "border-a-border text-a-text-2")}
       >
         {bad ? <TriangleAlert className="size-3.5" /> : <Check className="size-3.5" />}
         {bad ? `${fails.length} hard to read` : "Readable"}
@@ -460,7 +460,7 @@ export function Readability({ fails, total }: { fails: { id: string; label: stri
         <div className="absolute top-9 right-0 z-40 grid w-64 gap-2 rounded-a-lg border border-a-border-strong bg-a-raised p-3 text-a-text">
           <p className="t-body-m">{bad ? `${fails.length} of ${total} colour pairs are under WCAG AA` : `All ${total} colour pairs pass WCAG AA, in this mode.`}</p>
           {bad && (
-            <ul className="grid gap-1 text-xs text-muted-foreground">
+            <ul className="grid gap-1 t-caption text-muted-foreground">
               {fails.map((c) => (
                 <li key={c.id} className="flex justify-between gap-3">
                   <span>{c.label}</span>
@@ -506,7 +506,7 @@ export function ResetButton({ title, text, option, disabled, onReset }: { title:
         aria-expanded={open}
         title={title}
         className={cn(
-          "flex h-8 items-center gap-1.5 rounded-md px-2 text-xs whitespace-nowrap text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground disabled:opacity-35 disabled:hover:bg-transparent",
+          "flex h-8 items-center gap-1.5 rounded-md px-2 t-caption whitespace-nowrap text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground disabled:opacity-35 disabled:hover:bg-transparent",
           FOCUS,
           open && "bg-muted text-foreground",
         )}
@@ -518,7 +518,7 @@ export function ResetButton({ title, text, option, disabled, onReset }: { title:
           <p className="t-body-m-medium">{title}</p>
           <p className="t-body-m text-a-text-2">{text}</p>
           {option && (
-            <label className="flex cursor-pointer items-start gap-2 text-[0.8125rem]">
+            <label className="flex cursor-pointer items-start gap-2 t-body-m">
               <input type="checkbox" checked={withOption} onChange={(e) => setWithOption(e.target.checked)} className="mt-0.5 accent-current" />
               {option}
             </label>

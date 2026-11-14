@@ -308,15 +308,15 @@ export function PagesCanvas() {
                 {/* The label keeps a readable size at any zoom. */}
                 <div
                   className={cn(
-                    "absolute bottom-full left-0 flex origin-bottom-left items-center gap-1.5 pb-2 text-[0.8125rem] whitespace-nowrap",
+                    "absolute bottom-full left-0 flex origin-bottom-left items-center gap-1.5 pb-2 t-body-m whitespace-nowrap",
                     on ? "text-foreground" : "text-muted-foreground",
                   )}
                   style={{ transform: `scale(${1 / cam.z})` }}
                 >
                   <Icon className="size-3.5" />
                   <span className="font-medium text-foreground">{p.label}</span>
-                  {p.id !== "home" && <span className="font-mono text-[0.6875rem]">{p.href.replace(`/c/${slug}`, "")}</span>}
-                  {p.id === "home" && <span className="rounded bg-foreground/8 px-1.5 py-0.5 text-[0.6875rem]">Widgets</span>}
+                  {p.id !== "home" && <span className="t-caption">{p.href.replace(`/c/${slug}`, "")}</span>}
+                  {p.id === "home" && <span className="rounded bg-foreground/8 px-1.5 py-0.5 t-caption">Widgets</span>}
                 </div>
                 <div
                   data-page={i}
@@ -356,8 +356,8 @@ export function PagesCanvas() {
             <Button variant="ghost" size="sm" onClick={fitAll}>
               <ArrowLeft /> All pages
             </Button>
-            <span className="text-sm font-medium">{focused.label}</span>
-            <span className="hidden text-xs text-muted-foreground sm:inline">Live preview of your draft · Esc to go back</span>
+            <span className="t-body-l-medium">{focused.label}</span>
+            <span className="hidden t-caption text-muted-foreground sm:inline">Live preview of your draft · Esc to go back</span>
             <div className="ml-auto flex items-center gap-1">
               {pages.map((p, i) => (
                 <Button key={p.id} variant={i === focus ? "secondary" : "ghost"} size="xs" onClick={() => open(i)}>
@@ -378,7 +378,7 @@ export function PagesCanvas() {
               <Minus />
             </Button>
             <button
-              className="w-12 text-center text-xs tabular-nums text-muted-foreground hover:text-foreground"
+              className="w-12 text-center t-caption tabular-nums text-muted-foreground hover:text-foreground"
               onClick={() => zoomBy(1 / cam.z)}
               title="Zoom to 100%"
             >
@@ -392,7 +392,7 @@ export function PagesCanvas() {
             </Button>
           </div>
           {!focused && (
-            <p className="pointer-events-none hidden text-xs whitespace-nowrap text-muted-foreground xl:block">
+            <p className="pointer-events-none hidden t-caption whitespace-nowrap text-muted-foreground xl:block">
               Drag to move · Pinch or ⌘ + scroll to zoom · Click a page to open it
             </p>
           )}

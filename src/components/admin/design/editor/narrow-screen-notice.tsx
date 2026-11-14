@@ -20,7 +20,7 @@ export function NarrowScreenNotice() {
         <h1 id="narrow-design-title" className="text-xl font-medium">
           Design works best on a larger screen
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="t-body-l text-muted-foreground">
           The editor shows its controls, your pages and a live preview side by side, which needs a screen at least 900px wide. On this screen you can preview your platform as students
           see it.
         </p>

@@ -185,12 +185,13 @@ Valem para todo widget e toda opção de estilo, existentes e novos, em todos os
 
 ## 12. Editor de Design: interface limpa (decisão de 31/10)
 
-- **Seleção do editor (decisão de 13/11, vale desde 14/11):** laranja (`a-*`, a mesma do Admin) nos controles do painel e do inspector.
-  As marcas sobre o canvas (contorno do widget selecionado, alças, foco de tile no canvas) continuam brancas, para não se confundirem com
-  a cor do coach. Nunca a cor do coach para seleção da interface.
+- **Seleção do editor (decisões de 13/11 e 14/11):** laranja do Admin (`border/active`, `--ts-interactive` no workspace) em tudo: controles
+  do painel e do inspector **e** as marcas sobre o canvas (contorno do widget selecionado, cantos, áreas de soltar, etiqueta de regra). Em 14/11 o
+  Gustavo trocou o contorno branco pelo laranja, como no Figma. O contorno mantém a borda escura fina por fora para ler sobre páginas claras.
+  Nunca a cor do coach para seleção da interface.
 - **O editor usa o kit do Admin (`components/admin/ui`)**: AdminButton, AdminFilter, AdminSegmented, AdminTabs, AdminField, Tag, Panel, Menu
-  e os tokens `a-*`/`t-*`, na fonte do Admin (Inter e Space Mono). Nada de cor, texto, espaço ou raio solto em `admin/design`, exceto as
-  marcas sobre o canvas. As variáveis da moldura não descem para `.hb-canvas` e toda regra nova mantém a exclusão `:not(COACH)`.
+  e os tokens `a-*`/`t-*`, na fonte do Admin (Inter e Space Mono). Nada de cor, texto, espaço ou raio solto em `admin/design`, exceto o cinza do canvas (`editor/canvas-bg.ts`), os chips do
+  editor sobre o canvas, a arte das miniaturas, o seletor de cor e as paletas de dados. As variáveis da moldura não descem para `.hb-canvas` e toda regra nova mantém a exclusão `:not(COACH)`.
 - **Inspector em três níveis:** Layout aberto (Size, Shows, Layout); Look fechado com resumo (Stand out, Card, Background); More
   style fechado dentro dele (Title, Bars, Numbers, Header). Coisa nova entra no nível mais fundo que fizer sentido.
 - **Palavras simples, em inglês:** a plataforma toda é em inglês. Sem jargão de design no primeiro nível; dica no `title`, não em
@@ -224,6 +225,7 @@ Vale para cards que mostram um item (post, gráfico, curso, transmissão): capa 
 
 Não crie tamanhos soltos. Use só estes: `text-xs` (12px), `text-sm` (14px) e os três micro-tamanhos já usados: `text-[0.6875rem]` (11px, só rótulos em caixa alta; o resto vira 12px pelo piso do tema), `text-[0.8125rem]` (13px, controles do editor) e `text-[0.875rem]` (14px, títulos de painel; o 15px saiu em 03/11). Abaixo de 11px o texto não é legível: não use. Se um tamanho novo for mesmo necessário, escreva o motivo aqui. Antes eram 14 tamanhos diferentes; o grep `grep -rhoE "text-\[[0-9.]+(px|rem)\]" src | sort | uniq -c` deve listar só os três acima, mais títulos grandes (1.375, 1.75, 2, 2.5rem).
 
+**Editor de Design (desde 14/11):** não usa `text-xs`/`text-sm` nem os micro-tamanhos; só os estilos do Admin: `t-caption` (12), `t-body-m` (13), `t-body-l` (14) e as versões `-medium`, `t-heading-s` nos títulos de painel, `t-mono-label-s` nos rótulos de seção e `t-mono-data` nos códigos hex. Rótulo de campo = `t-caption-medium` primário. Exceções: a arte das miniaturas e os chips do editor sobre o canvas.
 
 ## 15. Tamanho de arquivo (divisão de 02/11)
 

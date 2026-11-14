@@ -110,10 +110,10 @@ Checks: `tsc` clean, ESLint 0 errors in admin (the old `frame.tsx:92` is the onl
 - Measured at 1920 × 1080 against Figma "Pages · 01 Pages": sidebar 8,64 346×1008; canvas 362,64 1550×1008; rail 64; top bar 56.
 
 ## Editor controls (14/11, stage 3A)
-- `--ts-interactive` inside the workspace is the Admin's orange (`border/active`); `--ts-mark` (#f4f4f5) is what the marks on the canvas use (selected widget outline, rule badge, handles). They are the only loose colours left in `admin/design`, with the preview art (theme thumbnails), the colour picker's own gradients and the palette data (`options.ts`, trading colours).
+- `--ts-interactive` inside the workspace is the Admin's orange (`border/active`), and since 14/11 (Gustavo) the marks on the canvas (selected widget outline, corners, drop zones, rule badge) use the same orange, as in Figma. Loose colours left in `admin/design`: the canvas grey, the editor's dark chips on the canvas, the preview art (theme thumbnails), the colour picker's own gradients and the palette data (`options.ts`, trading colours).
 - `states.ts` (cards, chips, swatches), `OptionTiles`, `menuRow()` and the field primitives in `fields/controls.tsx` (`BOX`, `Segmented`, `SliderField`, labels) use `a-*` tokens: hairline edge, strong edge and hover fill on hover, orange edge and soft orange fill when selected. `menuRow()` follows the Sortable row token. The `--ctl-*` overrides are gone (the library theme editor that used them was removed).
 - Dialogs: Switch look, Save as template, Back to the original design and the 2-minute guide are `AdminModal`; Earlier versions is `AdminDrawer`. Buttons in the panel are `AdminButton`.
-- Open: the Look and layout thumbnails (`thumbs/`) and the button-shape art are not redrawn to the Figma sizes; `text-xs`/`text-sm` remain in the inner panels.
+- 14/11 later: picture tiles follow Admin / Selection card (padding 8, radius 12, 12 between art and name, 8 between cards, name Body M primary); the Buttons glyph is Admin / Editor Button shape (16 × 8, radius 2xs / xs / full); every text size in `admin/design` is a `t-*` style. Still different from Figma on purpose: the Layout tiles show the real widget thumbnail, not Figma's simplified drawing.
 
 ---
 

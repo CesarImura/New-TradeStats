@@ -18,7 +18,7 @@ import { useConfirmSwitch } from "./switch-look"
 import { SECTION_LABEL } from "../panels/settings-panel"
 
 /** Small mono label in our own product style (was in the retired onboarding/frame.tsx). */
-const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] uppercase tracking-[0.06em]"
+const mono = "t-mono-label-s"
 
 /**
  * Design's own panels (brand, looks, menu), shared by the Design workspace
@@ -66,7 +66,7 @@ export function LookCards({ suggested, templates = true }: { suggested?: Templat
           />
         ))}
       </div>
-      {!active && <p className="text-xs text-muted-foreground">Your own mix. Pick a look to start again from it.</p>}
+      {!active && <p className="t-caption text-muted-foreground">Your own mix. Pick a look to start again from it.</p>}
       {dialog}
     </Section>
     {/* A tool for the team (saving templates), apart from the looks. */}
@@ -142,16 +142,16 @@ export function LookCard({ look, theme, selected, fits, onSelect }: { look: Look
         </span>
       </span>
       <span className="grid px-0.5">
-        <span className="flex items-center gap-1 text-xs font-medium">
+        <span className="flex items-center gap-1 t-caption-medium">
           {look.name}
           {selected && <Check className="size-3 text-a-text-accent" />}
           {fits && (
-            <Badge variant="outline" className={cn(mono, "ml-auto h-5 border-a-border-active text-[0.6875rem] text-a-text-accent")}>
+            <Badge variant="outline" className={cn(mono, "ml-auto h-5 border-a-border-active t-caption text-a-text-accent")}>
               Fits you
             </Badge>
           )}
         </span>
-        <span className="truncate text-[0.6875rem] text-muted-foreground">{look.blurb}</span>
+        <span className="truncate t-caption text-muted-foreground">{look.blurb}</span>
       </span>
     </button>
   )

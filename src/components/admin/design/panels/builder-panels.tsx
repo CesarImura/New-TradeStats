@@ -257,7 +257,7 @@ export function WidgetLibrary({
       {view === "page" ? (
         // The page's widgets as a list of names, in reading order: one click selects it on the page.
         <div className="grid gap-1 px-3 pb-3">
-          {here.length === 0 && <p className="px-2 py-6 text-center text-xs text-muted-foreground">{onPage.length ? `No widget on this page matches “${query}”.` : "No widgets on this page yet."}</p>}
+          {here.length === 0 && <p className="px-2 py-6 text-center t-caption text-muted-foreground">{onPage.length ? `No widget on this page matches “${query}”.` : "No widgets on this page yet."}</p>}
           {here.map((w) => {
             const d = getWidget(w.type)!
             return (
@@ -265,15 +265,15 @@ export function WidgetLibrary({
                 <span className="grid size-7 shrink-0 place-items-center rounded-md bg-a-muted [&_svg]:size-3.5">
                   <d.icon />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-foreground">{d.name}</span>
-                <span className="shrink-0 text-[0.6875rem]">{[d.variants.length > 1 && lookOf(d, w.variant).label, w.emphasis === "star" && "Star"].filter(Boolean).join(" · ")}</span>
+                <span className="min-w-0 flex-1 truncate t-body-m text-foreground">{d.name}</span>
+                <span className="shrink-0 t-caption">{[d.variants.length > 1 && lookOf(d, w.variant).label, w.emphasis === "star" && "Star"].filter(Boolean).join(" · ")}</span>
               </button>
             )
           })}
         </div>
       ) : tiles ? (
         <div className="grid gap-3 px-4 pb-4">
-          {tiles.length === 0 && <p className="px-2 py-6 text-center text-xs text-muted-foreground">No widget matches “{query}”. Try “calendar”, “progress” or “banner”.</p>}
+          {tiles.length === 0 && <p className="px-2 py-6 text-center t-caption text-muted-foreground">No widget matches “{query}”. Try “calendar”, “progress” or “banner”.</p>}
           {tiles.map(tile)}
         </div>
       ) : (
@@ -284,7 +284,7 @@ export function WidgetLibrary({
             return (
               <button key={s.title} type="button" aria-expanded={group === s.title} onClick={() => (setPicked(null), setGroup(group === s.title ? null : s.title))} className={cn(LIST_ROW, "text-muted-foreground hover:text-foreground", group === s.title && "bg-a-selected text-foreground")}>
                 <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-a-muted [&_svg]:size-4">{first && <first.icon />}</span>
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground">{s.title}</span>
+                <span className="min-w-0 flex-1 truncate t-body-l text-foreground">{s.title}</span>
                 <ChevronRight className="size-3.5" />
               </button>
             )
@@ -355,7 +355,7 @@ function WidgetDetails({
       <div className="grid flex-1 content-start gap-6 px-1 pb-2">
         <div className="grid gap-3">
           <div {...drag(variant)} title="Drag onto the page" className="group/card relative cursor-grab overflow-hidden rounded-xl border p-1.5 active:cursor-grabbing">
-            <span aria-hidden className="pointer-events-none absolute top-3 right-3 z-10 flex items-center gap-1 rounded-a-sm bg-a-page/75 py-0.5 pr-2 pl-1 text-[0.6875rem] font-medium text-white shadow-sm backdrop-blur-sm">
+            <span aria-hidden className="pointer-events-none absolute top-3 right-3 z-10 flex items-center gap-1 rounded-a-sm bg-a-page/75 py-0.5 pr-2 pl-1 t-caption-medium text-white shadow-sm backdrop-blur-sm">
               <GripVertical className="size-3.5" /> Drag to page
             </span>
             <div data-thumb className="pointer-events-none overflow-hidden rounded-lg">
@@ -363,12 +363,12 @@ function WidgetDetails({
             </div>
           </div>
           <div className="grid gap-0.5">
-            <span className="text-sm font-semibold">{def.name}</span>
-            <span className="text-xs text-muted-foreground">{shortOf(def)}</span>
+            <span className="t-body-l-medium">{def.name}</span>
+            <span className="t-caption text-muted-foreground">{shortOf(def)}</span>
           </div>
         </div>
         {onPage.length > 0 && (
-          <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+          <p className="flex flex-wrap items-center gap-x-1.5 t-caption text-muted-foreground">
             <Check className="size-3" /> Already on this page.
             <button type="button" className="font-medium text-foreground underline underline-offset-2" onClick={() => onSelect(onPage[0].id)}>
               Edit that one
@@ -378,7 +378,7 @@ function WidgetDetails({
         )}
         {def.variants.length > 1 && (
           <div className="grid gap-2">
-            <span className="text-[0.8125rem] font-medium">Layout</span>
+            <span className="t-body-m-medium">Layout</span>
             <div role="radiogroup" aria-label="Layout" className="grid grid-cols-2 gap-2">
               {def.variants.map((v) => (
                 <ThumbCard
@@ -404,21 +404,21 @@ function WidgetDetails({
           </div>
         )}
         <div className="grid gap-2">
-          <span className="text-[0.8125rem] font-medium">Detail</span>
+          <span className="t-body-m-medium">Detail</span>
           <Segmented label="How much it shows" value={detail} options={DETAIL.map((o) => ({ value: o.value, label: o.value === "compact" ? "Less" : o.value === "detailed" ? "More" : "Standard", hint: o.hint }))} onChange={setDetail} />
         </div>
         {choices.length > 0 && (
           <div className="grid gap-3">
-            <span className="text-[0.8125rem] font-medium">Shows</span>
+            <span className="t-body-m-medium">Shows</span>
             {choices.map((s) =>
               s.type === "toggle" ? (
-                <label key={s.key} className="flex items-center justify-between gap-3 text-[0.8125rem]">
+                <label key={s.key} className="flex items-center justify-between gap-3 t-body-m">
                   {s.label}
                   <Switch checked={props[s.key] === undefined ? !!s.defaultOn : !!props[s.key]} onCheckedChange={(v) => setProps({ ...props, [s.key]: v })} />
                 </label>
               ) : s.type === "select" ? (
                 <Field key={s.key} label={s.label}>
-                  <SelectOptions value={String(props[s.key] ?? s.options[0].value)} onChange={(e) => setProps({ ...props, [s.key]: e.target.value })} className="h-8 rounded-lg border bg-background px-2 text-sm">
+                  <SelectOptions value={String(props[s.key] ?? s.options[0].value)} onChange={(e) => setProps({ ...props, [s.key]: e.target.value })} className="h-8 rounded-lg border bg-background px-2 t-body-l">
                     {s.options.map((o) => (
                       <option key={o.value} value={o.value}>
                         {o.label}

@@ -320,7 +320,7 @@ export function DesignWorkspace() {
     pages: {
       content:
         step === "join" ? (
-          <p className="border-t border-a-border-subtle px-5 pt-6 text-xs leading-5 text-muted-foreground">The Join screens have no widgets. Their words, layout and look are on the right.</p>
+          <p className="border-t border-a-border-subtle px-5 pt-6 t-caption text-muted-foreground">The Join screens have no widgets. Their words, layout and look are on the right.</p>
         ) : step === "course" ? (
           <>
             <BackToPlaybook onBack={() => (setPage("courses"), select(null), go("pages"))} />
@@ -345,8 +345,8 @@ export function DesignWorkspace() {
         <ThumbStyles />
         {/* A screen of its own, over the admin (Figma 14/11): the Admin's page colour, a top bar with no fill, and the sections, the
             canvas and the inspector as three floating cards 8 px apart. The panel's controls select in the Admin's orange
-            (--ts-interactive); the marks on the canvas stay white (--ts-mark); the vars below keep the frame's colours out of the canvas (.hb-canvas never reads them). */}
-        <div role="dialog" aria-modal aria-label="Design" data-design-ws className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-a-page font-[family-name:var(--admin-font-family-primary)] [--background:var(--admin-color-bg-page)] [--border:var(--admin-color-border-default)] [--ring:var(--admin-color-border-focus)] [--ts-interactive:var(--admin-color-border-active)] [--ts-mark:#f4f4f5] lg:overflow-hidden">
+            (--ts-interactive); the marks on the canvas (selected outline, corners, drop zones) are the same orange; the vars below keep the frame's colours out of the canvas (.hb-canvas never reads them). */}
+        <div role="dialog" aria-modal aria-label="Design" data-design-ws className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-a-page font-[family-name:var(--admin-font-family-primary)] [--background:var(--admin-color-bg-page)] [--border:var(--admin-color-border-default)] [--ring:var(--admin-color-border-focus)] [--ts-interactive:var(--admin-color-border-active)] lg:overflow-hidden">
           <EditorTopBar
             back={fromSetup ? { href: "/setup", label: "Back to setup" } : { href: `/admin/${slug}`, label: "Admin" }}
             // The same in every section: the canvas shows this page in all of them, so its name is always in sight.
@@ -594,10 +594,10 @@ function DesignHelp() {
   const { go } = useContext(StepCtx)
   return (
     <div className="m-4 grid gap-2 rounded-[6px] border p-3">
-      <div className="flex items-center gap-2 text-sm font-medium">
+      <div className="flex items-center gap-2 t-body-l-medium">
         <Wand2 className="size-4" /> Want it to look exactly like your brand?
       </div>
-      <p className="text-xs text-muted-foreground">Our designers can build your own design on top of these settings.</p>
+      <p className="t-caption text-muted-foreground">Our designers can build your own design on top of these settings.</p>
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={() => toast("Design packages open from Settings → Our subscription.")}>
           See design packages

@@ -89,10 +89,10 @@ export function SaveTemplateDialog({ coach, theme, open, onOpenChange }: { coach
                   role="radio"
                   aria-checked={id === t}
                   onClick={() => choose(t)}
-                  className={cn("px-3 py-2 text-left text-sm", card(id === t))}
+                  className={cn("px-3 py-2 text-left t-body-l", card(id === t))}
                 >
                   <span className="block font-medium">{TEMPLATES[t].name}</span>
-                  <span className="block text-xs text-muted-foreground">{t === theme.template ? "This design's base" : "Replace"}</span>
+                  <span className="block t-caption text-muted-foreground">{t === theme.template ? "This design's base" : "Replace"}</span>
                 </button>
               ))}
             </div>

@@ -172,11 +172,11 @@ export function WidgetInspector({
           <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-a-muted [&_svg]:size-4">
             <def.icon />
           </span>
-          <span className="truncate text-[0.875rem] font-semibold">{def.name}</span>
+          <span className="truncate t-body-l-medium">{def.name}</span>
         </span>
       </InspectorTop>
       {pinned && (
-        <p className="m-4 mb-0 flex gap-2 rounded-[6px] bg-a-muted p-2.5 text-[0.6875rem] leading-4 text-muted-foreground">
+        <p className="m-4 mb-0 flex gap-2 rounded-[6px] bg-a-muted p-2.5 t-caption text-muted-foreground">
           <Lock className="mt-px size-3.5 shrink-0" />
           The main part of this page. It always stays.
         </p>
@@ -244,7 +244,7 @@ function StyleTab({
       {/* First in the panel: its size, how much it shows and its layout. */}
       {part === "layout" && (
       <InspectorSection title="Layout">
-        {!pinned && def.type !== "page-header" && <p className="px-0.5 text-xs text-muted-foreground">Drag the lines between cards to resize.</p>}
+        {!pinned && def.type !== "page-header" && <p className="px-0.5 t-caption text-muted-foreground">Drag the lines between cards to resize.</p>}
         {def.variants.length > 1 && (
           // Every layout of this widget as a picture, open under Size: one click swaps it on the page (the gallery's tiles, same widget, same draft).
           <Row label="Layout" stack own={look.value !== first} onReset={() => pick(lookOf(def, first))}>
@@ -319,7 +319,7 @@ function StyleTab({
             <OpenRow open={fly === "charts"} onClick={() => setFly(fly === "charts" ? null : "charts")} value={[caps.chart && CHART_NAME[own.chartStyle ?? chartStyleOf(theme)], caps.figure && NUMBER_NAME[figure]].filter(Boolean).join(" · ")} />
           </Row>
         )}
-        <button type="button" onClick={onAllWidgets} className="mt-1 flex w-fit items-center gap-1.5 text-[0.8125rem] text-muted-foreground underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:outline-1 focus-visible:outline-[color:var(--ring)]">
+        <button type="button" onClick={onAllWidgets} className="mt-1 flex w-fit items-center gap-1.5 t-body-m text-muted-foreground underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:outline-1 focus-visible:outline-[color:var(--ring)]">
           Style of all {count.total} widgets <ArrowRight className="size-3.5" />
         </button>
       </InspectorSection>
@@ -341,7 +341,7 @@ function StyleTab({
                   aria-pressed={header[p.key]}
                   title={p.hint}
                   onClick={() => onChange({ header: { ...w.header, [p.key]: !header[p.key] } }, `${w.id}-header-${p.key}`)}
-                  className={cn("flex h-8 items-center gap-1.5 px-3 text-[0.8125rem]", chip(header[p.key]))}
+                  className={cn("flex h-8 items-center gap-1.5 px-3 t-body-m", chip(header[p.key]))}
                 >
                   {header[p.key] && <Check className="size-3.5" />}
                   {p.label}
@@ -349,7 +349,7 @@ function StyleTab({
               ))}
             </div>
             {((caps.icon && !canShow.includes("icon")) || (caps.description && !canShow.includes("description"))) && (
-              <p className="text-[0.6875rem] leading-4 text-muted-foreground">
+              <p className="t-caption text-muted-foreground">
                 {[caps.icon && !canShow.includes("icon") && "The icon shows with a Top or Tag title.", caps.description && !canShow.includes("description") && "The description shows with More."].filter(Boolean).join(" ")}
               </p>
             )}
@@ -406,7 +406,7 @@ function OwnBackground({ w, onChange }: { w: WidgetInstance; onChange: (patch: P
   return (
     <>
       {star ? (
-        <p className="text-[0.6875rem] leading-4 text-muted-foreground">The page&apos;s Star keeps its colour fill. Set Stand out to Accent or Quiet to give it a background.</p>
+        <p className="t-caption text-muted-foreground">The page&apos;s Star keeps its colour fill. Set Stand out to Accent or Quiet to give it a background.</p>
       ) : (
         <>
           <Row label="Background" stack={fills.length > 3} hint={FILL_HINT[fill]} own={fill !== "card"} onReset={() => set({ tone: undefined, image: undefined, dim: undefined }, "fill")}>
@@ -529,23 +529,23 @@ function ContentTab({ w, pinned, onChange, part, phone }: { w: WidgetInstance; p
             return (
               <Row key={s.key} label={s.label} stack>
                 {s.type === "textarea" ? (
-                  <Textarea value={String(props[s.key] ?? "")} placeholder="Leave empty for the default text" aria-label={s.label} onChange={(e) => setProp(s.key, e.target.value)} className="min-h-20 text-[0.8125rem]" />
+                  <Textarea value={String(props[s.key] ?? "")} placeholder="Leave empty for the default text" aria-label={s.label} onChange={(e) => setProp(s.key, e.target.value)} className="min-h-20 t-body-m" />
                 ) : (
-                  <Input value={String(props[s.key] ?? "")} placeholder={s.placeholder ?? "Leave empty for the default"} aria-label={s.label} onChange={(e) => setProp(s.key, e.target.value)} className="h-8 text-[0.8125rem]" />
+                  <Input value={String(props[s.key] ?? "")} placeholder={s.placeholder ?? "Leave empty for the default"} aria-label={s.label} onChange={(e) => setProp(s.key, e.target.value)} className="h-8 t-body-m" />
                 )}
               </Row>
             )
           })}
-          {later.length > 0 && <p className="text-[0.6875rem] leading-4 text-muted-foreground">{later.map((s) => s.label).join(", ")} shows with More.</p>}
+          {later.length > 0 && <p className="t-caption text-muted-foreground">{later.map((s) => s.label).join(", ")} shows with More.</p>}
           {drawsNote && (
             <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
           {hasNote || adding ? (
             <>
               <Row label="Text" stack>
-                <Textarea value={note.text ?? ""} aria-label="Text" onChange={(e) => setNote("text", e.target.value)} className="min-h-20 text-[0.8125rem]" />
+                <Textarea value={note.text ?? ""} aria-label="Text" onChange={(e) => setNote("text", e.target.value)} className="min-h-20 t-body-m" />
               </Row>
               <Row label="Button">
-                <Input value={note.button ?? ""} placeholder="Button text" aria-label="Button text" onChange={(e) => setNote("button", e.target.value)} className="h-8 text-[0.8125rem]" />
+                <Input value={note.button ?? ""} placeholder="Button text" aria-label="Button text" onChange={(e) => setNote("button", e.target.value)} className="h-8 t-body-m" />
               </Row>
               <Row label="Opens">
                 <SelectOptions value={note.target ?? noteTargets()[0].value} aria-label="Opens" onChange={(e) => setNote("target", e.target.value)} className={select}>
@@ -558,7 +558,7 @@ function ContentTab({ w, pinned, onChange, part, phone }: { w: WidgetInstance; p
               </Row>
               {note.target === "url" && (
                 <Row label="Address">
-                  <Input value={note.url ?? ""} placeholder="https://" aria-label="Web address" onChange={(e) => setNote("url", e.target.value)} className="h-8 text-[0.8125rem]" />
+                  <Input value={note.url ?? ""} placeholder="https://" aria-label="Web address" onChange={(e) => setNote("url", e.target.value)} className="h-8 t-body-m" />
                 </Row>
               )}
               <Row label="Picture" stack>

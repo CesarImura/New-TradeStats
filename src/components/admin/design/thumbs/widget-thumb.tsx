@@ -177,36 +177,38 @@ export function ThumbCard({
   dragHint,
   tight,
   ...rest
-}: React.HTMLAttributes<HTMLDivElement> & { thumb: React.ReactNode; title: string; meta?: React.ReactNode; sub?: string; chevron?: boolean; selected?: boolean; off?: boolean; /** It can be dragged onto the page: a grip and "Drag to page" show on hover. */ dragHint?: boolean; /** Less padding around the thumbnail, for the small tiles of the inspector. */ tight?: boolean }) {
+}: React.HTMLAttributes<HTMLDivElement> & { thumb: React.ReactNode; title: string; meta?: React.ReactNode; sub?: string; chevron?: boolean; selected?: boolean; off?: boolean; /** It can be dragged onto the page: a grip and "Drag to page" show on hover. */ dragHint?: boolean; /** The small tiles of the inspector: less room between the thumbnail and the name. */ tight?: boolean }) {
   return (
     <div
       {...rest}
       className={cn(
-        "group/card grid gap-1.5 rounded-xl border text-left outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] active:scale-[0.985] motion-reduce:active:scale-100",
+        "group/card grid rounded-a-lg border text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.985] motion-reduce:active:scale-100",
         EASE,
-        tight ? "p-1" : "p-1.5",
+        "p-2",
+        // The small tiles of the inspector keep the art closer to the name.
+        tight ? "gap-2" : "gap-3",
         off ? "border-transparent opacity-55 active:scale-100" : cn("cursor-pointer", selected ? TILE_ON : TILE_IDLE),
         className,
       )}
     >
-      <div data-thumb className="relative overflow-hidden rounded-lg">
+      <div data-thumb className="relative overflow-hidden rounded-a-md">
         {thumb}
         {dragHint && (
           <span
             aria-hidden
-            className="pointer-events-none absolute top-1.5 right-1.5 flex items-center gap-1 rounded-a-sm bg-a-page/75 py-0.5 pr-2 pl-1 text-[0.6875rem] font-medium text-white opacity-0 shadow-sm backdrop-blur-sm transition-opacity duration-150 group-hover/card:opacity-100 group-focus-visible/card:opacity-100"
+            className="pointer-events-none absolute top-1.5 right-1.5 flex items-center gap-1 rounded-a-sm bg-a-page/75 py-0.5 pr-2 pl-1 t-caption-medium text-a-text opacity-0 shadow-sm backdrop-blur-sm transition-opacity duration-150 group-hover/card:opacity-100 group-focus-visible/card:opacity-100"
           >
             <GripVertical className="size-3.5" /> Drag to page
           </span>
         )}
       </div>
-      <div className="grid gap-0.5 px-1.5 pb-1">
+      <div className="grid gap-0.5">
         <span className="flex min-w-0 items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-medium">{title}</span>
-          {meta && <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">{meta}</span>}
+          <span className="min-w-0 flex-1 truncate t-body-m text-a-text">{title}</span>
+          {meta && <span className="flex shrink-0 items-center gap-1 t-caption text-a-text-2">{meta}</span>}
           {chevron && <ChevronRight aria-hidden className="size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 group-hover/card:translate-x-0.5" />}
         </span>
-        {sub && <span className="truncate text-xs text-muted-foreground">{sub}</span>}
+        {sub && <span className="truncate t-caption text-a-text-2">{sub}</span>}
       </div>
     </div>
   )

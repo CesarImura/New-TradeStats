@@ -31,13 +31,13 @@ export function TradingColoursField() {
     <div data-field="trading" className="grid gap-3">
       <div className="grid grid-cols-2 gap-2">
         <div className="grid gap-1.5">
-          <span className="flex items-center gap-1 text-[0.8125rem] leading-5 text-a-text-2">
+          <span className="flex items-center gap-1 t-body-m text-a-text-2">
             <ArrowUp className="size-3" style={{ color: profit }} /> Profit
           </span>
           <ColorField value={profit} onChange={(c) => write(c, loss)} label="Profit colour" />
         </div>
         <div className="grid gap-1.5">
-          <span className="flex items-center gap-1 text-[0.8125rem] leading-5 text-a-text-2">
+          <span className="flex items-center gap-1 t-body-m text-a-text-2">
             <ArrowDown className="size-3" style={{ color: loss }} /> Loss
           </span>
           <ColorField value={loss} onChange={(c) => write(profit, c)} label="Loss colour" />

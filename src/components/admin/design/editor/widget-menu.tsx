@@ -51,16 +51,16 @@ export function WidgetMenu({
   return (
     <ContextMenu onOpenChange={(open) => open && onOpen()}>
       <ContextMenuTrigger render={<div className="size-full select-auto" />}>{children}</ContextMenuTrigger>
-      <ContextMenuContent className="w-56 font-[family-name:var(--ff-geist)]">
+      <ContextMenuContent className="w-56">
         <ContextMenuGroup>
-          <ContextMenuLabel className="text-xs text-muted-foreground">{def.name}</ContextMenuLabel>
+          <ContextMenuLabel className="t-caption text-muted-foreground">{def.name}</ContextMenuLabel>
           <ContextMenuItem onClick={onOpen}>
             <Pencil /> Edit settings
           </ContextMenuItem>
           {def.variants.length > 1 && (
             <ContextMenuSub>
               <ContextMenuSubTrigger>Layout</ContextMenuSubTrigger>
-              <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
+              <ContextMenuSubContent>
                 <ContextMenuRadioGroup value={look.value} onValueChange={(v) => onLook(String(v))}>
                   {def.variants.map((v) => (
                     <ContextMenuRadioItem key={v.value} value={v.value}>
@@ -73,7 +73,7 @@ export function WidgetMenu({
           )}
           <ContextMenuSub>
             <ContextMenuSubTrigger>Stand out</ContextMenuSubTrigger>
-            <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
+            <ContextMenuSubContent>
               <ContextMenuRadioGroup value={w.emphasis ?? "accent"} onValueChange={(v) => onEmphasis(v as Emphasis)}>
                 {EMPHASIS.map((o) => (
                   <ContextMenuRadioItem key={o.value} value={o.value}>
@@ -85,7 +85,7 @@ export function WidgetMenu({
           </ContextMenuSub>
           <ContextMenuSub>
             <ContextMenuSubTrigger>Shows</ContextMenuSubTrigger>
-            <ContextMenuSubContent className="font-[family-name:var(--ff-geist)]">
+            <ContextMenuSubContent>
               <ContextMenuRadioGroup value={w.detail ?? "standard"} onValueChange={(v) => onDetail(v as Detail)}>
                 {DETAIL.map((o) => (
                   <ContextMenuRadioItem key={o.value} value={o.value}>

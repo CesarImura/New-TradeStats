@@ -48,7 +48,7 @@ const PARTS: Record<"shelf" | "hero", { part: Part; label: string }[]> = {
   ],
 }
 
-const selectClass = "h-8 w-full rounded-lg border bg-background px-2 text-sm"
+const selectClass = "h-8 w-full rounded-lg border bg-background px-2 t-body-l"
 const newId = () => `c${Math.random().toString(36).slice(2, 8)}`
 
 export function MediaCardsEditor({
@@ -107,7 +107,7 @@ export function MediaCardsEditor({
   return (
     <div className="grid gap-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[0.8125rem] font-medium">
+        <span className="t-body-m-medium">
           {label} <span className="text-muted-foreground tabular-nums">{list.filter((e) => !e.hidden).length}</span>
         </span>
         {saved && (
@@ -164,8 +164,8 @@ export function MediaCardsEditor({
                   )}
                 </span>
                 <button type="button" onClick={() => setOpen(expanded ? null : e.id)} className="grid min-w-0 flex-1 text-left outline-none focus-visible:underline" aria-expanded={expanded}>
-                  <span className={cn("truncate text-[0.8125rem] font-medium", e.hidden && "text-muted-foreground line-through")}>{title}</span>
-                  <span className="truncate text-xs text-muted-foreground">{e.hidden ? "Hidden" : e.ref ? (kind === "hero" && e.ref === "own" ? "Your headline" : "From your content") : `Your ${noun}`}</span>
+                  <span className={cn("truncate t-body-m-medium", e.hidden && "text-muted-foreground line-through")}>{title}</span>
+                  <span className="truncate t-caption text-muted-foreground">{e.hidden ? "Hidden" : e.ref ? (kind === "hero" && e.ref === "own" ? "Your headline" : "From your content") : `Your ${noun}`}</span>
                 </button>
                 <div className="flex shrink-0 items-center">
                   <IconButton label={`Move ${noun} up`} onClick={() => move(i, i - 1)} disabled={i === 0}>
@@ -196,7 +196,7 @@ export function MediaCardsEditor({
       <Button variant="outline" size="sm" className="w-full" onClick={add} disabled={list.length >= max}>
         <Plus /> Add {noun}
       </Button>
-      <p className="text-xs text-muted-foreground">
+      <p className="t-caption text-muted-foreground">
         {list.length >= max ? `Up to ${max} ${noun}s. Delete or hide one to add another.` : `Drag to change the order. Up to ${max} ${noun}s.`}
         {kind === "shelf" && " Cards from your content keep the student's progress."}
       </p>
@@ -249,7 +249,7 @@ function EntryFields({ kind, entry: e, base: b, picture, onChange }: { kind: "sh
     <div className="grid gap-3 border-t p-3">
       <Field label="Picture">{picture}</Field>
       <div className="grid gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Shows</span>
+        <span className="t-caption-medium text-muted-foreground">Shows</span>
         <div className="flex flex-wrap gap-1.5">
           {PARTS[kind].map(({ part, label }) => (
             <button
@@ -258,7 +258,7 @@ function EntryFields({ kind, entry: e, base: b, picture, onChange }: { kind: "sh
               aria-pressed={!off.has(part)}
               onClick={() => toggle(part)}
               className={cn(
-                "h-7 rounded-full border px-2.5 text-xs transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "h-7 rounded-full border px-2.5 t-caption transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 off.has(part) ? "text-muted-foreground line-through decoration-muted-foreground/60" : "border-foreground/25 bg-foreground/[0.06] text-foreground",
               )}
             >
@@ -266,7 +266,7 @@ function EntryFields({ kind, entry: e, base: b, picture, onChange }: { kind: "sh
             </button>
           ))}
         </div>
-        {kind === "hero" && <p className="text-xs text-muted-foreground">Switch everything off for a slide that is only its picture.</p>}
+        {kind === "hero" && <p className="t-caption text-muted-foreground">Switch everything off for a slide that is only its picture.</p>}
       </div>
       {!off.has("kicker") && text("kicker", "Small label", b?.kicker || "e.g. New course")}
       {!off.has("title") && text("title", "Title", b?.title || "Title")}
