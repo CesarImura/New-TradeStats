@@ -40,15 +40,8 @@ const ago = (iso: string) => {
   return d === 0 ? "today" : d < 7 ? `${d} d ago` : d < 30 ? `${Math.floor(d / 7)} w ago` : `${Math.floor(d / 30)} mo ago`
 }
 const count = (id: string) => ([...id].reduce((n, c) => n + c.charCodeAt(0), 0) * 7) % 400 + 14
-/** Figma groups checklists, trading plans and the rest as Tools. */
-const TABS = [
-  { id: "all", label: "All" },
-  { id: "indicators", label: "Indicators" },
-  { id: "templates", label: "Templates" },
-  { id: "tools", label: "Tools" },
-  { id: "lesson", label: "Lesson files" },
-] as const
-const groupOf = (c: DownloadCategory) => (c === "indicators" ? "indicators" : c === "templates" ? "templates" : "tools")
+/** One tab per category, in the words the Category column and the upload form use, then the files that come from lessons. */
+const TABS = [{ id: "all", label: "All" }, ...DOWNLOAD_CATEGORIES.map((c) => ({ id: c.id as string, label: c.label })), { id: "lesson", label: "Lesson files" }]
 
 type Row = { id: string; title: string; sub: string; name: string; tag: string; version: string; who: string; whoIds: string[]; updated: string; date: string; downloads: number; item?: DownloadItem }
 
@@ -62,7 +55,8 @@ export function DownloadsAdmin() {
   const [q, setQ] = useState("")
   const [tierSel, setTierSel] = useState("all")
   const [editing, setEditing] = useState<DownloadItem | "new" | null>(null)
-  const tierName = (d: DownloadItem) => (d.tiers.length === 0 ? "Everyone" : d.tiers.map((id) => tiers.find((t) => t.id === id)?.name ?? id).join(", "))
+  // A tier that was deleted or never existed here is left out instead of showing its id.
+  const tierName = (d: DownloadItem) => (d.tiers.length === 0 ? "Everyone" : d.tiers.flatMap((id) => tiers.find((t) => t.id === id)?.name ?? []).join(", ") || "No tier yet")
 
   const own: Row[] = items.map((d) => ({ id: d.id, title: d.title, sub: d.file.type, name: d.file.name, tag: categoryLabel(d.category), version: `v${d.version}`, who: tierName(d), whoIds: d.tiers, updated: ago(d.updated), date: shortDate(d.updated), downloads: count(d.id), item: d }))
   const lesson: Row[] = catalog.courses.flatMap((c) =>
@@ -72,7 +66,7 @@ export function DownloadsAdmin() {
   )
   const all = [...own, ...lesson]
   const rows = all.filter((r) => {
-    const g = r.item ? groupOf(r.item.category) : "lesson"
+    const g = r.item ? r.item.category : "lesson"
     return (tab === "all" || tab === g) && (tierSel === "all" || r.whoIds.length === 0 || r.whoIds.includes(tierSel)) && (!q || `${r.title} ${r.name}`.toLowerCase().includes(q.toLowerCase()))
   })
   const remove = (d: DownloadItem) => {
@@ -223,7 +217,7 @@ function UploadDrawer({ item, onClose }: { item?: DownloadItem; onClose: () => v
             <AdminFilter ariaLabel="Category" value={category} onValueChange={(v) => setCategory(v as DownloadCategory)} options={DOWNLOAD_CATEGORIES.map((c) => ({ value: c.id, label: c.label }))} className="h-11! w-full justify-between" />
           </div>
           <AdminField label="Version">
-            <input value={version} onChange={(e) => setVersion(e.target.value)} className={cn(adminControl, "h-11 tabular-nums")} />
+            <input value={`v${version}`} onChange={(e) => setVersion(e.target.value.replace(/^v+/i, ""))} inputMode="decimal" className={cn(adminControl, "h-11 tabular-nums")} />
           </AdminField>
         </div>
       </div>

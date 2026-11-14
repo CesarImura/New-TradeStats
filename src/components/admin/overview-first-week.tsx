@@ -29,8 +29,8 @@ export function useFirstWeek(): "demo" | "new" | null {
 
 /** The six steps, in Figma's order and words (524:9409), with a rough time for each. */
 const STEPS: { id: TaskId; title: string; text: string; action: string; minutes: number }[] = [
-  { id: "brand", title: "Pick your brand and template", text: "", action: "", minutes: 0 },
-  { id: "membership", title: "Create your first membership", text: "", action: "", minutes: 0 },
+  { id: "brand", title: "Pick your brand and template", text: "Colors, fonts and the look your students see", action: "Open Design", minutes: 5 },
+  { id: "membership", title: "Create your first membership", text: "Free or paid, your choice", action: "Create a tier", minutes: 3 },
   { id: "course", title: "Upload your first course", text: "Videos upload in the background", action: "Add a course", minutes: 5 },
   { id: "payouts", title: "Connect payouts", text: "Needed before your first sale", action: "Connect Stripe", minutes: 5 },
   { id: "live", title: "Schedule a livestream", text: "Students see it on their home", action: "Schedule", minutes: 2 },
@@ -119,11 +119,11 @@ export function FirstWeekOverview({ demo }: { demo: boolean }) {
                   </div>
                   {isDone ? (
                     <Tag tone="success" dot>Done</Tag>
-                  ) : (
+                  ) : s.action ? (
                     <AdminButton hierarchy="secondary" size="md" className="shrink-0" nativeButton={false} render={<Link href={href(s.id)} />}>
                       {s.action}
                     </AdminButton>
-                  )}
+                  ) : null}
                 </li>
               )
             })}

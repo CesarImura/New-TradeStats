@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { AdminAvatar } from "./avatar"
 import { cn } from "@/lib/utils"
 import { AdminProgress } from "./progress-line"
 
@@ -16,7 +16,7 @@ export function CellStack({ title, subtitle, weight = "regular", className }: { 
 export function CellPerson({ initials, name, subtitle, className }: { initials: string; name: React.ReactNode; subtitle?: React.ReactNode; className?: string }) {
   return (
     <div className={cn("flex min-w-0 items-center gap-2.5", className)}>
-      <Avatar className="size-8 shrink-0"><AvatarFallback>{initials}</AvatarFallback></Avatar>
+      <AdminAvatar initials={initials} />
       <CellStack title={name} subtitle={subtitle} weight="medium" />
     </div>
   )

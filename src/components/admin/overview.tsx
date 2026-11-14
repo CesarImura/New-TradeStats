@@ -6,8 +6,7 @@ import { toast } from "sonner"
 import { Bar, ComposedChart, Line, XAxis, YAxis } from "recharts"
 import { ArrowRight, CalendarDays, Video } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { AdminButton, AdminFilter, AdminPageHeader, AdminTabs, EmptyState, Metric as MetricCard, Panel, Tag } from "@/components/admin/ui"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { AdminAvatar, AdminButton, AdminFilter, AdminPageHeader, AdminTabs, EmptyState, Metric as MetricCard, Panel, Tag } from "@/components/admin/ui"
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart"
 import { COURSES, EVENTS } from "@/lib/data/sample"
 import { FirstWeekOverview, useFirstWeek } from "@/components/admin/overview-first-week"
@@ -423,10 +422,7 @@ function RunningOverview() {
           <ul className="flex flex-1 flex-col">
             {NEEDS.map((u) => (
               <li key={u.id} className="flex flex-1 items-center gap-3 border-t border-a-border py-3 last:pb-0">
-                <Avatar className="size-8 shrink-0 overflow-visible">
-                  <AvatarFallback className="text-xs">{u.initials}</AvatarFallback>
-                  <span aria-hidden className={cn("absolute -right-0.5 -top-0.5 size-2 rounded-full", u.tone === "danger" ? "bg-a-danger-fill" : "bg-a-warning-fill")} />
-                </Avatar>
+                <AdminAvatar initials={u.initials} status={u.tone} />
                 <span className="sr-only">{u.tone === "danger" ? "Urgent" : "Warning"}</span>
                 <div className="flex min-w-0 flex-1 flex-col t-body-m">
                   <span className="truncate text-a-text">{u.name}</span>

@@ -228,7 +228,11 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
 
   if (!box) return null
   const hole = { x: box.x - PAD, y: box.y - PAD, w: box.w + PAD * 2, h: box.h + PAD * 2 }
-  const inDialog = !!document.querySelector(step.target)?.closest("[role=dialog]")
+  // A modal or drawer (Base UI marks it data-open) already dims the page. The design editor is a full-screen dialog that
+  // does not, and it covers everything under z 50: there the dimming goes above it (z 55), and steps aside while a menu from the target is open.
+  const dialog = document.querySelector(step.target)?.closest("[role=dialog]")
+  const dimmedByDialog = !!dialog && dialog.hasAttribute("data-open")
+  const inEditor = !!dialog && !dimmedByDialog
   const { side, x, y, arrow } = place(hole, h, step.side)
   const Hint = side ? { bottom: ArrowUp, top: ArrowDown, right: ArrowLeft, left: ArrowRight }[side] : ArrowRight
   const progressIndex = step.part
@@ -237,8 +241,8 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
     <>
       {/* The page around the target is dimmed (a dialog or drawer dims it already). Under menus and popovers (z 50), so a
           select opened from the target stays bright. */}
-      {!inDialog && (
-        <svg aria-hidden className="pointer-events-none fixed inset-0 z-40 size-full">
+      {!dimmedByDialog && !(inEditor && box.open) && (
+        <svg aria-hidden className={cn("pointer-events-none fixed inset-0 size-full", inEditor ? "z-[55]" : "z-40")}>
           <path fillRule="evenodd" d={`M0 0H${innerWidth}V${innerHeight}H0Z M${hole.x} ${hole.y}h${hole.w}v${hole.h}h-${hole.w}Z`} style={{ fill: "var(--admin-color-bg-scrim)" }} />
         </svg>
       )}

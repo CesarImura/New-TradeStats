@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { ArrowRight, Pencil, Play, Plus, Search } from "@/components/icons"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { AdminAvatar } from "@/components/admin/ui"
 import { ADMIN_STUDENTS, COURSES, FEEDBACK_REQUESTS } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { useNewPlatform } from "./use-new-platform"
@@ -235,9 +235,7 @@ export function CommandPalette({ open, onOpenChange, base }: { open: boolean; on
                           className={cn("flex cursor-pointer items-center gap-2.5 rounded-a-md px-2.5 py-2", on && "bg-a-muted")}
                         >
                           {r.initials ? (
-                            <Avatar className="size-8 shrink-0">
-                              <AvatarFallback className="text-xs">{r.initials}</AvatarFallback>
-                            </Avatar>
+                            <AdminAvatar initials={r.initials} />
                           ) : (
                             <span aria-hidden className="grid w-3.5 shrink-0 place-items-center text-a-icon">
                               {r.icon === "edit" && <Pencil className="size-3.5" />}
