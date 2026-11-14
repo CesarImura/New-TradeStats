@@ -30,7 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { STATUS_LABEL, allLessons, isSampleCourse, saveCatalog, uid, useCatalog, type Catalog, type Course, type Status } from "@/lib/data/learning"
+import { STATUS_LABEL, allLessons, isSampleCourse, readyForLaunch, saveCatalog, uid, useCatalog, type Catalog, type Course, type Status } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
 import { NewCourse } from "./new-course"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
@@ -44,16 +44,18 @@ type Filter = "all" | "attention" | Status
 const needsAttention = (c: Course) => c.status === "published" && allLessons(c).some((l) => l.status === "draft")
 
 /** What the card says is out of the ordinary, if anything. */
-const attentionOf = (c: Course): { tone: "warning" | "muted"; text: string; action: string } | null => {
+const attentionOf = (c: Course, prelaunch = false): { tone: "warning" | "muted"; text: string; action: string } | null => {
+  if (prelaunch && readyForLaunch(c)) return { tone: "muted", text: "Goes public when you go live", action: "Open" }
   if (c.status === "draft") return { tone: "muted", text: "No one can see this course", action: "Publish" }
   const waiting = allLessons(c).filter((l) => l.status === "draft" || !l.video).length
   return c.status === "published" && waiting ? { tone: "warning", text: `${waiting} ${waiting === 1 ? "lesson isn't" : "lessons aren't"} ready`, action: "Review" } : null
 }
-const accessOf = (c: Course, tiers: { id: string; name: string }[]) => (c.soldSeparately ? "Sold on its own" : c.tiers.length ? tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") : "All tiers")
+const accessOf = (c: Course, tiers: { id: string; name: string }[]) => (c.soldSeparately ? "Sold on its own" : c.tiers.length ? tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") || "No tier yet" : "All tiers")
 const statusTone = (s: Status) => (s === "published" ? "success" : s === "scheduled" ? "accent" : "neutral")
-const StatusTag = ({ course }: { course: Course }) => (
-  <Tag tone={statusTone(course.status)} dot>
-    {STATUS_LABEL[course.status]}
+/** On a platform that isn't live yet, a draft with a visible lesson says "Ready for launch" (it opens with Go live). */
+const StatusTag = ({ course, prelaunch = false }: { course: Course; prelaunch?: boolean }) => (
+  <Tag tone={prelaunch && readyForLaunch(course) ? "accent" : statusTone(course.status)} dot>
+    {prelaunch && readyForLaunch(course) ? "Ready for launch" : STATUS_LABEL[course.status]}
     {course.status === "scheduled" && course.scheduledFor ? ` · ${course.scheduledFor}` : ""}
   </Tag>
 )
@@ -67,6 +69,7 @@ export function ContentBoard() {
   // A community made in setup starts on the sample courses; they carry a "Sample" label until replaced.
   const wizard = useWizardCommunity(coach.slug)
   const sample = (id: string) => !!wizard && isSampleCourse(coach, id)
+  const prelaunch = wizard?.status === "setup"
   const router = useRouter()
   const [filter, setFilter] = useState<Filter>("all")
   const [creating, setCreating] = useState(false)
@@ -226,7 +229,7 @@ export function ContentBoard() {
             {list.map((c) => {
               const live = c.status === "published"
               const seed = [...c.id].reduce((n, ch) => n + ch.charCodeAt(0), 0)
-              const att = attentionOf(c)
+              const att = attentionOf(c, prelaunch)
               const on = picked.includes(c.id)
               return (
                 <AdminTr key={c.id} selected={on} onClick={() => router.push(`${base}/content/${c.id}`)}>
@@ -244,7 +247,7 @@ export function ContentBoard() {
                       </Link>
                     </div>
                   </AdminTd>
-                  <AdminTd><StatusTag course={c} /></AdminTd>
+                  <AdminTd><StatusTag course={c} prelaunch={prelaunch} /></AdminTd>
                   <AdminTd>{att ? <CellDot tone={att.tone === "warning" ? "warning" : "neutral"} label={att.text} /> : <span className="text-a-text-3">—</span>}</AdminTd>
                   <AdminTd><span className="line-clamp-2">{accessOf(c, coach.tiers)}</span></AdminTd>
                   <AdminTd align="end">{allLessons(c).length}</AdminTd>
@@ -264,14 +267,14 @@ export function ContentBoard() {
           const lessons = allLessons(c)
           const live = c.status === "published"
           const seed = [...c.id].reduce((n, ch) => n + ch.charCodeAt(0), 0)
-          const att = attentionOf(c)
+          const att = attentionOf(c, prelaunch)
           return (
             <MediaCard key={c.id} data-tour={c.id === list[0]?.id ? "course-card" : undefined} onClick={() => router.push(`${base}/content/${c.id}`)} className={cn(c.status === "archived" && "opacity-70")}
               cover={
                 <>
                   <Link href={`${base}/content/${c.id}`} aria-label={c.title} className="absolute inset-0 z-10 outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus" />
                   <CourseCover course={c} className="size-full">
-                    <span className="absolute top-3 left-3 flex h-7 items-center"><StatusTag course={c} /></span>
+                    <span className="absolute top-3 left-3 flex h-7 items-center"><StatusTag course={c} prelaunch={prelaunch} /></span>
                     {att && <MediaCardStatus tone={att.tone === "warning" ? "warning" : "muted"} text={att.text} trailing={att.action} />}
                   </CourseCover>
                   <span onClick={(e) => e.stopPropagation()} className="absolute top-3 right-3 z-20">{menu(c, "ghost")}</span>

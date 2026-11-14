@@ -10,6 +10,7 @@ import { AdminButton } from "@/components/admin/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { customCommunities, renameSlug, setAccount, slugify, updateCommunity } from "@/lib/data/communities"
+import { readyForLaunch, saveCatalog } from "@/lib/data/learning"
 import { publish } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
 import { EmailChips, validChips, type Chip } from "./email-chips"
@@ -42,10 +43,11 @@ const checkboxClass = "mt-px border-a-border-strong data-checked:border-a-accent
 /**
  * Go live (Figma 1050:871; address taken 1066:879). The address suggested at sign-up, checked as it is typed, and the
  * coach's responsibility for content and legal details (the TraderHub terms were accepted at sign-up). Going live
- * publishes the draft, moves the platform to the address and opens You're live.
+ * publishes the draft and every course ready for launch, moves the platform to the address and opens You're live.
  */
 export function GoLiveModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const router = useRouter()
+  const { coach } = useCoach()
   const { community, ready } = useSetupSteps()
   const slug = community?.slug ?? ""
   const [address, setAddress] = useState<string>()
@@ -62,6 +64,7 @@ export function GoLiveModal({ open, onOpenChange }: { open: boolean; onOpenChang
     setBusy(true)
     setTimeout(() => {
       publish(slug, "Went live")
+      saveCatalog(coach, (c) => ({ ...c, courses: c.courses.map((co) => (readyForLaunch(co) ? { ...co, status: "published" } : co)) }))
       updateCommunity(slug, { status: "live", address: clean })
       renameSlug(slug, clean)
       setAccount({ setupSlug: clean })
@@ -74,7 +77,7 @@ export function GoLiveModal({ open, onOpenChange }: { open: boolean; onOpenChang
   const hint = tooShort ? "At least 3 letters or numbers." : taken ? `This address is taken. Try ${suggestAddress(clean, slug)} or ${clean.split("-")[0]}-trading.` : "Available. You can connect your own domain later in Settings."
 
   return (
-    <Shell open={open} onOpenChange={(o) => !busy && onOpenChange(o)} title="Go live" text="Confirm your web address. Your platform opens right after.">
+    <Shell open={open} onOpenChange={(o) => !busy && onOpenChange(o)} title="Go live" text="Confirm your web address. Your platform opens with every course that’s ready for launch.">
       <div className="flex flex-col gap-1.5">
         <label htmlFor={id} className="t-caption text-a-text">
           Web address

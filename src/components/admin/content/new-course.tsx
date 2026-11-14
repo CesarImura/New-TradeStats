@@ -5,20 +5,20 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { ArrowRight, ArrowUp, ChevronDown, GripVertical, MoreHorizontal, X } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { tiersForNewCourse, useTiers } from "@/lib/data/access"
 import { uid, type Course, type Lesson, type Module } from "@/lib/data/learning"
 import { pictureFrom } from "@/lib/images"
 import { cn } from "@/lib/utils"
 import { AdminButton, AdminField, Callout, Dropzone, OptionCard, StepIndicator, adminControl } from "../ui"
 import { uploadQueue } from "./course-parts"
 
-type Step = "course" | "access" | "content"
+type Step = "course" | "content"
 type Method = "blank" | "folder" | "links"
-type Access = "all" | "tiers" | "own"
 type Found = { module: string; name: string; file?: File; link?: string }
 
-const STEPS: { id: Step; label: string }[] = [{ id: "course", label: "Course" }, { id: "access", label: "Access" }, { id: "content", label: "Content" }]
+/** Two steps (Flavio, 14/11): who can watch comes from the tiers ("Courses it unlocks"), and is changed on the course's Access tab. */
+const STEPS: { id: Step; label: string }[] = [{ id: "course", label: "Course" }, { id: "content", label: "Content" }]
 /** Arrow keys move between the radio cards of a group and choose the one they land on, as a native radio group does. */
 function radioArrows(e: React.KeyboardEvent<HTMLElement>) {
   if (!["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft"].includes(e.key)) return
@@ -38,15 +38,14 @@ const VIDEO = /\.(mp4|mov|mkv|webm|m4v)$/i
 const cleanName = (f: string) => f.replace(VIDEO, "").replace(/^\d+[\s._-]*/, "").replace(/[-_]+/g, " ").trim().replace(/^./, (c) => c.toUpperCase())
 const sizeOf = (bytes: number) => (bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.max(1, Math.round(bytes / 1e6))} MB`)
 
-/** Content · 04 to 06 New course: three steps (Course, Access, Content). Save as draft works as soon as there is a title. */
+/** Content · 04 to 06 New course: two steps (Course, Content). Save as draft works as soon as there is a title. */
 export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", onCreate }: { open: boolean; onOpenChange: (o: boolean) => void; area: string; initialMethod?: Method; onCreate: (c: Course, o: { open: boolean }) => void }) {
   const { coach } = useCoach()
   const [step, setStep] = useState<Step>("course")
   const [title, setTitle] = useState("")
   const [tagline, setTagline] = useState("")
   const [cover, setCover] = useState<string | undefined>()
-  const [access, setAccess] = useState<Access>("all")
-  const [tiers, setTiers] = useState<string[]>([])
+  const allTiers = useTiers(coach)
   const [method, setMethod] = useState<Method>(initialMethod)
   /** The coach chose how to add videos (the Getting started tour waits for it); "Upload a folder" chose already. */
   const [picked, setPicked] = useState(initialMethod !== "blank")
@@ -72,7 +71,7 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
     setDir(way)
     setStep(to)
   }
-  const reset = () => (setTitle(""), setTagline(""), setCover(undefined), setAccess("all"), setTiers([]), setFound([]), setSkipped([]), setLinks(""), setShut([]))
+  const reset = () => (setTitle(""), setTagline(""), setCover(undefined), setFound([]), setSkipped([]), setLinks(""), setShut([]))
 
   const readFolder = (list: FileList | File[]) => {
     const all = [...list].sort((a, b) => ((a as File & { webkitRelativePath?: string }).webkitRelativePath || a.name).localeCompare((b as File & { webkitRelativePath?: string }).webkitRelativePath || b.name, undefined, { numeric: true }))
@@ -108,8 +107,8 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
       tagline: tagline.trim(),
       area,
       status: "draft",
-      tiers: access === "tiers" ? tiers : [],
-      soldSeparately: access === "own" || undefined,
+      // Open to every tier that unlocks all courses; tiers that picked their courses add it themselves.
+      tiers: tiersForNewCourse(allTiers),
       color: [...title].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 5,
       cover,
       edited: "just now",
@@ -134,13 +133,11 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
 
   const next = () => {
     if (step === "course" && !title.trim()) return void toast.error("Give the course a title first.")
-    if (step === "access" && access === "tiers" && tiers.length === 0) return void toast.error("Pick at least one tier, or choose All tiers.")
     if (step === "content") return finish(false)
     go(STEPS[idx + 1].id, "forward")
   }
   const doneText: Record<Step, string | undefined> = {
     course: title.trim() || undefined,
-    access: access === "all" ? "All tiers" : access === "own" ? "Sold on its own" : tiers.length ? coach.tiers.filter((t) => tiers.includes(t.id)).map((t) => t.name).join(", ") : undefined,
     content: undefined,
   }
 
@@ -210,33 +207,6 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
                       </div>
                     </div>
                   </>
-                )}
-
-                {step === "access" && (
-                  <div role="radiogroup" aria-label="Who can watch" data-tour="course-access" onKeyDown={radioArrows} className="flex flex-col gap-4">
-                    <h3 className="t-mono-label text-a-text-2">Who can watch</h3>
-                    {([["all", "All tiers", "Everyone with any paid or free tier"], ["tiers", "Pick tiers", "Only the tiers you choose"]] as const).map(([v, label, text]) => (
-                      <div key={v} className="flex flex-col">
-                        <OptionCard checked={access === v} onSelect={() => setAccess(v)} title={label} description={text} />
-                        {v === "tiers" && (
-                          <Collapse open={access === "tiers"}>
-                            <ul className="flex flex-col gap-3 pt-5 pb-1 pr-4 pl-11">
-                              {coach.tiers.map((t) => (
-                                <li key={t.id}>
-                                  <label className="flex cursor-pointer items-center gap-2.5 t-body-m text-a-text">
-                                    <Checkbox checked={tiers.includes(t.id)} onCheckedChange={(c) => setTiers((x) => (c ? [...x, t.id] : x.filter((y) => y !== t.id)))} />
-                                    <span className="flex-1">{t.name}</span>
-                                    <span className="t-caption text-a-text-3">{t.price}/{t.cadence === "month" ? "mo" : t.cadence} · {t.members} students</span>
-                                  </label>
-                                </li>
-                              ))}
-                            </ul>
-                          </Collapse>
-                        )}
-                      </div>
-                    ))}
-                    <OptionCard checked={access === "own"} onSelect={() => setAccess("own")} title="Sell it on its own" description="One-time price, set it later in Sales" />
-                  </div>
                 )}
 
                 {step === "content" && (
