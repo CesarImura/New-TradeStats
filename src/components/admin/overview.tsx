@@ -4,8 +4,9 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { Bar, ComposedChart, Line, XAxis, YAxis } from "recharts"
-import { ArrowRight, CalendarDays, Video } from "@/components/icons"
+import { ArrowRight, CalendarDays, RadioButtonChecked, Video } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
+import { useNewPlatform } from "./use-new-platform"
 import { AdminAvatar, AdminButton, AdminFilter, AdminPageHeader, AdminTabs, EmptyState, Metric as MetricCard, Panel, Tag } from "@/components/admin/ui"
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart"
 import { COURSES, EVENTS } from "@/lib/data/sample"
@@ -227,13 +228,15 @@ export function AdminOverview() {
 
 function RunningOverview() {
   const { coach, base } = useCoach()
+  // A platform made in setup has no numbers yet: the same screen, with zeros and empty lists instead of the sample.
+  const fresh = useNewPlatform()
   const members = coach.tiers.reduce((n, t) => n + t.members, 0)
 
   const [view, setView] = useState(VIEWS[0].id)
   const [range, setRange] = useState<Range>("30")
   const tiers = Object.fromEntries([["all", "All tiers"], ...coach.tiers.map((t) => [t.id, t.name])]) as Record<string, string>
   const [tier, setTier] = useState("all")
-  const share = tier === "all" ? 1 : (coach.tiers.find((t) => t.id === tier)?.members ?? 0) / Math.max(members, 1)
+  const share = fresh ? 0 : tier === "all" ? 1 : (coach.tiers.find((t) => t.id === tier)?.members ?? 0) / Math.max(members, 1)
   const metrics = VIEWS.find((v) => v.id === view)!.metrics
   const [lower, setLower] = useState<"courses" | "questions">("courses")
 
@@ -248,22 +251,44 @@ function RunningOverview() {
     bar: { label: barM.label, color: "var(--admin-color-bg-track)" },
     line: { label: lineM.label, color: "var(--admin-color-accent-default)" },
   } satisfies ChartConfig
-  const headline = [
+  const headline = fresh
+    ? [
+        { label: "Active students", value: "0", delta: "Invite people to start", href: "students", tone: undefined },
+        { label: "Revenue", value: "€0", delta: "No sales yet", href: "sales", tone: undefined },
+        { label: "New students", value: "0", delta: "Shows once students join", href: "students" },
+        { label: "Rules followed", value: "—", delta: "Shows once students trade", href: "journal" },
+      ]
+    : [
     { label: "Active students", value: "194", delta: "+6.2% vs last 30 days", tone: "success" as const, href: "students" },
     { label: "Revenue", value: "€37,180", delta: "+6.2% · €2,180 more", tone: "success" as const, href: "sales" },
     { label: "New students", value: "40", delta: "−4 vs last 30 days", tone: "danger" as const, href: "students" },
     { label: "Rules followed", value: "84%", delta: "+3 pp · 312 journal entries", tone: "success" as const, href: "journal" },
   ]
-  const courses = COURSES.slice(0, 3)
+  const courses = fresh ? [] : COURSES.slice(0, 3)
+  const needs = fresh ? [] : NEEDS
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <NextLiveBanner base={base} />
+      {fresh ? (
+        <EmptyState
+          compact
+          icon={RadioButtonChecked}
+          title="No livestream scheduled"
+          description="Students see your next live session at the top of their home page."
+          actions={
+            <AdminButton hierarchy="secondary" size="md" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
+              Schedule a livestream
+            </AdminButton>
+          }
+        />
+      ) : (
+        <NextLiveBanner base={base} />
+      )}
 
       <AdminPageHeader
         className="pt-6"
         title="Overview"
-        subtitle={`${coach.name} · last 30 days · updated 2 min ago`}
+        subtitle={`${coach.name} · last 30 days${fresh ? "" : " · updated 2 min ago"}`}
         actions={
           <>
             <span className="inline-flex h-9 items-center gap-2 rounded-a-md border border-a-border px-3 t-body-m">
@@ -271,7 +296,7 @@ function RunningOverview() {
                 <span className="absolute inset-0 animate-ping rounded-full bg-a-success-fill opacity-60 motion-reduce:animate-none" />
                 <span className="size-2 rounded-full bg-a-success-fill" />
               </span>
-              <span className="t-body-m-medium tabular-nums">23</span> Online
+              <span className="t-body-m-medium tabular-nums">{fresh ? 0 : 23}</span> Online
             </span>
             <div className="inline-flex">
               <AdminButton size="xl" className="rounded-r-none" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
@@ -351,7 +376,7 @@ function RunningOverview() {
           </header>
           {lower === "courses" ? (
             courses.length === 0 ? (
-              <EmptyLine>No courses yet. Add your first one in Content.</EmptyLine>
+              <EmptyLine>{fresh ? "No course results yet. They show once students start learning." : "No courses yet. Add your first one in Content."}</EmptyLine>
             ) : (
               <div className="grid flex-1 border-t border-a-border @min-[680px]:grid-cols-[246fr_270fr_246fr]">
                 {courses.map((c, ci) => {
@@ -419,8 +444,9 @@ function RunningOverview() {
               See all <ArrowRight className="size-3" />
             </Link>
           </header>
+          {needs.length === 0 && <EmptyLine>Nothing needs you today.</EmptyLine>}
           <ul className="flex flex-1 flex-col">
-            {NEEDS.map((u) => (
+            {needs.map((u) => (
               <li key={u.id} className="flex flex-1 items-center gap-3 border-t border-a-border py-3 last:pb-0">
                 <AdminAvatar initials={u.initials} status={u.tone} />
                 <span className="sr-only">{u.tone === "danger" ? "Urgent" : "Warning"}</span>
