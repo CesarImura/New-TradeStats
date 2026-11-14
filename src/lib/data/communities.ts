@@ -39,6 +39,8 @@ export type CustomCommunity = Coach & {
     firstCourse?: boolean
     firstTier?: boolean
     legal?: boolean
+    /** Getting started items the coach put off with "Skip for now" (ids of use-setup-steps). */
+    skipped?: string[]
   }
 }
 
