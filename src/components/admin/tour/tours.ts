@@ -100,7 +100,7 @@ export const TOURS: Record<TourId, Tour> = {
     steps: [
       { id: "new", target: t("tier-new"), part: 0, gap: 18, title: "Create your first tier", body: "Start with one. You can add more tiers anytime.", hint: "Click New tier" },
       { id: "plan", target: `${t("tier-plan")}:is(:not([data-filled]), :focus-within)`, part: 1, side: "left", gap: 8, dy: 5, title: "Name it and set a price", body: "Type a name and a monthly price. Students see both on your sales page.", hint: "Then choose what it unlocks" },
-      { id: "plan-free", target: `${t("tier-plan")}[data-free]:is(:not([data-filled]), :focus-within)`, part: 1, side: "left", gap: 8, dy: 5, title: "Name it and pick Free", body: "A free tier has no price or trial. Students join with their e-mail.", hint: "Then choose what it unlocks" },
+      { id: "plan-free", target: `${t("tier-plan")}[data-free]:is(:not([data-filled]), :focus-within)`, part: 1, side: "left", gap: 8, dy: 57, title: "Name it and pick Free", body: "A free tier has no price or trial. Students join with their e-mail.", hint: "Then choose what it unlocks" },
       { id: "unlocks", target: `body:has(${t("tier-plan")}[data-filled]:not(:focus-within)) ${t("tier-unlocks")}`, part: 2, side: "left", pad: 12, gap: 16, title: "Choose what it unlocks", body: "Keep All courses. Every course you add, now and later, is part of this tier.", hint: "Click Save tier" },
       { id: "done", target: `${NO_DRAWER} ${t("tier-card")}[data-ready]`, part: 2, side: "bottom", gap: 42, final: true, title: "Your first tier is ready", body: "Students see it on your sales page. You can change it anytime in Sales & payments.", hint: "" },
     ],
