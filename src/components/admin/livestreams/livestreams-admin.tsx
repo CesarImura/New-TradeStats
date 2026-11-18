@@ -32,7 +32,7 @@ export function LivestreamsAdmin() {
   const [q, setQ] = useState("")
   const next = live[0] ?? upcoming[0]
   const who = (s: Livestream) => (s.tiers.length === 0 ? "Everyone" : s.tiers.map((id) => coach.tiers.find((t) => t.id === id)?.name ?? id).join(", "))
-  const list = (tab === "upcoming" ? upcoming : tab === "live" ? live : past).filter((s) => !q || s.title.toLowerCase().includes(q.toLowerCase()))
+  const list = (tab === "upcoming" ? upcoming.filter((x) => x.id !== next?.id) : tab === "live" ? live : past).filter((s) => !q || s.title.toLowerCase().includes(q.toLowerCase()))
   const studio = (s: Livestream) => router.push(`${base}/livestreams/${s.id}`)
   const link = (s: Livestream) => navigator.clipboard?.writeText(`${window.location.origin}/c/${coach.slug}/live/${s.id}`).then(() => toast("Link copied"), () => toast.error("Couldn't copy. Select it and copy by hand."))
   const quick = () => {
@@ -69,17 +69,17 @@ export function LivestreamsAdmin() {
                 <Video className="absolute top-1/2 left-1/2 size-5 -translate-x-1/2 -translate-y-1/2 text-a-text-3" />
                 <span className="absolute right-3 bottom-3 rounded-a-sm bg-a-page px-2 py-1 t-caption text-a-text">{lengthLabel(next.planned ?? 60)}</span>
               </div>
-              <div className="flex min-w-0 flex-col justify-center gap-3 border-a-border p-7 md:border-x">
+              <div className="flex min-w-0 flex-col gap-3 border-a-border px-7 pt-8 pb-7 md:border-x">
                 <div className="flex flex-wrap items-center gap-2 t-caption text-a-text-2">
                   {next.state === "live" ? <Tag tone="danger">Live now</Tag> : <><span>Next live</span><Tag>{untilLabel(next.startsAt).replace(/^./, (c) => c.toUpperCase())}</Tag><Tag tone="warning">Waiting for OBS</Tag></>}
                 </div>
-                <h2 className="t-heading-xl text-a-text [overflow-wrap:anywhere]">{next.title}</h2>
+                <h2 className="mt-1 t-heading-xl text-a-text [overflow-wrap:anywhere]">{next.title}</h2>
                 <p className="flex flex-wrap items-center gap-x-4 gap-y-1 t-caption text-a-text-2">
                   <span className="flex items-center gap-1.5"><CalendarDays className="size-3.5" aria-hidden />{whenLabel(next.startsAt).replace(",", " ·")}</span>
                   <span className="flex items-center gap-1.5"><Clock className="size-3.5" aria-hidden />{lengthLabel(next.planned ?? 60)}</span>
                   <span className="flex items-center gap-1.5"><Users className="size-3.5" aria-hidden />{who(next)}</span>
                 </p>
-                <div className="flex flex-wrap items-center gap-2 pt-1">
+                <div className="mt-auto flex flex-wrap items-center gap-2">
                   <AdminButton onClick={() => studio(next)}>Open studio <ArrowRight /></AdminButton>
                   <AdminButton hierarchy="secondary" onClick={() => link(next)}><Copy /> Copy link</AdminButton>
                   {next.state === "scheduled" && <AdminButton hierarchy="ghost" onClick={() => setEditing(next)}><Pencil /> Edit</AdminButton>}
@@ -135,11 +135,11 @@ export function LivestreamsAdmin() {
             <AdminTable minWidth={900}>
               <AdminTableHead>
                 <AdminTh>Livestream</AdminTh>
-                <AdminTh width={140}>{tab === "live" ? "Started" : "Starts"}</AdminTh>
-                <AdminTh width={100}>Length</AdminTh>
-                <AdminTh width={90}>{tab === "live" ? "Watching" : "Joining"}</AdminTh>
-                <AdminTh width={236}>Who can watch</AdminTh>
-                <AdminTh width={116}>Status</AdminTh>
+                <AdminTh width={166}>{tab === "live" ? "Started" : "Starts"}</AdminTh>
+                <AdminTh width={106}>Length</AdminTh>
+                <AdminTh width={96}>{tab === "live" ? "Watching" : "Joining"}</AdminTh>
+                <AdminTh width={226}>Who can watch</AdminTh>
+                <AdminTh width={108}>Status</AdminTh>
                 <AdminTh width={56} />
               </AdminTableHead>
               <tbody>

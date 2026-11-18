@@ -40,7 +40,7 @@ export function ChartsAdmin() {
   const upload = <AdminButton onClick={() => setCreating(true)}><Plus /> Mark up a chart</AdminButton>
 
   return (
-    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
+    <div className="flex w-full flex-col gap-4">
       <PageHeader title="Charts" text="Charts, watchlist and your charts" actions={upload} />
       {!coach.modules.charts && (
         <Callout tone="warning" action={<AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="md">Review</AdminButton>}>

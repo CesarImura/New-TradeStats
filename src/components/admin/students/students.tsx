@@ -221,7 +221,7 @@ export function StudentsPage() {
             <AdminTh width={106}>Rules kept</AdminTh>
             <AdminTh width={146}>Status</AdminTh>
             <AdminTh width={150}>Joined</AdminTh>
-            <AdminTh width={100} align="end">Last active</AdminTh>
+            <AdminTh width={80} align="end">Last active</AdminTh>
           </AdminTableHead>
           <tbody>
             {shown.map((s) => {

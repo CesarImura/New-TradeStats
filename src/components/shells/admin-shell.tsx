@@ -181,7 +181,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
               </Avatar>
             </div>
           </header>
-          <main id="admin-main" tabIndex={-1} className="mx-auto w-full max-w-[1264px] outline-none min-w-0 flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10 xl:pt-12">{children}</main>
+          <main id="admin-main" tabIndex={-1} className={cn("mx-auto w-full outline-none min-w-0 flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10 xl:pt-12", path.startsWith(`${base}/charts`) ? "max-w-[1635px]" : "max-w-[1264px]")}>{children}</main>
         </div>
       </div>
     </SidebarProvider>
