@@ -122,7 +122,7 @@ function SettingsPage({ title, text, children }: { title: string; text: string; 
 /** Table inside a bordered panel surface (Figma "Table"). */
 function DataCard({ children, className, rowHeight, scrollLabel }: { children: React.ReactNode; className?: string; /** Names the sideways-scrolling table so the keyboard can reach it. */ scrollLabel?: string; /** Rows that hold one line are 53 high in Figma (the table standard is 61 for two lines). */ rowHeight?: 45 | 53 }) {
   return (
-    <div className={cn("overflow-hidden rounded-a-lg border border-a-border bg-a-panel", rowHeight === 53 && "[&_td]:h-[53px]", rowHeight === 45 && "[&_td]:h-[45px]", className)}>
+    <div className={cn("overflow-hidden rounded-a-lg border border-a-border bg-a-panel [&_th]:t-micro [&_th]:normal-case [&_th]:tracking-normal", rowHeight === 53 && "[&_td]:h-[53px]", rowHeight === 45 && "[&_td]:h-[45px]", className)}>
       <div className="overflow-x-auto">
         <Table scrollLabel={scrollLabel}>{children}</Table>
       </div>
@@ -143,7 +143,7 @@ function Segmented<T extends string>({ value, onChange, options, label }: { valu
           onClick={() => onChange(id)}
           className={cn(
             "h-8 rounded-a-md border t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
-            value === id ? "border-a-accent-strong bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover hover:text-a-text"
+            value === id ? "border-a-border-active bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover hover:text-a-text"
           )}
         >
           {text}
@@ -458,7 +458,7 @@ function Emails() {
                   <Textarea rows={6} value={cur.body} onChange={(e) => setEdits((x) => ({ ...x, [t.id]: { ...cur, body: e.target.value } }))} />
                 </Field>
                 <div className="grid gap-1 rounded-a-md border border-a-border bg-a-raised p-4">
-                  <span className="t-micro uppercase text-a-text-3">Preview</span>
+                  <span className="t-micro text-a-text-3">Preview</span>
                   <span className="t-body-m-medium">{fill(cur.subject)}</span>
                   <p className="t-body-m whitespace-pre-line text-a-text-2">{fill(cur.body)}</p>
                 </div>
@@ -896,7 +896,7 @@ function Team() {
                 {m.invited ? (
                   <Tag tone="warning">Invited</Tag>
                 ) : m.role === "Owner" ? (
-                  <Tag tone="accent">Owner</Tag>
+                  <Tag>Owner</Tag>
                 ) : (
                   <Tag>{m.role}</Tag>
                 )}
@@ -920,7 +920,7 @@ function Team() {
       </DataCard>
       <Panel>
         <PanelHeader title="Roles" />
-        <DataCard className="bg-a-field" scrollLabel="What each role can do">
+        <DataCard className="bg-a-field" rowHeight={45} scrollLabel="What each role can do">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead>Role</TableHead>
@@ -965,7 +965,7 @@ function Team() {
                   role="radio"
                   aria-checked={role === r}
                   onClick={() => setRole(r)}
-                  className={cn("flex items-center gap-3 rounded-a-md border px-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus", role === r ? "border-a-accent-strong bg-a-raised" : "border-a-border hover:bg-a-hover")}
+                  className={cn("flex items-center gap-3 rounded-a-md border px-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus", role === r ? "border-a-border-active bg-a-raised" : "border-a-border hover:bg-a-hover")}
                 >
                   <span className={cn("grid size-4 shrink-0 place-items-center rounded-full border", role === r ? "border-a-accent-strong" : "border-a-border-strong")}>
                     {role === r && <span className="size-2 rounded-full bg-a-accent-strong" />}
@@ -1009,7 +1009,7 @@ function Plan() {
         <div className="grid gap-4 pt-2 sm:grid-cols-3">
           {[["Students", "189 / 500"], ["Storage", "42 / 100 GB"], ["Team", "4 / 5"]].map(([l, v]) => (
             <div key={l} className="grid gap-1">
-              <span className="t-micro uppercase text-a-text-3">{l}</span>
+              <span className="t-micro text-a-text-3">{l}</span>
               <span className="t-heading-xl">{v}</span>
             </div>
           ))}
