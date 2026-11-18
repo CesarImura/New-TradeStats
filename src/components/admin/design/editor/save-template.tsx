@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
-import { AdminButton, AdminModal } from "@/components/admin/ui"
+import { AdminButton, AdminModal, Callout } from "@/components/admin/ui"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -63,11 +63,11 @@ export function SaveTemplateDialog({ coach, theme, open, onOpenChange }: { coach
   }
 
   return (
-    <AdminModal
+    <AdminModal overlay="plain"
       open={open}
       onOpenChange={onOpenChange}
       title="Save as template"
-      subtitle="Prototype only. Replaces a starting template with the design you see here, unpublished changes included. Git keeps the old version."
+      subtitle="Prototype only. Replaces a starting template with the design you see here, unpublished changes included."
       footer={
         <>
           <AdminButton hierarchy="secondary" onClick={() => onOpenChange(false)}>
@@ -105,15 +105,11 @@ export function SaveTemplateDialog({ coach, theme, open, onOpenChange }: { coach
             <Label htmlFor="tpl-blurb">One line about it</Label>
             <Textarea id="tpl-blurb" rows={2} value={blurb} onChange={(e) => setBlurb(e.target.value)} />
           </div>
-          <div className="grid gap-1 rounded-a-lg bg-a-subtle p-3 t-caption text-a-text-2">
-            <span>
-              <span className="font-medium text-foreground">Saved:</span> the look (colour, light/dark, greys for both modes and how they follow the brand, fonts, corners, depth, spacing, background, menu layout), the Home
-              {arranged.length ? ` and ${arranged.length} arranged page${arranged.length === 1 ? "" : "s"} (${arranged.join(", ")})` : ""}.
-            </span>
-            <span>
-              <span className="font-medium text-foreground">Not saved:</span> {coach.name}&rsquo;s name, logo, words and menu items, and per-tier layouts.
-            </span>
-          </div>
+          <Callout>
+            <span className="font-medium text-foreground">Saved:</span> the look (colours, light or dark, fonts, corners, cards, depth, spacing, background, widget styles)
+            {arranged.length ? `, the Home and ${arranged.length} arranged page${arranged.length === 1 ? "" : "s"} (${arranged.join(", ")})` : ""}. <span className="font-medium text-foreground">Not saved:</span> {coach.name}&rsquo;s name, logo, words and
+            menu items.
+          </Callout>
         </div>
 
     </AdminModal>

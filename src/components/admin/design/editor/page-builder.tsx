@@ -29,6 +29,8 @@ import { WidgetMenu } from "./widget-menu"
 export { useArrange, type Arrange }
 
 const DEVICE_WIDTH: Record<Device, number> = { desktop: 1180, tablet: 820, phone: 390 }
+/** A tablet or phone is a screen of its own size (Figma Canvas 02 and 03): the page scrolls inside it instead of showing at its full length. */
+const DEVICE_HEIGHT: Partial<Record<Device, number>> = { tablet: 844, phone: 844 }
 const PAD = { desktop: 32, tablet: 24, phone: 16 }
 
 export type Device = "desktop" | "tablet" | "phone"
@@ -514,7 +516,8 @@ export function ArrangeCanvas({
   const [zoom, setZoom] = useState<number | "fit">("fit")
   // Fit shows the whole page above the zoom bar (Figma: 64 above, 64 below): by width, and by height down to 40 %, below which a long page scrolls instead.
   const fitWidth = areaWidth ? Math.min(1, (areaWidth - 96) / logicalWidth) : 1
-  const fitHeight = areaHeight && canvasHeight ? (areaHeight - 128) / canvasHeight : 1
+  // A device screen sits clear of the notice above it and the zoom bar below (Figma: 93 % in a 1080 px window).
+  const fitHeight = areaHeight && canvasHeight ? (areaHeight - (shellOn && DEVICE_HEIGHT[device] ? 224 : 128)) / canvasHeight : 1
   const fit = Math.min(fitWidth, Math.max(fitHeight, 0.4))
   const scale = hold ?? (zoom === "fit" ? fit : zoom)
   useEffect(() => {
@@ -780,7 +783,7 @@ export function ArrangeCanvas({
               }}
               className={cn(canvasClass, "origin-top-left overflow-hidden bg-background font-sans text-foreground", spaceDown && "pointer-events-none")}
               // The same corners as the preview frame (12px on screen, 28px on a tablet or phone), whatever the zoom.
-              style={{ width: logicalWidth, transform: `scale(${scale})`, transition: easeScale ? "transform 180ms var(--ease-out)" : undefined, padding: shellOn ? 0 : PAD[device], borderRadius: (device === "desktop" ? 12 : 28) / (scale || 1), "--ui-zoom": scale ? Math.min(2.5, 1 / scale) : 1 } as React.CSSProperties}
+              style={{ width: logicalWidth, height: shellOn ? DEVICE_HEIGHT[device] : undefined, overflowY: shellOn && DEVICE_HEIGHT[device] ? "auto" : undefined, transform: `scale(${scale})`, transition: easeScale ? "transform 180ms var(--ease-out)" : undefined, padding: shellOn ? 0 : PAD[device], borderRadius: (device === "desktop" ? 12 : 28) / (scale || 1), "--ui-zoom": scale ? Math.min(2.5, 1 / scale) : 1 } as React.CSSProperties}
             >
               {shellOn ? (
                 <ShellEditorContext.Provider value={shellCtx}>

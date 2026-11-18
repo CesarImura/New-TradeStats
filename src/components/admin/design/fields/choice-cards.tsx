@@ -63,8 +63,8 @@ export function SelectionCard({ checked, onSelect, title, description, img, medi
       )}
       <span className="flex items-center gap-2">
         <span className="min-w-0 flex-1 truncate t-body-m-medium text-a-text">{title}</span>
-        <span aria-hidden className={cn("grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-150", checked ? "border-a-border-active" : "border-a-border-strong")}>
-          <span className={cn("size-2 rounded-full bg-a-accent transition-transform duration-200 ease-out motion-reduce:transition-none", checked ? "scale-100" : "scale-0")} />
+        <span aria-hidden className={cn("grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-150", checked ? "border-[var(--admin-color-control-on)]" : "border-a-border-strong")}>
+          <span className={cn("size-2 rounded-full bg-[var(--admin-color-control-on)] transition-transform duration-200 ease-out motion-reduce:transition-none", checked ? "scale-100" : "scale-0")} />
         </span>
       </span>
       {description && <span className="t-body-m text-balance text-a-text-2">{description}</span>}

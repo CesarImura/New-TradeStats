@@ -147,6 +147,7 @@ function ImportSiteField() {
     }, 700)
   }
   return (
+    <More label="Import from your website">
     <div data-field="import-site" className="grid gap-3">
       <Field id="import-site" label="Website" hint="Colours and fonts">
         <div className="flex items-center gap-2">
@@ -178,6 +179,7 @@ function ImportSiteField() {
       )}
       {state === "idle" && !host && <span className="t-caption text-a-text-3">Your site&apos;s colours and fonts are a good start. You review them before they apply.</span>}
     </div>
+    </More>
   )
 }
 
@@ -311,7 +313,6 @@ function FontsField() {
   const { theme, change } = useDesign()
   return (
     <div data-field="fonts" className="grid gap-1.5">
-      <span className="t-caption-medium text-a-text-2">Font pair</span>
       {/* Figma Style · 09: each pair as a card that shows its heading font, the pair's name and the fonts in it. */}
       <div role="radiogroup" aria-label="Font pair" className="grid grid-cols-2 gap-2">
         {FONT_PAIRS.map((p) => {
@@ -323,7 +324,7 @@ function FontsField() {
               checked={on}
               onSelect={() => change({ theme: { fonts: { heading: p.heading, body: p.body, label: p.label } } }, "fonts")}
               title={p.name}
-              description={FONT_LIBRARY[p.heading].label === FONT_LIBRARY[p.body].label ? FONT_LIBRARY[p.heading].label : `${FONT_LIBRARY[p.heading].label} · ${FONT_LIBRARY[p.body].label}`}
+              description={p.text}
               media={
                 <span aria-hidden className="grid h-[69px] place-items-center rounded-a-md bg-a-sunk text-[28px] leading-8 text-a-text" style={{ fontFamily: FONT_LIBRARY[p.heading].css }}>
                   Aa
@@ -333,24 +334,6 @@ function FontsField() {
           )
         })}
       </div>
-      <More label="Choose fonts one by one">
-        {(["heading", "body", "label"] as const).map((role) => (
-          <Field key={role} label={role === "heading" ? "Headings" : role === "body" ? "Text" : "Small labels"}>
-            <SelectOptions
-              value={theme.fonts[role]}
-              onChange={(e) => change({ theme: { fonts: { [role]: e.target.value as FontId } } }, `font-${role}`)}
-              className="h-7 rounded-[4px] border bg-background px-2 t-caption"
-            >
-              {Object.entries(FONT_LIBRARY).map(([id, f]) => (
-                <option key={id} value={id}>
-                  {f.label}
-                </option>
-              ))}
-            </SelectOptions>
-          </Field>
-        ))}
-        <p className="t-caption text-muted-foreground">Uploading your own font file comes later.</p>
-      </More>
     </div>
   )
 }

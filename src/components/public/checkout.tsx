@@ -53,7 +53,7 @@ export function Checkout() {
   // Wizard-made communities arrive after the first render (the provider shows a stand-in until then), so fall back to the first paid tier.
   const tier = tiers.find((t) => t.id === tierId) ?? tiers.find((t) => t.id === firstPaid)
   const [yearly, setYearly] = useState(params.get("cycle") === "yearly")
-  const open = groups.filter((g) => tier && g.tiers.includes(tier.id) && !isFull(g) && g.end >= "2026-10-12")
+  const open = groups.filter((g) => tier && g.tiers.includes(tier.id) && !isFull(g) && g.end >= "2025-11-12")
   const [groupId, setGroupId] = useState(params.get("group") ?? "")
   const group = open.find((g) => g.id === groupId)
   const [email, setEmail] = useState("")
@@ -76,7 +76,7 @@ export function Checkout() {
   const money = (n: number) => `€${n.toLocaleString("en", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`
   const cadence = isYearly ? "/ year" : per(tier.cadence)
   const trialEnd = (() => {
-    const d = new Date("2026-10-12T12:00:00Z")
+    const d = new Date("2025-11-12T12:00:00Z")
     d.setUTCDate(d.getUTCDate() + trial)
     return fmtDate(d.toISOString().slice(0, 10), false)
   })()
@@ -136,7 +136,7 @@ export function Checkout() {
                   >
                     {/* Name first, details after it: told apart by weight, both in a colour that reads at 4.5:1. */}
                     <span className="font-medium">{g.name}</span>
-                    {g.id && <span> · {g.start <= "2026-10-12" ? "running" : `starts ${fmtDate(g.start, false)}`}, {g.seats - g.members} left</span>}
+                    {g.id && <span> · {g.start <= "2025-11-12" ? "running" : `starts ${fmtDate(g.start, false)}`}, {g.seats - g.members} left</span>}
                   </button>
                 ))}
               </div>
