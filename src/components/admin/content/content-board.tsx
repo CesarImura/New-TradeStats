@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   Archive,
+  ArrowRight,
   ArchiveRestore,
   BookOpen,
   Copy,
@@ -45,9 +46,9 @@ type Filter = "all" | "attention" | Status
 const needsAttention = (c: Course) => c.status === "published" && allLessons(c).some((l) => l.status === "draft")
 
 /** What the card says is out of the ordinary, if anything. */
-const attentionOf = (c: Course, prelaunch = false): { tone: "warning" | "muted"; text: string; action: string } | null => {
+const attentionOf = (c: Course, prelaunch = false): { tone: "warning" | "muted" | "locked"; text: string; action: string } | null => {
   if (prelaunch && readyForLaunch(c)) return { tone: "muted", text: "Goes public when you go live", action: "Open" }
-  if (c.status === "draft") return { tone: "muted", text: "No one can see this course", action: "Pick tiers" }
+  if (c.status === "draft") return { tone: "locked", text: "No one can see this course", action: "Pick tiers" }
   const waiting = allLessons(c).filter((l) => l.status === "draft" || !l.video).length
   return c.status === "published" && waiting ? { tone: "warning", text: `${waiting} ${waiting === 1 ? "lesson isn't" : "lessons aren't"} ready`, action: "Review" } : null
 }
@@ -290,7 +291,7 @@ export function ContentBoard() {
                   <Link href={`${base}/content/${c.id}`} aria-label={c.title} className="absolute inset-0 z-10 outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus" />
                   <CourseCover course={c} className="size-full">
                     <span className="absolute top-3 left-3 flex h-7 items-center"><StatusTag course={c} prelaunch={prelaunch} cover /></span>
-                    {att && <MediaCardStatus tone={att.tone === "warning" ? "warning" : "muted"} text={att.text} trailing={att.action} />}
+                    {att && <MediaCardStatus tone={att.tone} text={att.text} trailing={att.tone === "locked" ? <span className="inline-flex items-center gap-1.5">{att.action} <ArrowRight className="size-3" /></span> : att.action} />}
                   </CourseCover>
                   <span onClick={(e) => e.stopPropagation()} className="absolute top-3 right-3 z-20">{menu(c, "ghost")}</span>
                 </>
