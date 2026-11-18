@@ -97,6 +97,7 @@ import {
   Screen as CScreen,
   Search as CSearch,
   Security as CSecurity,
+  Rocket as CRocket,
   Send as CSend,
   Settings as CSettings,
   Share as CShare,
@@ -297,6 +298,7 @@ export const RefreshCw = i(CRenew, "RefreshCw")
 export const RotateCcw = i(CReset, "RotateCcw")
 export const Search = i(CSearch, "Search")
 export const SearchIcon = Search
+export const Rocket = i(CRocket, "Rocket")
 export const Send = i(CSend, "Send")
 export const Settings = i(CSettings, "Settings")
 export const Share = i(CShare, "Share")
