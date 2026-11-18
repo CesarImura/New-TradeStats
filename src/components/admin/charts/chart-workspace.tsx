@@ -134,7 +134,7 @@ export function ChartWorkspace({ charts, onPin, onArchive, onNew }: { charts: Co
             <button key={w.k} onClick={() => setSym(w)} aria-pressed={w.k === sym.k} className={cn("grid w-full grid-cols-[1fr_auto] gap-x-3 px-4 py-1.5 text-left outline-none transition-colors duration-300 ease-out hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-a-border-focus", w.k === sym.k && "bg-a-selected")}>
               <span className="t-body-m text-a-text">{w.k}</span>
               <span className="t-body-m text-a-text tabular-nums">{fmt(w.price, w.dec)}</span>
-              <span className="t-caption text-a-text-3">{w.name}</span>
+              <span className={cn("t-caption", w.k === sym.k ? "text-a-text-2" : "text-a-text-3")}>{w.name}</span>
               <span className={cn("t-caption tabular-nums", w.chg >= 0 ? "text-a-success" : "text-a-danger")}>{w.chg >= 0 ? "+" : ""}{w.chg.toFixed(2)}%</span>
             </button>
           ))}

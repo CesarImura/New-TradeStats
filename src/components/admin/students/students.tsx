@@ -7,6 +7,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
+import { NOW } from "@/lib/data/schedule"
 import { EmptyState, PageHeader } from "../kit"
 import { AdminButton, AdminFilter, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, CellPerson, CellProgress, CellStack, StatPanel, Tag } from "../ui"
 import { SetupTip } from "../setup-checklist"
@@ -64,7 +65,9 @@ export function StudentsPage() {
     invited: students.filter((s) => s.joined.startsWith("invited")).length,
     paused: paused.length,
   }
-  const joinedThisMonth = students.filter((s) => /Nov 2025|Oct 2025/.test(s.joined)).length
+  // "This month" is the prototype's month and the one before it (the sample joins are dated "5 Nov 2025").
+  const recent = [0, 1].map((back) => new Date(NOW.getFullYear(), NOW.getMonth() - back, 1).toLocaleDateString("en-GB", { month: "short", year: "numeric" }))
+  const joinedThisMonth = students.filter((s) => recent.some((m) => s.joined.endsWith(m))).length
   const onPage = shown.filter((r) => picked.includes(r.id)).length
   const selected = students.filter((s) => picked.includes(s.id))
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))

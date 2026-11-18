@@ -8,7 +8,7 @@ const mono = "t-caption"
 /** Prototype launcher, in our own look (Traderhub logo, components/brand/logo.tsx). */
 export default function Launcher() {
   return (
-    <div className="ts-ui min-h-svh bg-a-page text-a-text t-body-m">
+    <main className="ts-ui min-h-svh bg-a-page text-a-text t-body-m">
       <div className="mx-auto flex max-w-[1180px] flex-col gap-6 px-4 py-8 md:px-6 md:py-10">
         <header className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -31,6 +31,6 @@ export default function Launcher() {
 
         <QuickLinks />
       </div>
-    </div>
+    </main>
   )
 }

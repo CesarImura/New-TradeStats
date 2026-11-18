@@ -174,7 +174,7 @@ function UploadTray({ uploads, open, setOpen, onClear, course, onRetry }: { uplo
       <div className="flex items-center gap-2 px-3.5 py-3">
         <div className="grid min-w-0 flex-1 gap-0.5">
           <span className="t-body-m text-a-text">{ready} of {uploads.length} ready</span>
-          <span className="t-caption text-a-text-2">{ready === uploads.length ? "All done" : left > 0 ? `about ${Math.max(1, Math.round(left))} min left` : "Needs your attention"}</span>
+          <span className="t-caption text-a-text-2">{ready === uploads.length ? "All done" : left > 0 ? `about ${Math.max(1, Math.round(left))} min left` : uploads.some((u) => u.phase === "failed") ? "Needs your attention" : "Almost done"}</span>
         </div>
         {ready > 0 && ready === uploads.length && <AdminButton hierarchy="ghost" size="md" onClick={onClear}>Clear</AdminButton>}
         <AdminButton hierarchy="ghost" size="sm" iconOnly aria-label={open ? "Minimise uploads" : "Show uploads"} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <Minus /> : <Plus />}</AdminButton>
@@ -190,7 +190,13 @@ function UploadTray({ uploads, open, setOpen, onClear, course, onRetry }: { uplo
                   <span className={cn("t-micro shrink-0", u.phase === "failed" ? "text-a-danger" : u.phase === "ready" ? "text-a-success" : "text-a-text-2")}>{u.phase === "uploading" ? `Uploading ${u.pct}%` : u.phase === "failed" ? `Failed at ${u.pct}%` : PHASE_LABEL[u.phase]}</span>
                   {u.phase === "failed" && u.file && <AdminButton hierarchy="ghost" size="md" onClick={() => onRetry(u)}>Retry</AdminButton>}
                 </div>
-                {u.phase !== "ready" && <AdminProgress label={u.title} tone={u.phase === "failed" ? "danger" : "accent"} value={u.phase === "uploading" || u.phase === "failed" ? u.pct : 100} />}
+                {u.phase !== "ready" && <AdminProgress
+                    label={u.title}
+                    tone={u.phase === "failed" ? "danger" : "default"}
+                    // Figma Content 06: amber while it goes up, olive while it is processed, red when it failed.
+                    className={u.phase === "uploading" ? "[&>span]:!bg-[var(--admin-component-progress-item-bar-fill)]" : u.phase === "failed" ? undefined : "[&>span]:!bg-[var(--admin-component-progress-item-bar-mid)]"}
+                    value={u.phase === "uploading" || u.phase === "failed" ? u.pct : 100}
+                  />}
               </li>
             ))}
           </ul>
