@@ -75,21 +75,21 @@ export function Payouts() {
 
     return (
       <div className="flex flex-col gap-4">
-        <Panel className="gap-3">
-          <header className="grid gap-0.5"><h2 className="t-heading-s text-a-text">Connect payouts</h2><p className="t-caption text-a-text-2">Needed before your first sale. Takes about 5 minutes.</p></header>
-          <ol className="flex flex-col gap-2.5">
+        <Panel className="gap-4">
+          <header className="grid gap-1"><h2 className="t-heading-m text-a-text">Connect payouts</h2><p className="t-body-m text-a-text-2">Needed before your first sale. Takes about 5 minutes.</p></header>
+          <ol className="flex flex-col gap-4">
             {STEPS.map((s, i) => {
               const done = i < state.step
               const current = i === state.step
               return (
-                <li key={s.title} aria-current={current ? "step" : undefined} className={cn("flex items-center gap-3 rounded-a-md border px-3.5 py-3", current ? "border-a-border-strong" : "border-a-border")}>
+                <li key={s.title} aria-current={current ? "step" : undefined} className={cn("flex items-center gap-3 rounded-a-md border px-4 py-3.5", current ? "border-a-border-strong" : "border-a-border")}>
                   <StepIndicator step={i + 1} state={done ? "done" : current ? "current" : "upcoming"} />
                   <div className="grid min-w-0 flex-1 gap-0.5">
-                    <span className={cn("t-body-m", done || current ? "text-a-text" : "text-a-text-2")}>{s.title}</span>
+                    <span className={cn("t-body-l", done || current ? "text-a-text" : "text-a-text-2")}>{s.title}</span>
                     <span className="t-caption text-a-text-2">{sub(i)}</span>
                   </div>
                   {current && (
-                    <AdminButton size="lg" data-tour={i === 0 ? "payouts-start" : "payouts-next"} onClick={() => setOpen(i)}>
+                    <AdminButton size="md" data-tour={i === 0 ? "payouts-start" : "payouts-next"} onClick={() => setOpen(i)}>
                       {i === 0 ? "Start" : "Continue"}
                     </AdminButton>
                   )}
