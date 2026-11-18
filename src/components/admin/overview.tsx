@@ -4,17 +4,16 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { Bar, ComposedChart, Line, XAxis, YAxis } from "recharts"
-import { ArrowRight, CalendarDays, RadioButtonChecked, Video } from "@/components/icons"
+import { ArrowRight, CalendarDays, Video } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { useNewPlatform } from "./use-new-platform"
 import { AdminAvatar, AdminButton, AdminFilter, AdminPageHeader, AdminTabs, EmptyState, Metric as MetricCard, Panel, Tag } from "@/components/admin/ui"
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart"
 import { COURSES, EVENTS } from "@/lib/data/sample"
-import { FirstWeekOverview, useFirstWeek } from "@/components/admin/overview-first-week"
 import { cn } from "@/lib/utils"
 
 /** "Today" in the prototype's sample data. */
-const TODAY = new Date(2026, 9, 12)
+const TODAY = new Date(2025, 9, 12)
 const RANGES = { "7": "Last 7 days", "30": "Last 30 days", "90": "Last 90 days" } as const
 type Range = keyof typeof RANGES
 
@@ -98,12 +97,15 @@ const BUCKETS = 14
 function bucketed(m: Metric, days: number, share: number) {
   const raw = series(m, days, share)
   const n = Math.min(BUCKETS, days)
-  const out = Array.from({ length: n }, () => ({ value: 0, label: "" }))
+  const out = Array.from({ length: n }, () => ({ value: 0, label: "", days: 0 }))
   raw.forEach((d, i) => {
     const b = out[Math.floor((i * n) / days)]
     b.value = m.sum ? b.value + d.value : d.value
     b.label = d.label
+    b.days += 1
   })
+  // Buckets of 2 and 3 days would zigzag the bars: a sum is scaled to an even bucket.
+  if (m.sum) out.forEach((b) => (b.value = (b.value / b.days) * (days / n)))
   return { buckets: out, ticks: [0, 0.25, 0.5, 0.75, 1].map((t) => raw[Math.round(t * (days - 1))].date) }
 }
 
@@ -142,9 +144,9 @@ function NextLiveBanner({ base }: { base: string }) {
     { value: "38", label: "Last live" },
   ]
   return (
-    <section aria-label="Next live" className="relative isolate flex flex-col gap-6 overflow-hidden rounded-a-lg px-5 py-5 text-a-on-highlight shadow-[0_0_28px_rgb(255_106_31/0.2)] md:min-h-48 md:flex-row md:items-end md:justify-between md:px-7" style={{ backgroundImage: BANNER_BG }}>
+    <section aria-label="Next live" className="relative isolate flex flex-col gap-6 overflow-hidden rounded-a-lg px-5 py-5 text-a-on-highlight shadow-[0_0_28px_rgb(255_106_31/0.2)] md:min-h-[172px] md:flex-row md:items-stretch md:justify-between md:px-7" style={{ backgroundImage: BANNER_BG }}>
       <span aria-hidden className="pointer-events-none absolute inset-0 -z-10 opacity-[0.16] mix-blend-multiply" style={{ backgroundImage: BANNER_GRAIN }} />
-      <div className="flex min-w-0 flex-col justify-between gap-6 self-stretch">
+      <div className="flex min-w-0 flex-col justify-between gap-3.5 self-stretch">
         <div className="flex flex-col gap-2.5">
           <span className="t-mono-data flex items-center gap-2 uppercase">
             <span aria-hidden className="size-[5px] rounded-full bg-a-on-highlight" />
@@ -152,16 +154,16 @@ function NextLiveBanner({ base }: { base: string }) {
           </span>
           <h2 className="t-title md:t-display [overflow-wrap:anywhere]">NY open, live trading</h2>
         </div>
-        <dl className="flex flex-wrap gap-x-8 gap-y-3">
+        <dl className="flex flex-wrap gap-y-3">
           {stats.map((st) => (
-            <div key={st.label} className="flex flex-col gap-0.5">
-              <dd className="t-data-m tabular-nums">{st.value}</dd>
+            <div key={st.label} className="flex flex-col gap-0.5 border-l border-a-on-highlight/20 px-[26px] first:border-l-0 first:pl-0 last:pr-0">
+              <dd className="t-heading-xl !leading-6 tabular-nums">{st.value}</dd>
               <dt className="t-body-m">{st.label}</dt>
             </div>
           ))}
         </dl>
       </div>
-      <div className="flex w-full shrink-0 flex-col gap-2 rounded-a-10 bg-a-page px-4 py-3.5 text-a-text md:w-[250px]">
+      <div className="flex w-full shrink-0 flex-col gap-2 rounded-a-10 bg-a-page px-4 py-3.5 text-a-text md:w-[255px]">
         <span className="t-mono-data uppercase text-a-text-2">Studio</span>
         <span className="t-body-m text-a-text-nav">Camera, screen and chat are ready. {expected} students said they will join.</span>
         <div className="flex gap-2">
@@ -220,13 +222,8 @@ function ChartBar({ x = 0, y = 0, width = 0, height = 0 }: BarShapeProps) {
   )
 }
 
-/** ADM-01. The everyday Overview, or the first-week one for a community with no students yet. */
+/** ADM-01. One Overview for every community: a new platform shows the same screen with zeros and empty lists (Figma Overview 01b). */
 export function AdminOverview() {
-  const firstWeek = useFirstWeek()
-  return firstWeek ? <FirstWeekOverview demo={firstWeek === "demo"} /> : <RunningOverview />
-}
-
-function RunningOverview() {
   const { coach, base } = useCoach()
   // A platform made in setup has no numbers yet: the same screen, with zeros and empty lists instead of the sample.
   const fresh = useNewPlatform()
@@ -270,17 +267,7 @@ function RunningOverview() {
   return (
     <div className="flex w-full flex-col gap-4">
       {fresh ? (
-        <EmptyState
-          compact
-          icon={RadioButtonChecked}
-          title="No livestream scheduled"
-          description="Students see your next live session at the top of their home page."
-          actions={
-            <AdminButton hierarchy="secondary" size="md" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
-              Schedule a livestream
-            </AdminButton>
-          }
-        />
+        <EmptyState compact title="No livestream scheduled" className="py-6" />
       ) : (
         <NextLiveBanner base={base} />
       )}
@@ -310,8 +297,8 @@ function RunningOverview() {
         }
       />
 
-      {/* Figma 524:7492 keeps 24px of air under the metrics before the chart. */}
-      <Panel className="mb-6 gap-0 p-0">
+      {/* Figma 1485:65181: the metrics sit 16px above the chart, same gap as everywhere else. */}
+      <Panel className="gap-0 p-0">
         <div className="grid grid-cols-2 divide-a-border lg:grid-cols-4 lg:divide-x">
           {headline.map((h, i) => (
             <Link key={h.label} href={`${base}/${h.href}`} className={cn("outline-none transition-colors duration-300 hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:ring-inset", i < 2 && "max-lg:border-b max-lg:border-a-border", i % 2 === 0 && "max-lg:border-r max-lg:border-a-border", i === 0 && "rounded-tl-a-lg", i === 1 && "max-lg:rounded-tr-a-lg", i === 2 && "max-lg:rounded-bl-a-lg lg:rounded-none", i === 3 && "rounded-br-a-lg max-lg:rounded-br-a-lg lg:rounded-r-a-lg")}>
@@ -394,7 +381,7 @@ function RunningOverview() {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="t-body-m truncate text-a-text">{c.title}</span>
-                        <Tag tone={risky ? "danger" : "success"} dot>{risky ? "At risk" : "Healthy"}</Tag>
+                        <Tag tone={risky ? "danger" : "success"}>{risky ? "At risk" : "Healthy"}</Tag>
                       </div>
                       <dl className="flex items-end">
                         {[
@@ -465,7 +452,7 @@ function RunningOverview() {
 }
 
 function EmptyLine({ children }: { children: React.ReactNode }) {
-  return <EmptyState compact title={children} className="py-8" />
+  return <EmptyState compact title={children} className="py-6" />
 }
 
 type TipProps = { active?: boolean; payload?: { payload?: { label: string; bar: number; line: number } }[] }
