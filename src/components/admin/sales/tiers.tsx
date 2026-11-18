@@ -212,8 +212,8 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
       }>
       <AdminUnderlineTabs label="Tier sections" value={tab} onChange={setTab} tabs={[{ id: "plan", label: "Plan" }, { id: "page", label: "Sales page" }]} />
       {x && tier && tab === "plan" && (
-        <div className="flex flex-col gap-5">
-          <div data-tour="tier-plan" data-filled={x.name?.trim() && (free || amount(x.price ?? "")) ? true : undefined} data-free={free || undefined} className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4">
+          <div data-tour="tier-plan" data-filled={x.name?.trim() && (free || amount(x.price ?? "")) ? true : undefined} data-free={free || undefined} className="flex flex-col gap-4">
           <label className="grid gap-1.5">
             <span className="t-caption text-a-text">Name</span>
             <input value={x.name ?? ""} onChange={(e) => set({ name: e.target.value })} maxLength={60} placeholder={fresh ? "e.g. Inner Circle" : undefined} className={cn(adminControl, "h-11")} />
@@ -264,8 +264,8 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
               </div>
             )}
           </div>
-          {!fresh && <span className="h-px bg-a-border" aria-hidden />}
-          <div className={cn("flex flex-col gap-3.5", fresh && "hidden")}>
+          {!fresh && <span className="my-1 h-px bg-a-border" aria-hidden />}
+          <div className={cn("flex flex-col gap-4", fresh && "hidden")}>
             {([
               ["Mark as most popular", "Highlighted on the sales page", !!x.featured, (v: boolean) => set({ featured: v })],
               ["Hidden · link only", "Not on the sales page; only people with the link can join", x.hidden, (v: boolean) => set({ hidden: v })],
