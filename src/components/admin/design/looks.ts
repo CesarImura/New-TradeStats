@@ -61,18 +61,3 @@ export const LOOKS: Look[] = [
     set: { widgetStyle: "soft", radius: 14, buttonShape: "rounded", shadow: "soft", borders: false, density: "comfortable", labelStyle: "plain", headingWeight: 600, fonts: { heading: "schibsted", body: "schibsted", label: "schibsted" } },
   },
 ]
-
-/** The look the theme currently matches exactly, if any (after fine-tuning it's "Custom"). */
-export function currentLook(t: CoachTheme): Look | undefined {
-  return LOOKS.find(
-    (l) =>
-      l.template === t.template &&
-      l.set.radius === t.radius &&
-      l.set.buttonShape === t.buttonShape &&
-      l.set.shadow === t.shadow &&
-      l.set.density === t.density &&
-      l.set.fonts.heading === t.fonts.heading &&
-      l.set.fonts.body === t.fonts.body,
-  )
-}
-

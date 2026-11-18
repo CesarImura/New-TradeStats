@@ -163,8 +163,7 @@ export function AdminMonth({ items, cursor, onSelect, onDay }: { items: Item[]; 
                   {list.slice(0, 3).map((x) => (
                     <button key={x.key} type="button" onClick={(e) => (e.stopPropagation(), onSelect(x, e.currentTarget))}
                       className={cn("flex w-full min-w-0 items-center gap-1.5 rounded-a-xs border-l-2 px-1.5 py-0.5 text-left outline-none hover:brightness-125 focus-visible:ring-2 focus-visible:ring-a-border-focus", TONE[x.kind])}>
-                      <span className="shrink-0 t-micro text-a-text-2 tabular-nums">{hhmm(x.start)}</span>
-                      <span className="truncate t-micro text-a-text">{x.title}</span>
+                      <span className="truncate t-micro text-a-text">{x.title} <span className="text-a-text-2 tabular-nums">· {hhmm(x.start)}</span></span>
                       <span className="sr-only">{more(x)}</span>
                     </button>
                   ))}

@@ -18,6 +18,11 @@ import { FocusCard } from "./public-shell"
 
 // ---------- shared bits
 
+/** The line under the code boxes: the prototype takes any six digits; a spinner while the code is being checked. */
+function CodeHint({ busy }: { busy?: boolean }) {
+  return <span className="text-center text-xs text-muted-foreground">{busy ? <Loader2 className="mx-auto size-4 animate-spin" /> : "Prototype: any six digits work."}</span>
+}
+
 /** Six boxes for the e-mail code. Prototype: any six digits work. */
 function CodeInput({ onDone }: { onDone: () => void }) {
   const [digits, setDigits] = useState(["", "", "", "", "", ""])
@@ -115,7 +120,7 @@ export function ConfirmAccount() {
       />
       <div className="grid gap-4">
         <CodeInput onDone={done} />
-        <span className="text-center text-xs text-muted-foreground">{busy ? <Loader2 className="mx-auto size-4 animate-spin" /> : "Prototype: any six digits work."}</span>
+        <CodeHint busy={busy} />
         <Or />
         <DiscordButton onClick={done} />
         <p className="text-center text-xs text-muted-foreground">No code? Check your spam folder or wait a minute, then send it again.</p>
@@ -265,7 +270,7 @@ export function Login() {
       ) : (
         <div className="grid gap-4">
           <CodeInput onDone={enter} />
-          <span className="text-center text-xs text-muted-foreground">{busy ? <Loader2 className="mx-auto size-4 animate-spin" /> : "Prototype: any six digits work."}</span>
+          <CodeHint busy={busy} />
           <Button variant="ghost" onClick={() => setStep("email")}>
             Use another e-mail
           </Button>
@@ -336,7 +341,7 @@ export function JoinFree({ invite }: { invite?: boolean }) {
       ) : (
         <div className="grid gap-4">
           <CodeInput onDone={go} />
-          <span className="text-center text-xs text-muted-foreground">Prototype: any six digits work.</span>
+          <CodeHint />
         </div>
       )}
     </FocusCard>

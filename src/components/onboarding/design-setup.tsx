@@ -123,6 +123,7 @@ function Flow({ community, step }: { community: CustomCommunity; step: Step }) {
 
   return (
     <SignupFrame
+      width={step === "brand" ? "sm:max-w-[520px]" : step === "layout" ? "sm:max-w-[560px]" : "sm:max-w-[600px]"}
       action={
         <AdminButton hierarchy="ghost" size="xl" nativeButton={false} render={<Link href={exit} />}>
           Save and exit
@@ -436,7 +437,7 @@ function LayoutStep({ theme, change, live, onBack, onNext }: { theme: CoachTheme
 /** Figma: the canvas is 1103 px wide; the product screen sits at (96, 150) and is 917 px wide on the last step. */
 const FIG = { w: 1103, left: 96, top: 150, screen: 917, screenH: 959 }
 const BASE = 1440 // the platform is drawn at a desktop width, then scaled
-const ZOOM = [2, 1.6, 1] // Brand, Look, Layout
+const ZOOM = [2, 1.43, 1] // Brand, Look, Layout
 /** The camera's move between steps. Any inline transition on the screen must keep it, or the zoom stops animating. */
 const CAM = "transform 820ms cubic-bezier(0.65,0,0.35,1)"
 

@@ -104,7 +104,7 @@ export function Payouts() {
           </ol>
         </Panel>
         <Callout tone="warning" icon={<AlertTriangle className="size-4" />}>
-          {firstTier ? `Students can’t buy ${firstTier} until payouts are connected.` : "Students can join free tiers now. Paid tiers open after payouts are connected."}
+          {firstTier ? `Students can't buy ${firstTier} until payouts are connected.` : "Students can join free tiers now. Paid tiers open after payouts are connected."}
         </Callout>
         <PayoutDrawers step={open} state={state} busy={busy} onClose={() => !busy && setOpen(null)} onSave={(i, patch) => (i === 2 ? finish(patch) : advance(patch))} />
       </div>

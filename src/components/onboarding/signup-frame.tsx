@@ -79,7 +79,11 @@ function useDark() {
   }, [])
 }
 
-/** The left column: logo bar, then the 600 px card centred in what is left. */
+/** Card box width by screen (Figma 01 to 05): 440 for Log in, Create account and Verify, 480 for Name, 560 for About (content 360, 400 and 480 plus 40 px padding each side). */
+const CARD_W: Record<string, string> = { "/signup/about": "sm:max-w-[560px]", "/signup/name": "sm:max-w-[480px]" }
+const CARD_W_DEFAULT = "sm:max-w-[440px]"
+
+/** The left column: logo bar, then the card centred in what is left. */
 function Column({ action, children }: { action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col lg:max-w-[max(742px,38.65vw)]">
@@ -109,7 +113,7 @@ function Hero() {
  * and only shows from 1024 px; below that the form takes the whole width. Under the sign-up layout only the card is
  * drawn here (the shell keeps the rest still between pages).
  */
-export function SignupFrame({ children, action, aside }: { children: React.ReactNode; /** On the right of the logo bar (Design: Save and exit). */ action?: React.ReactNode; /** Replaces the illustration (Design: the live canvas, full height from 1280 px). */ aside?: React.ReactNode }) {
+export function SignupFrame({ children, action, aside, width = "sm:max-w-[600px]" }: { children: React.ReactNode; /** Card box width from sm up (Design: 520 Brand, 600 Look, 560 Layout). */ width?: string; /** On the right of the logo bar (Design: Save and exit). */ action?: React.ReactNode; /** Replaces the illustration (Design: the live canvas, full height from 1280 px). */ aside?: React.ReactNode }) {
   const shell = useContext(InShell)
   useDark()
   if (shell) return <>{children}</>
@@ -117,7 +121,7 @@ export function SignupFrame({ children, action, aside }: { children: React.React
     <div className="ts-ui ts-onb flex min-h-svh bg-a-page text-a-text">
       <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS + ONB_BASE_CSS }} />
       <Column action={action}>
-        <div className="flex w-full max-w-[600px] flex-col gap-5 py-6 sm:p-10">{children}</div>
+        <div className={cn("flex w-full flex-col gap-5 py-6 sm:p-10", width)}>{children}</div>
       </Column>
       {aside ? <aside className="sticky top-0 hidden h-svh min-w-0 flex-1 p-8 xl:flex">{aside}</aside> : <Hero />}
     </div>
@@ -160,7 +164,7 @@ export function SignupShell({ children }: { children: React.ReactNode }) {
       <div className="ts-ui ts-onb flex min-h-svh bg-a-page text-a-text">
         <style dangerouslySetInnerHTML={{ __html: TS_SYSTEM_CSS + ONB_BASE_CSS }} />
         <Column>
-          <div ref={page} key={pathname} className="onb-page flex w-full max-w-[600px] flex-col gap-5 py-6 sm:p-10" style={{ "--dx": `${dir * 12}px` } as React.CSSProperties}>
+          <div ref={page} key={pathname} className={cn("onb-page flex w-full flex-col gap-5 py-6 sm:p-10", CARD_W[pathname] ?? CARD_W_DEFAULT)} style={{ "--dx": `${dir * 12}px` } as React.CSSProperties}>
             {children}
           </div>
         </Column>

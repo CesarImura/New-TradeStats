@@ -2,12 +2,12 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import { CalendarDays, ChevronRight, MessageCircle, Wrench } from "@/components/icons"
+import { CalendarDays, ChevronRight, FileText, GraduationCap, MessageCircle, Palette, Rocket, Store, Wallet, Wrench } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { AdminPageHeader, Callout, Panel, PanelHeader, TimelineStep } from "@/components/admin/ui"
 import { cn } from "@/lib/utils"
 import { GoLiveModal, LiveModal } from "./go-live"
+import { HelpPanels, type HelpKind } from "./help-panels"
 import { useSetupSteps } from "./use-setup-steps"
 import { useTourState } from "../tour/tour"
 import { TOURS, isTourId, type TourId } from "../tour/tours"
@@ -18,11 +18,15 @@ import { useCatalog } from "@/lib/data/learning"
  * While the platform is a draft this page replaces the Overview: five steps in any order (1237:61209), then Go live. On the right,
  * the progress ("5 of 5 steps done") and a way to get help.
  */
+/** Figma Show Icon: one icon per step. */
+const STEP_ICON = { design: Palette, tier: Store, course: GraduationCap, payouts: Wallet, legal: FileText, live: Rocket } as const
+
 export function GettingStarted() {
   const router = useRouter()
   const { coach, base } = useCoach()
-  const { steps, doneCount, total, current, community, skip, skipped, allPutOff } = useSetupSteps()
+  const { steps, doneCount, total, current, community, skipped, allPutOff } = useSetupSteps()
   const [goLive, setGoLive] = useState(false)
+  const [help, setHelp] = useState<HelpKind | null>(null)
   // A tour left half way (Skip or Do it later): its item says where, and Resume goes back there (Figma 1066:1047).
   // One tour runs at a time; any other left half way was paused where it was (Flavio, 14/11).
   const { pausedAt } = useTourState()
@@ -51,11 +55,11 @@ export function GettingStarted() {
                 first={i === 0}
                 last={i === steps.length - 1}
                 title={s.title}
+                icon={STEP_ICON[s.id]}
                 tag={!s.done && s.id !== "live" && skipped.includes(s.id) && s.id !== current ? "Skipped" : undefined}
                 description={paused && isTourId(s.id) ? `Paused at “${paused.title}”. ${savedLine(s.id)}` : s.description}
                 action={resume ? "Resume" : s.action}
                 disabledHint="Finish the five steps first"
-                onSkip={s.id === "live" || total - doneCount < 2 ? undefined : () => skip(s.id)}
                 onAction={() => (s.id === "live" ? setGoLive(true) : router.push(resume && at?.path ? `${at.path}${at.path.includes("?") ? "&" : "?"}tour=${s.id}` : s.href))}
                 onEdit={s.id === "live" ? undefined : () => router.push(s.href.replace(/[?&]tour=\w+/, ""))}
                 // Optional, once Design is done (Flavio, 14/11): a short tour of the full design editor. Not one of the five.
@@ -68,12 +72,12 @@ export function GettingStarted() {
           <Panel className="gap-3">
             <span className="t-mono-label text-a-text-3">{live ? "Live" : "Ready to go live"}</span>
             <p className="flex items-baseline gap-2">
-              <span className="t-display text-a-text tabular-nums">{doneCount}</span>
+              <span className="t-metric text-a-text tabular-nums">{doneCount}</span>
               <span className="t-body-l text-a-text-2">of {total} steps done</span>
             </p>
             <div className="flex gap-1 pb-2" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={doneCount} aria-label="Setup progress">
               {Array.from({ length: total }, (_, i) => (
-                <span key={i} className={cn("h-1.5 flex-1 rounded-full transition-colors duration-300", i < doneCount ? "bg-a-accent" : "bg-a-border")} />
+                <span key={i} className={cn("h-1.5 flex-1 rounded-full transition-colors duration-300", i < doneCount ? "bg-a-success-fill" : "bg-a-border")} />
               ))}
             </div>
             {!live && <Callout>Your progress is saved as you go.</Callout>}
@@ -81,12 +85,12 @@ export function GettingStarted() {
           <Panel>
             <PanelHeader title="Need a hand?" className="min-h-7" />
             <div className="flex flex-col gap-3">
-              {[
-                { icon: MessageCircle, label: "Chat with us" },
-                { icon: CalendarDays, label: "Book a setup call" },
-                { icon: Wrench, label: "Have us set it up" },
-              ].map(({ icon: Icon, label }) => (
-                <button key={label} type="button" onClick={() => toast(`${label}: opens our help in the real product.`)} className="group flex items-center gap-3 rounded-a-sm py-2 text-left t-body-m text-a-text outline-none transition-colors duration-150 hover:text-a-text-accent focus-visible:ring-2 focus-visible:ring-a-border-focus">
+              {([
+                { icon: MessageCircle, label: "Chat with us", kind: "chat" },
+                { icon: CalendarDays, label: "Book a setup call", kind: "call" },
+                { icon: Wrench, label: "Have us set it up", kind: "setup" },
+              ] as const).map(({ icon: Icon, label, kind }) => (
+                <button key={label} type="button" onClick={() => setHelp(kind)} className="group flex items-center gap-3 rounded-a-sm py-2 text-left t-body-m text-a-text outline-none transition-colors duration-150 hover:text-a-text-accent focus-visible:ring-2 focus-visible:ring-a-border-focus">
                   <Icon aria-hidden className="size-4 text-a-text-accent" />
                   <span className="flex-1">{label}</span>
                   <ChevronRight aria-hidden className="size-4 text-a-icon transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
@@ -96,6 +100,7 @@ export function GettingStarted() {
           </Panel>
         </div>
       </div>
+      <HelpPanels kind={help} onClose={() => setHelp(null)} />
       <GoLiveModal open={goLive} onOpenChange={setGoLive} />
       <LiveModal />
     </div>
