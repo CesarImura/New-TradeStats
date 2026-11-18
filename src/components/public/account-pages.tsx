@@ -308,11 +308,11 @@ export function JoinFree({ invite }: { invite?: boolean }) {
         >
           <div className="grid gap-1.5">
             <Label htmlFor="jf-name">Name</Label>
-            <Input id="jf-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+            <Input id="jf-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="First and last name" />
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="jf-email">E-mail</Label>
-            <Input id="jf-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} readOnly={invite} autoComplete="email" className={cn(invite && "text-muted-foreground")} />
+            <Input id="jf-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} readOnly={invite} autoComplete="email" placeholder="you@example.com" className={cn(invite && "text-muted-foreground")} />
           </div>
           <Button size="lg" type="submit" disabled={!name || !email.includes("@")}>
             {invite ? "Accept and start" : copy.button || "Join free"}
@@ -320,8 +320,16 @@ export function JoinFree({ invite }: { invite?: boolean }) {
           {!invite && copy.discord !== false && (
             <>
               <Or />
-              <DiscordButton onClick={go} label="Join with Discord" />
+              <DiscordButton onClick={go} />
             </>
+          )}
+          {!invite && (
+            <p className="pt-2 text-center text-sm text-muted-foreground">
+              Already a member?{" "}
+              <Link href={`${base}/login`} className="text-foreground underline underline-offset-4">
+                Log in
+              </Link>
+            </p>
           )}
         </form>
       ) : (
