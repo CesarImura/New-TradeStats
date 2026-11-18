@@ -94,7 +94,7 @@ export function TimelineStep({
                       Skip for now
                     </AdminButton>
                   )}
-                  <AdminButton hierarchy={state === "current" ? "primary" : "secondary"} disabled={state === "upcoming"} onClick={onAction}>
+                  <AdminButton hierarchy={state === "current" ? "primary" : "secondary"} disabled={state === "upcoming"} onClick={onAction} className="w-[152px]">
                     {action}
                   </AdminButton>
                 </span>
