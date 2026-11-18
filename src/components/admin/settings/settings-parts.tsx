@@ -9,7 +9,7 @@ import { AdminButton } from "../ui"
 export function SettingsPage({ title, text, children }: { title: string; text: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex flex-col gap-0.5">
+      <header className="flex flex-col gap-1">
         <h2 className="t-heading-m text-a-text">{title}</h2>
         <p className="t-body-m text-a-text-2">{text}</p>
       </header>
@@ -23,7 +23,7 @@ export function DataCard({ children, className, rowHeight, scrollLabel }: { chil
   return (
     <div className={cn("overflow-hidden rounded-a-lg border border-a-border bg-a-panel", rowHeight === 53 && "[&_td]:h-[53px]", rowHeight === 45 && "[&_td]:h-[45px]", className)}>
       <div className="overflow-x-auto">
-        <Table scrollLabel={scrollLabel}>{children}</Table>
+        <Table bare scrollLabel={scrollLabel}>{children}</Table>
       </div>
     </div>
   )
