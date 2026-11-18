@@ -8,7 +8,7 @@ import { setStored, useStored } from "@/lib/prototype-store"
  * Courses: what the coach builds in Content (ADM-08 to ADM-13) and what
  * students take in Courses (STU-02 to STU-05, STU-29). One catalogue per
  * community, stored in the browser, so admin edits show on the student side.
- * The prototype's "today" is Monday 12 October 2026.
+ * The prototype's "today" is Monday 10 November 2025.
  */
 
 export type Status = "published" | "draft" | "scheduled" | "archived"
@@ -23,7 +23,7 @@ export type Lesson = {
   title: string
   minutes: number
   status: Status
-  /** Shown to students while locked, e.g. "Thu 15 Oct". */
+  /** Shown to students while locked, e.g. "Thu 13 Nov". */
   unlockAt?: string
   /** Open to students without access (a taster). Set from the lesson's Visibility in the admin. */
   freePreview?: boolean
@@ -50,7 +50,7 @@ export type Course = {
   area: string
   status: Status
   scheduledFor?: string
-  /** When it goes live, as local date and time ("2026-10-29T09:00"); `scheduledFor` is the same day for display. */
+  /** When it goes live, as local date and time ("2025-11-27T09:00"); `scheduledFor` is the same day for display. */
   scheduledAt?: string
   /** Tier ids that get this course. Empty means every tier. */
   tiers: string[]
@@ -170,8 +170,8 @@ function seed(coach: Coach): Catalog {
             id: "m4",
             title: "Building a playbook",
             lessons: [
-              L("l9", "What goes in a playbook", 15, { status: "scheduled", unlockAt: "Thu 15 Oct" }),
-              L("l10", "Writing your first setup", 20, { status: "scheduled", unlockAt: "Thu 15 Oct" }),
+              L("l9", "What goes in a playbook", 15, { status: "scheduled", unlockAt: "Thu 13 Nov" }),
+              L("l10", "Writing your first setup", 20, { status: "scheduled", unlockAt: "Thu 13 Nov" }),
               L("l11", "Reviewing it every Friday", 11, { status: "draft" }),
             ],
           },
@@ -222,11 +222,11 @@ function seed(coach: Coach): Catalog {
         tagline: "Every live session, cut into lessons",
         area: "Strategies",
         status: "scheduled",
-        scheduledFor: "Thu 29 Oct",
+        scheduledFor: "Thu 27 Nov",
         tiers: [],
         color: 3,
         cover: "/placeholders/course-breakdowns.svg",
-        modules: [{ id: "b1", title: "October", lessons: [L("b1l1", "NY open, 5 Oct", 26, { status: "draft" }), L("b1l2", "NY open, 7 Oct", 31, { status: "draft" })] }],
+        modules: [{ id: "b1", title: "October", lessons: [L("b1l1", "NY open, 3 Nov", 26, { status: "draft" }), L("b1l2", "NY open, 5 Nov", 31, { status: "draft" })] }],
       },
       {
         id: "risk-lab",

@@ -149,7 +149,7 @@ const ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"
 /** A new stream key: long enough to be private. Only the coach sees it. */
 export const newStreamKey = () => "th_live_" + Array.from({ length: 20 }, () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)]).join("")
 
-/** "Thu 5 Nov, 14:30" */
+/** "Thu 4 Dec, 14:30" */
 export function whenLabel(startsAt: string) {
   const d = new Date(startsAt)
   return `${d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
