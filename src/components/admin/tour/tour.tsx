@@ -5,7 +5,8 @@ import { createPortal } from "react-dom"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
-import { setStored, useStored } from "@/lib/prototype-store"
+import { setStored, useDraft, useStored } from "@/lib/prototype-store"
+import { editorChoice } from "./editor-choices"
 import { cn } from "@/lib/utils"
 import { AdminButton, StepIndicator } from "../ui"
 import { useSetupSteps } from "../getting-started/use-setup-steps"
@@ -207,6 +208,10 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
   const card = useRef<HTMLDivElement>(null)
   const [h, setH] = useState(152)
   const scrolled = useRef<string | null>(null)
+  // The editor tour speaks of what the coach picked in setup (a saved look); without one the Figma text stays.
+  const { coach } = useCoach()
+  const { look } = editorChoice(useDraft(coach.slug))
+  const body = tour.id === "editor" && step.id === "editor" && look ? `Your setup choices (${look}) live here, with many more options: fonts, backgrounds, the menu and every widget.` : step.body
 
   // Bring the target into view once per step.
   useEffect(() => {
@@ -267,7 +272,7 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
             ))}
           </span>
         </div>
-        <p className="t-body-m whitespace-pre-line text-a-text-2">{step.body}</p>
+        <p className="t-body-m whitespace-pre-line text-a-text-2">{body}</p>
         {step.final ? (
           <div className="pt-2">
             <AdminButton size="xl" className="w-full" onClick={onFinish}>
