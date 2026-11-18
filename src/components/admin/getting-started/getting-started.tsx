@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { CalendarDays, ChevronRight, MessageCircle, Wrench } from "@/components/icons"
+import { CalendarDays, ChevronRight, FileText, GraduationCap, MessageCircle, Palette, Send, Store, Wallet, Wrench } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { AdminPageHeader, Callout, Panel, PanelHeader, TimelineStep } from "@/components/admin/ui"
 import { cn } from "@/lib/utils"
@@ -18,6 +18,9 @@ import { useCatalog } from "@/lib/data/learning"
  * While the platform is a draft this page replaces the Overview: five steps in any order (1237:61209), then Go live. On the right,
  * the progress ("5 of 5 steps done") and a way to get help.
  */
+/** Figma Show Icon: one icon per step. */
+const STEP_ICON = { design: Palette, tier: Store, course: GraduationCap, payouts: Wallet, legal: FileText, live: Send } as const
+
 export function GettingStarted() {
   const router = useRouter()
   const { coach, base } = useCoach()
@@ -51,6 +54,7 @@ export function GettingStarted() {
                 first={i === 0}
                 last={i === steps.length - 1}
                 title={s.title}
+                icon={STEP_ICON[s.id]}
                 tag={!s.done && s.id !== "live" && skipped.includes(s.id) && s.id !== current ? "Skipped" : undefined}
                 description={paused && isTourId(s.id) ? `Paused at “${paused.title}”. ${savedLine(s.id)}` : s.description}
                 action={resume ? "Resume" : s.action}
