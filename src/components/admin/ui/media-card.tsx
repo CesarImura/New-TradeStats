@@ -1,3 +1,4 @@
+import { AlertTriangle, CircleAlert, Clock, Lock } from "@/components/icons"
 import { cn } from "@/lib/utils"
 
 /**
@@ -28,12 +29,25 @@ export function MediaCard({ cover, title, subtitle, meta, stats, className, ...p
   )
 }
 
-/** The strip at the foot of a media card's cover (Figma 'Status'): a dot, a line, and an action or a figure on the right. */
-export function MediaCardStatus({ tone = "warning", text, trailing, className }: { tone?: "warning" | "danger" | "muted"; text: React.ReactNode; trailing?: React.ReactNode; className?: string }) {
-  const dot = { warning: "bg-a-warning-fill", danger: "bg-a-danger-fill", muted: "bg-a-text-3" }[tone]
+/** Ring loader (Figma Media card, uploading): a track and an arc, 14 px. Spins; still under reduced motion. */
+function RingLoader({ className }: { className?: string }) {
   return (
-    <span className={cn("absolute inset-x-3 bottom-3 flex items-center gap-2 rounded-a-md bg-a-page px-2.5 py-2 t-caption text-a-text", className)}>
-      <span aria-hidden className={cn("size-[7px] shrink-0 rounded-full", dot)} />
+    <svg aria-hidden viewBox="0 0 16 16" className={cn("size-3.5 shrink-0 animate-spin motion-reduce:animate-none", className)} fill="none" strokeWidth="2" strokeLinecap="round">
+      <circle cx="8" cy="8" r="6" className="stroke-a-border-strong" />
+      <path d="M8 2a6 6 0 0 1 6 6" className="stroke-a-text" />
+    </svg>
+  )
+}
+
+/**
+ * The strip at the foot of a media card's cover (Figma 'Status', v2): an icon (never a dot), a line, and an action or a figure on the right.
+ * warning = needs attention (amber triangle), danger = failed (red alert, tinted strip and line), muted = waiting (clock),
+ * uploading = ring loader, locked = no access (lock).
+ */
+export function MediaCardStatus({ tone = "warning", text, trailing, className }: { tone?: "warning" | "danger" | "muted" | "uploading" | "locked"; text: React.ReactNode; trailing?: React.ReactNode; className?: string }) {
+  return (
+    <span className={cn("absolute inset-x-3 bottom-3 flex items-center gap-2 rounded-a-md border px-2.5 py-2 t-caption text-a-text", tone === "danger" ? "border-a-border-danger bg-[color-mix(in_oklab,var(--admin-color-status-danger-soft)_100%,var(--admin-color-bg-page))]" : "border-a-border-subtle bg-a-page", className)}>
+      {tone === "uploading" ? <RingLoader /> : tone === "danger" ? <CircleAlert aria-hidden className="size-3.5 shrink-0 text-a-danger" /> : tone === "locked" ? <Lock aria-hidden className="size-3.5 shrink-0 text-a-text-2" /> : tone === "muted" ? <Clock aria-hidden className="size-3.5 shrink-0 text-a-text-2" /> : <AlertTriangle aria-hidden className="size-3.5 shrink-0 text-a-warning" />}
       <span className="min-w-0 flex-1 truncate">{text}</span>
       {trailing && <span className="shrink-0">{trailing}</span>}
     </span>
