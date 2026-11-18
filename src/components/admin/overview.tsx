@@ -148,7 +148,7 @@ function NextLiveBanner({ base }: { base: string }) {
   return (
     <section aria-label="Next live" className="relative isolate flex flex-col gap-6 overflow-hidden rounded-a-lg px-5 py-5 text-a-on-highlight shadow-[0_0_28px_rgb(255_106_31/0.2)] md:min-h-[172px] md:flex-row md:items-stretch md:justify-between md:px-7" style={{ backgroundImage: BANNER_BG }}>
       <span aria-hidden className="pointer-events-none absolute inset-0 -z-10 opacity-[0.16] mix-blend-multiply" style={{ backgroundImage: BANNER_GRAIN }} />
-      <div className="flex min-w-0 flex-col justify-between gap-3.5 self-stretch">
+      <div className="flex min-w-0 flex-col justify-start gap-3.5 self-stretch">
         <div className="flex flex-col gap-2.5">
           <span className="t-mono-data flex items-center gap-2 uppercase">
             <span aria-hidden className="size-[5px] rounded-full bg-a-on-highlight" />
@@ -158,7 +158,7 @@ function NextLiveBanner({ base }: { base: string }) {
         </div>
         <dl className="flex flex-wrap gap-y-3">
           {stats.map((st) => (
-            <div key={st.label} className="flex flex-col gap-0.5 border-l border-a-on-highlight/20 px-[26px] first:border-l-0 first:pl-0 last:pr-0">
+            <div key={st.label} className="flex flex-col gap-0.5 border-l border-a-on-highlight/20 px-4 first:border-l-0 first:pl-0 last:pr-0">
               <dd className="t-heading-xl !leading-6 tabular-nums">{st.value}</dd>
               <dt className="t-body-m">{st.label}</dt>
             </div>
