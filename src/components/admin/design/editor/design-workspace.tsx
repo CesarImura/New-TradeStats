@@ -31,7 +31,6 @@ import { pageLayout, resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import { getWidget, heightFor, heightOf } from "@/components/widgets/registry"
 import { TEMPLATES } from "@/lib/theme/templates"
 import { readingOrder, uid, type PageId, type WidgetInstance } from "@/lib/widgets/layout"
-import { cn } from "@/lib/utils"
 import { WidgetLibrary, type AddOptions } from "../panels/builder-panels"
 import { WidgetInspector } from "../panels/widget-inspector"
 import { ThumbStyles } from "../thumbs/widget-thumb"
@@ -387,7 +386,7 @@ export function DesignWorkspace() {
               <>
                 <AdminMenu>
                   <AdminMenuTrigger render={<AdminFilterButton label="Page" value={here} title="The page you are editing. Click to change page" />} />
-                  <AdminMenuContent align="center" className="w-60">
+                  <AdminMenuContent align="center" className="w-[220px]">
                     {/* The platform's pages; the page inside a course sits under Playbook, which it belongs to. */}
                     <AdminMenuGroup>
                       <AdminMenuLabel>Pages</AdminMenuLabel>
@@ -404,12 +403,10 @@ export function DesignWorkspace() {
                               }}
                             >
                               <span className="flex-1 truncate">{p.label}</span>
-                              {on && <Check className="size-4" />}
                             </AdminMenuItem>
                             {p.id === "courses" && (
-                              <AdminMenuItem active={step === "course"} className={cn("pl-8", step !== "course" && "text-a-text-2")} onClick={() => (select(null), go("course"))}>
+                              <AdminMenuItem active={step === "course"} onClick={() => (select(null), go("course"))}>
                                 <span className="flex-1 truncate">Course page</span>
-                                {step === "course" && <Check className="size-4" />}
                               </AdminMenuItem>
                             )}
                           </Fragment>
@@ -433,7 +430,6 @@ export function DesignWorkspace() {
                             }}
                           >
                             <span className="flex-1 truncate">{j.label}</span>
-                            {on && <Check className="size-4" />}
                           </AdminMenuItem>
                         )
                       })}
@@ -454,19 +450,19 @@ export function DesignWorkspace() {
                   <History /> Earlier versions
                 </AdminMenuItem>
                 <AdminMenuItem onClick={() => setMenu("guide")}>
-                  <PlayCircle /> 2-minute guide
+                  <PlayCircle /> 1-minute guide
                 </AdminMenuItem>
                 <AdminMenuItem render={<Link href={`/admin/${slug}/design/pages/all${fromSetup ? "?from=setup" : ""}`} />}>
                   <LayoutGrid /> All pages side by side
                 </AdminMenuItem>
                 {CAN_SAVE_TEMPLATE && (
                   <AdminMenuItem onClick={() => setMenu("template")}>
-                    <FileDown /> Save as template…
+                    <FileDown /> Save as template
                   </AdminMenuItem>
                 )}
                 <AdminMenuSeparator />
                 <AdminMenuItem onClick={() => setMenu("reset")}>
-                  <RotateCcw /> Reset to the original design…
+                  <RotateCcw /> Reset to the original design
                 </AdminMenuItem>
                 <AdminMenuItem tone="danger" disabled={!editor.dirty} onClick={editor.discard}>
                   <Trash2 /> Discard changes

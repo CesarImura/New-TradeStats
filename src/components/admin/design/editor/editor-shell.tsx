@@ -179,7 +179,7 @@ export function EditorBar({
               <History /> Earlier versions
             </AdminMenuItem>
             <AdminMenuItem onClick={() => setMenu("guide")}>
-              <PlayCircle /> 2-minute guide
+              <PlayCircle /> 1-minute guide
             </AdminMenuItem>
             <AdminMenuSeparator />
             <AdminMenuItem tone="danger" disabled={!editor.dirty} onClick={editor.discard}>
