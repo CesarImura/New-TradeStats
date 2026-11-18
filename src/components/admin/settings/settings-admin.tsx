@@ -122,7 +122,7 @@ function SettingsPage({ title, text, children }: { title: string; text: string; 
 /** Table inside a bordered panel surface (Figma "Table"). */
 function DataCard({ children, className, rowHeight, scrollLabel }: { children: React.ReactNode; className?: string; /** Names the sideways-scrolling table so the keyboard can reach it. */ scrollLabel?: string; /** Rows that hold one line are 53 high in Figma (the table standard is 61 for two lines). */ rowHeight?: 45 | 53 }) {
   return (
-    <div className={cn("overflow-hidden rounded-a-lg border border-a-border bg-a-panel [&_th]:t-micro [&_th]:normal-case [&_th]:tracking-normal", rowHeight === 53 && "[&_td]:h-[53px]", rowHeight === 45 && "[&_td]:h-[45px]", className)}>
+    <div className={cn("overflow-hidden rounded-a-lg border border-a-border bg-a-panel", rowHeight === 53 && "[&_td]:h-[53px]", rowHeight === 45 && "[&_td]:h-[45px]", className)}>
       <div className="overflow-x-auto">
         <Table scrollLabel={scrollLabel}>{children}</Table>
       </div>

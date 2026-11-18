@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Handshake, Plus } from "@/components/icons"
+import { Handshake, LineChart, Plus } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -56,9 +56,9 @@ export function PartnersAdmin() {
                 <Plus /> Add from catalogue
               </AdminButton>
             </>
-          ) : (
+          ) : shown.on ? (
             <AdminButton onClick={save}>Save</AdminButton>
-          )
+          ) : undefined
         }
       />
       {!coach.modules.partners && (
@@ -271,7 +271,7 @@ const DAYS = [7, 30, 60, 90].map((d) => ({ value: String(d), label: `${d} days` 
 
 function Affiliates({ fresh, program: p, set, turnOn }: { fresh: boolean; program: AffiliateProgram; set: (p: Partial<AffiliateProgram>) => void; turnOn: () => void }) {
   if (!p.on)
-    return <EmptyState icon={Handshake} title="The program is off" description="Switch it on and every student gets a link to share. You choose the commission." actions={<AdminButton onClick={turnOn}>Turn on the program</AdminButton>} />
+    return <EmptyState icon={LineChart} title="The program is off" description="Switch it on and every student gets a link to share. You choose the commission." actions={<AdminButton onClick={turnOn}>Turn on the program</AdminButton>} />
   return (
     <div className="flex flex-col gap-4">
       <StatPanel
