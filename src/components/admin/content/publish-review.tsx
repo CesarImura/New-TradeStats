@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AlertTriangle, Check, CircleAlert } from "@/components/icons"
 import { allLessons, type Course } from "@/lib/data/learning"
+import { NOW } from "@/lib/data/schedule"
 import { cn } from "@/lib/utils"
 import { AdminButton, AdminModal, AdminSegmented } from "../ui"
 import { dayLabel, localIso, type Upload } from "./course-parts"
@@ -20,7 +21,7 @@ export function PublishReview({ course, uploads, open, onOpenChange, onOpenUploa
   const [when, setWhen] = useState<"now" | "later">("now")
   // The day and time it goes live: what was set before, else tomorrow morning.
   const [first] = useState(() => {
-    const d = new Date()
+    const d = new Date(NOW)
     d.setDate(d.getDate() + 1)
     d.setHours(9, 0, 0, 0)
     return course.scheduledAt ?? localIso(d)
@@ -28,13 +29,8 @@ export function PublishReview({ course, uploads, open, onOpenChange, onOpenUploa
   const [day, setDay] = useState(first.slice(0, 10))
   const [time, setTime] = useState(first.slice(11, 16))
   const at = `${day}T${time}`
-  // "Now" moves on while the dialog stays open, so a time that was ahead can pass.
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 20_000)
-    return () => clearInterval(id)
-  }, [])
-  const valid = !Number.isNaN(new Date(at).getTime()) && new Date(at).getTime() > now
+  // The prototype clock (Wed 12 Nov 2025): a day picked before it is not in the future.
+  const valid = !Number.isNaN(new Date(at).getTime()) && new Date(at).getTime() > NOW.getTime()
   const date = valid ? dayLabel(at) : "…"
   const [channels, setChannels] = useState({ app: true, email: true, discord: false })
 
@@ -102,7 +98,7 @@ export function PublishReview({ course, uploads, open, onOpenChange, onOpenUploa
         {when === "later" && (
           <div className="grid gap-1.5">
             <div className="flex flex-wrap items-center gap-2">
-              <input type="date" value={day} min={localIso(new Date()).slice(0, 10)} onChange={(e) => setDay(e.target.value)} aria-label="Goes live on (day)" aria-invalid={!valid || undefined} className="h-9 w-44 rounded-a-md border border-a-border-subtle bg-a-field px-3 t-body-m text-a-text outline-none transition-colors duration-300 [color-scheme:dark] hover:border-a-border-strong focus-visible:border-a-border-focus aria-[invalid=true]:border-a-border-danger" />
+              <input type="date" value={day} min={localIso(NOW).slice(0, 10)} onChange={(e) => setDay(e.target.value)} aria-label="Goes live on (day)" aria-invalid={!valid || undefined} className="h-9 w-44 rounded-a-md border border-a-border-subtle bg-a-field px-3 t-body-m text-a-text outline-none transition-colors duration-300 [color-scheme:dark] hover:border-a-border-strong focus-visible:border-a-border-focus aria-[invalid=true]:border-a-border-danger" />
               <input type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Goes live at (time)" aria-invalid={!valid || undefined} className="h-9 w-32 rounded-a-md border border-a-border-subtle bg-a-field px-3 t-body-m text-a-text outline-none transition-colors duration-300 [color-scheme:dark] hover:border-a-border-strong focus-visible:border-a-border-focus aria-[invalid=true]:border-a-border-danger" />
             </div>
             <span role="status" className={cn("t-caption", valid ? "text-a-text-2" : "text-a-danger")}>{valid ? `Goes live ${dayLabel(at)} at ${time}, in your time zone.` : "Pick a day and time in the future."}</span>
