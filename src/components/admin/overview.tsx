@@ -10,10 +10,12 @@ import { useNewPlatform } from "./use-new-platform"
 import { AdminAvatar, AdminButton, AdminFilter, AdminPageHeader, AdminTabs, EmptyState, Metric as MetricCard, Panel, Tag } from "@/components/admin/ui"
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart"
 import { COURSES, EVENTS } from "@/lib/data/sample"
+import { NOW } from "@/lib/data/schedule"
 import { cn } from "@/lib/utils"
 
 /** "Today" in the prototype's sample data. */
-const TODAY = new Date(2025, 9, 12)
+/** The prototype's "today" (Wed 12 Nov 2025): the chart ends on it. */
+const TODAY = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate())
 const RANGES = { "7": "Last 7 days", "30": "Last 30 days", "90": "Last 90 days" } as const
 type Range = keyof typeof RANGES
 
