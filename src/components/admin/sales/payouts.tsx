@@ -223,8 +223,8 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
       }
     >
       {step === 0 && (
-        <div data-tour="payouts-you" className="flex flex-col gap-5">
-          <div role="radiogroup" aria-label="Sell as" className="flex flex-col gap-2">
+        <div data-tour="payouts-you" className="flex flex-col gap-4">
+          <div role="radiogroup" aria-label="Sell as" className="flex flex-col gap-4">
             <span className="t-caption text-a-text">Sell as</span>
             <OptionCard checked={(form.kind ?? "person") === "person"} onSelect={() => set({ kind: "person", name: form.name || account()?.name })} title="A person" description="You sell as yourself" />
             <OptionCard checked={form.kind === "company"} onSelect={() => set({ kind: "company", name: form.name === account()?.name ? "" : form.name })} title="A company" description="You sell through a registered business" />
@@ -238,7 +238,7 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
         </div>
       )}
       {step === 1 && (
-        <div data-tour="payouts-bank" className="flex flex-col gap-5">
+        <div data-tour="payouts-bank" className="flex flex-col gap-4">
           <AdminField label="Account holder" hint="Must match the name on your ID" error={tried && !holderOk ? "Type the account holder’s name." : undefined}>
             {(p) => <input {...p} value={form.holder ?? ""} onChange={(e) => set({ holder: e.target.value })} placeholder="Your legal name" className={cn(adminControl, "h-11")} />}
           </AdminField>
