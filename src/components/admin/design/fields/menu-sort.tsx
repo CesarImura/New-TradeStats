@@ -180,7 +180,7 @@ function SortItem({ id, name, flash, onDrop, onMove, children }: { id: string; n
         { boxShadow: "0 0 0 2px var(--admin-color-border-active)", borderRadius: "8px" },
         { boxShadow: "0 0 0 2px transparent", borderRadius: "8px" },
       ],
-      { duration: 1200, easing: "ease-in" },
+      { duration: 1200, easing: "ease-out" },
     )
   }, [flash, reduce])
   const onKey = (e: React.KeyboardEvent) => {
