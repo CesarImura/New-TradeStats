@@ -69,7 +69,8 @@ export function Checkout() {
   const isYearly = yearly && !!tier.yearly
   const list = amount(isYearly ? tier.yearly! : tier.price)
   const off = applied?.kind === "percent" ? Math.round(list * applied.value) / 100 : applied?.kind === "amount" ? Math.min(list, applied.value) : 0
-  const trial = applied?.kind === "trial" ? applied.value : tier.trial
+  // Figma Join 04 has no free trial: a plan's own trial only applies when the link asks for it (?trial=1); a trial code always does.
+  const trial = applied?.kind === "trial" ? applied.value : params.get("trial") ? tier.trial : 0
   const first = list - off
   const today = trial ? 0 : first
   const emailOk = /^\S+@\S+\.\S+$/.test(email)
@@ -92,9 +93,7 @@ export function Checkout() {
         <section className="grid gap-3">
           <h2 className="text-lg">Your plan</h2>
           <div className="grid gap-2 sm:grid-cols-2">
-            {paid
-              .filter((t) => !t.hidden || t.id === tierId)
-              .map((t) => (
+            {paid.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => setTierId(t.id)}
@@ -111,9 +110,10 @@ export function Checkout() {
                     {t.id === tierId && <Check className="size-3" strokeWidth={3} />}
                   </span>
                 </button>
-              ))}
+            ))}
           </div>
-          {tier.yearly && (
+          {/* Figma Join 04 has one price per plan: the yearly choice only shows when the link asks for it (?cycle=yearly or ?cycle=monthly). */}
+          {tier.yearly && params.get("cycle") && (
             <div className="flex w-fit rounded-full border p-1 text-sm">
               {[false, true].map((y) => (
                 <button key={String(y)} onClick={() => setYearly(y)} className={cn("rounded-full px-3.5 py-1", yearly === y ? "bg-foreground text-background" : "text-muted-foreground")}>

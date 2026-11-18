@@ -2,7 +2,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { Check, ExternalLink, Eye, FileDown, History, LayoutGrid, Palette, PlayCircle, RotateCcw, Trash2 } from "@/components/icons"
+import { ExternalLink, Eye, FileDown, History, LayoutGrid, Palette, PlayCircle, RotateCcw, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { studentNav } from "@/components/coach/nav"
@@ -21,7 +21,7 @@ import { readingOrder, uid, type PageId, type WidgetInstance } from "@/lib/widge
 import { WidgetLibrary, type AddOptions } from "../panels/builder-panels"
 import { WidgetInspector } from "../panels/widget-inspector"
 import { ThumbStyles } from "../thumbs/widget-thumb"
-import { RevealContext, Row, Segmented } from "../fields/controls"
+import { RevealContext, Segmented } from "../fields/controls"
 import { designTabs, DeviceSwitch, Readability, SettingsPanel, THEME_GROUPS, without } from "../panels/settings-panel"
 import { AllWidgetsInspector } from "../panels/all-widgets-inspector"
 import { DesignProvider } from "../fields/design-fields"
@@ -420,9 +420,11 @@ export function DesignWorkspace() {
                   <Eye /> <span className="max-sm:sr-only">Preview</span>
                 </PopoverTrigger>
                 <PopoverContent align="end" className="ts-ui ts-admin w-80">
-                  <Row label="Preview as" hint={PREVIEW_AS.find((o) => o.value === data)?.hint} stack>
+                  {/* Figma Top bar 03: a small mono label over the four choices; what the chosen one shows is its tooltip. */}
+                  <div className="grid gap-2">
+                    <span title={PREVIEW_AS.find((o) => o.value === data)?.hint} className="t-mono-label text-a-text-3 uppercase">Preview as</span>
                     <Segmented label="Preview data" value={data} onChange={setData} options={PREVIEW_AS} />
-                  </Row>
+                  </div>
                   <AdminButton hierarchy="secondary" className="w-full" nativeButton={false} render={<a href={src} target="_blank" rel="noreferrer" />}>
                     <ExternalLink /> Open in a new tab
                   </AdminButton>
@@ -518,7 +520,6 @@ export function DesignWorkspace() {
                                 {t.name}
                                 {t.id !== "default" && (coach.pages?.[page] ?? {})[t.id] ? <span className="text-a-text-3"> · own layout</span> : null}
                               </span>
-                              {t.id === tier && <Check className="size-3.5" />}
                             </AdminMenuItem>
                           ))}
                           {tier !== "default" && !arrange.inherits && (
