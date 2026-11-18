@@ -18,6 +18,9 @@ import { StudentProfile } from "./student-profile"
 export { MessageDialog } from "./student-message"
 
 type Filter = "all" | "help" | "invited" | "paused"
+
+/** Courses each sample student is enrolled in (Figma Students 01 shows the count next to the tier). */
+const COURSES: Record<string, number> = { s1: 3, s2: 2, s3: 1, s4: 3, s5: 1, s6: 3, s7: 2, s8: 2 }
 const PAGE = 8
 const NO_STUDENTS: Student[] = []
 
@@ -99,7 +102,7 @@ export function StudentsPage() {
       <StatPanel
         stats={[
           { label: "Active this week", value: students.filter((s) => s.activeDays > 0 && !s.joined.startsWith("invited")).length, delta: `${Math.round((students.filter((s) => s.activeDays > 0).length / Math.max(students.length, 1)) * 100)}% of all students` },
-          { label: "Need help", value: counts.help, delta: "Rules broken or stuck" },
+          { label: "At risk", value: counts.help, delta: "Rules broken or stuck" },
           { label: "Payment issues", value: students.filter((s) => s.reason?.toLowerCase().includes("payment")).length, delta: "Retrying automatically" },
           { label: "Invited", value: counts.invited, delta: "Haven't joined yet" },
         ]}
@@ -157,7 +160,7 @@ export function StudentsPage() {
             onChange={(v) => refine(setFilter)(v as Filter)}
             tabs={[
               { id: "all", label: "All", count: counts.all },
-              { id: "help", label: "Needs help", count: counts.help },
+              { id: "help", label: "At risk", count: counts.help },
               { id: "invited", label: "Invited", count: counts.invited },
               { id: "paused", label: "Paused", count: counts.paused },
             ]}
@@ -206,11 +209,13 @@ export function StudentsPage() {
               <Checkbox checked={onPage === shown.length && shown.length > 0} indeterminate={onPage > 0 && onPage < shown.length} onCheckedChange={(v) => setPicked((p) => (v ? [...new Set([...p, ...shown.map((r) => r.id)])] : p.filter((id) => !shown.some((r) => r.id === id))))} aria-label="Select all on this page" />
             </AdminTh>
             <AdminTh>Student</AdminTh>
-            <AdminTh width={216}>Tier and group</AdminTh>
-            <AdminTh width={166}>Course progress</AdminTh>
-            <AdminTh width={116} align="end">Rules kept</AdminTh>
-            <AdminTh width={272}>Status</AdminTh>
-            <AdminTh width={130} align="end">Last active</AdminTh>
+            <AdminTh width={166}>Tier and group</AdminTh>
+            <AdminTh width={96}>Courses</AdminTh>
+            <AdminTh width={176}>Overall progress</AdminTh>
+            <AdminTh width={106}>Rules kept</AdminTh>
+            <AdminTh width={146}>Status</AdminTh>
+            <AdminTh width={150}>Joined</AdminTh>
+            <AdminTh width={100} align="end">Last active</AdminTh>
           </AdminTableHead>
           <tbody>
             {shown.map((s) => {
@@ -230,15 +235,15 @@ export function StudentsPage() {
                   <AdminTd>
                     <CellStack title={tierFor(coach, s.tier).name} subtitle={s.group ?? "No group"} />
                   </AdminTd>
+                  <AdminTd className="tabular-nums text-a-text">{COURSES[s.id] ?? 1}</AdminTd>
                   <AdminTd>
-                    <CellProgress label={`${s.name} course progress`} value={s.progress} />
+                    <CellProgress label={`${s.name} overall progress`} value={s.progress} />
                   </AdminTd>
-                  <AdminTd align="end">{s.broker ? `${s.rules}%` : <span className="text-a-text-3">—</span>}</AdminTd>
+                  <AdminTd className="text-a-text">{s.broker ? `${s.rules}%` : <span className="text-a-text-3">—</span>}</AdminTd>
                   <AdminTd>
-                    <Tag tone={invited ? "neutral" : s.health === "red" ? "danger" : s.health === "amber" ? "warning" : "success"} dot className="max-w-full">
-                      <span className="truncate">{s.reason ?? "All good"}</span>
-                    </Tag>
+                    <StudentStatus student={s} paused={paused.includes(s.id)} />
                   </AdminTd>
+                  <AdminTd className="whitespace-nowrap text-a-text">{invited ? <span className="text-a-text-3">—</span> : s.joined}</AdminTd>
                   <AdminTd align="end" className="whitespace-nowrap">{s.lastActive === "never" ? <span className="text-a-text-3">—</span> : s.lastActive}</AdminTd>
                 </AdminTr>
               )
@@ -255,3 +260,12 @@ export function StudentsPage() {
 }
 
 const rank = (s: Student) => (s.health === "red" ? 0 : s.health === "amber" ? 1 : 2)
+
+/** The six standard statuses (Figma Students 01): what the coach should do about a student, in one word or two. */
+function StudentStatus({ student: s, paused }: { student: Student; paused: boolean }) {
+  if (paused) return <Tag>Paused</Tag>
+  if (s.joined.startsWith("invited")) return <Tag>Invited</Tag>
+  if (s.health === "red" && s.reason?.toLowerCase().includes("payment")) return <Tag tone="danger">Payment issue</Tag>
+  if (s.health !== "green") return <Tag tone="warning">At risk</Tag>
+  return <Tag tone="success">{s.progress >= 100 ? "Completed" : "Active"}</Tag>
+}
