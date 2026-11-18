@@ -228,7 +228,7 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
 
   if (!box) return null
   const pad = step.pad ?? PAD
-  const hole = { x: box.x - pad, y: box.y - pad, w: box.w + pad * 2, h: box.h + pad * 2 }
+  const hole = { x: box.x - pad, y: box.y - pad, w: box.w + pad * 2, h: box.h + pad * 2 + (step.padBottom ?? 0) }
   // A modal or drawer (Base UI marks it data-open) already dims the page. The design editor is a full-screen dialog that
   // does not, and it covers everything under z 50: there the dimming goes above it (z 55), and steps aside while a menu from the target is open.
   const dialog = document.querySelector(step.target)?.closest("[role=dialog]")
