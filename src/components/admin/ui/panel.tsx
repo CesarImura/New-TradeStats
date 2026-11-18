@@ -10,7 +10,7 @@ export function PanelHeader({ title, description, actions, className }: { title:
   return (
     <header className={cn("flex flex-wrap items-center justify-between gap-x-3 gap-y-2", className)}>
       <div className="flex min-w-0 flex-col gap-0.5">
-        <h2 className="t-heading-m truncate text-a-text">{title}</h2>
+        <h2 className="t-heading-s truncate text-a-text">{title}</h2>
         {description && <p className="t-body-m text-a-text-2">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
