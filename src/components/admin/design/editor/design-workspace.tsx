@@ -315,7 +315,7 @@ export function DesignWorkspace() {
   )
   const tabs = designTabs({
     // Light or dark moved to Theme (Figma Editor · 2 Style): Brand is who you are, Theme is how it looks.
-    brand: { groups: [{ title: "Import from your website", fields: ["import-site"], keys: [], words: "import website url colours fonts logo brand" }, { title: "Your platform", fields: ["logo", "name"], keys: [], words: "logo name platform" }, ...THEME_GROUPS.colour] },
+    brand: { groups: [{ title: "Your platform", fields: ["logo", "name", "import-site"], keys: [], words: "logo name platform import website url colours fonts brand" }, ...THEME_GROUPS.colour] },
     look: {
       content: <ThemeTab />,
       finds: [
