@@ -97,7 +97,7 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
           <AdminTh width={160}>Price</AdminTh>
           <AdminTh width={130} align="end">Members</AdminTh>
           <AdminTh width={170} align="end">Revenue · Oct</AdminTh>
-          <AdminTh width={200}>Share</AdminTh>
+          <AdminTh width={260}>Share</AdminTh>
         </AdminTableHead>
         <tbody>
           {byTier.map((t) => {
@@ -108,7 +108,7 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
                 <AdminTd>{t.price} / {t.cadence === "quarter" ? "qtr" : "mo"}</AdminTd>
                 <AdminTd align="end">{t.members}</AdminTd>
                 <AdminTd align="end">€{t.revenue.toLocaleString("en")}</AdminTd>
-                <AdminTd><AdminProgress tone="accent" label={`${t.name}: ${Math.round(share)}% of revenue`} value={share} className="w-[112px]" /></AdminTd>
+                <AdminTd><AdminProgress tone="accent" label={`${t.name}: ${Math.round(share)}% of revenue`} value={share} className="w-[220px]" /></AdminTd>
               </AdminTr>
             )
           })}
