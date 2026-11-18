@@ -58,7 +58,7 @@ export function RankingAdmin() {
         title="Ranking"
         text="Leaderboard, competitions, points and badges"
         actions={
-          <AdminButton onClick={() => setEditing("new")}>
+          <AdminButton hierarchy={tab === "competitions" && r.competitions.length === 0 ? "secondary" : "primary"} onClick={() => setEditing("new")}>
             <Plus /> New competition
           </AdminButton>
         }
