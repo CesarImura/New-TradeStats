@@ -14,9 +14,9 @@ const SAMPLE_NAME = "students-export.csv"
 const SAMPLE_HEAD = ["Full name", "E-mail", "Plan", "Team", "Joined", "Phone"]
 const SAMPLE_ROWS = [
   ["Hugo Martin", "hugo.martin@me.com", "Basic", "—", "12/03/2025", "+33 6 12 34"],
-  ["Ines Duarte", "ines.duarte@gmail.com", "Pro", "Futures A", "15/01/2026", "+351 91 234"],
-  ["Marek Nowak", "marek@nowak.pl", "Basic", "—", "09/03/2026", "+48 600 123"],
-  ["Yuki Tanaka", "yuki.t@me.com", "Pro", "—", "21/06/2026", "+81 90 1234"],
+  ["Ines Duarte", "ines.duarte@gmail.com", "Pro", "Futures A", "13/02/2025", "+351 91 234"],
+  ["Marek Nowak", "marek@nowak.pl", "Basic", "—", "07/04/2025", "+48 600 123"],
+  ["Yuki Tanaka", "yuki.t@me.com", "Pro", "—", "20/07/2025", "+81 90 1234"],
 ]
 const GUESS = ["Name", "E-mail", "Tier", "Group", "Joined date", "Don't import"]
 const FIELDS = ["Name", "E-mail", "Tier", "Group", "Joined date", "Don't import"]

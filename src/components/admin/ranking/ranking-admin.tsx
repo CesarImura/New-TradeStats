@@ -58,12 +58,9 @@ export function RankingAdmin() {
         title="Ranking"
         text="Leaderboard, competitions, points and badges"
         actions={
-          <>
-            <Tag tone="accent" dot>V2</Tag>
-            <AdminButton onClick={() => setEditing("new")}>
-              <Plus /> New competition
-            </AdminButton>
-          </>
+          <AdminButton hierarchy={tab === "competitions" && r.competitions.length === 0 ? "secondary" : "primary"} onClick={() => setEditing("new")}>
+            <Plus /> New competition
+          </AdminButton>
         }
       />
       {!coach.modules.ranking && (
@@ -154,10 +151,10 @@ function Competitions({ list, setList, onEdit, onNew }: { list: Competition[]; s
         return (
           <Panel key={c.id} className="gap-4">
             <div className="flex items-center gap-2">
-              <h2 className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 t-heading-m text-a-text">
+              <h2 className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 t-heading-s text-a-text">
                 {c.name}
-                {st.status === "upcoming" && <Tag tone="accent" dot>Starts in {st.days} {st.days === 1 ? "day" : "days"}</Tag>}
-                {st.status === "running" && <Tag tone="success" dot>Running · {st.days} {st.days === 1 ? "day" : "days"} left</Tag>}
+                {st.status === "upcoming" && <Tag>Starts in {st.days} {st.days === 1 ? "day" : "days"}</Tag>}
+                {st.status === "running" && <Tag tone="success">Running · {st.days} {st.days === 1 ? "day" : "days"} left</Tag>}
                 {st.status === "ended" && <Tag>Ended</Tag>}
               </h2>
               <DropdownMenu>
@@ -182,8 +179,8 @@ function Competitions({ list, setList, onEdit, onNew }: { list: Competition[]; s
             <dl className="grid grid-cols-3 gap-4 px-1">
               {([["Ranks by", metricName(c.metric)], ["Prize", c.prize], ["Entrants", String(c.entrants)]] as const).map(([k, v]) => (
                 <div key={k} className="grid min-w-0 gap-1.5">
-                  <dt className="t-mono-label-s text-a-text-2">{k}</dt>
-                  <dd className="truncate t-body-l text-a-text" title={v}>{v}</dd>
+                  <dt className="t-caption text-a-text-2">{k}</dt>
+                  <dd className="truncate t-body-m text-a-text" title={v}>{v}</dd>
                 </div>
               ))}
             </dl>
@@ -199,7 +196,7 @@ function CompetitionModal({ item, onClose, onSave }: { item: Competition | "new"
   const { coach } = useCoach()
   const tiers = useTiers(coach).filter((t) => !isFreeTier(t))
   const groups = useGroups(coach)
-  const blank: Competition = { id: "", name: "", metric: "rules", start: "2026-11-15", end: "2026-11-30", prize: "", entrants: 0, who: "everyone", picked: [], nicknames: true }
+  const blank: Competition = { id: "", name: "", metric: "rules", start: "2025-11-15", end: "2025-11-30", prize: "", entrants: 0, who: "everyone", picked: [], nicknames: true }
   const [c, setC] = useState<Competition>(blank)
   const [key, setKey] = useState<string | null>(null)
   const [tried, setTried] = useState(false)

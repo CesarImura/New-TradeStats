@@ -81,7 +81,7 @@ function SettingsNav({ value, onChange }: { value: TabId; onChange: (id: TabId) 
         <div key={g.label} className={cn("flex flex-col gap-0.5 max-md:flex-row max-md:items-center", i > 0 && "mt-3 border-t border-a-border-subtle pt-3 max-md:mt-0 max-md:border-t-0 max-md:pt-0")}>
           <div className="flex h-6 items-center gap-2 px-2 text-a-text-3 max-md:hidden">
             <g.icon className="size-4 text-a-icon" />
-            <span className="t-mono-label-s">{g.label}</span>
+            <span className="t-micro">{g.label}</span>
           </div>
           {g.tabs.map(([id, label]) => {
             const active = id === value
@@ -143,7 +143,7 @@ function Segmented<T extends string>({ value, onChange, options, label }: { valu
           onClick={() => onChange(id)}
           className={cn(
             "h-8 rounded-a-md border t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
-            value === id ? "border-a-accent-strong bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover hover:text-a-text"
+            value === id ? "border-a-border-active bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover hover:text-a-text"
           )}
         >
           {text}
@@ -336,7 +336,7 @@ function Domain() {
                       </button>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Tag tone={ok ? "success" : "warning"} dot>
+                      <Tag tone={ok ? "success" : "warning"}>
                         {ok ? "Found" : "Waiting"}
                       </Tag>
                     </TableCell>
@@ -458,7 +458,7 @@ function Emails() {
                   <Textarea rows={6} value={cur.body} onChange={(e) => setEdits((x) => ({ ...x, [t.id]: { ...cur, body: e.target.value } }))} />
                 </Field>
                 <div className="grid gap-1 rounded-a-md border border-a-border bg-a-raised p-4">
-                  <span className="t-mono-label-s text-a-text-3">Preview</span>
+                  <span className="t-micro text-a-text-3">Preview</span>
                   <span className="t-body-m-medium">{fill(cur.subject)}</span>
                   <p className="t-body-m whitespace-pre-line text-a-text-2">{fill(cur.body)}</p>
                 </div>
@@ -815,7 +815,7 @@ function Tax() {
           <Input defaultValue="Bahnhofstrasse 1, 8001 Zürich" />
         </Field>
         <Field label="Invoice number starts at">
-          <Input defaultValue="NT-2026-0001" />
+          <Input defaultValue="NT-2025-0001" />
         </Field>
       </Panel>
       <Panel>
@@ -894,9 +894,9 @@ function Team() {
               </TableCell>
               <TableCell>
                 {m.invited ? (
-                  <Tag tone="warning" dot>Invited</Tag>
+                  <Tag tone="warning">Invited</Tag>
                 ) : m.role === "Owner" ? (
-                  <Tag tone="accent" dot>Owner</Tag>
+                  <Tag>Owner</Tag>
                 ) : (
                   <Tag>{m.role}</Tag>
                 )}
@@ -920,7 +920,7 @@ function Team() {
       </DataCard>
       <Panel>
         <PanelHeader title="Roles" />
-        <DataCard className="bg-a-field" scrollLabel="What each role can do">
+        <DataCard className="bg-a-field" rowHeight={45} scrollLabel="What each role can do">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead>Role</TableHead>
@@ -965,7 +965,7 @@ function Team() {
                   role="radio"
                   aria-checked={role === r}
                   onClick={() => setRole(r)}
-                  className={cn("flex items-center gap-3 rounded-a-md border px-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus", role === r ? "border-a-accent-strong bg-a-raised" : "border-a-border hover:bg-a-hover")}
+                  className={cn("flex items-center gap-3 rounded-a-md border px-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus", role === r ? "border-a-border-active bg-a-raised" : "border-a-border hover:bg-a-hover")}
                 >
                   <span className={cn("grid size-4 shrink-0 place-items-center rounded-full border", role === r ? "border-a-accent-strong" : "border-a-border-strong")}>
                     {role === r && <span className="size-2 rounded-full bg-a-accent-strong" />}
@@ -988,8 +988,8 @@ function Team() {
 // ---------- ADM-52
 
 const INVOICES = [
-  ["November 2026", "€99.00"],
-  ["October 2026", "€99.00"],
+  ["November 2025", "€99.00"],
+  ["October 2025", "€99.00"],
 ]
 
 function Plan() {
@@ -1009,7 +1009,7 @@ function Plan() {
         <div className="grid gap-4 pt-2 sm:grid-cols-3">
           {[["Students", "189 / 500"], ["Storage", "42 / 100 GB"], ["Team", "4 / 5"]].map(([l, v]) => (
             <div key={l} className="grid gap-1">
-              <span className="t-mono-label text-a-text-3">{l}</span>
+              <span className="t-micro text-a-text-3">{l}</span>
               <span className="t-heading-xl">{v}</span>
             </div>
           ))}
@@ -1022,7 +1022,7 @@ function Plan() {
             <span className="t-body-m">Pro template pack</span>
             <span className="t-caption text-a-text-2">3 extra templates for your site</span>
           </div>
-          <Tag tone="success" dot>Active</Tag>
+          <Tag tone="success">Active</Tag>
         </div>
         <div className="flex items-center justify-between gap-3">
           <div className="grid">
@@ -1049,7 +1049,7 @@ function Plan() {
               <TableCell>{d}</TableCell>
               <TableCell className="text-right text-a-text-2 tabular-nums">{amount}</TableCell>
               <TableCell>
-                <Tag tone="success" dot>Paid</Tag>
+                <Tag tone="success">Paid</Tag>
               </TableCell>
               <TableCell className="text-right">
                 <AdminButton hierarchy="ghost" size="md" onClick={() => toast("Invoice downloaded")}>

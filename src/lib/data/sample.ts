@@ -1,5 +1,5 @@
 // Sample content shared by all demo coaches. The prototype's "today" is
-// Monday 12 October 2026, 09:00.
+// Monday 10 November 2025, 09:00.
 
 export const DEMO_STUDENT = { first: "Alex", last: "Moreau", initials: "AM" }
 
@@ -82,7 +82,7 @@ export type CalEvent = {
   kind: EventKind
   title: string
   day: string // e.g. "Mon"
-  date: string // e.g. "12 Oct"
+  date: string // e.g. "10 Nov"
   time: string
   live?: boolean
   noTrade?: boolean
@@ -94,15 +94,15 @@ export type CalEvent = {
 }
 
 export const EVENTS: CalEvent[] = [
-  { id: "e1", kind: "live", title: "Live trading · NY open", day: "Mon", date: "12 Oct", time: "15:30", live: false, inMinutes: 390, seats: "41 signed up" },
-  { id: "e2", kind: "call", title: "Q&A call", day: "Tue", date: "13 Oct", time: "18:00", seats: "34 signed up" },
-  { id: "e3", kind: "news", title: "US CPI", day: "Wed", date: "14 Oct", time: "14:30", noTrade: true, impact: "high", forecast: "3.1%", previous: "3.2%", inMinutes: 3210 },
-  { id: "e4", kind: "workshop", title: "Workshop · Journaling that works", day: "Thu", date: "15 Oct", time: "11:00", seats: "12 of 20 seats" },
-  { id: "e5", kind: "one-on-one", title: "1:1 with coach", day: "Fri", date: "16 Oct", time: "16:00" },
-  { id: "e6", kind: "news", title: "FOMC minutes", day: "Thu", date: "15 Oct", time: "20:00", impact: "medium" },
-  { id: "e7", kind: "news", title: "ECB rate decision", day: "Thu", date: "15 Oct", time: "14:15", impact: "high", forecast: "3.25%", previous: "3.50%", noTrade: true },
-  { id: "e8", kind: "news", title: "US retail sales", day: "Fri", date: "16 Oct", time: "14:30", impact: "medium", forecast: "0.3%", previous: "0.6%" },
-  { id: "e9", kind: "news", title: "UK GDP", day: "Fri", date: "16 Oct", time: "08:00", impact: "low", forecast: "0.2%", previous: "0.1%" },
+  { id: "e1", kind: "live", title: "Live trading · NY open", day: "Mon", date: "10 Nov", time: "15:30", live: false, inMinutes: 390, seats: "41 signed up" },
+  { id: "e2", kind: "call", title: "Q&A call", day: "Tue", date: "11 Nov", time: "18:00", seats: "34 signed up" },
+  { id: "e3", kind: "news", title: "US CPI", day: "Wed", date: "12 Nov", time: "14:30", noTrade: true, impact: "high", forecast: "3.1%", previous: "3.2%", inMinutes: 3210 },
+  { id: "e4", kind: "workshop", title: "Workshop · Journaling that works", day: "Thu", date: "13 Nov", time: "11:00", seats: "12 of 20 seats" },
+  { id: "e5", kind: "one-on-one", title: "1:1 with coach", day: "Fri", date: "14 Nov", time: "16:00" },
+  { id: "e6", kind: "news", title: "FOMC minutes", day: "Thu", date: "13 Nov", time: "20:00", impact: "medium" },
+  { id: "e7", kind: "news", title: "ECB rate decision", day: "Thu", date: "13 Nov", time: "14:15", impact: "high", forecast: "3.25%", previous: "3.50%", noTrade: true },
+  { id: "e8", kind: "news", title: "US retail sales", day: "Fri", date: "14 Nov", time: "14:30", impact: "medium", forecast: "0.3%", previous: "0.6%" },
+  { id: "e9", kind: "news", title: "UK GDP", day: "Fri", date: "14 Nov", time: "08:00", impact: "low", forecast: "0.2%", previous: "0.1%" },
 ]
 
 export const JOURNAL_WEEK = [
@@ -267,10 +267,10 @@ export const AI_INSIGHT = {
 }
 
 export const CALL_SLOTS = [
-  { day: "Tue", date: "13 Oct", times: ["10:00", "14:30"] },
-  { day: "Wed", date: "14 Oct", times: [] as string[] },
-  { day: "Thu", date: "15 Oct", times: ["09:00", "11:00", "16:00"] },
-  { day: "Fri", date: "16 Oct", times: ["13:00"] },
+  { day: "Tue", date: "11 Nov", times: ["10:00", "14:30"] },
+  { day: "Wed", date: "12 Nov", times: [] as string[] },
+  { day: "Thu", date: "13 Nov", times: ["09:00", "11:00", "16:00"] },
+  { day: "Fri", date: "14 Nov", times: ["13:00"] },
 ]
 export const CALL_ALLOWANCE = { used: 1, included: 2, length: 30 }
 

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowRight, Copy, MoreHorizontal, Plus, Radio, Trash2 } from "@/components/icons"
+import { ArrowRight, CalendarDays, Clock, Copy, MoreHorizontal, Pencil, Plus, Radio, Trash2, Users, Video } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Switch } from "@/components/ui/switch"
@@ -36,7 +36,7 @@ export function LivestreamsAdmin() {
   const studio = (s: Livestream) => router.push(`${base}/livestreams/${s.id}`)
   const link = (s: Livestream) => navigator.clipboard?.writeText(`${window.location.origin}/c/${coach.slug}/live/${s.id}`).then(() => toast("Link copied"), () => toast.error("Couldn't copy. Select it and copy by hand."))
   const quick = () => {
-    const s: Livestream = { id: uid("s"), title: "Livestream", startsAt: "2026-10-12T10:00", state: "scheduled", tiers: [], key: newStreamKey(), peak: 0, viewers: 0, chat: [], planned: 60, where: "both" }
+    const s: Livestream = { id: uid("s"), title: "Livestream", startsAt: "2025-11-12T10:00", state: "scheduled", tiers: [], key: newStreamKey(), peak: 0, viewers: 0, chat: [], planned: 60, where: "both" }
     saveLivestreams(coach, (l) => [...l, s])
     studio(s)
   }
@@ -44,7 +44,7 @@ export function LivestreamsAdmin() {
     saveLivestreams(coach, (l) => l.filter((x) => x.id !== s.id))
     toast(`${s.title} deleted`, { action: { label: "Undo", onClick: () => saveLivestreams(coach, (l) => [...l, s]) } })
   }
-  const schedule = <AdminButton onClick={() => setEditing("new")}><Plus /> Schedule a livestream</AdminButton>
+  const schedule = <AdminButton hierarchy={streams.length === 0 ? "primary" : "secondary"} onClick={() => setEditing("new")}><Plus /> Schedule a livestream</AdminButton>
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
@@ -53,9 +53,6 @@ export function LivestreamsAdmin() {
         text="Go live with OBS, chat with your students, and keep the recording."
         actions={
           <>
-            {streams.length > 0 && (
-              <AdminButton hierarchy="secondary" onClick={() => studio(next ?? streams[0])}><Radio /> Open studio</AdminButton>
-            )}
             {schedule}
           </>
         }
@@ -66,28 +63,36 @@ export function LivestreamsAdmin() {
       ) : (
         <>
           {next && (
-            <section aria-label="Next livestream" className="flex flex-col overflow-hidden rounded-a-lg border border-a-border bg-a-panel md:min-h-[280px] md:flex-row">
-              <div aria-hidden className="h-28 shrink-0 bg-[linear-gradient(135deg,var(--admin-color-accent-soft),var(--admin-color-bg-raised)_70%)] md:h-auto md:w-[360px]" />
-              <div className="flex min-w-0 flex-1 flex-col gap-3 p-7">
-                <span className="t-mono-label text-a-text-accent">{next.state === "live" ? "Live now" : `Next live · ${untilLabel(next.startsAt)}`}</span>
-                <h2 className="t-heading-xl text-a-text [overflow-wrap:anywhere]">{next.title}</h2>
-                <p className="t-body-m text-a-text-2">{whenLabel(next.startsAt).replace(",", " ·")} · {lengthLabel(next.planned ?? 60)} · {who(next)}</p>
-                <dl className="flex flex-wrap gap-x-8 gap-y-3 py-1.5">
-                  <div className="grid min-w-40 gap-1.5">
-                    <dt className="t-mono-label text-a-text-2">{next.state === "live" ? "Watching now" : "Said they'll join"}</dt>
-                    <dd className="t-title text-a-text tabular-nums">{next.state === "live" ? next.viewers : 41}</dd>
-                  </div>
-                  <span aria-hidden className="w-px bg-a-border" />
-                  <div className="grid min-w-40 gap-1.5">
-                    <dt className="t-mono-label text-a-text-2">Last live</dt>
-                    <dd className="t-title text-a-text tabular-nums">{past[0] ? `${past[0].peak} watching` : "None yet"}</dd>
-                  </div>
-                </dl>
-                <div className="flex flex-wrap items-center gap-2">
-                  <AdminButton onClick={() => studio(next)}>Open studio <ArrowRight /></AdminButton>
-                  <AdminButton hierarchy="secondary" onClick={() => link(next)}><Copy /> Copy the link</AdminButton>
-                  {next.state === "scheduled" && <AdminButton hierarchy="ghost" onClick={() => setEditing(next)}>Edit</AdminButton>}
+            <section aria-label="Next livestream" className="grid overflow-hidden rounded-a-lg border border-a-border bg-a-panel md:min-h-[230px] md:grid-cols-[minmax(0,440px)_minmax(0,1fr)_minmax(0,300px)]">
+              {/* Figma Livestreams 01: preview, what is next, and who is coming. */}
+              <div aria-hidden className="relative h-40 bg-[linear-gradient(135deg,var(--admin-color-accent-soft),var(--admin-color-bg-sunk)_70%)] md:h-auto">
+                <Video className="absolute top-1/2 left-1/2 size-5 -translate-x-1/2 -translate-y-1/2 text-a-text-3" />
+                <span className="absolute right-3 bottom-3 rounded-a-sm bg-a-page px-2 py-1 t-caption text-a-text">{lengthLabel(next.planned ?? 60)}</span>
+              </div>
+              <div className="flex min-w-0 flex-col justify-center gap-3 border-a-border p-7 md:border-x">
+                <div className="flex flex-wrap items-center gap-2 t-caption text-a-text-2">
+                  {next.state === "live" ? <Tag tone="danger">Live now</Tag> : <><span>Next live</span><Tag>{untilLabel(next.startsAt).replace(/^./, (c) => c.toUpperCase())}</Tag><Tag tone="warning">Waiting for OBS</Tag></>}
                 </div>
+                <h2 className="t-heading-xl text-a-text [overflow-wrap:anywhere]">{next.title}</h2>
+                <p className="flex flex-wrap items-center gap-x-4 gap-y-1 t-caption text-a-text-2">
+                  <span className="flex items-center gap-1.5"><CalendarDays className="size-3.5" aria-hidden />{whenLabel(next.startsAt).replace(",", " ·")}</span>
+                  <span className="flex items-center gap-1.5"><Clock className="size-3.5" aria-hidden />{lengthLabel(next.planned ?? 60)}</span>
+                  <span className="flex items-center gap-1.5"><Users className="size-3.5" aria-hidden />{who(next)}</span>
+                </p>
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <AdminButton onClick={() => studio(next)}>Open studio <ArrowRight /></AdminButton>
+                  <AdminButton hierarchy="secondary" onClick={() => link(next)}><Copy /> Copy link</AdminButton>
+                  {next.state === "scheduled" && <AdminButton hierarchy="ghost" onClick={() => setEditing(next)}><Pencil /> Edit</AdminButton>}
+                </div>
+              </div>
+              <div className="flex flex-col justify-center gap-4 p-7">
+                <div className="flex items-center">
+                  {["MA", "AL", "PR", "DA", "JW"].map((i) => <span key={i} aria-hidden className="-ml-1.5 grid size-7 place-items-center rounded-full border border-a-border bg-a-raised t-micro-medium text-a-text first:ml-0">{i}</span>)}
+                  <span className="ml-2 t-caption text-a-text-2">+36</span>
+                </div>
+                <div className="flex items-baseline gap-2"><span className="t-metric text-a-text tabular-nums">{next.state === "live" ? next.viewers : 41}</span><span className="t-caption text-a-text-2">{next.state === "live" ? "watching now" : "said they’ll join"}</span></div>
+                <span aria-hidden className="h-px bg-a-border" />
+                <div className="flex items-baseline gap-2"><span className="t-metric text-a-text tabular-nums">{past[0] ? past[0].peak : "—"}</span><span className="t-caption text-a-text-2">watching at the last live&apos;s peak</span></div>
               </div>
             </section>
           )}
@@ -130,17 +135,29 @@ export function LivestreamsAdmin() {
             <AdminTable minWidth={900}>
               <AdminTableHead>
                 <AdminTh>Livestream</AdminTh>
-                <AdminTh width={216}>{tab === "live" ? "Started" : "Starts"}</AdminTh>
-                <AdminTh width={236}>{tab === "live" ? "Watching" : "Who can watch"}</AdminTh>
-                <AdminTh width={136}>Status</AdminTh>
+                <AdminTh width={140}>{tab === "live" ? "Started" : "Starts"}</AdminTh>
+                <AdminTh width={100}>Length</AdminTh>
+                <AdminTh width={90}>{tab === "live" ? "Watching" : "Joining"}</AdminTh>
+                <AdminTh width={236}>Who can watch</AdminTh>
+                <AdminTh width={116}>Status</AdminTh>
                 <AdminTh width={56} />
               </AdminTableHead>
               <tbody>
                 {list.map((s) => (
                   <AdminTr key={s.id} onClick={() => studio(s)}>
-                    <AdminTd className="truncate text-a-text"><Link href={`${base}/livestreams/${s.id}`} onClick={(e) => e.stopPropagation()} className="rounded-a-xs outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">{s.title}</Link></AdminTd>
+                    <AdminTd>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span aria-hidden className="h-8 w-[52px] shrink-0 rounded-a-xs bg-[linear-gradient(135deg,var(--admin-color-accent-soft),var(--admin-color-bg-raised))]" />
+                        <div className="flex min-w-0 flex-col">
+                          <Link href={`${base}/livestreams/${s.id}`} onClick={(e) => e.stopPropagation()} className="truncate rounded-a-xs t-body-m text-a-text outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">{s.title}</Link>
+                          <span className="truncate t-caption text-a-text-2">{s.where === "live" ? "Live page only" : "Calendar and Live page"}</span>
+                        </div>
+                      </div>
+                    </AdminTd>
                     <AdminTd className="whitespace-nowrap">{whenLabel(s.startsAt).replace(",", " ·")}</AdminTd>
-                    <AdminTd className="truncate text-a-text">{tab === "live" ? `${s.viewers} watching` : who(s)}</AdminTd>
+                    <AdminTd className="whitespace-nowrap">{lengthLabel(s.planned ?? s.minutes ?? 60)}</AdminTd>
+                    <AdminTd className="text-a-text tabular-nums">{tab === "live" ? s.viewers : s.joining ?? "—"}</AdminTd>
+                    <AdminTd><span className="flex flex-wrap gap-1">{(s.tiers.length === 0 ? ["Everyone"] : s.tiers.map((id) => coach.tiers.find((t) => t.id === id)?.name ?? id)).map((n) => <Tag key={n}>{n}</Tag>)}</span></AdminTd>
                     <AdminTd><StateBadge state={s.state} /></AdminTd>
                     <AdminTd align="end" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
@@ -174,7 +191,7 @@ export function LivestreamsAdmin() {
 
 export function StateBadge({ state }: { state: Livestream["state"] }) {
   return (
-    <Tag tone={state === "live" ? "danger" : state === "scheduled" ? "accent" : "neutral"} dot>
+    <Tag tone={state === "live" ? "danger" : "neutral"}>
       {state === "live" ? "Live now" : state === "scheduled" ? "Scheduled" : "Ended"}
     </Tag>
   )
@@ -189,7 +206,7 @@ function ScheduleModal({ stream, onClose }: { stream: Livestream | "new" | null;
   const [where, setWhere] = useState("both")
   const [pick, setPick] = useState(false)
   const [tiers, setTiers] = useState<string[]>([])
-  const [when, setWhen] = useState("2026-11-12T15:00")
+  const [when, setWhen] = useState("2025-11-12T15:00")
   const [len, setLen] = useState("60")
   const [toCourse, setToCourse] = useState(false)
   if (stream && stream !== last) {
@@ -200,7 +217,7 @@ function ScheduleModal({ stream, onClose }: { stream: Livestream | "new" | null;
     setWhere(s?.where ?? "both")
     setPick((s?.tiers.length ?? 0) > 0)
     setTiers(s?.tiers ?? [])
-    setWhen(s?.startsAt ?? "2026-11-12T15:00")
+    setWhen(s?.startsAt ?? "2025-11-12T15:00")
     setLen(String(s?.planned ?? 60))
     setToCourse(false)
   }

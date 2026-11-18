@@ -62,7 +62,7 @@ export function StudentsPage() {
     invited: students.filter((s) => s.joined.startsWith("invited")).length,
     paused: paused.length,
   }
-  const joinedThisMonth = students.filter((s) => /Oct 2026|Sep 2026/.test(s.joined)).length
+  const joinedThisMonth = students.filter((s) => /Nov 2025|Oct 2025/.test(s.joined)).length
   const onPage = shown.filter((r) => picked.includes(r.id)).length
   const selected = students.filter((s) => picked.includes(s.id))
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))

@@ -3,14 +3,14 @@
 import { useCoach } from "@/components/coach/coach-provider"
 import { ACCESS_FEATURES, courseTiers, isFreeTier, saveAccess, useAccess, useTiers } from "@/lib/data/access"
 import { saveCatalog, useCatalog } from "@/lib/data/learning"
-import { cn } from "@/lib/utils"
+import { Check } from "@/components/icons"
 import { AdminFilter, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, Tag } from "../ui"
 
-/** A dot per tier: filled green when the tier gets it, an empty ring when not. A checkbox for the keyboard and screen readers. */
+/** A mark per tier: a green check when the tier gets it, an empty ring when not. A checkbox for the keyboard and screen readers. */
 function Dot({ on, label, onChange }: { on: boolean; label: string; onChange: (v: boolean) => void }) {
   return (
     <button type="button" role="checkbox" aria-checked={on} aria-label={label} onClick={() => onChange(!on)} className="grid size-6 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:size-10">
-      <span aria-hidden className={cn("size-3.5 rounded-full border-[1.5px] transition-colors duration-300", on ? "border-a-success-fill bg-a-success-fill shadow-[0_0_0_3px_var(--admin-color-success-soft,transparent)]" : "border-a-icon hover:border-a-text")} />
+      {on ? <Check aria-hidden className="size-4 text-a-success" /> : <span aria-hidden className="size-3.5 rounded-full border-[1.5px] border-a-icon transition-colors duration-300 hover:border-a-text" />}
     </button>
   )
 }
@@ -51,7 +51,7 @@ export function AccessOverview() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="t-body-m text-a-text-2">What each tier unlocks. Click a dot to change it.</p>
+        <p className="t-body-m text-a-text-2">What each tier unlocks. Click a check to change it.</p>
         <AdminFilter
           label="Locked content"
           ariaLabel="Locked content"

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 import { AdminButton, AdminDrawer, AdminField, AdminFilter, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, EmptyState, Tag, adminControl } from "../ui"
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-/** "2026-12-01" → "Mon 1 Dec" */
+/** "2025-12-01" → "Mon 1 Dec" */
 const startLabel = (iso: string) => {
   const d = new Date(`${iso}T12:00:00Z`)
   return Number.isNaN(d.getTime()) ? iso : `${DAYS[d.getUTCDay()]} ${fmtDate(iso, false)}`
@@ -40,7 +40,7 @@ export function Groups({ newSignal }: { newSignal: number }) {
   useEffect(() => {
     if (newSignal === seen.current) return
     seen.current = newSignal
-    setOpen({ id: `g${Date.now()}`, name: "December cohort", start: "2026-12-01", end: "2027-02-18", seats: 30, members: 0, waiting: 0, tiers: tiers.filter((t) => !isFreeTier(t)).slice(0, 2).map((t) => t.id), waitlist: true, channel: true, ranking: coach.modules.ranking })
+    setOpen({ id: `g${Date.now()}`, name: "December cohort", start: "2025-12-01", end: "2025-12-31", seats: 30, members: 0, waiting: 0, tiers: tiers.filter((t) => !isFreeTier(t)).slice(0, 2).map((t) => t.id), waitlist: true, channel: true, ranking: coach.modules.ranking })
   }, [newSignal, tiers, coach.modules.ranking])
 
   return (
@@ -52,8 +52,8 @@ export function Groups({ newSignal }: { newSignal: number }) {
           <AdminTableHead>
             <AdminTh>Group</AdminTh>
             <AdminTh width={170}>Tier</AdminTh>
-            <AdminTh width={92} align="end">Members</AdminTh>
-            <AdminTh width={92} align="end">Seats</AdminTh>
+            <AdminTh width={92}>Members</AdminTh>
+            <AdminTh width={92}>Seats</AdminTh>
             <AdminTh width={128}>Starts</AdminTh>
             <AdminTh width={240}>Extras</AdminTh>
             <AdminTh width={64} />
@@ -63,13 +63,13 @@ export function Groups({ newSignal }: { newSignal: number }) {
               <AdminTr key={g.id} onClick={() => setOpen(g)}>
                 <AdminTd>
                   <div className="grid min-w-0 gap-0.5">
-                    <button type="button" onClick={(e) => (e.stopPropagation(), setOpen(g))} className="w-fit max-w-full truncate rounded-a-xs text-left t-body-m-medium text-a-text outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">{g.name}</button>
+                    <button type="button" onClick={(e) => (e.stopPropagation(), setOpen(g))} className="w-fit max-w-full truncate rounded-a-xs text-left t-body-m text-a-text outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">{g.name}</button>
                     <span className="truncate t-caption text-a-text-2">{g.waiting > 0 ? `${g.waiting} on the waiting list` : g.description ?? `${fmtDate(g.start)} – ${fmtDate(g.end)}`}</span>
                   </div>
                 </AdminTd>
                 <AdminTd className="truncate">{tierNames(g)}</AdminTd>
-                <AdminTd align="end">{g.members}</AdminTd>
-                <AdminTd align="end">{g.seats > 0 ? g.seats : "No limit"}</AdminTd>
+                <AdminTd>{g.members}</AdminTd>
+                <AdminTd>{g.seats > 0 ? g.seats : "No limit"}</AdminTd>
                 <AdminTd>{startLabel(g.start)}</AdminTd>
                 <AdminTd>
                   <div className="flex flex-wrap gap-1.5">

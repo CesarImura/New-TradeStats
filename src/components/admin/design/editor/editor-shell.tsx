@@ -179,7 +179,7 @@ export function EditorBar({
               <History /> Earlier versions
             </AdminMenuItem>
             <AdminMenuItem onClick={() => setMenu("guide")}>
-              <PlayCircle /> 2-minute guide
+              <PlayCircle /> 1-minute guide
             </AdminMenuItem>
             <AdminMenuSeparator />
             <AdminMenuItem tone="danger" disabled={!editor.dirty} onClick={editor.discard}>
@@ -204,7 +204,7 @@ export function EditorBar({
 /** The short video guide for a Design screen, with the offer to set it up for the coach. */
 export function GuideDialog({ title, text, open, onOpenChange }: { title: string; text: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
-    <AdminModal open={open} onOpenChange={onOpenChange} title={title} subtitle={text} className="sm:max-w-xl">
+    <AdminModal overlay="plain" open={open} onOpenChange={onOpenChange} title={title} subtitle={text} className="sm:max-w-xl">
       <div className="grid aspect-video place-items-center rounded-a-lg bg-a-subtle">
         <PlayCircle className="size-12 text-a-text-3" />
       </div>
@@ -223,8 +223,9 @@ export function GuideDialog({ title, text, open, onOpenChange }: { title: string
 export function VersionsSheet({ slug, open, onOpenChange }: { slug: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   const history = useHistory(slug)
   return (
-    <AdminDrawer open={open} onOpenChange={onOpenChange} title="Earlier versions" subtitle="Restoring a version opens it as a draft. Publish to make it live again.">
+    <AdminDrawer overlay="plain" width={420} open={open} onOpenChange={onOpenChange} title="Earlier versions">
       <div className="grid gap-2">
+        <p className="t-body-m text-a-text-2">Restoring a version opens it as a draft. Publish to make it live again.</p>
         {history.length === 0 && <p className="t-body-m text-a-text-2">Nothing yet. Each time you publish, or switch to another look, the version before it is kept here.</p>}
         {history.map((v, i) => (
           <div key={v.at + i} className="flex items-center justify-between gap-3 rounded-a-lg border border-a-border p-3">

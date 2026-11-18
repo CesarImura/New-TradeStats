@@ -85,7 +85,7 @@ export function PlayerFrame({ lesson, course, className, children, controls = tr
 
 export const moduleOf = (c: Course, lessonId: string): Module | undefined => c.modules.find((m) => m.lessons.some((l) => l.id === lessonId))
 
-/** A date and time as the coach reads it: "Thu 29 Oct" and "Thu 29 Oct at 09:00". `iso` is local ("2026-10-29T09:00"). */
+/** A date and time as the coach reads it: "Thu 27 Nov" and "Thu 27 Nov at 09:00". `iso` is local ("2025-11-27T09:00"). */
 export const dayLabel = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }).replace(",", "")
 export const whenLabel = (iso: string) => `${dayLabel(iso)} at ${iso.slice(11, 16)}`
 /** Local "YYYY-MM-DDTHH:MM" for a Date (what date and time inputs speak). */

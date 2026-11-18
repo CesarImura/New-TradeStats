@@ -31,12 +31,11 @@ import { pageLayout, resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import { getWidget, heightFor, heightOf } from "@/components/widgets/registry"
 import { TEMPLATES } from "@/lib/theme/templates"
 import { readingOrder, uid, type PageId, type WidgetInstance } from "@/lib/widgets/layout"
-import { cn } from "@/lib/utils"
 import { WidgetLibrary, type AddOptions } from "../panels/builder-panels"
 import { WidgetInspector } from "../panels/widget-inspector"
 import { ThumbStyles } from "../thumbs/widget-thumb"
 import { RevealContext, Row, Segmented } from "../fields/controls"
-import { designTabs, DeviceSwitch, Readability, SettingsPanel, THEME_GROUPS, without } from "../panels/settings-panel"
+import { designTabs, DeviceSwitch, Readability, SettingsPanel, THEME_GROUPS, usePanelSearching, without } from "../panels/settings-panel"
 import { AllWidgetsInspector } from "../panels/all-widgets-inspector"
 import { DesignProvider } from "../fields/design-fields"
 import { GuideDialog, VersionsSheet, useDraftEditor } from "./editor-shell"
@@ -277,7 +276,7 @@ export function DesignWorkspace() {
     <>
     {/* The way to every widget's style (corner radius, cards, buttons, charts): the first thing in Pages, big enough to find.
         `data-tour="editor-widgets"`: step 2 of the design editor tour (Getting started → Tour the design editor). */}
-    <div className="px-4 pb-3" data-tour="editor-widgets">
+    <SearchHides><div className="px-4 pb-3" data-tour="editor-widgets">
       {/* Admin / Editor Design all card: a bordered panel, an icon tile, the name and what it holds; the active edge while it is open. */}
       <button
         type="button"
@@ -294,6 +293,7 @@ export function DesignWorkspace() {
         </span>
       </button>
     </div>
+    </SearchHides>
     <WidgetLibrary
       key={page}
       page={page}
@@ -316,7 +316,7 @@ export function DesignWorkspace() {
   )
   const tabs = designTabs({
     // Light or dark moved to Theme (Figma Editor · 2 Style): Brand is who you are, Theme is how it looks.
-    brand: { groups: [{ title: "Import from your website", fields: ["import-site"], keys: [], words: "import website url colours fonts logo brand" }, { title: "Your platform", fields: ["logo", "name"], keys: [], words: "logo name platform" }, ...THEME_GROUPS.colour] },
+    brand: { groups: [{ title: "Your platform", fields: ["logo", "name", "import-site"], keys: [], words: "logo name platform import website url colours fonts brand" }, ...THEME_GROUPS.colour] },
     look: {
       content: <ThemeTab />,
       finds: [
@@ -387,7 +387,7 @@ export function DesignWorkspace() {
               <>
                 <AdminMenu>
                   <AdminMenuTrigger render={<AdminFilterButton label="Page" value={here} title="The page you are editing. Click to change page" />} />
-                  <AdminMenuContent align="center" className="w-60">
+                  <AdminMenuContent align="center" className="w-[220px]">
                     {/* The platform's pages; the page inside a course sits under Playbook, which it belongs to. */}
                     <AdminMenuGroup>
                       <AdminMenuLabel>Pages</AdminMenuLabel>
@@ -404,12 +404,10 @@ export function DesignWorkspace() {
                               }}
                             >
                               <span className="flex-1 truncate">{p.label}</span>
-                              {on && <Check className="size-4" />}
                             </AdminMenuItem>
                             {p.id === "courses" && (
-                              <AdminMenuItem active={step === "course"} className={cn("pl-8", step !== "course" && "text-a-text-2")} onClick={() => (select(null), go("course"))}>
+                              <AdminMenuItem active={step === "course"} onClick={() => (select(null), go("course"))}>
                                 <span className="flex-1 truncate">Course page</span>
-                                {step === "course" && <Check className="size-4" />}
                               </AdminMenuItem>
                             )}
                           </Fragment>
@@ -433,7 +431,6 @@ export function DesignWorkspace() {
                             }}
                           >
                             <span className="flex-1 truncate">{j.label}</span>
-                            {on && <Check className="size-4" />}
                           </AdminMenuItem>
                         )
                       })}
@@ -454,19 +451,19 @@ export function DesignWorkspace() {
                   <History /> Earlier versions
                 </AdminMenuItem>
                 <AdminMenuItem onClick={() => setMenu("guide")}>
-                  <PlayCircle /> 2-minute guide
+                  <PlayCircle /> 1-minute guide
                 </AdminMenuItem>
                 <AdminMenuItem render={<Link href={`/admin/${slug}/design/pages/all${fromSetup ? "?from=setup" : ""}`} />}>
                   <LayoutGrid /> All pages side by side
                 </AdminMenuItem>
                 {CAN_SAVE_TEMPLATE && (
                   <AdminMenuItem onClick={() => setMenu("template")}>
-                    <FileDown /> Save as template…
+                    <FileDown /> Save as template
                   </AdminMenuItem>
                 )}
                 <AdminMenuSeparator />
                 <AdminMenuItem onClick={() => setMenu("reset")}>
-                  <RotateCcw /> Reset to the original design…
+                  <RotateCcw /> Reset to the original design
                 </AdminMenuItem>
                 <AdminMenuItem tone="danger" disabled={!editor.dirty} onClick={editor.discard}>
                   <Trash2 /> Discard changes
@@ -695,16 +692,21 @@ function useFlash(panel: React.RefObject<HTMLDivElement | null>, reveal: { field
   }, [panel, reveal])
 }
 
+/** Hidden while the panel search is open: the search and its results are all the panel shows then. */
+function SearchHides({ children }: { children: React.ReactNode }) {
+  return usePanelSearching() ? null : <>{children}</>
+}
+
 /** Back to the original design, from the ⋯ menu: asks first, says what goes back, and can put the pages back too. Undoable. */
 function ResetDialog({ open, onOpenChange, name, onReset }: { open: boolean; onOpenChange: (o: boolean) => void; name: string; onReset: (pagesToo: boolean) => void }) {
   const [pagesToo, setPagesToo] = useState(false)
   return (
-    <AdminModal
+    <AdminModal overlay="plain"
       open={open}
       onOpenChange={(o) => (onOpenChange(o), setPagesToo(false))}
       title="Back to the original design?"
-      subtitle={`Colours, type, shape, widgets and background go back to how ${name} started. Your name, logo and menu stay. You can undo it (⌘Z).`}
-      className="sm:max-w-sm"
+      subtitle={`Colours, type, shapes, widgets and background go back to how ${name} started. Your name, logo and menu stay. You can undo it (⌘Z).`}
+      className="sm:max-w-[560px]"
       footer={
         <>
           <AdminButton hierarchy="secondary" onClick={() => onOpenChange(false)}>
