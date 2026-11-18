@@ -24,6 +24,8 @@ export type TourStep = {
   pad?: number
   /** Distance from the spotlight to the coachmark in px (18 unless set). */
   gap?: number
+  /** Vertical nudge of the coachmark in px, for a Figma step that sits a little off the target's top or middle. */
+  dy?: number
   /** "Do it later" instead of "Skip". */
   later?: boolean
   /** The last step: the tour is done; its button goes back to Getting started. */
@@ -68,8 +70,8 @@ export const TOURS: Record<TourId, Tour> = {
     done: (c) => !!c?.setup?.firstCourse,
     steps: [
       { id: "new", target: t("course-new"), part: 0, title: "Start your first course", body: "Your first course starts here. We’ll guide you one step at a time.", hint: "Click New course" },
-      { id: "name", target: t("course-title"), part: 1, side: "right", gap: 33, title: "Name your course", body: "Pick a short name your students will see. Description and cover are optional.", hint: "Type a name, then click Continue" },
-      { id: "method", target: `${t("course-method")}:not([data-picked])`, part: 2, side: "right", title: "Where are your videos?", body: "On your computer: Upload a folder.\nOn YouTube, Vimeo or Loom: Import links.\nNot ready yet: Start blank.", hint: "Pick one to continue" },
+      { id: "name", target: t("course-title"), part: 1, side: "right", gap: 33, dy: 7, title: "Name your course", body: "Pick a short name your students will see. Description and cover are optional.", hint: "Type a name, then click Continue" },
+      { id: "method", target: `${t("course-method")}:not([data-picked])`, part: 2, side: "bottom", gap: 10, title: "Where are your videos?", body: "On your computer: Upload a folder.\nOn YouTube, Vimeo or Loom: Import links.\nNot ready yet: Start blank.", hint: "Pick one to continue" },
       { id: "folder", target: t("course-folder"), part: 2, side: "right", title: "Check your lessons", body: "Each folder became a module and each video a lesson. Files that aren’t videos are skipped.", hint: "Click Upload and create" },
       { id: "folder-drop", target: `${t("course-folder-drop")}[data-picked]`, part: 2, side: "right", title: "Drop your folder", body: "Each subfolder becomes a module and each video a lesson.", hint: "Drop the folder or click to choose it" },
       { id: "links", target: `${t("course-links")}[data-picked]`, part: 2, side: "right", title: "Paste your links", body: "Copy the link of each video and paste it here. We’ll turn each one into a lesson.", hint: "Paste, then click Import and create" },
@@ -92,7 +94,7 @@ export const TOURS: Record<TourId, Tour> = {
     complete: (slug) => setSetup(slug, { firstTier: true }),
     done: (c) => !!c?.setup?.firstTier,
     steps: [
-      { id: "new", target: t("tier-new"), part: 0, title: "Create your first tier", body: "Start with one. You can add more tiers anytime.", hint: "Click New tier" },
+      { id: "new", target: t("tier-new"), part: 0, gap: 10, title: "Create your first tier", body: "Start with one. You can add more tiers anytime.", hint: "Click New tier" },
       { id: "plan", target: `${t("tier-plan")}:is(:not([data-filled]), :focus-within)`, part: 1, side: "left", title: "Name it and set a price", body: "Type a name and a monthly price. Students see both on your sales page.", hint: "Then choose what it unlocks" },
       { id: "plan-free", target: `${t("tier-plan")}[data-free]:is(:not([data-filled]), :focus-within)`, part: 1, side: "left", title: "Name it and pick Free", body: "A free tier has no price or trial. Students join with their e-mail.", hint: "Then choose what it unlocks" },
       { id: "unlocks", target: `body:has(${t("tier-plan")}[data-filled]:not(:focus-within)) ${t("tier-unlocks")}`, part: 2, side: "left", title: "Choose what it unlocks", body: "Keep All courses. Every course you add, now and later, is part of this tier.", hint: "Click Save tier" },
