@@ -30,6 +30,7 @@ export function useConfirmSwitch() {
             Keep my design
           </AdminButton>
           <AdminButton
+            autoFocus
             onClick={() => {
               if (!pending) return
               keepVersion?.(`Before switching to ${pending.name}`)

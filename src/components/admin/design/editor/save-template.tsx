@@ -99,7 +99,7 @@ export function SaveTemplateDialog({ coach, theme, open, onOpenChange }: { coach
           </div>
           <div className="grid gap-2">
             <Label htmlFor="tpl-name">Name</Label>
-            <Input id="tpl-name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input id="tpl-name" autoFocus value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="tpl-blurb">One line about it</Label>
