@@ -22,7 +22,7 @@ import {
 } from "@/components/icons"
 import { PAGE_ICONS, isPageId, pageIdOf, type Coach, type ModuleId } from "@/lib/data/coaches"
 
-export type NavItem = { id: string; label: string; href: string; icon: LucideIcon; screens: string }
+export type NavItem = { id: string; label: string; href: string; icon: LucideIcon; screens: string; /** Not available yet: shows the grey Soon badge and opens the Coming soon screen. */ soon?: boolean }
 
 const MODULE_ICON: Record<ModuleId, LucideIcon> = {
   courses: BookOpen,
@@ -76,14 +76,14 @@ export function adminNav(coach: Coach, base: string): { group: string; items: Na
       group: "Coaching",
       items: [
         { id: "students", label: "Students", href: `${base}/students`, icon: Users, screens: "ADM-02 to ADM-07" },
-        { id: "journal", label: "Journal & feedback", href: `${base}/journal`, icon: NotebookPen, screens: "ADM-05, ADM-06, ADM-16" },
+        { id: "journal", label: "Journal & feedback", href: `${base}/journal`, icon: NotebookPen, screens: "ADM-05, ADM-06, ADM-16", soon: true },
         { id: "content", label: "Content", href: `${base}/content`, icon: GraduationCap, screens: "ADM-08 to ADM-15" },
         { id: "downloads", label: "Downloads", href: `${base}/downloads`, icon: Download, screens: "ADM-59" },
         { id: "calendar", label: "Calendar", href: `${base}/calendar`, icon: CalendarDays, screens: "ADM-19 to ADM-23" },
         { id: "livestreams", label: "Livestreams", href: `${base}/livestreams`, icon: Video, screens: "ADM-61" },
         { id: "charts", label: "Charts", href: `${base}/charts`, icon: LineChart, screens: "ADM-57, ADM-58" },
         { id: "community", label: "Community", href: `${base}/community`, icon: MessagesSquare, screens: "ADM-17, ADM-18" },
-        { id: "ai", label: "AI assistant", href: `${base}/ai`, icon: Sparkles, screens: "ADM-24 to ADM-28" },
+        { id: "ai", label: "AI assistant", href: `${base}/ai`, icon: Sparkles, screens: "ADM-24 to ADM-28", soon: true },
       ],
     },
     {
