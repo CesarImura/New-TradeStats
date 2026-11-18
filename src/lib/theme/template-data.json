@@ -381,7 +381,7 @@
     "blurb": "Bright and energetic. Pill buttons, deep shadows, icon rail.",
     "theme": {
       "template": "pulse",
-      "mode": "light",
+      "mode": "dark",
       "primary": "#3d5afe",
       "primaryForeground": "#ffffff",
       "palettes": {

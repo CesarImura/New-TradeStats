@@ -30,6 +30,7 @@ import { ArrangeCanvas, useArrange, type Device } from "./page-builder"
 import { CAN_SAVE_TEMPLATE, SaveTemplateDialog } from "./save-template"
 import { LayoutTab, MenuStep, ThemeTab } from "./design-steps"
 import { LOOKS } from "../looks"
+import { FONT_PAIRS } from "../options"
 import { LAYOUTS, THEMES } from "../presets"
 import { JOIN_SCREENS, type JoinScreenId } from "@/lib/data/join"
 import { studentCourses, useCatalog } from "@/lib/data/learning"
@@ -260,7 +261,30 @@ export function DesignWorkspace() {
   )
   const tabs = designTabs({
     // Light or dark moved to Theme (Figma Editor · 2 Style): Brand is who you are, Theme is how it looks.
-    brand: { groups: [{ title: "Your platform", fields: ["logo", "name", "import-site"], keys: [], words: "logo name platform import website url colours fonts brand" }, ...THEME_GROUPS.colour] },
+    type: {
+      finds: [
+        ...FONT_PAIRS.map((f) => ({ title: "Font pair", option: f.name, words: `${f.text} fonts typeface heading text serif mono` })),
+        ...["Light", "Medium", "Bold"].map((w) => ({ title: "Heading weight", option: w, words: "headings weight thin heavy" })),
+        { title: "Labels", words: "labels small caps uppercase mono plain" },
+        { title: "Numbers in widgets", words: "figures numbers headline mono display marked" },
+      ],
+    },
+    page: {
+      finds: [
+        ...["Plain", "Texture", "Gradient", "Image"].map((b) => ({ title: "Page background", option: b, words: "background page colour picture" })),
+        ...["Grid lines", "Dots", "Glow"].map((b) => ({ title: "Texture", option: b, words: "background pattern" })),
+        ...["Every page", "Home", "Login"].map((b) => ({ title: "Where it shows", option: b, words: "background where pages" })),
+        { title: "Readability", words: "image dim blur text contrast" },
+      ],
+    },
+    brand: { finds: [
+        { title: "Logo", words: "logo upload square png svg mark" },
+        { title: "Platform name", words: "name platform community" },
+        { title: "Brand colour", words: "brand primary colour color buttons accent" },
+        { title: "Highlight colour", words: "highlight accent colour color" },
+        { title: "Profit and loss colours", words: "profit loss green red up down trading numbers" },
+        { title: "Import from your website", words: "import website url colours fonts logo" },
+      ], groups: [{ title: "Your platform", fields: ["logo", "name", "import-site"], keys: [], words: "logo name platform import website url colours fonts brand" }, ...THEME_GROUPS.colour] },
     look: {
       content: <ThemeTab />,
       finds: [

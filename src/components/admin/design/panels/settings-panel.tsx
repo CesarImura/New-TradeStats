@@ -33,7 +33,7 @@ export const SECTION_LABEL = "t-mono-label-s text-a-text-3"
 /** `hidden`: not in the rail, but its settings are still found by search (Design's widget style, which lives in Pages). */
 /** `search`: the header's search looks in this section's own content (Pages: widgets), with this placeholder, instead of in every setting. */
 /** `finds`: what the search can find in a section that draws its own content (Theme, Layout): a row that opens the section. */
-export type SettingsFind = { title: string; words: string }
+export type SettingsFind = { title: string; words: string; /** The choice it stands for, shown after the title (Figma Style 11: "Heading weight · Bold"). */ option?: string }
 export type SettingsTab = { id: string; label: string; icon: React.ReactNode; blurb?: string; heading?: string; groups?: SettingsGroup[]; content?: React.ReactNode; hidden?: boolean; search?: string; finds?: SettingsFind[] }
 
 /** The theme's settings, by section. Hosts add their own groups (identity, dark colours) and sections around these. */
@@ -228,8 +228,9 @@ export function SettingsPanel({
   // A section with its own search (Pages) gets the text; the others search every setting.
   const ownSearch = !!current.search
   const term = ownSearch ? "" : q.trim().toLowerCase()
-  const found = term ? tabs.flatMap((t) => (t.groups ?? []).filter((g) => `${t.label} ${g.title} ${g.words}`.toLowerCase().includes(term)).map((g) => [t, g] as const)) : []
-  const foundIn = term ? tabs.flatMap((t) => (t.finds ?? []).filter((f) => `${t.label} ${f.title} ${f.words}`.toLowerCase().includes(term)).map((f) => [t, f] as const)) : []
+  // A section with `finds` is found by its rows (they open it); the others by their groups, controls and all.
+  const found = term ? tabs.filter((t) => !t.finds?.length).flatMap((t) => (t.groups ?? []).filter((g) => `${t.label} ${g.title} ${g.words}`.toLowerCase().includes(term)).map((g) => [t, g] as const)) : []
+  const foundIn = term ? tabs.flatMap((t) => (t.finds ?? []).filter((f) => `${t.label} ${f.title} ${f.option ?? ""} ${f.words}`.toLowerCase().includes(term)).map((f) => [t, f] as const)) : []
   const grad = `rail-${useId().replace(/:/g, "")}`
   // The rail: the merged sections as one icon, where the first of them stands.
   const visible = tabs.filter((t) => !t.hidden)
@@ -296,7 +297,7 @@ export function SettingsPanel({
         <div className={cn("flex shrink-0 flex-col gap-1 px-5 pt-5", sub ? "pb-3" : "pb-4")}>
           <div className="flex min-h-[22px] items-center gap-2">
             {searching ? (
-              <label className={cn("flex min-w-0 flex-1 items-center gap-2", ownSearch && "h-9 rounded-a-md border border-a-border-strong px-3")}>
+              <label className={"flex h-9 min-w-0 flex-1 items-center gap-2 rounded-a-md border border-a-border-strong px-3"}>
                 <Search className="size-4 shrink-0 text-a-icon" />
                 <input
                   autoFocus
@@ -308,7 +309,7 @@ export function SettingsPanel({
                   className="min-w-0 flex-1 bg-transparent t-body-m text-a-text outline-none placeholder:text-a-text-3"
                 />
                 {/* Pages (Figma 04 to 06): the way out sits inside the field. */}
-                {ownSearch && (
+                {(
                   <button type="button" aria-label="Close search" title="Close search" onClick={() => (setSearching(false), setQ(""))} className="-mr-1 grid size-6 shrink-0 place-items-center rounded-a-sm text-a-icon outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
                     <X className="size-4" />
                   </button>
@@ -318,7 +319,7 @@ export function SettingsPanel({
               <h2 className="min-w-0 flex-1 truncate t-heading-s text-a-text">{sub ? merge!.label : (current.heading ?? current.label)}</h2>
             )}
             {/* One search, in the same place in every section: in Pages it finds widgets, elsewhere any setting. */}
-            {!(searching && ownSearch) && <AdminButton
+            {!searching && <AdminButton
               hierarchy="ghost"
               size="sm"
               iconOnly
@@ -361,16 +362,17 @@ export function SettingsPanel({
           {term ? (
             found.length || foundIn.length ? (
               <>
+                <p className="px-5 pt-3 t-caption text-a-text-3">{foundIn.length + found.length} {foundIn.length + found.length === 1 ? "setting matches" : "settings match"} “{q.trim()}”</p>
                 {foundIn.length > 0 && (
                   <div className="grid gap-1 px-4 pt-3 pb-2">
                     {foundIn.map(([t, f]) => (
                       <button
-                        key={`${t.id}/${f.title}`}
+                        key={`${t.id}/${f.title}/${f.option ?? ""}`}
                         type="button"
                         onClick={() => (onTab(t.id), setQ(""), setSearching(false))}
                         className={cn("flex h-12 w-full items-center gap-3 rounded-a-md px-3 text-left hover:bg-a-hover", FOCUS)}
                       >
-                        <span className="min-w-0 flex-1 truncate t-body-m text-a-text">{f.title}</span>
+                        <span className="min-w-0 flex-1 truncate t-body-m text-a-text">{f.option ? `${f.title} · ${f.option}` : f.title}</span>
                         <span className="shrink-0 t-caption text-a-text-3">{t.label}</span>
                         <ChevronRight className="size-3.5 shrink-0 text-a-text-3" />
                       </button>
