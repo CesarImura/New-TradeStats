@@ -76,7 +76,7 @@ export function GettingStarted() {
             </p>
             <div className="flex gap-1 pb-2" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={doneCount} aria-label="Setup progress">
               {Array.from({ length: total }, (_, i) => (
-                <span key={i} className={cn("h-1.5 flex-1 rounded-full transition-colors duration-300", i < doneCount ? "bg-a-accent" : "bg-a-border")} />
+                <span key={i} className={cn("h-1.5 flex-1 rounded-full transition-colors duration-300", i < doneCount ? "bg-a-success-fill" : "bg-a-border")} />
               ))}
             </div>
             {!live && <Callout>Your progress is saved as you go.</Callout>}
