@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 
 const STATE = {
   done: "bg-a-success-fill text-a-on-accent",
-  current: "bg-a-accent-strong text-a-on-accent",
+  current: "bg-a-accent text-a-on-highlight",
   upcoming: "bg-a-raised text-a-text-2",
   success: "bg-a-success-fill text-a-on-accent",
   warning: "bg-a-warning-fill text-a-on-highlight",
