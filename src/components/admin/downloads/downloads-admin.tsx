@@ -73,11 +73,11 @@ export function DownloadsAdmin() {
     saveDownloads(coach, (l) => l.filter((x) => x.id !== d.id))
     toast(`${d.title} deleted`, { action: { label: "Undo", onClick: () => saveDownloads(coach, (l) => [d, ...l]) } })
   }
-  const upload = <AdminButton onClick={() => setEditing("new")}><Upload /> Upload a file</AdminButton>
+  const upload = (hierarchy?: "secondary") => <AdminButton hierarchy={hierarchy} onClick={() => setEditing("new")}><Upload /> Upload a file</AdminButton>
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
-      <PageHeader title="Downloads" text={all.length === 0 ? "No files yet" : `Files students can download · ${all.length} files · ${all.reduce((n, r) => n + r.downloads, 0).toLocaleString("en")} downloads this month`} actions={upload} />
+      <PageHeader title="Downloads" text={all.length === 0 ? "No files yet" : `Files students can download · ${all.length} files · ${all.reduce((n, r) => n + r.downloads, 0).toLocaleString("en")} downloads this month`} actions={upload(all.length === 0 ? "secondary" : undefined)} />
       {!coach.modules.downloads && (
         <Callout tone="warning" action={<AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="md">Review</AdminButton>}>
           Downloads is switched off, so students don&apos;t see it yet.
@@ -85,7 +85,7 @@ export function DownloadsAdmin() {
       )}
 
       {all.length === 0 ? (
-        <EmptyState icon={Download} title="No files yet" description="Share indicators, templates and worksheets. Students get a notification when you add one." actions={upload} />
+        <EmptyState icon={Download} title="No files yet" description="Share indicators, templates and worksheets. Students get a notification when you add one." actions={upload()} />
       ) : (
         <>
           <AdminToolbar>
