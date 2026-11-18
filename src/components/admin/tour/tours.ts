@@ -120,7 +120,7 @@ export const TOURS: Record<TourId, Tour> = {
       { id: "bank", target: t("payouts-bank"), part: 1, side: "left", gap: 8, dy: 42, title: "Add your bank account", body: "Your money arrives here every Monday. The account must be in your name.", hint: "Then click Save" },
       { id: "id", target: t("payouts-id"), part: 2, side: "left", gap: 8, dy: 47, title: "Check your identity", body: "Our payment partner checks your ID once. It usually takes a few minutes.", hint: "Upload it, then click Submit" },
       { id: "review", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="review"]`, part: 2, side: "bottom", gap: 20, final: true, pill: "ID in review", title: "We’re checking your ID", body: "Usually a few minutes, sometimes up to 2 days. Keep setting up; we’ll e-mail you when it’s done.", hint: "" },
-      { id: "done", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="connected"]`, part: 2, final: true, title: "Payouts are connected", body: "You’ll get paid every Monday. Next, add your legal pages.", hint: "" },
+      { id: "done", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="connected"]`, part: 2, side: "bottom", gap: 20, final: true, title: "Payouts are connected", body: "You’ll get paid every Monday. Next, add your legal pages.", hint: "" },
     ],
   },
   legal: {
