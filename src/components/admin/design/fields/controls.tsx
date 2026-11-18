@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
-import { SWATCH_ON } from "../states"
+import { Swatch } from "./swatch"
 
 /**
  * Click-to-edit: the setting fields picked in the preview. Folded parts of the
@@ -515,19 +515,7 @@ export function Swatches({
         {colors.map((c) => {
           const on = c.toLowerCase() === value.toLowerCase()
           return (
-            <button
-              key={c}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              aria-label={c}
-              onClick={() => onChange(c)}
-              className={cn(
-                "relative size-5 rounded-full ring-1 ring-a-border-strong ring-inset transition-transform outline-none after:absolute after:-inset-0.5 after:content-[''] hover:scale-110 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
-                on && cn("scale-110 hover:scale-110", SWATCH_ON),
-              )}
-              style={{ background: c }}
-            />
+            <Swatch key={c} role="radio" aria-checked={on} aria-label={c} onClick={() => onChange(c)} color={c} selected={on} />
           )
         })}
       </div>

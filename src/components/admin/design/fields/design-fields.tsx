@@ -24,6 +24,7 @@ import { SelectionCard } from "./choice-cards"
 import { Field, More, Segmented, SliderField, Swatches } from "./controls"
 import { FixedFirst, HIDDEN_INPUT, menuRow, SWITCH_OFF, SortableMenu, SortHandle, SortHint, useSort } from "./menu-sort"
 import { AddPageButton, PageRow } from "./pages-field"
+import { Swatch } from "./swatch"
 import { BRAND_COLORS, FONT_PAIRS, HIGHLIGHT_COLORS } from "../options"
 import { TradingColoursField } from "./trading-colours"
 import { card } from "../states"
@@ -258,7 +259,7 @@ function LogoField() {
         <div className="flex items-center gap-2 rounded-[4px] bg-muted p-2 t-caption">
           <span className="text-muted-foreground">From your logo</span>
           {suggested.map((c) => (
-            <button key={c} onClick={() => pickColor(c)} className="size-5 rounded-full ring-1 ring-a-border-strong ring-inset transition-transform hover:scale-110" style={{ background: c }} aria-label={`Use ${c}`} />
+            <Swatch key={c} onClick={() => pickColor(c)} color={c} aria-label={`Use ${c}`} />
           ))}
         </div>
       )}
