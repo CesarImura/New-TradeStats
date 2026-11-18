@@ -234,7 +234,7 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
   const dialog = document.querySelector(step.target)?.closest("[role=dialog]")
   const dimmedByDialog = !!dialog && dialog.hasAttribute("data-open")
   const inEditor = !!dialog && !dimmedByDialog
-  const { side, x, y, arrow } = place(hole, h, step.side, step.gap)
+  const { side, x, y, arrow } = place(hole, h, step.side, step.gap, step.dy)
   const Hint = side ? { bottom: ArrowUp, top: ArrowDown, right: ArrowLeft, left: ArrowRight }[side] : ArrowRight
   const progressIndex = step.part
 
@@ -292,7 +292,7 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
 }
 
 /** Where the coachmark goes: the step's side if it fits, else the first that does; kept on screen with a 16 px margin. */
-function place(hole: Box, h: number, want: Side = "bottom", GAP = DEFAULT_GAP) {
+function place(hole: Box, h: number, want: Side = "bottom", GAP = DEFAULT_GAP, dy = 0) {
   const vw = innerWidth
   const vh = innerHeight
   const fits: Record<Side, boolean> = {
@@ -313,7 +313,7 @@ function place(hole: Box, h: number, want: Side = "bottom", GAP = DEFAULT_GAP) {
     return { side, x, y, arrow: clamp(hole.x + hole.w / 2 - x, 20, W - 20) }
   }
   // Beside a tall target the coachmark sits on its middle; beside a short one, level with its top (Figma 1031:2, 1023:2).
-  const y = clamp(hole.h > h ? hole.y + hole.h / 2 - h / 2 : hole.y, 16, vh - h - 16)
+  const y = clamp((hole.h > h ? hole.y + hole.h / 2 - h / 2 : hole.y) + dy, 16, vh - h - 16)
   const x = side === "right" ? hole.x + hole.w + GAP : hole.x - GAP - W
   return { side, x, y, arrow: clamp(hole.y + hole.h / 2 - y, 20, h - 20) }
 }
