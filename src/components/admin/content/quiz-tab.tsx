@@ -114,7 +114,7 @@ export function QuizTab({ lesson, onChange }: { lesson: Lesson; onChange: (p: Pa
                       </AdminButton>
                     )}
                   </div>
-                  {q.answer === oi && <Tag tone="success" dot>Correct</Tag>}
+                  {q.answer === oi && <Tag tone="success">Correct</Tag>}
                 </div>
               ))}
               {q.options.length < 5 && (

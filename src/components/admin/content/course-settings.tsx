@@ -68,7 +68,7 @@ export function CourseSettingsDrawer({ course, open, onOpenChange, edit, onDupli
       <section className={section}>
         <h3 className="t-body-l-medium text-a-text">Status</h3>
         <div className="flex items-center gap-2 t-caption text-a-text-2">
-          <Tag tone={course.status === "published" ? "success" : course.status === "scheduled" ? "warning" : "neutral"} dot>{STATUS_LABEL[course.status]}</Tag>
+          <Tag tone={course.status === "published" ? "success" : course.status === "scheduled" ? "warning" : "neutral"}>{STATUS_LABEL[course.status]}</Tag>
           <span className="min-w-0 flex-1">{course.status === "published" ? `since 2 Oct · ${students} students` : course.status === "scheduled" ? `goes live ${course.scheduledAt ? whenLabel(course.scheduledAt) : (course.scheduledFor ?? "soon")}` : "Students can't see it yet"}</span>
           {course.status === "published" ? (
             <AdminButton hierarchy="secondary" size="md" onClick={() => (set({ status: "draft" }), toast("Unpublished. Students no longer see this course."))}>Unpublish</AdminButton>

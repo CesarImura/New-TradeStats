@@ -65,7 +65,7 @@ export function ChaptersTab({ course, lesson, t, setT, onChange }: { course: Cou
           <li key={`${i}-${c.at}`} className={cn("flex h-[46px] items-center gap-3 rounded-a-md border px-3.5", i === active ? "border-a-accent-strong" : "border-a-border")}>
             <input defaultValue={clock(c.at)} aria-label="Start time" onFocus={() => setT(c.at)} onBlur={(e) => set(lesson.chapters.map((x, j) => (j === i ? { ...x, at: Math.min(duration, parseTime(e.target.value)), ai: false } : x)))} className="w-11 bg-transparent t-caption text-a-text-2 outline-none focus-visible:text-a-text" />
             <input value={c.title} aria-label="Chapter title" onFocus={() => setT(c.at)} onChange={(e) => update(i, { title: e.target.value })} className="min-w-[4ch] max-w-full bg-transparent t-body-m text-a-text outline-none [field-sizing:content] focus-visible:ring-1 focus-visible:ring-[var(--admin-color-border-focus)]" />
-            {c.ai && <Tag tone="accent" dot>AI</Tag>}
+            {c.ai && <Tag tone="accent">AI</Tag>}
             <span aria-hidden className="min-w-0 flex-1" />
             <DropdownMenu>
               <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="sm" iconOnly aria-label={`More for ${c.title}`} />}>

@@ -27,7 +27,7 @@ export function StudentPreview({ course, lesson, onSelect, onEdit, onExit }: { c
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2.5 rounded-a-10 border border-a-accent bg-a-accent-soft px-3.5 py-2.5">
-        <Tag tone="accent" dot>Preview</Tag>
+        <Tag tone="accent">Preview</Tag>
         <span className="t-body-m text-a-text-2">Viewing as</span>
         <div role="radiogroup" aria-label="Viewing as" className="flex flex-wrap gap-1.5">
           {options.map((o) => (
