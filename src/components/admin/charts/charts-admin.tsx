@@ -112,7 +112,7 @@ function Settings({ s, setS }: { s: ChartSettings; setS: (n: ChartSettings | ((c
         </div>
         <div className="grid gap-1.5">
           <span className="t-caption text-a-text">Markets you trade</span>
-          <div role="group" aria-label="Markets you trade" className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+          <div role="group" aria-label="Markets you trade" className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
             {MARKETS.map((m) => {
               const on = s.markets.includes(m.id)
               return (
