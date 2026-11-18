@@ -53,7 +53,7 @@ export function EmailChips({ chips, onChange, labelId, hintId }: { chips: Chip[]
   return (
     <div
       onClick={(e) => e.target === e.currentTarget && input.current?.focus()}
-      className="flex min-h-11 cursor-text flex-wrap items-center gap-1.5 rounded-a-md border border-a-border bg-a-field p-2 transition-colors duration-150 focus-within:border-a-border-focus hover:border-a-border-strong"
+      className="flex min-h-9 cursor-text flex-wrap items-center gap-1.5 rounded-a-md border border-a-border bg-a-field p-[3px] pointer-coarse:min-h-10 transition-colors duration-150 focus-within:border-a-border-focus hover:border-a-border-strong"
     >
       {chips.map((c) => {
         const bad = !valid(c.email)
