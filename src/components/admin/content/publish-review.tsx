@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
+import { AlertTriangle, Check, CircleAlert } from "@/components/icons"
 import { allLessons, type Course } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
 import { AdminButton, AdminModal, AdminSegmented } from "../ui"
 import { dayLabel, localIso, type Upload } from "./course-parts"
 
 type Item = { tone: "danger" | "warning" | "success"; title: string; text: string; action?: { label: string; run: () => void } }
-const DOT = { danger: "bg-a-danger-fill", warning: "bg-a-warning-fill", success: "bg-a-success-fill" } as const
+/** Figma Content 11: an icon per item, not a dot: a triangle blocks, a circle warns, a check is fine. */
+const ICON = { danger: [AlertTriangle, "text-a-danger"], warning: [CircleAlert, "text-a-warning"], success: [Check, "text-a-success"] } as const
 
 /** Content · 12 Publish review: what blocks publishing, what to know, when, and who hears about it. */
 export function PublishReview({ course, uploads, open, onOpenChange, onOpenUploads, onOpenLesson, onPublish, onSaveDraft }: { course: Course; uploads: Upload[]; open: boolean; onOpenChange: (o: boolean) => void; onOpenUploads: () => void; onOpenLesson: (id: string, tab?: "quiz") => void; onPublish: (o: { when: "now" | "later"; date: string; at: string; channels: string[] }) => void; onSaveDraft: () => void }) {
@@ -55,16 +57,19 @@ export function PublishReview({ course, uploads, open, onOpenChange, onOpenUploa
   const blocked = blocks.length > 0
   const list = (items: Item[], quiet = false) => (
     <ul className="grid gap-1.5">
-      {items.map((it, i) => (
+      {items.map((it, i) => {
+        const [Icon, color] = ICON[it.tone]
+        return (
         <li key={i} className="flex min-h-14 items-center gap-3 py-2.5">
-          <span aria-hidden className={cn("size-2 shrink-0 rounded-full", DOT[it.tone])} />
+          <Icon aria-hidden className={cn("size-4 shrink-0", color)} />
           <span className="grid min-w-0 flex-1">
             <span className="t-body-m text-a-text">{it.title}</span>
             <span className="t-caption text-a-text-2">{it.text}</span>
           </span>
           {it.action && <AdminButton hierarchy={quiet ? "ghost" : "secondary"} size="md" onClick={() => (onOpenChange(false), it.action!.run())}>{it.action.label}</AdminButton>}
         </li>
-      ))}
+        )
+      })}
     </ul>
   )
 
@@ -82,12 +87,12 @@ export function PublishReview({ course, uploads, open, onOpenChange, onOpenUploa
       }>
       {blocked && (
         <section className="grid gap-1.5">
-          <h3 className="t-mono-label text-a-text-3">Blocks publishing</h3>
+          <h3 className="t-micro text-a-text-3">Blocks publishing</h3>
           {list(blocks)}
         </section>
       )}
       <section className="grid gap-1.5">
-        <h3 className="t-mono-label text-a-text-3">Heads up</h3>
+        <h3 className="t-micro text-a-text-3">Heads up</h3>
         {list(heads, true)}
       </section>
       <div className="grid gap-4">
