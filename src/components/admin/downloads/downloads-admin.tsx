@@ -11,6 +11,8 @@ import { Switch } from "@/components/ui/switch"
 import { useTiers } from "@/lib/data/access"
 import { DOWNLOAD_CATEGORIES, categoryLabel, daysAgo, saveDownloads, shortDate, useDownloads, type DownloadCategory, type DownloadFile, type DownloadItem } from "@/lib/data/downloads"
 import { useCatalog } from "@/lib/data/learning"
+import { NOW } from "@/lib/data/schedule"
+import { localIso } from "../content/course-parts"
 import { cn } from "@/lib/utils"
 import { PageHeader } from "../kit"
 import { AdminSelect, AdminButton, AdminDrawer, AdminField, AdminFilter, AdminSearch, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, Callout, Dropzone, EmptyState, FileIcon, FileItem, Tag, adminControl } from "../ui"
@@ -178,7 +180,7 @@ function UploadDrawer({ item, onClose }: { item?: DownloadItem; onClose: () => v
   }
   const save = () => {
     if (missing || !file) return
-    const next: DownloadItem = { id: item?.id ?? `d${Date.now()}`, title: title.trim(), description: description.trim(), category, file, version: version.trim() || "1.0", updated: "2025-11-12", tiers: pick ? chosen : [], cover: item?.cover ?? Math.floor(Math.random() * 5), notify }
+    const next: DownloadItem = { id: item?.id ?? `d${Date.now()}`, title: title.trim(), description: description.trim(), category, file, version: version.trim() || "1.0", updated: localIso(NOW).slice(0, 10), tiers: pick ? chosen : [], cover: item?.cover ?? Math.floor(Math.random() * 5), notify }
     saveDownloads(coach, (l) => (item ? l.map((x) => (x.id === item.id ? next : x)) : [next, ...l]))
     toast(item ? `${next.title} updated` : `${next.title} added`, { description: notify ? "Students get a notification." : undefined })
     close()

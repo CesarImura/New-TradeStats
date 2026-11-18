@@ -59,7 +59,7 @@ export function Legal() {
   return (
     <SettingsPage title="Legal pages" text="Linked in the footer of your site and at checkout.">
       <div data-tour="legal-table" data-complete={all || undefined} className="rounded-a-lg">
-        <DataCard rowHeight={53}>
+        <DataCard rowHeight={53} className="[&_th]:h-[34px]">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead>Page</TableHead>
@@ -159,12 +159,12 @@ export function LegalDrawer({ page, first, imprint, legalName, text, onClose, on
       }
     >
       {page?.id === "imprint" && (
-        <div data-tour="legal-imprint" className="flex flex-col gap-5">
+        <div data-tour="legal-imprint" className="flex flex-col gap-4">
           <AdminField label="Name or company" error={tried && errors.name ? "Type your legal name or your company’s name." : undefined}>
             {(p) => <input {...p} autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your legal name" className={cn(adminControl, "h-11")} />}
           </AdminField>
           <AdminField label="Address" error={tried && errors.address ? "Add the full address: street, postcode and city." : undefined}>
-            {(p) => <textarea {...p} rows={3} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Street and number, postcode, city" className={area} />}
+            {(p) => <textarea {...p} rows={3} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Street and number, postcode, city" className={cn(area, "h-[88px]")} />}
           </AdminField>
           <AdminField label="E-mail" error={tried && errors.email ? "Check the e-mail address." : undefined}>
             {(p) => <input {...p} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="An e-mail students can reach you at" className={cn(adminControl, "h-11")} />}

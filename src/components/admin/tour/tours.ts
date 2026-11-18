@@ -26,6 +26,10 @@ export type TourStep = {
   gap?: number
   /** Vertical nudge of the coachmark in px, for a Figma step that sits a little off the target's top or middle. */
   dy?: number
+  /** Horizontal nudge in px: for a step whose target fills the screen (the editor canvas), where the coachmark sits inside it. */
+  dx?: number
+  /** Extra spotlight height below the target in px (the Figma ring of Legal 02 is drawn taller than its content). */
+  padBottom?: number
   /** "Do it later" instead of "Skip". */
   later?: boolean
   /** The last step: the tour is done; its button goes back to Getting started. */
@@ -69,20 +73,20 @@ export const TOURS: Record<TourId, Tour> = {
     complete: (slug) => setSetup(slug, { firstCourse: true }),
     done: (c) => !!c?.setup?.firstCourse,
     steps: [
-      { id: "new", target: t("course-new"), part: 0, title: "Start your first course", body: "Your first course starts here. We’ll guide you one step at a time.", hint: "Click New course" },
+      { id: "new", target: t("course-new"), part: 0, gap: 26, title: "Start your first course", body: "Your first course starts here. We’ll guide you one step at a time.", hint: "Click New course" },
       { id: "name", target: t("course-title"), part: 1, side: "right", gap: 33, dy: 7, title: "Name your course", body: "Pick a short name your students will see. Description and cover are optional.", hint: "Type a name, then click Continue" },
       { id: "method", target: `${t("course-method")}:not([data-picked])`, part: 2, side: "bottom", gap: 10, title: "Where are your videos?", body: "On your computer: Upload a folder.\nOn YouTube, Vimeo or Loom: Import links.\nNot ready yet: Start blank.", hint: "Pick one to continue" },
-      { id: "folder", target: t("course-folder"), part: 2, side: "right", title: "Check your lessons", body: "Each folder became a module and each video a lesson. Files that aren’t videos are skipped.", hint: "Click Upload and create" },
+      { id: "folder", target: t("course-upload-button"), part: 2, side: "right", gap: 33, dy: -8, title: "Check your lessons", body: "Each folder became a module and each video a lesson. Files that aren’t videos are skipped.", hint: "Click Upload and create" },
       { id: "folder-drop", target: `${t("course-folder-drop")}[data-picked]`, part: 2, side: "right", title: "Drop your folder", body: "Each subfolder becomes a module and each video a lesson.", hint: "Drop the folder or click to choose it" },
-      { id: "links", target: `${t("course-links")}[data-picked]`, part: 2, side: "right", title: "Paste your links", body: "Copy the link of each video and paste it here. We’ll turn each one into a lesson.", hint: "Paste, then click Import and create" },
-      { id: "blank", target: `${t("course-blank")}[data-picked]`, part: 2, side: "right", title: "Start without videos", body: "We’ll create the course now. You’ll add the first video on the next screen.", hint: "Click Create course" },
+      { id: "links", target: `body:has(${t("course-links")}[data-picked]) ${t("course-upload-button")}`, part: 2, side: "right", gap: 33, dy: -8, title: "Paste your links", body: "Copy the link of each video and paste it here. We’ll turn each one into a lesson.", hint: "Paste, then click Import and create" },
+      { id: "blank", target: `body:has(${t("course-blank")}[data-picked]) ${t("course-upload-button")}`, part: 2, side: "right", gap: 33, dy: -8, title: "Start without videos", body: "We’ll create the course now. You’ll add the first video on the next screen.", hint: "Click Create course" },
       { id: "open-course", target: t("course-card"), part: 3, title: "Open your course", body: "Your course is saved. Open it to add the first lesson.", hint: "Click your course" },
-      { id: "add-lesson", target: t("course-add-lesson"), part: 3, side: "right", title: "Add your first lesson", body: "Each lesson is one video. Your course needs at least one to go live.", hint: "Click Add lesson" },
-      { id: "open-lesson", target: t("course-first-lesson"), part: 3, side: "right", title: "Open your first lesson", body: "Your videos keep uploading in the background. Let’s finish the first lesson.", hint: "Click the first lesson" },
-      { id: "video", target: t("lesson-video"), part: 3, side: "left", later: true, title: "Add the video", body: "Drop the video file or click to choose it. No video yet? Click Do it later and we’ll keep your place.", hint: "Drop your video here" },
-      { id: "lesson-name", target: `[data-tour="lesson"]:not(:has([data-tour="lesson-video"])) ${t("lesson-title")}:is(:not([data-named]), :focus-within)`, part: 4, side: "left", title: "Name the lesson", body: "Use a short, clear name. Students see it in the course list.", hint: "Type the lesson name" },
-      { id: "visibility", target: `[data-tour="lesson"]:not(:has([data-tour="lesson-video"])):has([data-named]:not(:focus-within)) ${t("lesson-visibility")}[data-state="hidden"]`, part: 4, title: "Show it to students", body: "New lessons start hidden. Change Visibility to Visible when it’s ready.", hint: "Click Visibility" },
-      { id: "done", target: `${t("lesson-visibility")}[data-state="visible"]`, part: 4, final: true, title: "Your first lesson is ready", body: "Your course is ready for launch. It goes public with your platform when you go live.", hint: "" },
+      { id: "add-lesson", target: t("course-add-lesson"), part: 3, side: "right", gap: 7, dy: 42, title: "Add your first lesson", body: "Each lesson is one video. Your course needs at least one to go live.", hint: "Click Add lesson" },
+      { id: "open-lesson", target: t("course-first-lesson"), part: 3, side: "right", gap: 7, dy: 42, title: "Open your first lesson", body: "Your videos keep uploading in the background. Let’s finish the first lesson.", hint: "Click the first lesson" },
+      { id: "video", target: t("lesson-video"), part: 3, side: "left", gap: 8, dy: -48, later: true, title: "Add the video", body: "Drop the video file or click to choose it. No video yet? Click Do it later and we’ll keep your place.", hint: "Drop your video here" },
+      { id: "lesson-name", target: `[data-tour="lesson"]:not(:has([data-tour="lesson-video"])) ${t("lesson-title")}:is(:not([data-named]), :focus-within)`, part: 4, side: "left", gap: 8, dy: 7, title: "Name the lesson", body: "Use a short, clear name. Students see it in the course list.", hint: "Type the lesson name" },
+      { id: "visibility", target: `[data-tour="lesson"]:not(:has([data-tour="lesson-video"])):has([data-named]:not(:focus-within)) ${t("lesson-visibility")}[data-state="hidden"]`, part: 4, side: "bottom", gap: 10, dx: -5, title: "Show it to students", body: "New lessons start hidden. Change Visibility to Visible when it’s ready.", hint: "Click Visibility" },
+      { id: "done", target: `${t("lesson-visibility")}[data-state="visible"]`, part: 4, side: "bottom", gap: 10, dx: -5, final: true, title: "Your first lesson is ready", body: "Your course is ready for launch. It goes public with your platform when you go live.", hint: "" },
     ],
   },
   tier: {
@@ -94,11 +98,11 @@ export const TOURS: Record<TourId, Tour> = {
     complete: (slug) => setSetup(slug, { firstTier: true }),
     done: (c) => !!c?.setup?.firstTier,
     steps: [
-      { id: "new", target: t("tier-new"), part: 0, gap: 10, title: "Create your first tier", body: "Start with one. You can add more tiers anytime.", hint: "Click New tier" },
-      { id: "plan", target: `${t("tier-plan")}:is(:not([data-filled]), :focus-within)`, part: 1, side: "left", title: "Name it and set a price", body: "Type a name and a monthly price. Students see both on your sales page.", hint: "Then choose what it unlocks" },
-      { id: "plan-free", target: `${t("tier-plan")}[data-free]:is(:not([data-filled]), :focus-within)`, part: 1, side: "left", title: "Name it and pick Free", body: "A free tier has no price or trial. Students join with their e-mail.", hint: "Then choose what it unlocks" },
-      { id: "unlocks", target: `body:has(${t("tier-plan")}[data-filled]:not(:focus-within)) ${t("tier-unlocks")}`, part: 2, side: "left", title: "Choose what it unlocks", body: "Keep All courses. Every course you add, now and later, is part of this tier.", hint: "Click Save tier" },
-      { id: "done", target: `${NO_DRAWER} ${t("tier-card")}[data-ready]`, part: 2, final: true, title: "Your first tier is ready", body: "Students see it on your sales page. You can change it anytime in Sales & payments.", hint: "" },
+      { id: "new", target: t("tier-new"), part: 0, gap: 18, title: "Create your first tier", body: "Start with one. You can add more tiers anytime.", hint: "Click New tier" },
+      { id: "plan", target: `${t("tier-plan")}:is(:not([data-filled]), :focus-within)`, part: 1, side: "left", gap: 8, dy: 5, title: "Name it and set a price", body: "Type a name and a monthly price. Students see both on your sales page.", hint: "Then choose what it unlocks" },
+      { id: "plan-free", target: `${t("tier-plan")}[data-free]:is(:not([data-filled]), :focus-within)`, part: 1, side: "left", gap: 8, dy: 57, title: "Name it and pick Free", body: "A free tier has no price or trial. Students join with their e-mail.", hint: "Then choose what it unlocks" },
+      { id: "unlocks", target: `body:has(${t("tier-plan")}[data-filled]:not(:focus-within)) ${t("tier-unlocks")}`, part: 2, side: "left", pad: 12, gap: 16, title: "Choose what it unlocks", body: "Keep All courses. Every course you add, now and later, is part of this tier.", hint: "Click Save tier" },
+      { id: "done", target: `${NO_DRAWER} ${t("tier-card")}[data-ready]`, part: 2, side: "bottom", gap: 42, final: true, title: "Your first tier is ready", body: "Students see it on your sales page. You can change it anytime in Sales & payments.", hint: "" },
     ],
   },
   payouts: {
@@ -112,11 +116,11 @@ export const TOURS: Record<TourId, Tour> = {
     steps: [
       { id: "start", target: t("payouts-start"), part: 0, title: "Connect payouts", body: "This is how the money from your sales reaches you. Three short steps, about 5 minutes.", hint: "Click Start" },
       { id: "next", target: t("payouts-next"), part: 1, title: "Pick up where you left off", body: "What you entered is saved. Carry on with the next step.", hint: "Click Continue" },
-      { id: "you", target: t("payouts-you"), part: 0, side: "left", title: "Tell us who gets paid", body: "Pick person or company and your country. Use your name exactly as on your ID.", hint: "Then click Continue" },
-      { id: "bank", target: t("payouts-bank"), part: 1, side: "left", title: "Add your bank account", body: "Your money arrives here every Monday. The account must be in your name.", hint: "Then click Save" },
-      { id: "id", target: t("payouts-id"), part: 2, side: "left", title: "Check your identity", body: "Our payment partner checks your ID once. It usually takes a few minutes.", hint: "Upload it, then click Submit" },
-      { id: "review", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="review"]`, part: 2, final: true, pill: "ID in review", title: "We’re checking your ID", body: "Usually a few minutes, sometimes up to 2 days. Keep setting up; we’ll e-mail you when it’s done.", hint: "" },
-      { id: "done", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="connected"]`, part: 2, final: true, title: "Payouts are connected", body: "You’ll get paid every Monday. Next, add your legal pages.", hint: "" },
+      { id: "you", target: t("payouts-you"), part: 0, side: "left", gap: 8, dy: 42, title: "Tell us who gets paid", body: "Pick person or company and your country. Use your name exactly as on your ID.", hint: "Then click Continue" },
+      { id: "bank", target: t("payouts-bank"), part: 1, side: "left", gap: 8, dy: 42, title: "Add your bank account", body: "Your money arrives here every Monday. The account must be in your name.", hint: "Then click Save" },
+      { id: "id", target: t("payouts-id"), part: 2, side: "left", gap: 8, dy: 47, title: "Check your identity", body: "Our payment partner checks your ID once. It usually takes a few minutes.", hint: "Upload it, then click Submit" },
+      { id: "review", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="review"]`, part: 2, side: "bottom", gap: 20, final: true, pill: "ID in review", title: "We’re checking your ID", body: "Usually a few minutes, sometimes up to 2 days. Keep setting up; we’ll e-mail you when it’s done.", hint: "" },
+      { id: "done", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="connected"]`, part: 2, side: "bottom", gap: 20, final: true, title: "Payouts are connected", body: "You’ll get paid every Monday. Next, add your legal pages.", hint: "" },
     ],
   },
   legal: {
@@ -130,9 +134,9 @@ export const TOURS: Record<TourId, Tour> = {
     steps: [
       { id: "start", target: t("legal-imprint-setup"), part: 0, title: "Add your legal pages", body: "Students see them in your footer and at checkout. Start with the imprint. We have templates for the rest.", hint: "Click Set up next to Imprint" },
       { id: "next", target: t("legal-next"), part: 2, title: "Check the templates", body: "Privacy policy, terms and risk disclaimer come pre-filled with your details. Read each one and change what doesn’t fit.", hint: "Click Set up" },
-      { id: "imprint", target: t("legal-imprint"), part: 1, side: "left", title: "Fill in your imprint", body: "The law asks who runs the platform and how to reach you.", hint: "Then click Save" },
-      { id: "template", target: t("legal-template"), part: 2, side: "left", title: "Check the templates", body: "Privacy policy, terms and risk disclaimer come pre-filled with your details. Read each one and change what doesn’t fit.", hint: "Then click Use this text" },
-      { id: "done", target: `${NO_DRAWER} ${t("legal-table")}[data-complete]`, part: 2, final: true, title: "Your legal pages are ready", body: "Students find them in your footer and at checkout. One step left: go live.", hint: "" },
+      { id: "imprint", target: t("legal-imprint"), part: 1, side: "left", gap: 8, padBottom: 44, dy: 20, title: "Fill in your imprint", body: "The law asks who runs the platform and how to reach you.", hint: "Then click Save" },
+      { id: "template", target: t("legal-template"), part: 2, side: "left", gap: 8, dy: 10, title: "Check the templates", body: "Privacy policy, terms and risk disclaimer come pre-filled with your details. Read each one and change what doesn’t fit.", hint: "Then click Use this text" },
+      { id: "done", target: `${NO_DRAWER} ${t("legal-table")}[data-complete]`, part: 2, side: "bottom", gap: 16, final: true, title: "Your legal pages are ready", body: "Students find them in your footer and at checkout. One step left: go live.", hint: "" },
     ],
   },
   editor: {
@@ -147,8 +151,8 @@ export const TOURS: Record<TourId, Tour> = {
     done: (c) => !!c?.setup?.editorTour,
     steps: [
       { id: "editor", target: t("editor-panel"), part: 0, side: "right", pad: 0, gap: 12, title: "This is your design editor", body: "Everything from setup lives here, with many more options: fonts, backgrounds, the menu and every widget.", hint: "Click Widgets in the side menu" },
-      { id: "widgets", target: `body:has(${t("editor-widgets")}) ${t("editor-canvas")}`, part: 1, side: "left", title: "Pages and widgets", body: "Add widgets from the side menu. On your page, click a widget to change it or drag it to move it.", hint: "Click a widget on your page" },
-      { id: "done", target: `body:has(${t("editor-inspector")}) ${t("editor-publish")}`, part: 2, side: "bottom", final: true, title: "Preview, then publish", body: "Change the widget in the panel on the right. Preview shows your platform as a student. Before you go live, changes stay in draft; after, Publish puts them online.", hint: "" },
+      { id: "widgets", target: `body:has(${t("editor-widgets")}) ${t("editor-canvas")}`, part: 1, side: "left", pad: 0, dx: 348, title: "Pages and widgets", body: "Add widgets from the side menu. On your page, click a widget to change it or drag it to move it.", hint: "Click a widget on your page" },
+      { id: "done", target: `body:has(${t("editor-inspector")}) ${t("editor-publish")}`, part: 2, side: "bottom", gap: 14, final: true, title: "Preview, then publish", body: "Change the widget in the panel on the right. Preview shows your platform as a student. Before you go live, changes stay in draft; after, Publish puts them online.", hint: "" },
     ],
   },
 }

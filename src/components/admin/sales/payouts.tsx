@@ -130,7 +130,7 @@ export function Payouts() {
         ]}
       />
       <div className={cn("grid items-start gap-4", !fresh && "lg:grid-cols-[minmax(0,610fr)_minmax(0,570fr)]")}>
-        <Panel className="gap-3.5" data-tour="payouts-connected" data-state={state.review ? "review" : "connected"}>
+        <Panel className="gap-3" data-tour="payouts-connected" data-state={state.review ? "review" : "connected"}>
           <header className="flex items-center justify-between gap-2"><h2 className="t-heading-s text-a-text">Where your money goes every week</h2>{state.review ? <Tag tone="warning">ID in review</Tag> : <Tag tone="success">Payouts connected</Tag>}</header>
           <dl className="flex flex-col gap-2.5">
             {rows.map(([k, v]) => (
@@ -223,8 +223,8 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
       }
     >
       {step === 0 && (
-        <div data-tour="payouts-you" className="flex flex-col gap-5">
-          <div role="radiogroup" aria-label="Sell as" className="flex flex-col gap-2">
+        <div data-tour="payouts-you" className="flex flex-col gap-4">
+          <div role="radiogroup" aria-label="Sell as" className="flex flex-col gap-4">
             <span className="t-caption text-a-text">Sell as</span>
             <OptionCard checked={(form.kind ?? "person") === "person"} onSelect={() => set({ kind: "person", name: form.name || account()?.name })} title="A person" description="You sell as yourself" />
             <OptionCard checked={form.kind === "company"} onSelect={() => set({ kind: "company", name: form.name === account()?.name ? "" : form.name })} title="A company" description="You sell through a registered business" />
@@ -238,7 +238,7 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
         </div>
       )}
       {step === 1 && (
-        <div data-tour="payouts-bank" className="flex flex-col gap-5">
+        <div data-tour="payouts-bank" className="flex flex-col gap-4">
           <AdminField label="Account holder" hint="Must match the name on your ID" error={tried && !holderOk ? "Type the account holder’s name." : undefined}>
             {(p) => <input {...p} value={form.holder ?? ""} onChange={(e) => set({ holder: e.target.value })} placeholder="Your legal name" className={cn(adminControl, "h-11")} />}
           </AdminField>

@@ -95,7 +95,7 @@ export function AdminCalendar() {
         Events and 1:1 bookings marked Sample are examples, so you can see how your calendar looks. Replace or delete them before you invite students.
       </SampleNotice>
 
-      <AdminToolbar className="min-h-9">
+      <AdminToolbar className="min-h-8">
         <AdminTabs label="Calendar" value={tab} onChange={setTab} tabs={TABS} />
         <div className="flex-1" />
         {tab === "calendar" && (
@@ -244,7 +244,7 @@ function EventModal({ event, isNew, onClose }: { event: CalEvent | null; isNew: 
             </span>
             <Switch checked={e.reminders.length > 0} onCheckedChange={(v) => set({ reminders: v ? ["1d", "1h"] : [] })} />
           </label>
-          <button type="button" aria-expanded={more} onClick={() => setMore((m) => !m)} className="-mt-2 flex w-fit items-center gap-1 rounded-a-xs t-body-m text-a-text-2 outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
+          <button type="button" aria-expanded={more} onClick={() => setMore((m) => !m)} className="-mt-3 flex w-fit items-center gap-1 rounded-a-xs t-body-m text-a-text-2 outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
             <ChevronDown className={cn("size-3.5 transition-transform duration-200", more && "rotate-180")} /> More options
           </button>
           {more && (
@@ -402,23 +402,23 @@ function NewsTab({ onOpen, impact, period }: { onOpen: (n: NewsItem) => void; im
   return (
     <AdminTable minWidth={860} footer={<AdminTableFooter>No-trade events are marked in red for students; the journal checks the rule.</AdminTableFooter>}>
       <AdminTableHead>
-        <AdminTh width={176}>When</AdminTh>
-        <AdminTh width={86} />
-        <AdminTh>Event</AdminTh>
-        <AdminTh width={116} align="end">Forecast</AdminTh>
-        <AdminTh width={116} align="end">Actual</AdminTh>
-        <AdminTh width={136}>Impact</AdminTh>
-        <AdminTh width={110} align="end">No trade</AdminTh>
+        <AdminTh width={146} className="h-[34px]">When</AdminTh>
+        <AdminTh width={86} className="h-[34px]" />
+        <AdminTh className="h-[34px]">Event</AdminTh>
+        <AdminTh width={116} align="end" className="h-[34px]">Forecast</AdminTh>
+        <AdminTh width={116} align="end" className="h-[34px]">Actual</AdminTh>
+        <AdminTh width={136} className="h-[34px]">Impact</AdminTh>
+        <AdminTh width={110} align="end" className="h-[34px]">No trade</AdminTh>
       </AdminTableHead>
       <tbody>
         {rows.map((n) => (
-          <AdminTr key={n.id} onClick={() => onOpen(n)}>
+          <AdminTr key={n.id} onClick={() => onOpen(n)} className="h-12">
             <AdminTd className="whitespace-nowrap">{format(at(n.start), "EEE d · HH:mm")}</AdminTd>
             <AdminTd><Tag>{CCY[n.country]}</Tag></AdminTd>
             <AdminTd className="truncate text-a-text">{n.title}</AdminTd>
             <AdminTd align="end">{n.forecast ?? "—"}</AdminTd>
             <AdminTd align="end">{n.actual ?? "—"}</AdminTd>
-            <AdminTd><Tag tone={IMPACT_TONE[n.impact]} dot>{n.impact}</Tag></AdminTd>
+            <AdminTd><Tag tone={IMPACT_TONE[n.impact]}>{n.impact}</Tag></AdminTd>
             <AdminTd align="end" onClick={(e) => e.stopPropagation()}>
               <Switch aria-label={`${n.title}: no trade`} checked={n.noTrade} onCheckedChange={(v) => toggle(n, v)} />
             </AdminTd>
@@ -541,7 +541,7 @@ function CallDrawer({ item, onClose }: { item: Item | null; onClose: () => void 
               </Avatar>
               <div className="grid min-w-0 gap-0.5">
                 <span className="truncate t-body-m-medium text-a-text">{b.student}</span>
-                <span className="truncate t-caption text-a-text-2">{tier ? `${tier.name} · ` : ""}{used} of {total} calls used this month</span>
+                <span className="truncate t-caption text-a-text-2">{tier ? `${tier.name} · ` : ""}{used - 1} of {total} calls used this month</span>
               </div>
             </div>
             <section className="flex flex-col gap-3">
@@ -556,11 +556,11 @@ function CallDrawer({ item, onClose }: { item: Item | null; onClose: () => void 
               </Panel>
             )}
             <section className="flex flex-col gap-4">
-              <h3 className="t-mono-label text-a-text-2">Calls this month · {used} of {total} used</h3>
+              <h3 className="t-mono-label text-a-text-2">Calls this month · {used - 1} of {total} used</h3>
               <ol className="flex flex-col gap-4">
                 {calls.map((k) => {
                   const state = k < used ? "done" : k === used ? "current" : "upcoming"
-                  const date = addDays(shown.start, -7 * (used - k))
+                  const date = addDays(shown.start, -7 * (used - k + 1))
                   return (
                     <li key={k} className="flex items-start gap-3">
                       <StepIndicator step={k} state={state} />

@@ -8,11 +8,11 @@ import { AdminPageHeader } from "./page-header"
 import { EmptyState } from "./empty-state"
 
 /** Admin / Coming soon screen (Figma 'Journal · 00 Coming soon' 1680:72979): page header, Empty state with the clock icon, one short line and a secondary Back to Overview. Features not available yet use this and the grey 'Soon' badge in the menu. */
-export function AdminComingSoon({ title, name }: { title: string; name: string }) {
+export function AdminComingSoon({ title, subtitle, name }: { title: string; subtitle?: string; name: string }) {
   const { base } = useCoach()
   return (
-    <div className="flex flex-col gap-6">
-      <AdminPageHeader title={title} />
+    <div className="flex flex-col gap-4">
+      <AdminPageHeader title={title} subtitle={subtitle} />
       <EmptyState
         icon={Clock}
         title="Coming soon"

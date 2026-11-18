@@ -81,7 +81,7 @@ function SettingsNav({ value, onChange }: { value: TabId; onChange: (id: TabId) 
   return (
     <nav aria-label="Settings pages" className="flex shrink-0 flex-col md:w-[220px] max-md:flex-row max-md:gap-4 max-md:overflow-x-auto max-md:[scrollbar-width:none]">
       {GROUPS.map((g, i) => (
-        <div key={g.label} className={cn("flex flex-col gap-0.5 max-md:flex-row max-md:items-center", i > 0 && "mt-3 border-t border-a-border-subtle pt-3 max-md:mt-0 max-md:border-t-0 max-md:pt-0")}>
+        <div key={g.label} className={cn("flex flex-col gap-0.5 max-md:flex-row max-md:items-center", i > 0 && "mt-3 border-t border-a-border-subtle pt-4 max-md:mt-0 max-md:border-t-0 max-md:pt-0")}>
           <div className="flex h-6 items-center gap-2 px-2 text-a-text-3 max-md:hidden">
             <g.icon className="size-4 text-a-icon" />
             <span className="t-micro">{g.label}</span>
