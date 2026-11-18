@@ -153,7 +153,7 @@ export function ThankYou() {
         )}
         {group && (
           <li className="flex gap-2">
-            <Check className="mt-0.5 size-4 shrink-0 text-primary" /> {group.name} {group.start <= "2026-10-12" ? "is running; you can catch up at your pace." : `starts on ${fmtDate(group.start)}.`}
+            <Check className="mt-0.5 size-4 shrink-0 text-primary" /> {group.name} {group.start <= "2025-11-12" ? "is running; you can catch up at your pace." : `starts on ${fmtDate(group.start)}.`}
           </li>
         )}
         <li className="flex gap-2">
@@ -281,7 +281,8 @@ export function JoinFree({ invite }: { invite?: boolean }) {
   const router = useRouter()
   const tiers = useTiers(coach)
   const params = useSearchParams()
-  const tier = tiers.find((t) => t.id === params.get("tier")) ?? tiers[0]
+  // Without a tier in the link, the one the page recommends (Figma Join 03: "Join Trading Desk for free"), as the checkout does.
+  const tier = tiers.find((t) => t.id === params.get("tier")) ?? tiers.find((t) => t.featured && !t.hidden) ?? tiers[0]
   const [name, setName] = useState(invite ? "Lena Hoffmann" : "")
   const [email, setEmail] = useState(invite ? "lena.hoffmann@mail.com" : "")
   const [step, setStep] = useState<"form" | "code">("form")
@@ -308,11 +309,11 @@ export function JoinFree({ invite }: { invite?: boolean }) {
         >
           <div className="grid gap-1.5">
             <Label htmlFor="jf-name">Name</Label>
-            <Input id="jf-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+            <Input id="jf-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="First and last name" />
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="jf-email">E-mail</Label>
-            <Input id="jf-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} readOnly={invite} autoComplete="email" className={cn(invite && "text-muted-foreground")} />
+            <Input id="jf-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} readOnly={invite} autoComplete="email" placeholder="you@example.com" className={cn(invite && "text-muted-foreground")} />
           </div>
           <Button size="lg" type="submit" disabled={!name || !email.includes("@")}>
             {invite ? "Accept and start" : copy.button || "Join free"}
@@ -320,8 +321,16 @@ export function JoinFree({ invite }: { invite?: boolean }) {
           {!invite && copy.discord !== false && (
             <>
               <Or />
-              <DiscordButton onClick={go} label="Join with Discord" />
+              <DiscordButton onClick={go} />
             </>
+          )}
+          {!invite && (
+            <p className="pt-2 text-center text-sm text-muted-foreground">
+              Already a member?{" "}
+              <Link href={`${base}/login`} className="text-foreground underline underline-offset-4">
+                Log in
+              </Link>
+            </p>
           )}
         </form>
       ) : (
@@ -403,7 +412,7 @@ export function LegalPage({ doc }: { doc: string }) {
       </nav>
       <h1 className="text-3xl">{page.name}</h1>
       <div className="text-[0.875rem] leading-relaxed whitespace-pre-line text-muted-foreground">{(texts[doc] ?? page.text).replace(/Northline Trading/g, coach.org)}</div>
-      <span className="text-xs text-muted-foreground">Last updated 1 October 2026</span>
+      <span className="text-xs text-muted-foreground">Last updated 1 October 2025</span>
     </div>
   )
 }

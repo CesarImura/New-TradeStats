@@ -43,7 +43,7 @@ export const THEME_GROUPS = {
     { title: "Profit and loss", fields: ["trading"], keys: ["trading"], words: "profit loss green red trading numbers" },
   ],
   type: [
-    { title: "Fonts", fields: ["fonts"], keys: ["fonts"], words: "font pair typeface heading text serif mono technical editorial bold elegant desk gallery characterful neutral" },
+    { title: "Font pair", fields: ["fonts"], keys: ["fonts"], words: "font pair typeface heading text serif mono technical editorial bold elegant desk gallery characterful neutral" },
     { title: "Headings and labels", fields: ["heading-weight", "labels"], keys: ["headingWeight", "labelStyle"], words: "weight bold uppercase caps small labels" },
     // Headline numbers are set with the widgets (they only show there); Type points to them.
     { title: "Numbers in widgets", fields: ["numbers-link"], keys: [], words: "figures numbers headline mono display marked font" },
@@ -162,6 +162,9 @@ const TabContext = createContext<(id: string) => void>(() => {})
 /** What is typed in the header's search, for a section that searches its own content (the widget gallery). */
 const PanelSearch = createContext("")
 export const usePanelSearch = () => useContext(PanelSearch)
+/** True while the header search box is open (Figma Pages · 04 to 06: the panel then shows the search and its results only). */
+const PanelSearching = createContext(false)
+export const usePanelSearching = () => useContext(PanelSearching)
 
 /** In Type: where headline numbers are set now, one click away. */
 function NumbersLink() {
@@ -293,7 +296,7 @@ export function SettingsPanel({
         <div className={cn("flex shrink-0 flex-col gap-1 px-5 pt-5", sub ? "pb-3" : "pb-4")}>
           <div className="flex min-h-[22px] items-center gap-2">
             {searching ? (
-              <label className="flex min-w-0 flex-1 items-center gap-2">
+              <label className={cn("flex min-w-0 flex-1 items-center gap-2", ownSearch && "h-9 rounded-a-md border border-a-border-strong px-3")}>
                 <Search className="size-4 shrink-0 text-a-icon" />
                 <input
                   autoFocus
@@ -304,12 +307,18 @@ export function SettingsPanel({
                   aria-label={current.search?.replace("…", "") ?? "Find a setting"}
                   className="min-w-0 flex-1 bg-transparent t-body-m text-a-text outline-none placeholder:text-a-text-3"
                 />
+                {/* Pages (Figma 04 to 06): the way out sits inside the field. */}
+                {ownSearch && (
+                  <button type="button" aria-label="Close search" title="Close search" onClick={() => (setSearching(false), setQ(""))} className="-mr-1 grid size-6 shrink-0 place-items-center rounded-a-sm text-a-icon outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
+                    <X className="size-4" />
+                  </button>
+                )}
               </label>
             ) : (
               <h2 className="min-w-0 flex-1 truncate t-heading-s text-a-text">{sub ? merge!.label : (current.heading ?? current.label)}</h2>
             )}
             {/* One search, in the same place in every section: in Pages it finds widgets, elsewhere any setting. */}
-            <AdminButton
+            {!(searching && ownSearch) && <AdminButton
               hierarchy="ghost"
               size="sm"
               iconOnly
@@ -319,7 +328,7 @@ export function SettingsPanel({
               onClick={() => (setSearching(!searching), setQ(""))}
             >
               {searching ? <X /> : <Search />}
-            </AdminButton>
+            </AdminButton>}
           </div>
           {caption && !searching && <p className="truncate t-caption text-a-text-3">{caption}</p>}
         </div>
@@ -347,6 +356,7 @@ export function SettingsPanel({
         {current.id !== "pages" && <div aria-hidden className="h-px shrink-0 bg-a-border-subtle" />}
         <TabContext.Provider value={(id) => (onTab(id), setQ(""), setSearching(false))}>
         <PanelSearch.Provider value={ownSearch ? q.trim().toLowerCase() : ""}>
+        <PanelSearching.Provider value={ownSearch && searching}>
         <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" {...bodyProps}>
           {term ? (
             found.length || foundIn.length ? (
@@ -379,6 +389,7 @@ export function SettingsPanel({
             </>
           )}
         </div>
+        </PanelSearching.Provider>
         </PanelSearch.Provider>
         </TabContext.Provider>
       </div>

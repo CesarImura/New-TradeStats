@@ -1,18 +1,15 @@
 "use client"
 
-import { useRef } from "react"
 import { toast } from "sonner"
-import { ImagePlus } from "@/components/icons"
+import { Dropzone } from "@/components/admin/ui"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { JOIN_SCREENS, joinTheme, type JoinCopy, type JoinDraft, type JoinLook, type JoinScreenId } from "@/lib/data/join"
 import { pictureFrom } from "@/lib/images"
 import { onColor } from "@/lib/theme/derive"
-import { cn } from "@/lib/utils"
 import { BackgroundControl } from "../fields/background-control"
 import { Field, InspectorSection, Segmented, Swatches } from "../fields/controls"
 import { useDesign } from "../fields/design-fields"
-import { card } from "../states"
 import { InspectorTop } from "./widget-inspector"
 
 /** What each screen says when the coach hasn't changed it: shown as the field's hint, so an empty field is never a mystery. */
@@ -108,7 +105,6 @@ export function JoinInspector({ screen }: { screen: JoinScreenId }) {
   const edit = (patch: Partial<JoinCopy>, key: string) => set({ ...join, screens: { ...join.screens, [screen]: { ...copy, ...patch } } }, `${screen}-${key}`)
   // The checkout is one task on one screen: it has no side picture, no second way in.
   const account = screen !== "subscribe"
-  const file = useRef<HTMLInputElement>(null)
   const text = (key: "title" | "subtitle" | "button", label: string, hint: string) => (
     <Field label={label}>
       <Input
@@ -149,33 +145,25 @@ export function JoinInspector({ screen }: { screen: JoinScreenId }) {
             </Field>
             {copy.layout === "split" && (
               <Field label="Picture">
-                <button type="button" onClick={() => file.current?.click()} className={cn("flex h-20 items-center justify-center gap-2 overflow-hidden rounded-md border border-dashed bg-cover bg-center t-caption text-muted-foreground", card(!!copy.sideImage))} style={copy.sideImage ? { backgroundImage: `url("${copy.sideImage}")` } : undefined}>
-                  {!copy.sideImage && (
-                    <>
-                      <ImagePlus className="size-4" /> Add a picture
-                    </>
-                  )}
-                </button>
-                <input
-                  ref={file}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0]
-                    e.target.value = ""
-                    if (!f) return
-                    try {
-                      edit({ sideImage: await pictureFrom(f, { max: 1200, side: "width", quality: 0.8, keep: [] }) }, "side")
-                    } catch (err) {
-                      toast.error((err as Error).message)
-                    }
-                  }}
-                />
-                {copy.sideImage && (
-                  <Button variant="ghost" size="sm" className="w-fit" onClick={() => edit({ sideImage: undefined }, "side")}>
-                    Remove picture
-                  </Button>
+                {copy.sideImage ? (
+                  <>
+                    <div role="img" aria-label="The picture beside the card" className="h-20 overflow-hidden rounded-a-10 border border-a-border bg-cover bg-center" style={{ backgroundImage: `url(${copy.sideImage})` }} />
+                    <Button variant="ghost" size="sm" className="w-fit" onClick={() => edit({ sideImage: undefined }, "side")}>
+                      Remove picture
+                    </Button>
+                  </>
+                ) : (
+                  <Dropzone
+                    title="Add a picture"
+                    accept="image/jpeg,image/png,image/webp"
+                    onFiles={async ([f]) => {
+                      try {
+                        edit({ sideImage: await pictureFrom(f, { max: 1200, side: "width", quality: 0.8, keep: [] }) }, "side")
+                      } catch (err) {
+                        toast.error((err as Error).message)
+                      }
+                    }}
+                  />
                 )}
               </Field>
             )}

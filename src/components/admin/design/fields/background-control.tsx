@@ -129,19 +129,21 @@ export function BackgroundControl({ theme, onChange, where = true }: { theme: Co
         </>
       )}
 
-      {where && (kind === "image" || kind === "gradient") && (
+      {where && kind !== "plain" && (
         <Field label="Where it shows">
           <Segmented
             label="Where the background shows"
             value={theme.bgWhere ?? "all"}
             onChange={(bgWhere) => onChange({ bgWhere }, "bg-where")}
             options={[
-              { value: "all", label: "Everywhere" },
-              { value: "home", label: "Home only" },
+              { value: "all", label: "Every page" },
+              { value: "home", label: "Home" },
+              { value: "login", label: "Login" },
             ]}
           />
         </Field>
       )}
+      {(kind === "texture" || kind === "gradient") && <p className="t-caption text-muted-foreground">Text stays readable on this background.</p>}
       {kind === "image" && <p className="t-caption text-muted-foreground">Cards and menus stay solid, so text and charts are always readable. Large images are made smaller for fast loading.</p>}
     </div>
   )

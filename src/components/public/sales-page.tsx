@@ -38,8 +38,9 @@ export function SalesPage() {
   }, [blocks.length])
   return (
     <div className="flex flex-col">
+      {/* The sales page editor marks the block being edited (data-editing, outline) from outside, maybe before this page has hydrated. */}
       {blocks.map((b, i) => (
-        <section key={b.id} id={b.id} className={cn("scroll-mt-20 py-14 sm:py-20", i > 0 && b.type !== "cta" && "border-t")}>
+        <section key={b.id} id={b.id} suppressHydrationWarning className={cn("scroll-mt-20 py-14 sm:py-20", i > 0 && b.type !== "cta" && "border-t")}>
           <BlockView block={b} />
         </section>
       ))}
@@ -283,7 +284,7 @@ function PriceCard({ tier, yearly, href }: { tier: TierInfo; yearly: boolean; hr
 function Groups({ block }: { block: Block }) {
   const { coach, base } = useCoach()
   const tiers = useTiers(coach)
-  const groups = useGroups(coach).filter((g) => g.end >= "2026-10-12")
+  const groups = useGroups(coach).filter((g) => g.end >= "2025-11-12")
   if (groups.length === 0) return null
   return (
     <div className={wrap}>
@@ -291,7 +292,7 @@ function Groups({ block }: { block: Block }) {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {groups.map((g) => {
           const full = isFull(g)
-          const started = g.start <= "2026-10-12"
+          const started = g.start <= "2025-11-12"
           const tier = tiers.find((t) => g.tiers.includes(t.id) && !t.hidden) ?? tiers.find((t) => g.tiers.includes(t.id))
           return (
             <article key={g.id} className="grid gap-4 rounded-(--radius) bg-card p-5 text-card-foreground" style={{ boxShadow: "var(--card-shadow)" }}>

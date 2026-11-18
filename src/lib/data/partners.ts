@@ -88,7 +88,7 @@ export function defaultOffers(coach: Coach): PartnerOffer[] {
   const third = coach.tiers[2]?.id
   const list: PartnerOffer[] = [
     fromCatalogue(coach, cat("tradeify"), { offer: `20% off any evaluation with code ${coachCode(coach, 20)}`, code: undefined, clicks: 312, signups: 41, earnings: 1140 }),
-    fromCatalogue(coach, { ...cat("tradingview"), offer: "30 days of Premium free" }, { offer: "30 days of Premium free", tiers: coach.tiers.filter((t) => t.price !== "€0").map((t) => t.id), clicks: 155, signups: 22, earnings: 780 }),
+    fromCatalogue(coach, { ...cat("tradingview"), offer: "30 days of Premium free" }, { offer: "30 days of Premium free", tiers: coach.tiers.filter((t) => t.price !== "€0").map((t) => t.id), clicks: 188, signups: 22, earnings: 780 }),
     {
       id: "own-broker",
       name: "My broker",
