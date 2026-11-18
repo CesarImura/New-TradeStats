@@ -18,7 +18,7 @@ export function LauncherOnboarding() {
       <div className="flex flex-col gap-3 bg-a-panel p-4">
         <span className={`${mono} text-a-text-2`}>New · Coach onboarding · ONB-01 to ONB-16</span>
         <h2 className="max-w-[40ch] text-lg leading-6 font-medium tracking-[-0.01em]">Sign up as a coach and build a platform from zero.</h2>
-        <p className="max-w-[56ch] text-sm text-white/55">
+        <p className="max-w-[56ch] text-sm text-a-text-2">
           Sign-up, e-mail code, a few questions and the platform&apos;s name, then Getting started: design, a first course, a tier, payouts and
           legal pages, each with a guided tour, and go live. The result is a real community you can open on both sides.
         </p>
@@ -38,14 +38,14 @@ export function LauncherOnboarding() {
         </div>
       </div>
       <div className="flex flex-col gap-3 bg-a-panel p-4">
-        <span className={`${mono} text-white/50`}>Made in this browser</span>
-        {communities.length === 0 && <p className="text-sm text-white/40">Nothing yet. Communities you create with the wizard appear here.</p>}
+        <span className={`${mono} text-a-text-2`}>Made in this browser</span>
+        {communities.length === 0 && <p className="text-sm text-a-text-2">Nothing yet. Communities you create with the wizard appear here.</p>}
         <ul className="grid gap-px">
           {communities.map((c) => (
             <li key={c.slug} className="flex items-center gap-3 border-t border-white/10 py-2.5 first:border-0">
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">{c.name}</span>
-                <span className={`${mono} text-[0.6875rem] text-white/40`}>
+                <span className={`${mono} text-[0.6875rem] text-a-text-2`}>
                   {c.status === "live" ? `${c.slug}.traderhub.io` : "Setting up"}
                 </span>
               </span>
