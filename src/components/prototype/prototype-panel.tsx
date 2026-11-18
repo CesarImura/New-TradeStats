@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useSearchParams } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useMemo, useState } from "react"
 import { ChevronDown, RotateCcw, Search } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
@@ -10,7 +10,12 @@ import { patchPublishedTheme } from "@/lib/prototype-store"
 import { resetAsNewStudent } from "@/lib/data/student-start"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import { cn } from "@/lib/utils"
-import { PROTO_AREAS } from "./flows"
+import { createCommunity } from "@/components/onboarding/setup-community"
+import { customCommunities, deleteCommunity } from "@/lib/data/communities"
+import { PROTO_AREAS, PROTO_DEFAULT_SLUG } from "./flows"
+
+/** A community made on this browser with nothing in it: shows every screen as a platform that has just been created (Figma "New platform" variants). */
+const EMPTY_SLUG = "new-platform"
 
 /** Small segmented control in the Admin look (dark, neutral selection): the old one drew white pills on a dark panel. */
 function Seg<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: { value: T; label: string }[]; onChange: (v: T) => void }) {
@@ -46,7 +51,16 @@ export function PrototypePanel({ area }: { area: "student" | "admin" | "site" })
   const search = useSearchParams().toString()
   const [tab, setTab] = useState<"go" | "settings">("go")
   const [q, setQ] = useState("")
+  const router = useRouter()
   const set = (patch: Parameters<typeof patchPublishedTheme>[1]) => patchPublishedTheme(coach.slug, patch)
+  const prefix = area === "admin" ? "admin" : area === "site" ? "site" : "c"
+  const isEmpty = coach.slug === EMPTY_SLUG
+  const open = (slug: string) => router.push(`/${prefix}/${slug}${rest ? `/${rest}` : ""}`)
+  const goEmpty = (fresh?: boolean) => {
+    if (fresh) deleteCommunity(EMPTY_SLUG)
+    if (!customCommunities().some((c) => c.slug === EMPTY_SLUG)) createCommunity({ name: "New platform", coachName: "Kairo", language: "en", account: null })
+    open(EMPTY_SLUG)
+  }
   const here = search ? `${path}?${search}` : path
   const rest = path.split("/").slice(3).join("/")
 
@@ -145,6 +159,16 @@ export function PrototypePanel({ area }: { area: "student" | "admin" | "site" })
                 </Link>
               ))}
             </div>
+          </div>
+          <div className="grid gap-1.5">
+            <span className="t-caption text-a-text-3">State</span>
+            <div role="radiogroup" aria-label="State" className="flex gap-0.5 rounded-a-md border border-a-border-subtle bg-a-subtle p-0.5">
+              {([["With data", false], ["New platform", true]] as const).map(([label, empty]) => (
+                <button key={label} role="radio" aria-checked={isEmpty === empty} onClick={() => (empty ? goEmpty() : open(PROTO_DEFAULT_SLUG))} className={cn("h-7 flex-1 rounded-a-sm px-2 t-caption-medium text-a-text-2 transition-colors duration-300 ease-out outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus", isEmpty === empty && "bg-a-raised text-a-text shadow-[inset_0_0_0_1px_var(--admin-color-border-default)]")}>{label}</button>
+              ))}
+            </div>
+            <span className="t-caption text-a-text-3">{isEmpty ? "Every screen as a platform just created: no students, sales or files." : "The demo community with its sample students, sales and files."}</span>
+            {isEmpty && <button onClick={() => goEmpty(true)} className="w-fit t-caption text-a-text-2 underline underline-offset-2 outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">Start the new platform over</button>}
           </div>
           <Seg label="Template" value={theme.template} options={TEMPLATE_IDS.map((id) => ({ value: id, label: TEMPLATES[id].name }))} onChange={(v) => { set(null); set({ template: v }) }} />
           <Seg label="Navigation" value={theme.nav.layout} options={[{ value: "side", label: "Side" }, { value: "top", label: "Top" }]} onChange={(v) => set({ nav: { layout: v } })} />
