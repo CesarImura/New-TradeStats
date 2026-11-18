@@ -24,7 +24,7 @@ ${A} {
   --muted: ${T("color-bg-muted")}; --muted-foreground: ${T("color-text-secondary")};
   --secondary: ${T("color-bg-muted")}; --secondary-foreground: ${T("color-text-primary")};
   --accent: ${T("color-bg-hover")}; --accent-foreground: ${T("color-text-primary")};
-  --primary: ${T("color-accent-default")}; --primary-foreground: ${T("color-text-on-accent")};
+  --primary: ${T("component-button-primary-bg-default")}; --primary-foreground: ${T("color-text-on-accent")};
   --destructive: ${T("color-status-danger")};
   --sidebar: ${T("color-bg-page")}; --sidebar-foreground: ${T("color-text-nav")};
   --sidebar-border: ${T("color-border-default")}; --sidebar-accent: ${T("color-bg-selected")};
@@ -117,7 +117,7 @@ ${adm("[data-slot=tabs-list][data-variant=line] [data-slot=tabs-trigger]::after"
 
 /* Progress: 4px track on ink-750, orange fill. */
 ${adm(":is([data-slot=progress], [data-slot=progress-track])")} { background: ${T("color-bg-track")} !important; }
-${adm("[data-slot=progress-indicator]")} { background: ${T("color-accent-default")} !important; }
+${adm("[data-slot=progress-indicator]")} { background: ${T("component-progress-fill")} !important; }
 /* Tables: no frame, mono header, hairlines. */
 ${adm("[data-slot=table-header] [data-slot=table-row]")} { border-color: ${T("color-border-subtle")}; }
 ${adm("[data-slot=table-header]")} { background: ${T("color-bg-subtle")}; }

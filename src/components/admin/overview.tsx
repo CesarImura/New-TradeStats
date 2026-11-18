@@ -213,9 +213,9 @@ function ChartBar({ x = 0, y = 0, width = 0, height = 0 }: BarShapeProps) {
   return (
     <g className="ov-bar">
       <rect className="ov-layer ov-col" x={x - (slot - width) / 2 - 0.75} y={0} width={slot + 1.5} height="100%" fill="var(--admin-color-bg-raised)" opacity={0} />
-      <path className="ov-layer ov-rest" d={d} fill="var(--admin-primitive-orange-800)" />
+      <path className="ov-layer ov-rest" d={d} fill="var(--admin-component-chart-bar-bg-dim)" />
       <path className="ov-layer ov-grey" d={d} fill="var(--admin-color-bg-track)" opacity={0} />
-      <path className="ov-layer ov-active" d={d} fill="var(--admin-color-accent-default)" opacity={0} style={{ filter: "drop-shadow(0 0 12px rgb(207 69 0 / 0.45))" }} />
+      <path className="ov-layer ov-active" d={d} fill="var(--admin-component-chart-bar-bg-default)" opacity={0} />
     </g>
   )
 }
@@ -249,7 +249,7 @@ function RunningOverview() {
   }, [barM, lineM, range, share])
   const config = {
     bar: { label: barM.label, color: "var(--admin-color-bg-track)" },
-    line: { label: lineM.label, color: "var(--admin-color-accent-default)" },
+    line: { label: lineM.label, color: "var(--admin-color-text-primary)" },
   } satisfies ChartConfig
   const headline = fresh
     ? [
@@ -326,7 +326,7 @@ function RunningOverview() {
           <AdminTabs label="Overview view" tabs={VIEWS.map((v) => ({ id: v.id, label: v.label }))} value={view} onChange={setView} />
           <div className="flex flex-wrap items-center gap-2">
             <ul className="mr-2 flex items-center gap-4 t-body-m text-a-text-2">
-              <li className="flex items-center gap-1.5"><span aria-hidden className="size-2 rounded-[2px] bg-a-accent" />{barM.label}</li>
+              <li className="flex items-center gap-1.5"><span aria-hidden className="size-2 rounded-[2px] bg-a-bar" />{barM.label}</li>
               <li className="flex items-center gap-1.5"><span aria-hidden className="h-[3px] w-3.5 rounded-full bg-a-text" />{lineM.label}</li>
             </ul>
             <AdminFilter label="Tier" value={tier} onValueChange={setTier} options={Object.entries(tiers).map(([value, label]) => ({ value, label }))} />
@@ -354,7 +354,7 @@ function RunningOverview() {
                   dot={(p: { cx?: number; cy?: number; index?: number }) =>
                     p.index === 0 || p.index === data.length - 1 ? <circle key={p.index} cx={p.cx} cy={p.cy} r={2} fill="var(--admin-color-text-primary)" /> : <g key={p.index} />
                   }
-                  activeDot={{ r: 4, fill: "var(--admin-color-text-primary)", stroke: "var(--admin-color-accent-default)", strokeWidth: 2 }}
+                  activeDot={{ r: 4, fill: "var(--admin-color-text-primary)", stroke: "var(--admin-color-text-primary)", strokeWidth: 2 }}
                   isAnimationActive={false}
                 />
               </ComposedChart>
@@ -475,7 +475,7 @@ function OverviewTooltip({ bar, line, active, payload }: { bar: Metric; line: Me
   const d = payload?.[0]?.payload
   if (!active || !d) return null
   const rows = [
-    { key: "bar", name: bar.label, value: format(bar, d.bar), marker: "size-2 rounded-[2px] bg-a-accent" },
+    { key: "bar", name: bar.label, value: format(bar, d.bar), marker: "size-2 rounded-[2px] bg-a-bar" },
     { key: "line", name: line.label, value: format(line, d.line), marker: "h-0.5 w-2 bg-a-text" },
   ]
   return (

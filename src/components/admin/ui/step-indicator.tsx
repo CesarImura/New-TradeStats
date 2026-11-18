@@ -2,7 +2,7 @@ import { Check } from "@/components/icons"
 import { cn } from "@/lib/utils"
 
 const STATE = {
-  done: "bg-a-accent text-a-on-accent",
+  done: "bg-a-success-fill text-a-on-accent",
   current: "bg-a-accent-strong text-a-on-accent",
   upcoming: "bg-a-raised text-a-text-2",
   success: "bg-a-success-fill text-a-on-accent",

@@ -1,4 +1,4 @@
-/* Admin v2 design tokens, generated from the Figma "Admin" variable collection (file XWHeEdjEiY6gWmrsg0vFIZ,
+/* Admin v2 design tokens (mode v2 is the only mode in code), generated from the Figma "Admin" variable collection (file XWHeEdjEiY6gWmrsg0vFIZ,
    collection 541:2). Names follow the Figma code syntax: --admin-<variable path with hyphens>. Do not edit by hand:
    change the variable in Figma, then regenerate (docs/admin-v2.md). Tokens live on :root so portalled popups inherit them. */
 :root {
@@ -7,25 +7,34 @@
   --admin-primitive-amber-soft: rgb(251 191 36 / 12%);
   --admin-primitive-black-60: rgb(0 0 0 / 60%);
   --admin-primitive-blue-400: #60a5fa;
-  --admin-primitive-blue-600: #2563eb;
   --admin-primitive-blue-soft: rgb(96 165 250 / 12%);
+  --admin-primitive-extra-050505: #050505;
+  --admin-primitive-extra-09090b: #09090b;
   --admin-primitive-extra-0a0a0d: #0a0a0d;
   --admin-primitive-extra-0a0a0d-0: rgb(10 10 13 / 0%);
   --admin-primitive-extra-0a0a0d-90: rgb(10 10 13 / 90%);
   --admin-primitive-extra-0ea5e9: #0ea5e9;
   --admin-primitive-extra-0ea5e9-55: rgb(14 165 233 / 55%);
   --admin-primitive-extra-101014: #101014;
-  --admin-primitive-extra-10b981: #10b981;
-  --admin-primitive-extra-10b981-55: rgb(16 185 129 / 55%);
   --admin-primitive-extra-121212: #121212;
-  --admin-primitive-extra-22c55e: #22c55e;
+  --admin-primitive-extra-1c1c1d: #1c1c1d;
   --admin-primitive-extra-2a1a10: #2a1a10;
+  --admin-primitive-extra-2b2b2e: #2b2b2e;
+  --admin-primitive-extra-38383b: #38383b;
   --admin-primitive-extra-3b82f6: #3b82f6;
   --admin-primitive-extra-444444: #444444;
+  --admin-primitive-extra-6b6b72: #6b6b72;
+  --admin-primitive-extra-757575: #757575;
+  --admin-primitive-extra-808085: #808085;
+  --admin-primitive-extra-88b137: #88b137;
   --admin-primitive-extra-8b5cf6: #8b5cf6;
   --admin-primitive-extra-8b5cf6-55: rgb(139 92 246 / 55%);
   --admin-primitive-extra-a855f7: #a855f7;
+  --admin-primitive-extra-a8a8b1: #a8a8b1;
+  --admin-primitive-extra-c2561c: #c2561c;
+  --admin-primitive-extra-c2561c-30: rgb(194 86 28 / 30%);
   --admin-primitive-extra-d9d9d9: #d9d9d9;
+  --admin-primitive-extra-d9d9dc: #d9d9dc;
   --admin-primitive-extra-e11d48: #e11d48;
   --admin-primitive-extra-e11d48-55: rgb(225 29 72 / 55%);
   --admin-primitive-extra-f4f4f5: #f4f4f5;
@@ -33,13 +42,10 @@
   --admin-primitive-extra-f97316-55: rgb(249 115 22 / 55%);
   --admin-primitive-extra-ff5500-35: rgb(255 85 0 / 35%);
   --admin-primitive-extra-ffffff-10: rgb(255 255 255 / 10%);
-  --admin-primitive-extra-ffffff-16: rgb(255 255 255 / 16%);
-  --admin-primitive-extra-ffffff-20: rgb(255 255 255 / 20%);
   --admin-primitive-extra-ffffff-7: rgb(255 255 255 / 7%);
   --admin-primitive-extra-ffffff-70: rgb(255 255 255 / 70%);
   --admin-primitive-green-400: #4ade80;
   --admin-primitive-green-600: #16a34a;
-  --admin-primitive-green-700: #15803d;
   --admin-primitive-green-soft: rgb(74 222 128 / 12%);
   --admin-primitive-ink-750: #262626;
   --admin-primitive-ink-850: #181818;
@@ -85,6 +91,7 @@
   --admin-primitive-white-09: rgb(255 255 255 / 9%);
   --admin-primitive-white-100: #ffffff;
   --admin-primitive-white-14: rgb(255 255 255 / 14%);
+  --admin-primitive-white-22: rgb(255 255 255 / 22%);
   --admin-primitive-white-36: rgb(255 255 255 / 36%);
   --admin-primitive-white-46: rgb(255 255 255 / 46%);
   --admin-primitive-white-52: rgb(255 255 255 / 52%);
@@ -92,9 +99,9 @@
   --admin-primitive-white-96: rgb(255 255 255 / 96%);
 
   /* color */
-  --admin-color-accent-default: var(--admin-primitive-orange-700);
+  --admin-color-accent-default: var(--admin-primitive-white-96);
   --admin-color-accent-hover: var(--admin-primitive-orange-800);
-  --admin-color-accent-soft: var(--admin-primitive-orange-soft);
+  --admin-color-accent-soft: var(--admin-primitive-white-08);
   --admin-color-accent-strong: var(--admin-primitive-orange-500);
   --admin-color-bg-field: var(--admin-primitive-white-04);
   --admin-color-bg-hover: var(--admin-primitive-white-04);
@@ -104,15 +111,16 @@
   --admin-color-bg-raised: var(--admin-primitive-ink-850);
   --admin-color-bg-scrim: var(--admin-primitive-black-60);
   --admin-color-bg-selected: var(--admin-primitive-white-08);
+  --admin-color-bg-sidebar: var(--admin-primitive-ink-925);
   --admin-color-bg-subtle: var(--admin-primitive-white-02);
   --admin-color-bg-sunk: var(--admin-primitive-ink-925);
   --admin-color-bg-track: var(--admin-primitive-ink-750);
-  --admin-color-border-active: var(--admin-color-accent-default);
+  --admin-color-border-active: var(--admin-primitive-white-64);
   --admin-color-border-danger: var(--admin-primitive-red-40);
-  --admin-color-border-default: var(--admin-primitive-white-08);
-  --admin-color-border-focus: var(--admin-primitive-orange-500);
-  --admin-color-border-strong: var(--admin-primitive-white-14);
-  --admin-color-border-subtle: var(--admin-primitive-white-06);
+  --admin-color-border-default: var(--admin-primitive-white-14);
+  --admin-color-border-focus: var(--admin-primitive-white-96);
+  --admin-color-border-strong: var(--admin-primitive-white-22);
+  --admin-color-border-subtle: var(--admin-primitive-white-09);
   --admin-color-brand-gradient-end: #ff9003;
   --admin-color-brand-gradient-start: #ff4701;
   --admin-color-category-blue: #1d2f3f;
@@ -128,12 +136,11 @@
   --admin-color-control-knob: var(--admin-primitive-white-100);
   --admin-color-control-mark: var(--admin-color-text-on-accent);
   --admin-color-control-off: var(--admin-primitive-ink-750);
-  --admin-color-control-on: var(--admin-color-accent-default);
+  --admin-color-control-on: var(--admin-primitive-orange-700);
   --admin-color-highlight-base: #f6d9c6;
   --admin-color-highlight-soft: #ffe0c2;
   --admin-color-highlight-strong: #ff9e61;
   --admin-color-icon-default: var(--admin-primitive-white-52);
-  --admin-color-icon-strong: var(--admin-primitive-white-96);
   --admin-color-icon-subtle: rgb(255 255 255 / 36%);
   --admin-color-status-danger: var(--admin-primitive-red-400);
   --admin-color-status-danger-fill: var(--admin-primitive-red-600);
@@ -147,21 +154,16 @@
   --admin-color-status-warning: var(--admin-primitive-amber-400);
   --admin-color-status-warning-fill: var(--admin-primitive-amber-400);
   --admin-color-status-warning-soft: var(--admin-primitive-amber-soft);
-  --admin-color-text-accent: var(--admin-primitive-orange-400);
+  --admin-color-text-accent: var(--admin-primitive-white-96);
   --admin-color-text-nav: var(--admin-primitive-white-64);
   --admin-color-text-on-accent: var(--admin-primitive-white-100);
   --admin-color-text-on-highlight: #0a0a0a;
   --admin-color-text-primary: var(--admin-primitive-white-96);
   --admin-color-text-secondary: var(--admin-primitive-white-52);
-  /* 46% (was 36%): at least 4.5:1 on the page (#0a0a0a) and on fields (#141414), WCAG AA. Gustavo 13/11; Figma to follow. */
   --admin-color-text-tertiary: var(--admin-primitive-white-46);
 
-  /* font */
-  --admin-font-family-cover: var(--ff-inter), "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
-  --admin-font-family-mono: var(--ff-space-mono), "Space Mono", ui-monospace, monospace;
-  --admin-font-family-primary: var(--ff-inter), "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
-
-  /* radius */
+  /* font, space, radius */
+  --admin-font-family-primary: "Helvetica Neue", Helvetica, var(--ff-inter), Arial, system-ui, sans-serif;
   --admin-radius-10: var(--admin-primitive-radius-10);
   --admin-radius-2xs: var(--admin-primitive-radius-2);
   --admin-radius-full: var(--admin-primitive-radius-999);
@@ -170,11 +172,6 @@
   --admin-radius-sm: var(--admin-primitive-radius-6);
   --admin-radius-xl: 16px;
   --admin-radius-xs: var(--admin-primitive-radius-4);
-
-  /* size */
-  --admin-size-icon: 16px;
-
-  /* space */
   --admin-space-10: var(--admin-primitive-space-10);
   --admin-space-12: var(--admin-primitive-space-12);
   --admin-space-14: var(--admin-primitive-space-14);
@@ -191,39 +188,33 @@
   --admin-space-6: var(--admin-primitive-space-6);
   --admin-space-72: var(--admin-primitive-space-72);
   --admin-space-8: var(--admin-primitive-space-8);
-  --admin-space-gap-inline: var(--admin-space-6);
-  --admin-space-pad-button: var(--admin-space-14);
-  --admin-space-pad-button-sm: var(--admin-space-10);
-  --admin-space-pad-control: var(--admin-space-12);
-  --admin-space-pad-page: var(--admin-space-40);
-  --admin-space-pad-panel: var(--admin-space-20);
 
   /* component */
   --admin-component-button-danger-bg-hover: var(--admin-color-status-danger-soft);
   --admin-component-button-danger-border: var(--admin-color-border-danger);
   --admin-component-button-danger-content: var(--admin-color-status-danger);
-  --admin-component-button-gap: var(--admin-space-gap-inline);
+  --admin-component-button-gap: var(--admin-space-6);
   --admin-component-button-ghost-bg-hover: var(--admin-color-bg-hover);
   --admin-component-button-ghost-content-default: var(--admin-color-text-secondary);
   --admin-component-button-ghost-content-hover: var(--admin-color-text-primary);
   --admin-component-button-highlight-bg-default: var(--admin-color-control-knob);
   --admin-component-button-highlight-bg-hover: var(--admin-color-highlight-soft);
   --admin-component-button-highlight-content: var(--admin-color-text-on-highlight);
-  --admin-component-button-icon-default: var(--admin-size-icon);
+  --admin-component-button-icon-default: var(--admin-space-16);
   --admin-component-button-icon-small: 14px;
   --admin-component-button-pad-icon-lg: 8px;
   --admin-component-button-pad-icon-md: 6px;
   --admin-component-button-pad-icon-sm: 5px;
   --admin-component-button-pad-icon-xl: 10px;
   --admin-component-button-pad-x-lg: 12px;
-  --admin-component-button-pad-x-md: var(--admin-space-pad-button-sm);
+  --admin-component-button-pad-x-md: var(--admin-space-10);
   --admin-component-button-pad-x-sm: 8px;
-  --admin-component-button-pad-x-xl: var(--admin-space-pad-button);
+  --admin-component-button-pad-x-xl: var(--admin-space-14);
   --admin-component-button-pad-y-lg: 7px;
   --admin-component-button-pad-y-md: 6px;
   --admin-component-button-pad-y-sm: 4px;
   --admin-component-button-pad-y-xl: 9px;
-  --admin-component-button-primary-bg-default: var(--admin-color-accent-default);
+  --admin-component-button-primary-bg-default: var(--admin-primitive-orange-700);
   --admin-component-button-primary-bg-hover: var(--admin-color-accent-hover);
   --admin-component-button-primary-content: var(--admin-color-text-on-accent);
   --admin-component-button-radius: var(--admin-radius-md);
@@ -231,18 +222,18 @@
   --admin-component-button-secondary-bg-hover: var(--admin-color-bg-hover);
   --admin-component-button-secondary-border: var(--admin-color-border-strong);
   --admin-component-button-secondary-content: var(--admin-color-text-primary);
-  --admin-component-chart-bar-bg-active: var(--admin-color-accent-default);
+  --admin-component-chart-bar-bg-active: var(--admin-primitive-orange-400);
   --admin-component-chart-bar-bg-danger: var(--admin-color-status-danger-fill);
-  --admin-component-chart-bar-bg-default: var(--admin-color-chart-line-muted);
+  --admin-component-chart-bar-bg-default: var(--admin-primitive-extra-c2561c);
+  --admin-component-chart-bar-bg-dim: var(--admin-primitive-extra-c2561c-30);
   --admin-component-chart-preview-placeholder: var(--admin-primitive-extra-d9d9d9);
+  --admin-component-checkbox-bg-on: var(--admin-primitive-orange-700);
   --admin-component-content-note-highlight: var(--admin-primitive-extra-ff5500-35);
   --admin-component-content-swatch-blue: var(--admin-primitive-extra-3b82f6);
-  --admin-component-content-swatch-green: var(--admin-primitive-extra-22c55e);
+  --admin-component-content-swatch-green: var(--admin-primitive-green-600);
   --admin-component-content-swatch-purple: var(--admin-primitive-extra-a855f7);
   --admin-component-content-swatch-white: var(--admin-primitive-extra-f4f4f5);
   --admin-component-course-cover-bg: var(--admin-primitive-extra-101014);
-  --admin-component-course-cover-breakdowns-accent: var(--admin-primitive-extra-10b981);
-  --admin-component-course-cover-breakdowns-glow: var(--admin-primitive-extra-10b981-55);
   --admin-component-course-cover-fade-end: var(--admin-primitive-extra-0a0a0d-0);
   --admin-component-course-cover-fade-start: var(--admin-primitive-extra-0a0a0d-90);
   --admin-component-course-cover-foundations-accent: var(--admin-primitive-extra-f97316);
@@ -258,26 +249,47 @@
   --admin-component-course-cover-subtitle: var(--admin-primitive-extra-ffffff-70);
   --admin-component-docs-section-bg: var(--admin-primitive-extra-444444);
   --admin-component-docs-section-border: var(--admin-primitive-extra-ffffff-10);
-  --admin-component-file-icon-doc: var(--admin-primitive-blue-600);
-  --admin-component-file-icon-fold: var(--admin-primitive-extra-ffffff-20);
-  --admin-component-file-icon-label: var(--admin-color-text-on-accent);
+  --admin-component-editor-canvas: var(--admin-primitive-extra-2b2b2e);
+  --admin-component-editor-canvas-dot: var(--admin-primitive-white-08);
+  --admin-component-editor-look-art-bar: var(--admin-primitive-extra-808085);
+  --admin-component-editor-look-art-card: var(--admin-primitive-extra-1c1c1d);
+  --admin-component-editor-look-art-card-raised: var(--admin-primitive-extra-38383b);
+  --admin-component-editor-look-art-preview-bg-1: var(--admin-primitive-ink-925);
+  --admin-component-editor-look-art-thumb: var(--admin-primitive-extra-050505);
+  --admin-component-editor-look-art-thumb-icon: var(--admin-primitive-extra-d9d9dc);
+  --admin-component-editor-look-art-thumb-icon-muted: var(--admin-primitive-extra-6b6b72);
+  --admin-component-editor-preview-nav-label: var(--admin-primitive-extra-f4f4f5);
+  --admin-component-editor-preview-nav-label-muted: var(--admin-primitive-extra-a8a8b1);
+  --admin-component-editor-preview-sidebar: var(--admin-primitive-extra-09090b);
   --admin-component-file-icon-label-other: var(--admin-color-text-secondary);
-  --admin-component-file-icon-media: var(--admin-color-accent-default);
-  --admin-component-file-icon-other: var(--admin-primitive-extra-ffffff-16);
-  --admin-component-file-icon-pdf: var(--admin-primitive-red-600);
-  --admin-component-file-icon-sheet: var(--admin-primitive-green-700);
+  --admin-component-file-icon-solid-doc: var(--admin-color-status-info-fill);
+  --admin-component-file-icon-solid-fold: var(--admin-primitive-white-22);
+  --admin-component-file-icon-solid-label: var(--admin-color-text-on-accent);
+  --admin-component-file-icon-solid-label-media: var(--admin-component-step-indicator-warning-content);
+  --admin-component-file-icon-solid-media: var(--admin-color-status-warning-fill);
+  --admin-component-file-icon-solid-other: var(--admin-primitive-ink-750);
+  --admin-component-file-icon-solid-pdf: var(--admin-color-status-danger-fill);
+  --admin-component-file-icon-solid-sheet: var(--admin-color-status-success-fill);
   --admin-component-file-item-border: var(--admin-color-border-subtle);
-  --admin-component-editor-canvas-dot: var(--admin-color-border-default);
   --admin-component-file-item-meta-danger: var(--admin-color-status-danger);
   --admin-component-file-item-meta-default: var(--admin-color-text-tertiary);
   --admin-component-file-item-meta-success: var(--admin-color-status-success);
   --admin-component-lesson-card-thumb-stop-1: var(--admin-primitive-extra-2a1a10);
   --admin-component-lesson-card-thumb-stop-2: var(--admin-primitive-extra-121212);
+  --admin-component-logo-mono-black: var(--admin-primitive-ink-950);
+  --admin-component-logo-mono-gray: var(--admin-primitive-extra-757575);
+  --admin-component-logo-mono-white: var(--admin-primitive-white-100);
+  --admin-component-logo-wordmark-on-dark: var(--admin-primitive-white-100);
+  --admin-component-logo-wordmark-on-light: var(--admin-primitive-ink-950);
   --admin-component-nav-indicator: var(--admin-primitive-orange-500);
+  --admin-component-progress-fill: var(--admin-primitive-extra-c2561c);
+  --admin-component-progress-item-bar-fill: var(--admin-color-status-warning-fill);
+  --admin-component-progress-item-bar-mid: var(--admin-primitive-extra-88b137);
   --admin-component-progress-item-title: var(--admin-color-text-primary);
-  --admin-component-progress-item-value-danger: var(--admin-color-status-danger-fill);
+  --admin-component-progress-item-value-danger: var(--admin-color-status-danger);
   --admin-component-progress-item-value-default: var(--admin-color-text-secondary);
-  --admin-component-progress-item-value-success: var(--admin-color-status-success-fill);
+  --admin-component-progress-item-value-success: var(--admin-color-status-success);
+  --admin-component-progress-track: var(--admin-primitive-white-14);
   --admin-component-sortable-row-bg-active: var(--admin-color-bg-muted);
   --admin-component-sortable-row-bg-dragging: var(--admin-color-bg-selected);
   --admin-component-sortable-row-bg-hover: var(--admin-color-bg-hover);
@@ -287,9 +299,43 @@
   --admin-component-step-indicator-error-content: var(--admin-color-text-on-accent);
   --admin-component-step-indicator-success-bg: var(--admin-color-status-success-fill);
   --admin-component-step-indicator-success-content: var(--admin-color-text-on-accent);
+  --admin-component-step-indicator-upcoming-bg: var(--admin-primitive-white-14);
+  --admin-component-step-indicator-upcoming-border: var(--admin-primitive-white-22);
+  --admin-component-step-indicator-upcoming-content: var(--admin-color-text-primary);
   --admin-component-step-indicator-warning-bg: var(--admin-color-status-warning-fill);
   --admin-component-step-indicator-warning-content: var(--admin-color-text-on-highlight);
+  --admin-component-swatch-ring-active: var(--admin-color-text-primary);
   --admin-component-tab-dot: var(--admin-color-status-warning-fill);
+  --admin-component-table-row-bg-active: var(--admin-color-bg-muted);
+  --admin-component-table-row-bg-hover: var(--admin-color-bg-hover);
+
+  /* Legacy names (not in the Figma collection any more). Kept so existing code keeps working; remove when no file uses them. */
+  --admin-primitive-blue-600: #2563eb;
+  --admin-primitive-extra-10b981: #10b981;
+  --admin-primitive-extra-10b981-55: rgb(16 185 129 / 55%);
+  --admin-primitive-extra-22c55e: #22c55e;
+  --admin-primitive-extra-ffffff-16: rgb(255 255 255 / 16%);
+  --admin-primitive-extra-ffffff-20: rgb(255 255 255 / 20%);
+  --admin-primitive-green-700: #15803d;
+  --admin-color-icon-strong: var(--admin-primitive-white-96);
+  --admin-font-family-cover: var(--admin-font-family-primary);
+  --admin-font-family-mono: var(--admin-font-family-primary);
+  --admin-size-icon: 16px;
+  --admin-space-gap-inline: var(--admin-space-6);
+  --admin-space-pad-button: var(--admin-space-14);
+  --admin-space-pad-button-sm: var(--admin-space-10);
+  --admin-space-pad-control: var(--admin-space-12);
+  --admin-space-pad-page: var(--admin-space-40);
+  --admin-space-pad-panel: var(--admin-space-20);
+  --admin-component-course-cover-breakdowns-accent: var(--admin-primitive-extra-10b981);
+  --admin-component-course-cover-breakdowns-glow: var(--admin-primitive-extra-10b981-55);
+  --admin-component-file-icon-doc: var(--admin-component-file-icon-solid-doc);
+  --admin-component-file-icon-fold: var(--admin-component-file-icon-solid-fold);
+  --admin-component-file-icon-label: var(--admin-color-text-on-accent);
+  --admin-component-file-icon-media: var(--admin-component-file-icon-solid-media);
+  --admin-component-file-icon-other: var(--admin-component-file-icon-solid-other);
+  --admin-component-file-icon-pdf: var(--admin-component-file-icon-solid-pdf);
+  --admin-component-file-icon-sheet: var(--admin-component-file-icon-solid-sheet);
 }
 
 /* Tailwind mapping: short names (bg-a-panel, text-a-text-2, border-a-border, rounded-a-md…) for the Admin v2 tokens. */
@@ -305,6 +351,10 @@
   --color-a-selected: var(--admin-color-bg-selected);
   --color-a-subtle: var(--admin-color-bg-subtle);
   --color-a-track: var(--admin-color-bg-track);
+  --color-a-progress: var(--admin-component-progress-fill);
+  --color-a-bar: var(--admin-component-chart-bar-bg-default);
+  --color-a-bar-active: var(--admin-component-chart-bar-bg-active);
+  --color-a-bar-dim: var(--admin-component-chart-bar-bg-dim);
   --color-a-scrim: var(--admin-color-bg-scrim);
   --color-a-border: var(--admin-color-border-default);
   --color-a-border-strong: var(--admin-color-border-strong);
