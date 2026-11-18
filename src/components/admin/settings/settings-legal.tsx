@@ -59,7 +59,7 @@ export function Legal() {
   return (
     <SettingsPage title="Legal pages" text="Linked in the footer of your site and at checkout.">
       <div data-tour="legal-table" data-complete={all || undefined} className="rounded-a-lg">
-        <DataCard rowHeight={53}>
+        <DataCard rowHeight={53} className="[&_th]:h-[34px]">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead>Page</TableHead>
