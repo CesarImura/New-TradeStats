@@ -1,31 +1,18 @@
 "use client"
-
-import { createContext, Fragment, useEffect, useMemo, useRef, useState } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import {
-  Check,
-  ExternalLink,
-  Eye,
-  FileDown,
-  History,
-  LayoutGrid,
-  Palette,
-  PlayCircle,
-  RotateCcw,
-  Trash2,
-} from "@/components/icons"
+import { Check, ExternalLink, Eye, FileDown, History, LayoutGrid, Palette, PlayCircle, RotateCcw, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { studentNav } from "@/components/coach/nav"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { AdminButton, AdminFilterButton, AdminMenu, AdminMenuContent, AdminMenuGroup, AdminMenuItem, AdminMenuLabel, AdminMenuSeparator, AdminMenuTrigger, AdminModal, Callout } from "@/components/admin/ui"
+import { AdminButton, AdminFilterButton, AdminMenu, AdminMenuContent, AdminMenuGroup, AdminMenuItem, AdminMenuLabel, AdminMenuSeparator, AdminMenuTrigger, Callout } from "@/components/admin/ui"
 import type { DataMode } from "@/components/widgets/parts/shared"
 import { getDemoCoach } from "@/lib/data/coaches"
 import { keepVersion } from "@/lib/prototype-store"
 import { useCustomCommunities } from "@/lib/data/use-communities"
-import { describe, targetsForField, type PickMessage, type PickTarget } from "@/lib/design-pick"
+import { describe } from "@/lib/design-pick"
 import { auditTheme } from "@/lib/theme/contrast"
 import { pageLayout, resolveCoach, resolveTheme } from "@/lib/theme/resolve"
 import { getWidget, heightFor, heightOf } from "@/components/widgets/registry"
@@ -35,7 +22,7 @@ import { WidgetLibrary, type AddOptions } from "../panels/builder-panels"
 import { WidgetInspector } from "../panels/widget-inspector"
 import { ThumbStyles } from "../thumbs/widget-thumb"
 import { RevealContext, Row, Segmented } from "../fields/controls"
-import { designTabs, DeviceSwitch, Readability, SettingsPanel, THEME_GROUPS, usePanelSearching, without } from "../panels/settings-panel"
+import { designTabs, DeviceSwitch, Readability, SettingsPanel, THEME_GROUPS, without } from "../panels/settings-panel"
 import { AllWidgetsInspector } from "../panels/all-widgets-inspector"
 import { DesignProvider } from "../fields/design-fields"
 import { GuideDialog, VersionsSheet, useDraftEditor } from "./editor-shell"
@@ -51,51 +38,9 @@ import type { CourseSectionId } from "@/lib/data/course-page"
 import { JoinInspector } from "../panels/join-panels"
 import { PreviewFrame } from "./preview-frame"
 import { EditorTopBar } from "./top-bar"
+import { FLASH, IN_PAGES, PREVIEW_AS, STEP_IDS, STEP_OF, StepCtx, type Scope, type Step } from "./workspace-steps"
+import { ResetDialog, SearchHides, useFlash, usePreviewPick } from "./workspace-parts"
 import { canvasDots } from "./canvas-bg"
-
-/** Design's sections, in the order a coach goes through them; the theme ones are the library's theme editor's. */
-type Step = "brand" | "look" | "layout" | "type" | "shape" | "widgets" | "page" | "menu" | "pages" | "course" | "join"
-const STEP_IDS: Step[] = ["brand", "look", "layout", "type", "shape", "widgets", "page", "menu", "pages", "course", "join"]
-
-/** Where a part clicked in the preview is set. */
-const STEP_OF: Record<string, Step> = {
-  logo: "brand",
-  highlight: "brand",
-  nav: "layout",
-  buttons: "widgets",
-  headings: "type",
-  labels: "type",
-  cards: "widgets",
-  "brand-surface": "brand",
-  background: "page",
-}
-/** The settings to flash after a click. */
-const FLASH: Partial<Record<PickTarget, string[]>> = {
-  buttons: ["corners", "buttons"],
-  headings: ["fonts", "heading-weight"],
-  labels: ["labels"],
-  cards: ["widget-set"],
-  "brand-surface": ["primary"],
-  background: ["background"],
-  highlight: ["highlight"],
-  logo: ["logo", "name"],
-  nav: ["nav-layout"],
-}
-
-/** What the widget panel's style changes reach: the selected widget, or every widget. Place, size and content are always one widget's. */
-type Scope = "one" | "all"
-
-/** Sections that now live in Pages, as All widgets (every widget's style, Shape's settings included): old links and clicks open it there. */
-const IN_PAGES = (s: string) => s === "widgets" || s === "shape"
-/** Who the canvas and the preview show the platform to (the Preview popover). */
-const PREVIEW_AS: { value: DataMode; label: string; hint: string }[] = [
-  { value: "sample", label: "Sample", hint: "Sample data" },
-  { value: "empty", label: "New", hint: "A new student: their first week" },
-  { value: "inactive", label: "Inactive", hint: "An inactive student" },
-  { value: "finished", label: "Finished", hint: "A student who finished a course" },
-]
-
-const StepCtx = createContext<{ go: (s: Step) => void }>({ go: () => {} })
 
 /**
  * ADM-37 to ADM-44: Design, in the same editor as the library's themes: an
@@ -220,7 +165,6 @@ export function DesignWorkspace() {
     },
   )
   useFlash(panel, pick.reveal)
-
 
   const fromSetup = params.get("from") === "setup"
   const pageInfo = arrange.pageInfo
@@ -615,126 +559,3 @@ export function DesignWorkspace() {
 
 /* ---------- Click-to-edit ---------- */
 
-/**
- * A click in the preview tells the workspace which part was clicked; `onPick`
- * opens the step and returns the settings to show. Hovering a setting outlines
- * what it changes in the preview.
- */
-function usePreviewPick(on: boolean, onPick: (target: PickTarget) => string[], onEditWidget: (m: { id: string; path: string }) => void) {
-  const frame = useRef<HTMLIFrameElement>(null)
-  const [reveal, setReveal] = useState<{ fields: string[]; n: number }>({ fields: [], n: 0 })
-  const shown = useRef("")
-  const pickRef = useRef(onPick)
-  const editRef = useRef(onEditWidget)
-  useEffect(() => {
-    pickRef.current = onPick
-    editRef.current = onEditWidget
-  })
-
-  useEffect(() => {
-    const send = (m: PickMessage) => frame.current?.contentWindow?.postMessage(m, window.location.origin)
-    send({ type: "design-pick-mode", on })
-    const onMessage = (e: MessageEvent<PickMessage>) => {
-      if (e.origin !== window.location.origin || e.source !== frame.current?.contentWindow) return
-      const m = e.data
-      if (m?.type === "design-pick-ready") send({ type: "design-pick-mode", on })
-      if (m?.type === "design-edit-widget") editRef.current({ id: m.id, path: m.path })
-      if (m?.type === "design-pick") {
-        const fields = pickRef.current(m.target)
-        setReveal((r) => ({ fields, n: r.n + 1 }))
-      }
-    }
-    window.addEventListener("message", onMessage)
-    return () => window.removeEventListener("message", onMessage)
-  }, [on])
-
-  const show = (targets: PickTarget[]) => {
-    const key = targets.join()
-    if (key === shown.current) return
-    shown.current = key
-    frame.current?.contentWindow?.postMessage({ type: "design-show", targets } satisfies PickMessage, window.location.origin)
-  }
-
-  return {
-    frameRef: frame,
-    reveal,
-    /** A click on the canvas (the one screen) does what a click in the preview frame did. */
-    pick: (target: PickTarget) => setReveal((r) => ({ fields: pickRef.current(target), n: r.n + 1 })),
-    onPanelHover: (e: React.PointerEvent) => {
-      if (!on) return
-      const field = (e.target as Element).closest("[data-field]")?.getAttribute("data-field")
-      show(field ? targetsForField(field) : [])
-    },
-    onPanelLeave: () => show([]),
-  }
-}
-
-/** After a pick (and the step and folds have opened): scroll to the first setting and flash them all. */
-function useFlash(panel: React.RefObject<HTMLDivElement | null>, reveal: { fields: string[]; n: number }) {
-  useEffect(() => {
-    if (!reveal.n) return
-    let id = requestAnimationFrame(() => {
-      id = requestAnimationFrame(() => {
-        const els = reveal.fields.flatMap((f) => [...(panel.current?.querySelectorAll<HTMLElement>(`[data-field="${f}"]`) ?? [])])
-        const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        els[0]?.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "center" })
-        for (const el of els)
-          el.animate(
-            [
-              { outline: "2px solid var(--admin-color-border-active)", outlineOffset: "6px", borderRadius: "4px" },
-              { outline: "2px solid transparent", outlineOffset: "6px", borderRadius: "4px" },
-            ],
-            { duration: still ? 600 : 1600, easing: "ease-out" },
-          )
-        if (reveal.fields[0]?.startsWith("menu-")) els[0]?.querySelector<HTMLInputElement>("input:not(:disabled)")?.select()
-      })
-    })
-    return () => cancelAnimationFrame(id)
-  }, [panel, reveal])
-}
-
-/** Hidden while the panel search is open: the search and its results are all the panel shows then. */
-function SearchHides({ children }: { children: React.ReactNode }) {
-  return usePanelSearching() ? null : <>{children}</>
-}
-
-/** Back to the original design, from the ⋯ menu: asks first, says what goes back, and can put the pages back too. Undoable. */
-function ResetDialog({ open, onOpenChange, name, onReset }: { open: boolean; onOpenChange: (o: boolean) => void; name: string; onReset: (pagesToo: boolean) => void }) {
-  const [pagesToo, setPagesToo] = useState(false)
-  // The dialog's one field takes the focus when it opens (the dialog itself would start on the close button).
-  useEffect(() => {
-    if (!open) return
-    const id = setTimeout(() => document.getElementById("reset-pages")?.focus(), 50)
-    return () => clearTimeout(id)
-  }, [open])
-  return (
-    <AdminModal overlay="plain"
-      open={open}
-      onOpenChange={(o) => (onOpenChange(o), setPagesToo(false))}
-      title="Back to the original design?"
-      subtitle={`Colours, type, shapes, widgets and background go back to how ${name} started. Your name, logo and menu stay. You can undo it (⌘Z).`}
-      className="sm:max-w-[560px]"
-      footer={
-        <>
-          <AdminButton hierarchy="secondary" onClick={() => onOpenChange(false)}>
-            Keep
-          </AdminButton>
-          <AdminButton
-            hierarchy="danger"
-            onClick={() => {
-              onReset(pagesToo)
-              onOpenChange(false)
-            }}
-          >
-            Reset
-          </AdminButton>
-        </>
-      }
-    >
-      <label className="flex cursor-pointer items-center gap-2 t-body-m">
-        <Checkbox id="reset-pages" autoFocus checked={pagesToo} onCheckedChange={(v) => setPagesToo(!!v)} />
-        Also put every page&apos;s layout back
-      </label>
-    </AdminModal>
-  )
-}
