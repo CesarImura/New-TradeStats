@@ -73,7 +73,7 @@ export function LivestreamsAdmin() {
                 <div className="flex flex-wrap items-center gap-2 t-caption text-a-text-2">
                   {next.state === "live" ? <Tag tone="danger">Live now</Tag> : <><span>Next live</span><Tag>{untilLabel(next.startsAt).replace(/^./, (c) => c.toUpperCase())}</Tag><Tag tone="warning">Waiting for OBS</Tag></>}
                 </div>
-                <h2 className="mt-1 t-heading-xl text-a-text [overflow-wrap:anywhere]">{next.title}</h2>
+                <h2 className="-mt-0.5 t-heading-xl text-a-text [overflow-wrap:anywhere]">{next.title}</h2>
                 <p className="flex flex-wrap items-center gap-x-4 gap-y-1 t-caption text-a-text-2">
                   <span className="flex items-center gap-1.5"><CalendarDays className="size-3.5" aria-hidden />{whenLabel(next.startsAt).replace(",", " ·")}</span>
                   <span className="flex items-center gap-1.5"><Clock className="size-3.5" aria-hidden />{lengthLabel(next.planned ?? 60)}</span>
@@ -146,7 +146,7 @@ export function LivestreamsAdmin() {
                 {list.map((s) => (
                   <AdminTr key={s.id} onClick={() => studio(s)}>
                     <AdminTd>
-                      <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex min-w-0 items-center gap-6">
                         <span aria-hidden className="h-8 w-[52px] shrink-0 rounded-a-xs bg-[linear-gradient(135deg,var(--admin-color-accent-soft),var(--admin-color-bg-raised))]" />
                         <div className="flex min-w-0 flex-col">
                           <Link href={`${base}/livestreams/${s.id}`} onClick={(e) => e.stopPropagation()} className="truncate rounded-a-xs t-body-m text-a-text outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">{s.title}</Link>
