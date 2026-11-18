@@ -93,8 +93,8 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
   const skippedNow = method === "links" ? badLinks : skipped
   const rows = method === "folder" ? found : method === "links" ? linkRows : []
   const groups = rows.reduce<Record<string, Found[]>>((g, r) => ((g[r.module] ||= []).push(r), g), {})
-  /** The folder result is the longest screen (Figma 680px); the others are 600px. */
-  const tall = step === "content" && rows.length > 0
+  /** The Content step is 680px tall in Figma (Course 04 and 05); the Course step is 600px. */
+  const tall = step === "content"
 
   const build = () => {
     const modules: Module[] = Object.entries(groups).map(([name, items]) => ({
@@ -153,8 +153,8 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
           className={cn(
             POP,
             "fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100svh-2rem)] w-[calc(100vw-2rem)] max-w-[880px] -translate-x-1/2 -translate-y-1/2 grid-cols-1 overflow-hidden rounded-a-xl border border-a-border-strong bg-a-panel text-a-text shadow-[0_30px_60px_rgb(0_0_0/0.6)] outline-none sm:grid-cols-[220px_minmax(0,1fr)]",
-            // Figma Modal / Course: top at y=200 on a 1080 screen (18.52svh). It stays centered unless the screen is tall enough to leave 1rem under it.
-            tall ? "h-[680px] [@media(min-height:874px)]:top-[18.52svh] [@media(min-height:874px)]:-translate-y-0" : "h-[600px] [@media(min-height:775px)]:top-[18.52svh] [@media(min-height:775px)]:-translate-y-0"
+            // Figma Modal / Course: top at y=200 on a 1080 screen (18.52svh); the taller Content step (680) sits at y=160 (14.81svh). Centered unless the screen leaves 1rem under it.
+            tall ? "h-[680px] [@media(min-height:817px)]:top-[14.81svh] [@media(min-height:817px)]:-translate-y-0" : "h-[600px] [@media(min-height:775px)]:top-[18.52svh] [@media(min-height:775px)]:-translate-y-0"
           )}
         >
           <nav aria-label="Steps" className="hidden flex-col gap-1 border-r border-a-border bg-a-sunk px-4 py-6 sm:flex">
