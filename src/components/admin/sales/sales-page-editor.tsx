@@ -80,19 +80,21 @@ export function SalesPageEditor({ resetSignal }: { resetSignal: number }) {
   }, [resetSignal])
 
   // The page is on our own origin, so the editor marks the block being edited itself (the page stays as it is) and scrolls it into view.
+  // The mark is a <style> in the page's head, not an attribute on the block: attributes added to the page's own elements
+  // before it has hydrated made React report a mismatch on the Sales page; a style element in the head is left alone.
   const mark = () => {
     const doc = frame.current?.contentDocument
     const win = frame.current?.contentWindow
     if (!doc || !win) return
-    doc.querySelectorAll<HTMLElement>("[data-editing]").forEach((x) => {
-      x.removeAttribute("data-editing")
-      x.style.outline = ""
-    })
+    let style = doc.getElementById("editing-mark") as HTMLStyleElement | null
+    if (!style) {
+      style = doc.createElement("style")
+      style.id = "editing-mark"
+      doc.head.appendChild(style)
+    }
     const el = block ? doc.getElementById(block.id) : null
+    style.textContent = el ? `#${CSS.escape(block!.id)} { outline: 2px dashed var(--ts-cta); outline-offset: -2px; }` : ""
     if (!el) return
-    el.setAttribute("data-editing", "")
-    el.style.outline = "2px dashed var(--ts-cta)"
-    el.style.outlineOffset = "-2px"
     win.scrollTo({ top: el.getBoundingClientRect().top + win.scrollY - 64, behavior: "smooth" })
   }
   useEffect(() => {
