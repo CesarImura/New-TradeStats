@@ -6,19 +6,30 @@ import { cn } from "@/lib/utils"
 
 /** Admin / Calendar event (Figma 583:660): a 2px edge and a soft fill by type. Live is accent, 1:1 call is success, news is danger, group calls and workshops are neutral. */
 const TONE: Record<ItemKind, string> = {
-  live: "border-a-accent-strong bg-a-accent-soft",
+  live: "border-a-accent-strong bg-a-muted",
   call: "border-a-border-strong bg-a-muted",
   workshop: "border-a-border-strong bg-a-muted",
   "one-on-one": "border-a-success bg-a-success-soft",
   news: "border-a-danger bg-a-danger-soft",
 }
 export const KIND_LABEL: Record<ItemKind, string> = { live: "Live session", call: "Group call", workshop: "Workshop", "one-on-one": "Call", news: "News" }
+/** Legend marks are 2 px edges like the events (Figma: no dots as status). */
 export const KIND_DOT: Record<ItemKind, string> = { live: "bg-a-accent-strong", call: "bg-a-text-2", workshop: "bg-a-text-2", "one-on-one": "bg-a-success", news: "bg-a-danger" }
 
 function meta(i: Item) {
   if (i.kind === "news") return `News · ${i.news?.noTrade ? "No trade" : i.news?.impact}`
   if (i.kind === "workshop" && i.event?.seats) return `Workshop · ${i.event.signedUp} / ${i.event.seats} seats`
   return `${KIND_LABEL[i.kind]} · ${hhmm(i.start)}`
+}
+
+/** "1 live", "1 call · 1 news", "3 events": what the day holds, in its header (Figma Calendar 01). */
+function dayCount(list: Item[]) {
+  if (!list.length) return ""
+  const g = { live: 0, call: 0, news: 0 }
+  for (const i of list) g[i.kind === "live" ? "live" : i.kind === "news" ? "news" : "call"]++
+  const parts = (Object.entries(g) as [keyof typeof g, number][]).filter(([, n]) => n > 0)
+  if (parts.length <= 2 && parts.every(([, n]) => n === 1)) return parts.map(([k, n]) => `${n} ${k}`).join(" · ")
+  return `${list.length} events`
 }
 
 const ROW = 56 // px per hour
@@ -79,13 +90,20 @@ export function AdminWeek({ items, start, onSelect, onEmptySlot }: { items: Item
           <div className="grid h-10 grid-cols-[56px_repeat(7,minmax(0,1fr))] border-b border-a-border">
             <span />
             {days.map((d) => (
-              <div key={+d} className={cn("flex items-center border-l border-a-border px-3 t-body-m tabular-nums", isSameDay(d, NOW) ? "text-a-text" : "text-a-text-2")}>
-                {format(d, "EEE d")}
+              <div key={+d} className="flex items-center justify-between gap-2 border-l border-a-border px-3 t-body-m tabular-nums text-a-text-2">
+                <span className="flex items-center gap-1.5">
+                  {format(d, "EEE")}
+                  <span className={cn(isSameDay(d, NOW) && "grid size-5 place-items-center rounded-full bg-a-accent text-a-on-highlight t-caption-medium", !isSameDay(d, NOW) && "text-a-text")}>{format(d, "d")}</span>
+                </span>
+                <span className="truncate t-micro text-a-text-3">{dayCount(inWeek.filter((i) => isSameDay(i.start, d)))}</span>
               </div>
             ))}
           </div>
           <div className="relative grid grid-cols-[56px_repeat(7,minmax(0,1fr))]" style={{ height: hours.length * ROW }}>
             <div className="relative">
+              {NOW.getHours() >= first && NOW.getHours() < last && days.some((d) => isSameDay(d, NOW)) && (
+                <span aria-hidden className="absolute left-1.5 z-10 -translate-y-1/2 rounded-a-xs bg-a-text px-1 t-micro-medium text-a-on-highlight tabular-nums" style={{ top: y(NOW) }}>{hhmm(NOW)}</span>
+              )}
               {hours.map((h) => (
                 <span key={h} className="absolute left-2.5 t-micro text-a-text-3 tabular-nums" style={{ top: (h - first) * ROW + 6 }}>
                   {String(h).padStart(2, "0")}:00
@@ -103,7 +121,7 @@ export function AdminWeek({ items, start, onSelect, onEmptySlot }: { items: Item
                     const mins = Math.round(((e.clientY - r.top) / ROW) * 2) * 30
                     onEmptySlot(addMinutes(new Date(d.getFullYear(), d.getMonth(), d.getDate(), first, 0), Math.floor(mins / 30) * 30 - 0))
                   }}>
-                  {isSameDay(d, NOW) && NOW.getHours() >= first && NOW.getHours() < last && <span aria-hidden className="absolute inset-x-0 z-10 h-px bg-a-accent-strong" style={{ top: y(NOW) }} />}
+                  {isSameDay(d, NOW) && NOW.getHours() >= first && NOW.getHours() < last && <span aria-hidden className="absolute inset-x-0 z-10 h-px bg-a-text" style={{ top: y(NOW) }}><span className="absolute -top-[2.5px] -left-[3px] size-1.5 rounded-full bg-a-text" /></span>}
                   {list.map((i) => {
                     const l = lane.get(i.key)!
                     return (
@@ -141,7 +159,7 @@ export function AdminMonth({ items, cursor, onSelect, onDay }: { items: Item[]; 
               const list = items.filter((x) => isSameDay(x.start, d))
               return (
                 <div key={+d} onClick={() => onDay(d)} className={cn("flex min-h-28 cursor-pointer flex-col gap-1 border-a-border p-1.5 transition-colors duration-300 hover:bg-a-hover", i % 7 > 0 && "border-l", i >= 7 && "border-t", !isSameMonth(d, cursor) && "bg-a-subtle")}>
-                  <span className={cn("t-caption tabular-nums", isSameDay(d, NOW) ? "grid size-5 place-items-center self-start rounded-full bg-a-accent-strong text-a-on-accent" : isSameMonth(d, cursor) ? "px-1 text-a-text" : "px-1 text-a-text-3")}>{d.getDate()}</span>
+                  <span className={cn("t-caption tabular-nums", isSameDay(d, NOW) ? "grid size-5 place-items-center self-start rounded-full bg-a-accent text-a-on-highlight" : isSameMonth(d, cursor) ? "px-1 text-a-text" : "px-1 text-a-text-3")}>{d.getDate()}</span>
                   {list.slice(0, 3).map((x) => (
                     <button key={x.key} type="button" onClick={(e) => (e.stopPropagation(), onSelect(x, e.currentTarget))}
                       className={cn("flex w-full min-w-0 items-center gap-1.5 rounded-a-xs border-l-2 px-1.5 py-0.5 text-left outline-none hover:brightness-125 focus-visible:ring-2 focus-visible:ring-a-border-focus", TONE[x.kind])}>
