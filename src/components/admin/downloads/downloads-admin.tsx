@@ -12,8 +12,7 @@ import { useTiers } from "@/lib/data/access"
 import { DOWNLOAD_CATEGORIES, categoryLabel, daysAgo, saveDownloads, shortDate, useDownloads, type DownloadCategory, type DownloadFile, type DownloadItem } from "@/lib/data/downloads"
 import { useCatalog } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
-import { PageHeader } from "../kit"
-import { AdminSelect, AdminButton, AdminDrawer, AdminField, AdminFilter, AdminSearch, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, Callout, Dropzone, EmptyState, FileIcon, FileItem, Tag, adminControl } from "../ui"
+import { AdminPageHeader, AdminSelect, AdminButton, AdminDrawer, AdminField, AdminFilter, AdminSearch, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, Callout, Dropzone, EmptyState, FileIcon, FileItem, Tag, adminControl } from "../ui"
 
 const TYPES: Record<string, string> = {
   pdf: "PDF",
@@ -77,7 +76,7 @@ export function DownloadsAdmin() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
-      <PageHeader title="Downloads" text={all.length === 0 ? "No files yet" : `Files students can download · ${all.length} files · ${all.reduce((n, r) => n + r.downloads, 0).toLocaleString("en")} downloads this month`} actions={upload(all.length === 0 ? "secondary" : undefined)} />
+      <AdminPageHeader className="[&>div:first-child]:gap-2" title="Downloads" subtitle={all.length === 0 ? "No files yet" : `Files students can download · ${all.length} files · ${all.reduce((n, r) => n + r.downloads, 0).toLocaleString("en")} downloads this month`} actions={upload(all.length === 0 ? "secondary" : undefined)} />
       {!coach.modules.downloads && (
         <Callout tone="warning" action={<AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="md">Review</AdminButton>}>
           Downloads is switched off, so students don&apos;t see it yet.

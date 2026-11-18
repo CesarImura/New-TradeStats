@@ -21,8 +21,7 @@ import {
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
-import { PageHeader } from "../kit"
-import { AdminButton, AdminFilter, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, AdminViewToggle, CellDot, CellStack, EmptyState, MediaCard, MediaCardStatus, StatPanel, Tag } from "../ui"
+import { AdminPageHeader, AdminButton, AdminFilter, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, AdminViewToggle, CellDot, CellStack, EmptyState, MediaCard, MediaCardStatus, StatPanel, Tag } from "../ui"
 import { CourseCover } from "./course-parts"
 import {
   DropdownMenu,
@@ -159,9 +158,9 @@ export function ContentBoard() {
 
   return (
     <div className="mx-auto flex max-w-[1200px] flex-col gap-4">
-      <PageHeader
+      <AdminPageHeader className="[&>div:first-child]:gap-2"
         title="Content"
-        text={catalog.courses.length === 0 ? "No courses yet" : `${catalog.courses.length} ${catalog.courses.length === 1 ? "course" : "courses"} · ${plural(catalog.courses.reduce((n, c) => n + allLessons(c).length, 0), "lesson")}`}
+        subtitle={catalog.courses.length === 0 ? "No courses yet" : `${catalog.courses.length} ${catalog.courses.length === 1 ? "course" : "courses"} · ${plural(catalog.courses.reduce((n, c) => n + allLessons(c).length, 0), "lesson")}`}
         actions={
           // One primary action per screen: with no courses the empty state's "New course" is the primary one.
           <AdminButton hierarchy={catalog.courses.length === 0 ? "secondary" : undefined} onClick={() => openWizard("blank")}>
