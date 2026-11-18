@@ -5,7 +5,7 @@ import { ImagePlus, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { pictureFrom } from "@/lib/images"
 import { cn } from "@/lib/utils"
-import { AdminButton } from "@/components/admin/ui"
+import { AdminButton, Dropzone } from "@/components/admin/ui"
 
 /** The admin keeps its own neutral look, so a course without a cover shows its colour in these tints. */
 export const COVER_TINTS = ["#f97316", "#0ea5e9", "#8b5cf6", "#10b981", "#e11d48"]
@@ -23,10 +23,10 @@ export function Tile({ src, color, className, children }: { src?: string; color:
 }
 
 /**
- * Choose, change or remove a picture (a course cover, a lesson thumbnail). The picture is made smaller on the way in, so the
- * draft stays light; with none, `empty` says what students see instead.
+ * Choose, change or remove a picture (a lesson thumbnail; Figma Content 07 and 07b). With none, a dropzone; with one, the
+ * picture and Change image / Remove. The picture is made smaller on the way in, so the draft stays light.
  */
-export function PictureField({ value, color, onChange, label, empty, className }: { value?: string; color: number; onChange: (v: string | undefined) => void; label: string; empty: string; className?: string }) {
+export function PictureField({ value, color, onChange, label, className }: { value?: string; color: number; onChange: (v: string | undefined) => void; label: string; className?: string }) {
   const input = useRef<HTMLInputElement>(null)
   const pick = async (file: File | undefined) => {
     if (!file) return
@@ -36,21 +36,25 @@ export function PictureField({ value, color, onChange, label, empty, className }
       toast.error(e instanceof Error ? e.message : "That picture couldn't be used.")
     }
   }
+  const hint = "PNG, JPG or WebP. 16:9 works best."
+  if (!value) {
+    return (
+      <Dropzone title="Drop an image here, or click to choose" hint={hint} accept="image/*" label={label} onFiles={(files) => void pick(files[0])} className="max-w-[520px]" />
+    )
+  }
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-a-10 border border-a-border p-3">
-      <Tile src={value} color={color} className={cn("aspect-video w-36 shrink-0 rounded-a-md", className)} />
-      <div className="grid min-w-[10rem] flex-1 gap-2">
-        <span className="t-caption text-a-text-2">{value ? `Your ${label.toLowerCase()} picture.` : empty}</span>
-        <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-start gap-3">
+      <Tile src={value} color={color} className={cn("aspect-video w-40 shrink-0 rounded-a-md border border-a-border", className)} />
+      <div className="grid gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <AdminButton onClick={() => input.current?.click()} hierarchy="secondary" size="md">
-            <ImagePlus /> {value ? "Change" : "Add a picture"}
+            <ImagePlus /> Change image
           </AdminButton>
-          {value && (
-            <AdminButton onClick={() => onChange(undefined)} hierarchy="ghost" size="md">
-              <Trash2 /> Remove
-            </AdminButton>
-          )}
+          <AdminButton onClick={() => onChange(undefined)} hierarchy="ghost" size="md">
+            <Trash2 /> Remove
+          </AdminButton>
         </div>
+        <span className="t-body-m text-a-text-2">{hint}</span>
       </div>
       <input ref={input} type="file" accept="image/*" aria-label={label} className="sr-only" onChange={(e) => (void pick(e.target.files?.[0]), (e.target.value = ""))} />
     </div>

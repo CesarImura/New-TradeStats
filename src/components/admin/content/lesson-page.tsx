@@ -68,7 +68,7 @@ export function LessonPage({ course, lesson, upload, saved, onChange, onPick, on
           <nav aria-label="Course outline" className="flex flex-col gap-1">
             {course.modules.map((m, mi) => (
               <div key={m.id} className="flex flex-col gap-1">
-                <span className="px-2.5 pt-2.5 pb-1 t-mono-label-s text-a-text-3">
+                <span className="px-2.5 pt-2.5 pb-1 t-micro text-a-text-3">
                   {mi + 1} · {m.title}
                 </span>
                 {m.lessons.map((l) => {

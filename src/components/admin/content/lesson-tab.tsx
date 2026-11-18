@@ -65,16 +65,16 @@ export function LessonTab({ course, lesson, upload, t, onChange, onPick, next }:
             onChange={(e) => onChange({ takeaways: e.target.value.split("\n") })}
             onBlur={() => onChange({ takeaways: (lesson.takeaways ?? []).map((x) => x.trim()).filter(Boolean) })}
             placeholder="What will students take away?"
-            className={cn(adminControl, "min-h-[80px] resize-y py-3")}
+            className={cn(adminControl, "min-h-[58px] resize-none py-3")}
           />
         )}
       </AdminField>
       <AdminField label="Task for students" className="grid-cols-[minmax(0,1fr)]">
-        {(p) => <textarea {...p} value={lesson.text ?? ""} onChange={(e) => onChange({ text: e.target.value })} placeholder="Optional homework, shown under the video." className={cn(adminControl, "min-h-[64px] resize-y py-3")} />}
+        {(p) => <textarea {...p} value={lesson.text ?? ""} onChange={(e) => onChange({ text: e.target.value })} placeholder="Optional homework, shown under the video." className={cn(adminControl, "min-h-[80px] resize-none py-3")} />}
       </AdminField>
       <div role="group" aria-labelledby={`${thumbId}-l`} className="grid grid-cols-[minmax(0,1fr)] gap-1.5">
         <span id={`${thumbId}-l`} className="t-caption text-a-text">Thumbnail</span>
-        <PictureField value={lesson.thumbnail} color={course.color} onChange={(thumbnail) => onChange({ thumbnail })} label="Thumbnail" empty="No picture yet: the list shows the course cover." />
+        <PictureField value={lesson.thumbnail} color={course.color} onChange={(thumbnail) => onChange({ thumbnail })} label="Thumbnail" />
       </div>
     </div>
   )
