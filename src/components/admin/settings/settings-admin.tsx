@@ -554,7 +554,7 @@ function Legal() {
           </TableBody>
         </DataCard>
       </div>
-      <div className="flex items-center gap-2 rounded-a-md border border-a-border bg-a-panel px-3 py-2.5 t-body-m">
+      <div className="flex items-center gap-2 rounded-a-md bg-a-subtle px-3 py-2.5 t-body-m">
         <Info className="size-4 shrink-0 text-a-icon" />
         Trading carries risk. The risk disclaimer is shown on every sales page and can&apos;t be turned off.
       </div>
