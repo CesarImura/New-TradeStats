@@ -112,7 +112,7 @@ export const TOURS: Record<TourId, Tour> = {
     steps: [
       { id: "start", target: t("payouts-start"), part: 0, title: "Connect payouts", body: "This is how the money from your sales reaches you. Three short steps, about 5 minutes.", hint: "Click Start" },
       { id: "next", target: t("payouts-next"), part: 1, title: "Pick up where you left off", body: "What you entered is saved. Carry on with the next step.", hint: "Click Continue" },
-      { id: "you", target: t("payouts-you"), part: 0, side: "left", title: "Tell us who gets paid", body: "Pick person or company and your country. Use your name exactly as on your ID.", hint: "Then click Continue" },
+      { id: "you", target: t("payouts-you"), part: 0, side: "left", gap: 8, title: "Tell us who gets paid", body: "Pick person or company and your country. Use your name exactly as on your ID.", hint: "Then click Continue" },
       { id: "bank", target: t("payouts-bank"), part: 1, side: "left", title: "Add your bank account", body: "Your money arrives here every Monday. The account must be in your name.", hint: "Then click Save" },
       { id: "id", target: t("payouts-id"), part: 2, side: "left", title: "Check your identity", body: "Our payment partner checks your ID once. It usually takes a few minutes.", hint: "Upload it, then click Submit" },
       { id: "review", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="review"]`, part: 2, final: true, pill: "ID in review", title: "We’re checking your ID", body: "Usually a few minutes, sometimes up to 2 days. Keep setting up; we’ll e-mail you when it’s done.", hint: "" },
@@ -130,7 +130,7 @@ export const TOURS: Record<TourId, Tour> = {
     steps: [
       { id: "start", target: t("legal-imprint-setup"), part: 0, title: "Add your legal pages", body: "Students see them in your footer and at checkout. Start with the imprint. We have templates for the rest.", hint: "Click Set up next to Imprint" },
       { id: "next", target: t("legal-next"), part: 2, title: "Check the templates", body: "Privacy policy, terms and risk disclaimer come pre-filled with your details. Read each one and change what doesn’t fit.", hint: "Click Set up" },
-      { id: "imprint", target: t("legal-imprint"), part: 1, side: "left", title: "Fill in your imprint", body: "The law asks who runs the platform and how to reach you.", hint: "Then click Save" },
+      { id: "imprint", target: t("legal-imprint"), part: 1, side: "left", gap: 8, title: "Fill in your imprint", body: "The law asks who runs the platform and how to reach you.", hint: "Then click Save" },
       { id: "template", target: t("legal-template"), part: 2, side: "left", title: "Check the templates", body: "Privacy policy, terms and risk disclaimer come pre-filled with your details. Read each one and change what doesn’t fit.", hint: "Then click Use this text" },
       { id: "done", target: `${NO_DRAWER} ${t("legal-table")}[data-complete]`, part: 2, final: true, title: "Your legal pages are ready", body: "Students find them in your footer and at checkout. One step left: go live.", hint: "" },
     ],
