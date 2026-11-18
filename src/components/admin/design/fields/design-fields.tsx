@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { isPageId, type Coach, type ModuleId } from "@/lib/data/coaches"
-import { FONT_LIBRARY, type FontId } from "@/lib/fonts"
+import { FONT_LIBRARY } from "@/lib/fonts"
 import type { Overrides } from "@/lib/prototype-store"
 import { themeToCss, themeVars } from "@/lib/theme/css"
 import { onColor } from "@/lib/theme/derive"
@@ -18,7 +18,6 @@ import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import { chartStyleOf, headerFormOf, widgetFinishOf, widgetSetOf, type CoachTheme, type NavFill, type NavMarker, type TemplateId } from "@/lib/theme/types"
 import { brandMenuReads, navFillOf } from "@/lib/theme/nav-fill"
-import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { BackgroundControl } from "./background-control"
 import { SelectionCard } from "./choice-cards"
@@ -125,7 +124,7 @@ function TemplateField() {
  * In the prototype the site is not read: the choices come from a sample worked out from the address, and the line says so.
  */
 function ImportSiteField() {
-  const { theme, change } = useDesign()
+  const { change } = useDesign()
   const [url, setUrl] = useState("")
   const [what, setWhat] = useState({ colours: true, fonts: true })
   const [state, setState] = useState<"idle" | "loading" | "done">("idle")

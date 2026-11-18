@@ -281,7 +281,8 @@ export function JoinFree({ invite }: { invite?: boolean }) {
   const router = useRouter()
   const tiers = useTiers(coach)
   const params = useSearchParams()
-  const tier = tiers.find((t) => t.id === params.get("tier")) ?? tiers[0]
+  // Without a tier in the link, the one the page recommends (Figma Join 03: "Join Trading Desk for free"), as the checkout does.
+  const tier = tiers.find((t) => t.id === params.get("tier")) ?? tiers.find((t) => t.featured && !t.hidden) ?? tiers[0]
   const [name, setName] = useState(invite ? "Lena Hoffmann" : "")
   const [email, setEmail] = useState(invite ? "lena.hoffmann@mail.com" : "")
   const [step, setStep] = useState<"form" | "code">("form")
