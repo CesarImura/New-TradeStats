@@ -130,7 +130,7 @@ export function Payouts() {
         ]}
       />
       <div className={cn("grid items-start gap-4", !fresh && "lg:grid-cols-[minmax(0,610fr)_minmax(0,570fr)]")}>
-        <Panel className="gap-3.5" data-tour="payouts-connected" data-state={state.review ? "review" : "connected"}>
+        <Panel className="gap-3" data-tour="payouts-connected" data-state={state.review ? "review" : "connected"}>
           <header className="flex items-center justify-between gap-2"><h2 className="t-heading-s text-a-text">Where your money goes every week</h2>{state.review ? <Tag tone="warning">ID in review</Tag> : <Tag tone="success">Payouts connected</Tag>}</header>
           <dl className="flex flex-col gap-2.5">
             {rows.map(([k, v]) => (
