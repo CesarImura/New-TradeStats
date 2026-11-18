@@ -2,6 +2,7 @@
 // The prototype's "today" is Monday 10 November 2025, 09:00.
 
 import type { Health } from "./sample"
+import { generatedStudents } from "./people-generated"
 
 export type Student = {
   id: string
@@ -29,7 +30,7 @@ export type Student = {
 
 const H = (when: string, text: string) => ({ when, text })
 
-export const STUDENTS: Student[] = [
+const FEATURED_STUDENTS: Student[] = [
   {
     id: "s1", name: "Alex Moreau", initials: "AM", email: "alex.moreau@mail.com", tier: "core", group: "October cohort", progress: 62, lastActive: "today", activeDays: 11, health: "red", reason: "Payment failed",
     joined: "1 Apr 2025", paid: 1043, broker: true, discord: true, country: "FR", trades30: 41, rules: 84,
@@ -78,6 +79,9 @@ export const STUDENTS: Student[] = [
     joined: "invited 4 Nov", paid: 0, broker: false, discord: false, country: "SE", trades30: 0, rules: 0, notes: [], history: [H("4 Nov", "Invited by e-mail")],
   },
 ]
+
+/** The ten written by hand plus the generated rest of the roster (201 in all). */
+export const STUDENTS: Student[] = [...FEATURED_STUDENTS, ...generatedStudents(FEATURED_STUDENTS)]
 
 export const GROUPS = [
   { id: "dec", name: "December cohort", start: "1 Dec 2025", end: "28 Feb 2026", seats: 20, members: 18, waiting: 0, tiers: ["desk"] },

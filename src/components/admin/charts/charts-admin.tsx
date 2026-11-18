@@ -2,19 +2,20 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { ChartCandlestick, MoreHorizontal, Plus, X } from "@/components/icons"
+import { Plus, X } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { COACH_CHARTS, chartDefaults, INDICATORS, INTERVALS, MARKETS, type ChartSettings, type CoachChart, type Market } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { PageHeader, useCommunityData } from "../kit"
+import { ChartWorkspace } from "./chart-workspace"
 import { useNewPlatform } from "../use-new-platform"
-import { AdminSelect, AdminButton, AdminField, AdminModal, AdminSearch, AdminSegmented, AdminTabs, Callout, EmptyState, Panel, Tag, adminControl } from "../ui"
+import { AdminSelect, AdminButton, AdminField, AdminModal, AdminSegmented, AdminTabs, Callout, Panel, Tag, adminControl } from "../ui"
 
 const TABS = [
-  { id: "charts", label: "Your charts" },
+  { id: "charts", label: "Chart" },
   { id: "settings", label: "Settings" },
 ] as const
 type Tab = (typeof TABS)[number]["id"]
@@ -30,7 +31,7 @@ export function ChartsAdmin() {
   const [s, setS] = useCommunityData<ChartSettings>(coach.slug, "charts", defaults)
   const [charts, setCharts] = useCommunityData<CoachChart[]>(coach.slug, "coach-charts", fresh ? NO_CHARTS : COACH_CHARTS)
   const [tab, setTab] = useState<Tab>("charts")
-  const [q, setQ] = useState("")
+  const q = ""
   const [creating, setCreating] = useState(false)
   const live = charts.filter((c) => !c.archived)
   const shown = live.filter((c) => c.title.toLowerCase().includes(q.toLowerCase())).sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned))
@@ -48,114 +49,23 @@ export function ChartsAdmin() {
       )}
       <div className="flex flex-wrap items-center gap-2">
         <AdminTabs label="Charts" tabs={TABS} value={tab} onChange={setTab} />
-        {tab === "charts" && live.length > 0 && (
-          <>
-            <div className="flex-1" />
-            <AdminSearch value={q} onChange={setQ} placeholder="Search charts" hint="⌘K" className="w-[220px]" />
-          </>
-        )}
       </div>
 
-      {tab === "charts" &&
-        (live.length === 0 ? (
-          <EmptyState icon={ChartCandlestick} title="No marked-up charts yet" description="Share levels for the week. Students see them on their chart." actions={upload} />
-        ) : shown.length === 0 ? (
-          <EmptyState icon={ChartCandlestick} title="No charts match" description="Clear the search." />
-        ) : (
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {shown.map((c) => (
-              <ChartCard
-                key={c.id}
-                chart={c}
-                onPin={() => setCharts((l) => l.map((x) => (x.id === c.id ? { ...x, pinned: !x.pinned } : x)))}
-                onArchive={() => {
-                  setCharts((l) => l.map((x) => (x.id === c.id ? { ...x, archived: true } : x)))
-                  toast("Chart archived", { description: "Students don't see it any more.", action: { label: "Undo", onClick: () => setCharts((l) => l.map((x) => (x.id === c.id ? { ...x, archived: false } : x))) } })
-                }}
-              />
-            ))}
-          </div>
-        ))}
+      {tab === "charts" && (
+        <ChartWorkspace
+          charts={shown}
+          onNew={() => setCreating(true)}
+          onPin={(id) => setCharts((l) => l.map((x) => (x.id === id ? { ...x, pinned: !x.pinned } : x)))}
+          onArchive={(id) => {
+            setCharts((l) => l.map((x) => (x.id === id ? { ...x, archived: true } : x)))
+            toast("Chart archived", { description: "Students don't see it any more.", action: { label: "Undo", onClick: () => setCharts((l) => l.map((x) => (x.id === id ? { ...x, archived: false } : x))) } })
+          }}
+        />
+      )}
       {tab === "settings" && <Settings s={s} setS={setS} />}
 
       <NewChart open={creating} onOpenChange={setCreating} onSave={(c) => setCharts((l) => [c, ...l])} symbols={symbols} />
     </div>
-  )
-}
-
-/* ---------- 01 Your charts ---------- */
-
-/** A small candlestick chart with the volume under it and the coach's levels as lines: drawn here, steady per chart, so the card needs no network. */
-function ChartPreview({ chart: c }: { chart: CoachChart }) {
-  const { candles, lines } = useMemo(() => {
-    let seed = [...c.id].reduce((n, ch) => (n * 31 + ch.charCodeAt(0)) % 4294967296, 7)
-    const rnd = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296)
-    const out: { open: number; close: number; high: number; low: number; vol: number }[] = []
-    let price = 100
-    for (let i = 0; i < 56; i++) {
-      const open = price
-      price = open + (rnd() - 0.48) * 6 + Math.sin(i / 9) * 1.4
-      out.push({ open, close: price, high: Math.max(open, price) + rnd() * 3, low: Math.min(open, price) - rnd() * 3, vol: 0.2 + rnd() * 0.8 })
-    }
-    const lo = Math.min(...c.levels.map((l) => l.at))
-    const hi = Math.max(...c.levels.map((l) => l.at))
-    return { candles: out, lines: c.levels.map((l) => ({ kind: l.kind, y: hi === lo ? 100 : 150 - ((l.at - lo) / (hi - lo)) * 90 })) }
-  }, [c])
-  const lo = Math.min(...candles.map((k) => k.low))
-  const hi = Math.max(...candles.map((k) => k.high))
-  const y = (v: number) => 30 + (1 - (v - lo) / (hi - lo)) * 110
-  const w = 387 / candles.length
-  return (
-    <svg viewBox="0 0 387 200" preserveAspectRatio="none" aria-hidden className="absolute inset-0 size-full">
-      {lines.map((l, i) => (
-        <line key={i} x1="0" x2="387" y1={l.y} y2={l.y} strokeWidth="1" className={l.kind === "support" ? "stroke-a-success/50" : l.kind === "resistance" ? "stroke-a-danger/50" : "stroke-a-text-3/60"} />
-      ))}
-      {candles.map((k, i) => {
-        const x = i * w + w / 2
-        return (
-          <g key={i} className={k.close >= k.open ? "text-a-success" : "text-a-danger"}>
-            <line x1={x} x2={x} y1={y(k.high)} y2={y(k.low)} stroke="currentColor" strokeWidth="1" />
-            <rect x={x - w * 0.32} y={Math.min(y(k.open), y(k.close))} width={w * 0.64} height={Math.max(1.5, Math.abs(y(k.open) - y(k.close)))} fill="currentColor" />
-            <rect x={x - w * 0.32} y={200 - k.vol * 32} width={w * 0.64} height={k.vol * 32} fill="currentColor" opacity="0.35" />
-          </g>
-        )
-      })}
-    </svg>
-  )
-}
-
-/** A shared chart (Figma 737:37893): a 200px cover with the chart, a Pinned tag and a menu, then the title and what it is. */
-function ChartCard({ chart: c, onPin, onArchive }: { chart: CoachChart; onPin: () => void; onArchive: () => void }) {
-  const { coach } = useCoach()
-  const who = c.tiers.length ? c.tiers.map((id) => coach.tiers.find((t) => t.id === id)?.name ?? id).join(", ") : "Everyone"
-  return (
-    <article className="flex flex-col overflow-hidden rounded-a-lg border border-a-border bg-a-panel transition-colors duration-300 [@media(hover:hover)_and_(pointer:fine)]:hover:border-a-border-strong">
-      <div className="relative h-[200px] shrink-0 overflow-hidden border-b border-a-border bg-a-sunk">
-        <ChartPreview chart={c} />
-        <div className="absolute inset-x-3 top-3 flex items-center justify-between">
-          {c.pinned ? <Tag tone="accent" dot>Pinned</Tag> : <span />}
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Actions for ${c.title}`} />}><MoreHorizontal /></DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onPin}>{c.pinned ? "Unpin" : "Pin to the top"}</DropdownMenuItem>
-              {c.link && <DropdownMenuItem render={<a href={c.link} target="_blank" rel="noreferrer" />}>Open the TradingView link</DropdownMenuItem>}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onArchive}>Archive</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-      <div className="flex flex-col gap-2 px-5 pt-4 pb-4">
-        <h2 className="truncate t-heading-s text-a-text">{c.title}</h2>
-        <div className="flex min-w-0 items-center gap-2">
-          <Tag>{c.symbol.name}</Tag>
-          {c.interval && <Tag>{c.interval}</Tag>}
-          <span className="shrink-0 t-caption text-a-text-2">{c.levels.length} levels</span>
-          <span aria-hidden className="h-px min-w-px flex-1" />
-          <span className="min-w-0 truncate t-caption text-a-text-2">{who}</span>
-        </div>
-      </div>
-    </article>
   )
 }
 

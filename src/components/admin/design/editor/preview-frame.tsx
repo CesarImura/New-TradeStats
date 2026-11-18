@@ -46,11 +46,11 @@ export function PreviewFrame({
   }, [])
 
   const fixed = device !== "desktop"
-  const scale = space.w ? Math.min(1, (space.w - 96) / size.w, fixed ? (space.h - 80) / size.h : 1) : 0
-  const height = fixed ? size.h : Math.max(size.h, (space.h - 80) / (scale || 1))
+  const scale = space.w ? Math.min(1, (space.w - 16) / size.w, fixed ? (space.h - 44) / size.h : 1) : 0
+  const height = fixed ? size.h : Math.max(size.h, (space.h - 44) / (scale || 1))
 
   return (
-    <div ref={box} className="relative grid h-full min-h-0 place-items-start justify-center overflow-hidden px-12 pt-10">
+    <div ref={box} className="relative grid h-full min-h-0 place-items-start justify-center overflow-hidden px-2 pt-[30px]">
       {scale > 0 && (
         <div
           // The same frame as the canvas in Pages: its corners and its shadow.
