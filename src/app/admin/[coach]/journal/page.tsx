@@ -1,5 +1,6 @@
-import { JournalAdmin } from "@/components/admin/journal/journal-admin"
+import { AdminComingSoon } from "@/components/admin/ui"
 
+/** Journal & feedback is not available yet (Flavio, 18/11): Coming soon screen. The full screen stays in components/admin/journal for when it ships. */
 export default function Page() {
-  return <JournalAdmin />
+  return <AdminComingSoon title="Journal & feedback" name="Journal & feedback" />
 }

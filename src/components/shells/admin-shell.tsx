@@ -268,7 +268,7 @@ function AdminLogo() {
  * Collapsed (desktop only): 40 x 40, icon only, the label in a tooltip. The icon keeps its place (card padding and
  * item padding swap together), so only the width moves.
  */
-function NavLink({ href, label, icon: Icon, active, collapsed }: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; active?: boolean; collapsed: boolean }) {
+function NavLink({ href, label, icon: Icon, active, collapsed, soon }: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; active?: boolean; collapsed: boolean; soon?: boolean }) {
   const link = (
     <Link
       href={href}
@@ -280,6 +280,8 @@ function NavLink({ href, label, icon: Icon, active, collapsed }: { href: string;
     >
       <Icon className={cn("size-4 shrink-0", active ? "fill-[url(#admin-icon-grad)]" : "text-a-text-nav")} />
       <span className="min-w-0 overflow-hidden whitespace-nowrap transition-opacity duration-150 ease-out [html[data-admin-sb=collapsed]_.admin-side_&]:opacity-0">{label}</span>
+      {/* Nav item badge (Figma _Base Nav item): absolute, right-anchored with a 16 px margin; the label keeps the full width. */}
+      {soon && <span className="absolute top-1/2 right-4 -translate-y-1/2 rounded-a-xs bg-a-muted px-1.5 t-micro text-a-text-2 transition-opacity duration-150 ease-out [html[data-admin-sb=collapsed]_.admin-side_&]:opacity-0">Soon</span>}
     </Link>
   )
   // Always wrapped (disabled while expanded), so collapsing does not remount every link.
@@ -313,7 +315,7 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
             )}
             {g.items.map((item) => (
               <Fragment key={item.id}>
-                <NavLink href={item.href} label={item.label} icon={item.icon} active={isOpen(item.href)} collapsed={collapsed} />
+                <NavLink href={item.href} label={item.label} icon={item.icon} active={isOpen(item.href)} collapsed={collapsed} soon={item.soon} />
                 {/* Platform: View as student sits right under Design (Figma Admin / Sidebar). */}
                 {item.id === "design" && <NavLink href={studentBase} label="View as student" icon={Eye} collapsed={collapsed} />}
               </Fragment>
