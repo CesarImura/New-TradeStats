@@ -7,7 +7,7 @@ import { Tag } from "./tag"
 /**
  * Admin / Timeline step (Figma 957:2923): one step of a vertical timeline (Getting started). The rail holds the step
  * indicator between two 2 px lines; the card sits 6 px in from the top and bottom so the indicator lines up with the
- * card's middle. Done = green check and an edit icon; Current = orange edge, the primary action and, with `onSkip`, a
+ * card's middle. Done = green check and an edit icon; Current = white edge (white step marker with a dark number), the primary action and, with `onSkip`, a
  * "Skip for now" text button before it; Open (14/11) = a step you may start any time (panel card, secondary action);
  * Upcoming = muted text and the action disabled at 40 %, for what is still locked (Go live).
  */
@@ -25,6 +25,7 @@ export function TimelineStep({
   disabledHint,
   guide,
   tag,
+  icon: Icon,
 }: {
   step: number
   state: "done" | "current" | "open" | "upcoming"
@@ -43,6 +44,8 @@ export function TimelineStep({
   guide?: { label: string; onClick: () => void }
   /** A neutral tag after the title ("Skipped": an item put off with Skip for now). */
   tag?: string
+  /** Figma Show Icon / Icon: a 20 px icon before the title (palette, store, course, wallet, legal, rocket). */
+  icon?: React.ComponentType<{ className?: string }>
 }) {
   const line = "w-0.5 flex-1 rounded-full"
   return (
@@ -54,6 +57,7 @@ export function TimelineStep({
       </div>
       <div className="min-w-0 flex-1 py-1.5">
         <div className={cn("flex items-center gap-4 rounded-a-lg border py-4 pr-4 pl-5 max-sm:flex-wrap max-sm:gap-3", state === "current" ? "border-a-border-active bg-a-panel" : state === "done" || state === "open" ? "border-a-border-subtle bg-a-panel" : "border-a-border-subtle")}>
+          {Icon && <Icon aria-hidden className={cn("size-5 shrink-0 max-sm:hidden", state === "upcoming" ? "text-a-text-3" : "text-a-text-2")} />}
           <div className="flex min-w-0 flex-1 flex-col gap-1 max-sm:basis-full">
             <h2 className={cn("t-body-l", state === "upcoming" ? "text-a-text-2" : "text-a-text")}>
               <span className="sr-only">{state === "done" ? "Done: " : state === "current" ? "Next: " : ""}</span>
@@ -90,7 +94,7 @@ export function TimelineStep({
                       Skip for now
                     </AdminButton>
                   )}
-                  <AdminButton hierarchy={state === "current" ? "primary" : "secondary"} disabled={state === "upcoming"} onClick={onAction}>
+                  <AdminButton hierarchy={state === "current" ? "primary" : "secondary"} disabled={state === "upcoming"} onClick={onAction} className="w-[152px]">
                     {action}
                   </AdminButton>
                 </span>
