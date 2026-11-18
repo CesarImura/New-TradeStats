@@ -10,7 +10,7 @@ import { useAccount } from "@/lib/data/use-communities"
 
 /**
  * Sign up · 03 Verify code (Figma 939:58478). Six boxes (Admin / Code box: 56 × 64, radius 10); paste works in any box
- * and the last digit verifies. Any six digits pass in the prototype. A coach logging back in goes to their platform;
+ * and the last digit verifies. Any six digits pass in the prototype except 000000, which shows the "code doesn't match" state. A coach logging back in goes to their platform;
  * everyone else goes on to About you.
  */
 export default function Verify() {
@@ -18,6 +18,7 @@ export default function Verify() {
   const acc = useAccount()
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""))
   const [checking, setChecking] = useState(false)
+  const [wrong, setWrong] = useState(false)
   const [wait, setWait] = useState(30)
   const refs = useRef<(HTMLInputElement | null)[]>([])
   const full = digits.every(Boolean)
@@ -32,7 +33,16 @@ export default function Verify() {
   const verify = (next = digits) => {
     if (next.some((d) => !d) || checking) return
     setChecking(true)
+    setWrong(false)
     setTimeout(() => {
+      // Prototype: 000000 is the code that doesn't match, so the error state can be seen.
+      if (next.every((d) => d === "0")) {
+        setChecking(false)
+        setWrong(true)
+        setDigits(Array(6).fill(""))
+        refs.current[0]?.focus()
+        return
+      }
       setAccount({ verified: true })
       const a = account()
       const mine = a?.setupSlug ? customCommunities().find((c) => c.slug === a.setupSlug) : undefined
@@ -43,6 +53,7 @@ export default function Verify() {
 
   const set = (i: number, value: string) => {
     const clean = value.replace(/\D/g, "")
+    setWrong(false)
     if (!clean) return setDigits((d) => d.map((x, j) => (j === i ? "" : x)))
     // One digit typed, or the whole code pasted into any box.
     const next = [...digits]
@@ -62,7 +73,7 @@ export default function Verify() {
           <ArrowLeft /> Back
         </AdminButton>
         <SignupTitle title="Enter the 6-digit code" text={<>We sent it to {acc?.email || "your e-mail"}.</>} />
-        <div className="flex gap-3 max-sm:gap-2" role="group" aria-label="Verification code">
+        <div className="flex gap-3 max-sm:gap-2" role="group" aria-label="Verification code" aria-describedby={wrong ? "code-error" : undefined}>
           {digits.map((d, i) => (
             <input
               key={i}
@@ -75,6 +86,7 @@ export default function Verify() {
               autoFocus={i === 0}
               aria-label={`Digit ${i + 1}`}
               readOnly={checking}
+              aria-invalid={wrong || undefined}
               data-filled={d ? "" : undefined}
               data-checking={checking ? "" : undefined}
               style={{ "--i": i } as React.CSSProperties}
@@ -86,10 +98,15 @@ export default function Verify() {
                 if (e.key === "Enter") verify()
               }}
               onFocus={(e) => e.target.select()}
-              className="h-16 w-0 min-w-0 flex-1 rounded-a-10 border border-a-border-strong bg-a-subtle text-center t-heading-xl text-a-text outline-none transition-[background-color,border-color] duration-300 ease-out hover:bg-a-hover focus:border-a-border-active focus:bg-a-raised data-[filled]:animate-[onb-pop_180ms_cubic-bezier(0.23,1,0.32,1)] data-[checking]:border-a-border-active data-[checking]:[transition-delay:calc(var(--i)*60ms)] motion-reduce:animate-none"
+              className="h-16 w-0 min-w-0 flex-1 rounded-a-10 border border-a-border-strong bg-a-subtle text-center t-heading-xl text-a-text aria-invalid:border-a-border-danger outline-none transition-[background-color,border-color] duration-300 ease-out hover:bg-a-hover focus:border-a-border-active focus:bg-a-raised data-[filled]:animate-[onb-pop_180ms_cubic-bezier(0.23,1,0.32,1)] data-[checking]:border-a-border-active data-[checking]:[transition-delay:calc(var(--i)*60ms)] motion-reduce:animate-none"
             />
           ))}
         </div>
+        {wrong && (
+          <p id="code-error" role="alert" className="-mt-2 t-body-m text-a-danger">
+            That code doesn’t match. Check your e-mail and try again.
+          </p>
+        )}
         <AdminButton className="w-full" disabled={!full || checking} onClick={() => verify()}>
           {checking ? (
             <>
