@@ -541,7 +541,7 @@ function CallDrawer({ item, onClose }: { item: Item | null; onClose: () => void 
               </Avatar>
               <div className="grid min-w-0 gap-0.5">
                 <span className="truncate t-body-m-medium text-a-text">{b.student}</span>
-                <span className="truncate t-caption text-a-text-2">{tier ? `${tier.name} · ` : ""}{used} of {total} calls used this month</span>
+                <span className="truncate t-caption text-a-text-2">{tier ? `${tier.name} · ` : ""}{used - 1} of {total} calls used this month</span>
               </div>
             </div>
             <section className="flex flex-col gap-3">
@@ -556,11 +556,11 @@ function CallDrawer({ item, onClose }: { item: Item | null; onClose: () => void 
               </Panel>
             )}
             <section className="flex flex-col gap-4">
-              <h3 className="t-mono-label text-a-text-2">Calls this month · {used} of {total} used</h3>
+              <h3 className="t-mono-label text-a-text-2">Calls this month · {used - 1} of {total} used</h3>
               <ol className="flex flex-col gap-4">
                 {calls.map((k) => {
                   const state = k < used ? "done" : k === used ? "current" : "upcoming"
-                  const date = addDays(shown.start, -7 * (used - k))
+                  const date = addDays(shown.start, -7 * (used - k + 1))
                   return (
                     <li key={k} className="flex items-start gap-3">
                       <StepIndicator step={k} state={state} />
