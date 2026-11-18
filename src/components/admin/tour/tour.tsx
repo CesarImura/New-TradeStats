@@ -308,7 +308,7 @@ function place(hole: Box, h: number, want: Side = "bottom", GAP = DEFAULT_GAP, d
   if (!found) return { side: undefined, x: clamp(hole.x + 24 + dx, 16, vw - W - 16), y: clamp(hole.y + 24 + dy, 16, vh - h - 16), arrow: 0 }
   const side = found
   if (side === "bottom" || side === "top") {
-    const x = clamp(hole.x + hole.w / 2 - W / 2, 16, vw - W - 16)
+    const x = clamp(hole.x + hole.w / 2 - W / 2 + dx, 16, vw - W - 16)
     const y = side === "bottom" ? hole.y + hole.h + GAP : hole.y - GAP - h
     return { side, x, y, arrow: clamp(hole.x + hole.w / 2 - x, 20, W - 20) }
   }
