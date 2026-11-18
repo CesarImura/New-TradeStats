@@ -234,7 +234,7 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
   const dialog = document.querySelector(step.target)?.closest("[role=dialog]")
   const dimmedByDialog = !!dialog && dialog.hasAttribute("data-open")
   const inEditor = !!dialog && !dimmedByDialog
-  const { side, x, y, arrow } = place(hole, h, step.side, step.gap, step.dy)
+  const { side, x, y, arrow } = place(hole, h, step.side, step.gap, step.dy, step.dx)
   const Hint = side ? { bottom: ArrowUp, top: ArrowDown, right: ArrowLeft, left: ArrowRight }[side] : ArrowRight
   const progressIndex = step.part
 
@@ -292,7 +292,7 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
 }
 
 /** Where the coachmark goes: the step's side if it fits, else the first that does; kept on screen with a 16 px margin. */
-function place(hole: Box, h: number, want: Side = "bottom", GAP = DEFAULT_GAP, dy = 0) {
+function place(hole: Box, h: number, want: Side = "bottom", GAP = DEFAULT_GAP, dy = 0, dx = 0) {
   const vw = innerWidth
   const vh = innerHeight
   const fits: Record<Side, boolean> = {
@@ -305,7 +305,7 @@ function place(hole: Box, h: number, want: Side = "bottom", GAP = DEFAULT_GAP, d
   const found = fits[want] ? want : (["bottom", "right", "left", "top"] as Side[]).find((s) => fits[s])
   // A target that fills the screen (the editor's canvas) leaves no room around it: the coachmark sits inside it, at its top
   // left, without the arrow (the ring already shows what it means), instead of falling off the screen.
-  if (!found) return { side: undefined, x: clamp(hole.x + 24, 16, vw - W - 16), y: clamp(hole.y + 24, 16, vh - h - 16), arrow: 0 }
+  if (!found) return { side: undefined, x: clamp(hole.x + 24 + dx, 16, vw - W - 16), y: clamp(hole.y + 24 + dy, 16, vh - h - 16), arrow: 0 }
   const side = found
   if (side === "bottom" || side === "top") {
     const x = clamp(hole.x + hole.w / 2 - W / 2, 16, vw - W - 16)

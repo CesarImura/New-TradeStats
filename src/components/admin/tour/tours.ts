@@ -26,6 +26,8 @@ export type TourStep = {
   gap?: number
   /** Vertical nudge of the coachmark in px, for a Figma step that sits a little off the target's top or middle. */
   dy?: number
+  /** Horizontal nudge in px: for a step whose target fills the screen (the editor canvas), where the coachmark sits inside it. */
+  dx?: number
   /** "Do it later" instead of "Skip". */
   later?: boolean
   /** The last step: the tour is done; its button goes back to Getting started. */
@@ -147,7 +149,7 @@ export const TOURS: Record<TourId, Tour> = {
     done: (c) => !!c?.setup?.editorTour,
     steps: [
       { id: "editor", target: t("editor-panel"), part: 0, side: "right", pad: 0, gap: 12, title: "This is your design editor", body: "Everything from setup lives here, with many more options: fonts, backgrounds, the menu and every widget.", hint: "Click Widgets in the side menu" },
-      { id: "widgets", target: `body:has(${t("editor-widgets")}) ${t("editor-canvas")}`, part: 1, side: "left", title: "Pages and widgets", body: "Add widgets from the side menu. On your page, click a widget to change it or drag it to move it.", hint: "Click a widget on your page" },
+      { id: "widgets", target: `body:has(${t("editor-widgets")}) ${t("editor-canvas")}`, part: 1, side: "left", pad: 0, dx: 348, title: "Pages and widgets", body: "Add widgets from the side menu. On your page, click a widget to change it or drag it to move it.", hint: "Click a widget on your page" },
       { id: "done", target: `body:has(${t("editor-inspector")}) ${t("editor-publish")}`, part: 2, side: "bottom", final: true, title: "Preview, then publish", body: "Change the widget in the panel on the right. Preview shows your platform as a student. Before you go live, changes stay in draft; after, Publish puts them online.", hint: "" },
     ],
   },
