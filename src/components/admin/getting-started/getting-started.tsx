@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { CalendarDays, ChevronRight, FileText, GraduationCap, MessageCircle, Palette, Rocket, Store, Wallet, Wrench } from "@/components/icons"
+import { CalendarDays, ChevronRight, DocumentVertical, GraduationCap, MessageCircle, Palette, Rocket, ShoppingCatalog, Wallet, Wrench } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { AdminPageHeader, Callout, Panel, PanelHeader, TimelineStep } from "@/components/admin/ui"
 import { cn } from "@/lib/utils"
@@ -19,7 +19,7 @@ import { useCatalog } from "@/lib/data/learning"
  * the progress ("5 of 5 steps done") and a way to get help.
  */
 /** Figma Show Icon: one icon per step. */
-const STEP_ICON = { design: Palette, tier: Store, course: GraduationCap, payouts: Wallet, legal: FileText, live: Rocket } as const
+const STEP_ICON = { design: Palette, tier: ShoppingCatalog, course: GraduationCap, payouts: Wallet, legal: DocumentVertical, live: Rocket } as const
 
 export function GettingStarted() {
   const router = useRouter()
@@ -63,7 +63,7 @@ export function GettingStarted() {
                 onAction={() => (s.id === "live" ? setGoLive(true) : router.push(resume && at?.path ? `${at.path}${at.path.includes("?") ? "&" : "?"}tour=${s.id}` : s.href))}
                 onEdit={s.id === "live" ? undefined : () => router.push(s.href.replace(/[?&]tour=\w+/, ""))}
                 // Optional, once Design is done (Flavio, 14/11): a short tour of the full design editor. Not one of the five.
-                guide={s.id === "design" && s.done && !live && !TOURS.editor.done(community) ? { label: "Tour the design editor", onClick: () => router.push(`${base}/design?tour=editor`) } : undefined}
+                guide={s.id === "design" && s.done && !live && !TOURS.editor.done(community) ? { label: "Tour the design editor", onClick: () => router.push(`${base}/design?tour=editor&step=theme`) } : undefined}
               />
             )
           })}

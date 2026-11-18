@@ -20,6 +20,10 @@ export type TourStep = {
   /** The line in accent under the text ("Click New course"). */
   hint: string
   side?: Side
+  /** Spotlight padding around the target in px (8 unless set; the editor panel is lit as it is, Figma 9 to 430). */
+  pad?: number
+  /** Distance from the spotlight to the coachmark in px (18 unless set). */
+  gap?: number
   /** "Do it later" instead of "Skip". */
   later?: boolean
   /** The last step: the tour is done; its button goes back to Getting started. */
@@ -64,7 +68,7 @@ export const TOURS: Record<TourId, Tour> = {
     done: (c) => !!c?.setup?.firstCourse,
     steps: [
       { id: "new", target: t("course-new"), part: 0, title: "Start your first course", body: "Your first course starts here. We’ll guide you one step at a time.", hint: "Click New course" },
-      { id: "name", target: t("course-title"), part: 1, side: "right", title: "Name your course", body: "Pick a short name your students will see. Description and cover are optional.", hint: "Type a name, then click Continue" },
+      { id: "name", target: t("course-title"), part: 1, side: "right", gap: 33, title: "Name your course", body: "Pick a short name your students will see. Description and cover are optional.", hint: "Type a name, then click Continue" },
       { id: "method", target: `${t("course-method")}:not([data-picked])`, part: 2, side: "right", title: "Where are your videos?", body: "On your computer: Upload a folder.\nOn YouTube, Vimeo or Loom: Import links.\nNot ready yet: Start blank.", hint: "Pick one to continue" },
       { id: "folder", target: t("course-folder"), part: 2, side: "right", title: "Check your lessons", body: "Each folder became a module and each video a lesson. Files that aren’t videos are skipped.", hint: "Click Upload and create" },
       { id: "folder-drop", target: `${t("course-folder-drop")}[data-picked]`, part: 2, side: "right", title: "Drop your folder", body: "Each subfolder becomes a module and each video a lesson.", hint: "Drop the folder or click to choose it" },
@@ -140,7 +144,7 @@ export const TOURS: Record<TourId, Tour> = {
     complete: (slug) => setSetup(slug, { editorTour: true }),
     done: (c) => !!c?.setup?.editorTour,
     steps: [
-      { id: "editor", target: t("editor-panel"), part: 0, side: "right", title: "This is your design editor", body: "Everything from setup lives here, with many more options: fonts, backgrounds, the menu and every widget.", hint: "Click Widgets in the side menu" },
+      { id: "editor", target: t("editor-panel"), part: 0, side: "right", pad: 0, gap: 12, title: "This is your design editor", body: "Everything from setup lives here, with many more options: fonts, backgrounds, the menu and every widget.", hint: "Click Widgets in the side menu" },
       { id: "widgets", target: `body:has(${t("editor-widgets")}) ${t("editor-canvas")}`, part: 1, side: "left", title: "Pages and widgets", body: "Add widgets from the side menu. On your page, click a widget to change it or drag it to move it.", hint: "Click a widget on your page" },
       { id: "done", target: `body:has(${t("editor-inspector")}) ${t("editor-publish")}`, part: 2, side: "bottom", final: true, title: "Preview, then publish", body: "Change the widget in the panel on the right. Preview shows your platform as a student. Before you go live, changes stay in draft; after, Publish puts them online.", hint: "" },
     ],

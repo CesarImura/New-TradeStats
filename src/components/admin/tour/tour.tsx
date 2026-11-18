@@ -199,7 +199,7 @@ function useBox(selector: string) {
 }
 
 const PAD = 8 // the cut-out is the target plus 8 on each side (Figma: 124 x 36 button, 140 x 52 ring)
-const GAP = 18 // from the cut-out to the coachmark (the 10 px arrow sits in it)
+const DEFAULT_GAP = 18 // from the cut-out to the coachmark (the 10 px arrow sits in it)
 const W = 320
 
 function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tour; onSkip: () => void; onFinish: () => void }) {
@@ -227,13 +227,14 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
   }, [step.id, shown])
 
   if (!box) return null
-  const hole = { x: box.x - PAD, y: box.y - PAD, w: box.w + PAD * 2, h: box.h + PAD * 2 }
+  const pad = step.pad ?? PAD
+  const hole = { x: box.x - pad, y: box.y - pad, w: box.w + pad * 2, h: box.h + pad * 2 }
   // A modal or drawer (Base UI marks it data-open) already dims the page. The design editor is a full-screen dialog that
   // does not, and it covers everything under z 50: there the dimming goes above it (z 55), and steps aside while a menu from the target is open.
   const dialog = document.querySelector(step.target)?.closest("[role=dialog]")
   const dimmedByDialog = !!dialog && dialog.hasAttribute("data-open")
   const inEditor = !!dialog && !dimmedByDialog
-  const { side, x, y, arrow } = place(hole, h, step.side)
+  const { side, x, y, arrow } = place(hole, h, step.side, step.gap)
   const Hint = side ? { bottom: ArrowUp, top: ArrowDown, right: ArrowLeft, left: ArrowRight }[side] : ArrowRight
   const progressIndex = step.part
 
@@ -291,7 +292,7 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
 }
 
 /** Where the coachmark goes: the step's side if it fits, else the first that does; kept on screen with a 16 px margin. */
-function place(hole: Box, h: number, want: Side = "bottom") {
+function place(hole: Box, h: number, want: Side = "bottom", GAP = DEFAULT_GAP) {
   const vw = innerWidth
   const vh = innerHeight
   const fits: Record<Side, boolean> = {
