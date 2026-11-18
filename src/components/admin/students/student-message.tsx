@@ -20,7 +20,7 @@ function Radio({ checked, disabled, onSelect, children }: { checked: boolean; di
     <button type="button" role="radio" aria-checked={checked} disabled={disabled} onClick={onSelect}
       className="flex items-center gap-2 rounded-a-xs t-body-m text-a-text outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus disabled:pointer-events-none disabled:text-a-text-3 pointer-coarse:min-h-10">
       <span aria-hidden className={cn("grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-300", checked ? "border-a-border-active" : "border-a-border-strong", disabled && "opacity-40")}>
-        <span className={cn("size-2 rounded-full bg-a-accent transition-transform duration-200 ease-out motion-reduce:transition-none", checked ? "scale-100" : "scale-0")} />
+        <span className={cn("size-2 rounded-full bg-[var(--admin-color-control-on)] transition-transform duration-200 ease-out motion-reduce:transition-none", checked ? "scale-100" : "scale-0")} />
       </span>
       {children}
     </button>
@@ -110,7 +110,7 @@ export function MessageDialog({ to, onClose }: { to: Student[] | null; onClose: 
       </div>
       <hr className="m-0 h-px shrink-0 border-0 bg-a-border-subtle" />
       <div role="radiogroup" aria-label="Send it" className="flex flex-col gap-2.5">
-        <h3 className="t-mono-label text-a-text-2">Send it</h3>
+        <h3 className="t-micro text-a-text-2">Send it</h3>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           {CHANNELS.map((c) =>
             c.id === "discord" ? (

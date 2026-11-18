@@ -168,7 +168,8 @@ export function CommandPalette({ open, onOpenChange, base }: { open: boolean; on
         >
           <DialogPrimitive.Title className="sr-only">Search</DialogPrimitive.Title>
           <DialogPrimitive.Description className="sr-only">Search students, lessons, payments and settings. Use the arrow keys to move and Enter to open.</DialogPrimitive.Description>
-          <div className="flex h-11 shrink-0 items-center gap-2 rounded-t-a-md border-b border-a-border-subtle bg-a-field px-3">
+          <div className="shrink-0 p-2.5 pb-1">
+          <div className="flex h-11 items-center gap-2 rounded-a-md border border-a-border bg-a-field px-3">
             <Search aria-hidden className="size-4 shrink-0 text-a-icon" />
             <input
               ref={inputRef}
@@ -209,6 +210,7 @@ export function CommandPalette({ open, onOpenChange, base }: { open: boolean; on
               className="t-body-l min-w-0 flex-1 bg-transparent text-a-text outline-none placeholder:text-a-text-3"
             />
           </div>
+          </div>
           <div id={listId} role="listbox" aria-label="Results" className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {results.length === 0 ? (
               <div className="flex flex-col items-center gap-1 px-4 py-10 text-center">
@@ -221,7 +223,7 @@ export function CommandPalette({ open, onOpenChange, base }: { open: boolean; on
                 if (!rows.length) return null
                 return (
                   <div key={g.id} role="group" aria-label={g.label} className="flex flex-col gap-0.5 px-2.5 pt-2.5 pb-1.5">
-                    <span aria-hidden className="t-mono-label-s text-a-text-3">{g.label}</span>
+                    <span aria-hidden className="t-micro text-a-text-3">{g.label}</span>
                     {rows.map((r) => {
                       const on = r === current
                       return (

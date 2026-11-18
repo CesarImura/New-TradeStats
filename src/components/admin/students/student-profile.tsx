@@ -12,7 +12,7 @@ import { NO_QUESTIONS, useOnboardingSettings, useStudentStart } from "@/lib/data
 import { TRADES } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { useCommunityData } from "../kit"
-import { AdminButton, AdminDrawer, AdminProgress, AdminUnderlineTabs, Callout, Metric, StepIndicator, adminControl } from "../ui"
+import { AdminButton, AdminDrawer, AdminProgress, AdminUnderlineTabs, Callout, StepIndicator, adminControl } from "../ui"
 
 /** The prototype's one student who really goes through onboarding (the others are sample data). */
 const DEMO_STUDENT_ID = "s1"
@@ -194,8 +194,11 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
             ].map(([label, value], i) => (
               <div key={label} className="contents">
                 {i > 0 && <span aria-hidden className="w-px bg-a-border" />}
-                {/* On a phone the three share 300px: smaller padding and value, and the label may wrap instead of being cut. */}
-                <Metric className="flex-1 px-3 max-sm:gap-1 sm:px-5 max-sm:[&>span:first-child]:min-h-7 max-sm:[&>span:first-child]:whitespace-normal max-sm:[&>span:nth-child(2)]:t-heading-l max-sm:[&>span:nth-child(2)]:whitespace-nowrap" label={label} value={value} />
+                {/* Figma Students 03: a small sentence-case label over the number. On a phone the three share 300px, so the value shrinks and the label may wrap. */}
+                <div className="flex min-w-0 flex-1 flex-col gap-1 px-3 py-[18px] sm:px-5">
+                  <span className="t-micro text-a-text-2 max-sm:min-h-7">{label}</span>
+                  <span className="t-title tabular-nums text-a-text max-sm:t-heading-l max-sm:whitespace-nowrap">{value}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -236,7 +239,7 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
           {tab === "overview" && (
             <>
               <section className="flex flex-col gap-2 rounded-a-10 border border-a-accent-strong bg-a-accent-soft px-4 py-3.5">
-                <h3 className="t-mono-label text-a-text-accent">AI briefing · only you see this</h3>
+                <h3 className="t-micro text-a-text-accent">AI briefing · only you see this</h3>
                 <p className="t-body-m text-a-text">
                   {first} has logged {shown.trades30} trades in 30 days and kept {shown.broker ? `${shown.rules}% of the rules` : "no rules yet, no broker connected"}. {shown.reason ? `${shown.reason}.` : "Nothing needs you this week."} {TRADES.filter((t) => t.review === "waiting").length > 0 && shown.id === DEMO_STUDENT_ID ? `${TRADES.filter((t) => t.review === "waiting").length} trades wait for your review.` : ""}
                 </p>
@@ -251,7 +254,7 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
               </section>
               <Rule />
               <section className="flex flex-col gap-2.5">
-                <Label>Course progress</Label>
+                <Label>Overall progress</Label>
                 {COURSES.map((c, i) => {
                   const locked = c.locked && tier.id !== "vip"
                   const v = locked ? 0 : Math.max(0, Math.min(100, shown.progress + (i === 0 ? 0 : i === 1 ? -32 : -62)))

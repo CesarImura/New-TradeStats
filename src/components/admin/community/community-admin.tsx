@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CalendarClock, Check, LayoutGrid, MoreHorizontal, Plus, Trash2 } from "@/components/icons"
+import { CalendarClock, Check, LayoutGrid, MoreHorizontal, Pin, Plus, Trash2 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -33,14 +33,42 @@ const CHANNELS = [
   { id: "discord", label: "Discord", post: "In Discord" },
 ] as const
 const BOT_POSTS = [
-  ["lesson", "New lesson published", "#announcements"],
-  ["live", "A live session starts", "#live"],
-  ["chart", "A new marked-up chart", "#charts"],
+  ["lesson", "New lesson published", "#announcements", "Posts to the platform when a new lesson goes live."],
+  ["live", "A live session starts", "#live", "Heads-up 15 minutes before a livestream starts."],
+  ["chart", "A new marked-up chart", "#charts", "Posts the chart as a notice with its levels."],
 ] as const
+
+type Report = { id: string; title: string; where: string; reason: string; reports: number; when: string }
+const REPORTS: Report[] = [
+  { id: "r1", title: "Signal for NQ at 21 480", where: "#trade-ideas · Dani P.", reason: "Signals or copy-trading", reports: 2, when: "10 min ago" },
+  { id: "r2", title: "Join my paid group", where: "#general · New member", reason: "Promotion of other groups", reports: 3, when: "1 h ago" },
+  { id: "r3", title: "That call was garbage", where: "#wins-and-lessons · Sam K.", reason: "Unkind to a member", reports: 1, when: "Yesterday" },
+  { id: "r4", title: "Screenshot of my P&L", where: "#trade-ideas · Lea M.", reason: "Off topic", reports: 1, when: "Mon 10 Nov" },
+]
+const NO_REPORTS: Report[] = []
+const MOD_RULES = [
+  ["first", "Hold a member's first post", "New members' first post waits for a moderator.", true],
+  ["hide", "Hide after 3 reports", "Posts reported three times are hidden until reviewed.", true],
+  ["mail", "Notify me of new reports", "Get an e-mail when a post is reported.", false],
+] as const
+
+/** A rule with its switch, on a bordered card (Figma 'Switch row'). */
+function SwitchCard({ label, text, checked, onChange }: { label: string; text: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center justify-between gap-2 rounded-a-md border border-a-border-subtle px-4 py-3">
+      <span className="grid gap-0.5">
+        <span className="t-body-m text-a-text">{label}</span>
+        <span className="t-caption text-a-text-2">{text}</span>
+      </span>
+      <Switch checked={checked} onCheckedChange={onChange} />
+    </label>
+  )
+}
 const TABS = [
   { id: "announcements", label: "Announcements" },
   { id: "spaces", label: "Spaces & rules" },
   { id: "discord", label: "Discord" },
+  { id: "moderation", label: "Moderation" },
 ] as const
 type Tab = (typeof TABS)[number]["id"]
 
@@ -59,12 +87,12 @@ export function CommunityAdmin() {
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
       <PageHeader
         title="Community"
-        text="Announcements, spaces and Discord"
+        text="Announcements, spaces, Discord and moderation"
         actions={
           tab === "spaces" ? (
             <AdminButton onClick={() => setEditing("new")}><Plus /> New space</AdminButton>
-          ) : (
-            <AdminButton onClick={() => setComposing(true)}><Plus /> New announcement</AdminButton>
+          ) : tab === "moderation" ? null : (
+            <AdminButton hierarchy={tab === "discord" && !d.connected ? "secondary" : "primary"} onClick={() => setComposing(true)}><Plus /> New announcement</AdminButton>
           )
         }
       />
@@ -74,6 +102,7 @@ export function CommunityAdmin() {
       {tab === "announcements" && <AnnouncementsTab list={list} setList={setList} d={d} setD={setD} />}
       {tab === "spaces" && <SpacesTab spaces={spaces} setSpaces={setSpaces} rules={rules} setRules={setRules} onEdit={setEditing} />}
       {tab === "discord" && <DiscordTab d={d} setD={setD} />}
+      {tab === "moderation" && <ModerationTab slug={coach.slug} />}
 
       <AnnouncementDrawer open={composing} onOpenChange={setComposing} onPost={(a) => setList((l) => [{ ...a, space: spaces[0]?.id }, ...l])} />
       <SpaceDialog space={editing} onClose={() => setEditing(null)} onSave={(s) => setSpaces((l) => (l.some((x) => x.id === s.id) ? l.map((x) => (x.id === s.id ? s : x)) : [...l, s]))} />
@@ -94,8 +123,8 @@ function AnnouncementsTab({ list, setList, d, setD }: { list: Announcement[]; se
           footer={<AdminTableFooter>Also shows as the Announcement widget on Home</AdminTableFooter>}>
           <AdminTableHead>
             <AdminTh>Announcement</AdminTh>
-            <AdminTh width={236}>Sent to</AdminTh>
-            <AdminTh width={236}>When</AdminTh>
+            <AdminTh width={200}>Sent to</AdminTh>
+            <AdminTh width={230}>When</AdminTh>
             <AdminTh width={64} />
           </AdminTableHead>
           <tbody>
@@ -103,15 +132,17 @@ function AnnouncementsTab({ list, setList, d, setD }: { list: Announcement[]; se
               <AdminTr key={a.id}>
                 <AdminTd>
                   <div className="flex min-w-0 items-center gap-2.5">
-                    {a.pinned && <Tag tone="accent" dot>Pinned</Tag>}
                     <div className="grid min-w-0 gap-0.5">
-                      <span className="truncate t-body-m text-a-text">{a.title}</span>
+                      <span className="flex min-w-0 items-center gap-1.5 t-body-m text-a-text">
+                        <span className="truncate">{a.title}</span>
+                        {a.pinned && <Pin className="size-4 shrink-0" aria-label="Pinned" />}
+                      </span>
                       <span className="truncate t-caption text-a-text-2">{a.body}</span>
                     </div>
                   </div>
                 </AdminTd>
-                <AdminTd>{a.channels.map((c) => CHANNELS.find((x) => x.id === c)?.label).join(", ")}</AdminTd>
-                <AdminTd className={cn("whitespace-nowrap", a.scheduled && "text-a-text-accent")}>{a.scheduled ? `Scheduled · ${a.scheduled}` : `Sent · ${a.when}`}</AdminTd>
+                <AdminTd className="text-a-text-2">{a.channels.map((c) => CHANNELS.find((x) => x.id === c)?.label).join(", ")}</AdminTd>
+                <AdminTd className={cn("whitespace-nowrap", a.scheduled ? "text-a-text-accent" : "text-a-text-3")}>{a.scheduled ? `Scheduled · ${a.scheduled}` : `Sent · ${a.when}`}</AdminTd>
                 <AdminTd align="end">
                   <DropdownMenu>
                     <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Actions for ${a.title}`} />}><MoreHorizontal /></DropdownMenuTrigger>
@@ -127,14 +158,11 @@ function AnnouncementsTab({ list, setList, d, setD }: { list: Announcement[]; se
           </tbody>
         </AdminTable>
       )}
-      <Panel className="gap-3">
+      <Panel className="gap-4">
         <h2 className="t-heading-s text-a-text">Automatic announcements</h2>
-        <div className="flex flex-col gap-3">
-          {BOT_POSTS.map(([id, label]) => (
-            <label key={id} className="flex items-center justify-between gap-3 t-body-m text-a-text">
-              {label}
-              <Switch checked={!!d.posts[id]} onCheckedChange={(v) => setD((x) => ({ ...x, posts: { ...x.posts, [id]: v } }))} />
-            </label>
+        <div className="grid gap-4 md:grid-cols-3">
+          {BOT_POSTS.map(([id, label, , text]) => (
+            <SwitchCard key={id} label={label} text={text} checked={!!d.posts[id]} onChange={(v) => setD((x) => ({ ...x, posts: { ...x.posts, [id]: v } }))} />
           ))}
         </div>
       </Panel>
@@ -452,6 +480,61 @@ function DiscordTab({ d, setD }: { d: DiscordSetup; setD: (n: DiscordSetup | ((c
           </label>
         </Panel>
       </div>
+    </>
+  )
+}
+
+/* ---------- 06 Moderation ---------- */
+
+function ModerationTab({ slug }: { slug: string }) {
+  const [list, setList] = useCommunityData<Report[]>(slug, "reports", REPORTS, NO_REPORTS)
+  const [rules, setRules] = useCommunityData<Record<string, boolean>>(slug, "mod-rules", Object.fromEntries(MOD_RULES.map(([id, , , on]) => [id, on])))
+  return (
+    <>
+      {list.length === 0 ? (
+        <EmptyState icon={Check} title="Nothing reported" description="Posts your students report show up here for you to review." />
+      ) : (
+        <AdminTable minWidth={820} footer={<AdminTableFooter>Removed posts stay hidden from students for 30 days</AdminTableFooter>}>
+          <AdminTableHead>
+            <AdminTh>Reported post</AdminTh>
+            <AdminTh width={200}>Reason</AdminTh>
+            <AdminTh width={230}>Reports</AdminTh>
+            <AdminTh width={64} />
+          </AdminTableHead>
+          <tbody>
+            {list.map((r) => (
+              <AdminTr key={r.id}>
+                <AdminTd>
+                  <div className="grid min-w-0 gap-0.5">
+                    <span className="truncate t-body-m text-a-text">{r.title}</span>
+                    <span className="truncate t-caption text-a-text-2">{r.where}</span>
+                  </div>
+                </AdminTd>
+                <AdminTd className="text-a-text-2">{r.reason}</AdminTd>
+                <AdminTd className="whitespace-nowrap text-a-text-3">{r.reports} {r.reports === 1 ? "report" : "reports"} · {r.when}</AdminTd>
+                <AdminTd align="end">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Actions for ${r.title}`} />}><MoreHorizontal /></DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => (setList((l) => l.filter((x) => x.id !== r.id)), toast("Reports dismissed"))}>Keep post</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem variant="destructive" onClick={() => (setList((l) => l.filter((x) => x.id !== r.id)), toast("Post removed"))}>Remove post</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </AdminTd>
+              </AdminTr>
+            ))}
+          </tbody>
+        </AdminTable>
+      )}
+      <Panel className="gap-4">
+        <h2 className="t-heading-s text-a-text">Moderation rules</h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          {MOD_RULES.map(([id, label, text]) => (
+            <SwitchCard key={id} label={label} text={text} checked={!!rules[id]} onChange={(v) => setRules((x) => ({ ...x, [id]: v }))} />
+          ))}
+        </div>
+      </Panel>
     </>
   )
 }

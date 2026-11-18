@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, ExternalLink, Minus, Plus, Settings } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
-import { allLessons, saveCatalog, uid, useCatalog, type Course, type Lesson, type Status } from "@/lib/data/learning"
+import { STATUS_LABEL, allLessons, saveCatalog, uid, useCatalog, type Course, type Lesson, type Status } from "@/lib/data/learning"
 import { videoFrames } from "@/lib/video-frames"
 import { cn } from "@/lib/utils"
 import { useTiers } from "@/lib/data/access"
@@ -113,7 +113,7 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
       <div className="flex min-w-[12rem] flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <h1 className="t-heading-xl min-w-0 truncate text-a-text">{course.title}</h1>
-          <Tag tone={tone(course.status)} dot>{course.status === "scheduled" && course.scheduledFor ? `Scheduled · ${course.scheduledFor}` : course.status}</Tag>
+          <Tag tone={tone(course.status)}>{course.status === "scheduled" && course.scheduledFor ? `Scheduled · ${course.scheduledFor}` : STATUS_LABEL[course.status]}</Tag>
         </div>
         <p className="t-body-m text-a-text-2">{course.modules.length} {course.modules.length === 1 ? "module" : "modules"} · {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}{minutesOf(course) > 0 ? ` · ${fmtLength(minutesOf(course))}` : ""} · {course.soldSeparately ? "Sold on its own" : tiers}</p>
       </div>

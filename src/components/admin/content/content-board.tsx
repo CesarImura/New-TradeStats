@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   Archive,
+  ArrowRight,
   ArchiveRestore,
   BookOpen,
   Copy,
@@ -45,20 +46,23 @@ type Filter = "all" | "attention" | Status
 const needsAttention = (c: Course) => c.status === "published" && allLessons(c).some((l) => l.status === "draft")
 
 /** What the card says is out of the ordinary, if anything. */
-const attentionOf = (c: Course, prelaunch = false): { tone: "warning" | "muted"; text: string; action: string } | null => {
+const attentionOf = (c: Course, prelaunch = false): { tone: "warning" | "muted" | "locked"; text: string; action: string } | null => {
   if (prelaunch && readyForLaunch(c)) return { tone: "muted", text: "Goes public when you go live", action: "Open" }
-  if (c.status === "draft") return { tone: "muted", text: "No one can see this course", action: "Publish" }
+  if (c.status === "draft") return { tone: "locked", text: "No one can see this course", action: "Pick tiers" }
   const waiting = allLessons(c).filter((l) => l.status === "draft" || !l.video).length
   return c.status === "published" && waiting ? { tone: "warning", text: `${waiting} ${waiting === 1 ? "lesson isn't" : "lessons aren't"} ready`, action: "Review" } : null
 }
 const accessOf = (c: Course, tiers: { id: string; name: string }[]) => (c.soldSeparately ? "Sold on its own" : c.tiers.length ? tiers.filter((t) => c.tiers.includes(t.id)).map((t) => t.name).join(", ") || "No tier yet" : tiers.length ? "All tiers" : "No tier yet")
-const statusTone = (s: Status) => (s === "published" ? "success" : s === "scheduled" ? "accent" : "neutral")
 /** "1 lesson", "3 lessons". */
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`
 
 /** On a platform that isn't live yet, a draft with a visible lesson says "Ready for launch" (it opens with Go live). */
-const StatusTag = ({ course, prelaunch = false }: { course: Course; prelaunch?: boolean }) => (
-  <Tag tone={prelaunch && readyForLaunch(course) ? "accent" : statusTone(course.status)} dot>
+const StatusTag = ({ course, prelaunch = false, cover = false }: { course: Course; prelaunch?: boolean; cover?: boolean }) => (
+  <Tag
+    tone={prelaunch && readyForLaunch(course) ? "accent" : !cover && course.status === "published" ? "success" : "neutral"}
+    // On a cover the tag is a dark chip (Figma Media card); in the table it takes the status tone.
+    className={cn(cover && "h-[22px] border border-a-border bg-a-page text-a-text")}
+  >
     {prelaunch && readyForLaunch(course) ? "Ready for launch" : STATUS_LABEL[course.status]}
     {course.status === "scheduled" && course.scheduledFor ? ` · ${course.scheduledFor}` : ""}
   </Tag>
@@ -192,7 +196,6 @@ export function ContentBoard() {
             id: f,
             label: f === "all" ? "All" : f === "attention" ? "Needs attention" : STATUS_LABEL[f as Status],
             count: count(f),
-            dot: f === "attention" && count(f) > 0,
           }))}
         />
         <div className="flex-1" />
@@ -256,7 +259,13 @@ export function ContentBoard() {
                   </AdminTd>
                   <AdminTd><StatusTag course={c} prelaunch={prelaunch} /></AdminTd>
                   <AdminTd>{att ? <CellDot tone={att.tone === "warning" ? "warning" : "neutral"} label={att.text} /> : <span className="text-a-text-3">—</span>}</AdminTd>
-                  <AdminTd><span className="line-clamp-2">{accessOf(c, allTiers)}</span></AdminTd>
+                  <AdminTd>
+                    <div className="flex flex-wrap gap-1">
+                      {accessOf(c, allTiers).split(", ").map((a) => (
+                        <Tag key={a}>{a}</Tag>
+                      ))}
+                    </div>
+                  </AdminTd>
                   <AdminTd align="end">{allLessons(c).length}</AdminTd>
                   <AdminTd align="end">{live && !wizard ? 80 + ((seed * 37) % 120) : "—"}</AdminTd>
                   <AdminTd align="end">{live && !wizard ? `${20 + ((seed * 13) % 60)}%` : "—"}</AdminTd>
@@ -281,8 +290,8 @@ export function ContentBoard() {
                 <>
                   <Link href={`${base}/content/${c.id}`} aria-label={c.title} className="absolute inset-0 z-10 outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus" />
                   <CourseCover course={c} className="size-full">
-                    <span className="absolute top-3 left-3 flex h-7 items-center"><StatusTag course={c} prelaunch={prelaunch} /></span>
-                    {att && <MediaCardStatus tone={att.tone === "warning" ? "warning" : "muted"} text={att.text} trailing={att.action} />}
+                    <span className="absolute top-3 left-3 flex h-7 items-center"><StatusTag course={c} prelaunch={prelaunch} cover /></span>
+                    {att && <MediaCardStatus tone={att.tone} text={att.text} trailing={att.tone === "locked" ? <span className="inline-flex items-center gap-1.5">{att.action} <ArrowRight className="size-3" /></span> : att.action} />}
                   </CourseCover>
                   <span onClick={(e) => e.stopPropagation()} className="absolute top-3 right-3 z-20">{menu(c, "ghost")}</span>
                 </>

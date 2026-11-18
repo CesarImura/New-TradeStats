@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 import { useCommunityData } from "../kit"
 import { AdminButton, AdminField, AdminModal, AdminSegmented, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, EmptyState, Tag, adminControl } from "../ui"
 
-const TODAY = "2026-10-12"
+const TODAY = "2025-11-12"
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 const day = (iso: string) => {
   const [y, m, d] = iso.split("-").map(Number)
@@ -25,9 +25,12 @@ const discountText = couponLabel
 const isEnded = couponEnded
 const endsText = (c: Coupon) => (c.ends ? (c.ends < TODAY ? `Ended ${long(c.ends)}` : `Ends ${short(c.ends)}`) : isEnded(c) ? "Limit reached" : "No end")
 
-export function NewCouponButton({ onClick }: { onClick: () => void }) {
+/** In the page header it steps back to secondary while the list is empty, because the empty state carries the primary one (Figma 07b). */
+export function NewCouponButton({ onClick, inEmpty }: { onClick: () => void; inEmpty?: boolean }) {
+  const { coach } = useCoach()
+  const [saved] = useCommunityData<Coupon[]>(coach.slug, "coupons", COUPONS, NO_COUPONS)
   return (
-    <AdminButton onClick={onClick}>
+    <AdminButton onClick={onClick} hierarchy={!inEmpty && Array.isArray(saved) && saved.length === 0 ? "secondary" : "primary"}>
       <Plus /> New coupon
     </AdminButton>
   )
@@ -59,14 +62,14 @@ export function Coupons({ newSignal }: { newSignal: number }) {
   return (
     <div className="flex flex-col gap-4">
       {list.length === 0 ? (
-        <EmptyState title="No coupons yet" description="Students enter a code at checkout. A wrong code never blocks the purchase." actions={<NewCouponButton onClick={() => setOpen(true)} />} />
+        <EmptyState title="No coupons yet" description="Students enter a code at checkout. A wrong code never blocks the purchase." actions={<NewCouponButton inEmpty onClick={() => setOpen(true)} />} />
       ) : (
         <AdminTable minWidth={820}>
           <AdminTableHead>
             <AdminTh width={170}>Code</AdminTh>
             <AdminTh width={250}>Discount</AdminTh>
             <AdminTh width={190}>Tier</AdminTh>
-            <AdminTh width={100} align="end">Used</AdminTh>
+            <AdminTh width={100}>Used</AdminTh>
             <AdminTh width={170}>Ends</AdminTh>
             <AdminTh width={120}>Status</AdminTh>
             <AdminTh width={64} />
@@ -76,12 +79,12 @@ export function Coupons({ newSignal }: { newSignal: number }) {
               const ended = isEnded(c)
               return (
                 <AdminTr key={c.code}>
-                  <AdminTd className="font-mono text-a-text">{c.code}</AdminTd>
+                  <AdminTd className="text-a-text">{c.code}</AdminTd>
                   <AdminTd className="text-a-text">{discountText(c)}</AdminTd>
                   <AdminTd className="truncate">{tierText(c)}</AdminTd>
-                  <AdminTd align="end">{c.used}{c.limit !== undefined ? ` / ${c.limit}` : ""}</AdminTd>
+                  <AdminTd>{c.used}{c.limit !== undefined ? ` / ${c.limit}` : ""}</AdminTd>
                   <AdminTd>{endsText(c)}</AdminTd>
-                  <AdminTd>{ended ? <Tag>Ended</Tag> : c.paused ? <Tag tone="warning" dot>Paused</Tag> : <Tag tone="success" dot>Active</Tag>}</AdminTd>
+                  <AdminTd>{ended ? <Tag>Ended</Tag> : c.paused ? <Tag tone="warning">Paused</Tag> : <Tag tone="success">Active</Tag>}</AdminTd>
                   <AdminTd align="end">
                     <DropdownMenu>
                       <DropdownMenuTrigger render={<AdminButton aria-label={`Actions for ${c.code}`} hierarchy="ghost" size="md" iconOnly />}>
@@ -164,7 +167,7 @@ function CouponModal({ open, onClose, taken, onCreate }: { open: boolean; onClos
       <div className="contents" onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); create() } }}>
         <div className="grid grid-cols-2 items-start gap-3 max-sm:grid-cols-1">
           <AdminField label="Code" error={tried ? errors.code : undefined}>
-            <input value={f.code} maxLength={24} onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, "") })} placeholder="AUTUMN20" aria-invalid={tried && !!errors.code} className={cn(adminControl, "h-11 font-mono")} />
+            <input value={f.code} maxLength={24} onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, "") })} placeholder="AUTUMN20" aria-invalid={tried && !!errors.code} className={cn(adminControl, "h-11")} />
           </AdminField>
           <AdminField label="Discount" error={tried ? errors.amount : undefined}>
             <span className="flex h-11 items-center rounded-a-md border border-a-border-subtle bg-a-field pr-2 transition-colors duration-300 focus-within:border-a-border-focus hover:border-a-border-strong">

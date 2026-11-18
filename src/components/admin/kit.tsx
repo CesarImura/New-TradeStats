@@ -52,7 +52,7 @@ export function SettingRow({ label, text, children, className }: { label: React.
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5 py-2.5", className)}>
       <div className="grid min-w-0 flex-1 basis-64 gap-0.5">
-        <span id={id} className="t-body-m-medium">
+        <span id={id} className="t-body-m">
           {label}
         </span>
         {text && <span className="t-caption text-a-text-2">{text}</span>}

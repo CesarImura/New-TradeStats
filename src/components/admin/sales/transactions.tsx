@@ -48,7 +48,7 @@ export function Transactions() {
         <AdminTableHead>
           <AdminTh width={190}>Student</AdminTh>
           <AdminTh>What</AdminTh>
-          <AdminTh width={110} align="end">Amount</AdminTh>
+          <AdminTh width={110}>Amount</AdminTh>
           <AdminTh width={140}>Status</AdminTh>
           <AdminTh width={130}>When</AdminTh>
           <AdminTh width={210} />
@@ -63,8 +63,8 @@ export function Transactions() {
             <AdminTr key={t.id}>
               <AdminTd className="text-a-text">{t.who}</AdminTd>
               <AdminTd>{t.what}</AdminTd>
-              <AdminTd align="end" className="text-a-text">{money(t.amount)}</AdminTd>
-              <AdminTd><Tag tone={TXN_TONE[t.status]} dot>{LABEL[t.status]}</Tag></AdminTd>
+              <AdminTd className="text-a-text">{money(t.amount)}</AdminTd>
+              <AdminTd><Tag tone={TXN_TONE[t.status]}>{LABEL[t.status]}</Tag></AdminTd>
               <AdminTd>{t.when}</AdminTd>
               <AdminTd align="end">
                 <div className="flex items-center justify-end gap-1">

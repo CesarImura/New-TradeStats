@@ -74,7 +74,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
       open={open}
       onOpenChange={(o) => (o ? onOpenChange(true) : close())}
       title="Import or invite students"
-      subtitle={step === 1 && csv ? undefined : subtitle}
+      subtitle={step === 1 && csv ? "From a file, a list of e-mails, or a link to share." : subtitle}
       className="sm:max-w-[720px]"
       bodyClassName="gap-5"
       footer={
@@ -87,7 +87,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
           )}
           {step === 1 && (
             <AdminButton disabled={blocked || count === 0} onClick={done}>
-              <Check /> Import {count} {count === 1 ? "student" : "students"}
+              Import {count} {count === 1 ? "student" : "students"}
             </AdminButton>
           )}
           {step === 2 && (
@@ -170,7 +170,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
                   <AdminTd className="text-a-text">{h}</AdminTd>
                   <AdminTd className={cn("max-sm:hidden", map[i] === "Don't import" && "opacity-60")}>{SAMPLE_ROWS[0][i]}</AdminTd>
                   <AdminTd>
-                    <AdminFilter ariaLabel={`${h} becomes`} value={map[i]} onValueChange={(v) => setMap((m) => m.map((x, j) => (j === i ? v : x)))} options={FIELDS.map((f) => ({ value: f, label: f === "Tier" ? `Tier · ${tierName}` : f }))} />
+                    <AdminFilter className="w-full justify-between" ariaLabel={`${h} becomes`} value={map[i]} onValueChange={(v) => setMap((m) => m.map((x, j) => (j === i ? v : x)))} options={FIELDS.map((f) => ({ value: f, label: f === "Tier" ? `Tier · ${tierName}` : f }))} />
                   </AdminTd>
                 </AdminTr>
               ))}

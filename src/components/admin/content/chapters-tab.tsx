@@ -33,18 +33,22 @@ export function ChaptersTab({ course, lesson, t, setT, onChange }: { course: Cou
 
   return (
     <div className="flex flex-col gap-4">
-      <PlayerFrame lesson={lesson} course={course} controls={false} className="aspect-[3.08]">
+      <PlayerFrame lesson={lesson} course={course} controls={false} className="aspect-video">
         <div ref={bar} className="absolute inset-x-3.5 bottom-3.5 h-6 touch-none" onPointerMove={onMove} onPointerUp={() => (setDragging(null), set(lesson.chapters))} onPointerLeave={() => dragging !== null && (setDragging(null), set(lesson.chapters))}
           onClick={(e) => {
             if (!bar.current || dragging !== null) return
             const r = bar.current.getBoundingClientRect()
             setT(Math.round(((e.clientX - r.left) / r.width) * duration))
           }}>
-          <span aria-hidden className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-a-track" />
+          {/* Figma Content 08: one segment per chapter, the one playing in white. The handles above them stay draggable. */}
+          {lesson.chapters.map((c, i) => {
+            const end = lesson.chapters[i + 1]?.at ?? duration
+            return <span key={`seg-${i}`} aria-hidden className={cn("absolute top-1/2 h-[3px] -translate-y-1/2 rounded-full", i === active ? "bg-a-text" : "bg-a-track")} style={{ left: `${(c.at / duration) * 100}%`, width: `calc(${((end - c.at) / duration) * 100}% - 4px)` }} />
+          })}
           {lesson.chapters.map((c, i) => (
             <button key={i} type="button" aria-label={`Move chapter ${c.title}`} onPointerDown={(e) => (e.stopPropagation(), bar.current?.setPointerCapture(e.pointerId), setDragging(i))} onClick={(e) => e.stopPropagation()}
               className={cn("absolute inset-y-1 w-3 -translate-x-1/2 outline-none", i === 0 ? "cursor-pointer" : "cursor-ew-resize")} style={{ left: `${(c.at / duration) * 100}%` }}>
-              <span className={cn("mx-auto block h-full w-1 rounded-full bg-a-accent-strong transition-[width] duration-200 ease-out motion-reduce:transition-none", dragging === i && "w-1.5")} />
+              <span className={cn("mx-auto block h-full w-1 rounded-full bg-transparent transition-[background-color,width] duration-200 ease-out hover:bg-a-text-2 motion-reduce:transition-none", dragging === i && "w-1.5 bg-a-text")} />
             </button>
           ))}
         </div>
@@ -62,10 +66,11 @@ export function ChaptersTab({ course, lesson, t, setT, onChange }: { course: Cou
 
       <ul className="grid grid-cols-[minmax(0,1fr)] gap-1.5">
         {lesson.chapters.map((c, i) => (
-          <li key={`${i}-${c.at}`} className={cn("flex h-[46px] items-center gap-3 rounded-a-md border px-3.5", i === active ? "border-a-accent-strong" : "border-a-border")}>
-            <input defaultValue={clock(c.at)} aria-label="Start time" onFocus={() => setT(c.at)} onBlur={(e) => set(lesson.chapters.map((x, j) => (j === i ? { ...x, at: Math.min(duration, parseTime(e.target.value)), ai: false } : x)))} className="w-11 bg-transparent t-caption text-a-text-2 outline-none focus-visible:text-a-text" />
+          <li key={`${i}-${c.at}`} className={cn("flex h-[46px] items-center gap-3 rounded-a-md border px-3.5", i === active ? "border-a-border-active" : "border-a-border")}>
+            <input defaultValue={clock(c.at)} aria-label="Start time" onFocus={() => setT(c.at)} onBlur={(e) => set(lesson.chapters.map((x, j) => (j === i ? { ...x, at: Math.min(duration, parseTime(e.target.value)), ai: false } : x)))} className="w-[34px] bg-transparent t-caption text-a-text-2 outline-none focus-visible:text-a-text" />
+            <span aria-hidden className="-ml-2 t-caption text-a-text-2">– {clock(lesson.chapters[i + 1]?.at ?? duration)}</span>
             <input value={c.title} aria-label="Chapter title" onFocus={() => setT(c.at)} onChange={(e) => update(i, { title: e.target.value })} className="min-w-[4ch] max-w-full bg-transparent t-body-m text-a-text outline-none [field-sizing:content] focus-visible:ring-1 focus-visible:ring-[var(--admin-color-border-focus)]" />
-            {c.ai && <Tag tone="accent" dot>AI</Tag>}
+            {c.ai && <Tag>AI</Tag>}
             <span aria-hidden className="min-w-0 flex-1" />
             <DropdownMenu>
               <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="sm" iconOnly aria-label={`More for ${c.title}`} />}>
