@@ -74,8 +74,10 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const texture = { grid: "coach-bg-grid", glow: "coach-bg-glow", dots: "coach-bg-dots" } as Record<string, string>
   // An image or gradient sits on its own layer behind the page, so the page itself turns see-through.
   const where = theme.bgWhere ?? "all"
-  const backdrop = backdropStyle(theme) && (where === "all" || (where === "home" && path === base)) ? backdropStyle(theme) : null
-  const bg = backdrop ? "bg-transparent" : cn("bg-background", texture[theme.background])
+  // "Login" puts the background on the Join pages only (PublicShell), so the platform itself stays plain.
+  const here = where === "all" || (where === "home" && path === base)
+  const backdrop = backdropStyle(theme) && here ? backdropStyle(theme) : null
+  const bg = backdrop ? "bg-transparent" : cn("bg-background", here && texture[theme.background])
 
   // The Charts terminal uses the full width, like a trading screen.
   const wide = path.startsWith(`${base}/charts`)

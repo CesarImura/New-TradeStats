@@ -11,13 +11,13 @@ import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
 import type { NavLayout, TemplateId } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 
-const mono = "font-[family-name:var(--ff-geist-mono)] text-[0.6875rem] uppercase tracking-[0.06em]"
+const mono = "t-caption"
 const btnPrimary =
-  "inline-flex h-7 items-center gap-1.5 rounded-[4px] bg-[#f8ff9e] px-2.5 text-[0.8125rem] font-medium text-[#040404] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),0_0_0_1px_rgb(0_0_0/0.5)] hover:bg-[#ecf38a]"
+  "inline-flex h-7 items-center gap-1.5 rounded-a-md bg-[var(--admin-component-button-primary-bg-default)] text-[var(--admin-component-button-primary-content)] hover:bg-[var(--admin-component-button-primary-bg-hover)] px-2.5 text-[0.8125rem] font-medium"
 const btnSecondary =
-  "inline-flex h-7 items-center gap-1.5 rounded-[4px] border border-[#2a2a2f] bg-[#222226] px-2.5 text-[0.8125rem] font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_1px_1px_rgb(0_0_0/0.4)] hover:bg-[#2e2e33]"
-const iconBtn = "grid size-7 place-items-center rounded-[4px] text-white/40 hover:bg-white/10 hover:text-white"
-const input = "h-7 w-full rounded-[4px] border border-[#2a2a2f] bg-[#0a0a0b] px-2 text-[0.8125rem] text-white outline-none focus:border-white/40"
+  "inline-flex h-7 items-center gap-1.5 rounded-a-md border border-a-border bg-a-raised px-2.5 text-[0.8125rem] font-medium  hover:bg-a-selected"
+const iconBtn = "grid size-7 place-items-center rounded-a-md text-white/40 hover:bg-white/10 hover:text-white"
+const input = "h-7 w-full rounded-a-md border border-a-border bg-a-page px-2 text-[0.8125rem] text-white outline-none focus:border-white/40"
 
 const HIDDEN: string[] = []
 
@@ -85,7 +85,7 @@ function CoachCard({ base }: { base: Coach }) {
   const remove = () => setStored<string[]>("launcher:hidden", (h) => [...h, base.slug], HIDDEN)
 
   return (
-    <article className="flex flex-col gap-3 rounded-[6px] bg-[#161618] p-3 shadow-[0_0_0_1px_#2a2a2f]">
+    <article className="flex flex-col gap-3 rounded-a-lg bg-a-panel p-3 shadow-[0_0_0_1px_var(--admin-color-border-default)]">
       <style dangerouslySetInnerHTML={{ __html: themeToCss(theme, scope) }} />
       <div className="flex items-center justify-between">
         <span className={`${mono} text-white/50`}>Template · {TEMPLATES[theme.template].name}</span>
@@ -93,7 +93,7 @@ function CoachCard({ base }: { base: Coach }) {
       </div>
 
       {/* Live mini preview rendered with the coach's real theme */}
-      <div className={`pv-${base.slug} overflow-hidden rounded-[4px] bg-background p-4 text-foreground shadow-[0_0_0_1px_#2a2a2f]`} style={{ fontFamily: "var(--coach-font-body)" }}>
+      <div className={`pv-${base.slug} overflow-hidden rounded-a-md bg-background p-4 text-foreground shadow-[0_0_0_1px_var(--admin-color-border-default)]`} style={{ fontFamily: "var(--coach-font-body)" }}>
         <div className="mb-4 flex items-center gap-2">
           <span className="grid size-7 place-items-center rounded-[min(var(--radius),8px)] bg-primary text-xs text-primary-foreground" style={{ fontFamily: "var(--coach-font-heading)" }}>
             {coach.mark}
@@ -151,7 +151,7 @@ function CoachCard({ base }: { base: Coach }) {
         <>
           <div className="flex flex-col gap-1">
             <h2 className="text-sm font-semibold">{saved.name}</h2>
-            <p className="text-xs text-[#a8a8b1]">{saved.tagline}</p>
+            <p className="text-xs text-a-text-2">{saved.tagline}</p>
           </div>
           {confirming ? (
             <div className="mt-auto flex flex-wrap items-center gap-2">
@@ -191,12 +191,12 @@ function Choice<T extends string>({ label, value, options, onChange }: { label: 
   return (
     <div className="grid gap-1">
       <span className={`${mono} text-white/50`}>{label}</span>
-      <div className="flex rounded-[4px] bg-[#0a0a0b] p-0.5 shadow-[0_0_0_1px_#2a2a2f]">
+      <div className="flex rounded-a-md bg-a-page p-0.5 shadow-[0_0_0_1px_var(--admin-color-border-default)]">
         {options.map((o) => (
           <button
             key={o.value}
             onClick={() => onChange(o.value)}
-            className={cn("flex-1 rounded-[3px] px-2 py-1 text-xs text-white/55 hover:text-white", o.value === value && "bg-[#2e2e33] font-medium text-white")}
+            className={cn("flex-1 rounded-[3px] px-2 py-1 text-xs text-white/55 hover:text-white", o.value === value && "bg-a-selected font-medium text-white")}
           >
             {o.label}
           </button>
