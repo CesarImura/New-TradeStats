@@ -12,6 +12,8 @@ import { useSetupSteps } from "./use-setup-steps"
 import { useTourState } from "../tour/tour"
 import { TOURS, isTourId, type TourId } from "../tour/tours"
 import { useCatalog } from "@/lib/data/learning"
+import { useDraft } from "@/lib/prototype-store"
+import { editorChoice } from "../tour/editor-choices"
 
 /**
  * Admin · Getting started (Figma 958:6684 and the "done" states 991:7443, 1028:76858, 1046:675, 1049:2, 1050:2).
@@ -33,6 +35,8 @@ export function GettingStarted() {
   const live = community?.status === "live"
   // "Your … is saved" only when something is (QA 14/11): a tier exists only once it was saved; a course once it was created.
   const catalog = useCatalog(coach)
+  // The design editor tour opens where the coach last chose something in the Design steps.
+  const editorStep = editorChoice(useDraft(coach.slug)).step
   const savedLine = (id: TourId) =>
     id === "course" ? (catalog.courses.length ? TOURS.course.saved : "Resume picks up where you left off.") : id === "tier" ? "Resume picks up where you left off." : TOURS[id].saved
   const intro = live ? "Your platform is live. Next, bring in your first students." : doneCount === total ? "Everything is set up. Go live to open your platform to students." : allPutOff ? "Come back to these when you're ready. Go live opens once all five are done." : "Your platform is a draft. Do these five steps in any order, then go live."
@@ -63,7 +67,7 @@ export function GettingStarted() {
                 onAction={() => (s.id === "live" ? setGoLive(true) : router.push(resume && at?.path ? `${at.path}${at.path.includes("?") ? "&" : "?"}tour=${s.id}` : s.href))}
                 onEdit={s.id === "live" ? undefined : () => router.push(s.href.replace(/[?&]tour=\w+/, ""))}
                 // Optional, once Design is done (Flavio, 14/11): a short tour of the full design editor. Not one of the five.
-                guide={s.id === "design" && s.done && !live && !TOURS.editor.done(community) ? { label: "Tour the design editor", onClick: () => router.push(`${base}/design?tour=editor&step=theme`) } : undefined}
+                guide={s.id === "design" && s.done && !live && !TOURS.editor.done(community) ? { label: "Tour the design editor", onClick: () => router.push(`${base}/design?tour=editor&step=${editorStep}`) } : undefined}
               />
             )
           })}
