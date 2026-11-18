@@ -8,8 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
 import { NOW } from "@/lib/data/schedule"
-import { EmptyState } from "../kit"
-import { AdminPageHeader, AdminButton, AdminFilter, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, CellPerson, CellProgress, CellStack, StatPanel, Tag } from "../ui"
+import { EmptyState, PageHeader } from "../kit"
+import { AdminButton, AdminFilter, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, CellPerson, CellProgress, CellStack, StatPanel, Tag } from "../ui"
 import { SetupTip } from "../setup-checklist"
 import { useNewPlatform } from "../use-new-platform"
 import { ImportDialog } from "./import-dialog"
@@ -88,9 +88,9 @@ export function StudentsPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
-      <AdminPageHeader className="[&>div:first-child]:gap-2"
+      <PageHeader
         title="Students"
-        subtitle={students.length === 0 ? `${coach.name} · No students yet` : `${coach.name} · ${label(students.length)} · ${joinedThisMonth} joined this month`}
+        text={students.length === 0 ? `${coach.name} · No students yet` : `${coach.name} · ${label(students.length)} · ${joinedThisMonth} joined this month`}
         actions={
           <>
             <AdminButton onClick={() => toast("Export started", { description: "students.csv with the columns you see." })} hierarchy="secondary">
