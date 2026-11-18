@@ -165,7 +165,7 @@ export function SeekBar({ barRef, fillRef, bufRef, knobRef, tipRef, tipPicRef, t
       </div>
       <span aria-hidden className="relative block h-1 w-full origin-center overflow-hidden rounded-full bg-a-track transition-transform duration-150 ease-out group-hover/bar:scale-y-150 group-focus-visible/bar:scale-y-150 group-active/bar:scale-y-150 motion-reduce:transition-none">
         <span ref={bufRef} className="absolute inset-0 origin-left rounded-full bg-a-text/15 transition-transform duration-500 ease-out motion-reduce:transition-none" style={{ transform: "scaleX(0)" }} />
-        <span ref={fillRef} className="absolute inset-0 origin-left rounded-full bg-a-accent-strong will-change-transform" style={{ transform: "scaleX(0)" }} />
+        <span ref={fillRef} className="absolute inset-0 origin-left rounded-full bg-a-text will-change-transform" style={{ transform: "scaleX(0)" }} />
         {chapters?.map((c) => (c.at > 0 && c.at < total ? <span key={`${c.at}-${c.title}`} className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-a-page/90" style={{ left: `${(c.at / total) * 100}%` }} /> : null))}
       </span>
       <span ref={knobRef} aria-hidden className="pointer-events-none absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 scale-0 rounded-full bg-a-text shadow-[0_0_0_3px_rgb(0_0_0/0.35)] transition-transform duration-150 ease-out group-hover/bar:scale-100 group-focus-visible/bar:scale-100 group-active/bar:scale-100 motion-reduce:transition-none" style={{ left: "0%" }} />
