@@ -58,8 +58,9 @@ const SEED_BY_ID: Record<string, Partial<TierExtra>> = {
   vip: { trial: 0, installments: true, hidden: true, features: ["Everything in Trading Desk", "4 calls a month", "Private channel"], featured: false },
 }
 
-export function blankExtra(i: number, id?: string): TierExtra {
-  return { trial: i === 0 ? 7 : 0, installments: false, hidden: false, role: "", description: "", features: FEATURES[Math.min(i, 2)], featured: i === 1, ...(id ? SEED_BY_ID[id] : undefined) }
+/** `slug`: the sample texts of Sales · Tiers & prices are Kairo FX's; every other community starts from the generic list by position (Figma Join · Subscribe: "Everything in the first tier", "Group trade reviews"…). */
+export function blankExtra(i: number, id?: string, slug?: string): TierExtra {
+  return { trial: i === 0 ? 7 : 0, installments: false, hidden: false, role: "", description: "", features: FEATURES[Math.min(i, 2)], featured: i === 1, ...(id && slug === "kairo" ? SEED_BY_ID[id] : undefined) }
 }
 
 /** The free tier isn't sold: the Sales tabs list only the paid ones (no free tier, visitors see the paywall first). */
@@ -74,14 +75,14 @@ export function useTiers(coach: Coach): TierInfo[] {
 
 function mergeTiers(coach: Coach, extra: Record<string, TierExtra>, added: Tier[]): TierInfo[] {
   return [...coach.tiers, ...added].map((t, i) => {
-    const x = { ...blankExtra(i, t.id), ...extra[t.id] }
+    const x = { ...blankExtra(i, t.id, coach.slug), ...extra[t.id] }
     const { name, price, cadence, ...rest } = x
     return { ...t, ...rest, name: name ?? t.name, price: price ?? t.price, cadence: cadence ?? t.cadence }
   })
 }
 
 export function saveTier(slug: string, id: string, index: number, patch: Partial<TierExtra>) {
-  setStored<Record<string, TierExtra>>(`${slug}:tier-extra`, (all) => ({ ...all, [id]: { ...blankExtra(index, id), ...all[id], ...patch } }), NO_EXTRA)
+  setStored<Record<string, TierExtra>>(`${slug}:tier-extra`, (all) => ({ ...all, [id]: { ...blankExtra(index, id, slug), ...all[id], ...patch } }), NO_EXTRA)
 }
 
 export function addTier(slug: string): Tier {
