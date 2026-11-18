@@ -13,6 +13,7 @@ import { useTiers } from "@/lib/data/access"
 import { AdminButton, AdminProgress, Tag } from "../ui"
 import { Curriculum } from "./curriculum"
 import { CourseCover, PHASE_LABEL, fmtLength, minutesOf, uploadQueue, type Upload } from "./course-parts"
+import { updateUploads, useCourseUploads } from "./upload-store"
 import { CourseSettingsDrawer } from "./course-settings"
 import { LessonPage } from "./lesson-page"
 import { PublishReview } from "./publish-review"
@@ -43,10 +44,10 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
   const [saved, setSaved] = useState(true)
   const [settings, setSettings] = useState(false)
   const [publishing, setPublishing] = useState(false)
-  const [uploads, setUploads] = useState<Upload[]>([])
+  // Uploads live in a store, not in this screen: they keep going, and show on the Content board, when the coach leaves.
+  const uploads = useCourseUploads(courseId)
+  const setUploads = useCallback((fn: (u: Upload[]) => Upload[]) => updateUploads(courseId, fn), [courseId])
   const [tray, setTray] = useState(true)
-  const timers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
-  useEffect(() => { const t = timers.current; return () => t.forEach(clearTimeout) }, [])
 
   const edit = useCallback((fn: (c: Course) => Course) => {
     saveCatalog(coach, (cat) => ({ ...cat, courses: cat.courses.map((x) => (x.id === courseId ? { ...fn(x), edited: "just now" } : x)) }))
@@ -54,7 +55,7 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
   }, [coach, courseId])
   const editLesson = useCallback((id: string, patch: Partial<Lesson>) => edit((c) => ({ ...c, modules: c.modules.map((m) => ({ ...m, lessons: m.lessons.map((l) => (l.id === id ? { ...l, ...patch } : l)) })) })), [edit])
   const patchUpload = (id: string, patch: Partial<Upload>) => setUploads((u) => u.map((x) => (x.id === id ? { ...x, ...patch } : x)))
-  const later = (fn: () => void, ms: number) => { const t = setTimeout(() => (timers.current.delete(t), fn()), ms); timers.current.add(t) }
+  const later = (fn: () => void, ms: number) => void setTimeout(fn, ms)
 
   /** A video going up: progress, then the transcript and AI chapters. The same bar shows in the tray and on the lesson. */
   const startUpload = async (lessonId: string, file: File) => {

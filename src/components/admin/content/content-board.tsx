@@ -23,7 +23,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageHeader } from "../kit"
 import { AdminButton, AdminFilter, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, AdminViewToggle, CellDot, CellStack, EmptyState, MediaCard, MediaCardStatus, StatPanel, Tag } from "../ui"
-import { CourseCover } from "./course-parts"
+import { CourseCover, type Upload as VideoUpload } from "./course-parts"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +35,7 @@ import { STATUS_LABEL, allLessons, isSampleCourse, readyForLaunch, saveCatalog, 
 import { cn } from "@/lib/utils"
 import { useTiers } from "@/lib/data/access"
 import { NewCourse } from "./new-course"
+import { useAllUploads } from "./upload-store"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 
 /** Thumbnail tints for the admin, which keeps its own neutral look. */
@@ -46,7 +47,12 @@ type Filter = "all" | "attention" | Status
 const needsAttention = (c: Course) => c.status === "published" && allLessons(c).some((l) => l.status === "draft")
 
 /** What the card says is out of the ordinary, if anything. */
-const attentionOf = (c: Course, prelaunch = false): { tone: "warning" | "muted" | "locked"; text: string; action: string } | null => {
+const attentionOf = (c: Course, prelaunch = false, uploads: VideoUpload[] = []): { tone: "warning" | "muted" | "locked" | "danger" | "uploading"; text: string; action: string } | null => {
+  // Videos going up come first (Figma Content 01): a failed one, else how far the batch has got.
+  const failed = uploads.filter((u) => u.phase === "failed")
+  if (failed.length) return { tone: "danger", text: `${failed.length} ${failed.length === 1 ? "upload" : "uploads"} failed · Lesson ${allLessons(c).findIndex((l) => l.id === failed[0].lessonId) + 1}`, action: "Retry" }
+  const busy = uploads.filter((u) => u.phase !== "ready")
+  if (busy.length) return { tone: "uploading", text: `Uploading ${uploads.length - busy.length} of ${uploads.length} videos`, action: `${Math.round(uploads.reduce((n, u) => n + (u.phase === "uploading" ? u.pct : 100), 0) / uploads.length)}%` }
   if (prelaunch && readyForLaunch(c)) return { tone: "muted", text: "Goes public when you go live", action: "Open" }
   if (c.status === "draft") return { tone: "locked", text: "No one can see this course", action: "Pick tiers" }
   const waiting = allLessons(c).filter((l) => l.status === "draft" || !l.video).length
@@ -92,6 +98,7 @@ export function ContentBoard() {
   // The view the coach chose stays between visits.
   const [view, setView] = useStoredChoice("proto:content-view", VIEWS, "grid")
 
+  const uploads = useAllUploads()
   const edit = (fn: (c: Catalog) => Catalog) => saveCatalog(coach, fn)
   // Prototype shortcut for tours and tests: `?sample=course` or `?sample=lesson` (add `&video=ready` for a lesson that already has its video)
   // makes a sample draft course with one lesson and opens it. Without a video the lesson shows the Course tour's "Add the video" step.
@@ -256,7 +263,7 @@ export function ContentBoard() {
             {list.map((c) => {
               const live = c.status === "published"
               const seed = [...c.id].reduce((n, ch) => n + ch.charCodeAt(0), 0)
-              const att = attentionOf(c, prelaunch)
+              const att = attentionOf(c, prelaunch, uploads.get(c.id))
               const on = picked.includes(c.id)
               return (
                 <AdminTr key={c.id} selected={on} onClick={() => router.push(`${base}/content/${c.id}`)}>
@@ -275,7 +282,7 @@ export function ContentBoard() {
                     </div>
                   </AdminTd>
                   <AdminTd><StatusTag course={c} prelaunch={prelaunch} /></AdminTd>
-                  <AdminTd>{att ? <CellDot tone={att.tone === "warning" ? "warning" : "neutral"} label={att.text} /> : <span className="text-a-text-3">—</span>}</AdminTd>
+                  <AdminTd>{att ? <CellDot tone={att.tone === "warning" ? "warning" : att.tone === "danger" ? "danger" : "neutral"} label={att.text} /> : <span className="text-a-text-3">—</span>}</AdminTd>
                   <AdminTd>
                     <div className="flex flex-wrap gap-1">
                       {accessOf(c, allTiers).split(", ").map((a) => (
@@ -300,7 +307,7 @@ export function ContentBoard() {
           const lessons = allLessons(c)
           const live = c.status === "published"
           const seed = [...c.id].reduce((n, ch) => n + ch.charCodeAt(0), 0)
-          const att = attentionOf(c, prelaunch)
+          const att = attentionOf(c, prelaunch, uploads.get(c.id))
           return (
             <MediaCard key={c.id} data-tour={c.id === list[0]?.id ? "course-card" : undefined} onClick={() => router.push(`${base}/content/${c.id}`)} className={cn(c.status === "archived" && "opacity-70")}
               cover={
