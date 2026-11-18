@@ -91,7 +91,8 @@ export function StudentsPage() {
             <AdminButton onClick={() => toast("Export started", { description: "students.csv with the columns you see." })} hierarchy="secondary">
               <Download /> Export
             </AdminButton>
-            <AdminButton onClick={() => setImporting(true)}>
+            {/* One primary action per screen: with no students or no matches the empty state button is the primary one. */}
+            <AdminButton hierarchy={rows.length === 0 ? "secondary" : undefined} onClick={() => setImporting(true)}>
               <Plus /> Import or invite
             </AdminButton>
           </>
