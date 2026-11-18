@@ -21,7 +21,7 @@ export { MessageDialog } from "./student-message"
 type Filter = "all" | "help" | "invited" | "paused"
 
 /** Courses each sample student is enrolled in (Figma Students 01 shows the count next to the tier). */
-const COURSES: Record<string, number> = { s1: 3, s2: 2, s3: 1, s4: 3, s5: 1, s6: 3, s7: 2, s8: 2 }
+const COURSES: Record<string, number> = { s1: 3, s2: 2, s3: 1, s4: 1, s5: 1, s6: 3, s7: 2, s8: 2, s9: 1, s10: 1, s11: 3, s12: 1, s13: 3, s14: 2, s15: 2 }
 /** The sample students above are set by hand; the generated ones get a steady 1 to 3 from their id. */
 const coursesOf = (id: string) => COURSES[id] ?? 1 + ([...id].reduce((n, c) => n + c.charCodeAt(0), 0) % 3)
 const PAGE = 8
@@ -36,9 +36,12 @@ export function StudentsPage() {
   const [filter, setFilter] = useState<Filter>("all")
   const [tier, setTier] = useState("")
   const [group, setGroup] = useState("")
+  // The list opens in Figma's order (Students 01); "At risk first" puts payment and rule problems on top.
+  const [sort, setSort] = useState<"default" | "risk">("default")
   const [page, setPage] = useState(0)
   const [picked, setPicked] = useState<string[]>([])
-  const [paused, setPaused] = useState<string[]>([])
+  // Figma Students 01 shows 2 paused students: two of the fine ones, picked by position.
+  const [paused, setPaused] = useState<string[]>(() => STUDENTS.filter((s) => s.health === "green").filter((_, i) => i === 20 || i === 61).map((s) => s.id))
   const [open, setOpen] = useState<Student | null>(null)
   const [importing, setImporting] = useState(false)
   const [message, setMessage] = useState<Student[] | null>(null)
@@ -47,27 +50,30 @@ export function StudentsPage() {
     () =>
       students.filter((s) => {
         if (q && !`${s.name} ${s.email}`.toLowerCase().includes(q.toLowerCase())) return false
-        if (filter === "help" && s.health === "green") return false
+        if (filter === "help" && !atRisk(s)) return false
         if (filter === "paused" && !paused.includes(s.id)) return false
         if (filter === "invited" && !s.joined.startsWith("invited")) return false
         if (tier && tierFor(coach, s.tier).id !== tier) return false
         if (group && s.group !== group) return false
         return true
-      }).sort((a, b) => rank(a) - rank(b)),
-    [q, filter, tier, group, coach, paused, students],
+      }).sort((a, b) => (sort === "risk" ? rank(a) - rank(b) : 0)),
+    [q, filter, tier, group, coach, paused, students, sort],
   )
   const pages = Math.max(1, Math.ceil(rows.length / PAGE))
   const at = Math.min(page, pages - 1)
   const shown = rows.slice(at * PAGE, at * PAGE + PAGE)
+  const activeNow = students.filter((s) => s.activeDays >= 10 && !s.joined.startsWith("invited")).length
   const counts = {
     all: students.length,
-    help: students.filter((s) => s.health !== "green").length,
+    help: students.filter(atRisk).length,
     invited: students.filter((s) => s.joined.startsWith("invited")).length,
-    paused: paused.length,
+    paused: students.filter((s) => paused.includes(s.id)).length,
   }
-  // "This month" is the prototype's month and the one before it (the sample joins are dated "5 Nov 2025").
-  const recent = [0, 1].map((back) => new Date(NOW.getFullYear(), NOW.getMonth() - back, 1).toLocaleDateString("en-GB", { month: "short", year: "numeric" }))
-  const joinedThisMonth = students.filter((s) => recent.some((m) => s.joined.endsWith(m))).length
+  // "This month" is the 30 days up to the prototype clock (joins are written as "5 Nov 2025").
+  const joinedThisMonth = students.filter((s) => {
+    const days = (NOW.getTime() - new Date(`${s.joined} 12:00`).getTime()) / 86_400_000
+    return days > -1 && days <= 30
+  }).length
   const onPage = shown.filter((r) => picked.includes(r.id)).length
   const selected = students.filter((s) => picked.includes(s.id))
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
@@ -107,7 +113,7 @@ export function StudentsPage() {
 
       <StatPanel
         stats={[
-          { label: "Active this week", value: students.filter((s) => s.activeDays > 0 && !s.joined.startsWith("invited")).length, delta: `${Math.round((students.filter((s) => s.activeDays > 0).length / Math.max(students.length, 1)) * 100)}% of all students` },
+          { label: "Active this week", value: activeNow, delta: `${Math.round((activeNow / Math.max(students.length, 1)) * 100)}% of all students` },
           { label: "At risk", value: counts.help, delta: "Rules broken or stuck" },
           { label: "Payment issues", value: students.filter((s) => s.reason?.toLowerCase().includes("payment")).length, delta: "Retrying automatically" },
           { label: "Invited", value: counts.invited, delta: "Haven't joined yet" },
@@ -175,6 +181,7 @@ export function StudentsPage() {
           <AdminSearch value={q} onChange={refine(setQ)} placeholder="Search students" hint="⌘K" />
           <AdminFilter label="Tier" value={tier} onValueChange={refine(setTier)} options={[{ value: "", label: "All tiers" }, ...coach.tiers.map((t) => ({ value: t.id, label: t.name }))]} />
           <AdminFilter label="Group" value={group} onValueChange={refine(setGroup)} options={[{ value: "", label: "All groups" }, ...GROUPS.map((g) => ({ value: g.name, label: g.name }))]} />
+          <AdminFilter label="Sort" value={sort} onValueChange={refine((v: string) => setSort(v as "default" | "risk"))} options={[{ value: "default", label: "Default" }, { value: "risk", label: "At risk first" }]} />
         </AdminToolbar>
       )}
 
@@ -265,6 +272,8 @@ export function StudentsPage() {
   )
 }
 
+/** Worth a look but not a payment problem or a student who has not joined (those have their own status). */
+const atRisk = (s: Student) => s.health !== "green" && !s.joined.startsWith("invited") && !s.reason?.toLowerCase().includes("payment")
 const rank = (s: Student) => (s.health === "red" ? 0 : s.health === "amber" ? 1 : 2)
 
 /** The six standard statuses (Figma Students 01): what the coach should do about a student, in one word or two. */

@@ -28,15 +28,29 @@ export function generatedStudents(existing: Student[], total = 201): Student[] {
   const used = new Set(existing.map((s) => s.name))
   const out: Student[] = []
   const count = Math.max(0, total - existing.length)
+  // Kairo's counts in Figma (Students 01): 3 payment issues, 7 at risk and 12 invited in all. The written students already hold
+  // 1 payment issue, 3 at risk and 2 invited, so the generated ones add 2, 4 and 10; the rest are fine. Placed by the seed, not at random.
+  const roles: ("payment" | "risk" | "invited" | "ok")[] = [...Array(2).fill("payment"), ...Array(4).fill("risk"), ...Array(10).fill("invited"), ...Array(Math.max(0, count - 16)).fill("ok")]
+  for (let i = roles.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1))
+    ;[roles[i], roles[j]] = [roles[j]!, roles[i]!]
+  }
+  // Figma Students 01 says 86 active this week (activeDays 10 or more of 14): with the 8 written ones that is 78 of the fine ones, spread by a stride.
+  let fine = 0
   for (let i = 0; out.length < count; i++) {
     const name = `${FIRST[(i * 7 + Math.floor(r() * 3)) % FIRST.length]} ${LAST[(i * 11 + Math.floor(r() * 5)) % LAST.length]}`
     if (used.has(name)) continue
     used.add(name)
     const tier = tiers[out.length] ?? "core"
-    const roll = r()
-    const health = roll < 0.03 ? "red" : roll < 0.08 ? "amber" : "green"
-    const reasonFor = { red: ["Payment failed", "Broke loss limit", "No activity for 2 weeks"], amber: ["Rules kept below 70%", "Stuck in Module 2", "Skipped three lives"], green: [] as string[] }[health]
-    const monthsAgo = 1 + Math.floor(r() * 9)
+    const role = roles[out.length] ?? "ok"
+    const health: Student["health"] = role === "payment" ? "red" : role === "ok" ? "green" : "amber"
+    const reasonFor = role === "risk" ? ["Rules kept below 70%", "Stuck in Module 2", "Skipped three lives", "No activity for 2 weeks"] : []
+    const invitedDays = 3 + Math.floor(r() * 9)
+    const okIdx = role === "ok" ? fine++ : -1
+    const active = okIdx >= 0 && (okIdx * 37) % Math.max(1, count - 16) < 78
+    // Figma says 14 joined this month (Oct 13 to Nov 12): 4 written ones plus 10 of these.
+    const recentJoin = okIdx >= 0 && (okIdx * 53) % Math.max(1, count - 16) < 10
+    const monthsAgo = 2 + Math.floor(r() * 9)
     const joinedMonth = Math.max(0, 10 - monthsAgo)
     const [first, last] = name.split(" ")
     out.push({
@@ -45,14 +59,14 @@ export function generatedStudents(existing: Student[], total = 201): Student[] {
       initials: `${first![0]}${last![0]}`,
       email: `${first!.toLowerCase()}.${last!.toLowerCase()}@mail.com`,
       tier,
-      progress: Math.round(5 + r() * 90),
-      lastActive: health === "red" ? LAST_ACTIVE[6 + Math.floor(r() * 3)]! : LAST_ACTIVE[Math.floor(r() * 6)]!,
-      activeDays: health === "red" ? Math.floor(r() * 4) : 4 + Math.floor(r() * 10),
+      progress: role === "invited" ? Math.floor(r() * 9) : Math.round(5 + r() * 90),
+      lastActive: role === "invited" ? "never" : role === "payment" || role === "risk" ? LAST_ACTIVE[6 + Math.floor(r() * 3)]! : LAST_ACTIVE[Math.floor(r() * 6)]!,
+      activeDays: role === "invited" ? 0 : role === "payment" || role === "risk" ? Math.floor(r() * 4) : active ? 10 + Math.floor(r() * 4) : 4 + Math.floor(r() * 6),
       health,
-      reason: reasonFor.length ? reasonFor[Math.floor(r() * reasonFor.length)] : undefined,
-      joined: `${1 + Math.floor(r() * 27)} ${MONTHS[joinedMonth]} 2025`,
+      reason: role === "payment" ? "Payment failed" : role === "invited" ? `Invited ${invitedDays} days ago, hasn't joined` : reasonFor.length ? reasonFor[Math.floor(r() * reasonFor.length)] : undefined,
+      joined: role === "invited" ? `invited ${Math.max(1, 12 - invitedDays)} Nov` : recentJoin ? `${1 + Math.floor(r() * 12)} Nov 2025` : `${1 + Math.floor(r() * 27)} ${MONTHS[joinedMonth]} 2025`,
       paid: tier === "free" ? 0 : Math.round((tier === "vip" ? 390 : tier === "desk" ? 129 : 49) * (1 + r() * 9)),
-      broker: r() > 0.5,
+      broker: role === "invited" ? false : r() > 0.5,
       discord: r() > 0.35,
       country: COUNTRY[Math.floor(r() * COUNTRY.length)]!,
       trades30: Math.floor(r() * 45),

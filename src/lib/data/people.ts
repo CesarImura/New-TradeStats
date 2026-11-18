@@ -32,14 +32,14 @@ const H = (when: string, text: string) => ({ when, text })
 
 const FEATURED_STUDENTS: Student[] = [
   {
-    id: "s1", name: "Alex Moreau", initials: "AM", email: "alex.moreau@mail.com", tier: "core", group: "October cohort", progress: 62, lastActive: "today", activeDays: 11, health: "red", reason: "Payment failed",
-    joined: "1 Apr 2025", paid: 1043, broker: true, discord: true, country: "FR", trades30: 41, rules: 84,
+    id: "s1", name: "Alex Moreau", initials: "AM", email: "alex.moreau@mail.com", tier: "desk", group: "Futures A", progress: 62, lastActive: "2 h ago", activeDays: 11, health: "red", reason: "Payment failed",
+    joined: "18 Jun 2025", paid: 588, broker: true, discord: true, country: "FR", trades30: 41, rules: 94,
     notes: [{ by: "Marco", when: "31 Oct", text: "Wants to pass a 50K funded challenge before December. Push the daily loss limit module." }],
     history: [H("Today 07:12", "Payment of €149 failed (card expired)"), H("Fri 7 Nov", "Asked for review: NQ long −1.2R"), H("30 Oct", "Joined October cohort"), H("1 Apr", "Joined Core")],
   },
   {
-    id: "s2", name: "Mia Sørensen", initials: "MS", email: "mia.s@proton.me", tier: "desk", progress: 81, lastActive: "today", activeDays: 13, health: "amber", reason: "Broke loss limit twice",
-    joined: "10 Feb 2025", paid: 3510, broker: true, discord: true, country: "DK", coach: "Jana", trades30: 68, rules: 71,
+    id: "s2", name: "Mia Sørensen", initials: "MS", email: "mia.s@proton.me", tier: "desk", group: "Futures A", progress: 48, lastActive: "today", activeDays: 13, health: "amber", reason: "Broke loss limit twice",
+    joined: "2 Aug 2025", paid: 3510, broker: true, discord: true, country: "DK", coach: "Jana", trades30: 68, rules: 61,
     notes: [{ by: "Jana", when: "6 Nov", text: "Revenge trades after the first loss. Suggest a hard stop after −2R." }],
     history: [H("Fri 7 Nov", "Broke daily loss limit"), H("Wed 5 Nov", "Broke daily loss limit"), H("10 Feb", "Joined Trading Desk")],
   },
@@ -49,8 +49,8 @@ const FEATURED_STUDENTS: Student[] = [
     history: [H("1 Nov", "Last login"), H("18 Sep", "Joined Core")],
   },
   {
-    id: "s4", name: "Lena Ito", initials: "LI", email: "lena.ito@gmail.com", tier: "vip", progress: 35, lastActive: "yesterday", activeDays: 8, health: "amber", reason: "Stuck in Module 2 for 12 days",
-    joined: "27 Oct 2025", paid: 149, broker: true, discord: true, country: "JP", trades30: 17, rules: 88, notes: [],
+    id: "s4", name: "Lena Ito", initials: "LI", email: "lena.ito@gmail.com", tier: "vip", progress: 22, lastActive: "3 days ago", activeDays: 8, health: "amber", reason: "Stuck in Module 2 for 12 days",
+    joined: "14 Sep 2025", paid: 149, broker: true, discord: true, country: "JP", trades30: 17, rules: 88, notes: [],
     history: [H("Thu 6 Nov", "Asked for review: CL long −0.8R"), H("27 Oct", "Joined Core")],
   },
   {
@@ -78,14 +78,41 @@ const FEATURED_STUDENTS: Student[] = [
     id: "s10", name: "Ava Lindqvist", initials: "AL", email: "ava.lindqvist@me.com", tier: "core", progress: 0, lastActive: "never", activeDays: 0, health: "amber", reason: "Invited 6 days ago, hasn't joined",
     joined: "invited 4 Nov", paid: 0, broker: false, discord: false, country: "SE", trades30: 0, rules: 0, notes: [], history: [H("4 Nov", "Invited by e-mail")],
   },
+  {
+    id: "s11", name: "Kofi Owusu", initials: "KO", email: "kofi@owusu.io", tier: "desk", group: "Futures B", progress: 91, lastActive: "today", activeDays: 13, health: "green",
+    joined: "9 Mar 2025", paid: 1290, broker: true, discord: true, country: "GH", trades30: 36, rules: 97, notes: [], history: [H("9 Mar", "Joined Trading Desk")],
+  },
+  {
+    id: "s12", name: "Hugo Martin", initials: "HM", email: "hugo.martin@me.com", tier: "free", progress: 8, lastActive: "never", activeDays: 0, health: "amber", reason: "Invited 8 days ago, hasn't joined",
+    joined: "invited 4 Nov", paid: 0, broker: false, discord: false, country: "FR", trades30: 0, rules: 0, notes: [], history: [H("4 Nov", "Invited by e-mail")],
+  },
+  {
+    id: "s13", name: "Ines Duarte", initials: "ID", email: "ines@duarte.pt", tier: "desk", group: "Futures B", progress: 77, lastActive: "yesterday", activeDays: 11, health: "green",
+    joined: "22 Jan 2025", paid: 1590, broker: true, discord: true, country: "PT", trades30: 29, rules: 90, notes: [], history: [H("22 Jan", "Joined Trading Desk")],
+  },
+  {
+    id: "s14", name: "Marek Nowak", initials: "MN", email: "marek.nowak@wp.pl", tier: "vip", progress: 100, lastActive: "4 days ago", activeDays: 7, health: "green",
+    joined: "5 Nov 2024", paid: 9100, broker: true, discord: true, country: "PL", trades30: 44, rules: 99, notes: [], history: [H("5 Nov 2024", "Joined 1:1 VIP")],
+  },
+  {
+    id: "s15", name: "Yuki Tanaka", initials: "YT", email: "yuki.t@icloud.com", tier: "desk", group: "Futures A", progress: 35, lastActive: "today", activeDays: 12, health: "green",
+    joined: "27 Oct 2025", paid: 258, broker: true, discord: true, country: "JP", trades30: 19, rules: 72, notes: [], history: [H("27 Oct", "Joined Trading Desk")],
+  },
 ]
 
-/** The ten written by hand plus the generated rest of the roster (201 in all). */
-export const STUDENTS: Student[] = [...FEATURED_STUDENTS, ...generatedStudents(FEATURED_STUDENTS)]
+/** The fifteen written by hand plus the generated rest of the roster (201 in all). */
+/**
+ * The first eight rows are the ones Figma shows in Students 01, in that order; the rest of the written ones and the generated roster follow.
+ * (The default order of the Students list is this array's order; "At risk first" is the other choice there.)
+ */
+const FIGMA_FIRST = ["s1", "s2", "s4", "s11", "s12", "s13", "s14", "s15"]
+const ORDERED = [...FIGMA_FIRST.map((id) => FEATURED_STUDENTS.find((x) => x.id === id)!), ...FEATURED_STUDENTS.filter((x) => !FIGMA_FIRST.includes(x.id))]
+export const STUDENTS: Student[] = [...ORDERED, ...generatedStudents(FEATURED_STUDENTS)]
 
 export const GROUPS = [
   { id: "dec", name: "December cohort", start: "1 Dec 2025", end: "28 Feb 2026", seats: 20, members: 18, waiting: 0, tiers: ["desk"] },
   { id: "futures", name: "Futures A", start: "6 Oct 2025", end: "31 Dec 2025", seats: 0, members: 24, waiting: 0, tiers: ["desk"] },
+  { id: "futures-b", name: "Futures B", start: "5 Jan 2026", end: "31 Mar 2026", seats: 12, members: 14, waiting: 0, tiers: ["desk"] },
 ]
 
 /** A discount code. `tiers` empty means every tier; `ends` is an ISO date or empty for no end. */
