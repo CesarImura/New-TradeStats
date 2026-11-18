@@ -64,7 +64,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       <footer className="border-t">
         <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-x-5 gap-y-2 px-4 py-6 text-xs text-muted-foreground sm:px-6">
           <span>
-            © 2026 {coach.org}
+            © 2025 {coach.org}
           </span>
           {LEGAL.map((l) => (
             <Link key={l.id} href={`${base}/legal/${l.id}`} className="hover:text-foreground">

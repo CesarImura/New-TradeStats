@@ -153,7 +153,7 @@ export function ThankYou() {
         )}
         {group && (
           <li className="flex gap-2">
-            <Check className="mt-0.5 size-4 shrink-0 text-primary" /> {group.name} {group.start <= "2026-10-12" ? "is running; you can catch up at your pace." : `starts on ${fmtDate(group.start)}.`}
+            <Check className="mt-0.5 size-4 shrink-0 text-primary" /> {group.name} {group.start <= "2025-11-12" ? "is running; you can catch up at your pace." : `starts on ${fmtDate(group.start)}.`}
           </li>
         )}
         <li className="flex gap-2">
@@ -411,7 +411,7 @@ export function LegalPage({ doc }: { doc: string }) {
       </nav>
       <h1 className="text-3xl">{page.name}</h1>
       <div className="text-[0.875rem] leading-relaxed whitespace-pre-line text-muted-foreground">{(texts[doc] ?? page.text).replace(/Northline Trading/g, coach.org)}</div>
-      <span className="text-xs text-muted-foreground">Last updated 1 October 2026</span>
+      <span className="text-xs text-muted-foreground">Last updated 1 October 2025</span>
     </div>
   )
 }
