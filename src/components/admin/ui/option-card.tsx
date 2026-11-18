@@ -7,8 +7,8 @@ export function OptionCard({ checked, onSelect, title, description, disabled, cl
   return (
     <button type="button" role="radio" aria-checked={checked} disabled={disabled} onClick={onSelect}
       className={cn("flex items-center gap-3 self-stretch rounded-a-10 border px-4 py-3.5 text-left outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus disabled:pointer-events-none disabled:opacity-40", checked ? "border-a-border-active bg-a-raised" : "border-a-border hover:border-a-border-strong", className)}>
-      <span aria-hidden className={cn("grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-300", checked ? "border-a-border-active" : "border-a-border-strong")}>
-        <span className={cn("size-2 rounded-full bg-a-accent transition-transform duration-200 ease-out motion-reduce:transition-none", checked ? "scale-100" : "scale-0")} />
+      <span aria-hidden className={cn("grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-300", checked ? "border-[var(--admin-color-control-on)]" : "border-a-border-strong")}>
+        <span className={cn("size-2 rounded-full bg-[var(--admin-color-control-on)] transition-transform duration-200 ease-out motion-reduce:transition-none", checked ? "scale-100" : "scale-0")} />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="t-body-l text-a-text">{title}</span>

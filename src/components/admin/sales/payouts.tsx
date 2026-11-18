@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 import { useCommunityData } from "../kit"
 import { useWizardCommunity } from "../setup-checklist"
 import { isFreeTier, useTiers } from "@/lib/data/access"
-import { AdminSelect, AdminButton, AdminDrawer, AdminField, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, Callout, Dropzone, OptionCard, Panel, PanelHeader, StatPanel, StepIndicator, Tag, adminControl } from "../ui"
+import { AdminSelect, AdminButton, AdminDrawer, AdminField, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, Callout, Dropzone, OptionCard, Panel, StatPanel, StepIndicator, Tag, adminControl } from "../ui"
 
 type Payouts = { step: number; done: boolean; country?: string; kind?: "person" | "company"; iban?: string; /** Full legal name, as on the ID. */ name?: string; holder?: string; /** The ID is being checked (it clears by itself in the prototype). */ review?: boolean }
 const STEPS = [
@@ -76,7 +76,7 @@ export function Payouts() {
     return (
       <div className="flex flex-col gap-4">
         <Panel className="gap-3">
-          <PanelHeader title="Connect payouts" description="Needed before your first sale. Takes about 5 minutes." />
+          <header className="grid gap-0.5"><h2 className="t-heading-s text-a-text">Connect payouts</h2><p className="t-caption text-a-text-2">Needed before your first sale. Takes about 5 minutes.</p></header>
           <ol className="flex flex-col gap-2.5">
             {STEPS.map((s, i) => {
               const done = i < state.step
@@ -129,9 +129,9 @@ export function Payouts() {
           { label: "Our share · 5%", value: fresh ? "€0" : `€${MONEY.share.toLocaleString("en")}` },
         ]}
       />
-      <div className={cn("grid items-start gap-4", !fresh && "lg:grid-cols-2")}>
+      <div className={cn("grid items-start gap-4", !fresh && "lg:grid-cols-[minmax(0,610fr)_minmax(0,570fr)]")}>
         <Panel className="gap-3.5" data-tour="payouts-connected" data-state={state.review ? "review" : "connected"}>
-          <PanelHeader title="Where your money goes every week" actions={state.review ? <Tag tone="warning" dot>ID in review</Tag> : <Tag tone="success" dot>Payouts connected</Tag>} />
+          <header className="flex items-center justify-between gap-2"><h2 className="t-heading-s text-a-text">Where your money goes every week</h2>{state.review ? <Tag tone="warning">ID in review</Tag> : <Tag tone="success">Payouts connected</Tag>}</header>
           <dl className="flex flex-col gap-2.5">
             {rows.map(([k, v]) => (
               <div key={k} className="flex items-baseline justify-between gap-4">
@@ -156,7 +156,7 @@ export function Payouts() {
               <AdminTr key={p.d}>
                 <AdminTd className="text-a-text">{p.d}</AdminTd>
                 <AdminTd align="end">€{p.a.toLocaleString("en")}</AdminTd>
-                <AdminTd><Tag tone="success" dot>Paid</Tag></AdminTd>
+                <AdminTd><Tag tone="success">Paid</Tag></AdminTd>
               </AdminTr>
             ))}
           </tbody>
@@ -243,7 +243,7 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
             {(p) => <input {...p} value={form.holder ?? ""} onChange={(e) => set({ holder: e.target.value })} placeholder="Your legal name" className={cn(adminControl, "h-11")} />}
           </AdminField>
           <AdminField label="IBAN" hint="Payouts go out every Monday, no minimum" error={tried && !ibanOk ? "Check the IBAN. It starts with the country, like DE89…" : undefined}>
-            {(p) => <input {...p} autoFocus value={iban} onChange={(e) => set({ iban: e.target.value.toUpperCase() })} placeholder="DE89 3704 0044 0532 0130 00" className={cn(adminControl, "h-11 font-a-mono")} />}
+            {(p) => <input {...p} autoFocus value={iban} onChange={(e) => set({ iban: e.target.value.toUpperCase() })} placeholder="DE89 3704 0044 0532 0130 00" className={cn(adminControl, "h-11")} />}
           </AdminField>
         </div>
       )}

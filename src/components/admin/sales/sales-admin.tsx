@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { ExternalLink, Plus } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
+import { isFreeTier, useTiers } from "@/lib/data/access"
 import { PageHeader } from "../kit"
 import { SetupTip } from "../setup-checklist"
 import { AdminButton, AdminTabs, Panel, PanelHeader } from "@/components/admin/ui"
@@ -32,6 +33,7 @@ type Tab = (typeof TABS)[number]["id"] | "affiliates"
 /** Sales & payments (Figma 535:7152, 12 screens): tiers, groups, access, the sales page, coupons, transactions and payouts. The header's actions follow the tab. */
 export function SalesAdmin() {
   const { coach } = useCoach()
+  const noTiers = useTiers(coach).filter((t) => !isFreeTier(t)).length === 0
   const asked = useSearchParams().get("tab")
   const pick = (v: string | null): Tab => (TABS.some((t) => t.id === v) || v === "affiliates" ? (v as Tab) : "overview")
   const [tab, setTab] = useState<Tab>(pick(asked))
@@ -55,7 +57,7 @@ export function SalesAdmin() {
     tab === "overview" || tab === "tiers" ? (
       <>
         {salesPage}
-        <AdminButton onClick={() => (setTab("tiers"), setNewTier((n) => n + 1))}>
+        <AdminButton hierarchy={noTiers ? "secondary" : "primary"} onClick={() => (setTab("tiers"), setNewTier((n) => n + 1))}>
           <Plus /> New tier
         </AdminButton>
       </>

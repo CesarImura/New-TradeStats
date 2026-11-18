@@ -7,7 +7,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { isFreeTier } from "@/lib/data/access"
 import { MONEY, TRANSACTIONS } from "@/lib/data/people"
 import { useNewPlatform } from "../use-new-platform"
-import { AdminButton, AdminProgress, AdminSegmented, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, EmptyState, Panel, PanelHeader, StatPanel, Tag } from "../ui"
+import { AdminButton, AdminProgress, AdminSegmented, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, EmptyState, Panel, StatPanel, Tag } from "../ui"
 
 /** Last six months. November is still running. */
 const MONTHS = [
@@ -52,14 +52,14 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
       />
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
         <Panel>
-          <PanelHeader title="Last 6 months, what students paid" actions={<AdminSegmented size="sm" label="Chart metric" value={metric} onChange={setMetric} options={[{ value: "revenue", label: "Revenue" }, { value: "members", label: "Members" }]} className="w-[168px]" />} />
+          <header className="flex items-center justify-between gap-2"><h2 className="t-heading-s text-a-text">Last 6 months, what students paid</h2><AdminSegmented size="sm" label="Chart metric" value={metric} onChange={setMetric} options={[{ value: "revenue", label: "Revenue" }, { value: "members", label: "Members" }]} className="w-[168px]" /></header>
           <ChartContainer config={{ [metric]: { label: metric === "revenue" ? "Revenue" : "Members", color: "var(--admin-component-chart-bar-bg-default)" } } satisfies ChartConfig} className="aspect-auto h-[230px] w-full">
-            <BarChart data={months} margin={{ top: 20, left: 0, right: 4 }} barCategoryGap="14%" onMouseMove={(st) => setHover(typeof st.activeTooltipIndex === "number" ? st.activeTooltipIndex : null)} onMouseLeave={() => setHover(null)}>
+            <BarChart data={months} margin={{ top: 20, left: 0, right: 4 }} barCategoryGap="27%" onMouseMove={(st) => setHover(typeof st.activeTooltipIndex === "number" ? st.activeTooltipIndex : null)} onMouseLeave={() => setHover(null)}>
               <CartesianGrid vertical={false} stroke="var(--admin-color-chart-grid)" />
               <YAxis tickLine={false} axisLine={false} width={44} tickFormatter={fmt} domain={metric === "revenue" ? [0, 40000] : [0, 200]} ticks={metric === "revenue" ? [0, 20000, 40000] : [0, 100, 200]} />
               <XAxis dataKey="month" tickLine={false} axisLine={false} />
               <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel formatter={(v) => <span className="tabular-nums">{metric === "revenue" ? `€${Number(v).toLocaleString("en")}` : v}</span>} />} />
-              <Bar dataKey={metric} radius={[3, 3, 0, 0]} isAnimationActive={false}>
+              <Bar dataKey={metric} radius={[4, 4, 0, 0]} isAnimationActive={false}>
                 <LabelList dataKey={metric} position="top" formatter={(v: unknown) => fmt(Number(v))} className="fill-[var(--admin-color-text-secondary)] text-[11px]" />
                 {months.map((d, i) => (
                   <Cell key={d.month} fill={i === active ? (hover === null ? "var(--admin-component-chart-bar-bg-default)" : "var(--admin-component-chart-bar-bg-active)") : "var(--admin-component-chart-bar-bg-dim)"} />
@@ -69,21 +69,21 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
           </ChartContainer>
         </Panel>
         <Panel className="gap-0 overflow-hidden p-0">
-          <PanelHeader className="px-5 py-5" title="Needs attention" actions={<button type="button" onClick={onProblems} className="rounded-a-xs t-body-m text-a-text-2 outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">All payments</button>} />
+          <header className="flex items-center justify-between gap-2 px-5 py-4"><h2 className="t-heading-s text-a-text">Needs attention</h2><button type="button" onClick={onProblems} className="rounded-a-xs t-caption text-a-text-2 outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">All payments</button></header>
           {attention.length === 0 ? (
             <EmptyState compact title="All payments are fine." className="m-5 mt-0 py-8" />
           ) : (
             <ul>
               {attention.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-3 border-t border-a-border px-5 py-4">
+                <li key={t.id} className="flex items-center justify-between gap-3 border-t border-a-border-subtle px-5 py-3.5">
                   <div className="min-w-0">
-                    <div className="t-body-m-medium truncate">{t.who}</div>
-                    <div className="t-caption truncate text-a-text-2">{t.status === "disputed" ? "Disputed" : "Payment failed"} · {t.what.split(" · ")[0]} €{t.amount}</div>
+                    <div className="t-body-m truncate text-a-text">{t.who}</div>
+                    <div className="t-caption mt-1 truncate text-a-text-2">{t.status === "disputed" ? "Disputed" : "Payment failed"} · {t.what.split(" · ")[0]} €{t.amount}</div>
                   </div>
                   {t.status === "disputed" ? (
                     <AdminButton onClick={onProblems} hierarchy="secondary" size="lg">Answer the dispute</AdminButton>
                   ) : (
-                    <Tag tone={toneOf[t.status as keyof typeof toneOf]} dot>{t.status === "retrying" ? "Retrying" : "Failed"}</Tag>
+                    <Tag tone={toneOf[t.status as keyof typeof toneOf]}>{t.status === "retrying" ? "Retrying" : "Failed"}</Tag>
                   )}
                 </li>
               ))}

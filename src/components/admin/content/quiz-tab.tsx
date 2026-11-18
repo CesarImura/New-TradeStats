@@ -156,7 +156,8 @@ export function QuizTab({ lesson, onChange }: { lesson: Lesson; onChange: (p: Pa
         </div>
       </div>
 
-      <Panel className="gap-3.5">
+      {/* Figma Content 09: the rules panel starts level with the course outline, beside the tabs (tab bar 29px + 16px gap). */}
+      <Panel className="relative z-10 gap-3.5 xl:-mt-[45px]">
         <h2 className="t-heading-s text-a-text">Quiz rules</h2>
         <div className="grid gap-1.5">
           <span className="t-caption text-a-text">Pass mark</span>

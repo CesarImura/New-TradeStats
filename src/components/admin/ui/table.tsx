@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils"
 
 /**
  * Admin / Table for screens written as <Table><TableHeader>… (Figma 662:30058 and its parts, section "Admin · Tables").
- * Same look as `AdminTable` + `AdminTh/Tr/Td`: a panel with a clipping radius, a 32px subtle head row with mono 10px labels,
+ * Same look as `AdminTable` + `AdminTh/Tr/Td`: a panel with a clipping radius, a 38px subtle head row with Caption 12px labels in sentence case,
  * 61px rows with a hairline above and a hover fill, and sideways scroll instead of squeezing. The shell is part of `Table`: do not wrap it in another border.
  */
 export function Table({ className, bare, scrollLabel, ...props }: React.ComponentProps<"table"> & { /** A table with nothing to focus in it: lets the keyboard reach it to scroll sideways, and names it. */ scrollLabel?: string; /** The parent already is the panel (border, radius, fill): draw only the table and its sideways scroll. */ bare?: boolean }) {
@@ -27,7 +27,7 @@ export function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
 }
 
 export function TableHead({ className, ...props }: React.ComponentProps<"th">) {
-  return <th scope="col" className={cn("relative h-8 py-0 pr-4 text-left align-middle font-normal whitespace-nowrap t-mono-label-s text-a-text-2 first:pl-5 last:pr-5", className)} {...props} />
+  return <th scope="col" className={cn("relative h-[38px] py-0 pr-4 text-left align-middle whitespace-nowrap t-caption text-a-text-2 first:pl-5 last:pr-5", className)} {...props} />
 }
 
 export function TableCell({ className, ...props }: React.ComponentProps<"td">) {
