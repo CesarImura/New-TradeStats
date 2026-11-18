@@ -21,6 +21,8 @@ type Filter = "all" | "help" | "invited" | "paused"
 
 /** Courses each sample student is enrolled in (Figma Students 01 shows the count next to the tier). */
 const COURSES: Record<string, number> = { s1: 3, s2: 2, s3: 1, s4: 3, s5: 1, s6: 3, s7: 2, s8: 2 }
+/** The sample students above are set by hand; the generated ones get a steady 1 to 3 from their id. */
+const coursesOf = (id: string) => COURSES[id] ?? 1 + ([...id].reduce((n, c) => n + c.charCodeAt(0), 0) % 3)
 const PAGE = 8
 const NO_STUDENTS: Student[] = []
 
@@ -236,7 +238,7 @@ export function StudentsPage() {
                   <AdminTd>
                     <CellStack title={tierFor(coach, s.tier).name} subtitle={s.group ?? "No group"} />
                   </AdminTd>
-                  <AdminTd className="tabular-nums text-a-text">{COURSES[s.id] ?? 1}</AdminTd>
+                  <AdminTd className="tabular-nums text-a-text">{coursesOf(s.id)}</AdminTd>
                   <AdminTd>
                     <CellProgress label={`${s.name} overall progress`} value={s.progress} />
                   </AdminTd>

@@ -163,7 +163,8 @@ export function ContentBoard() {
         title="Content"
         text={catalog.courses.length === 0 ? "No courses yet" : `${catalog.courses.length} ${catalog.courses.length === 1 ? "course" : "courses"} · ${plural(catalog.courses.reduce((n, c) => n + allLessons(c).length, 0), "lesson")}`}
         actions={
-          <AdminButton onClick={() => openWizard("blank")}>
+          // One primary action per screen: with no courses the empty state's "New course" is the primary one.
+          <AdminButton hierarchy={catalog.courses.length === 0 ? "secondary" : undefined} onClick={() => openWizard("blank")}>
             <Plus /> New course
           </AdminButton>
         }

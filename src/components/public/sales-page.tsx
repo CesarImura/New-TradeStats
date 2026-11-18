@@ -38,9 +38,8 @@ export function SalesPage() {
   }, [blocks.length])
   return (
     <div className="flex flex-col">
-      {/* The sales page editor marks the block being edited (data-editing, outline) from outside, maybe before this page has hydrated. */}
       {blocks.map((b, i) => (
-        <section key={b.id} id={b.id} suppressHydrationWarning className={cn("scroll-mt-20 py-14 sm:py-20", i > 0 && b.type !== "cta" && "border-t")}>
+        <section key={b.id} id={b.id} className={cn("scroll-mt-20 py-14 sm:py-20", i > 0 && b.type !== "cta" && "border-t")}>
           <BlockView block={b} />
         </section>
       ))}
