@@ -40,7 +40,7 @@ export function ChartsAdmin() {
   const upload = <AdminButton onClick={() => setCreating(true)}><Plus /> Mark up a chart</AdminButton>
 
   return (
-    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
+    <div className="flex w-full flex-col gap-4">
       <PageHeader title="Charts" text="Charts, watchlist and your charts" actions={upload} />
       {!coach.modules.charts && (
         <Callout tone="warning" action={<AdminButton nativeButton={false} render={<Link href={`${base}/design`} />} hierarchy="secondary" size="md">Review</AdminButton>}>
@@ -112,7 +112,7 @@ function Settings({ s, setS }: { s: ChartSettings; setS: (n: ChartSettings | ((c
         </div>
         <div className="grid gap-1.5">
           <span className="t-caption text-a-text">Markets you trade</span>
-          <div role="group" aria-label="Markets you trade" className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+          <div role="group" aria-label="Markets you trade" className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
             {MARKETS.map((m) => {
               const on = s.markets.includes(m.id)
               return (

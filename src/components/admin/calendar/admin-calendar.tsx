@@ -244,7 +244,7 @@ function EventModal({ event, isNew, onClose }: { event: CalEvent | null; isNew: 
             </span>
             <Switch checked={e.reminders.length > 0} onCheckedChange={(v) => set({ reminders: v ? ["1d", "1h"] : [] })} />
           </label>
-          <button type="button" aria-expanded={more} onClick={() => setMore((m) => !m)} className="-mt-2 flex w-fit items-center gap-1 rounded-a-xs t-body-m text-a-text-2 outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
+          <button type="button" aria-expanded={more} onClick={() => setMore((m) => !m)} className="-mt-3 flex w-fit items-center gap-1 rounded-a-xs t-body-m text-a-text-2 outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
             <ChevronDown className={cn("size-3.5 transition-transform duration-200", more && "rotate-180")} /> More options
           </button>
           {more && (
@@ -541,7 +541,7 @@ function CallDrawer({ item, onClose }: { item: Item | null; onClose: () => void 
               </Avatar>
               <div className="grid min-w-0 gap-0.5">
                 <span className="truncate t-body-m-medium text-a-text">{b.student}</span>
-                <span className="truncate t-caption text-a-text-2">{tier ? `${tier.name} · ` : ""}{used} of {total} calls used this month</span>
+                <span className="truncate t-caption text-a-text-2">{tier ? `${tier.name} · ` : ""}{used - 1} of {total} calls used this month</span>
               </div>
             </div>
             <section className="flex flex-col gap-3">
@@ -556,11 +556,11 @@ function CallDrawer({ item, onClose }: { item: Item | null; onClose: () => void 
               </Panel>
             )}
             <section className="flex flex-col gap-4">
-              <h3 className="t-mono-label text-a-text-2">Calls this month · {used} of {total} used</h3>
+              <h3 className="t-mono-label text-a-text-2">Calls this month · {used - 1} of {total} used</h3>
               <ol className="flex flex-col gap-4">
                 {calls.map((k) => {
                   const state = k < used ? "done" : k === used ? "current" : "upcoming"
-                  const date = addDays(shown.start, -7 * (used - k))
+                  const date = addDays(shown.start, -7 * (used - k + 1))
                   return (
                     <li key={k} className="flex items-start gap-3">
                       <StepIndicator step={k} state={state} />

@@ -49,7 +49,7 @@ const FEATURED_STUDENTS: Student[] = [
     history: [H("1 Nov", "Last login"), H("18 Sep", "Joined Core")],
   },
   {
-    id: "s4", name: "Lena Ito", initials: "LI", email: "lena.ito@gmail.com", tier: "core", group: "October cohort", progress: 35, lastActive: "yesterday", activeDays: 8, health: "amber", reason: "Stuck in Module 2 for 12 days",
+    id: "s4", name: "Lena Ito", initials: "LI", email: "lena.ito@gmail.com", tier: "vip", progress: 35, lastActive: "yesterday", activeDays: 8, health: "amber", reason: "Stuck in Module 2 for 12 days",
     joined: "27 Oct 2025", paid: 149, broker: true, discord: true, country: "JP", trades30: 17, rules: 88, notes: [],
     history: [H("Thu 6 Nov", "Asked for review: CL long −0.8R"), H("27 Oct", "Joined Core")],
   },
