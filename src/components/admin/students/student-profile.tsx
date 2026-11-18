@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { CircleAlert } from "@/components/icons"
 import { DEMO_ADMIN } from "@/lib/data/account"
 import { GROUPS, tierFor, type Student } from "@/lib/data/people"
 import { COURSES } from "@/lib/data/sample"
@@ -206,6 +207,7 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
           {shown.reason && (
             <Callout
               tone={shown.health === "red" ? "danger" : "warning"}
+              icon={shown.health === "red" ? <CircleAlert className="size-4" /> : undefined}
               action={
                 <DropdownMenu>
                   <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Review</DropdownMenuTrigger>
