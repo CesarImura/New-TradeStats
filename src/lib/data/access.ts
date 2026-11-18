@@ -132,9 +132,9 @@ export type Group = {
 }
 
 const SEED_GROUPS = [
-  { id: "oct", name: "October cohort", description: "Students who joined in October.", start: "2026-10-01", end: "2026-12-17", seats: 30, members: 24, waiting: 0, tiers: [0, 1] },
-  { id: "nov", name: "November cohort", description: "Joins at checkout until 2 Nov.", start: "2026-11-02", end: "2027-01-21", seats: 30, members: 11, waiting: 0, tiers: [0, 1] },
-  { id: "mastermind", name: "Funded mastermind", description: "Futures traders, US session.", start: "2026-10-05", end: "2026-11-30", seats: 12, members: 12, waiting: 7, tiers: [1, 2] },
+  { id: "oct", name: "October cohort", description: "Students who joined in October.", start: "2025-10-30", end: "2026-01-15", seats: 30, members: 24, waiting: 0, tiers: [0, 1] },
+  { id: "nov", name: "November cohort", description: "Joins at checkout until 1 Dec.", start: "2025-12-01", end: "2027-01-21", seats: 30, members: 11, waiting: 0, tiers: [0, 1] },
+  { id: "mastermind", name: "Funded mastermind", description: "Futures traders, US session.", start: "2025-11-03", end: "2025-12-29", seats: 12, members: 12, waiting: 7, tiers: [1, 2] },
 ]
 
 const NO_GROUPS: Group[] = []
@@ -167,7 +167,7 @@ export function saveGroups(coach: Coach, update: (g: Group[]) => Group[]) {
 export const isFull = (g: Group) => g.members >= g.seats
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-/** "2026-10-01" → "1 Oct 2026" */
+/** "2025-10-30" → "30 Oct 2025" */
 export function fmtDate(iso: string, year = true) {
   const [y, m, d] = iso.split("-").map(Number)
   if (!y || !m || !d) return iso
@@ -270,7 +270,7 @@ export function useViewerGroup(coach: Coach): Group | undefined {
   return groups.find((g) => g.id === id)
 }
 
-const TODAY = "2026-10-12"
+const TODAY = "2025-11-10"
 const OFFSET: Partial<Record<GroupRule, number>> = { start: 0, week2: 7, week3: 14, week4: 21 }
 
 /** For a group member: is the course open yet, and from when. `null` when the group rule doesn't apply. */

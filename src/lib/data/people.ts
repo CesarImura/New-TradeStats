@@ -1,5 +1,5 @@
 // Coach-side sample data: students, team, money, AI, ranking.
-// The prototype's "today" is Monday 12 October 2026, 09:00.
+// The prototype's "today" is Monday 10 November 2025, 09:00.
 
 import type { Health } from "./sample"
 
@@ -32,68 +32,68 @@ const H = (when: string, text: string) => ({ when, text })
 export const STUDENTS: Student[] = [
   {
     id: "s1", name: "Alex Moreau", initials: "AM", email: "alex.moreau@mail.com", tier: "core", group: "October cohort", progress: 62, lastActive: "today", activeDays: 11, health: "red", reason: "Payment failed",
-    joined: "3 Mar 2026", paid: 1043, broker: true, discord: true, country: "FR", trades30: 41, rules: 84,
-    notes: [{ by: "Marco", when: "2 Oct", text: "Wants to pass a 50K funded challenge before December. Push the daily loss limit module." }],
-    history: [H("Today 07:12", "Payment of €149 failed (card expired)"), H("Fri 9 Oct", "Asked for review: NQ long −1.2R"), H("1 Oct", "Joined October cohort"), H("3 Mar", "Joined Core")],
+    joined: "1 Apr 2025", paid: 1043, broker: true, discord: true, country: "FR", trades30: 41, rules: 84,
+    notes: [{ by: "Marco", when: "31 Oct", text: "Wants to pass a 50K funded challenge before December. Push the daily loss limit module." }],
+    history: [H("Today 07:12", "Payment of €149 failed (card expired)"), H("Fri 7 Nov", "Asked for review: NQ long −1.2R"), H("30 Oct", "Joined October cohort"), H("1 Apr", "Joined Core")],
   },
   {
     id: "s2", name: "Mia Sørensen", initials: "MS", email: "mia.s@proton.me", tier: "desk", progress: 81, lastActive: "today", activeDays: 13, health: "amber", reason: "Broke loss limit twice",
-    joined: "12 Jan 2026", paid: 3510, broker: true, discord: true, country: "DK", coach: "Jana", trades30: 68, rules: 71,
-    notes: [{ by: "Jana", when: "8 Oct", text: "Revenge trades after the first loss. Suggest a hard stop after −2R." }],
-    history: [H("Fri 9 Oct", "Broke daily loss limit"), H("Wed 7 Oct", "Broke daily loss limit"), H("12 Jan", "Joined Trading Desk")],
+    joined: "10 Feb 2025", paid: 3510, broker: true, discord: true, country: "DK", coach: "Jana", trades30: 68, rules: 71,
+    notes: [{ by: "Jana", when: "6 Nov", text: "Revenge trades after the first loss. Suggest a hard stop after −2R." }],
+    history: [H("Fri 7 Nov", "Broke daily loss limit"), H("Wed 5 Nov", "Broke daily loss limit"), H("10 Feb", "Joined Trading Desk")],
   },
   {
     id: "s3", name: "Tom Becker", initials: "TB", email: "tom.becker@web.de", tier: "core", progress: 23, lastActive: "9 days ago", activeDays: 2, health: "amber", reason: "Inactive for 9 days",
-    joined: "20 Aug 2026", paid: 298, broker: false, discord: false, country: "DE", trades30: 0, rules: 0, notes: [],
-    history: [H("3 Oct", "Last login"), H("20 Aug", "Joined Core")],
+    joined: "18 Sep 2025", paid: 298, broker: false, discord: false, country: "DE", trades30: 0, rules: 0, notes: [],
+    history: [H("1 Nov", "Last login"), H("18 Sep", "Joined Core")],
   },
   {
     id: "s4", name: "Lena Ito", initials: "LI", email: "lena.ito@gmail.com", tier: "core", group: "October cohort", progress: 35, lastActive: "yesterday", activeDays: 8, health: "amber", reason: "Stuck in Module 2 for 12 days",
-    joined: "28 Sep 2026", paid: 149, broker: true, discord: true, country: "JP", trades30: 17, rules: 88, notes: [],
-    history: [H("Thu 8 Oct", "Asked for review: CL long −0.8R"), H("28 Sep", "Joined Core")],
+    joined: "27 Oct 2025", paid: 149, broker: true, discord: true, country: "JP", trades30: 17, rules: 88, notes: [],
+    history: [H("Thu 6 Nov", "Asked for review: CL long −0.8R"), H("27 Oct", "Joined Core")],
   },
   {
     id: "s5", name: "Jonas Pereira", initials: "JP", email: "jonas@pereira.pt", tier: "vip", progress: 94, lastActive: "today", activeDays: 14, health: "green",
-    joined: "2 Nov 2025", paid: 9600, broker: true, discord: true, country: "PT", trades30: 52, rules: 96, notes: [{ by: "Marco", when: "30 Sep", text: "Ready to size up. Talk about scaling plan on next 1:1." }],
-    history: [H("Thu 8 Oct", "Asked for review: ES short +2.4R"), H("2 Nov 2025", "Joined 1:1 VIP")],
+    joined: "2 Nov 2025", paid: 9600, broker: true, discord: true, country: "PT", trades30: 52, rules: 96, notes: [{ by: "Marco", when: "29 Oct", text: "Ready to size up. Talk about scaling plan on next 1:1." }],
+    history: [H("Thu 6 Nov", "Asked for review: ES short +2.4R"), H("2 Nov 2025", "Joined 1:1 VIP")],
   },
   {
     id: "s6", name: "Sara Kowalski", initials: "SK", email: "sara.kowalski@o2.pl", tier: "desk", progress: 70, lastActive: "2 days ago", activeDays: 10, health: "green",
-    joined: "5 May 2026", paid: 2340, broker: true, discord: true, country: "PL", coach: "Jana", trades30: 33, rules: 92, notes: [], history: [H("5 May", "Joined Trading Desk")],
+    joined: "3 Jun 2025", paid: 2340, broker: true, discord: true, country: "PL", coach: "Jana", trades30: 33, rules: 92, notes: [], history: [H("3 Jun", "Joined Trading Desk")],
   },
   {
     id: "s7", name: "Tariq Bello", initials: "TB", email: "tariq.bello@icloud.com", tier: "core", group: "October cohort", progress: 48, lastActive: "today", activeDays: 12, health: "green",
-    joined: "30 Sep 2026", paid: 149, broker: true, discord: true, country: "NG", trades30: 22, rules: 90, notes: [], history: [H("30 Sep", "Joined Core")],
+    joined: "29 Oct 2025", paid: 149, broker: true, discord: true, country: "NG", trades30: 22, rules: 90, notes: [], history: [H("29 Oct", "Joined Core")],
   },
   {
     id: "s8", name: "Elena Rossi", initials: "ER", email: "elena.rossi@libero.it", tier: "core", progress: 57, lastActive: "yesterday", activeDays: 9, health: "green",
-    joined: "14 Jun 2026", paid: 745, broker: false, discord: true, country: "IT", trades30: 0, rules: 0, notes: [], history: [H("14 Jun", "Joined Core")],
+    joined: "13 Jul 2025", paid: 745, broker: false, discord: true, country: "IT", trades30: 0, rules: 0, notes: [], history: [H("13 Jul", "Joined Core")],
   },
   {
     id: "s9", name: "Noah Fischer", initials: "NF", email: "noah.f@gmx.ch", tier: "desk", progress: 12, lastActive: "today", activeDays: 3, health: "green",
-    joined: "10 Oct 2026", paid: 390, broker: false, discord: false, country: "CH", trades30: 0, rules: 0, notes: [], history: [H("10 Oct", "Joined Trading Desk")],
+    joined: "8 Nov 2025", paid: 390, broker: false, discord: false, country: "CH", trades30: 0, rules: 0, notes: [], history: [H("8 Nov", "Joined Trading Desk")],
   },
   {
     id: "s10", name: "Ava Lindqvist", initials: "AL", email: "ava.lindqvist@me.com", tier: "core", progress: 0, lastActive: "never", activeDays: 0, health: "amber", reason: "Invited 6 days ago, hasn't joined",
-    joined: "invited 6 Oct", paid: 0, broker: false, discord: false, country: "SE", trades30: 0, rules: 0, notes: [], history: [H("6 Oct", "Invited by e-mail")],
+    joined: "invited 4 Nov", paid: 0, broker: false, discord: false, country: "SE", trades30: 0, rules: 0, notes: [], history: [H("4 Nov", "Invited by e-mail")],
   },
 ]
 
 export const GROUPS = [
-  { id: "oct", name: "October cohort", start: "1 Oct 2026", end: "17 Dec 2026", seats: 30, members: 24, waiting: 0, tiers: ["core", "desk"] },
-  { id: "nov", name: "November cohort", start: "2 Nov 2026", end: "21 Jan 2027", seats: 30, members: 11, waiting: 0, tiers: ["core", "desk"] },
-  { id: "mastermind", name: "Funded mastermind", start: "5 Oct 2026", end: "30 Nov 2026", seats: 12, members: 12, waiting: 7, tiers: ["desk", "vip"] },
+  { id: "oct", name: "October cohort", start: "30 Oct 2025", end: "15 Jan 2026", seats: 30, members: 24, waiting: 0, tiers: ["core", "desk"] },
+  { id: "nov", name: "November cohort", start: "1 Dec 2025", end: "21 Jan 2027", seats: 30, members: 11, waiting: 0, tiers: ["core", "desk"] },
+  { id: "mastermind", name: "Funded mastermind", start: "3 Nov 2025", end: "29 Dec 2025", seats: 12, members: 12, waiting: 7, tiers: ["desk", "vip"] },
 ]
 
 /** A discount code. `tiers` empty means every tier; `ends` is an ISO date or empty for no end. */
 export type Coupon = { /** `discount` and `active` are what the checkout reads; they follow the fields below. */ discount: string; active: boolean; code: string; kind: "percent" | "amount"; amount: number; duration: "first" | "3" | "forever"; tiers: string[]; used: number; limit?: number; ends?: string; paused?: boolean }
 export const COUPONS: Coupon[] = [
-  { discount: "20% off · first payment", active: true, code: "AUTUMN20", kind: "percent", amount: 20, duration: "first", tiers: [], used: 34, limit: 100, ends: "2026-11-30" },
+  { discount: "20% off · first payment", active: true, code: "AUTUMN20", kind: "percent", amount: 20, duration: "first", tiers: [], used: 34, limit: 100, ends: "2025-12-29" },
   { discount: "€50 off · forever", active: true, code: "DESK50", kind: "amount", amount: 50, duration: "forever", tiers: ["desk"], used: 6, limit: 20 },
   { discount: "30% off · 3 months", active: false, code: "BF2025", kind: "percent", amount: 30, duration: "3", tiers: [], used: 100, limit: 100, ends: "2025-12-01" },
 ]
 
-export const COUPON_TODAY = "2026-10-12"
+export const COUPON_TODAY = "2025-11-10"
 /** "20% off · first payment" */
 export const couponLabel = (c: Coupon) => `${c.kind === "percent" ? `${c.amount}%` : `€${c.amount}`} off · ${c.duration === "first" ? "first payment" : c.duration === "3" ? "3 months" : "forever"}`
 /** Out of date or out of uses. */
@@ -118,7 +118,7 @@ export const MONEY = {
   fees: { label: "Our share (5%) and card fees", amount: 1118 },
   share: 1859,
   mrrMore: 2180,
-  nextPayout: { amount: 8412, date: "Mon 17 Nov" },
+  nextPayout: { amount: 8412, date: "Mon 16 Dec" },
   churn: 3.1,
   trials: 14,
 }
@@ -199,13 +199,13 @@ export const RANK_METRICS = [
 
 export type Competition = { id: string; name: string; metric: "rules" | "journal" | "points"; start: string; end: string; prize: string; entrants: number; winner?: string; who: "everyone" | "pick"; /** Tier and group ids when `who` is "pick". */ picked?: string[]; nicknames: boolean; /** Kept for the student side, which reads it. */ status?: "running" | "scheduled" | "ended" }
 export const COMPETITIONS: Competition[] = [
-  { id: "c1", name: "November discipline cup", metric: "rules", start: "2026-11-15", end: "2026-11-30", prize: "A free month", entrants: 64, who: "everyone", nicknames: true, status: "scheduled" },
-  { id: "c2", name: "October consistency cup", metric: "journal", start: "2026-10-01", end: "2026-10-31", prize: "Bragging rights", entrants: 52, winner: "Sara Kowalski", who: "everyone", nicknames: true, status: "ended" },
+  { id: "c1", name: "November discipline cup", metric: "rules", start: "2025-12-14", end: "2025-12-29", prize: "A free month", entrants: 64, who: "everyone", nicknames: true, status: "scheduled" },
+  { id: "c2", name: "October consistency cup", metric: "journal", start: "2025-10-30", end: "2025-11-29", prize: "Bragging rights", entrants: 52, winner: "Sara Kowalski", who: "everyone", nicknames: true, status: "ended" },
 ]
-export const RANK_TODAY = "2026-11-07"
+export const RANK_TODAY = "2025-12-06"
 const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-/** "2026-11-15" → "Sat 15 Nov" */
+/** "2025-12-14" → "Sat 14 Dec" */
 export const dayLabel = (iso: string) => {
   const d = new Date(`${iso}T12:00:00Z`)
   return Number.isNaN(d.getTime()) ? iso : `${WD[d.getUTCDay()]} ${d.getUTCDate()} ${MO[d.getUTCMonth()]}`
@@ -249,8 +249,8 @@ export const BADGES = [
 
 export const ANNOUNCEMENTS = [
   { id: "n1", title: "New module: Daily loss limits", body: "Watch it before Wednesday's CPI. We'll go through your limits on Thursday's call.", when: "2 hours ago", pinned: true, channels: ["platform", "email", "discord"], reads: 128 },
-  { id: "n2", title: "Live this Thursday moves to 15:00", body: "ECB at 14:15, so we start a bit later and trade the reaction.", when: "Fri 9 Oct", pinned: false, channels: ["platform", "discord"], reads: 164 },
-  { id: "n3", title: "November cohort is open", body: "11 seats left. Members of the October cohort get the replays for free.", when: "Mon 5 Oct", pinned: false, channels: ["platform", "email"], reads: 171 },
+  { id: "n2", title: "Live this Thursday moves to 15:00", body: "ECB at 14:15, so we start a bit later and trade the reaction.", when: "Fri 7 Nov", pinned: false, channels: ["platform", "discord"], reads: 164 },
+  { id: "n3", title: "November cohort is open", body: "11 seats left. Members of the October cohort get the replays for free.", when: "Mon 3 Nov", pinned: false, channels: ["platform", "email"], reads: 171 },
 ]
 
 export const DISCORD_ROLES = [

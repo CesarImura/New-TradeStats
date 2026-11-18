@@ -84,7 +84,7 @@ export function AdminCalendar() {
                 <Settings /> Call settings
               </AdminButton>
             )}
-            <AdminButton onClick={() => newEvent(new Date(2026, 9, 13, 15, 30))}>
+            <AdminButton onClick={() => newEvent(new Date(2025, 10, 11, 15, 30))}>
               <Plus /> New event
             </AdminButton>
           </>
