@@ -47,7 +47,7 @@ export function LessonTab({ course, lesson, upload, t, onChange, onPick, next }:
       <AdminField label="Summary" className="grid-cols-[minmax(0,1fr)]">
         {(p) => (
           <>
-            <textarea {...p} value={lesson.summary ?? ""} onChange={(e) => onChange({ summary: e.target.value, aiSummary: false })} placeholder="Two or three sentences on what students take away." className={cn(adminControl, "min-h-[72px] resize-y py-3")} />
+            <textarea {...p} value={lesson.summary ?? ""} onChange={(e) => onChange({ summary: e.target.value, aiSummary: false })} placeholder="Two or three sentences on what students take away." className={cn(adminControl, "min-h-[72px] resize-none py-3")} />
             <div className="flex items-center gap-3 t-caption text-a-text-3">
               {lesson.aiSummary && <span>Written by AI from the transcript · edit freely</span>}
               <button type="button" onClick={() => onChange({ summary: `In this ${coach.wording.lesson.toLowerCase()} you'll learn ${lesson.title.toLowerCase()}, why it matters for your trading, and how to apply it on your next session.`, takeaways: ["The one idea to remember", "How it shows on the chart", "What to practise this week"], aiSummary: true })} className="flex items-center gap-1 text-a-text-2 outline-none hover:text-a-text focus-visible:text-a-text">
