@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useStoredChoice } from "@/lib/use-stored-choice"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   Archive,
   ArrowRight,
@@ -93,6 +93,22 @@ export function ContentBoard() {
   const [view, setView] = useStoredChoice("proto:content-view", VIEWS, "grid")
 
   const edit = (fn: (c: Catalog) => Catalog) => saveCatalog(coach, fn)
+  // Prototype shortcut for tours and tests: `?sample=course` or `?sample=lesson` (add `&video=ready` for a lesson that already has its video)
+  // makes a sample draft course with one lesson and opens it. Without a video the lesson shows the Course tour's "Add the video" step.
+  const params = useSearchParams()
+  const sampleMode = params.get("sample")
+  const sampled = useRef(false)
+  useEffect(() => {
+    if ((sampleMode !== "course" && sampleMode !== "lesson") || sampled.current) return
+    sampled.current = true
+    const id = "sample-course"
+    if (!catalog.courses.some((c) => c.id === id)) {
+      const lesson = { id: "sample-lesson", title: "New lesson", minutes: params.get("video") === "ready" ? 14 : 0, status: "draft" as const, chapters: [], downloads: [], ...(params.get("video") === "ready" ? { video: "sample.mp4" } : {}) }
+      edit((c) => ({ ...c, courses: [...c.courses, { id, title: "Foundations", tagline: "", area: c.areas[0] ?? "Core", status: "draft" as const, tiers: [], color: 0, edited: "just now", modules: [{ id: "sample-module", title: "Module 1", lessons: [lesson] }] }] }))
+    }
+    router.replace(`${base}/content/${id}?sample=${sampleMode}`)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sampleMode])
   const inFilter = (c: Course, f: Filter) => (f === "all" ? c.status !== "archived" : f === "attention" ? needsAttention(c) : c.status === f)
   const count = (f: Filter) => catalog.courses.filter((c) => inFilter(c, f)).length
   const list = catalog.courses

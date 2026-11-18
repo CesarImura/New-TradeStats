@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, ExternalLink, Minus, Plus, Settings } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
@@ -30,6 +30,16 @@ export function CourseBuilder({ courseId }: { courseId: string }) {
   const catalog = useCatalog(coach)
   const course = catalog.courses.find((c) => c.id === courseId)
   const [view, setView] = useState<View>({ k: "outline" })
+  // `?sample=lesson` (see ContentBoard) lands on the sample course's first lesson; `?sample=course` stays on the course page.
+  const sampleLesson = useSearchParams().get("sample") === "lesson"
+  const openedSample = useRef(false)
+  useEffect(() => {
+    const first = course?.modules[0]?.lessons[0]
+    if (sampleLesson && first && !openedSample.current) {
+      openedSample.current = true
+      setView({ k: "lesson", id: first.id })
+    }
+  }, [sampleLesson, course])
   const [saved, setSaved] = useState(true)
   const [settings, setSettings] = useState(false)
   const [publishing, setPublishing] = useState(false)
