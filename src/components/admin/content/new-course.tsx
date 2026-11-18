@@ -1,6 +1,7 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { ArrowRight, ArrowUp, ChevronDown, GripVertical, MoreHorizontal, X } from "@/components/icons"
 import { toast } from "sonner"
@@ -18,6 +19,23 @@ type Method = "blank" | "folder" | "links"
 type Found = { module: string; name: string; file?: File; link?: string }
 
 /** Two steps (Flavio, 14/11): who can watch comes from the tiers ("Courses it unlocks"), and is changed on the course's Access tab. */
+/** The prototype's sample folder (Figma Content 05): 3 subfolders, 11 videos and one file that is not a video. */
+const SAMPLE_FOLDER: [string, string[]][] = [
+  ["01-market-structure", ["01-how-price-moves.mp4", "02-trends-and-ranges.mp4", "03-support-and-resistance.mp4", "04-reading-the-higher-timeframe.mp4"]],
+  ["02-execution", ["01-entries-that-make-sense.mp4", "02-stops-and-targets.mp4", "03-managing-the-trade.mp4", "04-scaling-out.mp4"]],
+  ["03-risk", ["01-position-sizing.mp4", "02-daily-loss-limits.mp4", "03-scaling-up-safely.mp4"]],
+]
+const sampleFolder = () => {
+  // Sizes are made up (about 390 MB a video, 4.2 GB in all, as in Figma); the files themselves are empty.
+  const mk = (path: string, type: string) => {
+    const f = new File([], path.split("/").pop()!, { type })
+    Object.defineProperty(f, "webkitRelativePath", { value: path })
+    Object.defineProperty(f, "size", { value: type.startsWith("video/") ? 391 * 1024 * 1024 : 48 * 1024 })
+    return f
+  }
+  return [...SAMPLE_FOLDER.flatMap(([dir, names]) => names.map((n) => mk(`Foundations/${dir}/${n}`, "video/mp4"))), mk("Foundations/notes.pdf", "application/pdf")]
+}
+
 const STEPS: { id: Step; label: string }[] = [{ id: "course", label: "Course" }, { id: "content", label: "Content" }]
 /** Arrow keys move between the radio cards of a group and choose the one they land on, as a native radio group does. */
 function radioArrows(e: React.KeyboardEvent<HTMLElement>) {
@@ -86,6 +104,16 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
     )
     if (!videos.length) toast.error("No videos in that folder. Use MP4, MOV or WebM.")
   }
+  // Prototype shortcut for tours and tests: `?sample=folder` fills the Content step with the sample folder (once per open).
+  const sampleParam = useSearchParams().get("sample")
+  const sampled = useRef(false)
+  useEffect(() => {
+    if (!open) sampled.current = false
+    else if (sampleParam === "folder" && step === "content" && method === "folder" && found.length === 0 && !sampled.current) {
+      sampled.current = true
+      readFolder(sampleFolder())
+    }
+  }, [open, step, method, found.length, sampleParam])
   const lines = links.split("\n").map((l) => l.trim()).filter(Boolean)
   const isVideoLink = (l: string) => /^(https?:\/\/)?(www\.|m\.)?(youtube\.com|youtu\.be|vimeo\.com|loom\.com)\/\S+/i.test(l)
   const badLinks = lines.filter((l) => !isVideoLink(l))
@@ -222,6 +250,9 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
                     {method === "folder" && rows.length === 0 && (
                       <div data-tour="course-folder-drop" data-picked={picked || undefined} className="flex flex-col"><Dropzone label="Folder of videos" title="Drop a folder of videos or browse" hint="MP4, MOV or WebM · each subfolder becomes a module" icon={<ArrowUp className="size-[22px]" />} directory size="md" onFiles={readFolder} /></div>
                     )}
+                    {method === "folder" && rows.length === 0 && (
+                      <p className="-mt-2 t-caption text-a-text-3">Prototype: no folder handy? <button type="button" data-tour="course-sample-folder" onClick={() => readFolder(sampleFolder())} className="rounded-a-xs text-a-text outline-none hover:underline focus-visible:ring-2 focus-visible:ring-a-border-focus">Use a sample folder</button></p>
+                    )}
                     {method === "blank" && (
                       <div data-tour="course-blank" data-picked={picked || undefined} className="flex flex-col gap-3 rounded-a-10 border border-a-border px-4 py-4">
                         <div className="flex flex-col gap-0.5">
@@ -289,7 +320,7 @@ export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", o
               <AdminButton hierarchy="ghost" onClick={() => finish(true)}>Save as draft</AdminButton>
               <div className="ml-auto flex flex-wrap justify-end gap-2">
                 {idx === 0 ? <AdminButton hierarchy="secondary" onClick={() => onOpenChange(false)}>Cancel</AdminButton> : <AdminButton hierarchy="secondary" onClick={() => go(STEPS[idx - 1].id, "back")}>Back</AdminButton>}
-                <AdminButton onClick={next}>{step === "content" ? (method === "folder" && rows.length ? "Upload and create" : method === "links" && rows.length ? "Import and create" : "Create course") : <>Continue <ArrowRight /></>}</AdminButton>
+                <AdminButton data-tour="course-upload-button" onClick={next}>{step === "content" ? (method === "folder" && rows.length ? "Upload and create" : method === "links" && rows.length ? "Import and create" : "Create course") : <>Continue <ArrowRight /></>}</AdminButton>
               </div>
             </footer>
           </div>
