@@ -63,7 +63,7 @@ export function GettingStarted() {
                 onAction={() => (s.id === "live" ? setGoLive(true) : router.push(resume && at?.path ? `${at.path}${at.path.includes("?") ? "&" : "?"}tour=${s.id}` : s.href))}
                 onEdit={s.id === "live" ? undefined : () => router.push(s.href.replace(/[?&]tour=\w+/, ""))}
                 // Optional, once Design is done (Flavio, 14/11): a short tour of the full design editor. Not one of the five.
-                guide={s.id === "design" && s.done && !live && !TOURS.editor.done(community) ? { label: "Tour the design editor", onClick: () => router.push(`${base}/design?tour=editor`) } : undefined}
+                guide={s.id === "design" && s.done && !live && !TOURS.editor.done(community) ? { label: "Tour the design editor", onClick: () => router.push(`${base}/design?tour=editor&step=theme`) } : undefined}
               />
             )
           })}
