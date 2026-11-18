@@ -63,7 +63,7 @@ export function SaveTemplateDialog({ coach, theme, open, onOpenChange }: { coach
   }
 
   return (
-    <AdminModal
+    <AdminModal overlay="plain"
       open={open}
       onOpenChange={onOpenChange}
       title="Save as template"

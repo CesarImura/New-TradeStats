@@ -18,7 +18,7 @@ export function useConfirmSwitch() {
   /** `confirm` false: nothing the coach did by hand would be lost, so it applies at once (the toast has Undo). */
   const ask = (name: string, apply: () => void, confirm = true) => (keepVersion && confirm ? setPending({ name, apply }) : apply())
   const dialog = (
-    <AdminModal
+    <AdminModal overlay="plain"
       open={!!pending}
       onOpenChange={(o) => !o && setPending(null)}
       title={`Switch to ${pending?.name}?`}

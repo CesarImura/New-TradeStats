@@ -701,7 +701,7 @@ function SearchHides({ children }: { children: React.ReactNode }) {
 function ResetDialog({ open, onOpenChange, name, onReset }: { open: boolean; onOpenChange: (o: boolean) => void; name: string; onReset: (pagesToo: boolean) => void }) {
   const [pagesToo, setPagesToo] = useState(false)
   return (
-    <AdminModal
+    <AdminModal overlay="plain"
       open={open}
       onOpenChange={(o) => (onOpenChange(o), setPagesToo(false))}
       title="Back to the original design?"
