@@ -38,7 +38,7 @@ function Shell({ open, onOpenChange, title, text, close, children }: { open: boo
   )
 }
 
-const checkboxClass = "mt-px border-a-border-strong data-checked:border-a-accent data-checked:bg-a-accent data-checked:text-[var(--admin-component-button-primary-content)]"
+const checkboxClass = "mt-px border-a-border-strong data-checked:border-[var(--admin-color-control-on)] data-checked:bg-[var(--admin-color-control-on)] data-checked:text-white"
 
 /**
  * Go live (Figma 1050:871; address taken 1066:879). The address suggested at sign-up, checked as it is typed, and the

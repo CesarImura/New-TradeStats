@@ -88,7 +88,7 @@ export default function NamePlatform() {
           </AdminField>
         </div>
         <label className="flex items-center gap-2.5 t-body-m text-a-text-2">
-          <Checkbox checked={terms} onCheckedChange={(v) => setTerms(!!v)} aria-invalid={tried && !terms ? true : undefined} className="border-a-border-strong data-checked:border-a-accent data-checked:bg-a-accent data-checked:text-[var(--admin-component-button-primary-content)]" />
+          <Checkbox checked={terms} onCheckedChange={(v) => setTerms(!!v)} aria-invalid={tried && !terms ? true : undefined} className="border-a-border-strong data-checked:border-[var(--admin-color-control-on)] data-checked:bg-[var(--admin-color-control-on)] data-checked:text-white" />
           <span>
             I accept the TraderHub{" "}
             <a href="#" onClick={(e) => e.preventDefault()} className="rounded-a-xs text-a-text-accent outline-none hover:underline focus-visible:ring-2 focus-visible:ring-a-border-focus">
