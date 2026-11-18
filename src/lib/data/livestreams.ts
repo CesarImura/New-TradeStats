@@ -1,5 +1,6 @@
 import { setStored, useStored } from "@/lib/prototype-store"
 import type { Coach } from "./coaches"
+import { NOW } from "./schedule"
 import { isSetupSlug } from "./communities"
 import { useEmptyIfSetup } from "./use-communities"
 
@@ -17,7 +18,7 @@ export type Livestream = {
   id: string
   title: string
   description?: string
-  /** When it starts, as local time "2026-11-05T15:00". */
+  /** When it starts, as local time "2025-11-05T15:00". */
   startsAt: string
   state: StreamState
   /** Tier ids that can watch. Empty means every tier. */
@@ -26,6 +27,8 @@ export type Livestream = {
   key: string
   /** When the coach went live (ms since 1970), while it is live. */
   startedAt?: number
+  /** Students who said they will join (sample figure), while it is scheduled. */
+  joining?: number
   /** Minutes on air, once it ended. */
   minutes?: number
   /** The most people watching at once. */
@@ -48,9 +51,11 @@ export const STREAM_SERVER = "rtmps://live.traderhub.io:443/app"
 const SEED = (): Livestream[] => [
   {
     id: "s1",
-    title: "Live session: NY open",
+    title: "NY open, live trading",
     description: "We trade the first hour together. Bring your questions.",
-    startsAt: "2026-11-05T14:30",
+    startsAt: "2025-11-13T15:30",
+    planned: 90,
+    joining: 41,
     state: "scheduled",
     tiers: [],
     key: "th_live_9f3k2m8x7q1w4c6v5b0n",
@@ -59,15 +64,54 @@ const SEED = (): Livestream[] => [
     chat: [],
   },
   {
+    id: "s3",
+    title: "London open breakdown",
+    startsAt: "2025-11-14T09:00",
+    planned: 75,
+    joining: 24,
+    state: "scheduled",
+    tiers: [],
+    key: "th_live_4c8m1p5r2t7y3u9i6o0a",
+    peak: 0,
+    viewers: 0,
+    chat: [],
+  },
+  {
+    id: "s4",
+    title: "Q&A: risk and sizing",
+    startsAt: "2025-11-17T18:00",
+    planned: 60,
+    joining: 18,
+    state: "scheduled",
+    tiers: ["desk"],
+    key: "th_live_7d2n6q1w8e4r9t3y5u0i",
+    peak: 0,
+    viewers: 0,
+    chat: [],
+  },
+  {
+    id: "s5",
+    title: "Weekly review",
+    startsAt: "2025-11-19T17:00",
+    planned: 45,
+    joining: 12,
+    state: "scheduled",
+    tiers: ["core", "desk"],
+    key: "th_live_1k5l9z3x7c2v6b8n4m0q",
+    peak: 0,
+    viewers: 0,
+    chat: [],
+  },
+  {
     id: "s2",
     title: "Weekly market review",
     description: "What moved, what we traded and what we are watching next week.",
-    startsAt: "2026-10-30T15:00",
+    startsAt: "2025-11-06T15:00",
     state: "ended",
     tiers: [],
     key: "th_live_2b7h4j9d3s8a1e6f5g0t",
     minutes: 74,
-    peak: 118,
+    peak: 38,
     viewers: 0,
     chat: [
       { id: "m1", who: "Alex", text: "That stop placement made sense, thanks." },
@@ -114,7 +158,7 @@ export function whenLabel(startsAt: string) {
 export const STATE_LABEL: Record<StreamState, string> = { scheduled: "Before", live: "Live", ended: "After" }
 
 /** "in 2 h 14 min", "in 24 days": how long until a livestream starts, from the prototype's today. */
-export function untilLabel(startsAt: string, now = new Date(2026, 9, 12, 9, 0)) {
+export function untilLabel(startsAt: string, now = NOW) {
   const mins = Math.round((new Date(startsAt).getTime() - now.getTime()) / 60000)
   if (mins <= 0) return "now"
   if (mins < 60) return `in ${mins} min`
