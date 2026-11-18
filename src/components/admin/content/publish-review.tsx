@@ -11,8 +11,8 @@ import { AdminButton, AdminModal, AdminSegmented } from "../ui"
 import { dayLabel, localIso, type Upload } from "./course-parts"
 
 type Item = { tone: "danger" | "warning" | "success"; title: string; text: string; action?: { label: string; run: () => void } }
-/** Figma Content 11: an icon per item, not a dot: a triangle blocks, a circle warns, a check is fine. */
-const ICON = { danger: [AlertTriangle, "text-a-danger"], warning: [CircleAlert, "text-a-warning"], success: [Check, "text-a-success"] } as const
+/** Figma Content 11: an icon per item, not a dot: the triangle glyph blocks, the circle glyph warns (the icon set names them the other way round), a check is fine. */
+const ICON = { danger: [CircleAlert, "text-a-danger"], warning: [AlertTriangle, "text-a-warning"], success: [Check, "text-a-success"] } as const
 
 /** Content · 12 Publish review: what blocks publishing, what to know, when, and who hears about it. */
 export function PublishReview({ course, uploads, open, onOpenChange, onOpenUploads, onOpenLesson, onPublish, onSaveDraft }: { course: Course; uploads: Upload[]; open: boolean; onOpenChange: (o: boolean) => void; onOpenUploads: () => void; onOpenLesson: (id: string, tab?: "quiz") => void; onPublish: (o: { when: "now" | "later"; date: string; at: string; channels: string[] }) => void; onSaveDraft: () => void }) {

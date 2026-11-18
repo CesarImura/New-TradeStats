@@ -14,12 +14,12 @@ type Notice = { id: string; title: string; detail: string; time: string; icon: R
 
 /** Sample items from Figma "Overview · 03 Notifications" (524:11637). The first four start unread. */
 const NOTICES: Notice[] = [
-  { id: "n1", title: "Payment failed · Alex Moreau", detail: "Inner Circle €49 · retrying in 2 days", time: "2 h", icon: AlertTriangle, tone: "text-a-danger", filters: ["payments", "students"], href: "sales" },
+  { id: "n1", title: "Payment failed · Alex Moreau", detail: "Inner Circle €49 · retrying in 2 days", time: "2 h", icon: CircleAlert, tone: "text-a-danger", filters: ["payments", "students"], href: "sales" },
   { id: "n2", title: "New journal request · Mia Sørensen", detail: "“Was my stop on NQ too tight?”", time: "3 h", icon: MessageCircle, tone: "text-a-text-2", filters: ["journal", "students"], href: "journal" },
   { id: "n3", title: "New sale · Lena Ito", detail: "1:1 VIP · €390", time: "5 h", icon: CreditCard, tone: "text-a-success", filters: ["payments", "students"], href: "sales" },
   { id: "n4", title: "Upload finished", detail: "Price action · Lesson 4 is ready to publish", time: "6 h", icon: ArrowUpToLine, tone: "text-a-text-2", filters: [], href: "content" },
   { id: "n5", title: "Livestream starts in 1 hour", detail: "London open breakdown · 09:00", time: "1 d", icon: Video, tone: "text-a-text-2", filters: [], href: "livestreams" },
-  { id: "n6", title: "Payout delayed", detail: "Stripe needs a document from you", time: "2 d", icon: CircleAlert, tone: "text-a-text-2", filters: ["payments"], href: "sales" },
+  { id: "n6", title: "Payout delayed", detail: "Stripe needs a document from you", time: "2 d", icon: AlertTriangle, tone: "text-a-text-2", filters: ["payments"], href: "sales" },
 ]
 const NO_NOTICES: Notice[] = []
 const FILTERS: { id: Filter; label: string }[] = [
