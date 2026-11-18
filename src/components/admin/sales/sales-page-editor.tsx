@@ -107,7 +107,7 @@ export function SalesPageEditor({ resetSignal }: { resetSignal: number }) {
         <SortHint id="block-sort-hint" />
         <Live />
         <div className="flex items-center justify-between gap-3 px-2 pt-1 pb-3">
-          <h2 className="t-mono-label text-a-text-2">Blocks · top to bottom</h2>
+          <h2 className="t-micro uppercase text-a-text-2">Blocks · top to bottom</h2>
           <DropdownMenu>
             <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" />}>
               <Plus /> Block
@@ -220,7 +220,7 @@ export function SalesPageEditor({ resetSignal }: { resetSignal: number }) {
 
       <Panel className="gap-0 overflow-hidden p-0">
         <div className="flex items-center justify-between gap-2 border-b border-a-border px-4 py-2.5">
-          <span className="truncate t-mono-label text-a-text-2">{coach.slug}.traderhub.io · live</span>
+          <span className="truncate t-micro uppercase text-a-text-2">{coach.slug}.traderhub.io · live</span>
         </div>
         <iframe ref={frame} key={coach.slug} onLoad={loaded} src={`${url}?preview=draft`} title="Sales page preview" className="h-[72vh] w-full bg-background" />
       </Panel>

@@ -111,13 +111,13 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
               <span className="sr-only">Edit </span>
               <Logo name={o.name} kind={o.kind} />
               <span className="grid min-w-0 flex-1">
-                <span className="truncate t-body-l-medium text-a-text">{o.name}</span>
+                <span className="truncate t-body-m text-a-text">{o.name}</span>
                 <span className="truncate t-caption text-a-text-2">{KIND_LABEL[o.kind]} · {o.source === "catalogue" ? "Our partner" : "Your own link"}</span>
               </span>
             </button>
             <Switch checked={o.on} onCheckedChange={(v) => saveOffers(coach, (l) => l.map((x) => (x.id === o.id ? { ...x, on: v } : x)))} aria-label={`${o.name} on`} />
           </div>
-          <p className="t-body-m text-a-text">{o.offer}{o.code && !o.offer.includes(o.code) ? <span className="ml-1 font-mono text-a-text-2">{o.code}</span> : null}</p>
+          <p className="t-body-m text-a-text">{o.offer}{o.code && !o.offer.includes(o.code) ? <span className="ml-1 text-a-text-2">{o.code}</span> : null}</p>
           <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
             <Tag>{tierName(o)}</Tag>
             <span className="min-w-0 t-caption text-a-text-2 tabular-nums">{o.clicks} clicks{o.signups ? ` · ${o.signups} sign-ups` : ""}</span>
@@ -165,7 +165,7 @@ function CatalogueDialog({ open, onClose }: { open: boolean; onClose: () => void
                 <span className="truncate t-caption text-a-text-2">{c.offer}</span>
               </span>
               {added ? (
-                <Tag tone="success" dot>Added</Tag>
+                <Tag tone="success">Added</Tag>
               ) : (
                 <AdminButton hierarchy="secondary" size="md" aria-label={`Add ${c.name}`} onClick={() => (saveOffers(coach, (l) => [...l, fromCatalogue(coach, c)]), toast(`${c.name} added`, { description: "Students see it as a partner offer." }))}>
                   Add
@@ -238,7 +238,7 @@ function OwnDialog({ item, onClose }: { item?: PartnerOffer; onClose: () => void
       </AdminField>
       <div className="grid grid-cols-2 items-start gap-3 max-sm:grid-cols-1">
         <AdminField label="Code" optional>
-          <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase().replace(/\s/g, ""))} placeholder="MARCO20" className={cn(adminControl, "h-11 font-mono")} />
+          <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase().replace(/\s/g, ""))} placeholder="MARCO20" className={cn(adminControl, "h-11")} />
         </AdminField>
         <AdminField label="Link" error={tried ? errors.url : undefined}>
           <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://" disabled={fixed} className={cn(adminControl, "h-11")} />
@@ -286,7 +286,7 @@ function Affiliates({ fresh, program: p, set, turnOn }: { fresh: boolean; progra
         <Panel className="gap-4">
           <label className="flex items-center justify-between gap-4">
             <span className="grid">
-              <span className="t-body-m-medium text-a-text">Students bring students</span>
+              <span className="t-heading-s text-a-text">Students bring students</span>
               <span className="t-caption text-a-text-2">Switch it on and every student gets a link to share.</span>
             </span>
             <Switch checked={p.on} onCheckedChange={(v) => set({ on: v })} aria-label="Students bring students" />
