@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { CalendarDays, ChevronRight, FileText, GraduationCap, MessageCircle, Palette, Send, Store, Wallet, Wrench } from "@/components/icons"
+import { CalendarDays, ChevronRight, FileText, GraduationCap, MessageCircle, Palette, Rocket, Store, Wallet, Wrench } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { AdminPageHeader, Callout, Panel, PanelHeader, TimelineStep } from "@/components/admin/ui"
 import { cn } from "@/lib/utils"
@@ -19,12 +19,12 @@ import { useCatalog } from "@/lib/data/learning"
  * the progress ("5 of 5 steps done") and a way to get help.
  */
 /** Figma Show Icon: one icon per step. */
-const STEP_ICON = { design: Palette, tier: Store, course: GraduationCap, payouts: Wallet, legal: FileText, live: Send } as const
+const STEP_ICON = { design: Palette, tier: Store, course: GraduationCap, payouts: Wallet, legal: FileText, live: Rocket } as const
 
 export function GettingStarted() {
   const router = useRouter()
   const { coach, base } = useCoach()
-  const { steps, doneCount, total, current, community, skip, skipped, allPutOff } = useSetupSteps()
+  const { steps, doneCount, total, current, community, skipped, allPutOff } = useSetupSteps()
   const [goLive, setGoLive] = useState(false)
   // A tour left half way (Skip or Do it later): its item says where, and Resume goes back there (Figma 1066:1047).
   // One tour runs at a time; any other left half way was paused where it was (Flavio, 14/11).
@@ -59,7 +59,6 @@ export function GettingStarted() {
                 description={paused && isTourId(s.id) ? `Paused at “${paused.title}”. ${savedLine(s.id)}` : s.description}
                 action={resume ? "Resume" : s.action}
                 disabledHint="Finish the five steps first"
-                onSkip={s.id === "live" || total - doneCount < 2 ? undefined : () => skip(s.id)}
                 onAction={() => (s.id === "live" ? setGoLive(true) : router.push(resume && at?.path ? `${at.path}${at.path.includes("?") ? "&" : "?"}tour=${s.id}` : s.href))}
                 onEdit={s.id === "live" ? undefined : () => router.push(s.href.replace(/[?&]tour=\w+/, ""))}
                 // Optional, once Design is done (Flavio, 14/11): a short tour of the full design editor. Not one of the five.
