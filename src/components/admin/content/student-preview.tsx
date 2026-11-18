@@ -26,12 +26,12 @@ export function StudentPreview({ course, lesson, onSelect, onEdit, onExit }: { c
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2.5 rounded-a-10 border border-a-accent bg-a-accent-soft px-3.5 py-2.5">
-        <Tag tone="accent">Preview</Tag>
+      <div className="flex flex-wrap items-center gap-2.5 rounded-a-10 border border-a-border bg-a-panel px-3.5 py-2.5">
+        <Tag>Preview</Tag>
         <span className="t-body-m text-a-text-2">Viewing as</span>
         <div role="radiogroup" aria-label="Viewing as" className="flex flex-wrap gap-1.5">
           {options.map((o) => (
-            <button key={o.id} type="button" role="radio" aria-checked={as === o.id} onClick={() => setAs(o.id)} className={cn("h-9 rounded-a-md border px-3 t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus", as === o.id ? "border-a-accent-strong bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover hover:text-a-text")}>
+            <button key={o.id} type="button" role="radio" aria-checked={as === o.id} onClick={() => setAs(o.id)} className={cn("h-9 rounded-a-md border px-3 t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus", as === o.id ? "border-a-border-active bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover hover:text-a-text")}>
               {o.label}
             </button>
           ))}
