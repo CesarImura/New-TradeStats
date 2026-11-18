@@ -307,12 +307,18 @@ export function SettingsPanel({
                   aria-label={current.search?.replace("…", "") ?? "Find a setting"}
                   className="min-w-0 flex-1 bg-transparent t-body-m text-a-text outline-none placeholder:text-a-text-3"
                 />
+                {/* Pages (Figma 04 to 06): the way out sits inside the field. */}
+                {ownSearch && (
+                  <button type="button" aria-label="Close search" title="Close search" onClick={() => (setSearching(false), setQ(""))} className="-mr-1 grid size-6 shrink-0 place-items-center rounded-a-sm text-a-icon outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
+                    <X className="size-4" />
+                  </button>
+                )}
               </label>
             ) : (
               <h2 className="min-w-0 flex-1 truncate t-heading-s text-a-text">{sub ? merge!.label : (current.heading ?? current.label)}</h2>
             )}
             {/* One search, in the same place in every section: in Pages it finds widgets, elsewhere any setting. */}
-            <AdminButton
+            {!(searching && ownSearch) && <AdminButton
               hierarchy="ghost"
               size="sm"
               iconOnly
@@ -322,7 +328,7 @@ export function SettingsPanel({
               onClick={() => (setSearching(!searching), setQ(""))}
             >
               {searching ? <X /> : <Search />}
-            </AdminButton>
+            </AdminButton>}
           </div>
           {caption && !searching && <p className="truncate t-caption text-a-text-3">{caption}</p>}
         </div>
