@@ -206,8 +206,8 @@ const BAR_GAP = 0.24
 
 /**
  * One bar, with all of its hover states in CSS (no React state, so moving across bars never re-renders the page):
- * three fills that cross-fade (a muted orange at rest, grey for the others while one is hovered, the gradient with
- * glow for the hovered one) plus a column behind it. The column is as wide as the slot, so the whole slot is the hover area (1.5px wider, so no seam between slots).
+ * three fills that cross-fade (the orange at rest, the dim orange for the others while one is hovered, the orange with glow
+ * for the hovered one; Figma Overview 01 and 01c) plus a column behind it. The column is as wide as the slot, so the whole slot is the hover area (1.5px wider, so no seam between slots).
  * The state rules live on the chart wrapper in `AdminOverview`.
  */
 function ChartBar({ x = 0, y = 0, width = 0, height = 0 }: BarShapeProps) {
@@ -217,8 +217,8 @@ function ChartBar({ x = 0, y = 0, width = 0, height = 0 }: BarShapeProps) {
   return (
     <g className="ov-bar">
       <rect className="ov-layer ov-col" x={x - (slot - width) / 2 - 0.75} y={0} width={slot + 1.5} height="100%" fill="var(--admin-color-bg-raised)" opacity={0} />
-      <path className="ov-layer ov-rest" d={d} fill="var(--admin-component-chart-bar-bg-dim)" />
-      <path className="ov-layer ov-grey" d={d} fill="var(--admin-color-bg-track)" opacity={0} />
+      <path className="ov-layer ov-rest" d={d} fill="var(--admin-component-chart-bar-bg-default)" />
+      <path className="ov-layer ov-grey" d={d} fill="var(--admin-component-chart-bar-bg-dim)" opacity={0} />
       <path className="ov-layer ov-active" d={d} fill="var(--admin-component-chart-bar-bg-default)" opacity={0} />
     </g>
   )
