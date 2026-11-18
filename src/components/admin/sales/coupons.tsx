@@ -25,9 +25,12 @@ const discountText = couponLabel
 const isEnded = couponEnded
 const endsText = (c: Coupon) => (c.ends ? (c.ends < TODAY ? `Ended ${long(c.ends)}` : `Ends ${short(c.ends)}`) : isEnded(c) ? "Limit reached" : "No end")
 
-export function NewCouponButton({ onClick }: { onClick: () => void }) {
+/** In the page header it steps back to secondary while the list is empty, because the empty state carries the primary one (Figma 07b). */
+export function NewCouponButton({ onClick, inEmpty }: { onClick: () => void; inEmpty?: boolean }) {
+  const { coach } = useCoach()
+  const [saved] = useCommunityData<Coupon[]>(coach.slug, "coupons", COUPONS, NO_COUPONS)
   return (
-    <AdminButton onClick={onClick}>
+    <AdminButton onClick={onClick} hierarchy={!inEmpty && Array.isArray(saved) && saved.length === 0 ? "secondary" : "primary"}>
       <Plus /> New coupon
     </AdminButton>
   )
@@ -59,7 +62,7 @@ export function Coupons({ newSignal }: { newSignal: number }) {
   return (
     <div className="flex flex-col gap-4">
       {list.length === 0 ? (
-        <EmptyState title="No coupons yet" description="Students enter a code at checkout. A wrong code never blocks the purchase." actions={<NewCouponButton onClick={() => setOpen(true)} />} />
+        <EmptyState title="No coupons yet" description="Students enter a code at checkout. A wrong code never blocks the purchase." actions={<NewCouponButton inEmpty onClick={() => setOpen(true)} />} />
       ) : (
         <AdminTable minWidth={820}>
           <AdminTableHead>
