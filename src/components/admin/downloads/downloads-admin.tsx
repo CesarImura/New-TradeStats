@@ -178,7 +178,7 @@ function UploadDrawer({ item, onClose }: { item?: DownloadItem; onClose: () => v
   }
   const save = () => {
     if (missing || !file) return
-    const next: DownloadItem = { id: item?.id ?? `d${Date.now()}`, title: title.trim(), description: description.trim(), category, file, version: version.trim() || "1.0", updated: "2026-10-12", tiers: pick ? chosen : [], cover: item?.cover ?? Math.floor(Math.random() * 5), notify }
+    const next: DownloadItem = { id: item?.id ?? `d${Date.now()}`, title: title.trim(), description: description.trim(), category, file, version: version.trim() || "1.0", updated: "2025-11-12", tiers: pick ? chosen : [], cover: item?.cover ?? Math.floor(Math.random() * 5), notify }
     saveDownloads(coach, (l) => (item ? l.map((x) => (x.id === item.id ? next : x)) : [next, ...l]))
     toast(item ? `${next.title} updated` : `${next.title} added`, { description: notify ? "Students get a notification." : undefined })
     close()
