@@ -119,7 +119,7 @@ export const TOURS: Record<TourId, Tour> = {
       { id: "you", target: t("payouts-you"), part: 0, side: "left", gap: 8, dy: 42, title: "Tell us who gets paid", body: "Pick person or company and your country. Use your name exactly as on your ID.", hint: "Then click Continue" },
       { id: "bank", target: t("payouts-bank"), part: 1, side: "left", gap: 8, dy: 42, title: "Add your bank account", body: "Your money arrives here every Monday. The account must be in your name.", hint: "Then click Save" },
       { id: "id", target: t("payouts-id"), part: 2, side: "left", gap: 8, dy: 47, title: "Check your identity", body: "Our payment partner checks your ID once. It usually takes a few minutes.", hint: "Upload it, then click Submit" },
-      { id: "review", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="review"]`, part: 2, final: true, pill: "ID in review", title: "We’re checking your ID", body: "Usually a few minutes, sometimes up to 2 days. Keep setting up; we’ll e-mail you when it’s done.", hint: "" },
+      { id: "review", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="review"]`, part: 2, side: "bottom", gap: 20, final: true, pill: "ID in review", title: "We’re checking your ID", body: "Usually a few minutes, sometimes up to 2 days. Keep setting up; we’ll e-mail you when it’s done.", hint: "" },
       { id: "done", target: `${NO_DRAWER} ${t("payouts-connected")}[data-state="connected"]`, part: 2, final: true, title: "Payouts are connected", body: "You’ll get paid every Monday. Next, add your legal pages.", hint: "" },
     ],
   },
@@ -136,7 +136,7 @@ export const TOURS: Record<TourId, Tour> = {
       { id: "next", target: t("legal-next"), part: 2, title: "Check the templates", body: "Privacy policy, terms and risk disclaimer come pre-filled with your details. Read each one and change what doesn’t fit.", hint: "Click Set up" },
       { id: "imprint", target: t("legal-imprint"), part: 1, side: "left", gap: 8, padBottom: 44, dy: 20, title: "Fill in your imprint", body: "The law asks who runs the platform and how to reach you.", hint: "Then click Save" },
       { id: "template", target: t("legal-template"), part: 2, side: "left", gap: 8, dy: 10, title: "Check the templates", body: "Privacy policy, terms and risk disclaimer come pre-filled with your details. Read each one and change what doesn’t fit.", hint: "Then click Use this text" },
-      { id: "done", target: `${NO_DRAWER} ${t("legal-table")}[data-complete]`, part: 2, side: "bottom", gap: 10, final: true, title: "Your legal pages are ready", body: "Students find them in your footer and at checkout. One step left: go live.", hint: "" },
+      { id: "done", target: `${NO_DRAWER} ${t("legal-table")}[data-complete]`, part: 2, side: "bottom", gap: 16, final: true, title: "Your legal pages are ready", body: "Students find them in your footer and at checkout. One step left: go live.", hint: "" },
     ],
   },
   editor: {
