@@ -26,11 +26,11 @@ const SAMPLE_FOLDER: [string, string[]][] = [
   ["03-risk", ["01-position-sizing.mp4", "02-daily-loss-limits.mp4", "03-scaling-up-safely.mp4"]],
 ]
 const sampleFolder = () => {
-  // Sizes are made up (about 390 MB a video, 4.2 GB in all, as in Figma); the files themselves are empty.
+  // Sizes are made up (about 380 MB a video, 4.2 GB in all, as in Figma); the files themselves are empty.
   const mk = (path: string, type: string) => {
     const f = new File([], path.split("/").pop()!, { type })
     Object.defineProperty(f, "webkitRelativePath", { value: path })
-    Object.defineProperty(f, "size", { value: type.startsWith("video/") ? 391 * 1024 * 1024 : 48 * 1024 })
+    Object.defineProperty(f, "size", { value: type.startsWith("video/") ? 364 * 1024 * 1024 : 48 * 1024 })
     return f
   }
   return [...SAMPLE_FOLDER.flatMap(([dir, names]) => names.map((n) => mk(`Foundations/${dir}/${n}`, "video/mp4"))), mk("Foundations/notes.pdf", "application/pdf")]
