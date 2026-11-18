@@ -310,32 +310,10 @@
   --admin-component-table-row-bg-hover: var(--admin-color-bg-hover);
 
   /* Legacy names (not in the Figma collection any more). Kept so existing code keeps working; remove when no file uses them. */
-  --admin-primitive-blue-600: #2563eb;
-  --admin-primitive-extra-10b981: #10b981;
-  --admin-primitive-extra-10b981-55: rgb(16 185 129 / 55%);
-  --admin-primitive-extra-22c55e: #22c55e;
-  --admin-primitive-extra-ffffff-16: rgb(255 255 255 / 16%);
-  --admin-primitive-extra-ffffff-20: rgb(255 255 255 / 20%);
-  --admin-primitive-green-700: #15803d;
   --admin-color-icon-strong: var(--admin-primitive-white-96);
-  --admin-font-family-cover: var(--admin-font-family-primary);
   --admin-font-family-mono: var(--admin-font-family-primary);
-  --admin-size-icon: 16px;
-  --admin-space-gap-inline: var(--admin-space-6);
   --admin-space-pad-button: var(--admin-space-14);
-  --admin-space-pad-button-sm: var(--admin-space-10);
-  --admin-space-pad-control: var(--admin-space-12);
-  --admin-space-pad-page: var(--admin-space-40);
-  --admin-space-pad-panel: var(--admin-space-20);
-  --admin-component-course-cover-breakdowns-accent: var(--admin-primitive-extra-10b981);
-  --admin-component-course-cover-breakdowns-glow: var(--admin-primitive-extra-10b981-55);
-  --admin-component-file-icon-doc: var(--admin-component-file-icon-solid-doc);
-  --admin-component-file-icon-fold: var(--admin-component-file-icon-solid-fold);
   --admin-component-file-icon-label: var(--admin-color-text-on-accent);
-  --admin-component-file-icon-media: var(--admin-component-file-icon-solid-media);
-  --admin-component-file-icon-other: var(--admin-component-file-icon-solid-other);
-  --admin-component-file-icon-pdf: var(--admin-component-file-icon-solid-pdf);
-  --admin-component-file-icon-sheet: var(--admin-component-file-icon-solid-sheet);
 }
 
 /* Tailwind mapping: short names (bg-a-panel, text-a-text-2, border-a-border, rounded-a-md…) for the Admin v2 tokens. */
