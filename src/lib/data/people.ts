@@ -88,9 +88,9 @@ export const GROUPS = [
 /** A discount code. `tiers` empty means every tier; `ends` is an ISO date or empty for no end. */
 export type Coupon = { /** `discount` and `active` are what the checkout reads; they follow the fields below. */ discount: string; active: boolean; code: string; kind: "percent" | "amount"; amount: number; duration: "first" | "3" | "forever"; tiers: string[]; used: number; limit?: number; ends?: string; paused?: boolean }
 export const COUPONS: Coupon[] = [
-  { discount: "20% off · first payment", active: true, code: "AUTUMN20", kind: "percent", amount: 20, duration: "first", tiers: [], used: 34, limit: 100, ends: "2025-12-29" },
+  { discount: "20% off · first payment", active: true, code: "AUTUMN20", kind: "percent", amount: 20, duration: "first", tiers: [], used: 34, limit: 100, ends: "2025-11-30" },
   { discount: "€50 off · forever", active: true, code: "DESK50", kind: "amount", amount: 50, duration: "forever", tiers: ["desk"], used: 6, limit: 20 },
-  { discount: "30% off · 3 months", active: false, code: "BF2025", kind: "percent", amount: 30, duration: "3", tiers: [], used: 100, limit: 100, ends: "2025-12-01" },
+  { discount: "30% off · 3 months", active: false, code: "BF2024", kind: "percent", amount: 30, duration: "3", tiers: [], used: 100, limit: 100, ends: "2024-12-01" },
 ]
 
 export const COUPON_TODAY = "2025-11-10"
