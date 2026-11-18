@@ -96,7 +96,7 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
         actions={
           <>
             <AdminButton onClick={() => onAdd("catalogue")} hierarchy="secondary">Add from catalogue</AdminButton>
-            <AdminButton onClick={() => onAdd("own")}>Add my own link</AdminButton>
+            <AdminButton onClick={() => onAdd("own")} hierarchy="secondary">Add my own link</AdminButton>
           </>
         }
       />
