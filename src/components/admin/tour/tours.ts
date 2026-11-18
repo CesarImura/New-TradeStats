@@ -69,7 +69,7 @@ export const TOURS: Record<TourId, Tour> = {
     complete: (slug) => setSetup(slug, { firstCourse: true }),
     done: (c) => !!c?.setup?.firstCourse,
     steps: [
-      { id: "new", target: t("course-new"), part: 0, title: "Start your first course", body: "Your first course starts here. We’ll guide you one step at a time.", hint: "Click New course" },
+      { id: "new", target: t("course-new"), part: 0, gap: 26, title: "Start your first course", body: "Your first course starts here. We’ll guide you one step at a time.", hint: "Click New course" },
       { id: "name", target: t("course-title"), part: 1, side: "right", gap: 33, dy: 7, title: "Name your course", body: "Pick a short name your students will see. Description and cover are optional.", hint: "Type a name, then click Continue" },
       { id: "method", target: `${t("course-method")}:not([data-picked])`, part: 2, side: "bottom", gap: 10, title: "Where are your videos?", body: "On your computer: Upload a folder.\nOn YouTube, Vimeo or Loom: Import links.\nNot ready yet: Start blank.", hint: "Pick one to continue" },
       { id: "folder", target: t("course-folder"), part: 2, side: "right", title: "Check your lessons", body: "Each folder became a module and each video a lesson. Files that aren’t videos are skipped.", hint: "Click Upload and create" },
