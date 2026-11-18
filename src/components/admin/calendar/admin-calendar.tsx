@@ -125,7 +125,7 @@ export function AdminCalendar() {
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 t-caption text-a-text-2">
             {(["live", "call", "one-on-one", "news"] as const).map((k) => (
               <span key={k} className="flex items-center gap-1.5">
-                <span aria-hidden className={cn("size-1.5 rounded-full", KIND_DOT[k])} />
+                <span aria-hidden className={cn("h-3 w-0.5 rounded-full", KIND_DOT[k])} />
                 {k === "call" ? "Group call / Workshop" : k === "news" ? "No-trade news" : k === "one-on-one" ? "1:1 call" : "Live session"}
               </span>
             ))}
