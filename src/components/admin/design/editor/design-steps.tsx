@@ -69,7 +69,7 @@ export function ThemeTab() {
           )}
         </div>
         {custom && <p className="t-caption text-a-text-3">Your own mix. Pick a theme to start again from it.</p>}
-        <Field id="mode" label="Mode">
+        <Field id="mode" label="Mode" inline>
           <PillSegmented<Mode>
             label="Light or dark"
             value={theme.mode}
@@ -78,7 +78,7 @@ export function ThemeTab() {
               { value: "dark", label: "Dark" },
               { value: "light", label: "Light" },
             ]}
-            className="w-full [&>button]:flex-1"
+            className="[&>button]:w-[54px] [&>button]:px-0"
           />
         </Field>
         <div role="radiogroup" aria-label="Theme" className="grid gap-2" data-field="template">

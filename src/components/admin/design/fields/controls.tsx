@@ -40,7 +40,14 @@ export const BOX =
   "h-8 rounded-a-md border border-a-border bg-a-field t-body-m outline-none transition-colors duration-300 hover:border-a-border-strong focus-within:border-a-border-focus"
 
 /** A labelled row in the editor panel. `id` lets a click in the preview find it. */
-export function Field({ id, label, hint, children }: { id?: string; label: string; hint?: React.ReactNode; children: React.ReactNode }) {
+export function Field({ id, label, hint, children, inline }: { id?: string; label: string; hint?: React.ReactNode; children: React.ReactNode; /** The control sits on the label's row, on the right (Figma Theme · Mode). */ inline?: boolean }) {
+  if (inline)
+    return (
+      <div className="flex min-w-0 items-center justify-between gap-3" data-field={id}>
+        <Label className={cn(LABEL, "shrink-0 whitespace-nowrap")}>{label}</Label>
+        {children}
+      </div>
+    )
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-2" data-field={id}>
       <div className="flex min-w-0 items-center justify-between gap-3">

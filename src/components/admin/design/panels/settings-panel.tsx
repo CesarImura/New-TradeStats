@@ -43,7 +43,7 @@ export const THEME_GROUPS = {
     { title: "Profit and loss", fields: ["trading"], keys: ["trading"], words: "profit loss green red trading numbers" },
   ],
   type: [
-    { title: "Fonts", fields: ["fonts"], keys: ["fonts"], words: "font pair typeface heading text serif mono technical editorial bold elegant desk gallery characterful neutral" },
+    { title: "Font pair", fields: ["fonts"], keys: ["fonts"], words: "font pair typeface heading text serif mono technical editorial bold elegant desk gallery characterful neutral" },
     { title: "Headings and labels", fields: ["heading-weight", "labels"], keys: ["headingWeight", "labelStyle"], words: "weight bold uppercase caps small labels" },
     // Headline numbers are set with the widgets (they only show there); Type points to them.
     { title: "Numbers in widgets", fields: ["numbers-link"], keys: [], words: "figures numbers headline mono display marked font" },

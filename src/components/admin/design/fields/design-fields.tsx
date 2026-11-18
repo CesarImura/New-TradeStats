@@ -311,7 +311,6 @@ function FontsField() {
   const { theme, change } = useDesign()
   return (
     <div data-field="fonts" className="grid gap-1.5">
-      <span className="t-caption-medium text-a-text-2">Font pair</span>
       {/* Figma Style · 09: each pair as a card that shows its heading font, the pair's name and the fonts in it. */}
       <div role="radiogroup" aria-label="Font pair" className="grid grid-cols-2 gap-2">
         {FONT_PAIRS.map((p) => {
@@ -323,7 +322,7 @@ function FontsField() {
               checked={on}
               onSelect={() => change({ theme: { fonts: { heading: p.heading, body: p.body, label: p.label } } }, "fonts")}
               title={p.name}
-              description={FONT_LIBRARY[p.heading].label === FONT_LIBRARY[p.body].label ? FONT_LIBRARY[p.heading].label : `${FONT_LIBRARY[p.heading].label} · ${FONT_LIBRARY[p.body].label}`}
+              description={p.text}
               media={
                 <span aria-hidden className="grid h-[69px] place-items-center rounded-a-md bg-a-sunk text-[28px] leading-8 text-a-text" style={{ fontFamily: FONT_LIBRARY[p.heading].css }}>
                   Aa
