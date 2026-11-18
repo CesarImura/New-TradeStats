@@ -23,7 +23,7 @@ export function LessonPage({ course, lesson, upload, saved, onChange, onPick, on
   const rename = useRenameUndo(lesson.title, (title) => onChange({ title }))
   const vis = visibilityOf(lesson)
   const setVis = (v: Visibility) =>
-    onChange(v === "hidden" ? { status: "draft", freePreview: false } : v === "scheduled" ? { status: "scheduled", unlockAt: lesson.unlockAt ?? "Thu 15 Oct", freePreview: false } : { status: "published", freePreview: v === "free" })
+    onChange(v === "hidden" ? { status: "draft", freePreview: false } : v === "scheduled" ? { status: "scheduled", unlockAt: lesson.unlockAt ?? "Thu 13 Nov", freePreview: false } : { status: "published", freePreview: v === "free" })
 
   return (
     <div data-tour="lesson" className="flex flex-col gap-4">

@@ -230,7 +230,7 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
                   </DropdownMenuContent>
                 </DropdownMenu>
               }>
-              {failed ? `${shown.reason} · retrying Wed 14 Oct` : shown.reason}
+              {failed ? `${shown.reason} · retrying Wed 12 Nov` : shown.reason}
             </Callout>
           )}
 
@@ -249,7 +249,7 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
                 <Label>Tier and group</Label>
                 <Row label="Tier" value={`${tier.name} · ${price(tier.id)}`} options={coach.tiers.map((t) => ({ label: `${t.name} · ${price(t.id)}`, onSelect: () => toast(`${shown.name} moves to ${t.name}`, { description: "Upgrades start now, downgrades at the end of the period." }) }))} />
                 <Row label="Group" value={shown.group ?? "No group"} options={[{ label: "No group", onSelect: () => toast("Removed from the group") }, ...GROUPS.map((g) => ({ label: g.name, onSelect: () => toast(`Added to ${g.name}`, { description: "What a group unlocks starts on its start date." }) }))]} />
-                <Row label="Next payment" value={failed ? "14 Oct" : "1 Nov"} />
+                <Row label="Next payment" value={failed ? "12 Nov" : "30 Nov"} />
                 <Row label="Extra access" value={shown.coach ?? "Nobody"} options={[{ label: "Add a course for free", onSelect: () => toast("Pick a course to unlock for this student") }]} />
               </section>
               <Rule />

@@ -455,14 +455,14 @@ export function Links({ variant = "list", props }: WidgetProps) {
 
 // ---------- Countdown
 
-/** The prototype's today is 12 Oct 2026: the sample counts down to 22 Oct 2026, 09:00. */
-const SAMPLE_DATE = new Date(2026, 9, 22, 9, 0, 0)
+/** The prototype's today is 10 Nov 2025: the sample counts down to 20 Nov 2025, 09:00. */
+const SAMPLE_DATE = new Date(2025, 10, 20, 9, 0, 0)
 
 /** The coach's date; none typed yet is the sample, and one no browser can read is null (never a made-up "Started"). */
 function parseDate(raw: unknown): Date | null {
   const v = String(raw ?? "").trim()
   if (!v) return SAMPLE_DATE
-  // "2026-11-01 09:00" is not a format every browser reads: make it ISO (local time).
+  // "2025-11-30 09:00" is not a format every browser reads: make it ISO (local time).
   const d = new Date(/^\d{4}-\d{2}-\d{2} \d/.test(v) ? v.replace(" ", "T") : v)
   return Number.isNaN(d.getTime()) ? null : d
 }
