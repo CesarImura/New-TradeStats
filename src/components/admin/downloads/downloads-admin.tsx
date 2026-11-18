@@ -89,7 +89,7 @@ export function DownloadsAdmin() {
       ) : (
         <>
           <AdminToolbar>
-            <AdminTabs label="Category" tabs={TABS.map((t) => (t.id === "all" ? { ...t, count: all.length } : t))} value={tab} onChange={setTab} />
+            <AdminTabs label="Category" tabs={TABS.map((t) => ({ ...t, count: t.id === "all" ? all.length : all.filter((r) => (r.item ? r.item.category : "lesson") === t.id).length }))} value={tab} onChange={setTab} />
             <div className="flex-1" />
             <AdminSearch value={q} onChange={setQ} placeholder="Search files" hint="⌘K" />
             <AdminFilter ariaLabel="Tier" value={tierSel} onValueChange={setTierSel} options={[{ value: "all", label: "All tiers" }, ...tiers.map((t) => ({ value: t.id, label: t.name }))]} />
