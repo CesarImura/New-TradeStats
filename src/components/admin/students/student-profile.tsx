@@ -106,7 +106,7 @@ function WeeklyActivity({ s }: { s: Student }) {
           {weeks.map((w, i) => (
             <li key={i} className="flex min-w-0 flex-col items-center gap-1" title={`${12 - i === 1 ? "This week" : `${12 - i - 1} weeks ago`}: ${w.lessons} lessons, ${w.trades} trades`}>
               <span className="flex h-[125px] w-full items-end border-b border-a-border-subtle">
-                <span className={cn("block w-full rounded-t-a-xs transition-colors duration-300", w.hot ? "bg-a-accent" : "bg-a-track")} style={{ height: `${Math.max(2, (w.total / ceil) * 100)}%` }} />
+                <span className={cn("block w-full rounded-t-a-xs transition-colors duration-300", w.hot ? "bg-[var(--admin-component-chart-bar-bg-default)]" : "bg-[var(--admin-component-chart-bar-bg-dim)]")} style={{ height: `${Math.max(2, (w.total / ceil) * 100)}%` }} />
               </span>
               <span className="t-micro text-a-text-3 tabular-nums">{i + 1}</span>
               <span className="sr-only">{`${w.lessons} ${w.lessons === 1 ? "lesson" : "lessons"}, ${w.trades} ${w.trades === 1 ? "trade" : "trades"}`}</span>
