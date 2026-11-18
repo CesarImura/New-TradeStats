@@ -162,6 +162,9 @@ const TabContext = createContext<(id: string) => void>(() => {})
 /** What is typed in the header's search, for a section that searches its own content (the widget gallery). */
 const PanelSearch = createContext("")
 export const usePanelSearch = () => useContext(PanelSearch)
+/** True while the header search box is open (Figma Pages · 04 to 06: the panel then shows the search and its results only). */
+const PanelSearching = createContext(false)
+export const usePanelSearching = () => useContext(PanelSearching)
 
 /** In Type: where headline numbers are set now, one click away. */
 function NumbersLink() {
@@ -293,7 +296,7 @@ export function SettingsPanel({
         <div className={cn("flex shrink-0 flex-col gap-1 px-5 pt-5", sub ? "pb-3" : "pb-4")}>
           <div className="flex min-h-[22px] items-center gap-2">
             {searching ? (
-              <label className="flex min-w-0 flex-1 items-center gap-2">
+              <label className={cn("flex min-w-0 flex-1 items-center gap-2", ownSearch && "h-9 rounded-a-md border border-a-border-strong px-3")}>
                 <Search className="size-4 shrink-0 text-a-icon" />
                 <input
                   autoFocus
@@ -347,6 +350,7 @@ export function SettingsPanel({
         {current.id !== "pages" && <div aria-hidden className="h-px shrink-0 bg-a-border-subtle" />}
         <TabContext.Provider value={(id) => (onTab(id), setQ(""), setSearching(false))}>
         <PanelSearch.Provider value={ownSearch ? q.trim().toLowerCase() : ""}>
+        <PanelSearching.Provider value={ownSearch && searching}>
         <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" {...bodyProps}>
           {term ? (
             found.length || foundIn.length ? (
@@ -379,6 +383,7 @@ export function SettingsPanel({
             </>
           )}
         </div>
+        </PanelSearching.Provider>
         </PanelSearch.Provider>
         </TabContext.Provider>
       </div>

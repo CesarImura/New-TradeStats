@@ -35,7 +35,7 @@ import { WidgetLibrary, type AddOptions } from "../panels/builder-panels"
 import { WidgetInspector } from "../panels/widget-inspector"
 import { ThumbStyles } from "../thumbs/widget-thumb"
 import { RevealContext, Row, Segmented } from "../fields/controls"
-import { designTabs, DeviceSwitch, Readability, SettingsPanel, THEME_GROUPS, without } from "../panels/settings-panel"
+import { designTabs, DeviceSwitch, Readability, SettingsPanel, THEME_GROUPS, usePanelSearching, without } from "../panels/settings-panel"
 import { AllWidgetsInspector } from "../panels/all-widgets-inspector"
 import { DesignProvider } from "../fields/design-fields"
 import { GuideDialog, VersionsSheet, useDraftEditor } from "./editor-shell"
@@ -276,7 +276,7 @@ export function DesignWorkspace() {
     <>
     {/* The way to every widget's style (corner radius, cards, buttons, charts): the first thing in Pages, big enough to find.
         `data-tour="editor-widgets"`: step 2 of the design editor tour (Getting started → Tour the design editor). */}
-    <div className="px-4 pb-3" data-tour="editor-widgets">
+    <SearchHides><div className="px-4 pb-3" data-tour="editor-widgets">
       {/* Admin / Editor Design all card: a bordered panel, an icon tile, the name and what it holds; the active edge while it is open. */}
       <button
         type="button"
@@ -293,6 +293,7 @@ export function DesignWorkspace() {
         </span>
       </button>
     </div>
+    </SearchHides>
     <WidgetLibrary
       key={page}
       page={page}
@@ -691,6 +692,11 @@ function useFlash(panel: React.RefObject<HTMLDivElement | null>, reveal: { field
   }, [panel, reveal])
 }
 
+/** Hidden while the panel search is open: the search and its results are all the panel shows then. */
+function SearchHides({ children }: { children: React.ReactNode }) {
+  return usePanelSearching() ? null : <>{children}</>
+}
+
 /** Back to the original design, from the ⋯ menu: asks first, says what goes back, and can put the pages back too. Undoable. */
 function ResetDialog({ open, onOpenChange, name, onReset }: { open: boolean; onOpenChange: (o: boolean) => void; name: string; onReset: (pagesToo: boolean) => void }) {
   const [pagesToo, setPagesToo] = useState(false)
@@ -699,8 +705,8 @@ function ResetDialog({ open, onOpenChange, name, onReset }: { open: boolean; onO
       open={open}
       onOpenChange={(o) => (onOpenChange(o), setPagesToo(false))}
       title="Back to the original design?"
-      subtitle={`Colours, type, shape, widgets and background go back to how ${name} started. Your name, logo and menu stay. You can undo it (⌘Z).`}
-      className="sm:max-w-sm"
+      subtitle={`Colours, type, shapes, widgets and background go back to how ${name} started. Your name, logo and menu stay. You can undo it (⌘Z).`}
+      className="sm:max-w-[560px]"
       footer={
         <>
           <AdminButton hierarchy="secondary" onClick={() => onOpenChange(false)}>

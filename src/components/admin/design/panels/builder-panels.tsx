@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
-import { ArrowLeft, Check, ChevronRight, GripVertical, ImagePlus, Plus } from "@/components/icons"
+import { ArrowLeft, Check, ChevronRight, GripVertical, ImagePlus, Plus, Search } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { getWidget, librarySections, lookOf, settingApplies, settingsFor, type WidgetDef } from "@/components/widgets/registry"
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils"
 import { Field, Segmented } from "../fields/controls"
 import { ThumbCard, WidgetThumb, dragGhost, galleryWidget } from "../thumbs/widget-thumb"
 import { Flyout } from "./flyout"
-import { usePanelSearch } from "./settings-panel"
+import { usePanelSearch, usePanelSearching } from "./settings-panel"
 
 /** Per-widget Emphasis and Detail (see the rules in widgets/kit.tsx). Shared with the grid's right-click menu. */
 export const EMPHASIS: { value: Emphasis; label: string; hint: string }[] = [
@@ -158,6 +158,7 @@ export function WidgetLibrary({
   const [view, setView] = useState<"add" | "page">("add")
   // Typed in the panel's header search, the same place as in Theme and Menu.
   const query = usePanelSearch()
+  const searching = usePanelSearching()
   const [group, setGroup] = useState<string | null>(null)
   const [picked, setPicked] = useState<string | null>(null)
   const q = query.trim().toLowerCase()
@@ -239,7 +240,7 @@ export function WidgetLibrary({
           )}
         </div>
       </Flyout>
-      <div className="sticky top-0 z-10 grid border-t border-a-border-subtle bg-background px-5 pt-4 pb-3">
+      {!searching && <div className="sticky top-0 z-10 grid border-t border-a-border-subtle bg-background px-5 pt-4 pb-3">
         <Segmented
           label="Gallery"
           value={view}
@@ -252,9 +253,36 @@ export function WidgetLibrary({
             { value: "page", label: "On this page" },
           ]}
         />
-      </div>
+      </div>}
 
-      {view === "page" ? (
+      {searching && (
+        // Figma Pages · 04 to 06: the box in the header, a line under it, then the groups or the matches as plain rows.
+        <p className="px-5 pb-3 t-caption text-a-text-3">{!q ? "Search every widget by name or type" : tiles && tiles.length ? `${tiles.length} ${tiles.length === 1 ? "widget matches" : "widgets match"} “${query}”` : `No widgets match “${query}”`}</p>
+      )}
+
+      {searching && q && tiles ? (
+        tiles.length === 0 ? (
+          <div className="mx-4 mb-4 grid justify-items-center gap-2 rounded-a-lg border border-dashed border-a-border px-6 py-10 text-center">
+            <span className="grid size-10 place-items-center rounded-a-md bg-a-muted text-a-icon">
+              <Search className="size-4" />
+            </span>
+            <span className="t-body-l-medium text-a-text">No widgets match</span>
+            <span className="t-body-m text-a-text-2">Try another word, like “calendar” or “journal”.</span>
+          </div>
+        ) : (
+          <div className="grid gap-1 px-3 pb-3">
+            {tiles.map((w) => (
+              <button key={w.type} type="button" onClick={() => setPicked(w.type)} className={cn(LIST_ROW, "text-muted-foreground hover:text-foreground")}>
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-a-muted [&_svg]:size-4">
+                  <w.icon />
+                </span>
+                <span className="min-w-0 flex-1 truncate t-body-l text-foreground">{w.variants.length > 1 ? `${w.name} · ${w.variants[0].label}` : w.name}</span>
+                <ChevronRight className="size-3.5" />
+              </button>
+            ))}
+          </div>
+        )
+      ) : view === "page" && !searching ? (
         // The page's widgets as a list of names, in reading order: one click selects it on the page.
         <div className="grid gap-1 px-3 pb-3">
           {here.length === 0 && <p className="px-2 py-6 text-center t-caption text-muted-foreground">{onPage.length ? `No widget on this page matches “${query}”.` : "No widgets on this page yet."}</p>}
@@ -279,6 +307,7 @@ export function WidgetLibrary({
       ) : (
         // The groups: one short list, each opening its widgets.
         <div className="grid gap-1 px-3 pb-3">
+          {searching && <span className="px-2.5 pb-1 t-body-m text-a-text-2">Browse by category</span>}
           {sections.map((s) => {
             const first = getWidget(s.types[0])
             return (
