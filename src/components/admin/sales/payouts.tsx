@@ -82,7 +82,12 @@ export function Payouts() {
               const done = i < state.step
               const current = i === state.step
               return (
-                <li key={s.title} aria-current={current ? "step" : undefined} className={cn("flex items-center gap-3 rounded-a-md border px-4 py-3.5", current ? "border-a-border-strong" : "border-a-border")}>
+                <li
+                  key={s.title}
+                  aria-current={current ? "step" : undefined}
+                  // A finished step shows the Done tag (Figma 'Tag / Done'); the whole row opens it again to edit.
+                  {...(done ? { role: "button", tabIndex: 0, "aria-label": `Edit ${s.title}`, onClick: () => setOpen(i), onKeyDown: (e: React.KeyboardEvent) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setOpen(i)) } : {})}
+                  className={cn("flex items-center gap-3 rounded-a-md border px-4 py-3.5 transition-colors duration-300", current ? "border-a-border-strong" : "border-a-border", done && "cursor-pointer outline-none hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus")}>
                   <StepIndicator step={i + 1} state={done ? "done" : current ? "current" : "upcoming"} />
                   <div className="grid min-w-0 flex-1 gap-0.5">
                     <span className={cn("t-body-l", done || current ? "text-a-text" : "text-a-text-2")}>{s.title}</span>
@@ -93,11 +98,7 @@ export function Payouts() {
                       {i === 0 ? "Start" : "Continue"}
                     </AdminButton>
                   )}
-                  {done && (
-                    <AdminButton hierarchy="ghost" size="md" onClick={() => setOpen(i)}>
-                      Edit
-                    </AdminButton>
-                  )}
+                  {done && <Tag tone="success">Done</Tag>}
                 </li>
               )
             })}
