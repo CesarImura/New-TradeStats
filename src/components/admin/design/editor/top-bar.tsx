@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { ArrowLeft, MoreHorizontal, Redo2, Undo2 } from "@/components/icons"
+import { LogoMark } from "@/components/brand/logo"
 import { AdminButton, AdminMenu, AdminMenuContent, AdminMenuTrigger, Tag } from "@/components/admin/ui"
 import { cn } from "@/lib/utils"
 
@@ -21,13 +22,14 @@ export function PublishTag({ status, className }: { status: PublishStatus; class
 }
 
 /**
- * Admin / Editor Top bar (Figma 14/11): no fill, 56 high, 24 at the sides. Where you are on the left (the way back in secondary grey, the
- * screen's name in white), what you are looking at in the middle (`center`), the status, history (undo, redo, more: 2 apart) and the
- * Preview and Publish buttons on the right. One bar for the Design workspace and the all-pages overview.
+ * Admin / Editor Top bar (Figma 14/11, 16/11): no fill, 56 high, 28 on the left and 24 on the right. The Traderhub mark first, centred over
+ * the rail's icons, then the way back in secondary grey (no screen name beside it any more); what you are looking at in the middle
+ * (`center`), the status, history (undo, redo, more: 2 apart) and the Preview and Publish buttons on the right. One bar for the Design
+ * workspace and the all-pages overview.
  */
 export function EditorTopBar({
   back,
-  title = "Design",
+  title,
   center,
   extra,
   status,
@@ -41,6 +43,7 @@ export function EditorTopBar({
 }: {
   /** The way back: the Admin, or the setup wizard it was opened from. */
   back?: { href: string; label: string }
+  /** A name after the way back, only where the screen is not the Design workspace itself ("All pages"). */
   title?: string
   center?: React.ReactNode
   /** Something that belongs before the status (the readability check), only when it has something to say. */
@@ -59,15 +62,24 @@ export function EditorTopBar({
   return (
     <div
       data-design-slug={slug}
-      className={cn("grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 max-xl:grid-cols-[auto_minmax(0,1fr)_auto] max-xl:gap-2 max-sm:h-auto max-sm:grid-cols-[auto_minmax(0,1fr)] max-sm:px-4 max-sm:py-2", className)}
+      className={cn("grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 pr-6 pl-7 max-xl:grid-cols-[auto_minmax(0,1fr)_auto] max-xl:gap-2 max-sm:h-auto max-sm:grid-cols-[auto_minmax(0,1fr)] max-sm:px-4 max-sm:py-2", className)}
     >
       <div className="flex min-w-0 items-center gap-6">
+        {/* The mark is a way back too: the same place as "← Admin" (or the setup wizard it was opened from). */}
+        <Link
+          href={back?.href ?? (slug ? `/admin/${slug}` : "/")}
+          title={back && back.label !== "Admin" ? back.label : "Back to the admin"}
+          aria-label={back && back.label !== "Admin" ? back.label : "Back to the admin"}
+          className="shrink-0 rounded-a-sm outline-none transition-opacity duration-300 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-a-border-focus"
+        >
+          <LogoMark size={25} />
+        </Link>
         {back && (
           <Link href={back.href} title={back.label === "Admin" ? "Back to the admin" : back.label} className="inline-flex items-center gap-1.5 rounded-a-sm t-body-m text-a-text-2 outline-none transition-colors duration-300 hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
             <ArrowLeft className="size-4" aria-hidden /> {back.label}
           </Link>
         )}
-        <span className="t-body-m text-a-text max-lg:hidden">{title}</span>
+        {title && <span className="t-body-m text-a-text max-lg:hidden">{title}</span>}
       </div>
       {center ? <div className="flex min-w-0 items-center justify-center gap-4 max-sm:col-span-2 max-sm:row-start-2">{center}</div> : <span />}
       <div className="flex shrink-0 flex-nowrap items-center justify-end gap-3 max-xl:gap-2 max-sm:gap-1">

@@ -1,10 +1,9 @@
 "use client"
 
-import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useState } from "react"
+import { createContext, Fragment, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import {
-  ArrowRight,
   Check,
   ExternalLink,
   Eye,
@@ -15,12 +14,10 @@ import {
   PlayCircle,
   RotateCcw,
   Trash2,
-  Wand2,
 } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { studentNav } from "@/components/coach/nav"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { AdminButton, AdminFilterButton, AdminMenu, AdminMenuContent, AdminMenuGroup, AdminMenuItem, AdminMenuLabel, AdminMenuSeparator, AdminMenuTrigger, AdminModal, Callout } from "@/components/admin/ui"
@@ -45,7 +42,9 @@ import { DesignProvider } from "../fields/design-fields"
 import { GuideDialog, VersionsSheet, useDraftEditor } from "./editor-shell"
 import { ArrangeCanvas, useArrange, type Device } from "./page-builder"
 import { CAN_SAVE_TEMPLATE, SaveTemplateDialog } from "./save-template"
-import { LookCards, MenuStep } from "./design-steps"
+import { LayoutTab, MenuStep, ThemeTab } from "./design-steps"
+import { LOOKS } from "../looks"
+import { LAYOUTS, THEMES } from "../presets"
 import { JOIN_SCREENS, type JoinScreenId } from "@/lib/data/join"
 import { studentCourses, useCatalog } from "@/lib/data/learning"
 import { BackToPlaybook, CourseInspector, CoursePageLink, CourseSections } from "../panels/course-panels"
@@ -56,14 +55,14 @@ import { EditorTopBar } from "./top-bar"
 import { canvasDots } from "./canvas-bg"
 
 /** Design's sections, in the order a coach goes through them; the theme ones are the library's theme editor's. */
-type Step = "brand" | "look" | "type" | "shape" | "widgets" | "page" | "menu" | "pages" | "course" | "join"
-const STEP_IDS: Step[] = ["brand", "look", "type", "shape", "widgets", "page", "menu", "pages", "course", "join"]
+type Step = "brand" | "look" | "layout" | "type" | "shape" | "widgets" | "page" | "menu" | "pages" | "course" | "join"
+const STEP_IDS: Step[] = ["brand", "look", "layout", "type", "shape", "widgets", "page", "menu", "pages", "course", "join"]
 
 /** Where a part clicked in the preview is set. */
 const STEP_OF: Record<string, Step> = {
   logo: "brand",
   highlight: "brand",
-  nav: "menu",
+  nav: "layout",
   buttons: "widgets",
   headings: "type",
   labels: "type",
@@ -126,7 +125,9 @@ export function DesignWorkspace() {
 
   // Where to start, from the link that opened Design (setup, all pages, old Pages links).
   const params = useSearchParams()
-  const asked = params.get("step") ?? (params.get("mode") === "arrange" || params.get("panel") === "pages" ? "pages" : params.get("panel") === "menu" ? "menu" : "brand")
+  const askedRaw = params.get("step")
+  // "theme" is the Theme tab's name in the rail; its id stays "look".
+  const asked = (askedRaw === "theme" ? "look" : askedRaw) ?? (params.get("mode") === "arrange" || params.get("panel") === "pages" ? "pages" : params.get("panel") === "menu" ? "menu" : "brand")
   // Widgets' style lives in Pages, as All widgets: old links to Widgets open it there.
   const [step, setStep] = useState<Step>(IN_PAGES(asked) ? "pages" : STEP_IDS.includes(asked as Step) ? (asked as Step) : "brand")
   // The section of the course page selected on the left, edited on the right.
@@ -314,8 +315,27 @@ export function DesignWorkspace() {
     </>
   )
   const tabs = designTabs({
-    brand: { groups: [{ title: "Your platform", fields: ["logo", "name", "mode"], keys: ["mode"], words: "logo name platform light dark mode" }, ...THEME_GROUPS.colour] },
-    look: { content: <LookTab /> },
+    // Light or dark moved to Theme (Figma Editor · 2 Style): Brand is who you are, Theme is how it looks.
+    brand: { groups: [{ title: "Import from your website", fields: ["import-site"], keys: [], words: "import website url colours fonts logo brand" }, { title: "Your platform", fields: ["logo", "name"], keys: [], words: "logo name platform" }, ...THEME_GROUPS.colour] },
+    look: {
+      content: <ThemeTab />,
+      finds: [
+        { title: "Light or dark mode", words: "mode dark light night day" },
+        ...THEMES.map((t) => ({ title: `${t.name} theme`, words: `${t.summary} theme template` })),
+        ...LOOKS.map((l) => ({ title: `${l.name} variation`, words: `${l.blurb} look variation` })),
+        { title: "Reset to the theme", words: "reset custom own mix theme" },
+      ],
+    },
+    layout: {
+      content: <LayoutTab />,
+      finds: [
+        ...LAYOUTS.map((l) => ({ title: l.name, words: `${l.text} layout menu` })),
+        { title: "Menu position", words: "menu side top left header" },
+        { title: "Page frame", words: "frame classic floating" },
+        { title: "Widgets cards or blended", words: "widgets cards blended open" },
+        { title: "Spacing", words: "spacing density compact comfortable airy" },
+      ],
+    },
     menu: { content: <MenuStep /> },
         // No line under the title: the gallery speaks for itself.
     pages: {
@@ -340,6 +360,18 @@ export function DesignWorkspace() {
     // Every widget's style is in Pages (All widgets); off the rail, still found by search.
   }).map((t) => (t.id === "widgets" ? { ...t, hidden: true, label: "All widgets" } : t.id === "join" || t.id === "course" ? { ...t, hidden: true } : t.id === "pages" && (step === "join" || step === "course") ? { ...t, heading: step === "join" ? "Join screens" : "Course page" } : t))
 
+  // The room between the floating cards (Figma 16/11): 12 px beside each 336 px card, which sit 12 px in from the canvas edge.
+  const freeLeft = leftOpen ? 360 : 0
+  const freeRight = inspector ? 360 : 0
+  // Toasts stay out of the inspector: they sit in the room left of it while it is open (wide screens only; the card is absolute there).
+  const hasInspector = !!inspector
+  useEffect(() => {
+    if (!hasInspector) return
+    const root = document.documentElement.style
+    root.setProperty("--admin-toast-right", "380px")
+    return () => void root.removeProperty("--admin-toast-right")
+  }, [hasInspector])
+  const freeCentre = `calc(${freeLeft}px + (100% - ${freeLeft + freeRight}px) / 2)`
   return (
     <DesignProvider value={{ coach, theme, working, change, commit, keepVersion: (label) => keepVersion(slug, label, working), undo: editor.undo, openPage: (id) => (setPage(id), select(null), go("pages")) }}>
       <StepCtx.Provider value={{ go }}>
@@ -475,16 +507,19 @@ export function DesignWorkspace() {
           {menu === "template" && <SaveTemplateDialog coach={coach} theme={theme} open onOpenChange={(o) => setMenu(o ? "template" : null)} />}
           <GuideDialog
             title="Designing your platform"
-            text="Your brand and a look first; then type and background to fine-tune; then your menu and pages. In Widgets, select a widget to move, size, fill and style it, for that widget or all of them. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."
+            text="Your brand and a theme first; then layout, type and background to fine-tune; then your menu and pages. In Widgets, select a widget to move, size, fill and style it, for that widget or all of them. Click anything in your platform on the right to jump to what changes it. Nothing changes for students until you publish."
             open={menu === "guide"}
             onOpenChange={(o) => setMenu(o ? "guide" : null)}
           />
 
           {/* Below 1280px the left sidebar keeps only its icons, so the page has room; an icon opens it again. */}
-          <div className={cn("grid min-h-0 gap-2 p-2", leftOpen ? (inspector ? "grid-cols-[346px_minmax(0,1fr)_336px]" : "grid-cols-[346px_minmax(0,1fr)]") : inspector ? "grid-cols-[66px_minmax(0,1fr)_336px]" : "grid-cols-[66px_minmax(0,1fr)]")}>
-            {/* One card: the section rail and the panel, with a divider between. The same editor as the library's themes, with Design's own
-                sections (brand, look, menu, pages) around the theme's. */}
-            <aside data-tour="editor-panel" className="flex min-h-0 flex-col overflow-hidden rounded-a-xl border border-a-border bg-a-page">
+          {/* Figma 16/11: the rail is the only fixed column; the section panel and the inspector are cards floating over the canvas, which
+              fills the rest. The preview and the "Layout for" menu centre in the room the two cards leave (`free`). */}
+          <div className="relative grid min-h-0 grid-cols-[64px_minmax(0,1fr)] gap-2 p-2">
+            {/* The section rail (a column) and its panel (a floating card): the same editor as the library's themes, with Design's own
+                sections (brand, look, menu, pages) around the theme's. `editor-panel` is the tour's spotlight over both. */}
+            <div aria-hidden data-tour="editor-panel" className="pointer-events-none absolute top-2 bottom-2 left-2" style={{ width: leftOpen ? 422 : 64 }} />
+            <div className="contents">
               <RevealContext.Provider value={pick.reveal}>
                 <SettingsPanel
                   tabs={tabs}
@@ -495,22 +530,23 @@ export function DesignWorkspace() {
                   bodyRef={panel}
                   bodyProps={{ onPointerOver: pick.onPanelHover, onPointerLeave: pick.onPanelLeave }}
                   // Brand, Look, Type and Background are one place, Theme, with its parts as pills.
-                  merge={{ id: "theme", label: "Theme", icon: <Palette />, of: ["brand", "look", "type", "page"] }}
+                  merge={{ id: "theme", label: "Style", icon: <Palette />, of: ["brand", "look", "layout", "type", "page"] }}
                   caption={`${coach.name} · saved as you type`}
                   collapsed={!leftOpen}
+                  floating
                   // On a narrow screen the open section's icon folds the panel away again; any other icon opens it.
                   onRail={(_, wasOpen) => setLeftOpen(narrow && wasOpen && leftOpen ? false : true)}
                 />
               </RevealContext.Provider>
-            </aside>
+            </div>
 
             {/* The platform on its dotted field. On Pages it's the widget grid; elsewhere, click a part to change it. */}
             <section data-tour="editor-canvas" className="relative grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] overflow-hidden rounded-a-xl border border-a-border" style={canvasDots()}>
-              <div className="relative min-h-0 min-w-0 overflow-hidden">
+              <div className="relative min-h-0 min-w-0 overflow-hidden" style={{ paddingLeft: freeLeft, paddingRight: freeRight }}>
                 {step !== "join" && step !== "course" && (
                   <>
                     {/* In the canvas's corner: whose layout of this page is on the canvas. Each tier can have its own; until then it uses Everyone's. */}
-                    <div className="absolute top-4 left-4 z-30">
+                    <div className="absolute top-4 z-30 -translate-x-1/2" style={{ left: freeCentre }}>
                       <AdminMenu>
                         <AdminMenuTrigger
                           render={
@@ -557,7 +593,7 @@ export function DesignWorkspace() {
                 )}
                 {/* Publishing failed: the draft is safe. A callout over the canvas, blurred so the page shows through it. */}
                 {failed && (
-                  <Callout tone="danger" className="absolute top-4 left-1/2 z-40 w-[min(42rem,calc(100%-2rem))] -translate-x-1/2 backdrop-blur-a-overlay" action={<AdminButton hierarchy="secondary" size="md" onClick={doPublish}>Try again</AdminButton>}>
+                  <Callout tone="danger" className="absolute top-4 z-40 w-[min(42rem,calc(100%-2rem))] -translate-x-1/2 backdrop-blur-a-overlay" style={{ left: freeCentre }} action={<AdminButton hierarchy="secondary" size="md" onClick={doPublish}>Try again</AdminButton>}>
                     We couldn&apos;t publish {editor.changes > 0 ? `your ${editor.changes} ${editor.changes === 1 ? "change" : "changes"}` : "your changes"}. They are still saved, so you can try again.
                   </Callout>
                 )}
@@ -569,7 +605,7 @@ export function DesignWorkspace() {
             {/* The inspector: a card of its own, as in Framer; the canvas between the cards gives way. Only open when there is something
                 to edit: a selected widget, every widget's style, or a Join or course screen. */}
             {inspector && (
-              <aside aria-label="Inspector" data-tour="editor-inspector" className="min-h-0 overflow-y-auto rounded-a-xl border border-a-border bg-a-page [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <aside aria-label="Inspector" data-tour="editor-inspector" className="absolute top-5 right-5 bottom-5 z-20 w-[336px] overflow-y-auto rounded-a-lg border border-a-border bg-a-page shadow-[0_8px_24px_-4px_rgb(0_0_0/0.6)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <RevealContext.Provider value={pick.reveal}>{inspector}</RevealContext.Provider>
               </aside>
             )}
@@ -577,36 +613,6 @@ export function DesignWorkspace() {
         </div>
       </StepCtx.Provider>
     </DesignProvider>
-  )
-}
-
-/** The ready-made looks, then the way to a design of their own. */
-function LookTab() {
-  return (
-    <>
-      <LookCards />
-      <DesignHelp />
-    </>
-  )
-}
-
-function DesignHelp() {
-  const { go } = useContext(StepCtx)
-  return (
-    <div className="m-4 grid gap-2 rounded-[6px] border p-3">
-      <div className="flex items-center gap-2 t-body-l-medium">
-        <Wand2 className="size-4" /> Want it to look exactly like your brand?
-      </div>
-      <p className="t-caption text-muted-foreground">Our designers can build your own design on top of these settings.</p>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" onClick={() => toast("Design packages open from Settings → Our subscription.")}>
-          See design packages
-        </Button>
-        <Button variant="ghost" size="sm" onClick={() => go("type")}>
-          Or fine-tune it <ArrowRight />
-        </Button>
-      </div>
-    </div>
   )
 }
 

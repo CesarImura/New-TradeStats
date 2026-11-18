@@ -172,7 +172,7 @@ export function WidgetLibrary({
   // The flyout opens against the whole left sidebar (the aside), not just this list.
   const edge = useRef<HTMLElement | null>(null)
   useEffect(() => {
-    edge.current = root.current?.closest("aside") ?? root.current
+    edge.current = root.current?.closest("aside,[data-editor-panel]") ?? root.current
   })
   const drag = (type: string | null, opts?: AddOptions) => {
     setDragging(!!type)
@@ -228,7 +228,7 @@ export function WidgetLibrary({
         onClose={() => (setPicked(null), setGroup(null))}
         anchor={edge}
         side="right"
-        width={380}
+        width={378}
         title={def ? def.name : group}
       >
         <div className={cn("transition-opacity duration-150", dragging && "pointer-events-none opacity-30")}>

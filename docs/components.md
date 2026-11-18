@@ -394,3 +394,14 @@ Um arquivo de componente passa de ~600 linhas? Divida por responsabilidade, sem 
 - Tons (iguais ao Figma Admin / Logo): `brand` (texto branco, fundo escuro, oficial), `brand-light` (texto preto, fundo claro) e os de uma cor `white`, `gray` (#757575) e `black`, chapados na marca e no texto.
 - Proibido: o "T" chapado laranja (`M2 3h20v6h-7v12H9V9H2z`) e a palavra "TradeStats" na interface.
 - Ícone da aba: `src/app/icon.svg` e `src/app/favicon.ico`, gerados do mesmo "T".
+
+## Editor · Style (16/11, Figma "Editor · 2 Style", 15 telas)
+
+- O grupo do rail se chama **Style** e tem cinco abas: Brand, Theme, Layout, Type, Background (`designTabs` + `merge` em `design-workspace.tsx`; o id interno da aba Theme continua `look`, e `layout` é novo). Links antigos (`?step=look`) seguem valendo.
+- **Um dono para cada configuração.** Brand: nome, logo, cores, destaque, lucro e perda (e "Import from your website"). Theme: personalidade (template, fontes, cantos, botões, sombra, bordas, rótulos, peso do título, estilo de widget) e Dark/Light. Layout: menu, moldura, widgets em cards ou abertos, espaçamento. Um tema nunca grava espaçamento (`lookPatch`), só o layout (`layoutPatch`).
+- **Cards compartilhados com o setup:** `fields/choice-cards.tsx` (`SelectionCard`, `PillSegmented`) e `presets.ts` (`THEMES`, `LAYOUTS`, `layoutOf`, `layoutPatch`, `lookPatch`, `matchLook`). Setup e editor usam as mesmas ilustrações (`/onboarding/look-*.webp`, `layout-*.webp`). Gap do card = 6 px.
+- **Theme:** Mode no topo, três cards, duas variações (chips). Estado **Custom** (ponto laranja + Reset) quando alguma configuração do tema foi mudada à mão (`matchLook` não acha look). Trocar de tema pede confirmação só em Custom (`useConfirmSwitch(name, apply, confirm)`); fora disso aplica na hora com Undo. A caixa lista o que é refeito e o que fica.
+- **Type:** pares de fonte como cards com o "Aa" na fonte do título. **Background:** quatro cards com a cena (`BackgroundArt`).
+- **Erros:** logo acima de 2 MB e imagem de fundo com menos de 1600 px de largura mostram um `Callout` vermelho (não só toast).
+- **Busca:** abas com conteúdo próprio (Theme, Layout) declaram `finds` (linhas que abrem a aba); os grupos mostram "Aba · Grupo".
+- **Clique no preview:** o menu abre Layout (`STEP_OF.nav`), títulos e rótulos abrem Type, o fundo abre Background.

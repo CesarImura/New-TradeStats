@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useId, useRef, useState } from "react"
-import { ArrowRight, Check, ChevronDown, GraduationCap, Image as ImageIcon, LayoutGrid, Monitor, Palette, PanelLeftIcon, RotateCcw, Search, Smartphone, Tablet, TriangleAlert, Type, UserPlus, Wand2, X } from "@/components/icons"
+import { ArrowRight, Check, ChevronDown, ChevronRight, GraduationCap, Image as ImageIcon, LayoutGrid, Monitor, Palette, PanelLeftIcon, RotateCcw, Search, Smartphone, Tablet, TriangleAlert, Type, UserPlus, Wand2, X } from "@/components/icons"
 import type { ThemeDraft } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
 import { AdminButton, AdminSegmentGroup } from "@/components/admin/ui"
@@ -32,7 +32,9 @@ export const SECTION_LABEL = "t-mono-label-s text-a-text-3"
 
 /** `hidden`: not in the rail, but its settings are still found by search (Design's widget style, which lives in Pages). */
 /** `search`: the header's search looks in this section's own content (Pages: widgets), with this placeholder, instead of in every setting. */
-export type SettingsTab = { id: string; label: string; icon: React.ReactNode; blurb?: string; heading?: string; groups?: SettingsGroup[]; content?: React.ReactNode; hidden?: boolean; search?: string }
+/** `finds`: what the search can find in a section that draws its own content (Theme, Layout): a row that opens the section. */
+export type SettingsFind = { title: string; words: string }
+export type SettingsTab = { id: string; label: string; icon: React.ReactNode; blurb?: string; heading?: string; groups?: SettingsGroup[]; content?: React.ReactNode; hidden?: boolean; search?: string; finds?: SettingsFind[] }
 
 /** The theme's settings, by section. Hosts add their own groups (identity, dark colours) and sections around these. */
 export const THEME_GROUPS = {
@@ -41,7 +43,7 @@ export const THEME_GROUPS = {
     { title: "Profit and loss", fields: ["trading"], keys: ["trading"], words: "profit loss green red trading numbers" },
   ],
   type: [
-    { title: "Fonts", fields: ["fonts"], keys: ["fonts"], words: "font pair typeface heading text serif mono" },
+    { title: "Fonts", fields: ["fonts"], keys: ["fonts"], words: "font pair typeface heading text serif mono technical editorial bold elegant desk gallery characterful neutral" },
     { title: "Headings and labels", fields: ["heading-weight", "labels"], keys: ["headingWeight", "labelStyle"], words: "weight bold uppercase caps small labels" },
     // Headline numbers are set with the widgets (they only show there); Type points to them.
     { title: "Numbers in widgets", fields: ["numbers-link"], keys: [], words: "figures numbers headline mono display marked font" },
@@ -93,11 +95,12 @@ export const THEME_GROUPS = {
  * the admin's Design, the setup wizard and the library's theme editor all
  * build their tabs from here, so they look and work the same.
  */
-export type SectionId = "brand" | "look" | "type" | "shape" | "widgets" | "page" | "menu" | "pages" | "course" | "join"
+export type SectionId = "brand" | "look" | "layout" | "type" | "shape" | "widgets" | "page" | "menu" | "pages" | "course" | "join"
 /** `heading`: the panel's title when it says more than the rail's label (Widgets: it changes every widget at once). */
 const SECTIONS: { id: SectionId; label: string; icon: React.ReactNode; blurb?: string; heading?: string; search?: string }[] = [
   { id: "brand", label: "Brand", icon: <Palette />, blurb: "Your name, logo and colours." },
-  { id: "look", label: "Look", icon: <Wand2 />, blurb: "A ready-made look to start from. Your colours and logo stay." },
+  { id: "look", label: "Theme", icon: <Wand2 />, blurb: "A ready-made theme to start from. Your colours and logo stay." },
+  { id: "layout", label: "Layout", icon: <LayoutGrid />, blurb: "How your platform is laid out: menu, page frame, widgets and spacing." },
   { id: "type", label: "Type", icon: <Type /> },
   { id: "widgets", label: "Widgets", icon: <LayoutGrid />, heading: "Widgets · all widgets", blurb: "Applies to every widget, on every page. To move or change one widget, use Widgets." },
   { id: "pages", label: "Widgets", icon: <LayoutGrid />, blurb: "Arrange each page and edit one widget at a time.", search: "Search widgets…" },
@@ -114,7 +117,7 @@ const DEFAULT_GROUPS: Partial<Record<SectionId, SettingsGroup[]>> = { brand: THE
  * some (the wizard's Fine-tune), and each part can give its groups, its own
  * content or a different line under the title.
  */
-export function designTabs(parts: Partial<Record<SectionId, Pick<SettingsTab, "groups" | "content" | "blurb">>>, only?: SectionId[]): SettingsTab[] {
+export function designTabs(parts: Partial<Record<SectionId, Pick<SettingsTab, "groups" | "content" | "blurb" | "finds">>>, only?: SectionId[]): SettingsTab[] {
   return SECTIONS.filter((s) => !only || only.includes(s.id)).map((s) => ({ id: s.id, label: s.label, icon: s.icon, blurb: s.blurb, heading: s.heading, search: s.search, groups: DEFAULT_GROUPS[s.id], ...parts[s.id] }))
 }
 
@@ -191,6 +194,7 @@ export function SettingsPanel({
   bodyProps,
   merge,
   collapsed,
+  floating,
   onRail,
   caption,
 }: {
@@ -198,6 +202,8 @@ export function SettingsPanel({
   caption?: string
   /** Only the icon rail shows (narrow screens); the host opens the panel again from `onRail`. */
   collapsed?: boolean
+  /** The editor's layout (Figma 16/11): the rail is a column of the host's grid and the panel a card floating over the canvas. */
+  floating?: boolean
   /** A rail icon was clicked (with which section it opens and whether it was already open). */
   onRail?: (id: string, wasOpen: boolean) => void
   /** Sections shown as one icon in the rail, with their own pills under the title (Theme: Brand, Look, Type, Background). */
@@ -220,6 +226,7 @@ export function SettingsPanel({
   const ownSearch = !!current.search
   const term = ownSearch ? "" : q.trim().toLowerCase()
   const found = term ? tabs.flatMap((t) => (t.groups ?? []).filter((g) => `${t.label} ${g.title} ${g.words}`.toLowerCase().includes(term)).map((g) => [t, g] as const)) : []
+  const foundIn = term ? tabs.flatMap((t) => (t.finds ?? []).filter((f) => `${t.label} ${f.title} ${f.words}`.toLowerCase().includes(term)).map((f) => [t, f] as const)) : []
   const grad = `rail-${useId().replace(/:/g, "")}`
   // The rail: the merged sections as one icon, where the first of them stands.
   const visible = tabs.filter((t) => !t.hidden)
@@ -227,9 +234,9 @@ export function SettingsPanel({
   const sub = merge && merge.of.includes(current.id) && !term ? tabs.filter((t) => merge.of.includes(t.id)) : null
 
   return (
-    <div className="flex min-h-0 flex-1">
+    <div className={floating ? "contents" : "flex min-h-0 flex-1"}>
       {/* The sections, as an icon rail: always in view, one click each. */}
-      <nav aria-label="Settings" className={cn("flex w-16 shrink-0 flex-col items-center gap-3 overflow-y-auto border-r border-a-border p-3 [scrollbar-width:none]", RAIL_TONE)}>
+      <nav aria-label="Settings" className={cn("flex w-16 shrink-0 flex-col items-center gap-3 overflow-y-auto p-3 [scrollbar-width:none]", !floating && "border-r border-a-border", RAIL_TONE)}>
         {/* The open section's icon is drawn in the orange gradient (Carbon icons are filled shapes in a 32 box). */}
         <svg aria-hidden width="0" height="0" className="absolute">
           <linearGradient id={grad} x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
@@ -272,7 +279,16 @@ export function SettingsPanel({
         })}
       </nav>
 
-      <div className={cn("flex min-w-0 flex-1 flex-col", collapsed && "hidden")}>
+      <div
+        data-editor-panel
+        className={cn(
+          "flex min-w-0 flex-1 flex-col",
+          // A card over the canvas: the rail's colour, a fine border, the float shadow and a fade where it scrolls on.
+          floating &&
+            "absolute top-5 bottom-5 left-[92px] z-20 w-[336px] flex-none overflow-hidden rounded-a-lg border border-a-border bg-a-page shadow-[0_8px_24px_-4px_rgb(0_0_0/0.6)] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-14 after:bg-gradient-to-t after:from-a-page after:to-transparent",
+          collapsed && "hidden",
+        )}
+      >
         {/* The section's name (Heading S) with a caption of what is happening to the draft, or a search across every section. */}
         <div className={cn("flex shrink-0 flex-col gap-1 px-5 pt-5", sub ? "pb-3" : "pb-4")}>
           <div className="flex min-h-[22px] items-center gap-2">
@@ -328,13 +344,31 @@ export function SettingsPanel({
             ))}
           </div>
         )}
-        <div aria-hidden className="h-px shrink-0 bg-a-border-subtle" />
+        {current.id !== "pages" && <div aria-hidden className="h-px shrink-0 bg-a-border-subtle" />}
         <TabContext.Provider value={(id) => (onTab(id), setQ(""), setSearching(false))}>
         <PanelSearch.Provider value={ownSearch ? q.trim().toLowerCase() : ""}>
         <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" {...bodyProps}>
           {term ? (
-            found.length ? (
-              found.map(([t, g]) => <Group key={`${t.id}/${g.title}`} group={g} section={t.label} draft={draft} onReset={onReset} fields={fields} />)
+            found.length || foundIn.length ? (
+              <>
+                {foundIn.length > 0 && (
+                  <div className="grid gap-1 px-4 pt-3 pb-2">
+                    {foundIn.map(([t, f]) => (
+                      <button
+                        key={`${t.id}/${f.title}`}
+                        type="button"
+                        onClick={() => (onTab(t.id), setQ(""), setSearching(false))}
+                        className={cn("flex h-12 w-full items-center gap-3 rounded-a-md px-3 text-left hover:bg-a-hover", FOCUS)}
+                      >
+                        <span className="min-w-0 flex-1 truncate t-body-m text-a-text">{f.title}</span>
+                        <span className="shrink-0 t-caption text-a-text-3">{t.label}</span>
+                        <ChevronRight className="size-3.5 shrink-0 text-a-text-3" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {found.map(([t, g]) => <Group key={`${t.id}/${g.title}`} group={g} section={t.label} draft={draft} onReset={onReset} fields={fields} />)}
+              </>
             ) : (
               <p className="px-5 py-6 t-body-m text-muted-foreground">No setting matches “{q}”.</p>
             )

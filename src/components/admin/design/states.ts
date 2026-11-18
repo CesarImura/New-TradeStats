@@ -18,6 +18,6 @@ export const CHIP_IDLE = "border-a-border text-a-text-2 hover:border-a-border-st
 export const CHIP_ON = "border-a-border-active bg-a-accent-soft text-a-text"
 export const chip = (on: boolean) => `${CHIP} ${on ? CHIP_ON : CHIP_IDLE}`
 
-/** A colour swatch: grows a little on hover; the chosen one gets an orange ring outside it. */
+/** A colour swatch: grows a little on hover; the chosen one gets a white ring outside it (Figma 16/11). */
 /** `outline-solid` is needed: the swatch buttons carry `outline-none`, which would otherwise hide this outline. */
-export const SWATCH_ON = "outline-solid outline-2 outline-offset-2 outline-a-border-active"
+export const SWATCH_ON = "outline-solid outline-2 outline-offset-2 outline-a-text"

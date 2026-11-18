@@ -12,7 +12,7 @@ import type { Detail, WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
 import { useDesign } from "../fields/design-fields"
 import { EASE } from "../states"
-import { TILE_IDLE, TILE_ON } from "./option-art"
+import { TILE_ON } from "./option-art"
 
 /*
  * Widget thumbnails: the gallery, "On this page", a widget's details and the layouts in the inspector all draw the
@@ -184,10 +184,10 @@ export function ThumbCard({
       className={cn(
         "group/card grid rounded-a-lg border text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.985] motion-reduce:active:scale-100",
         EASE,
-        "p-2",
+        "p-3",
         // The small tiles of the inspector keep the art closer to the name.
         tight ? "gap-2" : "gap-3",
-        off ? "border-transparent opacity-55 active:scale-100" : cn("cursor-pointer", selected ? TILE_ON : TILE_IDLE),
+        off ? "border-transparent opacity-55 active:scale-100" : cn("cursor-pointer", selected ? TILE_ON : "border-transparent bg-a-raised hover:bg-a-hover"),
         className,
       )}
     >

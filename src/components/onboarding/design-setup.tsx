@@ -9,13 +9,14 @@ import { AdminButton, AdminField, adminControl } from "@/components/admin/ui"
 import { useDraftEditor } from "@/components/admin/design/editor/editor-shell"
 import { ColorPicker } from "@/components/admin/design/fields/controls"
 import { LOOKS } from "@/components/admin/design/looks"
+import { LAYOUTS, THEMES, layoutOf, layoutPatch, type Layout } from "@/components/admin/design/presets"
+import { PillSegmented, SelectionCard } from "@/components/admin/design/fields/choice-cards"
 import { updateCommunity, type CustomCommunity } from "@/lib/data/communities"
 import { useAccount, useCustomCommunities } from "@/lib/data/use-communities"
 import { pictureFrom } from "@/lib/images"
 import { mergeOverrides, type Overrides } from "@/lib/prototype-store"
 import { onColor } from "@/lib/theme/derive"
 import { resolveCoach, resolveTheme } from "@/lib/theme/resolve"
-import { TEMPLATES } from "@/lib/theme/templates"
 import type { CoachTheme, Mode } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { SignupFrame, SignupTitle, ghostOut } from "./signup-frame"
@@ -276,7 +277,7 @@ function Swatch({ color, checked, onClick, label }: { color?: string; checked: b
       onClick={onClick}
       className={cn(
         "relative size-6 shrink-0 rounded-full outline-none transition-[box-shadow,scale] duration-150 ease-out after:absolute after:-inset-2 after:content-[''] hover:scale-110 focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97]",
-        checked && "outline-solid outline-2 outline-offset-2 outline-a-border-active",
+        checked && "outline-solid outline-2 outline-offset-2 outline-a-text",
       )}
       style={{ background: color }}
     />
@@ -321,13 +322,6 @@ function ColorInput({ value, onChange, label, className }: { value: string; onCh
 
 // ---------- 02 Look
 
-const THEMES = [
-  { id: "terminal", name: "Terminal", text: "Dense, data first, dark", img: "/onboarding/look-terminal.webp" },
-  { id: "atelier", name: "Atelier", text: "Editorial, calm, light", img: "/onboarding/look-atelier.webp" },
-  { id: "pulse", name: "Pulse", text: "Bold, community first", img: "/onboarding/look-pulse.webp" },
-] as const
-
-
 function LookStep({ theme, change, onBack, onNext }: { theme: CoachTheme; change: Change; onBack: () => void; onNext: () => void }) {
   return (
     <StepCard title="Your look" text="Pick a theme, light or dark. Backgrounds and more are in Design." onBack={onBack} next={onNext}>
@@ -367,79 +361,7 @@ function LookStep({ theme, change, onBack, onNext }: { theme: CoachTheme; change
   )
 }
 
-/** Admin / Segmented (Figma: 36 px, padding 2, items 30 px; the active one on the panel fill). Radio semantics, arrows move. */
-function PillSegmented<T extends string>({ value, onChange, options, label, className, style }: { value: T; onChange: (v: T) => void; options: readonly { value: T; label: string }[]; label: string; className?: string; style?: React.CSSProperties }) {
-  return (
-    <div
-      role="radiogroup"
-      aria-label={label}
-      style={style}
-      className={cn("inline-flex h-9 shrink-0 items-center gap-0.5 rounded-a-md border border-a-border p-0.5", className)}
-      onKeyDown={(e) => {
-        if (!["ArrowRight", "ArrowLeft"].includes(e.key)) return
-        e.preventDefault()
-        const i = options.findIndex((o) => o.value === value)
-        const next = options[(i + (e.key === "ArrowRight" ? 1 : options.length - 1)) % options.length]
-        onChange(next.value)
-        ;(e.currentTarget.querySelector(`[data-value="${next.value}"]`) as HTMLElement | null)?.focus()
-      }}
-    >
-      {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          role="radio"
-          data-value={o.value}
-          aria-checked={o.value === value}
-          tabIndex={o.value === value ? 0 : -1}
-          onClick={() => onChange(o.value)}
-          className={cn("h-[30px] rounded-a-sm px-3 t-body-m outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:h-10", o.value === value ? "bg-a-panel text-a-text" : "text-a-text-2 hover:text-a-text")}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-/** Admin / Selection card (Figma _Base Selection card): the picture, the title with its radio, a line. Active = accent edge on the raised fill. */
-function SelectionCard({ checked, onSelect, title, description, img, radius }: { checked: boolean; onSelect: () => void; title: string; description: string; img: string; radius: string }) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={checked}
-      onClick={onSelect}
-      className={cn(
-        "flex min-w-0 flex-col gap-3 rounded-a-lg border p-2 text-left outline-none transition-[background-color,border-color,scale] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.99]",
-        checked ? "border-a-border-active bg-a-raised" : "border-a-border hover:border-a-border-strong",
-      )}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element -- static thumbnail exported from Figma */}
-      <img src={img} alt="" className={cn("h-[100px] w-full border border-a-border-subtle object-cover object-left-top", radius)} />
-      <span className="flex items-center gap-2">
-        <span className="min-w-0 flex-1 truncate t-body-m-medium text-a-text">{title}</span>
-        <span aria-hidden className={cn("grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-150", checked ? "border-a-border-active" : "border-a-border-strong")}>
-          <span className={cn("size-2 rounded-full bg-a-accent transition-transform duration-200 ease-out motion-reduce:transition-none", checked ? "scale-100" : "scale-0")} />
-        </span>
-      </span>
-      <span className="t-body-m text-a-text-2">{description}</span>
-    </button>
-  )
-}
-
 // ---------- 03 Layout
-
-type Layout = { id: string; name: string; text: string; img: string; nav: "side" | "top"; floating: boolean; set: "cards" | "open"; density?: CoachTheme["density"] }
-const LAYOUTS: Layout[] = [
-  { id: "side", name: "Side menu · Cards", text: "Menu on the left, widgets in cards", img: "/onboarding/layout-side.webp", nav: "side", floating: false, set: "cards" },
-  { id: "top", name: "Top menu · Cards", text: "Menu in the header, widgets in cards", img: "/onboarding/layout-top.webp", nav: "top", floating: false, set: "cards" },
-  { id: "floating", name: "Floating · Compact", text: "Page floats on the menu, dense widgets", img: "/onboarding/layout-floating.webp", nav: "side", floating: true, set: "cards", density: "compact" },
-  { id: "blended", name: "Top menu · Blended", text: "Header menu, open widgets, airy", img: "/onboarding/layout-blended.webp", nav: "top", floating: false, set: "open", density: "airy" },
-]
-
-/** The layout the theme matches: the menu, whether the page floats, and how widgets sit. */
-const layoutOf = (t: CoachTheme) => LAYOUTS.find((l) => l.nav === t.nav.layout && l.floating === (t.nav.frame === "floating") && l.set === (t.widgetSet === "open" ? "open" : "cards"))?.id
 
 /** Ready-made profit and loss pairs (Figma Presets). */
 const PAIRS = [
@@ -456,14 +378,7 @@ function LayoutStep({ theme, change, live, onBack, onNext }: { theme: CoachTheme
   // A ready-made pair swaps the page like the other picks; a colour being picked or typed shows live.
   const write = (p: string, l: string) => change({ theme: { trading: { profit: p, loss: l } } }, "trading")
   const writeLive = (p: string, l: string) => live({ theme: { trading: { profit: p, loss: l } } }, "trading")
-  const pick = (l: Layout) => {
-    // Cards layouts go back to the look's own spacing; the other two set theirs.
-    const density = l.density ?? LOOKS.find((x) => x.template === theme.template)?.set.density ?? theme.density
-    // A header menu always names its pages (Pulse's icon-only rail reads as icons with no names up there); a side menu
-    // goes back to the look's own style.
-    const style = l.nav === "top" ? "labels" : (TEMPLATES[theme.template]?.theme.nav.style ?? theme.nav.style)
-    change({ theme: { nav: { layout: l.nav, style, frame: l.floating ? "floating" : "classic" }, widgetSet: l.set, density } }, "layout")
-  }
+  const pick = (l: Layout) => change({ theme: layoutPatch(l, theme) }, "layout")
 
   return (
     <StepCard title="Your layout" text="How your platform is laid out. You can change it later in Design." onBack={onBack} next={onNext} nextLabel="Finish">
@@ -501,7 +416,7 @@ function LayoutStep({ theme, change, live, onBack, onNext }: { theme: CoachTheme
                 onClick={() => write(p.profit, p.loss)}
                 className={cn(
                   "relative flex size-6 shrink-0 overflow-hidden rounded-full outline-none transition-[box-shadow,scale] duration-150 ease-out hover:scale-110 focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97]",
-                  on && "outline-solid outline-2 outline-offset-2 outline-a-border-active",
+                  on && "outline-solid outline-2 outline-offset-2 outline-a-text",
                 )}
               >
                 <span className="h-full flex-1" style={{ background: p.profit }} />

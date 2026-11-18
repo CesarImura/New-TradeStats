@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full">
         <TooltipProvider>{children}</TooltipProvider>
         {/* Above the tour pill and the prototype switch in the bottom right corner (QA 14/11). */}
-        <Toaster offset={{ bottom: "var(--admin-toast-bottom, 72px)", right: 24 }} mobileOffset={{ bottom: "var(--admin-toast-bottom, 72px)" }} />
+        <Toaster offset={{ bottom: "var(--admin-toast-bottom, 72px)", right: "var(--admin-toast-right, 24px)" }} mobileOffset={{ bottom: "var(--admin-toast-bottom, 72px)" }} />
       </body>
     </html>
   )

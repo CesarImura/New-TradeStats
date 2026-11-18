@@ -63,7 +63,7 @@ export function Flyout({
       role="dialog"
       aria-label={typeof title === "string" ? title : undefined}
       className={cn(
-        "fixed z-[45] flex flex-col overflow-hidden rounded-a-xl border border-a-border bg-a-panel text-foreground",
+        "fixed z-[45] flex flex-col overflow-hidden rounded-a-lg border border-a-border bg-a-page shadow-[0_8px_24px_-4px_rgb(0_0_0/0.6)] text-foreground",
         "animate-in fade-in-0 duration-150 ease-out motion-reduce:animate-none",
         side === "right" ? "slide-in-from-left-2" : "slide-in-from-right-2",
       )}
@@ -74,13 +74,13 @@ export function Flyout({
         left: side === "right" ? rect.right + gap : rect.left - gap - width,
       }}
     >
-      <div className="flex h-14 shrink-0 items-center gap-2 pr-3 pl-5">
+      <div className="flex h-14 shrink-0 items-center gap-2 pr-3 pl-6">
         <div className="min-w-0 flex-1 truncate t-body-l-medium">{title}</div>
         <Button variant="ghost" size="icon" aria-label="Close" title="Close (Esc)" onClick={onClose}>
           <X />
         </Button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{children}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{children}</div>
     </div>
   )
 }

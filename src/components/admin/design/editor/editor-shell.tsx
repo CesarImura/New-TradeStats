@@ -138,7 +138,7 @@ export function useDraftEditor(slug: string) {
  */
 export function EditorBar({
   slug,
-  title = "Design",
+  title,
   back,
   editor,
   guide,

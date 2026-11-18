@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useRef, useState } from "react"
+import { Callout } from "@/components/admin/ui"
 import { ArrowDown, ArrowUp, ImagePlus, Palette, Pencil, Trash2, X } from "@/components/icons"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -15,11 +16,12 @@ import { pictureFrom } from "@/lib/images"
 import { BACKDROPS, NAV_MIN_DIM } from "@/lib/theme/backdrops"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { TEMPLATES, TEMPLATE_IDS } from "@/lib/theme/templates"
-import { chartStyleOf, headerFormOf, widgetFinishOf, type CoachTheme, type NavFill, type NavMarker, type TemplateId } from "@/lib/theme/types"
+import { chartStyleOf, headerFormOf, widgetFinishOf, widgetSetOf, type CoachTheme, type NavFill, type NavMarker, type TemplateId } from "@/lib/theme/types"
 import { brandMenuReads, navFillOf } from "@/lib/theme/nav-fill"
 import { SelectOptions } from "@/components/kit/select-field"
 import { cn } from "@/lib/utils"
 import { BackgroundControl } from "./background-control"
+import { SelectionCard } from "./choice-cards"
 import { Field, More, Segmented, SliderField, Swatches } from "./controls"
 import { FixedFirst, HIDDEN_INPUT, menuRow, SWITCH_OFF, SortableMenu, SortHandle, SortHint, useSort } from "./menu-sort"
 import { AddPageButton, PageRow } from "./pages-field"
@@ -118,6 +120,67 @@ function TemplateField() {
   )
 }
 
+/**
+ * Import from your website (Figma Style · 13): the address, what to bring (colours, fonts, logo), then a result the coach reviews.
+ * In the prototype the site is not read: the choices come from a sample worked out from the address, and the line says so.
+ */
+function ImportSiteField() {
+  const { theme, change } = useDesign()
+  const [url, setUrl] = useState("")
+  const [what, setWhat] = useState({ colours: true, fonts: true })
+  const [state, setState] = useState<"idle" | "loading" | "done">("idle")
+  const host = url.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "")
+  const run = () => {
+    if (!host.includes(".")) return
+    setState("loading")
+    window.setTimeout(() => {
+      const h = [...host].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7)
+      if (what.colours) {
+        const primary = BRAND_COLORS[h % BRAND_COLORS.length]
+        change({ theme: { primary, primaryForeground: onColor(primary), highlight: HIGHLIGHT_COLORS[h % HIGHLIGHT_COLORS.length] } }, "import")
+      }
+      if (what.fonts) {
+        const p = FONT_PAIRS[h % FONT_PAIRS.length]
+        change({ theme: { fonts: { heading: p.heading, body: p.body, label: p.label } } }, "import")
+      }
+      setState("done")
+    }, 700)
+  }
+  return (
+    <div data-field="import-site" className="grid gap-3">
+      <Field id="import-site" label="Website" hint="Colours and fonts">
+        <div className="flex items-center gap-2">
+          <Input aria-label="Website" placeholder="yourcoaching.com" value={url} onChange={(e) => (setUrl(e.target.value), setState("idle"))} onKeyDown={(e) => e.key === "Enter" && run()} className="min-w-0 flex-1" />
+          <Button variant="outline" onClick={run} disabled={!host.includes(".") || state === "loading"}>
+            {state === "loading" ? "Reading…" : "Import"}
+          </Button>
+        </div>
+      </Field>
+      <div role="group" aria-label="What to import" className="flex flex-wrap gap-2">
+        {(["colours", "fonts"] as const).map((k) => (
+          <button
+            key={k}
+            type="button"
+            aria-pressed={what[k]}
+            onClick={() => (setWhat({ ...what, [k]: !what[k] }), setState("idle"))}
+            className={cn("h-9 rounded-full border px-4 t-body-m capitalize outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus", what[k] ? "border-a-border-active bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:border-a-border-strong")}
+          >
+            {k}
+          </button>
+        ))}
+      </div>
+      {state === "done" && (
+        <Callout tone="success" aria-live="polite">
+          Imported {what.colours && "a brand and highlight colour"}
+          {what.colours && what.fonts && " and "}
+          {what.fonts && "a font pair"} from {host}. Review them below. (Sample import in the prototype.)
+        </Callout>
+      )}
+      {state === "idle" && !host && <span className="t-caption text-a-text-3">Your site&apos;s colours and fonts are a good start. You review them before they apply.</span>}
+    </div>
+  )
+}
+
 function NameField() {
   const { coach, change } = useDesign()
   return (
@@ -134,7 +197,11 @@ function LogoField() {
   const onLogo = (logo: string | undefined) => change({ content: { logo } }, "logo")
   const pickColor = (c: string) => change({ theme: { primary: c, primaryForeground: onColor(c) } }, "primary")
 
+  const [logoError, setLogoError] = useState<string | null>(null)
   const onFile = async (file: File) => {
+    // Figma Style · 14: a file over 2 MB is refused with the limit (the picture is kept small anyway).
+    if (file.size > 2 * 1024 * 1024) return setLogoError(`That file is ${(file.size / 1048576).toFixed(1)} MB. Use a PNG or SVG under 2 MB.`)
+    setLogoError(null)
     let small: string
     try {
       small = await pictureFrom(file, { max: 256, type: "image/png", keep: ["svg"] })
@@ -185,6 +252,7 @@ function LogoField() {
           }}
         />
       </div>
+      {logoError && <Callout tone="danger" role="alert">{logoError}</Callout>}
       {suggested.length > 0 && (
         <div className="flex items-center gap-2 rounded-[4px] bg-muted p-2 t-caption">
           <span className="text-muted-foreground">From your logo</span>
@@ -244,22 +312,24 @@ function FontsField() {
   return (
     <div data-field="fonts" className="grid gap-1.5">
       <span className="t-caption-medium text-a-text-2">Font pair</span>
-      <div className="grid grid-cols-2 gap-2">
+      {/* Figma Style · 09: each pair as a card that shows its heading font, the pair's name and the fonts in it. */}
+      <div role="radiogroup" aria-label="Font pair" className="grid grid-cols-2 gap-2">
         {FONT_PAIRS.map((p) => {
           // The label font too: two pairs share a heading and body and differ only in their labels.
           const on = theme.fonts.heading === p.heading && theme.fonts.body === p.body && theme.fonts.label === p.label
           return (
-            <button
+            <SelectionCard
               key={p.name}
-              onClick={() => change({ theme: { fonts: { heading: p.heading, body: p.body, label: p.label } } }, "fonts")}
-              aria-pressed={on}
-              className={cn("grid gap-1 p-2.5 text-left", card(on))}
-            >
-              <span className="text-xl leading-none" style={{ fontFamily: FONT_LIBRARY[p.heading].css }}>Aa</span>
-              <span className="truncate t-caption text-muted-foreground" style={{ fontFamily: FONT_LIBRARY[p.body].css }}>
-                {p.name} · {FONT_LIBRARY[p.heading].label}
-              </span>
-            </button>
+              checked={on}
+              onSelect={() => change({ theme: { fonts: { heading: p.heading, body: p.body, label: p.label } } }, "fonts")}
+              title={p.name}
+              description={FONT_LIBRARY[p.heading].label === FONT_LIBRARY[p.body].label ? FONT_LIBRARY[p.heading].label : `${FONT_LIBRARY[p.heading].label} · ${FONT_LIBRARY[p.body].label}`}
+              media={
+                <span aria-hidden className="grid h-[69px] place-items-center rounded-a-md bg-a-sunk text-[28px] leading-8 text-a-text" style={{ fontFamily: FONT_LIBRARY[p.heading].css }}>
+                  Aa
+                </span>
+              }
+            />
           )
         })}
       </div>
@@ -458,7 +528,7 @@ function BackgroundField() {
 function NavLayoutField() {
   const { theme, change } = useDesign()
   return (
-    <Field id="nav-layout" label="Menu position">
+    <Field id="nav-layout" label="Menu">
       <Segmented
         label="Menu position"
         value={theme.nav.layout}
@@ -492,7 +562,7 @@ function NavStyleField() {
 function NavFrameField() {
   const { theme, change } = useDesign()
   return (
-    <Field id="nav-frame" label="Menu frame" hint={theme.nav.frame === "floating" ? "Pages float on the menu's colour" : "Menu and page are one surface"}>
+    <Field id="nav-frame" label="Page frame" hint={theme.nav.frame === "floating" ? "Pages float on the menu's colour" : "Menu and page are one surface"}>
       <Segmented
         label="Menu frame"
         value={theme.nav.frame ?? "classic"}
@@ -500,6 +570,24 @@ function NavFrameField() {
         options={[
           { value: "classic", label: "Classic" },
           { value: "floating", label: "Floating" },
+        ]}
+      />
+    </Field>
+  )
+}
+
+/** How widgets sit on the page: one card each, or open on the page (Blended). Part of Layout; the card surface (raised, grey, outline) is Widgets. */
+function LayoutWidgetsField() {
+  const { theme, change } = useDesign()
+  return (
+    <Field id="layout-widgets" label="Widgets">
+      <Segmented
+        label="Widgets"
+        value={widgetSetOf(theme) === "open" ? "open" : "cards"}
+        onChange={(widgetSet) => change({ theme: { widgetSet } }, "widget-set")}
+        options={[
+          { value: "cards", label: "Cards" },
+          { value: "open", label: "Blended" },
         ]}
       />
     </Field>
@@ -758,6 +846,7 @@ function WordingField() {
 
 const FIELDS: Record<string, () => React.ReactNode> = {
   template: TemplateField,
+  "import-site": ImportSiteField,
   name: NameField,
   logo: LogoField,
   primary: PrimaryField,
@@ -777,6 +866,7 @@ const FIELDS: Record<string, () => React.ReactNode> = {
   "header-form": HeaderFormField,
   "widget-finish": WidgetFinishField,
   "nav-layout": NavLayoutField,
+  "layout-widgets": LayoutWidgetsField,
   "nav-style": NavStyleField,
   "nav-logo": NavLogoField,
   "nav-frame": NavFrameField,

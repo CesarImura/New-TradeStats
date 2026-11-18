@@ -225,7 +225,7 @@ function StyleTab({
   const root = useRef<HTMLDivElement>(null)
   const panelEdge = useRef<HTMLElement | null>(null)
   useEffect(() => {
-    panelEdge.current = root.current?.closest("aside") ?? null
+    panelEdge.current = root.current?.closest("aside,[data-editor-panel]") ?? null
   })
   const header = widgetHeaderOf(theme, w.header)
   const own = w.style ?? {}
