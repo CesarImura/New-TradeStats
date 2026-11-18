@@ -77,7 +77,7 @@ function CallModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: bo
       title="Book a setup call"
       subtitle="30 minutes with someone from our team to go through your first steps."
       overlay="plain"
-      bodyClassName="gap-6 px-12 py-12"
+      bodyClassName="gap-6 px-6 py-6 sm:px-12 sm:py-12"
       footer={
         <>
           <AdminButton hierarchy="secondary" onClick={() => onOpenChange(false)}>
@@ -137,7 +137,7 @@ function SetupModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
       title="Have us set it up"
       subtitle="Our team builds the first version for you."
       overlay="plain"
-      bodyClassName="gap-5 px-12 py-12"
+      bodyClassName="gap-5 px-6 py-6 sm:px-12 sm:py-12"
       footer={
         <>
           <AdminButton hierarchy="secondary" onClick={() => onOpenChange(false)}>
