@@ -676,14 +676,15 @@ function useFlash(panel: React.RefObject<HTMLDivElement | null>, reveal: { field
     let id = requestAnimationFrame(() => {
       id = requestAnimationFrame(() => {
         const els = reveal.fields.flatMap((f) => [...(panel.current?.querySelectorAll<HTMLElement>(`[data-field="${f}"]`) ?? [])])
-        els[0]?.scrollIntoView({ behavior: "smooth", block: "center" })
+        const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        els[0]?.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "center" })
         for (const el of els)
           el.animate(
             [
               { outline: "2px solid var(--admin-color-border-active)", outlineOffset: "6px", borderRadius: "4px" },
               { outline: "2px solid transparent", outlineOffset: "6px", borderRadius: "4px" },
             ],
-            { duration: 1600, easing: "ease-in" },
+            { duration: still ? 600 : 1600, easing: "ease-out" },
           )
         if (reveal.fields[0]?.startsWith("menu-")) els[0]?.querySelector<HTMLInputElement>("input:not(:disabled)")?.select()
       })
