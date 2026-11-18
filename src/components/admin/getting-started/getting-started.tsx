@@ -2,12 +2,12 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
 import { CalendarDays, ChevronRight, FileText, GraduationCap, MessageCircle, Palette, Rocket, Store, Wallet, Wrench } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { AdminPageHeader, Callout, Panel, PanelHeader, TimelineStep } from "@/components/admin/ui"
 import { cn } from "@/lib/utils"
 import { GoLiveModal, LiveModal } from "./go-live"
+import { HelpPanels, type HelpKind } from "./help-panels"
 import { useSetupSteps } from "./use-setup-steps"
 import { useTourState } from "../tour/tour"
 import { TOURS, isTourId, type TourId } from "../tour/tours"
@@ -26,6 +26,7 @@ export function GettingStarted() {
   const { coach, base } = useCoach()
   const { steps, doneCount, total, current, community, skipped, allPutOff } = useSetupSteps()
   const [goLive, setGoLive] = useState(false)
+  const [help, setHelp] = useState<HelpKind | null>(null)
   // A tour left half way (Skip or Do it later): its item says where, and Resume goes back there (Figma 1066:1047).
   // One tour runs at a time; any other left half way was paused where it was (Flavio, 14/11).
   const { pausedAt } = useTourState()
@@ -84,12 +85,12 @@ export function GettingStarted() {
           <Panel>
             <PanelHeader title="Need a hand?" className="min-h-7" />
             <div className="flex flex-col gap-3">
-              {[
-                { icon: MessageCircle, label: "Chat with us" },
-                { icon: CalendarDays, label: "Book a setup call" },
-                { icon: Wrench, label: "Have us set it up" },
-              ].map(({ icon: Icon, label }) => (
-                <button key={label} type="button" onClick={() => toast(`${label}: opens our help in the real product.`)} className="group flex items-center gap-3 rounded-a-sm py-2 text-left t-body-m text-a-text outline-none transition-colors duration-150 hover:text-a-text-accent focus-visible:ring-2 focus-visible:ring-a-border-focus">
+              {([
+                { icon: MessageCircle, label: "Chat with us", kind: "chat" },
+                { icon: CalendarDays, label: "Book a setup call", kind: "call" },
+                { icon: Wrench, label: "Have us set it up", kind: "setup" },
+              ] as const).map(({ icon: Icon, label, kind }) => (
+                <button key={label} type="button" onClick={() => setHelp(kind)} className="group flex items-center gap-3 rounded-a-sm py-2 text-left t-body-m text-a-text outline-none transition-colors duration-150 hover:text-a-text-accent focus-visible:ring-2 focus-visible:ring-a-border-focus">
                   <Icon aria-hidden className="size-4 text-a-text-accent" />
                   <span className="flex-1">{label}</span>
                   <ChevronRight aria-hidden className="size-4 text-a-icon transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
@@ -99,6 +100,7 @@ export function GettingStarted() {
           </Panel>
         </div>
       </div>
+      <HelpPanels kind={help} onClose={() => setHelp(null)} />
       <GoLiveModal open={goLive} onOpenChange={setGoLive} />
       <LiveModal />
     </div>
