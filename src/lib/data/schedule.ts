@@ -42,6 +42,8 @@ export type CalEvent = {
 export type NewsItem = {
   id: string
   title: string
+  /** The short name on a calendar chip ("CPI"); the News tab uses the full title. */
+  short?: string
   country: "US" | "EU" | "UK" | "DE" | "JP"
   start: string
   impact: Impact
@@ -78,29 +80,20 @@ function seed(coach: Coach): Schedule {
   const perMonth = Object.fromEntries(coach.tiers.map((t, i) => [t.id, [2, 4, 8][i] ?? 2]))
   return {
     events: [
-      { id: "prep", kind: "live", title: "Morning market prep", start: "2025-11-03T08:45", minutes: 45, repeat: "weekly", tiers: [], signedUp: 58, streamed: true, reminders: ["10m"], host, description: "Levels, news and the plan for the day, before Europe gets going." },
-      { id: "nyo", kind: "live", title: "Live trading · NY open", start: "2025-11-03T15:30", minutes: 90, repeat: "weekly", tiers: [], signedUp: 41, streamed: true, reminders: ["1h", "10m"], host, description: "I trade the open live and talk through every decision. Questions in the chat." },
-      { id: "nyo-w", kind: "live", title: "Live trading · NY open", start: "2025-11-05T15:30", minutes: 90, repeat: "weekly", tiers: [], signedUp: 37, streamed: true, reminders: ["1h", "10m"], host },
-      { id: "qa", kind: "call", title: "Q&A call", start: "2025-11-04T18:00", minutes: 45, repeat: "weekly", tiers: [], signedUp: 34, streamed: false, reminders: ["1h"], host, description: "Bring your questions, or a trade you want to talk through." },
-      { id: "review", kind: "call", title: "Group trade review", start: "2025-11-07T17:00", minutes: 60, repeat: "weekly", tiers: upper, signedUp: 14, streamed: false, reminders: ["1h"], host, description: "Three student trades, reviewed on screen." },
-      { id: "ws1", kind: "workshop", title: "Workshop · Journaling that works", start: "2025-11-13T11:00", minutes: 90, repeat: "none", tiers: [], seats: 20, signedUp: 12, streamed: true, reminders: ["1d", "1h"], host, description: "How to journal so it actually changes your trading. Bring last week's trades." },
-      { id: "ws2", kind: "workshop", title: "Workshop · Prop firm rules, explained", start: "2025-11-20T16:00", minutes: 60, repeat: "none", tiers: upper, seats: 30, signedUp: 21, streamed: true, reminders: ["1d", "1h"], host, price: "€49" },
-      { id: "ws3", kind: "workshop", title: "Workshop · Building your first playbook", start: "2025-11-27T11:00", minutes: 90, repeat: "none", tiers: [], seats: 20, signedUp: 20, streamed: true, reminders: ["1d"], host },
+      { id: "nyo", kind: "live", title: "NY open, live trading", start: "2025-11-03T09:00", minutes: 90, repeat: "weekly", tiers: [], signedUp: 41, streamed: true, reminders: ["1d", "1h"], host, description: "I trade the open live and talk through every decision. Questions in the chat." },
+      { id: "nyo-th", kind: "live", title: "NY open, live trading", start: "2025-11-06T09:00", minutes: 90, repeat: "weekly", tiers: [], signedUp: 37, streamed: true, reminders: ["1d", "1h"], host },
+      { id: "review", kind: "call", title: "Group call: week review", start: "2025-11-05T15:00", minutes: 60, repeat: "weekly", tiers: upper, signedUp: 14, streamed: false, reminders: ["1h"], host, description: "Three student trades, reviewed on screen." },
+      { id: "ws1", kind: "workshop", title: "Workshop: order flow", start: "2025-11-13T13:00", minutes: 120, repeat: "none", tiers: [], seats: 20, signedUp: 12, streamed: true, reminders: ["1d", "1h"], host, description: "How to read the order book and footprint before you click." },
+      { id: "ws2", kind: "workshop", title: "Workshop: risk and sizing", start: "2025-11-20T13:00", minutes: 120, repeat: "none", tiers: upper, seats: 30, signedUp: 21, streamed: true, reminders: ["1d", "1h"], host },
     ],
     news: [
-      { id: "n1", title: "Non-farm payrolls", country: "US", start: "2025-10-31T14:30", impact: "high", forecast: "150K", previous: "142K", actual: "171K", noTrade: true, comment: "Flat 10 minutes before. Wait for the first 5-minute candle to close." },
-      { id: "n2", title: "US PPI", country: "US", start: "2025-11-11T14:30", impact: "medium", forecast: "0.2%", previous: "0.3%", noTrade: false },
-      { id: "n3", title: "US CPI", country: "US", start: "2025-11-12T14:30", impact: "high", forecast: "3.1%", previous: "3.2%", noTrade: true, comment: "No new positions from 14:20. Expect a fake first move; let it settle." },
-      { id: "n4", title: "ECB rate decision", country: "EU", start: "2025-11-13T14:15", impact: "high", forecast: "3.25%", previous: "3.50%", noTrade: true, comment: "Press conference at 14:45 moves EUR more than the decision itself." },
-      { id: "n5", title: "FOMC minutes", country: "US", start: "2025-11-13T20:00", impact: "medium", noTrade: false },
-      { id: "n6", title: "UK GDP", country: "UK", start: "2025-11-14T08:00", impact: "low", forecast: "0.2%", previous: "0.1%", noTrade: false },
-      { id: "n7", title: "US retail sales", country: "US", start: "2025-11-14T14:30", impact: "medium", forecast: "0.3%", previous: "0.6%", noTrade: false },
-      { id: "n8", title: "Fed chair speech", country: "US", start: "2025-11-18T16:00", impact: "high", noTrade: false },
-      { id: "n9", title: "German ifo", country: "DE", start: "2025-11-19T10:00", impact: "low", forecast: "86.1", previous: "85.7", noTrade: false },
-      { id: "n10", title: "US jobless claims", country: "US", start: "2025-11-20T14:30", impact: "low", forecast: "228K", previous: "231K", noTrade: false },
-      { id: "n11", title: "EU flash PMI", country: "EU", start: "2025-11-21T10:00", impact: "medium", forecast: "45.4", previous: "45.0", noTrade: false },
-      { id: "n12", title: "BoJ rate decision", country: "JP", start: "2025-11-26T04:00", impact: "medium", noTrade: false },
-      { id: "n13", title: "FOMC rate decision", country: "US", start: "2025-11-26T19:00", impact: "high", forecast: "4.25%", previous: "4.50%", noTrade: true, comment: "No trades from 18:50 until the press conference ends." },
+      { id: "n1", title: "CPI m/m", short: "CPI", country: "US", start: "2025-11-11T14:30", impact: "high", forecast: "0.3%", previous: "0.2%", noTrade: true, comment: "No new positions from 14:20. Expect a fake first move; let it settle." },
+      { id: "n2", title: "FOMC minutes", short: "FOMC", country: "US", start: "2025-11-12T20:00", impact: "high", noTrade: false },
+      { id: "n3", title: "Initial jobless claims", short: "Claims", country: "US", start: "2025-11-13T13:30", impact: "medium", forecast: "218K", previous: "221K", noTrade: false },
+      { id: "n4", title: "Non-farm payrolls", short: "NFP", country: "US", start: "2025-11-14T14:30", impact: "high", forecast: "180K", noTrade: true, comment: "Flat 10 minutes before. Wait for the first 5-minute candle to close." },
+      { id: "n5", title: "CPI m/m", short: "CPI", country: "US", start: "2025-11-18T14:30", impact: "high", forecast: "0.3%", previous: "0.3%", noTrade: true },
+      { id: "n6", title: "FOMC minutes", short: "FOMC", country: "US", start: "2025-11-19T20:00", impact: "high", noTrade: false },
+      { id: "n7", title: "Non-farm payrolls", short: "NFP", country: "US", start: "2025-11-21T14:30", impact: "high", forecast: "175K", previous: "180K", noTrade: true },
     ],
     availability: {
       week: { 1: [], 2: [{ from: "10:00", to: "12:00" }, { from: "14:00", to: "16:00" }], 3: [], 4: [{ from: "09:00", to: "12:00" }, { from: "15:00", to: "17:00" }], 5: [{ from: "13:00", to: "15:00" }], 6: [], 7: [] },
@@ -110,9 +103,11 @@ function seed(coach: Coach): Schedule {
       perMonth,
     },
     bookings: [
-      { id: "b1", start: "2025-11-11T10:00", minutes: 30, student: "Jonas Pereira", initials: "JP", question: "Scaling into winners: when is it too early?" },
-      { id: "b2", start: "2025-11-13T09:40", minutes: 30, student: "Mia Sørensen", initials: "MS", question: "My stops after the CPI week." },
-      { id: "b3", start: "2025-11-14T13:00", minutes: 30, student: `${DEMO_STUDENT.first} ${DEMO_STUDENT.last}`, initials: DEMO_STUDENT.initials, question: "Can we go through my last losing streak?" },
+      { id: "b1", start: "2025-11-12T11:00", minutes: 30, student: "Lena Ito", initials: "LI", question: "Can we go through my last 10 trades? I keep cutting winners early." },
+      { id: "b2", start: "2025-11-14T10:00", minutes: 30, student: "Alex Moreau", initials: "AM", question: "My stops after the CPI week." },
+      { id: "b3", start: "2025-11-13T09:30", minutes: 30, student: "Priya Nair", initials: "PN", question: "Scaling into winners: when is it too early?" },
+      { id: "b4", start: "2025-11-06T10:00", minutes: 30, student: "Mia Sørensen", initials: "MS", question: "Position sizing on the desk account." },
+      { id: "b5", start: "2025-11-21T14:00", minutes: 30, student: "Leo Marsh", initials: "LM", question: "Can we go through my last losing streak?" },
     ],
   }
 }
@@ -195,7 +190,7 @@ export function occurrences(events: CalEvent[], from: Date, to: Date): Item[] {
 
 export function itemsBetween(s: Schedule, from: Date, to: Date, opts: { bookings: "all" | string | "none" }): Item[] {
   const news = s.news
-    .map((n) => ({ key: n.id, kind: "news" as const, title: n.title, start: at(n.start), end: addMinutes(at(n.start), 15), news: n }))
+    .map((n) => ({ key: n.id, kind: "news" as const, title: n.short ?? n.title, start: at(n.start), end: addMinutes(at(n.start), 15), news: n }))
     .filter((i) => i.start >= startOfDay(from) && i.start < to)
   const bookings =
     opts.bookings === "none"

@@ -39,10 +39,12 @@ const more = (i: Item) => `, ${KIND_LABEL[i.kind]}, ${format(i.start, "EEEE d MM
 function EventBlock({ item, onSelect, className, style }: { item: Item; onSelect: (i: Item, el?: HTMLElement) => void; className?: string; style?: React.CSSProperties }) {
   // A 30 minute slot is 24px tall: only the title fits (Figma 557:26777).
   const short = typeof style?.height === "number" && style.height < 44
+  // Short chips read as in the Figma: "CPI · 14:30" for news and "Lena Ito, 11:00" for a 1:1; the title alone elsewhere.
+  const label = !short ? item.title : item.kind === "news" ? `${item.title} · ${hhmm(item.start)}` : item.kind === "one-on-one" ? `${item.title.replace(/^1:1 · /, "")}, ${hhmm(item.start)}` : item.title
   return (
     <button type="button" title={`${hhmm(item.start)} ${item.title}`} onClick={(e) => (e.stopPropagation(), onSelect(item, e.currentTarget))} style={style}
       className={cn("absolute flex min-w-0 flex-col items-start overflow-hidden rounded-a-sm border-l-2 px-2 text-left outline-none transition-[filter] duration-200 hover:brightness-125 focus-visible:ring-2 focus-visible:ring-a-border-focus", short ? "justify-center py-0" : "gap-0.5 py-1.5", TONE[item.kind], className)}>
-      <span className="w-full truncate t-caption text-a-text">{item.title}</span>
+      <span className="w-full truncate t-caption text-a-text">{label}</span>
       {!short && <span className="w-full truncate t-micro text-a-text-2">{meta(item)}</span>}
       <span className="sr-only">{more(item)}</span>
     </button>
