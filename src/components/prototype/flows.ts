@@ -150,5 +150,5 @@ export const PROTO_AREAS: ProtoArea[] = [
   },
 ]
 
-/** Slug of the community used by the start page's quick links. */
-export const PROTO_DEFAULT_SLUG = "northline"
+/** Community used by the start page quick links: Kairo FX, the coach the Figma screens show. */
+export const PROTO_DEFAULT_SLUG = "kairo"

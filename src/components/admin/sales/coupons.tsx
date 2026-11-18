@@ -9,10 +9,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { isFreeTier, useTiers } from "@/lib/data/access"
 import { COUPONS, couponEnded, couponLabel, type Coupon } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
+import { NOW } from "@/lib/data/schedule"
 import { useCommunityData } from "../kit"
 import { AdminButton, AdminField, AdminModal, AdminSegmented, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, EmptyState, Tag, adminControl } from "../ui"
 
-const TODAY = "2025-11-12"
+const TODAY = `${NOW.getFullYear()}-${String(NOW.getMonth() + 1).padStart(2, "0")}-${String(NOW.getDate()).padStart(2, "0")}`
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 const day = (iso: string) => {
   const [y, m, d] = iso.split("-").map(Number)
