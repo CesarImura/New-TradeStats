@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Eye, EyeOff, Play, RefreshCw, Send, Video } from "@/components/icons"
+import { ArrowLeft, Check, Eye, EyeOff, Pin, Play, RefreshCw, Send, Video } from "@/components/icons"
 import { toast } from "sonner"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -69,7 +69,7 @@ function Before({ s, patch }: { s: Livestream; patch: (p: Partial<Livestream>) =
       sub={`${whenLabel(s.startsAt).replace(",", " ·")} · ${who(s, coach.tiers)}`}
       right={
         <>
-          <Tag tone={conn === "ok" ? "success" : "warning"} dot>{conn === "ok" ? "OBS connected" : conn === "checking" ? "Looking for OBS" : "Waiting for OBS"}</Tag>
+          <Tag tone={conn === "ok" ? "success" : "warning"}>{conn === "ok" ? "OBS connected" : conn === "checking" ? "Looking for OBS" : "Waiting for OBS"}</Tag>
           <AdminButton disabled={conn !== "ok"} onClick={go}><Play /> Go live</AdminButton>
         </>
       }>
@@ -190,7 +190,7 @@ function Live({ s, patch }: { s: Livestream; patch: (p: Partial<Livestream>) => 
       sub={`Started ${hhmm(s.startedAt ?? now)} · ${clock}`}
       right={
         <>
-          <Tag tone="danger" dot>Live</Tag>
+          <Tag tone="danger">Live</Tag>
           <span className="t-body-m text-a-text tabular-nums">{s.viewers} watching</span>
           <AdminButton hierarchy="danger" onClick={end}>End livestream</AdminButton>
         </>
@@ -201,16 +201,31 @@ function Live({ s, patch }: { s: Livestream; patch: (p: Partial<Livestream>) => 
             <Video aria-hidden className="absolute top-1/2 left-1/2 size-10 -translate-x-1/2 -translate-y-1/2 text-a-text opacity-20" />
             <span className="absolute top-3 left-3 rounded-a-sm bg-a-scrim px-2 py-1 t-caption text-a-text-2">Your OBS picture shows here, as students see it.</span>
           </AdminVideoPlayer>
-          <div className="grid grid-cols-3 overflow-hidden rounded-a-lg border border-a-border bg-a-panel [&>*+*]:border-l [&>*+*]:border-a-border">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-a-lg border border-a-border bg-a-panel px-4 py-3 t-caption text-a-text-2">
+            <span className="flex items-center gap-2 t-body-m text-a-text"><Check aria-hidden className="size-4 text-a-success" /> Stream is healthy</span>
+            <span className="tabular-nums">6,000 kbps</span>
+            <span className="tabular-nums">60 fps</span>
+            <span className="tabular-nums">1080p</span>
+            <span className="tabular-nums">0.0% dropped frames</span>
+          </div>
+          <div className="grid grid-cols-2 overflow-hidden rounded-a-lg border border-a-border bg-a-panel sm:grid-cols-4 [&>*+*]:border-l [&>*+*]:border-a-border">
             <Metric label="Watching now" value={s.viewers} />
             <Metric label="Most watching at once" value={s.peak} />
             <Metric label="Chat messages" value={s.chat.length} />
+            <Metric label="Avg watch time" value={`${Math.max(1, Math.round((secs / 60) * 0.43))} min`} />
           </div>
         </div>
         <aside className="flex h-[600px] max-h-[80svh] flex-col overflow-hidden rounded-a-lg border border-a-border bg-a-panel">
           <div className="flex items-center justify-between border-b border-a-border px-4 py-3.5">
             <h2 className="t-heading-s text-a-text">Chat</h2>
             <span className="t-caption text-a-text-2 tabular-nums">{s.chat.length}</span>
+          </div>
+          <div className="flex items-start gap-2 border-b border-a-border bg-a-subtle px-4 py-2.5">
+            <Pin aria-hidden className="mt-0.5 size-3.5 shrink-0 text-a-text-2" />
+            <div className="grid min-w-0">
+              <span className="t-micro uppercase text-a-text-3">Pinned</span>
+              <span className="t-body-m text-a-text">Levels for today are in the Downloads tab.</span>
+            </div>
           </div>
           <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto py-1">
             {s.chat.length === 0 && <p className="px-4 py-3 t-body-m text-a-text-2">No messages yet. Say hello.</p>}
@@ -238,7 +253,7 @@ function After({ s }: { s: Livestream }) {
   }, [s.recording, s.id, coach])
 
   return (
-    <Shell s={s} sub={`${whenLabel(s.startsAt).replace(",", " ·")} · ${lengthLabel(s.minutes ?? 0)}`} right={<Tag dot>Ended</Tag>}>
+    <Shell s={s} sub={`${whenLabel(s.startsAt).replace(",", " ·")} · ${lengthLabel(s.minutes ?? 0)}`} right={<Tag>Ended</Tag>}>
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,804fr)_minmax(0,380fr)]">
         <div className="flex min-w-0 flex-col gap-4">
           <Panel className="gap-4">
@@ -247,9 +262,10 @@ function After({ s }: { s: Livestream }) {
               <AdminButton hierarchy="secondary" size="md" disabled={s.recording === "processing" || !!s.lesson} onClick={() => setSaving(s)}>{s.lesson ? `Lesson in ${s.lesson}` : "Save as a lesson"}</AdminButton>
             </div>
             {s.recording === "processing" ? (
-              <p className="flex items-center gap-2 t-body-m text-a-text-2" role="status">
-                <span className="size-2 animate-pulse rounded-full bg-a-warning-fill" /> Making the recording. This takes a minute or two.
-              </p>
+              <div className="grid place-items-center gap-1 rounded-a-md border border-dashed border-a-border-strong px-6 py-12 text-center" role="status">
+                <p className="t-heading-s text-a-text">Your recording will appear here</p>
+                <p className="t-caption text-a-text-2">Making the recording. This takes a minute or two.</p>
+              </div>
             ) : (
               <>
                 <AdminVideoPlayer seconds={Math.max(60, (s.minutes ?? 0) * 60)} resetKey={s.id} resumeKey={`livestream:${s.id}`} background={GRADIENT} className="aspect-video" />
