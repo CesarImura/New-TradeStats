@@ -701,6 +701,12 @@ function SearchHides({ children }: { children: React.ReactNode }) {
 /** Back to the original design, from the ⋯ menu: asks first, says what goes back, and can put the pages back too. Undoable. */
 function ResetDialog({ open, onOpenChange, name, onReset }: { open: boolean; onOpenChange: (o: boolean) => void; name: string; onReset: (pagesToo: boolean) => void }) {
   const [pagesToo, setPagesToo] = useState(false)
+  // The dialog's one field takes the focus when it opens (the dialog itself would start on the close button).
+  useEffect(() => {
+    if (!open) return
+    const id = setTimeout(() => document.getElementById("reset-pages")?.focus(), 50)
+    return () => clearTimeout(id)
+  }, [open])
   return (
     <AdminModal overlay="plain"
       open={open}
@@ -726,7 +732,7 @@ function ResetDialog({ open, onOpenChange, name, onReset }: { open: boolean; onO
       }
     >
       <label className="flex cursor-pointer items-center gap-2 t-body-m">
-        <Checkbox checked={pagesToo} onCheckedChange={(v) => setPagesToo(!!v)} />
+        <Checkbox id="reset-pages" autoFocus checked={pagesToo} onCheckedChange={(v) => setPagesToo(!!v)} />
         Also put every page&apos;s layout back
       </label>
     </AdminModal>
