@@ -80,9 +80,8 @@ export const STUDENTS: Student[] = [
 ]
 
 export const GROUPS = [
-  { id: "oct", name: "October cohort", start: "30 Oct 2025", end: "15 Jan 2026", seats: 30, members: 24, waiting: 0, tiers: ["core", "desk"] },
-  { id: "nov", name: "November cohort", start: "1 Dec 2025", end: "21 Jan 2027", seats: 30, members: 11, waiting: 0, tiers: ["core", "desk"] },
-  { id: "mastermind", name: "Funded mastermind", start: "3 Nov 2025", end: "29 Dec 2025", seats: 12, members: 12, waiting: 7, tiers: ["desk", "vip"] },
+  { id: "dec", name: "December cohort", start: "1 Dec 2025", end: "28 Feb 2026", seats: 20, members: 18, waiting: 0, tiers: ["desk"] },
+  { id: "futures", name: "Futures A", start: "6 Oct 2025", end: "31 Dec 2025", seats: 0, members: 24, waiting: 0, tiers: ["desk"] },
 ]
 
 /** A discount code. `tiers` empty means every tier; `ends` is an ISO date or empty for no end. */
@@ -118,7 +117,7 @@ export const MONEY = {
   fees: { label: "Our share (5%) and card fees", amount: 1118 },
   share: 1859,
   mrrMore: 2180,
-  nextPayout: { amount: 8412, date: "Mon 16 Dec" },
+  nextPayout: { amount: 8412, date: "Mon 17 Nov" },
   churn: 3.1,
   trials: 14,
 }
@@ -248,9 +247,10 @@ export const BADGES = [
 // ---------- Community
 
 export const ANNOUNCEMENTS = [
-  { id: "n1", title: "New module: Daily loss limits", body: "Watch it before Wednesday's CPI. We'll go through your limits on Thursday's call.", when: "2 hours ago", pinned: true, channels: ["platform", "email", "discord"], reads: 128 },
-  { id: "n2", title: "Live this Thursday moves to 15:00", body: "ECB at 14:15, so we start a bit later and trade the reaction.", when: "Fri 7 Nov", pinned: false, channels: ["platform", "discord"], reads: 164 },
-  { id: "n3", title: "November cohort is open", body: "11 seats left. Members of the October cohort get the replays for free.", when: "Mon 3 Nov", pinned: false, channels: ["platform", "email"], reads: 171 },
+  { id: "n1", title: "New module is live", body: "Foundations · Module 3 is ready.", when: "Mon 10 Nov", pinned: true, channels: ["platform", "email", "discord"], reads: 128 },
+  { id: "n2", title: "London open at 09:00", body: "A live session starts.", when: "Fri 7 Nov", pinned: false, channels: ["platform", "discord"], reads: 164 },
+  { id: "n3", title: "Levels for this week", body: "A new marked-up chart.", when: "Mon 3 Nov", pinned: false, channels: ["platform"], reads: 171 },
+  { id: "n4", title: "November discipline cup", body: "Starts Sat 15 Nov.", when: "Sat 15 Nov 08:00", pinned: false, channels: ["platform", "email"], reads: 0, scheduled: "Sat 15 Nov 08:00" },
 ]
 
 export const DISCORD_ROLES = [
