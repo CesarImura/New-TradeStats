@@ -110,7 +110,7 @@ export function MessageDialog({ to, onClose }: { to: Student[] | null; onClose: 
       </div>
       <hr className="m-0 h-px shrink-0 border-0 bg-a-border-subtle" />
       <div role="radiogroup" aria-label="Send it" className="flex flex-col gap-2.5">
-        <h3 className="t-mono-label text-a-text-2">Send it</h3>
+        <h3 className="t-micro text-a-text-2">Send it</h3>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           {CHANNELS.map((c) =>
             c.id === "discord" ? (
