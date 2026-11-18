@@ -68,7 +68,7 @@ export function GettingStarted() {
           <Panel className="gap-3">
             <span className="t-mono-label text-a-text-3">{live ? "Live" : "Ready to go live"}</span>
             <p className="flex items-baseline gap-2">
-              <span className="t-display text-a-text tabular-nums">{doneCount}</span>
+              <span className="t-metric text-a-text tabular-nums">{doneCount}</span>
               <span className="t-body-l text-a-text-2">of {total} steps done</span>
             </p>
             <div className="flex gap-1 pb-2" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={doneCount} aria-label="Setup progress">
