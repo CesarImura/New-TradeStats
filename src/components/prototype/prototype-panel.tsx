@@ -45,7 +45,7 @@ function Seg<T extends string>({ label, value, options, onChange }: { label: str
 const chip = "inline-flex h-7 items-center rounded-a-sm px-2.5 t-caption-medium outline-none transition-colors duration-300 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus"
 
 /** The Prototype controller's panel: Go to (every screen of every flow, searchable) and Settings (community, template, navigation, mode). */
-export function PrototypePanel({ area }: { area: "student" | "admin" | "site" }) {
+export function PrototypePanel({ area, compact, onCompact }: { area: "student" | "admin" | "site"; compact: boolean; onCompact: (v: boolean) => void }) {
   const { coach, theme } = useCoach()
   const path = usePathname()
   const search = useSearchParams().toString()
@@ -174,6 +174,10 @@ export function PrototypePanel({ area }: { area: "student" | "admin" | "site" })
           <Seg label="Navigation" value={theme.nav.layout} options={[{ value: "side", label: "Side" }, { value: "top", label: "Top" }]} onChange={(v) => set({ nav: { layout: v } })} />
           <Seg label="Menu" value={theme.nav.style} options={[{ value: "labels", label: "Icons + labels" }, { value: "icons", label: "Icons only" }]} onChange={(v) => set({ nav: { style: v } })} />
           <Seg label="Mode" value={theme.mode} options={[{ value: "light", label: "Light" }, { value: "dark", label: "Dark" }]} onChange={(v) => set({ mode: v })} />
+          <label className="flex items-center justify-between gap-3 t-body-m text-a-text">
+            <span className="grid"><span>Keep the bar small</span><span className="t-caption text-a-text-3">Only the flask stays in the corner, so it covers nothing.</span></span>
+            <input type="checkbox" checked={compact} onChange={(e) => onCompact(e.target.checked)} className="size-4 accent-[var(--admin-color-control-on)]" />
+          </label>
           <button onClick={() => set(null)} className="inline-flex h-8 items-center justify-center gap-1.5 rounded-a-md t-body-m-medium text-a-text shadow-[inset_0_0_0_1px_var(--admin-component-button-secondary-border)] outline-none transition-colors duration-300 ease-out hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus">
             <RotateCcw className="size-4" aria-hidden /> Reset {coach.name}
           </button>
