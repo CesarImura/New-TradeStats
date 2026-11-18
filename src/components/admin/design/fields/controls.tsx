@@ -154,7 +154,7 @@ export function SliderField({
           <SliderPrimitive.Track className="relative h-0.5 w-full grow rounded-full bg-a-track">
             <SliderPrimitive.Indicator className="h-full rounded-full bg-a-text-3" />
           </SliderPrimitive.Track>
-          <SliderPrimitive.Thumb className="relative block size-2.5 shrink-0 cursor-grab rounded-full bg-a-text transition-transform outline-none select-none before:absolute before:top-1/2 before:left-1/2 before:size-[18px] before:-translate-1/2 hover:scale-125 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-a-border-focus active:cursor-grabbing data-[dragging]:scale-125" />
+          <SliderPrimitive.Thumb aria-label={label} className="relative block size-2.5 shrink-0 cursor-grab rounded-full bg-a-text transition-transform outline-none select-none before:absolute before:top-1/2 before:left-1/2 before:size-[18px] before:-translate-1/2 hover:scale-125 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-a-border-focus active:cursor-grabbing data-[dragging]:scale-125" />
         </SliderPrimitive.Control>
       </SliderPrimitive.Root>
       {ends && (
@@ -366,7 +366,7 @@ function ColorPickerPanel({ value, onChange }: { value: string; onChange: (c: st
                 className="relative h-0.5 w-full grow rounded-full"
                 style={{ background: "linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)" }}
               />
-              <SliderPrimitive.Thumb className="relative block size-[9px] shrink-0 cursor-grab rounded-[2px] bg-white shadow-[0_0_0_1px_rgb(0_0_0/0.45)] transition-transform outline-none select-none before:absolute before:top-1/2 before:left-1/2 before:size-[18px] before:-translate-1/2 hover:scale-125 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)] active:cursor-grabbing data-[dragging]:scale-125" />
+              <SliderPrimitive.Thumb aria-label="Hue" className="relative block size-[9px] shrink-0 cursor-grab rounded-[2px] bg-white shadow-[0_0_0_1px_rgb(0_0_0/0.45)] transition-transform outline-none select-none before:absolute before:top-1/2 before:left-1/2 before:size-[18px] before:-translate-1/2 hover:scale-125 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)] active:cursor-grabbing data-[dragging]:scale-125" />
             </SliderPrimitive.Control>
           </SliderPrimitive.Root>
         </div>
