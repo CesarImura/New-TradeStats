@@ -50,9 +50,9 @@ export function NotificationsMenu({ base, anchorRef, paused = false }: { base: s
 
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
-      <PopoverPrimitive.Trigger render={<AdminButton hierarchy="secondary" iconOnly aria-label={unread ? `Notifications, ${unread} new` : "Notifications"} className="relative" />}>
+      <PopoverPrimitive.Trigger render={<AdminButton hierarchy="secondary" iconOnly aria-label={unread ? `Notifications, ${unread} new` : "Notifications"} className="relative w-[38px]" />}>
         <Bell />
-        {unread > 0 && <span aria-hidden className="absolute top-1.5 right-1.5 size-2 rounded-full bg-a-accent-strong" />}
+        {unread > 0 && <span aria-hidden className="absolute top-0 left-0 size-2 rounded-full bg-a-accent-strong ring-2 ring-a-page" />}
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Positioner anchor={anchorRef} side="bottom" align="end" sideOffset={8} alignOffset={24} collisionPadding={8} className="isolate z-50">

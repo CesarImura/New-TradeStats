@@ -51,21 +51,21 @@ export function WorkspaceSwitcher({ compact = false }: { compact?: boolean }) {
             render={
               <SidebarMenuButton
                 size="lg"
-                className={cn("ts-switcher h-12 rounded-[10px] bg-white/[0.04] hover:bg-white/[0.07] data-popup-open:bg-white/[0.07] group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:shadow-none [html[data-admin-sb=collapsed]_.admin-side_&]:h-10 [html[data-admin-sb=collapsed]_.admin-side_&]:p-1")}
+                className={cn("ts-switcher h-12 rounded-a-lg bg-a-panel ring-1 ring-inset ring-a-border hover:bg-a-hover data-popup-open:bg-a-hover group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:shadow-none [html[data-admin-sb=collapsed]_.admin-side_&]:h-10 [html[data-admin-sb=collapsed]_.admin-side_&]:p-1")}
               />
             }
           >
-            <CommunityMark coach={coach} />
+            <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-a-md bg-a-accent-strong t-body-m text-white">{coach.mark}</span>
             {/* Collapsed sidebar: only the mark shows; the names stay for screen readers. */}
-            <span className="grid min-w-0 flex-1 text-left leading-tight [html[data-admin-sb=collapsed]_.admin-side_&]:sr-only">
-              <span className="truncate text-sm font-semibold">{coach.name}</span>
-              <span className="truncate text-xs text-muted-foreground">
+            <span className="grid min-w-0 flex-1 text-left [html[data-admin-sb=collapsed]_.admin-side_&]:sr-only">
+              <span className="truncate t-body-l text-a-text">{coach.name}</span>
+              <span className="truncate t-caption text-a-text-2">
                 {coach.org} · {current?.role ?? "Owner"}
               </span>
             </span>
             {/* The name read out is the visible text (community, org, role) plus this, so voice control matches what is on screen. */}
             <span className="sr-only">Switch community</span>
-            <ChevronsUpDown className="ml-auto size-4 text-muted-foreground [html[data-admin-sb=collapsed]_.admin-side_&]:hidden" />
+            <ChevronsUpDown className="ml-auto size-4 text-a-text-nav [html[data-admin-sb=collapsed]_.admin-side_&]:hidden" />
           </PopoverTrigger>
           <PopoverContent align={compact ? "end" : "start"} side={compact ? "right" : "bottom"} sideOffset={compact ? 12 : undefined} className="w-(--anchor-width) min-w-72 p-0">
             <Command>

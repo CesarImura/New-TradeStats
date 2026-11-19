@@ -4,12 +4,12 @@ import { cn } from "@/lib/utils"
 
 /**
  * Admin / Button (Figma 572:28569). Hierarchy × size, states by CSS.
- * Sizes as in Figma _Base Button: sm 24 (r6, 12px), md 28 (12px), lg 32 (13px), xl 36 (13px, default). `iconOnly` makes it square.
+ * Sizes as in Figma _Base Button: sm 24 (r6, 12px), md 28 (12px), lg 32 (13px), xl 36 (13px, default); every label is Regular (400), as in all 861 Figma buttons. `iconOnly` makes it square.
  * Secondary and danger draw their 1 px outline inside the box, so every hierarchy has the same height (36 for xl, Figma 14/11).
  * Open state (K7): a trigger whose menu is open (`aria-expanded` or `data-popup-open`) looks like Secondary Hover, for every hierarchy.
  */
 const button = cva(
-  "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-a-md t-body-m-medium outline-none select-none transition-colors duration-300 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:min-h-10 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-a-md t-body-m outline-none select-none transition-colors duration-300 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:min-h-10 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       hierarchy: {
@@ -20,8 +20,8 @@ const button = cva(
         highlight: "bg-[var(--admin-component-button-highlight-bg-default)] text-[var(--admin-component-button-highlight-content)] hover:bg-[var(--admin-component-button-highlight-bg-hover)]",
       },
       size: {
-        sm: "h-6 px-2 rounded-a-sm t-caption-medium",
-        md: "h-7 px-2.5 t-caption-medium",
+        sm: "h-6 px-2 rounded-a-sm t-caption",
+        md: "h-7 px-2.5 t-caption",
         lg: "h-8 px-3",
         xl: "h-9 px-3.5",
       },

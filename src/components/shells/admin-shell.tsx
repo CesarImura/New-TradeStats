@@ -161,14 +161,14 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
             <span className="t-body-l-medium truncate xl:hidden">{current?.label}</span>
             <button
               type="button"
-              className="hidden h-11 w-80 max-w-full items-center gap-2 rounded-a-md border border-a-border-subtle bg-a-field px-3 text-left text-a-text-3 t-body-l transition-colors duration-300 hover:border-a-border-strong focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:outline-none xl:flex"
+              className="hidden h-[34px] w-80 max-w-full items-center gap-2 rounded-a-md border border-a-border-subtle bg-a-field px-3 text-left text-a-text-3 t-body-m transition-colors duration-300 hover:border-a-border-strong focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:outline-none xl:flex"
               aria-keyshortcuts="Meta+K Control+K"
               onClick={() => setSearchOpen(true)}
             >
               <Search className="size-4 text-a-icon" />
               <span className="flex-1">Search</span>
               {/* The shortcut is announced through aria-keyshortcuts; the name is the visible "Search". */}
-              <kbd aria-hidden className="t-mono-meta rounded-a-xs bg-a-selected px-1.5 py-0.5 text-a-text-2">⌘K</kbd>
+              <kbd aria-hidden className="t-caption font-[inherit] text-a-text-3">⌘K</kbd>
             </button>
             <div className="ml-auto flex items-center gap-2">
               <Button hierarchy="secondary" iconOnly aria-label="Search" className="xl:hidden" onClick={() => setSearchOpen(true)}>
@@ -176,8 +176,8 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
               </Button>
               <HelpButton />
               <NotificationsMenu base={base} anchorRef={topbarRef} paused={searchOpen} />
-              <Avatar className="ml-1 size-8">
-                <AvatarFallback className="text-xs">{DEMO_ADMIN.initials}</AvatarFallback>
+              <Avatar className="size-8">
+                <AvatarFallback className="bg-a-track t-micro text-a-text ring-1 ring-inset ring-a-border">{DEMO_ADMIN.initials}</AvatarFallback>
               </Avatar>
             </div>
           </header>
@@ -210,7 +210,7 @@ function DesktopSidebar({ children }: { children: (collapsed: boolean) => React.
       aria-label="Main menu"
     >
       <TooltipProvider delay={0}>
-        <div className="flex h-full flex-col overflow-hidden rounded-a-xl border border-a-border bg-a-page pt-5 pr-4 pb-4 pl-4 [html[data-admin-sb=collapsed]_.admin-side_&]:px-[11px]">{children(collapsed)}</div>
+        <div className="flex h-full flex-col overflow-hidden rounded-a-xl border border-a-border bg-[var(--admin-color-bg-sidebar)] pt-5 pr-4 pb-4 pl-4 [html[data-admin-sb=collapsed]_.admin-side_&]:px-[11px]">{children(collapsed)}</div>
       </TooltipProvider>
       {/* Same round button in both sizes, on the card's right edge level with the logo (Figma Collapse / Expand). */}
       <Button
@@ -220,7 +220,7 @@ function DesktopSidebar({ children }: { children: (collapsed: boolean) => React.
         aria-label={collapsed ? "Expand menu" : "Collapse menu"}
         aria-expanded={!collapsed}
         onClick={() => setCollapsedStored(!collapsed)}
-        className="absolute top-7 -right-[5px] rounded-full bg-a-panel text-a-text-2 hover:bg-a-hover hover:text-a-text active:scale-[0.97] transition-[background-color,color,scale]"
+        className="absolute top-7 -right-[5px] rounded-full bg-[var(--admin-color-bg-panel)] aria-expanded:bg-[var(--admin-color-bg-panel)] aria-expanded:hover:bg-a-hover text-a-text-2 hover:bg-a-hover hover:text-a-text active:scale-[0.97] transition-[background-color,color,scale] [&_svg]:size-3.5"
       >
         {collapsed ? <ChevronRight /> : <ChevronLeft />}
       </Button>
@@ -281,7 +281,7 @@ function NavLink({ href, label, icon: Icon, active, collapsed, soon }: { href: s
       <Icon className={cn("size-4 shrink-0", active ? "fill-[url(#admin-icon-grad)]" : "text-a-text-nav")} />
       <span className="min-w-0 overflow-hidden whitespace-nowrap transition-opacity duration-150 ease-out [html[data-admin-sb=collapsed]_.admin-side_&]:opacity-0">{label}</span>
       {/* Nav item badge (Figma _Base Nav item): absolute, right-anchored with a 16 px margin; the label keeps the full width. */}
-      {soon && <span className="absolute top-1/2 right-4 -translate-y-1/2 rounded-a-xs bg-a-muted px-1.5 t-micro text-a-text-2 transition-opacity duration-150 ease-out [html[data-admin-sb=collapsed]_.admin-side_&]:opacity-0">Soon</span>}
+      {soon && <span className="absolute top-1/2 right-4 -translate-y-1/2 rounded-a-xs bg-a-selected px-1.5 py-0.5 t-micro text-a-text-2 transition-opacity duration-150 ease-out [html[data-admin-sb=collapsed]_.admin-side_&]:opacity-0">Soon</span>}
     </Link>
   )
   // Always wrapped (disabled while expanded), so collapsing does not remount every link.
@@ -302,12 +302,12 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
       <div className="flex items-center pr-1">
         <AdminLogo />
       </div>
-      <nav aria-label="Admin" className="-mx-1 mt-2 flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-1 pb-2">
+      <nav aria-label="Admin" className="-mx-1 mt-2 flex min-h-0 flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto px-1 pb-2">
         {groups.map((g, i) => (
           <div key={g.group} className="flex flex-col gap-0.5">
             {/* The first page (Overview) sits on its own at the top, like a home link. Collapsed, a group's name turns into a line in the same space. */}
             {i > 0 ? (
-              <span className="t-mono-label-s relative whitespace-nowrap px-2 pt-5 pb-2 text-a-text-3 transition-colors duration-150 ease-out after:absolute after:inset-x-1 after:bottom-[calc(50%-10px)] after:h-px after:bg-a-border after:opacity-0 after:transition-opacity after:duration-150 [html[data-admin-sb=collapsed]_.admin-side_&]:text-transparent [html[data-admin-sb=collapsed]_.admin-side_&]:after:opacity-100">
+              <span className="t-micro relative whitespace-nowrap px-2 pt-[18px] pb-2 uppercase text-a-text-3 transition-colors duration-150 ease-out after:absolute after:inset-x-1 after:bottom-[calc(50%-10px)] after:h-px after:bg-a-border after:opacity-0 after:transition-opacity after:duration-150 [html[data-admin-sb=collapsed]_.admin-side_&]:text-transparent [html[data-admin-sb=collapsed]_.admin-side_&]:after:opacity-100">
                 {g.group}
               </span>
             ) : (
@@ -334,15 +334,15 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
 /** A quiet card above the footer links, as in ElevenLabs. Dismissed for this visit only. */
 function InviteCard({ href, onDismiss }: { href: string; onDismiss: () => void }) {
   return (
-    <div className="relative rounded-a-lg bg-a-subtle p-3 [html[data-admin-sb=collapsed]_.admin-side_&]:hidden [@media(max-height:820px)]:hidden">
+    <div className="relative rounded-a-lg bg-a-panel p-3 ring-1 ring-inset ring-a-border [html[data-admin-sb=collapsed]_.admin-side_&]:hidden [@media(max-height:820px)]:hidden">
       <button type="button" onClick={onDismiss} aria-label="Dismiss" className="absolute top-2 right-2 text-muted-foreground after:absolute after:-inset-[5px] after:content-[''] hover:text-foreground">
         <X className="size-3.5" />
       </button>
-      <span className="grid size-7 place-items-center rounded-a-md bg-a-accent-strong/15 text-a-accent-strong">
+      <span className="grid size-7 place-items-center rounded-a-md bg-a-selected text-a-text">
         <UserPlus className="size-3.5" />
       </span>
-      <Link href={href} className="mt-2.5 block text-sm font-medium hover:underline">Invite your team</Link>
-      <p className="mt-0.5 text-xs text-muted-foreground">Add coaches and moderators to help run your community.</p>
+      <Link href={href} className="mt-2.5 block t-body-l text-a-text hover:underline">Invite your team</Link>
+      <p className="mt-0.5 t-caption text-a-text-2">Add coaches and moderators to help run your community.</p>
     </div>
   )
 }
