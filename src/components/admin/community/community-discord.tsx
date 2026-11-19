@@ -29,14 +29,14 @@ export function DiscordTab({ d, setD }: { d: DiscordSetup; setD: (n: DiscordSetu
       </Callout>
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,572fr)_minmax(0,612fr)]">
         <Panel className="gap-0 overflow-hidden p-0">
-          <div className="grid gap-1 px-5 py-4">
+          <div className="grid gap-0.5 px-5 py-4">
             <h2 className="t-heading-s text-a-text">Role for each tier</h2>
             <p className="t-caption text-a-text-2">Given when someone joins, removed when they cancel.</p>
           </div>
           {coach.tiers.map((t) => (
-            <div key={t.id} className="flex h-[52px] items-center justify-between gap-3 border-t border-a-border px-5 t-body-m text-a-text">
+            <div key={t.id} className="flex h-[53px] items-center justify-between gap-3 border-t border-a-border-subtle px-5 t-body-m text-a-text">
               <span className="min-w-0 truncate">{t.name}</span>
-              <AdminFilter ariaLabel={`Role for ${t.name}`} value={d.roles[t.id] ?? "No role"} onValueChange={(v) => setD((x) => ({ ...x, roles: { ...x.roles, [t.id]: v } }))} options={[...new Set([d.roles[t.id] ?? "No role", ...SERVER_ROLES])].map((r) => ({ value: r, label: r }))} />
+              <AdminFilter className="w-[126px] justify-between" ariaLabel={`Role for ${t.name}`} value={d.roles[t.id] ?? "No role"} onValueChange={(v) => setD((x) => ({ ...x, roles: { ...x.roles, [t.id]: v } }))} options={[...new Set([d.roles[t.id] ?? "No role", ...SERVER_ROLES])].map((r) => ({ value: r, label: r }))} />
             </div>
           ))}
         </Panel>
@@ -47,11 +47,11 @@ export function DiscordTab({ d, setD }: { d: DiscordSetup; setD: (n: DiscordSetu
           </div>
           <div className="flex flex-col gap-3">
             {BOT_POSTS.map(([id, label, channel]) => (
-              <label key={id} className="flex items-center gap-2.5 t-body-m text-a-text">
-                <Switch checked={!!d.posts[id]} onCheckedChange={(v) => setD((x) => ({ ...x, posts: { ...x.posts, [id]: v } }))} />
+              <label key={id} className="flex items-center gap-3 t-body-m text-a-text">
                 {label}
                 <span aria-hidden className="h-px min-w-px flex-1" />
                 <span className="t-caption text-a-text-3">{channel}</span>
+                <Switch checked={!!d.posts[id]} onCheckedChange={(v) => setD((x) => ({ ...x, posts: { ...x.posts, [id]: v } }))} />
               </label>
             ))}
           </div>

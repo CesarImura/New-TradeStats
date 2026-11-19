@@ -47,9 +47,9 @@ export function SpacesTab({ spaces, setSpaces, rules, setRules, onEdit }: { spac
         {spaces.map((s, i) => {
           const tier = s.audience ? coach.tiers.find((t) => t.id === s.audience)?.name : undefined
           return (
-            <div key={s.id} onDragOver={(e) => drag !== null && (e.preventDefault(), setOver(i))} onDrop={() => drop(i)} className={cn("border-t border-a-border", over === i && drag !== null && drag !== i && dropLine(drag < i ? "after" : "before"))}>
+            <div key={s.id} onDragOver={(e) => drag !== null && (e.preventDefault(), setOver(i))} onDrop={() => drop(i)} className={cn(over === i && drag !== null && drag !== i && dropLine(drag < i ? "after" : "before"))}>
               <SortableRow
-                className="rounded-none"
+                className="py-[7px]"
                 dragging={drag === i}
                 active={flashed(s.id)}
                 handle={{
@@ -70,7 +70,7 @@ export function SpacesTab({ spaces, setSpaces, rules, setRules, onEdit }: { spac
                 trailing={
                   <>
                     <Tag>{tier ?? "Everyone"}</Tag>
-                    {s.posts !== undefined && <span className="t-caption text-a-text-2 tabular-nums">{s.posts >= 1000 ? `${(s.posts / 1000).toFixed(1)}k` : s.posts} posts</span>}
+                    {s.posts !== undefined && <span className="w-20 text-right t-caption text-a-text-2 tabular-nums">{s.posts >= 1000 ? `${(s.posts / 1000).toFixed(1)}k` : s.posts} posts</span>}
                     <DropdownMenu>
                       <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Actions for ${s.name}`} />}><MoreHorizontal /></DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -98,14 +98,14 @@ export function RulesPanel({ rules, setRules }: { rules: string[]; setRules: (n:
       <h2 className="t-heading-s text-a-text">Community rules</h2>
       <ol className="flex flex-col gap-3">
         {rules.map((r, i) => (
-          <li key={i} className="group/rule flex items-start gap-2 t-body-m">
-            <span className="w-4 shrink-0 text-center t-caption leading-[18px] text-a-text-accent tabular-nums">{i + 1}</span>
+          <li key={i} className="group/rule flex items-start gap-3 t-body-m">
+            <span className="shrink-0 t-caption leading-[18px] text-a-text-accent tabular-nums">{i + 1}</span>
             {edit === i ? (
               <input autoFocus aria-label={`Rule ${i + 1}`} defaultValue={r} onBlur={(e) => (setRules((l) => (e.target.value.trim() ? l.map((x, j) => (j === i ? e.target.value.trim() : x)) : l.filter((_, j) => j !== i))), setEdit(null))} onKeyDown={(e) => (e.key === "Enter" && e.currentTarget.blur()) || (e.key === "Escape" && setEdit(null))} className={cn(adminControl, "h-8 min-w-0 flex-1 py-0 t-body-m")} />
             ) : (
               <>
                 <button type="button" onClick={() => setEdit(i)} aria-label={`Edit rule ${i + 1}: ${r}`} className="min-w-0 flex-1 rounded-a-xs text-left text-a-text outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus">{r}</button>
-                <button type="button" aria-label={`Delete rule ${i + 1}`} onClick={() => setRules((l) => l.filter((_, j) => j !== i))} className="grid size-5 shrink-0 place-items-center rounded-a-xs text-a-text-3 opacity-0 outline-none transition-opacity hover:text-a-text focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-a-border-focus group-hover/rule:opacity-100 pointer-coarse:size-8 pointer-coarse:opacity-100">
+                <button type="button" aria-label={`Delete rule ${i + 1}`} onClick={() => setRules((l) => l.filter((_, j) => j !== i))} className="-my-0.5 grid size-5 shrink-0 place-items-center rounded-a-xs text-a-text-3 opacity-0 outline-none transition-opacity hover:text-a-text focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-a-border-focus group-hover/rule:opacity-100 pointer-coarse:size-8 pointer-coarse:opacity-100">
                   <Trash2 className="size-3.5" />
                 </button>
               </>
