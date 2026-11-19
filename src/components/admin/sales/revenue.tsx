@@ -54,10 +54,10 @@ export function RevenueOverview({ onProblems }: { onProblems: () => void }) {
         <Panel>
           <header className="flex items-center justify-between gap-2"><h2 className="t-heading-s text-a-text">Last 6 months, what students paid</h2><AdminSegmented size="sm" label="Chart metric" value={metric} onChange={setMetric} options={[{ value: "revenue", label: "Revenue" }, { value: "members", label: "Members" }]} className="w-[168px]" /></header>
           <ChartContainer config={{ [metric]: { label: metric === "revenue" ? "Revenue" : "Members", color: "var(--admin-component-chart-bar-bg-default)" } } satisfies ChartConfig} className="aspect-auto h-[230px] w-full">
-            <BarChart data={months} margin={{ top: 20, left: 0, right: 4 }} barCategoryGap="27%" onMouseMove={(st) => setHover(typeof st.activeTooltipIndex === "number" ? st.activeTooltipIndex : null)} onMouseLeave={() => setHover(null)}>
+            <BarChart data={months} margin={{ top: 7, left: 0, right: 0 }} barCategoryGap="11%" onMouseMove={(st) => setHover(typeof st.activeTooltipIndex === "number" ? st.activeTooltipIndex : null)} onMouseLeave={() => setHover(null)}>
               <CartesianGrid vertical={false} stroke="var(--admin-color-chart-grid)" />
-              <YAxis tickLine={false} axisLine={false} width={44} tickFormatter={fmt} domain={metric === "revenue" ? [0, 40000] : [0, 200]} ticks={metric === "revenue" ? [0, 20000, 40000] : [0, 100, 200]} />
-              <XAxis dataKey="month" tickLine={false} axisLine={false} />
+              <YAxis tickLine={false} axisLine={false} width={36} tickFormatter={fmt} domain={metric === "revenue" ? [0, 40000] : [0, 200]} ticks={metric === "revenue" ? [0, 20000, 40000] : [0, 100, 200]} />
+              <XAxis dataKey="month" tickLine={false} axisLine={false} height={28} tickMargin={8} />
               <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel formatter={(v) => <span className="tabular-nums">{metric === "revenue" ? `€${Number(v).toLocaleString("en")}` : v}</span>} />} />
               <Bar dataKey={metric} radius={[4, 4, 0, 0]} isAnimationActive={false}>
                 <LabelList dataKey={metric} position="top" formatter={(v: unknown) => fmt(Number(v))} className="fill-[var(--admin-color-text-secondary)] text-[11px]" />
