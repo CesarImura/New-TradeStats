@@ -55,8 +55,8 @@ export const shortDate = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDa
 /** Does a student on this tier get the file? */
 export const canDownload = (d: Pick<DownloadItem, "tiers">, tier?: string) => d.tiers.length === 0 || (!!tier && d.tiers.includes(tier))
 
-const SEED = (second?: string): DownloadItem[] => {
-  const limited = second ? [second] : []
+const SEED = (first?: string): DownloadItem[] => {
+  const limited = first ? [first] : []
   return [
     { id: "d1", title: "Session levels indicator (TradingView)", description: "Marks the Asia, London and New York highs and lows on any chart. Add it from the shared script link inside.", category: "indicators", file: { name: "session-levels-v1.3.pine", size: "18 KB", type: "Pine Script" }, version: "1.3", updated: "2025-11-06", tiers: [], cover: 0, notify: true },
     { id: "d2", title: "NQ scalping template (NinjaTrader)", description: "Chart layout with the volume profile, the opening range and the three levels we trade from.", category: "templates", file: { name: "nq-scalping.ntwtemplate", size: "142 KB", type: "NinjaTrader template" }, version: "2.0", updated: "2025-11-03", tiers: limited, cover: 1 },
@@ -70,11 +70,11 @@ const SEED = (second?: string): DownloadItem[] => {
 }
 
 const cache = new Map<string, DownloadItem[]>()
-/** The sample files, with the coach's own second tier. Stable per coach, as the store needs. */
+/** The sample files, with the coach's first tier (Figma Downloads 01 shows "Inner Circle" for the two limited files). Stable per coach, as the store needs. */
 export function defaultDownloads(coach: Coach): DownloadItem[] {
   const hit = cache.get(coach.slug)
   if (hit) return hit
-  const list = SEED(coach.tiers[1]?.id)
+  const list = SEED((coach.tiers.find((t) => t.id === "core") ?? coach.tiers[0])?.id)
   cache.set(coach.slug, list)
   return list
 }

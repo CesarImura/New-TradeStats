@@ -43,6 +43,7 @@ const ago = (iso: string) => {
 }
 const count = (id: string) => ([...id].reduce((n, c) => n + c.charCodeAt(0), 0) * 7) % 400 + 14
 /** One tab per category, in the words the Category column and the upload form use, then the files that come from lessons. */
+const HEAD = "!h-[34px] !text-[11px] !leading-[14px]"
 const TABS = [{ id: "all", label: "All" }, ...DOWNLOAD_CATEGORIES.map((c) => ({ id: c.id as string, label: c.label })), { id: "lesson", label: "Lesson files" }]
 
 type Row = { id: string; title: string; sub: string; name: string; tag: string; version: string; who: string; whoIds: string[]; updated: string; date: string; downloads: number; item?: DownloadItem }
@@ -101,13 +102,14 @@ export function DownloadsAdmin() {
           ) : (
             <AdminTable minWidth={980} footer={<AdminTableFooter>Lesson files come from Content and are grouped by course</AdminTableFooter>}>
               <AdminTableHead>
-                <AdminTh>File</AdminTh>
-                <AdminTh width={146}>Category</AdminTh>
-                <AdminTh width={96}>Version</AdminTh>
-                <AdminTh width={216}>Who gets it</AdminTh>
-                <AdminTh width={116}>Updated</AdminTh>
-                <AdminTh width={106} align="end">Downloads</AdminTh>
-                <AdminTh width={56} />
+                {/* Figma Downloads 01: head 34px with the Micro (11px) label; columns 148, 87, 118, 106, 106 and 28 wide with 16px between. */}
+                <AdminTh className={HEAD}>File</AdminTh>
+                <AdminTh width={164} className={HEAD}>Category</AdminTh>
+                <AdminTh width={103} className={HEAD}>Version</AdminTh>
+                <AdminTh width={134} className={HEAD}>Who gets it</AdminTh>
+                <AdminTh width={122} className={HEAD}>Updated</AdminTh>
+                <AdminTh width={122} align="end" className={HEAD}>Downloads</AdminTh>
+                <AdminTh width={48} className={HEAD} />
               </AdminTableHead>
               <tbody>
                 {rows.map((r) => (
@@ -121,14 +123,14 @@ export function DownloadsAdmin() {
                         </div>
                       </div>
                     </AdminTd>
-                    <AdminTd><Tag>{r.tag}</Tag></AdminTd>
-                    <AdminTd className="text-a-text tabular-nums">{r.version}</AdminTd>
-                    <AdminTd className="truncate text-a-text">{r.who}</AdminTd>
-                    <AdminTd className="whitespace-nowrap" title={r.date || undefined}>{r.updated}</AdminTd>
-                    <AdminTd align="end" className="text-a-text">{r.downloads.toLocaleString("en")}</AdminTd>
+                    <AdminTd><Tag className="h-[22px] !text-[11px] !leading-[14px] !font-normal">{r.tag}</Tag></AdminTd>
+                    <AdminTd className="tabular-nums">{r.version}</AdminTd>
+                    <AdminTd className="truncate">{r.who}</AdminTd>
+                    <AdminTd className="whitespace-nowrap text-a-text-3" title={r.date || undefined}>{r.updated}</AdminTd>
+                    <AdminTd align="end" className="tabular-nums">{r.downloads.toLocaleString("en")}</AdminTd>
                     <AdminTd align="end">
                       <DropdownMenu>
-                        <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Actions for ${r.title}`} />}><MoreHorizontal /></DropdownMenuTrigger>
+                        <DropdownMenuTrigger render={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Actions for ${r.title}`} className="text-a-text" />}><MoreHorizontal /></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           {r.item ? (
                             <>
