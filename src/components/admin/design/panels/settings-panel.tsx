@@ -289,7 +289,7 @@ export function SettingsPanel({
           "flex min-w-0 flex-1 flex-col",
           // A card over the canvas: the rail's colour, a fine border, the float shadow and a fade where it scrolls on.
           floating &&
-            "absolute top-5 bottom-5 left-[92px] z-20 w-[336px] flex-none overflow-hidden rounded-a-lg border border-a-border bg-a-page shadow-[0_8px_24px_-4px_rgb(0_0_0/0.6)] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-14 after:bg-gradient-to-t after:from-a-page after:to-transparent",
+            "absolute top-5 bottom-5 left-[94px] z-20 w-[336px] flex-none overflow-hidden rounded-a-lg border border-a-border bg-a-page shadow-[0_8px_24px_-4px_rgb(0_0_0/0.6)] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-14 after:bg-gradient-to-t after:from-a-page after:to-transparent",
           collapsed && "hidden",
         )}
       >
