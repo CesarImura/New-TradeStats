@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import { XIcon } from "@/components/icons"
+import { trapTab } from "@/components/ui/trap-tab"
 
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
@@ -42,6 +43,7 @@ function SheetContent({
   side = "right",
   showCloseButton = true,
   overlayClassName,
+  onKeyDown,
   ...props
 }: SheetPrimitive.Popup.Props & {
   side?: "top" | "right" | "bottom" | "left"
@@ -60,6 +62,7 @@ function SheetContent({
           className
         )}
         {...props}
+        onKeyDown={(e) => trapTab(e, onKeyDown as never)}
       >
         {children}
         {showCloseButton && (

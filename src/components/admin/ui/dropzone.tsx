@@ -15,7 +15,7 @@ export function Dropzone({ title = "Drop a file here, or click", hint, icon, acc
   const [over, setOver] = useState(false)
   return (
     <>
-      <button type="button" disabled={disabled} aria-label={label ?? title} onClick={() => input.current?.click()}
+      <button type="button" disabled={disabled} aria-label={children ? label : undefined} onClick={() => input.current?.click()}
         onDragOver={(e) => (e.preventDefault(), !over && setOver(true))} onDragLeave={() => setOver(false)} onDrop={(e) => (e.preventDefault(), setOver(false), e.dataTransfer.files.length && onFiles([...e.dataTransfer.files]))}
         className={cn("relative grid place-items-center content-center gap-1.5 overflow-hidden rounded-a-10 border border-dashed border-a-border-strong text-center outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus disabled:pointer-events-none disabled:opacity-40",
           size === "md" ? "px-4 py-7" : "h-full min-h-24 w-full px-3", over ? "border-a-border-active bg-a-accent-soft" : "border-a-border-strong hover:border-a-border-active hover:bg-a-hover", className)}>

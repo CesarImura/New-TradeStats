@@ -60,14 +60,14 @@ export function NotificationsMenu({ base, anchorRef, paused = false }: { base: s
             data-slot="notifications-panel"
             className="flex max-h-[calc(100svh-5rem)] w-[calc(100vw-1rem)] origin-(--transform-origin) flex-col overflow-hidden rounded-a-lg border border-a-border-strong bg-a-raised text-a-text shadow-[0_20px_50px_rgb(0_0_0/0.55)] outline-none transition-[opacity,transform] duration-200 ease-out data-[starting-style]:-translate-y-1 data-[starting-style]:scale-[0.97] data-[starting-style]:opacity-0 data-[ending-style]:-translate-y-0.5 data-[ending-style]:scale-[0.98] data-[ending-style]:opacity-0 data-[ending-style]:duration-150 motion-reduce:transition-none sm:w-[420px]"
           >
-        <header className="flex shrink-0 items-center gap-2 px-4 py-3.5">
+        <div className="flex shrink-0 items-center gap-2 px-4 py-3.5">
           <PopoverPrimitive.Title className="t-heading-s text-a-text">Notifications</PopoverPrimitive.Title>
           <PopoverPrimitive.Description className="sr-only">Payments, journal requests and live reminders</PopoverPrimitive.Description>
           {unreadShown > 0 && <Tag>{unreadShown} new</Tag>}
           <AdminButton hierarchy="ghost" size="md" className="ml-auto" disabled={unread === 0} onClick={() => markRead(...notices.map((n) => n.id))}>
             Mark all read
           </AdminButton>
-        </header>
+        </div>
         <div className="shrink-0 px-4 pb-2.5">
           <AdminTabs label="Notification filter" tabs={FILTERS} value={filter} onChange={setFilter} />
         </div>
