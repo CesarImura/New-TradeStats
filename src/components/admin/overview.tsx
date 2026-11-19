@@ -158,7 +158,7 @@ function NextLiveBanner({ base }: { base: string }) {
         </div>
         <dl className="flex flex-wrap gap-y-3">
           {stats.map((st) => (
-            <div key={st.label} className="flex flex-col gap-0.5 border-l border-a-on-highlight/20 px-4 first:border-l-0 first:pl-0 last:pr-0">
+            <div key={st.label} className="flex flex-col gap-0.5 border-l border-a-on-highlight/10 px-4 first:border-l-0 first:pl-0 last:pr-0">
               <dd className="t-heading-xl !leading-6 tabular-nums">{st.value}</dd>
               <dt className="t-body-m">{st.label}</dt>
             </div>
@@ -280,9 +280,10 @@ export function AdminOverview() {
         subtitle={`${coach.name} · last 30 days${fresh ? "" : " · updated 2 min ago"}`}
         actions={
           <>
-            <span className="inline-flex h-9 items-center gap-2 rounded-a-md border border-a-border px-3 t-body-m">
-              <span className="relative flex size-2">
-                <span className="absolute inset-0 animate-ping rounded-full bg-a-success-fill opacity-60 motion-reduce:animate-none" />
+            {/* Figma Overview 01: a 114px pill with the live dot (14px box) 15px from the edge. */}
+            <span className="inline-flex h-9 items-center gap-2 rounded-a-md border border-a-border px-[15px] t-body-m">
+              <span className="relative grid size-3.5 place-items-center">
+                <span className="absolute inset-0 animate-ping rounded-full bg-a-success-fill opacity-30 motion-reduce:animate-none" />
                 <span className="size-2 rounded-full bg-a-success-fill" />
               </span>
               <span className="t-body-m-medium tabular-nums">{fresh ? 0 : 23}</span> Online
