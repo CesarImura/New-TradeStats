@@ -89,7 +89,9 @@ function useFitDetail(detail: Detail, box: React.RefObject<HTMLDivElement | null
   }, [contentKey, detail])
   // The coach's fonts load late: a level dropped on the first measurement, with the fallback font's wider letters, is worked out again from the chosen one once they are in.
   const latest = useRef(detail)
-  latest.current = detail
+  useEffect(() => {
+    latest.current = detail
+  }, [detail])
   useEffect(() => {
     let live = true
     document.fonts?.ready.then(() => {
