@@ -9,7 +9,7 @@ export const DEFAULT_SPACES: Space[] = [
 ]
 
 export const DEFAULT_RULES: string[] = [
-  "Be respectful. We all started somewhere.",
-  "No signals or financial advice. Share your reasoning, not a tip.",
-  "No promotion or links to other services.",
+  "No signals or copy-trading calls",
+  "Be kind; critique the trade, not the person",
+  "No promotion of other groups",
 ]
