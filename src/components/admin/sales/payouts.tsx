@@ -175,7 +175,6 @@ export function Payouts() {
 function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | null; state: Payouts; busy: boolean; onClose: () => void; onSave: (i: number, patch: Partial<Payouts>) => void }) {
   const [form, setForm] = useState<Payouts>(state)
   const [key, setKey] = useState<number | null>(null)
-  const [tried, setTried] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   // Open on the saved values every time (derived state, no effect).
   if (step !== key) {
@@ -184,7 +183,6 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
     // Only a person's name: a company's registered name is never the coach's own (QA 14/11).
     const name = state.name ?? (step !== null && (state.kind ?? "person") === "person" ? account()?.name : undefined)
     setForm({ ...state, name, holder: state.holder ?? name })
-    setTried(false)
     setFile(null)
   }
   const set = (p: Partial<Payouts>) => setForm((f) => ({ ...f, ...p }))
@@ -198,8 +196,10 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
     { title: "Bank account", subtitle: "Where your money goes. Step 2 of 3", action: "Save" },
     { title: "Identity check", subtitle: "Checked once by our payment partner. Step 3 of 3", action: "Submit" },
   ][step ?? 0]
+  // Rule (19/11): the action stays disabled until the step is valid; a field with an error shows it only once something is typed.
+  const ready = step === 0 ? nameOk : step === 1 ? holderOk && ibanOk : !!file
   const submit = () => {
-    setTried(true)
+    if (!ready) return
     if (step === 0 && nameOk) onSave(0, { kind: form.kind ?? "person", country: form.country ?? "DE", name: form.name?.trim() })
     if (step === 1 && holderOk && ibanOk) onSave(1, { holder: form.holder?.trim(), iban })
     if (step === 2 && file) onSave(2, {})
@@ -217,7 +217,7 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
           <AdminButton hierarchy="ghost" disabled={busy} onClick={onClose}>
             Cancel
           </AdminButton>
-          <AdminButton disabled={busy || (step === 2 && !file)} onClick={submit}>
+          <AdminButton disabled={busy || !ready} onClick={submit}>
             {busy && <Loader2 className="animate-spin" />} {copy.action}
           </AdminButton>
         </>
@@ -233,17 +233,17 @@ function PayoutDrawers({ step, state, busy, onClose, onSave }: { step: number | 
           <AdminField label="Country">
             {() => <AdminSelect ariaLabel="Country" value={form.country ?? "DE"} onValueChange={(v) => set({ country: v })} options={COUNTRIES} />}
           </AdminField>
-          <AdminField label={form.kind === "company" ? "Company name" : "Full legal name"} hint={form.kind === "company" ? "Exactly as registered" : "Exactly as on your ID"} error={tried && !nameOk ? "Type the name as it is on your ID." : undefined}>
+          <AdminField label={form.kind === "company" ? "Company name" : "Full legal name"} hint={form.kind === "company" ? "Exactly as registered" : "Exactly as on your ID"} error={(form.name ?? "").trim() && !nameOk ? "Type the name as it is on your ID." : undefined}>
             {(p) => <input {...p} autoFocus value={form.name ?? ""} onChange={(e) => set({ name: e.target.value })} placeholder={form.kind === "company" ? "Your company’s name" : "Your legal name"} className={cn(adminControl, "h-11")} />}
           </AdminField>
         </div>
       )}
       {step === 1 && (
         <div data-tour="payouts-bank" className="flex flex-col gap-4">
-          <AdminField label="Account holder" hint="Must match the name on your ID" error={tried && !holderOk ? "Type the account holder’s name." : undefined}>
+          <AdminField label="Account holder" hint="Must match the name on your ID" error={(form.holder ?? "").trim() && !holderOk ? "Type the account holder’s name." : undefined}>
             {(p) => <input {...p} value={form.holder ?? ""} onChange={(e) => set({ holder: e.target.value })} placeholder="Your legal name" className={cn(adminControl, "h-11")} />}
           </AdminField>
-          <AdminField label="IBAN" hint="Payouts go out every Monday, no minimum" error={tried && !ibanOk ? "Check the IBAN. It starts with the country, like DE89…" : undefined}>
+          <AdminField label="IBAN" hint="Payouts go out every Monday, no minimum" error={iban.trim() && !ibanOk ? "Check the IBAN. It starts with the country, like DE89…" : undefined}>
             {(p) => <input {...p} autoFocus value={iban} onChange={(e) => set({ iban: e.target.value.toUpperCase() })} placeholder="DE89 3704 0044 0532 0130 00" className={cn(adminControl, "h-11")} />}
           </AdminField>
         </div>

@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { TS_SYSTEM_CSS } from "@/lib/theme/ts-system"
 import { Logo } from "@/components/brand/logo"
 import { cn } from "@/lib/utils"
-import { account } from "@/lib/data/communities"
+import { account, customCommunities } from "@/lib/data/communities"
 
 /**
  * Sign up · phase 1 (Figma 939:59751, screens 01 to 05): the form column on the left (742 px: the logo bar, then a
@@ -20,11 +20,18 @@ const InShell = createContext<{ go: (href: string, dir?: 1 | -1) => void } | nul
  * Moving between sign-up pages (and out to Getting started): the card leaves toward the side it isn't heading to, then the
  * next one comes in from the other (Midday). Outside the sign-up layout it is a plain navigation.
  */
-/** About and Name need the account made on Create: opened without one (a fresh tab, a typed URL) they send you back there. */
+/**
+ * About and Name need the account made on Create: opened without one (a fresh tab, a typed URL) they send you back there.
+ * With a platform already made (the browser's Back from Getting started, 19/11) they send you on to it instead of letting
+ * a second, identical platform be created.
+ */
 export function useNeedsAccount() {
   const router = useRouter()
   useEffect(() => {
-    if (!account()) router.replace("/signup/create")
+    const a = account()
+    if (!a) return router.replace("/signup/create")
+    const mine = a.setupSlug ? customCommunities().find((c) => c.slug === a.setupSlug) : undefined
+    if (mine) router.replace(mine.status === "live" ? `/admin/${mine.slug}` : `/admin/${mine.slug}/getting-started`)
   }, [router])
 }
 
@@ -79,7 +86,7 @@ function useDark() {
   }, [])
 }
 
-/** Card box width by screen (Figma 01 to 05): 440 for Log in, Create account and Verify, 480 for Name, 560 for About (content 360, 400 and 480 plus 40 px padding each side). */
+/** Card box width by screen (Figma Admin v2 · 01 Onboarding): 440 for Log in, Create account and Verify, 480 for Name, 560 for About (content 360, 400 and 480 plus 40 px padding each side). */
 const CARD_W: Record<string, string> = { "/signup/about": "sm:max-w-[560px]", "/signup/name": "sm:max-w-[480px]" }
 const CARD_W_DEFAULT = "sm:max-w-[440px]"
 
@@ -193,7 +200,7 @@ export function SignupTitle({ title, text }: { title: React.ReactNode; text?: Re
   )
 }
 
-/** Admin / Choice chip (Figma 945:2318): a pill that is picked or not. 36 px tall with the touch floor. */
+/** Admin / Choice chip (Figma 945:2318): a pill that is picked or not. 36 px tall with the touch floor. Hover: solid orange edge; Active: orange soft fill and the same edge. */
 export function ChoiceChip({ checked, onClick, children, multi }: { checked: boolean; onClick: () => void; children: React.ReactNode; multi?: boolean }) {
   return (
     <button
@@ -202,8 +209,11 @@ export function ChoiceChip({ checked, onClick, children, multi }: { checked: boo
       aria-checked={checked}
       onClick={onClick}
       className={cn(
-        "inline-flex h-9 items-center rounded-full border px-3.5 t-body-m text-a-text outline-none transition-[background-color,border-color,scale] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97] pointer-coarse:min-h-10",
-        checked ? "border-a-border-active bg-a-accent-soft" : "border-a-border bg-a-field hover:border-a-border-focus",
+        // Colour fades in 200 ms; the press answers in 100 ms and lets go in 200 (scale is in the list on purpose).
+        "inline-flex h-9 items-center rounded-full border px-3.5 t-body-m text-a-text outline-none transition-[background-color,border-color,scale] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97] active:duration-100 pointer-coarse:min-h-10",
+        checked
+          ? "border-[var(--admin-component-choice-chip-border-active)] bg-[var(--admin-component-choice-chip-bg-active)]"
+          : "border-a-border bg-a-field hover:border-[var(--admin-component-choice-chip-border-hover)]",
       )}
     >
       {children}

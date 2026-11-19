@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { ArrowDown, ArrowLeft, ArrowUp, ChevronsUpDown, PanelLeftIcon as PanelLeft, Plus, Trash2 } from "@/components/icons"
-import { AdminButton, AdminField, adminControl } from "@/components/admin/ui"
+import { AdminButton, AdminField, ProgressRing, adminControl } from "@/components/admin/ui"
 import { useDraftEditor } from "@/components/admin/design/editor/editor-shell"
 import { ColorPicker } from "@/components/admin/design/fields/controls"
 import { LOOKS } from "@/components/admin/design/looks"
@@ -167,7 +167,7 @@ function StepCard({ title, text, children, onBack, next, nextLabel = "Continue",
       </div>
       <div className="onb-in flex items-center gap-4 pt-2" style={{ "--i": Children.count(children) + 1 } as React.CSSProperties}>
         {onBack && (
-          <AdminButton type="button" hierarchy="ghost" size="xl" onClick={onBack} className="pl-0">
+          <AdminButton type="button" hierarchy="text" size="xl" onClick={onBack} className="pl-0 [&_svg]:transition-transform [&_svg]:duration-200 hover:[&_svg]:-translate-x-0.5">
             <ArrowLeft /> Back
           </AdminButton>
         )}
@@ -352,6 +352,7 @@ function LookStep({ theme, change, onBack, onNext }: { theme: CoachTheme; change
                 title={t.name}
                 description={t.text}
                 img={t.img}
+                imgClass="aspect-[276/188]"
                 radius="rounded-a-sm"
               />
             )
@@ -385,7 +386,7 @@ function LayoutStep({ theme, change, live, onBack, onNext }: { theme: CoachTheme
     <StepCard title="Your layout" text="How your platform is laid out. You can change it later in Design." onBack={onBack} next={onNext} nextLabel="Finish">
       <div role="radiogroup" aria-label="Layout" className="grid gap-3 sm:grid-cols-2">
         {LAYOUTS.map((l) => (
-          <SelectionCard key={l.id} checked={active === l.id} onSelect={() => active !== l.id && pick(l)} title={l.name} description={l.text} img={l.img} radius="rounded-a-md" />
+          <SelectionCard key={l.id} checked={active === l.id} onSelect={() => active !== l.id && pick(l)} title={l.name} description={l.text} img={l.img} imgClass="aspect-[276/117]" radius="rounded-a-md" />
         ))}
       </div>
       <div className="flex flex-col gap-2">
@@ -680,14 +681,7 @@ function Canvas({ slug, step, coach, theme, typing, swapRef }: { slug: string; s
 
 /** "Design progress · n of 3": a 24 px ring, top right. */
 function Ring({ step }: { step: number }) {
-  const r = 10
-  const c = 2 * Math.PI * r
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" role="img" aria-label={`Step ${step + 1} of 3`} className="absolute top-10 right-10 -rotate-90">
-      <circle cx="12" cy="12" r={r} fill="none" strokeWidth="2.5" style={{ stroke: "var(--admin-color-border-default)" }} />
-      <circle cx="12" cy="12" r={r} fill="none" strokeWidth="2.5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - (step + 1) / 3)} className="transition-[stroke-dashoffset] duration-500 ease-out motion-reduce:transition-none" style={{ stroke: "var(--admin-color-accent-default)" }} />
-    </svg>
-  )
+  return <ProgressRing value={(step + 1) / 3} size={24} label={`Step ${step + 1} of 3`} className="absolute top-10 right-10" />
 }
 
 /**

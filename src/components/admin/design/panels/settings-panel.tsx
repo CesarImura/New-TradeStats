@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useId, useRef, useState } from "r
 import { ArrowRight, Check, ChevronDown, ChevronRight, GraduationCap, Image as ImageIcon, LayoutGrid, Monitor, Palette, PanelLeftIcon, RotateCcw, Search, Smartphone, Tablet, TriangleAlert, Type, UserPlus, Wand2, X } from "@/components/icons"
 import type { ThemeDraft } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
-import { AdminButton, AdminSegmentGroup } from "@/components/admin/ui"
+import { AdminButton, AdminSegmentGroup, SlideTrack } from "@/components/admin/ui"
 import { widgetFinishOf, widgetSetOf, type CoachTheme } from "@/lib/theme/types"
 import { DesignField, useDesign } from "../fields/design-fields"
 import { ChartPanelField, FOCUS, HeaderPartsField, LogoColoursField, NumbersField, StylePresetField, SurfaceField } from "../fields/settings-fields"
@@ -336,22 +336,36 @@ export function SettingsPanel({
 
         {/* A merged section's parts as tabs: one click between Brand, Look, Type and Background. */}
         {sub && (
-          <div role="tablist" aria-label={merge!.label} className="flex shrink-0 gap-0.5 overflow-x-auto px-4 pb-3 [scrollbar-width:none]">
-            {sub.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                aria-selected={t.id === current.id}
-                onClick={() => onTab(t.id)}
-                className={cn(
-                  "h-[26px] shrink-0 rounded-a-sm px-2.5 t-caption outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:h-10",
-                  t.id === current.id ? "bg-a-raised text-a-text" : "text-a-text-2 hover:bg-a-hover hover:text-a-text",
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
+          <div
+            role="tablist"
+            aria-label={merge!.label}
+            className="flex shrink-0 overflow-x-auto px-4 pb-3 [scrollbar-width:none]"
+            onKeyDown={(e) => {
+              if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(e.key)) return
+              e.preventDefault()
+              const i = Math.max(0, sub.findIndex((t) => t.id === current.id))
+              const next = e.key === "Home" ? sub[0] : e.key === "End" ? sub[sub.length - 1] : sub[(i + (e.key === "ArrowRight" ? 1 : sub.length - 1)) % sub.length]
+              onTab(next.id)
+              ;(e.currentTarget.querySelectorAll("[role=tab]")[sub.indexOf(next)] as HTMLElement | undefined)?.focus()
+            }}
+          >
+            <SlideTrack
+              items={sub.map((t) => ({ key: t.id, label: t.label }))}
+              activeKey={current.id}
+              rowClass="flex gap-0.5"
+              wrapClass="shrink-0"
+              thumbClass="rounded-a-sm bg-a-raised"
+              renderItem={(t, layer, st) => {
+                const item = "inline-flex h-[26px] shrink-0 items-center rounded-a-sm px-2.5 t-caption pointer-coarse:h-10"
+                if (layer === "base") return <span data-slide={t.key} aria-hidden className={cn(item, "transition-colors duration-150", st.pre ? "bg-a-raised text-a-text" : st.hovered ? "bg-a-hover text-a-text" : "text-a-text-2")}>{t.label}</span>
+                if (layer === "copy") return <span className={cn(item, "text-a-text")}>{t.label}</span>
+                return (
+                  <button type="button" role="tab" aria-selected={t.key === current.id} tabIndex={t.key === current.id ? 0 : -1} onClick={() => onTab(t.key as typeof current.id)} {...st.hover} className={cn(item, "text-transparent outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus")}>
+                    {t.label}
+                  </button>
+                )
+              }}
+            />
           </div>
         )}
         {current.id !== "pages" && <div aria-hidden className="h-px shrink-0 bg-a-border-subtle" />}

@@ -166,7 +166,7 @@ export function Team() {
       <AdminModal open={open} onOpenChange={setOpen} title="Invite to the team" subtitle="They get an e-mail with a link to join." footer={<><AdminButton hierarchy="ghost" onClick={() => setOpen(false)}>
               Cancel
             </AdminButton>
-            <AdminButton disabled={!email.includes("@")} onClick={send}>
+            <AdminButton disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())} onClick={send}>
               Send invite
             </AdminButton></>}>
           

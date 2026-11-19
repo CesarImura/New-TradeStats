@@ -10,12 +10,12 @@ import { cn } from "@/lib/utils"
 export default function LogIn() {
   const go = useSignupGo()
   const [email, setEmail] = useState("")
-  const [tried, setTried] = useState(false)
+  // Rule (19/11): the button stays disabled until the e-mail is valid; a format error shows only after the field was left with something typed.
+  const [left, setLeft] = useState(false)
   const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    setTried(true)
     if (!ok) return
     const cur = account()
     // Same e-mail as the coach on this browser: keep their account (and the platform they set up).
@@ -28,13 +28,15 @@ export default function LogIn() {
     <SignupFrame>
       <form onSubmit={submit} noValidate className="flex flex-col gap-5">
         <SignupTitle title="Log in" text="We e-mail you a 6-digit code. No password." />
-        <AdminField label="E-mail" error={tried && !ok ? "That e-mail doesn't look right." : undefined}>
-          {(f) => <input {...f} type="email" autoComplete="email" autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={cn(adminControl, "h-11")} />}
+        <AdminField label="E-mail" error={left && email.trim() && !ok ? "That e-mail doesn't look right." : undefined}>
+          {(f) => <input {...f} type="email" autoComplete="email" autoFocus value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setLeft(true)} placeholder="you@example.com" className={cn(adminControl, "h-11")} />}
         </AdminField>
-        <AdminButton type="submit" className="w-full">Send code</AdminButton>
-        <AdminButton type="button" hierarchy="secondary" className="w-full" onClick={() => go("/signup/create")}>
-          Create account
-        </AdminButton>
+        <div className="flex flex-col gap-3">
+          <AdminButton type="submit" className="w-full" disabled={!ok}>Send code</AdminButton>
+          <AdminButton type="button" hierarchy="secondary" className="w-full" onClick={() => go("/signup/create")}>
+            Create account
+          </AdminButton>
+        </div>
       </form>
     </SignupFrame>
   )

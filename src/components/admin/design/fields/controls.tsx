@@ -4,6 +4,7 @@ import { Slider as SliderPrimitive } from "@base-ui/react/slider"
 import { ChevronDown, RotateCcw } from "@/components/icons"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { SlideTrack } from "@/components/admin/ui/slide-thumb"
 import { LABEL, VALUE } from "./field-styles"
 
 /**
@@ -176,25 +177,26 @@ export function Segmented<T extends string | number>({
   className?: string
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn("flex items-stretch gap-0.5 rounded-a-md border border-a-border p-0.5", className)}>
-      {options.map((o) => (
-        <button
-          key={String(o.value)}
-          type="button"
-          role="radio"
-          aria-checked={o.value === value}
-          aria-label={o.name}
-          title={o.hint ?? o.name ?? (typeof o.label === "string" ? o.label : undefined)}
-          onClick={() => onChange(o.value)}
-          className={cn(
-            // The Admin's Segmented item: 30 px, radius 6, secondary text; the chosen one takes the panel fill.
-            "relative flex h-[30px] min-w-0 flex-[1_1_auto] items-center justify-center gap-1.5 overflow-hidden rounded-a-sm px-3 t-body-m text-ellipsis whitespace-nowrap text-a-text-2 transition-colors duration-300 outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:min-h-10 [&_svg]:size-4",
-            o.value === value && "bg-a-panel text-a-text",
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
+    <div role="radiogroup" aria-label={label} className={cn("flex items-stretch rounded-a-md border border-a-border p-0.5", className)}>
+      <SlideTrack
+        items={options.map((o) => ({ ...o, key: String(o.value) }))}
+        activeKey={String(value)}
+        rowClass="flex items-stretch gap-0.5"
+        wrapClass="w-full"
+        thumbClass="rounded-a-sm bg-a-panel"
+        renderItem={(o, layer, s) => {
+          // The Admin's Segmented item: 30 px, radius 6, secondary text; the chosen one takes the panel fill (a sliding thumb).
+          const item = "relative flex h-[30px] min-w-0 flex-[1_1_auto] items-center justify-center gap-1.5 overflow-hidden rounded-a-sm px-3 t-body-m text-ellipsis whitespace-nowrap pointer-coarse:min-h-10 [&_svg]:size-4"
+          if (layer === "base") return <span data-slide={o.key} aria-hidden className={cn(item, "transition-colors duration-150", s.pre ? "bg-a-panel text-a-text" : s.hovered ? "text-a-text" : "text-a-text-2")}>{o.label}</span>
+          if (layer === "copy") return <span className={cn(item, "text-a-text")}>{o.label}</span>
+          return (
+            <button type="button" role="radio" aria-checked={o.value === value} aria-label={o.name} title={o.hint ?? o.name ?? (typeof o.label === "string" ? o.label : undefined)} onClick={() => onChange(o.value)} {...s.hover}
+              className={cn(item, "text-transparent outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus [&>*]:invisible")}>
+              {o.label}
+            </button>
+          )
+        }}
+      />
     </div>
   )
 }

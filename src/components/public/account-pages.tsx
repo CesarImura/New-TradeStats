@@ -208,7 +208,7 @@ export function Login() {
           {step === "email" ? (
             <>
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" aria-label="E-mail" />
-              <Button size="lg" type="submit" disabled={!email.includes("@")}>
+              <Button size="lg" type="submit" disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())}>
                 Send the link
               </Button>
             </>
@@ -250,7 +250,7 @@ export function Login() {
               <Input id="li-pw" type="password" autoComplete="current-password" />
             </div>
           )}
-          <Button size="lg" type="submit" disabled={!email.includes("@") || busy}>
+          <Button size="lg" type="submit" disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) || busy}>
             {busy && <Loader2 className="animate-spin" />}
             {copy.button || (password ? "Log in" : "Send me a code")}
           </Button>
@@ -320,7 +320,7 @@ export function JoinFree({ invite }: { invite?: boolean }) {
             <Label htmlFor="jf-email">E-mail</Label>
             <Input id="jf-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} readOnly={invite} autoComplete="email" placeholder="you@example.com" className={cn(invite && "text-muted-foreground")} />
           </div>
-          <Button size="lg" type="submit" disabled={!name || !email.includes("@")}>
+          <Button size="lg" type="submit" disabled={!name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())}>
             {invite ? "Accept and start" : copy.button || "Join free"}
           </Button>
           {!invite && copy.discord !== false && (
@@ -383,7 +383,7 @@ export function WaitingList() {
           }}
         >
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" aria-label="E-mail" />
-          <Button size="lg" type="submit" disabled={!email.includes("@")}>
+          <Button size="lg" type="submit" disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())}>
             Put me on the list
           </Button>
           <p className="text-center text-xs text-muted-foreground">

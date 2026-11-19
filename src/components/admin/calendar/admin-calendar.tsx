@@ -440,6 +440,8 @@ function NewsDrawer({ item, onClose }: { item: Item | null; onClose: () => void 
     setComment(item.news!.comment ?? "")
   }
   const news = (item ?? last)?.news
+  // Rule (19/11): an edit form saves only when something changed.
+  const changed = !!news && (noTrade !== news.noTrade || comment.trim() !== (news.comment ?? ""))
   return (
     <AdminDrawer
       open={!!item}
@@ -452,8 +454,8 @@ function NewsDrawer({ item, onClose }: { item: Item | null; onClose: () => void 
         <div className="flex w-full items-center gap-2">
           <AdminButton hierarchy="ghost" onClick={onClose}>Cancel</AdminButton>
           <span aria-hidden className="h-px min-w-px flex-1" />
-          <AdminButton onClick={() => {
-            if (!news) return
+          <AdminButton disabled={!changed} onClick={() => {
+            if (!news || !changed) return
             saveSchedule(coach, (s) => ({ ...s, news: s.news.map((n) => (n.id === news.id ? { ...n, noTrade, comment: comment.trim() || undefined } : n)) }))
             toast.success("Saved. Students see your note on the event.")
             onClose()

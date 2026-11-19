@@ -426,7 +426,7 @@ function TradeDetail({ trade: t, onClose }: { trade: T | null; onClose: () => vo
         </SheetHeader>
         <div className="grid gap-4 p-4">
           <div className="overflow-hidden rounded-(--radius) border bg-background">
-            <TradeChart trade={t} dark={theme.mode === "dark"} background={theme.palettes[theme.mode].background} />
+            <TradeChart trade={t} dark={theme.mode === "dark"} background={resolveColors(theme).background} />
           </div>
           <div className="flex flex-wrap gap-1.5">
             <Badge variant="outline">{t.setup}</Badge>

@@ -459,7 +459,7 @@ function TestChat({ corrections, onCorrect }: { corrections: AiSetup["correction
             ask()
           }}>
           <input ref={field} value={q} onChange={(e) => setQ(e.target.value)} aria-label="Ask your AI as a student" placeholder="Try: “Where do I put my stop on an ORB?”" className={cn(adminControl, "h-11 min-w-0 flex-1")} />
-          <AdminButton type="submit" size="xl" className="h-11 px-5">Ask</AdminButton>
+          <AdminButton type="submit" size="xl" className="h-11 px-5" disabled={!q.trim()}>Ask</AdminButton>
         </form>
       </Panel>
       <Panel>

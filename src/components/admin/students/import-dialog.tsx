@@ -79,7 +79,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
       bodyClassName="gap-5"
       footer={
         <div className="flex w-full items-center gap-2">
-          {step === 1 && <AdminButton hierarchy="ghost" onClick={() => setStep(0)}>Back</AdminButton>}
+          {step === 1 && <AdminButton hierarchy="text" onClick={() => setStep(0)}>Back</AdminButton>}
           <span aria-hidden className="h-px min-w-px flex-1" />
           {step === 0 && mode === "link" && <AdminButton onClick={close}>Done</AdminButton>}
           {step === 0 && mode !== "link" && (

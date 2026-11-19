@@ -83,7 +83,7 @@ export function AnswerPage({ trade: t, student: s, aiDraft, readOnly, onBack, on
       {!recording && (
         <AdminButton hierarchy="secondary" nativeButton={false} render={<a href={`${base}/students`} />}><ExternalLink /> Open profile</AdminButton>
       )}
-      <AdminButton hierarchy="ghost" onClick={onSkip} disabled={!hasNext}>Skip</AdminButton>
+      <AdminButton hierarchy="text" onClick={onSkip} disabled={!hasNext}>Skip</AdminButton>
       <AdminButton hierarchy="secondary" onClick={onNext} disabled={!hasNext}>Next request <ArrowRight /></AdminButton>
     </header>
   )

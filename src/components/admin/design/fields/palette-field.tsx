@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Check, RotateCcw, TriangleAlert } from "@/components/icons"
 import { auditTheme } from "@/lib/theme/contrast"
+import { greysFollow } from "@/lib/theme/derive"
 import { TEMPLATES } from "@/lib/theme/templates"
 import type { Mode, Palette } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
@@ -82,7 +83,7 @@ export function PaletteField() {
           <span className="t-caption text-muted-foreground">Greys follow</span>
           <Segmented
             label="Greys follow"
-            value={theme.tint ?? "brand"}
+            value={greysFollow(theme)}
             onChange={(tint) => change({ theme: { tint } }, "tint")}
             options={[
               // Short words: three options share a 240px row.
@@ -92,9 +93,9 @@ export function PaletteField() {
             ]}
           />
           <p className="t-caption text-muted-foreground">
-            {(theme.tint ?? "brand") === "brand"
+            {greysFollow(theme) === "brand"
               ? "Each grey keeps its lightness but takes the coach's brand hue, so these show slightly recoloured."
-              : theme.tint === "none"
+              : greysFollow(theme) === "none"
                 ? "Each grey keeps its lightness with no colour at all."
                 : "The greys show exactly as set here, whatever the coach's colour."}{" "}
             Saved with the template.

@@ -199,22 +199,21 @@ function CompetitionModal({ item, onClose, onSave }: { item: Competition | "new"
   const blank: Competition = { id: "", name: "", metric: "rules", start: "2025-11-15", end: "2025-11-30", prize: "", entrants: 0, who: "everyone", picked: [], nicknames: true }
   const [c, setC] = useState<Competition>(blank)
   const [key, setKey] = useState<string | null>(null)
-  const [tried, setTried] = useState(false)
   const k = item === null ? null : item === "new" ? "new" : item.id
   // Open with this competition's values each time (derived state, no effect).
   if (k !== key && k !== null) {
     setKey(k)
     setC(item === "new" ? blank : { ...(item as Competition) })
-    setTried(false)
   }
   if (k === null && key !== null) setKey(null)
   const isNew = item === "new"
   const ended = !isNew && item !== null && competitionState(item).status === "ended"
   const set = (p: Partial<Competition>) => setC((v) => ({ ...v, ...p }))
   const errors = { name: c.name.trim() ? "" : "Give it a name", dates: c.end < c.start ? "It can't end before it starts" : "", who: c.who === "pick" && !(c.picked?.length) ? "Pick at least one tier or group" : "" }
+  // Rule (19/11): the action stays disabled until the form is valid; an empty field never shows an error.
+  const invalid = Object.values(errors).some(Boolean)
   const submit = () => {
-    setTried(true)
-    if (Object.values(errors).some(Boolean)) return
+    if (invalid) return
     onSave({ ...c, status: ({ upcoming: "scheduled", running: "running", ended: "ended" } as const)[competitionState(c).status], id: isNew ? `c${Date.now()}` : c.id, name: c.name.trim(), prize: c.prize.trim() || "Bragging rights" }, isNew)
     onClose()
   }
@@ -231,12 +230,12 @@ function CompetitionModal({ item, onClose, onSave }: { item: Competition | "new"
       footer={
         <>
           <AdminButton hierarchy="ghost" onClick={onClose}>{ended ? "Close" : "Cancel"}</AdminButton>
-          {!ended && <AdminButton onClick={submit}>{isNew ? "Create competition" : "Save competition"}</AdminButton>}
+          {!ended && <AdminButton disabled={invalid} onClick={submit}>{isNew ? "Create competition" : "Save competition"}</AdminButton>}
         </>
       }>
       <fieldset disabled={ended} className="contents">
         <div className="contents" onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); submit() } }}>
-          <AdminField label="Name" error={tried ? errors.name : undefined}>
+          <AdminField label="Name">
             <input value={c.name} maxLength={60} onChange={(e) => set({ name: e.target.value })} placeholder="November discipline cup" className={cn(adminControl, "h-11")} />
           </AdminField>
           <div className="grid gap-1.5">
@@ -244,7 +243,7 @@ function CompetitionModal({ item, onClose, onSave }: { item: Competition | "new"
             <AdminSegmented label="Ranks by" value={c.metric} onChange={(v) => set({ metric: v })} options={COMPETITION_METRICS} />
           </div>
           <div className="grid grid-cols-2 items-start gap-3 max-sm:grid-cols-1">
-            <AdminField label="Starts" error={tried ? errors.dates : undefined}>
+            <AdminField label="Starts" error={errors.dates || undefined}>
               <input type="date" value={c.start} onChange={(e) => set({ start: e.target.value })} className={cn(adminControl, "h-11")} />
             </AdminField>
             <AdminField label="Ends">
@@ -262,7 +261,7 @@ function CompetitionModal({ item, onClose, onSave }: { item: Competition | "new"
                     {o.name}
                   </label>
                 ))}
-                {tried && errors.who && <span className="w-full t-caption text-a-danger">{errors.who}</span>}
+                {errors.who && <span className="w-full t-caption text-a-danger">{errors.who}</span>}
               </div>
             )}
           </div>
@@ -370,23 +369,21 @@ function PointsCell({ label, value, onChange }: { label: string; value: number; 
 function BadgeModal({ open, onClose, onAdd }: { open: boolean; onClose: () => void; onAdd: (b: (typeof ADMIN_BADGES)[number]) => void }) {
   const [name, setName] = useState("")
   const [text, setText] = useState("")
-  const [tried, setTried] = useState(false)
   const close = () => {
     onClose()
-    setTimeout(() => (setName(""), setText(""), setTried(false)), 200)
+    setTimeout(() => (setName(""), setText("")), 200)
   }
   const add = () => {
-    setTried(true)
     if (!name.trim() || !text.trim()) return
     onAdd({ id: `b${Date.now()}`, name: name.trim(), text: text.trim(), earned: 0 })
     close()
   }
   return (
-    <AdminModal open={open} onOpenChange={(o) => !o && close()} title="New badge" subtitle="Students get it when they do what you describe." className="sm:max-w-[480px]" bodyClassName="gap-4" footer={<><AdminButton hierarchy="ghost" onClick={close}>Cancel</AdminButton><AdminButton onClick={add}>Add badge</AdminButton></>}>
-      <AdminField label="Name" error={tried && !name.trim() ? "Give it a name" : undefined}>
+    <AdminModal open={open} onOpenChange={(o) => !o && close()} title="New badge" subtitle="Students get it when they do what you describe." className="sm:max-w-[480px]" bodyClassName="gap-4" footer={<><AdminButton hierarchy="ghost" onClick={close}>Cancel</AdminButton><AdminButton disabled={!name.trim() || !text.trim()} onClick={add}>Add badge</AdminButton></>}>
+      <AdminField label="Name">
         <input value={name} maxLength={40} onChange={(e) => setName(e.target.value)} placeholder="Early bird" className={cn(adminControl, "h-11")} />
       </AdminField>
-      <AdminField label="How it's earned" error={tried && !text.trim() ? "Say how a student earns it" : undefined}>
+      <AdminField label="How it's earned">
         <input value={text} maxLength={80} onChange={(e) => setText(e.target.value)} placeholder="Joined 5 live sessions" className={cn(adminControl, "h-11")} />
       </AdminField>
     </AdminModal>

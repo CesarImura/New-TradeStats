@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
  * Admin / Button (Figma 572:28569). Hierarchy × size, states by CSS.
  * Sizes as in Figma _Base Button: sm 24 (r6, 12px), md 28 (12px), lg 32 (13px), xl 36 (13px, default); every label is Regular (400), as in all 861 Figma buttons. `iconOnly` makes it square.
  * Secondary and danger draw their 1 px outline inside the box, so every hierarchy has the same height (36 for xl, Figma 14/11).
+ * Text (19/11): a quiet text action (Back, Skip). No fill at any state; on hover only the label and the icons turn orange (they follow currentColor) in 200 ms; pressed = scale 0.97 in 100 ms.
  * Open state (K7): a trigger whose menu is open (`aria-expanded` or `data-popup-open`) looks like Secondary Hover, for every hierarchy.
  */
 const button = cva(
@@ -17,6 +18,7 @@ const button = cva(
         secondary: "text-a-text shadow-[inset_0_0_0_1px_var(--admin-component-button-secondary-border)] hover:bg-a-hover aria-expanded:bg-a-hover data-popup-open:bg-a-hover",
         ghost: "text-a-text-2 hover:bg-a-hover hover:text-a-text aria-expanded:bg-a-hover aria-expanded:text-a-text data-popup-open:bg-a-hover data-popup-open:text-a-text",
         danger: "text-a-danger shadow-[inset_0_0_0_1px_var(--admin-component-button-danger-border)] hover:bg-a-danger-soft aria-expanded:bg-a-danger-soft data-popup-open:bg-a-danger-soft",
+        text: "transition-[color,scale] duration-200 active:scale-[0.97] active:duration-100 text-a-text-2 hover:text-[var(--admin-component-button-text-content-hover)] aria-expanded:text-[var(--admin-component-button-text-content-hover)] data-popup-open:text-[var(--admin-component-button-text-content-hover)]",
         highlight: "bg-[var(--admin-component-button-highlight-bg-default)] text-[var(--admin-component-button-highlight-content)] hover:bg-[var(--admin-component-button-highlight-bg-hover)]",
       },
       size: {

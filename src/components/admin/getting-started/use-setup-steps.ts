@@ -7,10 +7,11 @@ import { useStored } from "@/lib/prototype-store"
 import { openLessons, useCatalog } from "@/lib/data/learning"
 
 /**
- * Getting started (Figma 1090:58716; a step skipped 1237:61209): five setup items and Go live. The items are done in any
- * order (Flavio, 14/11): every one can be opened any time; the first one not done and not put off is the suggested
- * one (orange edge, "Skip for now"). Go live is phase 3 and unlocks when all five are done; until then it says what is
- * still open. Each item is done when the coach really did it: the screens set the flags (`setup.design`, `firstTier`,
+ * Getting started (Figma 1090:58716; a step skipped 1237:61209): five setup items and Go live, in order (Gustavo, 19/11).
+ * Only the first item that is not done and not put off is open to start (the current one, "Skip for now"); the items
+ * after it are locked until it is done or put off. Put-off items stay reachable but do not count as done. Go live is
+ * phase 3 and unlocks when all five are done; until then it says what is still open. Nothing is stored for the lock:
+ * it is worked out from what exists, so accounts that already did items out of order keep them done. Each item is done when the coach really did it: the screens set the flags (`setup.design`, `firstTier`,
  * `firstCourse`, `legal`); payouts also count from the Payouts screen itself.
  */
 export type SetupStepId = "design" | "tier" | "course" | "payouts" | "legal" | "live"
@@ -58,5 +59,8 @@ export function useSetupSteps() {
   }
   // Every item still open was put off: the suggestion goes back to the first one put off (QA 14/11, Gustavo).
   const allPutOff = open.length > 0 && open.every((x) => skipped.includes(x.id))
-  return { community, steps, doneCount, total: items.length, current, skip, skipped, allPutOff, ready: open.length === 0 }
+  // Locked (19/11): not done, not put off, and after the current one. With everything left put off, nothing is locked.
+  const currentAt = items.findIndex((x) => x.id === current)
+  const locked: SetupStepId[] = currentAt < 0 ? [] : items.filter((x, i) => i > currentAt && !x.done && !skipped.includes(x.id)).map((x) => x.id)
+  return { community, steps, doneCount, total: items.length, current, locked, skip, skipped, allPutOff, ready: open.length === 0 }
 }

@@ -76,7 +76,7 @@ export default function About() {
   return (
     <SignupFrame>
       <div className="flex flex-col gap-5">
-        <AdminButton type="button" hierarchy="ghost" className="-ml-2 w-fit" onClick={() => (save(), go("/signup/create", -1))}>
+        <AdminButton type="button" hierarchy="text" className="w-fit pl-0 [&_svg]:transition-transform [&_svg]:duration-200 hover:[&_svg]:-translate-x-0.5" onClick={() => (save(), go("/signup/create", -1))}>
           <ArrowLeft /> Back
         </AdminButton>
         <SignupTitle title="Tell us about your coaching." text="Help us tailor TraderHub for you. All optional." />
@@ -110,10 +110,10 @@ export default function About() {
         </div>
         {/* Figma 939:58985: Continue then Skip, on the right. */}
         <div className="flex items-center justify-end gap-4 pt-2">
-          <AdminButton size="xl" onClick={() => next()}>
+          <AdminButton size="xl" disabled={!members && tools.length === 0 && offers.length === 0} onClick={() => next()}>
             Continue
           </AdminButton>
-          <AdminButton size="xl" hierarchy="ghost" className="pr-0" onClick={() => next(true)}>
+          <AdminButton size="xl" hierarchy="text" className="pl-0" onClick={() => next(true)}>
             Skip
           </AdminButton>
         </div>

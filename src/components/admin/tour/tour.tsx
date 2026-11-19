@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from "@/components/icons"
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { setStored, useDraft, useStored } from "@/lib/prototype-store"
 import { editorChoice } from "./editor-choices"
 import { cn } from "@/lib/utils"
-import { AdminButton, StepIndicator } from "../ui"
+import { AdminButton, ProgressRing, StepIndicator } from "../ui"
 import { useSetupSteps } from "../getting-started/use-setup-steps"
 import { isTourId, pausedKey, TOURS, tourKey, type PausedTours, type Side, type Tour, type TourId, type TourState, type TourStep } from "./tours"
 
@@ -62,21 +62,22 @@ export function TourLayer() {
   const { coach, base } = useCoach()
   const { state, set, open, tour } = useTourState()
   const asked = params.get("tour")
+  const { community, current, locked } = useSetupSteps()
 
   // ?tour=… (from Getting started): the tour starts at once, coachmark on the first target (Figma 1014:8741…), or
   // resumes where it was; the panel stays folded into the pill. Then the parameter is dropped.
   useEffect(() => {
     if (!isTourId(asked)) return
-    open(asked)
+    // A step that is still locked (they go in order) doesn't start its tour from a link.
+    if (!(locked as string[]).includes(asked)) open(asked)
     const rest = new URLSearchParams(params.toString())
     rest.delete("tour")
     router.replace(`${pathname}${rest.size ? `?${rest}` : ""}`, { scroll: false })
-  }, [asked, open, params, pathname, router])
+  }, [asked, open, params, pathname, router, locked])
 
   // Coming in another way (the side menu, a tab): while that Getting started item is the one to do next and no tour
   // is on, its tour starts as soon as its first target is on screen (Content's New course, the Tiers tab's New tier,
   // the Payouts tab's Start, Legal's Set up). A tour the coach skipped keeps its state, so it doesn't come back.
-  const { community, current } = useSetupSteps()
   useEffect(() => {
     if (state || !community || !isTourId(current ?? null)) return
     const id = current as TourId
@@ -118,6 +119,8 @@ export function TourLayer() {
     }
   }, [tour, step, stepIndex, state, coach.slug, set, pathname])
 
+  // The pill belongs to the flows of the timeline (Figma: only the Tour frames have it, never Getting started itself).
+  const onGettingStarted = /\/getting-started\/?$/.test(pathname)
   if (!tour || !state) return null
   const part = step ? step.part : state.at ? tour.steps.find((x) => x.id === state.at)?.part ?? 0 : 0
   const progress = state.done ? 1 : state.at ? (part + (state.started ? 0.5 : 0)) / tour.parts.length : 0
@@ -131,8 +134,8 @@ export function TourLayer() {
   return createPortal(
     <>
       {state.started && step && <Spotlight key={tour.id} step={step} tour={tour} onSkip={pause} onFinish={finish} />}
-      <Pill tour={tour} done={!!state.done} label={state.done ? step?.pill ?? tour.doneTitle : tour.title} progress={progress} open={state.panel} onToggle={() => (state.done ? finish() : set((s) => (s ? { ...s, panel: !s.panel } : s)))} />
-      {state.panel && !state.done && <Panel tour={tour} part={state.at ? part : 0} resumed={!!state.at} onStart={() => set((s) => (s ? { ...s, started: true, panel: false } : s))} />}
+      {!onGettingStarted && <Pill tour={tour} done={!!state.done} label={state.done ? step?.pill ?? tour.doneTitle : tour.title} progress={progress} open={state.panel} onToggle={() => (state.done ? finish() : set((s) => (s ? { ...s, panel: !s.panel } : s)))} />}
+      {!onGettingStarted && state.panel && !state.done && <Panel tour={tour} part={state.at ? part : 0} resumed={!!state.at} onStart={() => set((s) => (s ? { ...s, started: true, panel: false } : s))} />}
     </>,
     document.body,
   )
@@ -268,7 +271,7 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
           <h2 className="min-w-0 flex-1 t-heading-s text-a-text">{step.title}</h2>
           <span role="img" aria-label={`Part ${progressIndex + 1} of ${tour.parts.length}`} className="flex shrink-0 gap-0.5">
             {tour.parts.map((p, i) => (
-              <span key={p} className={cn("h-1 w-3 rounded-full transition-colors duration-300", i <= progressIndex || step.final ? "bg-a-accent" : "bg-a-border")} />
+              <span key={p} className={cn("h-1 w-3 rounded-full transition-colors duration-300", i <= progressIndex || step.final ? "bg-a-coach-progress" : "bg-a-coach-progress-off")} />
             ))}
           </span>
         </div>
@@ -285,7 +288,7 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
               <Hint aria-hidden className="size-4 shrink-0" />
               {step.hint}
             </span>
-            <AdminButton hierarchy="ghost" size="xl" className="pr-0" onClick={onSkip}>
+            <AdminButton hierarchy="text" size="xl" className="pr-0" onClick={onSkip}>
               {step.later ? "Do it later" : "Skip"}
             </AdminButton>
           </div>
@@ -336,7 +339,7 @@ function Arrow({ side, offset }: { side: Side; offset: number }) {
 }
 
 /** Course tour pill (Figma: 36 px, panel fill, the progress ring and the tour's name). Opens and closes the panel. */
-function Pill({ label, progress, open, onToggle }: { tour: Tour; done: boolean; label: string; progress: number; open: boolean; onToggle: () => void }) {
+function Pill({ label, done, progress, open, onToggle }: { tour: Tour; done: boolean; label: string; progress: number; open: boolean; onToggle: () => void }) {
   const { right, bottom } = useCorner()
   // Toasts stack above the pill while it is on screen, so a toast never covers it (QA 14/11). 36 px pill + 12 px gap.
   useEffect(() => {
@@ -349,21 +352,15 @@ function Pill({ label, progress, open, onToggle }: { tour: Tour; done: boolean; 
       type="button"
       onClick={onToggle}
       onPointerDown={(e) => e.stopPropagation()}
-      aria-expanded={open}
-      className="fixed z-[60] flex h-9 items-center gap-2 rounded-full border border-a-border bg-a-panel px-3 t-body-m-medium text-a-text outline-none transition-[background-color,right] duration-300 ease-out hover:bg-a-raised focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97] motion-reduce:transition-none"
+      aria-expanded={done ? undefined : open}
+      className="fixed z-[60] flex h-9 items-center gap-2 rounded-full border border-a-border bg-a-panel px-3 t-body-m-medium text-a-text outline-none transition-[background-color,right,scale] duration-300 ease-out hover:bg-a-raised focus-visible:ring-2 focus-visible:ring-a-border-focus active:scale-[0.97] active:duration-100 motion-reduce:transition-none"
       style={{ right, bottom }}
     >
-      {open ? (
-        <>
-          {label}
-          <Ring value={progress} />
-        </>
-      ) : (
-        <>
-          <Ring value={progress} />
-          {label}
-        </>
-      )}
+      {/* The ring (or the check) always stays before the name, open panel or not. */}
+      <span className="grid size-[18px] shrink-0 place-items-center">
+        {done ? <Check aria-hidden className="size-[18px] text-a-success motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:fade-in-0 motion-safe:duration-300" /> : <ProgressRing value={progress} />}
+      </span>
+      <span>{label}</span>
     </button>
   )
 }
@@ -391,17 +388,6 @@ function useCorner() {
     return () => cancelAnimationFrame(frame)
   }, [])
   return corner
-}
-
-function Ring({ value }: { value: number }) {
-  const r = 7.5
-  const c = 2 * Math.PI * r
-  return (
-    <svg aria-hidden width="18" height="18" viewBox="0 0 18 18" className="-rotate-90">
-      <circle cx="9" cy="9" r={r} fill="none" strokeWidth="2" style={{ stroke: "var(--admin-color-border-default)" }} />
-      <circle cx="9" cy="9" r={r} fill="none" strokeWidth="2" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - Math.max(0.06, value))} className="transition-[stroke-dashoffset] duration-500 ease-out motion-reduce:transition-none" style={{ stroke: "var(--admin-color-accent-default)" }} />
-    </svg>
-  )
 }
 
 /** The tour's parts, the current one with Start (or Resume). Figma "Course tour panel": 298 px, 12 above the pill. */

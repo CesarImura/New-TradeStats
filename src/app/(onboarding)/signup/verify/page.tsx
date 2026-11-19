@@ -69,11 +69,11 @@ export default function Verify() {
   return (
     <SignupFrame>
       <div className="flex flex-col gap-5">
-        <AdminButton hierarchy="ghost" className="-ml-2 w-fit" onClick={() => go(back, -1)}>
+        <AdminButton hierarchy="text" className="w-fit pl-0 [&_svg]:transition-transform [&_svg]:duration-200 hover:[&_svg]:-translate-x-0.5" onClick={() => go(back, -1)}>
           <ArrowLeft /> Back
         </AdminButton>
         <SignupTitle title="Enter the 6-digit code" text={<>We sent it to {acc?.email || "your e-mail"}.</>} />
-        <div className="flex gap-3 max-sm:gap-2" role="group" aria-label="Verification code" aria-describedby={wrong ? "code-error" : undefined}>
+        <div className="flex gap-2.5 max-sm:gap-2" role="group" aria-label="Verification code" aria-describedby={wrong ? "code-error" : undefined}>
           {digits.map((d, i) => (
             <input
               key={i}
@@ -121,11 +121,11 @@ export default function Verify() {
           {wait > 0 ? (
             <span className="tabular-nums text-a-text-3">Send a new code in 0:{String(wait).padStart(2, "0")}</span>
           ) : (
-            <button className="rounded-a-xs text-a-text-accent outline-none hover:underline focus-visible:ring-2 focus-visible:ring-a-border-focus" onClick={() => (setWait(30), toast("New code sent."))}>
+            <button className="inline-flex min-h-6 -my-[3px] items-center rounded-a-xs text-a-text-accent outline-none hover:underline focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:-mx-2 pointer-coarse:-my-[11px] pointer-coarse:min-h-10 pointer-coarse:px-2" onClick={() => (setWait(30), toast("New code sent."))}>
               Send a new code
             </button>
           )}
-          <button className="ml-auto rounded-a-xs outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus" onClick={() => go(back, -1)}>
+          <button className="ml-auto inline-flex min-h-6 -my-[3px] items-center rounded-a-xs outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:-mr-2 pointer-coarse:-my-[11px] pointer-coarse:min-h-10 pointer-coarse:px-2" onClick={() => go(back, -1)}>
             Change e-mail
           </button>
         </div>

@@ -8,7 +8,7 @@ import { AdminPageHeader, Callout, Panel, PanelHeader, TimelineStep } from "@/co
 import { cn } from "@/lib/utils"
 import { GoLiveModal, LiveModal } from "./go-live"
 import { HelpPanels, type HelpKind } from "./help-panels"
-import { useSetupSteps } from "./use-setup-steps"
+import { useSetupSteps, type SetupStepId } from "./use-setup-steps"
 import { useTourState } from "../tour/tour"
 import { TOURS, isTourId, type TourId } from "../tour/tours"
 import { useCatalog } from "@/lib/data/learning"
@@ -17,7 +17,7 @@ import { editorChoice } from "../tour/editor-choices"
 
 /**
  * Admin · Getting started (Figma 958:6684 and the "done" states 991:7443, 1028:76858, 1046:675, 1049:2, 1050:2).
- * While the platform is a draft this page replaces the Overview: five steps in any order (1237:61209), then Go live. On the right,
+ * While the platform is a draft this page replaces the Overview: five steps in order (19/11; a step put off 1237:61209), then Go live. On the right,
  * the progress ("5 of 5 steps done") and a way to get help.
  */
 /** Figma Show Icon: one icon per step. */
@@ -26,7 +26,7 @@ const STEP_ICON = { design: Palette, tier: ShoppingCatalog, course: GraduationCa
 export function GettingStarted() {
   const router = useRouter()
   const { coach, base } = useCoach()
-  const { steps, doneCount, total, current, community, skipped, allPutOff } = useSetupSteps()
+  const { steps, doneCount, total, current, locked, community, skip, skipped, allPutOff } = useSetupSteps()
   const [goLive, setGoLive] = useState(false)
   const [help, setHelp] = useState<HelpKind | null>(null)
   // A tour left half way (Skip or Do it later): its item says where, and Resume goes back there (Figma 1066:1047).
@@ -39,7 +39,7 @@ export function GettingStarted() {
   const editorStep = editorChoice(useDraft(coach.slug)).step
   const savedLine = (id: TourId) =>
     id === "course" ? (catalog.courses.length ? TOURS.course.saved : "Resume picks up where you left off.") : id === "tier" ? "Resume picks up where you left off." : TOURS[id].saved
-  const intro = live ? "Your platform is live. Next, bring in your first students." : doneCount === total ? "Everything is set up. Go live to open your platform to students." : allPutOff ? "Come back to these when you're ready. Go live opens once all five are done." : "Your platform is a draft. Do these five steps in any order, then go live."
+  const intro = live ? "Your platform is live. Next, bring in your first students." : doneCount === total ? "Everything is set up. Go live to open your platform to students." : allPutOff ? "Come back to these when you're ready. Go live opens once all five are done." : "Your platform is a draft. Do these five steps one after the other, then go live."
 
   return (
     <div className="flex flex-col gap-6">
@@ -47,7 +47,8 @@ export function GettingStarted() {
       <div className="flex flex-col items-start gap-4 lg:flex-row">
         <ol aria-label="Setup steps" className="flex w-full min-w-0 flex-1 flex-col">
           {steps.map((s, i) => {
-            const state = s.done ? "done" : s.id === current ? "current" : s.id === "live" ? "upcoming" : "open"
+            const state = s.done ? "done" : s.id === current ? "current" : s.id === "live" ? "upcoming" : locked.includes(s.id) ? "locked" : "open"
+            const currentStep = steps.find((x) => x.id === current)
             const at = isTourId(s.id) && !s.done ? pausedAt(s.id) : undefined
             const paused = at && isTourId(s.id) ? TOURS[s.id].steps.find((x) => x.id === at.at) : undefined
             const resume = !!paused
@@ -58,12 +59,14 @@ export function GettingStarted() {
                 state={state}
                 first={i === 0}
                 last={i === steps.length - 1}
+                prevDone={i > 0 && steps[i - 1].done}
                 title={s.title}
                 icon={STEP_ICON[s.id]}
                 tag={!s.done && s.id !== "live" && skipped.includes(s.id) && s.id !== current ? "Skipped" : undefined}
                 description={paused && isTourId(s.id) ? `Paused at “${paused.title}”. ${savedLine(s.id)}` : s.description}
                 action={resume ? "Resume" : s.action}
-                disabledHint="Finish the five steps first"
+                disabledHint={state === "locked" && currentStep ? `Finish “${currentStep.short}” first` : "Finish the five steps first"}
+                onSkip={s.id === "live" ? undefined : () => skip(s.id as SetupStepId)}
                 onAction={() => (s.id === "live" ? setGoLive(true) : router.push(resume && at?.path ? `${at.path}${at.path.includes("?") ? "&" : "?"}tour=${s.id}` : s.href))}
                 onEdit={s.id === "live" ? undefined : () => router.push(s.href.replace(/[?&]tour=\w+/, ""))}
                 // Optional, once Design is done (Flavio, 14/11): a short tour of the full design editor. Not one of the five.
@@ -94,7 +97,7 @@ export function GettingStarted() {
                 { icon: CalendarDays, label: "Book a setup call", kind: "call" },
                 { icon: Wrench, label: "Have us set it up", kind: "setup" },
               ] as const).map(({ icon: Icon, label, kind }) => (
-                <button key={label} type="button" onClick={() => setHelp(kind)} className="group flex items-center gap-3 rounded-a-sm py-2 text-left t-body-m text-a-text outline-none transition-colors duration-150 hover:text-a-text-accent focus-visible:ring-2 focus-visible:ring-a-border-focus">
+                <button key={label} type="button" onClick={() => setHelp(kind)} className="group flex items-center gap-3 rounded-a-sm py-2 text-left pointer-coarse:min-h-10 t-body-m text-a-text outline-none transition-colors duration-150 hover:text-a-text-accent focus-visible:ring-2 focus-visible:ring-a-border-focus">
                   <Icon aria-hidden className="size-4 text-a-text-accent" />
                   <span className="flex-1">{label}</span>
                   <ChevronRight aria-hidden className="size-4 text-a-icon transition-transform duration-150 ease-out group-hover:translate-x-0.5" />

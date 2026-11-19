@@ -1,5 +1,6 @@
 "use client"
 
+import { resolveColors } from "@/lib/theme/derive"
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, ChevronDown, ExternalLink, Lock, MessageCircle, NotebookPen, Pin, Plus, Search, Sparkles, X } from "@/components/icons"
@@ -57,7 +58,7 @@ export function StudentCharts({ props = {} }: { props?: Record<string, string | 
   const plan = planId === undefined ? firstOpen : planId === null ? undefined : plans.find((c) => c.id === planId && hasTier(c))
   const symbol: Sym = plan?.symbol ?? own ?? s.watchlist[0] ?? { tv: "CAPITALCOM:US100", name: "NQ" }
   const dark = theme.mode === "dark"
-  const bg = theme.palettes[theme.mode].card
+  const bg = resolveColors(theme).card
 
   const tierName = (c: CoachChart) => coach.tiers.find((t) => c.tiers.includes(t.id))?.name ?? "a higher plan"
   const upgrade = (name?: string) => toast(`Upgrade to ${name}`, { description: "Opens the plan change with the price difference." })

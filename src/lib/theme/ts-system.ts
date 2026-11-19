@@ -91,7 +91,8 @@ ${ui(":is([data-slot=button], [data-slot=tabs-trigger], [data-slot=checkbox], [d
 ${ui(".text-sm")} { font-size: 0.8125rem; line-height: 1.125rem; }
 ${ui(".text-xs")} { font-size: 0.71875rem; line-height: 1rem; }
 ${ui(".text-base")} { font-size: 0.875rem; line-height: 1.25rem; }
-${ui(":is(h1, h2, h3)")} { letter-spacing: -0.005em; }
+/* Headings without a type token (t-*) only: the Admin type styles carry their own tracking (Figma -4.5% on Title/L). */
+${ui(":is(h1, h2, h3):not([class^=\"t-\"], [class*=\" t-\"])")} { letter-spacing: -0.005em; }
 
 /*
  * Buttons: small and tactile. 28px (24px small), 4px corners, 12.5px medium text,

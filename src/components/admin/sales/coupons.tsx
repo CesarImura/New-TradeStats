@@ -126,11 +126,10 @@ function CouponModal({ open, onClose, taken, onCreate }: { open: boolean; onClos
   const tiers = useTiers(coach).filter((t) => !isFreeTier(t))
   const blank = { code: "", kind: "percent" as Coupon["kind"], amount: "20", duration: "first" as Coupon["duration"], pick: false, picked: [] as string[], limit: "", ends: "" }
   const [f, setF] = useState(blank)
-  const [tried, setTried] = useState(false)
   const set = (p: Partial<typeof blank>) => setF((v) => ({ ...v, ...p }))
   const close = () => {
     onClose()
-    setTimeout(() => (setF(blank), setTried(false)), 200)
+    setTimeout(() => setF(blank), 200)
   }
 
   const amount = Number(f.amount)
@@ -142,9 +141,9 @@ function CouponModal({ open, onClose, taken, onCreate }: { open: boolean; onClos
     tiers: f.pick && f.picked.length === 0 ? "Pick at least one tier" : "",
     ends: f.ends && f.ends < TODAY ? "Pick a date that isn't past" : "",
   }
+  // Rule (19/11): Create stays disabled until the form is valid; an empty field never shows an error.
   const bad = Object.values(errors).some(Boolean)
   const create = () => {
-    setTried(true)
     if (bad) return
     onCreate({ discount: couponLabel({ kind: f.kind, amount, duration: f.duration } as Coupon), active: true, code: f.code, kind: f.kind, amount, duration: f.duration, tiers: f.pick ? f.picked : [], used: 0, ...(limit !== undefined ? { limit } : {}), ...(f.ends ? { ends: f.ends } : {}) })
     toast(`${f.code} created`)
@@ -162,15 +161,15 @@ function CouponModal({ open, onClose, taken, onCreate }: { open: boolean; onClos
       footer={
         <>
           <AdminButton hierarchy="ghost" onClick={close}>Cancel</AdminButton>
-          <AdminButton onClick={create}>Create coupon</AdminButton>
+          <AdminButton disabled={bad} onClick={create}>Create coupon</AdminButton>
         </>
       }>
       <div className="contents" onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); create() } }}>
         <div className="grid grid-cols-2 items-start gap-3 max-sm:grid-cols-1">
-          <AdminField label="Code" error={tried ? errors.code : undefined}>
-            <input value={f.code} maxLength={24} onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, "") })} placeholder="AUTUMN20" aria-invalid={tried && !!errors.code} className={cn(adminControl, "h-11")} />
+          <AdminField label="Code" error={f.code ? errors.code || undefined : undefined}>
+            <input value={f.code} maxLength={24} onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, "") })} placeholder="AUTUMN20" aria-invalid={!!f.code && !!errors.code} className={cn(adminControl, "h-11")} />
           </AdminField>
-          <AdminField label="Discount" error={tried ? errors.amount : undefined}>
+          <AdminField label="Discount" error={f.amount ? errors.amount || undefined : undefined}>
             <span className="flex h-11 items-center rounded-a-md border border-a-border-subtle bg-a-field pr-2 transition-colors duration-300 focus-within:border-a-border-focus hover:border-a-border-strong">
               <input value={f.amount} onChange={(e) => set({ amount: e.target.value.replace(/[^\d.]/g, "") })} inputMode="decimal" aria-label="Discount" className="min-w-0 flex-1 bg-transparent px-3 t-body-l text-a-text tabular-nums outline-none" />
               <button type="button" aria-label={`Discount in ${f.kind === "percent" ? "percent" : "euros"}. Switch`} onClick={() => set({ kind: f.kind === "percent" ? "amount" : "percent" })} className="grid h-7 min-w-7 place-items-center rounded-a-sm px-1.5 t-caption text-a-text-3 outline-none hover:bg-a-hover hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
@@ -195,16 +194,16 @@ function CouponModal({ open, onClose, taken, onCreate }: { open: boolean; onClos
                   {t.name}
                 </label>
               ))}
-              {tried && errors.tiers && <span className="w-full t-caption text-a-danger">{errors.tiers}</span>}
+              {errors.tiers && <span className="w-full t-caption text-a-danger">{errors.tiers}</span>}
             </div>
           )}
         </div>
         <span className="h-px bg-a-border" aria-hidden />
         <div className="grid grid-cols-2 items-start gap-3 max-sm:grid-cols-1">
-          <AdminField label="Limit" hint="Leave empty for no limit" error={tried ? errors.limit : undefined}>
+          <AdminField label="Limit" hint="Leave empty for no limit" error={errors.limit || undefined}>
             {(p) => <input {...p} value={f.limit} onChange={(e) => set({ limit: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="No limit" className={cn(adminControl, "h-11 tabular-nums")} />}
           </AdminField>
-          <AdminField label="Ends" optional error={tried ? errors.ends : undefined}>
+          <AdminField label="Ends" optional error={errors.ends || undefined}>
             {(p) => <input {...p} type="date" min={TODAY} value={f.ends} onChange={(e) => set({ ends: e.target.value })} className={cn(adminControl, "h-11")} />}
           </AdminField>
         </div>

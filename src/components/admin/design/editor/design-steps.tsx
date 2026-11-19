@@ -83,7 +83,7 @@ export function ThemeTab() {
         </Field>
         <div role="radiogroup" aria-label="Theme" className="grid gap-2" data-field="template">
           {THEMES.map((t) => (
-            <SelectionCard key={t.id} checked={theme.template === t.id} onSelect={() => pick(t.id)} title={t.name} description={t.summary} img={t.img} imgClass="aspect-[276/189]" radius="rounded-a-md" />
+            <SelectionCard key={t.id} checked={theme.template === t.id} onSelect={() => pick(t.id)} title={t.name} description={t.summary} img={t.img} imgClass="aspect-[276/188]" radius="rounded-a-md" />
           ))}
         </div>
         <Field id="look" label="Variation" hint={look ? look.blurb : "Your own mix"}>
@@ -134,7 +134,7 @@ export function LayoutTab() {
         {!active && <p className="t-caption text-a-text-3">Your own layout. Pick one to start again from it.</p>}
         <div role="radiogroup" aria-label="Layout" className="grid gap-2" data-field="layout">
           {LAYOUTS.map((l) => (
-            <SelectionCard key={l.id} checked={active === l.id} onSelect={() => active !== l.id && change({ theme: layoutPatch(l, theme) }, "layout")} title={l.name} description={l.text} img={l.img} imgClass="aspect-[276/118]" radius="rounded-a-md" />
+            <SelectionCard key={l.id} checked={active === l.id} onSelect={() => active !== l.id && change({ theme: layoutPatch(l, theme) }, "layout")} title={l.name} description={l.text} img={l.img} imgClass="aspect-[276/117]" radius="rounded-a-md" />
           ))}
         </div>
       </Section>

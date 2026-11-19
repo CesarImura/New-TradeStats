@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { CoachChart } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
+import { SlideTrack } from "@/components/admin/ui/slide-thumb"
 
 /**
  * Charts · 01 Live chart (Figma Admin v2, 1485:102744): a charting workspace. Drawing tools on the left, a toolbar with the
@@ -70,10 +71,30 @@ export function ChartWorkspace({ charts, onPin, onArchive, onNew }: { charts: Co
             {sym.k}
             <ChevronDown className="size-3.5 text-a-text-3" aria-hidden />
           </button>
-          <div role="radiogroup" aria-label="Timeframe" className="flex gap-0.5 rounded-a-md border border-a-border-subtle bg-a-subtle p-0.5">
-            {FRAMES.map((f) => (
-              <button key={f} role="radio" aria-checked={f === frame} onClick={() => setFrame(f)} className={cn("h-6 rounded-a-sm px-2 t-caption text-a-text-2 outline-none transition-colors duration-300 ease-out hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus", f === frame && "bg-a-raised text-a-text shadow-[inset_0_0_0_1px_var(--admin-color-border-default)]")}>{f}</button>
-            ))}
+          <div
+            role="radiogroup"
+            aria-label="Timeframe"
+            className="flex rounded-a-md border border-a-border-subtle bg-a-subtle p-0.5"
+            onKeyDown={(e) => {
+              if (!["ArrowRight", "ArrowLeft"].includes(e.key)) return
+              e.preventDefault()
+              const next = FRAMES[(FRAMES.indexOf(frame) + (e.key === "ArrowRight" ? 1 : FRAMES.length - 1)) % FRAMES.length]
+              setFrame(next)
+              ;(e.currentTarget.querySelectorAll("[role=radio]")[FRAMES.indexOf(next)] as HTMLElement | undefined)?.focus()
+            }}
+          >
+            <SlideTrack
+              items={FRAMES.map((f) => ({ key: f }))}
+              activeKey={frame}
+              rowClass="flex gap-0.5"
+              thumbClass="rounded-a-sm bg-a-raised shadow-[inset_0_0_0_1px_var(--admin-color-border-default)]"
+              renderItem={(f, layer, s) => {
+                const item = "inline-flex h-6 items-center rounded-a-sm px-2 t-caption"
+                if (layer === "base") return <span data-slide={f.key} aria-hidden className={cn(item, "transition-colors duration-150", s.pre ? "bg-a-raised text-a-text shadow-[inset_0_0_0_1px_var(--admin-color-border-default)]" : s.hovered ? "text-a-text" : "text-a-text-2")}>{f.key}</span>
+                if (layer === "copy") return <span className={cn(item, "text-a-text")}>{f.key}</span>
+                return <button type="button" role="radio" aria-checked={f.key === frame} tabIndex={f.key === frame ? 0 : -1} onClick={() => setFrame(f.key as typeof frame)} {...s.hover} className={cn(item, "text-transparent outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus")}>{f.key}</button>
+              }}
+            />
           </div>
           <button className="flex h-7 items-center gap-1.5 rounded-a-sm px-2 t-caption text-a-text-2 outline-none hover:bg-a-hover hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus"><BarChart3 className="size-4" aria-hidden /> Indicators</button>
           <button className="flex h-7 items-center gap-1.5 rounded-a-sm px-2 t-caption text-a-text-2 outline-none hover:bg-a-hover hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus"><LineChart className="size-4" aria-hidden /> Weekly levels <ChevronDown className="size-3.5" aria-hidden /></button>

@@ -117,7 +117,6 @@ export function LegalDrawer({ page, first, imprint, legalName, text, onClose, on
   const [form, setForm] = useState<Imprint>(imprint)
   const [body, setBody] = useState(text)
   const [key, setKey] = useState<string | null>(null)
-  const [tried, setTried] = useState(false)
   // Open on what was saved (derived state, no effect).
   if ((page?.id ?? null) !== key) {
     setKey(page?.id ?? null)
@@ -125,14 +124,14 @@ export function LegalDrawer({ page, first, imprint, legalName, text, onClose, on
     const me = page ? account() : null
     setForm({ ...imprint, name: imprint.name || legalName || me?.name || "", email: imprint.email || me?.email || "" })
     setBody(text)
-    setTried(false)
   }
   const errors = { name: form.name.trim().length < 2, address: form.address.trim().length < 6, email: !EMAIL.test(form.email.trim()) }
+  // Rule (19/11): Save stays disabled until the page is valid and, when it was saved before, until something changed; an empty field never shows an error.
+  const invalid = page?.id === "imprint" ? errors.name || errors.address || errors.email : !body.trim()
+  const unchanged = !first && !!page && (page.id === "imprint" ? form.name.trim() === imprint.name && form.address.trim() === imprint.address && form.email.trim() === imprint.email && (form.vat?.trim() || undefined) === (imprint.vat?.trim() || undefined) : body.trim() === text.trim())
   const save = () => {
-    if (!page) return
-    setTried(true)
+    if (!page || invalid || unchanged) return
     if (page.id === "imprint") {
-      if (errors.name || errors.address || errors.email) return
       onSaveImprint({ name: form.name.trim(), address: form.address.trim(), email: form.email.trim(), vat: form.vat?.trim() || undefined })
     } else if (body.trim()) onSaveText(page.id, body.trim())
   }
@@ -154,19 +153,19 @@ export function LegalDrawer({ page, first, imprint, legalName, text, onClose, on
           <AdminButton hierarchy="ghost" onClick={onClose}>
             Cancel
           </AdminButton>
-          <AdminButton onClick={save}>{page?.id !== "imprint" && first ? "Use this text" : "Save"}</AdminButton>
+          <AdminButton disabled={!page || invalid || unchanged} onClick={save}>{page?.id !== "imprint" && first ? "Use this text" : "Save"}</AdminButton>
         </>
       }
     >
       {page?.id === "imprint" && (
         <div data-tour="legal-imprint" className="flex flex-col gap-4">
-          <AdminField label="Name or company" error={tried && errors.name ? "Type your legal name or your company’s name." : undefined}>
+          <AdminField label="Name or company" error={form.name.trim() && errors.name ? "Type your legal name or your company’s name." : undefined}>
             {(p) => <input {...p} autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your legal name" className={cn(adminControl, "h-11")} />}
           </AdminField>
-          <AdminField label="Address" error={tried && errors.address ? "Add the full address: street, postcode and city." : undefined}>
+          <AdminField label="Address" error={form.address.trim() && errors.address ? "Add the full address: street, postcode and city." : undefined}>
             {(p) => <textarea {...p} rows={3} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Street and number, postcode, city" className={cn(area, "h-[88px]")} />}
           </AdminField>
-          <AdminField label="E-mail" error={tried && errors.email ? "Check the e-mail address." : undefined}>
+          <AdminField label="E-mail" error={form.email.trim() && errors.email ? "Check the e-mail address." : undefined}>
             {(p) => <input {...p} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="An e-mail students can reach you at" className={cn(adminControl, "h-11")} />}
           </AdminField>
           <AdminField label="VAT ID" optional hint="Only if you have one">

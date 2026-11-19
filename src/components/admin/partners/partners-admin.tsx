@@ -37,7 +37,7 @@ export function PartnersAdmin() {
   const shown: AffiliateProgram = { ...program, ...draft }
   const dirty = Object.keys(draft).length > 0
   const save = () => {
-    if (!dirty) return toast("Nothing to save", { description: "The affiliate program is up to date." })
+    if (!dirty) return
     saveAffiliate(coach, draft)
     setDraft({})
     toast.success("Affiliate program saved")
@@ -57,7 +57,7 @@ export function PartnersAdmin() {
               </AdminButton>
             </>
           ) : shown.on ? (
-            <AdminButton onClick={save}>Save</AdminButton>
+            <AdminButton disabled={!dirty} onClick={save}>Save</AdminButton>
           ) : undefined
         }
       />
@@ -189,14 +189,14 @@ function OwnDialog({ item, onClose }: { item?: PartnerOffer; onClose: () => void
   const [code, setCode] = useState(item?.code ?? "")
   const [url, setUrl] = useState(item?.url ?? "")
   const [chosen, setChosen] = useState<string[]>(item?.tiers ?? [])
-  const [tried, setTried] = useState(false)
   const fixed = item?.source === "catalogue"
   const errors = { name: name.trim() ? "" : "Give it a name", offer: offer.trim() ? "" : "Say what the student gets", url: /^https?:\/\/\S+\.\S+/.test(url.trim()) ? "" : "Use a full link, starting with https://" }
+  // Rule (19/11): Add/Save stays disabled until the form is valid, and (editing) until something changed; an empty field never shows an error.
   const bad = Object.values(errors).some(Boolean)
+  const changed = !item || name.trim() !== item.name || kind !== item.kind || offer.trim() !== item.offer || (code.trim() || undefined) !== item.code || url.trim() !== item.url || [...chosen].sort().join() !== [...item.tiers].sort().join()
 
   const save = () => {
-    setTried(true)
-    if (bad) return
+    if (bad || !changed) return
     const next: PartnerOffer = { id: item?.id ?? `own-${Date.now()}`, name: name.trim(), kind, offer: offer.trim(), code: code.trim() || undefined, url: url.trim(), tiers: chosen, source: item?.source ?? "own", clicks: item?.clicks ?? 0, signups: item?.signups ?? 0, earnings: item?.earnings ?? 0, on: item?.on ?? true }
     saveOffers(coach, (l) => (item ? l.map((x) => (x.id === item.id ? next : x)) : [...l, next]))
     toast(item ? `${next.name} updated` : `${next.name} added`)
@@ -222,25 +222,25 @@ function OwnDialog({ item, onClose }: { item?: PartnerOffer; onClose: () => void
           {item && <AdminButton hierarchy="danger" onClick={remove}>Remove</AdminButton>}
           <span aria-hidden className="h-px min-w-px flex-1" />
           <AdminButton hierarchy="ghost" onClick={onClose}>Cancel</AdminButton>
-          <AdminButton onClick={save}>{item ? "Save" : "Add"}</AdminButton>
+          <AdminButton disabled={bad || !changed} onClick={save}>{item ? "Save" : "Add"}</AdminButton>
         </div>
       }>
       <div className="grid grid-cols-2 items-start gap-3 max-sm:grid-cols-1">
-        <AdminField label="Name" error={tried ? errors.name : undefined}>
+        <AdminField label="Name">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tradeify" disabled={fixed} className={cn(adminControl, "h-11")} />
         </AdminField>
         <AdminField label="Kind">
           {() => <AdminSelect ariaLabel="Kind" value={kind} onValueChange={(v) => setKind(v as PartnerKind)} options={PARTNER_KINDS.map((k) => ({ value: k, label: KIND_LABEL[k] }))} />}
         </AdminField>
       </div>
-      <AdminField label="Offer" hint="What the student gets" error={tried ? errors.offer : undefined}>
+      <AdminField label="Offer" hint="What the student gets" >
         <input value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="20% off the first month" className={cn(adminControl, "h-11")} />
       </AdminField>
       <div className="grid grid-cols-2 items-start gap-3 max-sm:grid-cols-1">
         <AdminField label="Code" optional>
           <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase().replace(/\s/g, ""))} placeholder="MARCO20" className={cn(adminControl, "h-11")} />
         </AdminField>
-        <AdminField label="Link" error={tried ? errors.url : undefined}>
+        <AdminField label="Link" error={url.trim() ? errors.url || undefined : undefined}>
           <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://" disabled={fixed} className={cn(adminControl, "h-11")} />
         </AdminField>
       </div>

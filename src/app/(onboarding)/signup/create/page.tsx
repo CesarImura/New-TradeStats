@@ -20,7 +20,8 @@ export default function CreateAccount() {
   const go = useSignupGo()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [tried, setTried] = useState(false)
+  // Rule (19/11): the button stays disabled until both fields are valid; the e-mail format error shows only after the field was left with something typed.
+  const [left, setLeft] = useState(false)
   // Back from the code (or Change e-mail): what was typed comes back, read once on the client.
   const saved = useSyncExternalStore(noop, unfinished, () => "")
   const [seeded, setSeeded] = useState(false)
@@ -37,7 +38,6 @@ export default function CreateAccount() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    setTried(true)
     if (errors.name || errors.email) return
     // A new account starts clean: no answers and no platform yet. Back from About you with the same e-mail keeps
     // what was already answered.
@@ -51,17 +51,17 @@ export default function CreateAccount() {
   return (
     <SignupFrame>
       <form onSubmit={submit} noValidate className="flex flex-col gap-5">
-        <AdminButton type="button" hierarchy="ghost" className="-ml-2 w-fit" onClick={() => go("/signup", -1)}>
+        <AdminButton type="button" hierarchy="text" className="w-fit pl-0 [&_svg]:transition-transform [&_svg]:duration-200 hover:[&_svg]:-translate-x-0.5" onClick={() => go("/signup", -1)}>
           <ArrowLeft /> Back
         </AdminButton>
         <SignupTitle title="Create your account" text="We e-mail you a 6-digit code. No password." />
-        <AdminField label="Your name" error={tried ? errors.name : undefined}>
+        <AdminField label="Your name">
           {(f) => <input {...f} autoComplete="name" autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" className={cn(adminControl, "h-11")} />}
         </AdminField>
-        <AdminField label="E-mail" error={tried ? errors.email : undefined}>
-          {(f) => <input {...f} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={cn(adminControl, "h-11")} />}
+        <AdminField label="E-mail" error={left && email.trim() ? errors.email : undefined}>
+          {(f) => <input {...f} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setLeft(true)} placeholder="you@example.com" className={cn(adminControl, "h-11")} />}
         </AdminField>
-        <AdminButton type="submit" className="w-full">Continue</AdminButton>
+        <AdminButton type="submit" className="w-full" disabled={!!errors.name || !!errors.email}>Continue</AdminButton>
       </form>
     </SignupFrame>
   )
