@@ -266,7 +266,7 @@ function Spotlight({ step, tour, onSkip, onFinish }: { step: TourStep; tour: Tou
         {side && <Arrow side={side} offset={arrow} />}
         <div className="flex items-center gap-3">
           <h2 className="min-w-0 flex-1 t-heading-s text-a-text">{step.title}</h2>
-          <span aria-label={`Part ${progressIndex + 1} of ${tour.parts.length}`} className="flex shrink-0 gap-0.5">
+          <span role="img" aria-label={`Part ${progressIndex + 1} of ${tour.parts.length}`} className="flex shrink-0 gap-0.5">
             {tour.parts.map((p, i) => (
               <span key={p} className={cn("h-1 w-3 rounded-full transition-colors duration-300", i <= progressIndex || step.final ? "bg-a-accent" : "bg-a-border")} />
             ))}
