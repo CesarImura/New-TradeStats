@@ -17,18 +17,23 @@
   --admin-primitive-extra-0ea5e9-55: rgb(14 165 233 / 55%);
   --admin-primitive-extra-101014: #101014;
   --admin-primitive-extra-121212: #121212;
+  --admin-primitive-extra-15803d: #15803d;
   --admin-primitive-extra-1c1c1d: #1c1c1d;
+  --admin-primitive-extra-2563eb: #2563eb;
   --admin-primitive-extra-2a1a10: #2a1a10;
   --admin-primitive-extra-2b2b2e: #2b2b2e;
   --admin-primitive-extra-38383b: #38383b;
   --admin-primitive-extra-3b82f6: #3b82f6;
   --admin-primitive-extra-444444: #444444;
+  --admin-primitive-extra-4a4a4f: #4a4a4f;
+  --admin-primitive-extra-5f5f66: #5f5f66;
   --admin-primitive-extra-6b6b72: #6b6b72;
   --admin-primitive-extra-757575: #757575;
   --admin-primitive-extra-808085: #808085;
   --admin-primitive-extra-88b137: #88b137;
   --admin-primitive-extra-8b5cf6: #8b5cf6;
   --admin-primitive-extra-8b5cf6-55: rgb(139 92 246 / 55%);
+  --admin-primitive-extra-a16207: #a16207;
   --admin-primitive-extra-a855f7: #a855f7;
   --admin-primitive-extra-a8a8b1: #a8a8b1;
   --admin-primitive-extra-c2561c: #c2561c;
@@ -270,15 +275,13 @@
   --admin-component-editor-preview-nav-label: var(--admin-primitive-extra-f4f4f5);
   --admin-component-editor-preview-nav-label-muted: var(--admin-primitive-extra-a8a8b1);
   --admin-component-editor-preview-sidebar: var(--admin-primitive-extra-09090b);
-  --admin-component-file-icon-label-other: var(--admin-color-text-secondary);
-  --admin-component-file-icon-solid-doc: var(--admin-color-status-info-fill);
-  --admin-component-file-icon-solid-fold: var(--admin-primitive-white-22);
-  --admin-component-file-icon-solid-label: var(--admin-color-text-on-accent);
-  --admin-component-file-icon-solid-label-media: var(--admin-component-step-indicator-warning-content);
-  --admin-component-file-icon-solid-media: var(--admin-color-status-warning-fill);
-  --admin-component-file-icon-solid-other: var(--admin-primitive-ink-750);
-  --admin-component-file-icon-solid-pdf: var(--admin-color-status-danger-fill);
-  --admin-component-file-icon-solid-sheet: var(--admin-color-status-success-fill);
+  --admin-component-file-icon-bar-doc: var(--admin-primitive-extra-2563eb);
+  --admin-component-file-icon-bar-media: var(--admin-primitive-extra-a16207);
+  --admin-component-file-icon-bar-other: var(--admin-primitive-extra-5f5f66);
+  --admin-component-file-icon-bar-pdf: var(--admin-color-status-danger-fill);
+  --admin-component-file-icon-bar-sheet: var(--admin-primitive-extra-15803d);
+  --admin-component-file-icon-label: var(--admin-color-text-on-accent);
+  --admin-component-file-icon-page-stroke: var(--admin-primitive-extra-4a4a4f);
   --admin-component-file-item-border: var(--admin-color-border-subtle);
   --admin-component-file-item-meta-danger: var(--admin-color-status-danger);
   --admin-component-file-item-meta-default: var(--admin-color-text-tertiary);
@@ -331,7 +334,6 @@
   --admin-color-icon-strong: var(--admin-primitive-white-96);
   --admin-font-family-mono: var(--admin-font-family-primary);
   --admin-space-pad-button: var(--admin-space-14);
-  --admin-component-file-icon-label: var(--admin-color-text-on-accent);
 }
 
 /* Tailwind mapping: short names (bg-a-panel, text-a-text-2, border-a-border, rounded-a-md…) for the Admin v2 tokens. */

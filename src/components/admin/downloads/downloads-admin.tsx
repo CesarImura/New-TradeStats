@@ -116,7 +116,7 @@ export function DownloadsAdmin() {
                   <AdminTr key={r.id}>
                     <AdminTd>
                       <div className="flex min-w-0 items-center gap-3">
-                        <FileIcon name={r.name} />
+                        <FileIcon name={r.name} size="md" />
                         <div className="grid min-w-0 gap-0.5">
                           <span className="truncate t-body-m text-a-text">{r.title}</span>
                           <span className="truncate t-caption text-a-text-2">{r.sub}</span>
@@ -203,7 +203,7 @@ function UploadDrawer({ item, onClose }: { item?: DownloadItem; onClose: () => v
         </div>
       }>
       {file ? (
-        <FileItem name={file.name} status="done" meta={`${file.size} · Completed`} trailing={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Remove ${file.name}`} onClick={() => setFile(undefined)}><Trash2 /></AdminButton>} />
+        <FileItem name={file.name} status="done" meta={file.size} trailing={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label={`Remove ${file.name}`} onClick={() => setFile(undefined)}><Trash2 /></AdminButton>} />
       ) : (
         <Dropzone title="Drop a file here, or click to choose" hint="Only the name and size are kept in this prototype." onFiles={(f) => take(f[0])} />
       )}

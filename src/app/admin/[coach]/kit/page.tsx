@@ -1,14 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Download, MoreHorizontal, Plus } from "@/components/icons"
+import { Download, MoreHorizontal, Plus, RefreshCw, Trash2, X } from "@/components/icons"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
 import {
   AdminButton, AdminDrawer, AdminField, AdminFilter, AdminModal, AdminPageHeader, AdminProgress, AdminSearch, AdminSegmented, AdminTabs, AdminToolbar, AdminUnderlineTabs,
   AdminFilterButton, AdminSegmentGroup, AdminMenu, AdminMenuContent, AdminMenuGroup, AdminMenuItem, AdminMenuLabel, AdminMenuSeparator, AdminMenuTrigger, TimelineStep,
-  AdminVideoPlayer, Callout, CellDot, CellPerson, CellProgress, CellStack, Dropzone, EmptyState, FileItem, LessonCard, MediaCard, Metric, OptionCard, Panel, SortableRow, StatPanel, StepIndicator, Tag, adminControl,
+  AdminVideoPlayer, Callout, CellDot, CellPerson, CellProgress, CellStack, Dropzone, EmptyState, FileIcon, KNOWN_FILE_EXTENSIONS, FileItem, LessonCard, MediaCard, Metric, OptionCard, Panel, SortableRow, StatPanel, StepIndicator, Tag, adminControl,
 } from "@/components/admin/ui"
 
 const TONES = ["neutral", "accent", "success", "warning", "danger", "info"] as const
@@ -78,13 +78,49 @@ export default function KitGallery() {
         </div>
         <div className="grid gap-3"><AdminSearch value={q} onChange={setQ} placeholder="Search" hint="⌘K" /><AdminFilter label="Tier" value={filter} onValueChange={setFilter} options={[{ value: "all", label: "All tiers" }, { value: "core", label: "Core" }]} /></div>
       </Block>
+      <Block title="File icon · types and sizes">
+        <div className="grid w-full gap-4">
+          {(["sm", "md", "lg"] as const).map((z) => (
+            <div key={z} className="flex flex-wrap items-end gap-4" data-kit-file-icons={z}>
+              <span className="w-14 t-caption text-a-text-2">{z}</span>
+              {["a.pdf", "a.docx", "a.xlsx", "a.png", "a.zip", "a.pptx", "Makefile", "x.fig", "a.verylongext"].map((n) => <FileIcon key={n} name={n} size={z} />)}
+            </div>
+          ))}
+        </div>
+      </Block>
+      <Block title="File icon · on every Admin background">
+        <div className="grid w-full gap-3" data-kit-file-bg>
+          {(["page", "panel", "raised", "track"] as const).map((bg) => (
+            <div key={bg} className="flex flex-wrap items-end gap-5 rounded-a-10 p-4" style={{ background: `var(--admin-color-bg-${bg})` }} data-bg={bg}>
+              <span className="w-14 t-caption text-a-text-2">{bg}</span>
+              {["a.pdf", "a.docx", "a.xlsx", "a.png", "a.zip"].flatMap((n) => (["sm", "md", "lg"] as const).map((z) => <FileIcon key={n + z} name={n} size={z} />))}
+            </div>
+          ))}
+        </div>
+      </Block>
+      <Block title="File icon · every known format and the fallbacks">
+        <div className="flex w-full flex-wrap gap-x-5 gap-y-4" data-kit-file-formats>
+          {KNOWN_FILE_EXTENSIONS.map((e) => (
+            <div key={e} className="grid justify-items-center gap-1.5"><FileIcon name={`file.${e}`} size="md" /><span className="t-caption text-a-text-3">.{e}</span></div>
+          ))}
+          {["Makefile", "report.", ".env", "archive.tar.gz", "UPPER.PDF", "no extension", "Quarterly report final v2 (copy) (1).xlsx", "weird.name.with.many.dots.csv", "file.ext!"].map((n) => (
+            <div key={n} className="grid justify-items-center gap-1.5"><FileIcon name={n} size="lg" /><span className="max-w-24 truncate t-caption text-a-text-3" title={n}>{n}</span></div>
+          ))}
+          <div className="grid justify-items-center gap-1.5"><FileIcon type="pdf" size="lg" /><span className="t-caption text-a-text-3">type=pdf</span></div>
+          <div className="grid justify-items-center gap-1.5"><FileIcon size="lg" /><span className="t-caption text-a-text-3">no name</span></div>
+        </div>
+      </Block>
       <Block title="Files · dropzone, file items, sortable rows">
         <div className="grid w-full max-w-sm gap-3">
           <Dropzone title="Drop a file here, or click" hint="Up to 200 MB" onFiles={() => {}} />
-          <FileItem name="Trend checklist.pdf" meta="1.2 MB · Ready" />
-          <FileItem name="Trend checklist.pdf" status="uploading" progress={40} meta="480 KB of 1.2 MB" />
-          <FileItem name="Trend checklist.pdf" status="done" meta="1.2 MB · Complete" />
-          <FileItem name="Trend checklist.pdf" status="error" meta="Upload failed · Retry" />
+          <FileItem name="Trend checklist.pdf" meta="1.2 MB · Ready to upload" trailing={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Remove"><Trash2 /></AdminButton>} />
+          <FileItem name="Trend checklist.pdf" status="uploading" progress={40} meta="480 KB of 1.2 MB · Uploading" trailing={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Cancel"><X /></AdminButton>} />
+          <FileItem name="Trend checklist.pdf" status="done" meta="1.2 MB" trailing={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Remove"><Trash2 /></AdminButton>} />
+          <FileItem name="Trend checklist.pdf" status="error" meta="1.2 MB" />
+          <FileItem name="Trend checklist.pdf" status="error" progress={40} statusText="Upload failed · connection lost" trailing={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Retry"><RefreshCw /></AdminButton>} />
+          <FileItem name="Quarterly risk review for the whole funded trader program final v2 (copy) (1).xlsx" meta="3.4 MB · A very long file name must truncate" />
+          <FileItem name="Makefile" meta="No extension" />
+          <FileItem name="breakout-range.ex5" meta="MetaTrader 5 · 24 KB" />
         </div>
         <div className="grid w-full max-w-xs gap-2">
           <SortableRow title="Default" description="One line" trailing={<Tag>New</Tag>} />

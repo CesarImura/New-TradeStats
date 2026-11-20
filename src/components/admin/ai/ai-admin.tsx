@@ -234,7 +234,7 @@ function Knowledge({ ai, set, sources }: { ai: AiSetup; set: (p: Partial<AiSetup
               <AdminTr key={k.id}>
                 <AdminTd>
                   <div className="flex min-w-0 items-center gap-2.5">
-                    {file && <FileIcon name={k.name} className="size-7 t-mono-label-s" />}
+                    {file && <FileIcon name={k.name} size="sm" />}
                     <div className="grid min-w-0 gap-0.5">
                       <span className="truncate t-body-m text-a-text">{k.name}</span>
                       <span className="truncate t-caption text-a-text-2">{k.kind} · {k.items}</span>
