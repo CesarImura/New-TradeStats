@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { STATUS_LABEL, type Course } from "@/lib/data/learning"

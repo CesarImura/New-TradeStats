@@ -1,7 +1,7 @@
 "use client"
 
 import { RotateCcw } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import type { Mode, TemplateId } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
 import { Field, More } from "../fields/controls"

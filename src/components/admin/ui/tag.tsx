@@ -1,8 +1,8 @@
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
-/** Admin / Tag (576:414). Helvetica Caption, sentence case, no dot. Tone carries the meaning, never the colour alone: keep the label. */
-const tag = cva("inline-flex h-5 shrink-0 items-center gap-1.5 rounded-a-xs px-2 t-caption-medium whitespace-nowrap", {
+/** Admin / Tag (576:414). Helvetica Micro (11/14, Regular), 22 px tall, padding 4/8, sentence case, no dot. Tone carries the meaning, never the colour alone: keep the label. */
+const tag = cva("inline-flex h-[22px] shrink-0 items-center gap-1.5 rounded-a-xs px-2 t-micro whitespace-nowrap", {
   variants: {
     tone: {
       neutral: "bg-a-selected text-a-text-2",

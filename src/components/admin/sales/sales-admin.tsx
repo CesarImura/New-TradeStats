@@ -8,7 +8,7 @@ import { useCoach } from "@/components/coach/coach-provider"
 import { isFreeTier, useTiers } from "@/lib/data/access"
 import { PageHeader } from "../kit"
 import { SetupTip } from "../setup-checklist"
-import { AdminButton, AdminTabs, Panel, PanelHeader } from "@/components/admin/ui"
+import { AdminButton, AdminTabs, Panel, PanelHeader, TabPanel } from "@/components/admin/ui"
 import { AccessOverview } from "./access-overview"
 import { Groups, NewGroupButton } from "./groups"
 import { SalesPageEditor, SalesPageActions } from "./sales-page-editor"
@@ -79,6 +79,7 @@ export function SalesAdmin() {
       <div className="flex">
         <AdminTabs label="Sales sections" tabs={TABS} value={tab as (typeof TABS)[number]["id"]} onChange={setTab} />
       </div>
+      <TabPanel value={tab} order={TABS.map((t) => t.id)}>
       {tab === "overview" && <RevenueOverview onProblems={() => setTab("transactions")} />}
       {tab === "tiers" && <Tiers newSignal={newTier} onNew={() => setNewTier((n) => n + 1)} />}
       {tab === "groups" && <Groups newSignal={newGroup} />}
@@ -88,6 +89,7 @@ export function SalesAdmin() {
       {tab === "transactions" && <Transactions />}
       {tab === "payouts" && <Payouts />}
       {tab === "affiliates" && <Affiliates />}
+      </TabPanel>
     </div>
   )
 }

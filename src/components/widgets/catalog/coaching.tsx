@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { CalendarClock, MessageSquareReply } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { CALL_ALLOWANCE, CALL_SLOTS, FEEDBACK } from "@/lib/data/sample"

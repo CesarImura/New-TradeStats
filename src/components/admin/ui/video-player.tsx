@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { AdminButton } from "./button"
 import { VideoPlayerMenu } from "./video-player-menu"
 import { LiveMarker, NextUp, SeekBar, SkipRipple, TOOL, VolumeControl } from "./video-player-parts"
-import { LIVE_SECONDS, RESUME_END_GAP, RESUME_MIN, SKIP, SPEEDS, VOLUME_STEP, cueAt, formatTime, loadPrefs, loadResume, saveResume, savePrefs, speedLabel, volumeLabel, type PlayerPrefs } from "./video-player-options"
+import { DEFAULT_PREFS, LIVE_SECONDS, RESUME_END_GAP, RESUME_MIN, SKIP, SPEEDS, VOLUME_STEP, cueAt, formatTime, loadPrefs, loadResume, saveResume, savePrefs, speedLabel, volumeLabel, type PlayerPrefs } from "./video-player-options"
 
 const SPEED_STEPS = SPEEDS as readonly number[]
 const TIP_W = 120
@@ -81,7 +81,12 @@ export function AdminVideoPlayer({ seconds, startAt = 0, resetKey = "", resumeKe
   const [playing, setPlaying] = useState(live)
   const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(live)
-  const [prefs, setPrefs] = useState<PlayerPrefs>(loadPrefs)
+  // The saved choices are read after the first paint: the server cannot know them, and reading them while rendering made the markup differ (a saved volume under 50%, for one).
+  const [prefs, setPrefs] = useState<PlayerPrefs>(DEFAULT_PREFS)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setPrefs(loadPrefs()))
+    return () => cancelAnimationFrame(id)
+  }, [])
   const [menu, setMenu] = useState<null | "settings" | "captions">(null)
   const [menuStart, setMenuStart] = useState<"root" | "keys">("root")
   const [compact, setCompact] = useState(false)

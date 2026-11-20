@@ -3,7 +3,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { ExternalLink, Eye, FileDown, History, LayoutGrid, Palette, PlayCircle, RotateCcw, Trash2 } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { studentNav } from "@/components/coach/nav"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -333,10 +333,10 @@ export function DesignWorkspace() {
   const freeRight = inspector ? 360 : 0
   // Toasts stay out of the inspector: they sit in the room left of it while it is open (wide screens only; the card is absolute there).
   const hasInspector = !!inspector
+  // Without the inspector the room beside the phone preview is about 365 px: a 356 px toast at the default 24 px would sit 15 px over it, so it hugs the edge (QA 20/11).
   useEffect(() => {
-    if (!hasInspector) return
     const root = document.documentElement.style
-    root.setProperty("--admin-toast-right", "380px")
+    root.setProperty("--admin-toast-right", hasInspector ? "380px" : "14px")
     return () => void root.removeProperty("--admin-toast-right")
   }, [hasInspector])
   const freeCentre = `calc(${freeLeft}px + (100% - ${freeLeft + freeRight}px) / 2)`

@@ -3,7 +3,7 @@
 import { Check, ImagePlus } from "@/components/icons"
 import { useRef, useState } from "react"
 import type { ThemeDraft } from "@/lib/prototype-store"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { readAsDataUrl } from "@/lib/images"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { chartStyleOf, figureStyleOf, headerFormOf, panelStyleOf, starStyleOf, widgetFinishOf, widgetFontOf, widgetHeaderOf, widgetSetOf, widgetStyleOf, type CoachTheme, type FigureStyle, type PanelStyle, type WidgetHeader, type WidgetStyle } from "@/lib/theme/types"

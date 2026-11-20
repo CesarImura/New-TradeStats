@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { ImagePlus } from "@/components/icons"
 import { pictureFrom } from "@/lib/images"
 import { BACKDROPS, minDimOf } from "@/lib/theme/backdrops"

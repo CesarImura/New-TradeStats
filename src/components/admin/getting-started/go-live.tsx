@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { Loader2, X } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { addressTaken, suggestAddress } from "@/components/onboarding/setup-community"

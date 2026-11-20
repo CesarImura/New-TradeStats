@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { ArrowRight, ExternalLink, Mic, Pause, Plus, Square, X } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { TradeChart } from "@/components/charts/trade-chart"
 import { useCoach } from "@/components/coach/coach-provider"
 import { addFeedback, type allTrades } from "@/lib/data/feedback"

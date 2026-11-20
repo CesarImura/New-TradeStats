@@ -2,7 +2,7 @@
 
 import { useId } from "react"
 import { PlayCircle } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { setStored, useStored } from "@/lib/prototype-store"
 import { SelectOptions } from "@/components/kit/select-field"
 import { ControlLabel } from "@/components/kit/control-label"

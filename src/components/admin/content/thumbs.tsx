@@ -2,7 +2,7 @@
 
 import { useRef } from "react"
 import { ImagePlus, Trash2 } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { pictureFrom } from "@/lib/images"
 import { cn } from "@/lib/utils"
 import { AdminButton, Dropzone } from "@/components/admin/ui"

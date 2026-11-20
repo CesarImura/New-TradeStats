@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { ArrowLeft, Loader2 } from "@/components/icons"
 import { SignupFrame, SignupTitle, useSignupGo } from "@/components/onboarding/signup-frame"
 import { AdminButton } from "@/components/admin/ui"

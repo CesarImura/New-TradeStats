@@ -3,7 +3,7 @@
 import { Children, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { ArrowDown, ArrowLeft, ArrowUp, ChevronsUpDown, PanelLeftIcon as PanelLeft, Plus, Trash2 } from "@/components/icons"
 import { AdminButton, AdminField, ProgressRing, adminControl } from "@/components/admin/ui"
 import { useDraftEditor } from "@/components/admin/design/editor/editor-shell"

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { Plus, X } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -13,6 +13,7 @@ import { PageHeader, useCommunityData } from "../kit"
 import { ChartWorkspace } from "./chart-workspace"
 import { useNewPlatform } from "../use-new-platform"
 import { AdminSelect, AdminButton, AdminField, AdminModal, AdminSegmented, AdminTabs, Callout, Panel, Tag, adminControl } from "../ui"
+import { TabPanel } from "@/components/admin/ui"
 
 const TABS = [
   { id: "charts", label: "Chart" },
@@ -51,6 +52,7 @@ export function ChartsAdmin() {
         <AdminTabs label="Charts" tabs={TABS} value={tab} onChange={setTab} />
       </div>
 
+      <TabPanel value={tab} order={TABS.map((t) => t.id)}>
       {tab === "charts" && (
         <ChartWorkspace
           charts={shown}
@@ -63,6 +65,7 @@ export function ChartsAdmin() {
         />
       )}
       {tab === "settings" && <Settings s={s} setS={setS} />}
+      </TabPanel>
 
       <NewChart open={creating} onOpenChange={setCreating} onSave={(c) => setCharts((l) => [c, ...l])} symbols={symbols} />
     </div>

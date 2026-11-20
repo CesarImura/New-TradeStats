@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { ExternalLink, MoreHorizontal, Plus, X } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { BLOCK_INFO, blockHint, defaultBlocks, resetSalesPage, saveSalesPage, useSalesPage, type Block, type BlockType } from "@/lib/data/sales-page"

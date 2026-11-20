@@ -1,7 +1,7 @@
 "use client"
 
 import { Suspense, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCommunityData } from "@/components/admin/kit"
 import { useStudentTier } from "@/components/courses/shared"
 import { ArrowUpRight, Check, Eye, Heart, Megaphone, MessageCircle, MessageSquareText, MessagesSquare, Pin } from "@/components/icons"

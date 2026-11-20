@@ -1,4 +1,5 @@
-import { toast as notify, type ExternalToast } from "sonner"
+import { toast as notify } from "@/lib/toast"
+import type { ExternalToast } from "sonner"
 
 /**
  * The canvas's notices ("added at the bottom", "removed"…) have their own toaster, top right under the editor's bar,

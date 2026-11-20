@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { ExternalLink, History, PlayCircle, Trash2 } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { AdminButton, AdminDrawer, AdminMenuItem, AdminMenuSeparator, AdminModal } from "@/components/admin/ui"
 import { EditorTopBar, type PublishStatus } from "./top-bar"
 import {

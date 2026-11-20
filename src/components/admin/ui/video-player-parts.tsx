@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type RefObject } from "react"
 import { Play, Replay, VolumeDown, VolumeMute, VolumeUp } from "@/components/icons"
 import { cn } from "@/lib/utils"
 import { AdminButton } from "./button"
+import { LiveDot } from "./live-dot"
 import { NEXT_SECONDS, VOLUME_STEP } from "./video-player-options"
 
 /** The ripple of a double-click skip: a soft shape on the side that was hit, with the seconds. */
@@ -121,7 +122,7 @@ export function LiveMarker({ playing, label, onBack }: { playing: boolean; label
         onClick={() => !playing && onBack()}
         className={cn("flex h-5 shrink-0 items-center gap-1.5 rounded-a-xs px-1.5 t-mono-label-s outline-none transition-colors duration-200 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus motion-reduce:transition-none", playing ? "cursor-default bg-a-danger-soft text-a-danger" : "bg-a-selected text-a-text-2 hover:bg-a-hover hover:text-a-text")}
       >
-        <span aria-hidden className={cn("size-1.5 rounded-full transition-colors duration-200", playing ? "bg-a-danger-fill motion-safe:animate-pulse" : "bg-a-text-3")} />
+        {playing ? <LiveDot tone="danger" className="size-1.5" /> : <span aria-hidden className="size-1.5 rounded-full bg-a-text-3" />}
         {playing ? "LIVE" : "BACK TO LIVE"}
       </button>
       {label && <span className="min-w-0 truncate tabular-nums text-a-text-2">{label}</span>}

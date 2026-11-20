@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -14,6 +14,7 @@ import { TRADES } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { useCommunityData } from "../kit"
 import { AdminButton, AdminDrawer, AdminProgress, AdminUnderlineTabs, Callout, StepIndicator, adminControl } from "../ui"
+import { TabPanel } from "@/components/admin/ui"
 
 /** The prototype's one student who really goes through onboarding (the others are sample data). */
 const DEMO_STUDENT_ID = "s1"
@@ -238,6 +239,7 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
 
           <AdminUnderlineTabs label="Student" tabs={TABS} value={tab} onChange={setTab} />
 
+          <TabPanel value={tab} order={TABS.map((t) => t.id)} className="flex flex-col gap-5">
           {tab === "overview" && (
             <>
               <section className="flex flex-col gap-2 rounded-a-10 border border-a-accent-strong bg-a-accent-soft px-4 py-3.5">
@@ -348,6 +350,7 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
               </section>
             </>
           )}
+          </TabPanel>
         </>
       )}
     </AdminDrawer>

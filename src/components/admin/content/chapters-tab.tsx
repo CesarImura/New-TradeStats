@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react"
 import { MoreHorizontal, Plus, Trash2 } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { type Chapter, type Course, type Lesson } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"

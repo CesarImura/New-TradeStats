@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { ArrowLeft, Check, ChevronRight, GripVertical, ImagePlus, Plus, Search } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"

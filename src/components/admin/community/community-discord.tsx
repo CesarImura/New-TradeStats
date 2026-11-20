@@ -1,7 +1,7 @@
 "use client"
 
 import { Check, LayoutGrid } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Switch } from "@/components/ui/switch"
 import { AdminButton, AdminFilter, Callout, EmptyState, Panel } from "../ui"

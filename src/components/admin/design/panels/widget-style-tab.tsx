@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { ArrowRight, Check, ChevronRight, ImagePlus } from "@/components/icons"
 import { fitWidth, getWidget, lookOf, styleParts } from "@/components/widgets/registry"
 import { filledStar } from "@/components/widgets/parts/widget-scope"

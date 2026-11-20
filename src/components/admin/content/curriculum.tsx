@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, ChevronDown, Copy, MoreHorizontal, Pencil, Plus, Trash2, Upload as UploadIcon } from "@/components/icons"
 import { Checkbox } from "@/components/ui/checkbox"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { allLessons, uid, type Course, type Lesson, type Module, type Status } from "@/lib/data/learning"

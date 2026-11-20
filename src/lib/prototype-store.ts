@@ -1,7 +1,7 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import type { CustomPage, MenuId, ModuleId, Wording } from "@/lib/data/coaches"
 import type { CoursePageDraft } from "@/lib/data/course-page"
 import type { JoinDraft } from "@/lib/data/join"

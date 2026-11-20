@@ -1,7 +1,7 @@
 "use client"
 
 import { Check, MoreHorizontal } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useCommunityData } from "../kit"
 import { AdminButton, AdminTable, AdminTableFooter, AdminTableHead, AdminTd, AdminTh, AdminTr, EmptyState, Panel } from "../ui"

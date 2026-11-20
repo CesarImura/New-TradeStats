@@ -1,5 +1,5 @@
 "use client"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { ArrowDownToLine, ArrowUpToLine, Copy, Lock, MoreHorizontal, RotateCcw, Trash2, X } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"

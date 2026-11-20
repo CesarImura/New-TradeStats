@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Handshake, LineChart, Plus } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
 import { PageHeader } from "../kit"
 import { AdminSelect, AdminButton, AdminField, AdminModal, AdminSearch, AdminSegmented, AdminTable, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, Callout, EmptyState, Panel, StatPanel, Tag, adminControl } from "../ui"
 import { useNewPlatform } from "../use-new-platform"
+import { TabPanel } from "@/components/admin/ui"
 
 const euro = (n: number) => `€${n.toLocaleString("en")}`
 
@@ -69,8 +70,10 @@ export function PartnersAdmin() {
       <div className="flex">
         <AdminTabs label="Partners sections" tabs={[{ id: "offers", label: "Offers", count: offers.length }, { id: "affiliate", label: "Affiliate program" }]} value={tab} onChange={setTab} />
       </div>
+      <TabPanel value={tab} order={["offers", "affiliate"]}>
       {tab === "offers" && <Offers onAdd={setAdding} />}
       {tab === "affiliate" && <Affiliates fresh={fresh} program={shown} set={(p) => setDraft((d) => ({ ...d, ...p }))} turnOn={() => (saveAffiliate(coach, { on: true }), setDraft((d) => Object.fromEntries(Object.entries(d).filter(([k]) => k !== "on"))), toast("Affiliate program is on"))} />}
+      </TabPanel>
       <CatalogueDialog open={adding === "catalogue"} onClose={() => setAdding(null)} />
       {adding === "own" && <OwnDialog onClose={() => setAdding(null)} />}
     </div>

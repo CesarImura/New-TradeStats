@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Check, Download, Lock, Search } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { OwnTitle } from "@/components/student/own-title"
 import { UnlockDialog } from "@/components/student/unlock-dialog"

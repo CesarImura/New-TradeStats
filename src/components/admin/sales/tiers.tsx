@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Check, MoreHorizontal, Plus, Tag as TagIcon, X } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -12,6 +12,7 @@ import { saveCatalog, useCatalog } from "@/lib/data/learning"
 import { readStored, setStored, useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
 import { AdminButton, AdminDrawer, AdminSegmented, AdminUnderlineTabs, Callout, EmptyState, Panel, Tag, adminControl } from "../ui"
+import { TabPanel } from "@/components/admin/ui"
 
 const NO_EXTRA: Record<string, TierExtra> = {}
 
@@ -211,6 +212,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
         </>
       }>
       <AdminUnderlineTabs label="Tier sections" value={tab} onChange={setTab} tabs={[{ id: "plan", label: "Plan" }, { id: "page", label: "Sales page" }]} />
+      <TabPanel value={tab} order={["plan", "page"]}>
       {x && tier && tab === "plan" && (
         <div className="flex flex-col gap-4">
           <div data-tour="tier-plan" data-filled={x.name?.trim() && (free || amount(x.price ?? "")) ? true : undefined} data-free={free || undefined} className="flex flex-col gap-4">
@@ -298,6 +300,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
           </div>
         </div>
       )}
+      </TabPanel>
     </AdminDrawer>
   )
 }

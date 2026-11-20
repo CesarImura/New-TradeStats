@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Download, MoreHorizontal, RotateCcw } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { TRANSACTIONS, TXN_COUNTS, type Txn } from "@/lib/data/people"
 import { useNewPlatform } from "../use-new-platform"

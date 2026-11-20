@@ -13,6 +13,7 @@ import { AnnouncementsTab, AnnouncementDrawer } from "./community-announcements"
 import { SpacesTab, SpaceDialog } from "./community-spaces"
 import { DiscordTab, DiscordMark } from "./community-discord"
 import { ModerationTab } from "./community-moderation"
+import { TabPanel } from "@/components/admin/ui"
 
 export { DiscordMark }
 export type { Announcement }
@@ -52,10 +53,12 @@ export function CommunityAdmin() {
       <SetupTip task="discord" />
       <AdminTabs label="Community" tabs={TABS} value={tab} onChange={setTab} className="self-start" />
 
+      <TabPanel value={tab} order={TABS.map((t) => t.id)}>
       {tab === "announcements" && <AnnouncementsTab list={list} setList={setList} d={d} setD={setD} />}
       {tab === "spaces" && <SpacesTab spaces={spaces} setSpaces={setSpaces} rules={rules} setRules={setRules} onEdit={setEditing} />}
       {tab === "discord" && <DiscordTab d={d} setD={setD} />}
       {tab === "moderation" && <ModerationTab slug={coach.slug} />}
+      </TabPanel>
 
       <AnnouncementDrawer open={composing} onOpenChange={setComposing} onPost={(a) => setList((l) => [{ ...a, space: spaces[0]?.id }, ...l])} />
       <SpaceDialog space={editing} onClose={() => setEditing(null)} onSave={(s) => setSpaces((l) => (l.some((x) => x.id === s.id) ? l.map((x) => (x.id === s.id ? s : x)) : [...l, s]))} />

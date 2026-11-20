@@ -1,6 +1,6 @@
 "use client"
 
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { Dropzone } from "@/components/admin/ui"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

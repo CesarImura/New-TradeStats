@@ -424,3 +424,10 @@
 @utility t-mono-label-s { font: 400 10px/12px var(--admin-font-family-mono); letter-spacing: 0.06em; text-transform: uppercase; }
 @utility t-mono-data { font: 400 12px/16px var(--admin-font-family-mono); }
 @utility t-mono-meta { font: 400 10px/12px var(--admin-font-family-mono); letter-spacing: 0.02em; }
+
+/* Live dot (Admin / Live dot): two soft rings leave the dot one after the other (2.8 s cycle: ~2 s of motion, then a short rest).
+   The ring grows to 2.2x and fades with a long tail (ease-out), so it reads as one breath, never a blink. Only transform and opacity move. */
+@keyframes live-ping {
+  0% { transform: scale(1); opacity: 1; }
+  70%, 100% { transform: scale(2.2); opacity: 0; }
+}

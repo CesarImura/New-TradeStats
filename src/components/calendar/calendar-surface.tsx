@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ShellEditorContext } from "@/components/shells/student-shell"
 import { NOW, hhmm, isLiveNow, type Item, type ItemKind } from "@/lib/data/schedule"
 import { cn } from "@/lib/utils"
+import { PingDot } from "@/components/ui/ping-dot"
 
 export type View = "month" | "week" | "list"
 
@@ -146,12 +147,7 @@ export function CalendarSurface({
 }
 
 function LiveDot() {
-  return (
-    <span className="relative flex size-2 shrink-0">
-      <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-75" />
-      <span className="relative inline-flex size-2 rounded-full bg-red-500" />
-    </span>
-  )
+  return <PingDot className="bg-red-500" />
 }
 
 export type EventStyle = "tinted" | "solid" | "outline"

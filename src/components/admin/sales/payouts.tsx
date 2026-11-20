@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { AlertTriangle, ArrowUp, Loader2, X } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { account } from "@/lib/data/communities"
 import { MONEY } from "@/lib/data/people"

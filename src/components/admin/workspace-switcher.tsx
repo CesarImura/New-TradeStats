@@ -51,7 +51,7 @@ export function WorkspaceSwitcher({ compact = false }: { compact?: boolean }) {
             render={
               <SidebarMenuButton
                 size="lg"
-                className={cn("ts-switcher h-12 rounded-a-lg bg-a-panel ring-1 ring-inset ring-a-border hover:bg-a-hover data-popup-open:bg-a-hover group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:shadow-none [html[data-admin-sb=collapsed]_.admin-side_&]:h-10 [html[data-admin-sb=collapsed]_.admin-side_&]:p-1")}
+                className={cn("ts-switcher h-12 rounded-a-lg! bg-a-panel ring-1 ring-inset ring-a-border hover:bg-a-hover data-popup-open:bg-a-hover group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:shadow-none [html[data-admin-sb=collapsed]_.admin-side_&]:h-10 [html[data-admin-sb=collapsed]_.admin-side_&]:p-1")}
               />
             }
           >

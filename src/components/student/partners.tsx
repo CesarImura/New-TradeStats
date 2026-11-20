@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Copy, ExternalLink, Handshake, Link2, Lock } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCommunityData } from "@/components/admin/kit"
 import { useCoach } from "@/components/coach/coach-provider"
 import { OwnTitle } from "@/components/student/own-title"

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Info, ShieldCheck, TriangleAlert } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"

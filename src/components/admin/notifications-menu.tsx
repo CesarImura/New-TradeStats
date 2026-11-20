@@ -2,26 +2,30 @@
 
 import { useState, type RefObject } from "react"
 import Link from "next/link"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { AlertTriangle, ArrowUpToLine, Bell, CircleAlert, CreditCard, MessageCircle, Video } from "@/components/icons"
-import { AdminButton, AdminTabs, Tag } from "@/components/admin/ui"
+import { AdminButton, AdminTabs, EmptyState, Tag } from "@/components/admin/ui"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { cn } from "@/lib/utils"
+import { useCoach } from "@/components/coach/coach-provider"
+import { DEFAULT_NOTICE_PREFS, NOTICE_PREFS_KEY, NOTICE_READ_KEY, normalizePrefs, panelOn, type NoticeKind, type NoticePrefs } from "@/lib/data/admin-notifications"
+import { useCommunityData } from "./kit"
 import { useNewPlatform } from "./use-new-platform"
 
 type Filter = "all" | "payments" | "journal" | "students"
-type Notice = { id: string; title: string; detail: string; time: string; icon: React.ComponentType<{ className?: string }>; tone: string; filters: Filter[]; href: string }
+type Notice = { id: string; kind?: NoticeKind; title: string; detail: string; time: string; icon: React.ComponentType<{ className?: string }>; tone: string; filters: Filter[]; href: string }
 
 /** Sample items from Figma "Overview · 03 Notifications" (524:11637). The first four start unread. */
 const NOTICES: Notice[] = [
-  { id: "n1", title: "Payment failed · Alex Moreau", detail: "Inner Circle €49 · retrying in 2 days", time: "2 h", icon: CircleAlert, tone: "text-a-danger", filters: ["payments", "students"], href: "sales" },
+  { id: "n1", kind: "failed", title: "Payment failed · Alex Moreau", detail: "Inner Circle €49 · retrying in 2 days", time: "2 h", icon: CircleAlert, tone: "text-a-danger", filters: ["payments", "students"], href: "sales" },
   { id: "n2", title: "New journal request · Mia Sørensen", detail: "“Was my stop on NQ too tight?”", time: "3 h", icon: MessageCircle, tone: "text-a-text-2", filters: ["journal", "students"], href: "journal" },
-  { id: "n3", title: "New sale · Lena Ito", detail: "1:1 VIP · €390", time: "5 h", icon: CreditCard, tone: "text-a-success", filters: ["payments", "students"], href: "sales" },
-  { id: "n4", title: "Upload finished", detail: "Price action · Lesson 4 is ready to publish", time: "6 h", icon: ArrowUpToLine, tone: "text-a-text-2", filters: [], href: "content" },
-  { id: "n5", title: "Livestream starts in 1 hour", detail: "London open breakdown · 09:00", time: "1 d", icon: Video, tone: "text-a-text-2", filters: [], href: "livestreams" },
+  { id: "n3", kind: "sale", title: "New sale · Lena Ito", detail: "1:1 VIP · €390", time: "5 h", icon: CreditCard, tone: "text-a-success", filters: ["payments", "students"], href: "sales" },
+  { id: "n4", kind: "upload", title: "Upload finished", detail: "Price action · Lesson 4 is ready to publish", time: "6 h", icon: ArrowUpToLine, tone: "text-a-text-2", filters: [], href: "content" },
+  { id: "n5", kind: "live", title: "Livestream starts in 1 hour", detail: "London open breakdown · 09:00", time: "1 d", icon: Video, tone: "text-a-text-2", filters: [], href: "livestreams" },
   { id: "n6", title: "Payout delayed", detail: "Stripe needs a document from you", time: "2 d", icon: AlertTriangle, tone: "text-a-text-2", filters: ["payments"], href: "sales" },
 ]
 const NO_NOTICES: Notice[] = []
+const INITIALLY_READ = ["n5", "n6"]
 const FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "payments", label: "Payments" },
@@ -38,21 +42,28 @@ export function NotificationsMenu({ base, anchorRef, paused = false }: { base: s
   const [open, setOpen] = useState(false)
   if (paused && open) setOpen(false)
   const [filter, setFilter] = useState<Filter>("all")
-  const [read, setRead] = useState<Set<string>>(() => new Set(["n5", "n6"]))
   // A platform made in setup has nothing yet: no sample payments or requests.
   const fresh = useNewPlatform()
-  const notices = fresh ? NO_NOTICES : NOTICES
+  // What Settings › Notifications switched off for the bell is hidden here.
+  const { coach } = useCoach()
+  const [stored] = useCommunityData<NoticePrefs>(coach.slug, NOTICE_PREFS_KEY, DEFAULT_NOTICE_PREFS)
+  const prefs = normalizePrefs(stored)
+  // What was read is remembered, like the switches. The two oldest start read; a new platform has nothing to read.
+  const [readList, setReadList] = useCommunityData<string[]>(coach.slug, NOTICE_READ_KEY, INITIALLY_READ, [])
+  const read = new Set(Array.isArray(readList) ? readList : [])
+  const notices = fresh ? NO_NOTICES : NOTICES.filter((n) => !n.kind || panelOn(prefs, n.kind))
+  const empty = notices.length === 0
   const unread = notices.filter((n) => !read.has(n.id)).length
   const shown = notices.filter((n) => filter === "all" || n.filters.includes(filter))
   // The tag counts what the list under the tabs holds, so it never says 4 above one row; the bell counts everything.
   const unreadShown = shown.filter((n) => !read.has(n.id)).length
-  const markRead = (...ids: string[]) => setRead((r) => new Set([...r, ...ids]))
+  const markRead = (...ids: string[]) => setReadList((l) => [...new Set([...(Array.isArray(l) ? l : []), ...ids])])
 
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
       <PopoverPrimitive.Trigger render={<AdminButton hierarchy="secondary" iconOnly aria-label={unread ? `Notifications, ${unread} new` : "Notifications"} className="relative w-[38px]" />}>
         <Bell />
-        {unread > 0 && <span aria-hidden className="absolute top-0 left-0 size-2 rounded-full bg-a-accent-strong ring-2 ring-a-page" />}
+        <span aria-hidden className={cn("absolute top-0 left-0 size-2 rounded-full bg-a-accent-strong ring-2 ring-a-page transition-[opacity,scale] duration-200 ease-out motion-reduce:transition-none", unread > 0 ? "scale-100 opacity-100" : "scale-50 opacity-0")} />
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Positioner anchor={anchorRef} side="bottom" align="end" sideOffset={8} alignOffset={24} collisionPadding={8} className="isolate z-50">
@@ -63,15 +74,31 @@ export function NotificationsMenu({ base, anchorRef, paused = false }: { base: s
         <div className="flex shrink-0 items-center gap-2 px-4 py-3.5">
           <PopoverPrimitive.Title className="t-heading-s text-a-text">Notifications</PopoverPrimitive.Title>
           <PopoverPrimitive.Description className="sr-only">Payments, journal requests and live reminders</PopoverPrimitive.Description>
-          {unreadShown > 0 && <Tag>{unreadShown} new</Tag>}
+          {unreadShown > 0 && <Tag>{unreadShown > 99 ? "99+" : unreadShown} new</Tag>}
           <AdminButton hierarchy="ghost" size="md" className="ml-auto" disabled={unread === 0} onClick={() => markRead(...notices.map((n) => n.id))}>
             Mark all read
           </AdminButton>
         </div>
+        {empty ? (
+          // Nothing at all yet (a new platform, or everything cleared): one calm block instead of tabs and an empty list. Figma Overview 02b.
+          <div className="border-t border-a-selected p-4">
+            <EmptyState
+              icon={Bell}
+              title="You're all caught up"
+              description="Payments, requests and live reminders show up here."
+              actions={
+                <AdminButton hierarchy="secondary" nativeButton={false} render={<Link href={`${base}/settings?tab=notifications`} onClick={() => setOpen(false)} />}>
+                  Notification settings
+                </AdminButton>
+              }
+            />
+          </div>
+        ) : (
+          <>
         <div className="shrink-0 px-4 pb-2.5">
           <AdminTabs label="Notification filter" tabs={FILTERS} value={filter} onChange={setFilter} />
         </div>
-        <ul className="flex min-h-0 flex-1 flex-col overflow-y-auto border-y border-a-selected">
+        <ul key={filter} className="flex min-h-0 flex-1 flex-col overflow-y-auto border-y border-a-selected motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200">
           {shown.map((n) => {
             const isNew = !read.has(n.id)
             return (
@@ -82,11 +109,11 @@ export function NotificationsMenu({ base, anchorRef, paused = false }: { base: s
                     markRead(n.id)
                     setOpen(false)
                   }}
-                  className={cn("flex items-start gap-3 px-4 py-3 outline-none transition-colors duration-300 hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:ring-inset", isNew && "bg-a-subtle")}
+                  className={cn("flex items-start gap-3 px-4 py-3 outline-none transition-colors duration-300 ease-out hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:ring-inset motion-reduce:transition-none", isNew && "bg-a-subtle")}
                 >
-                  <n.icon aria-hidden className={cn("mt-px size-4 shrink-0", isNew ? n.tone : "text-a-text-3")} />
-                  <span className={cn("flex min-w-0 flex-1 flex-col gap-1", !isNew && "text-a-text-2")}>
-                    <span className={cn("t-body-m", isNew && "text-a-text")}>{n.title}</span>
+                  <n.icon aria-hidden className={cn("mt-px size-4 shrink-0 transition-colors duration-300 ease-out motion-reduce:transition-none", isNew ? n.tone : "text-a-text-3")} />
+                  <span className={cn("flex min-w-0 flex-1 flex-col gap-1 transition-colors duration-300 ease-out motion-reduce:transition-none", !isNew && "text-a-text-2")}>
+                    <span className={cn("t-body-m transition-colors duration-300 ease-out motion-reduce:transition-none", isNew && "text-a-text")}>{n.title}</span>
                     <span className="t-caption truncate text-a-text-2">{n.detail}</span>
                   </span>
                   <span className="t-micro shrink-0 text-a-text-3">{n.time}</span>
@@ -94,16 +121,18 @@ export function NotificationsMenu({ base, anchorRef, paused = false }: { base: s
               </li>
             )
           })}
-          {shown.length === 0 && <li className="px-4 py-8 text-center t-body-m text-a-text-2">Nothing here right now.</li>}
+          {shown.length === 0 && <li className="px-4 py-8 text-center t-body-m text-a-text-2">Nothing in {FILTERS.find((f) => f.id === filter)?.label} right now.</li>}
         </ul>
         <footer className="flex shrink-0 items-center gap-2 px-4 py-2.5">
-          <AdminButton hierarchy="ghost" size="md" nativeButton={false} render={<Link href={`${base}/settings`} onClick={() => setOpen(false)} />}>
+          <AdminButton hierarchy="ghost" size="md" nativeButton={false} render={<Link href={`${base}/settings?tab=notifications`} onClick={() => setOpen(false)} />}>
             Notification settings
           </AdminButton>
           <AdminButton hierarchy="secondary" size="md" className="ml-auto" onClick={() => toast("All notifications are shown here", { description: "A full history page is not part of the prototype yet." })}>
             See all
           </AdminButton>
         </footer>
+          </>
+        )}
           </PopoverPrimitive.Popup>
         </PopoverPrimitive.Positioner>
       </PopoverPrimitive.Portal>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { X } from "@/components/icons"
 import type { Student } from "@/lib/data/people"
 import { cn } from "@/lib/utils"

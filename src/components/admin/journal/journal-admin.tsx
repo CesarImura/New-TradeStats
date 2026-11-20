@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Check, ExternalLink, MoreHorizontal, Plus, Settings, X } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -15,6 +15,7 @@ import { PageHeader, useCommunityData } from "../kit"
 import { AdminButton, AdminField, AdminFilter, AdminModal, AdminSearch, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, CellPerson, EmptyState, Panel, StatPanel, Tag, adminControl } from "../ui"
 import { AnswerPage } from "./journal-answer"
 import { useNewPlatform } from "../use-new-platform"
+import { TabPanel } from "@/components/admin/ui"
 
 /** Who sent which sample trade. In the prototype every student shares the same sample journal. */
 const OWNER: Record<string, string> = { t1: "s2", t2: "s5", t3: "s4", t4: "s1", t5: "s6", t6: "s7", t7: "s1" }
@@ -116,6 +117,7 @@ export function JournalAdmin() {
         )}
       </AdminToolbar>
 
+      <TabPanel value={tab} order={["requests", "answered", "rules"]}>
       {tab === "requests" &&
         (waiting.length === 0 ? (
           <EmptyState
@@ -134,6 +136,7 @@ export function JournalAdmin() {
         ))}
       {tab === "answered" && (answered.length === 0 ? <EmptyState icon={Check} title="Nothing answered yet" description="Feedback you send shows up here." /> : <AnsweredTable trades={answered} onOpen={show} q={q} kind={kind} since={since} />)}
       {tab === "rules" && <JournalRules />}
+      </TabPanel>
     </div>
   )
 }

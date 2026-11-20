@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { AdminButton, AdminModal, Callout } from "@/components/admin/ui"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"

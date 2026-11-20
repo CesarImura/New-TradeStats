@@ -148,7 +148,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
               <SheetDescription>Admin navigation</SheetDescription>
             </SheetHeader>
             {/* A tap on a link closes the drawer. */}
-            <div className="flex h-full flex-col pt-5 pr-4 pb-4 pl-4" onClickCapture={(e) => (e.target as HTMLElement).closest("a") && setDrawer(false)}>
+            <div className="flex h-full flex-col pt-5 pr-4 pb-4 pl-4" style={{ "--sb-h": "clamp(22px, calc((100svh - 239px) / 17.5), 36px)" } as React.CSSProperties} onClickCapture={(e) => (e.target as HTMLElement).closest("a") && setDrawer(false)}>
               {menu}
             </div>
           </SheetContent>
@@ -208,6 +208,9 @@ function DesktopSidebar({ children }: { children: (collapsed: boolean) => React.
         animate && "transition-[width] duration-200 ease-out motion-reduce:transition-none"
       )}
       aria-label="Main menu"
+      // Item height follows the window height so the whole menu fits without scrolling: 16 items + 3 group labels
+      // + gaps need 17.5 x item + 104 px, and the card, logo (18 px gap, as in Figma) and switcher take 153 px. Full size (36, or 40 collapsed) from ~880 px up.
+      style={{ "--sb-h": "clamp(22px, calc((100svh - 257px) / 17.5), 36px)", "--sb-hc": "clamp(22px, calc((100svh - 257px) / 17.5), 40px)" } as React.CSSProperties}
     >
       <TooltipProvider delay={0}>
         <div className="flex h-full flex-col overflow-hidden rounded-a-xl border border-a-border bg-[var(--admin-color-bg-sidebar)] pt-5 pr-4 pb-4 pl-4 [html[data-admin-sb=collapsed]_.admin-side_&]:px-[11px]">{children(collapsed)}</div>
@@ -274,8 +277,8 @@ function NavLink({ href, label, icon: Icon, active, collapsed, soon }: { href: s
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "relative flex h-9 shrink-0 items-center gap-3 rounded-a-md border px-2 t-body-l outline-none transition-[height,background-color,border-color,color] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus [html[data-admin-sb=collapsed]_.admin-side_&]:h-10 [html[data-admin-sb=collapsed]_.admin-side_&]:px-3",
-        active ? "border-a-border bg-a-panel text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-[var(--admin-component-nav-indicator)] [html[data-admin-sb=collapsed]_.admin-side_&]:after:hidden" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text"
+        "relative flex h-[var(--sb-h,36px)] shrink-0 items-center gap-3 rounded-a-md border px-2 t-body-l outline-none transition-[height,background-color,border-color,color] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-a-border-focus [html[data-admin-sb=collapsed]_.admin-side_&]:h-[var(--sb-hc,40px)] [html[data-admin-sb=collapsed]_.admin-side_&]:px-3",
+        active ? "border-a-border bg-a-panel text-a-text after:absolute after:top-[calc(var(--sb-h,36px)*0.22)] after:right-2 after:bottom-[calc(var(--sb-h,36px)*0.22)] after:w-0.5 after:rounded-full after:bg-[var(--admin-component-nav-indicator)] [html[data-admin-sb=collapsed]_.admin-side_&]:after:hidden" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text"
       )}
     >
       <Icon className={cn("size-4 shrink-0", active ? "fill-[url(#admin-icon-grad)]" : "text-a-text-nav")} />
@@ -302,17 +305,15 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
       <div className="flex items-center pr-1">
         <AdminLogo />
       </div>
-      <nav aria-label="Admin" className="-mx-1 mt-2 flex min-h-0 flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto px-1 pb-2">
+      <nav aria-label="Admin" className="-mx-1 mt-[18px] flex min-h-0 flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {groups.map((g, i) => (
-          <div key={g.group} className="flex flex-col gap-0.5">
+          <div key={g.group} className="flex flex-col gap-0.5 [@media(max-height:620px)]:not-first:mt-2">
             {/* The first page (Overview) sits on its own at the top, like a home link. Collapsed, a group's name turns into a line in the same space. */}
             {i > 0 ? (
-              <span className="t-micro relative whitespace-nowrap px-2 pt-[18px] pb-2 uppercase text-a-text-3 transition-colors duration-150 ease-out after:absolute after:inset-x-1 after:bottom-[calc(50%-10px)] after:h-px after:bg-a-border after:opacity-0 after:transition-opacity after:duration-150 [html[data-admin-sb=collapsed]_.admin-side_&]:text-transparent [html[data-admin-sb=collapsed]_.admin-side_&]:after:opacity-100">
+              <span className="t-micro relative whitespace-nowrap [@media(max-height:620px)]:hidden px-2 pt-[calc(var(--sb-h,36px)/2)] pb-2 [html[data-admin-sb=collapsed]_.admin-side_&]:pt-[calc(var(--sb-hc,40px)/2)] uppercase text-a-text-3 transition-colors duration-150 ease-out after:absolute after:inset-x-1 after:bottom-[calc(50%-10px)] after:h-px after:bg-a-border after:opacity-0 after:transition-opacity after:duration-150 [html[data-admin-sb=collapsed]_.admin-side_&]:text-transparent [html[data-admin-sb=collapsed]_.admin-side_&]:after:opacity-100">
                 {g.group}
               </span>
-            ) : (
-              <span className="h-2" />
-            )}
+            ) : null}
             {g.items.map((item) => (
               <Fragment key={item.id}>
                 <NavLink href={item.href} label={item.label} icon={item.icon} active={isOpen(item.href)} collapsed={collapsed} soon={item.soon} />
@@ -334,7 +335,7 @@ function SidebarBody({ groups, base, studentBase, isOpen, invite, onDismissInvit
 /** A quiet card above the footer links, as in ElevenLabs. Dismissed for this visit only. */
 function InviteCard({ href, onDismiss }: { href: string; onDismiss: () => void }) {
   return (
-    <div className="relative rounded-a-lg bg-a-panel p-3 ring-1 ring-inset ring-a-border [html[data-admin-sb=collapsed]_.admin-side_&]:hidden [@media(max-height:820px)]:hidden">
+    <div className="relative rounded-a-lg bg-a-panel p-3 ring-1 ring-inset ring-a-border [html[data-admin-sb=collapsed]_.admin-side_&]:hidden [@media(max-height:1010px)]:hidden">
       <button type="button" onClick={onDismiss} aria-label="Dismiss" className="absolute top-2 right-2 text-muted-foreground after:absolute after:-inset-[5px] after:content-[''] hover:text-foreground">
         <X className="size-3.5" />
       </button>

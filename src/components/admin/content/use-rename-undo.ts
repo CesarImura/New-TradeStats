@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 
 /**
  * For a title that is saved as you type: when the field is left with a new name, a toast offers to take the rename back.

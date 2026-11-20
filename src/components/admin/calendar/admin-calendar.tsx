@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { addDays, addMinutes, format, startOfWeek } from "date-fns"
 import { ChevronDown, ChevronLeft, ChevronRight, Info, Plus, Settings, Trash2 } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -33,6 +33,7 @@ import { PageHeader } from "../kit"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 import { AdminSelect, AdminButton, AdminDrawer, AdminField, AdminFilter, AdminModal, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, Callout, EmptyState, OptionCard, Panel, StepIndicator, Tag, adminControl } from "../ui"
 import { AdminMonth, AdminWeek, KIND_DOT } from "./calendar-views"
+import { TabPanel } from "@/components/admin/ui"
 
 const RANGE = { from: addDays(NOW, -45), to: addDays(NOW, 75) }
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -115,6 +116,7 @@ export function AdminCalendar() {
         )}
       </AdminToolbar>
 
+      <TabPanel value={tab} order={TABS.map((t) => t.id)} className="flex flex-col gap-4">
       {tab === "calendar" && (
         <>
           {view === "week" ? (
@@ -136,6 +138,7 @@ export function AdminCalendar() {
       )}
       {tab === "availability" && <AvailabilityTab />}
       {tab === "news" && <NewsTab impact={impact} period={period} onOpen={(n) => setOpen({ key: n.id, kind: "news", title: n.title, start: at(n.start), end: addMinutes(at(n.start), 15), news: n })} />}
+      </TabPanel>
 
       <EventModal event={editing} isNew={isNew} onClose={() => setEditing(null)} />
       <CallDrawer item={open?.booking ? open : null} onClose={() => setOpen(null)} />

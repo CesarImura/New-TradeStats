@@ -2,7 +2,7 @@
 import { MODULE_NAMES, move, useDesign } from "./design-context"
 import { useRef } from "react"
 import { ArrowDown, ArrowUp, ImagePlus, Pencil, X } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"

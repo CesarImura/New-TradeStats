@@ -18,7 +18,7 @@ import {
   Trash2,
   Upload,
 } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageHeader } from "../kit"

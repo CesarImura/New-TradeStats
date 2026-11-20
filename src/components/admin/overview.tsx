@@ -1,13 +1,14 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useReducedMotion } from "motion/react"
 import Link from "next/link"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { Bar, ComposedChart, Line, XAxis, YAxis } from "recharts"
 import { ArrowRight, CalendarDays, Video } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { useNewPlatform } from "./use-new-platform"
-import { AdminAvatar, AdminButton, AdminFilter, AdminPageHeader, AdminTabs, EmptyState, Metric as MetricCard, Panel, Tag } from "@/components/admin/ui"
+import { AdminAvatar, AdminButton, AdminFilter, AdminPageHeader, AdminTabs, EmptyState, LiveDot, Metric as MetricCard, Panel, Tag, TabStackPane, tabDirection } from "@/components/admin/ui"
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart"
 import { COURSES, EVENTS } from "@/lib/data/sample"
 import { NOW } from "@/lib/data/schedule"
@@ -156,10 +157,10 @@ function NextLiveBanner({ base }: { base: string }) {
           </span>
           <h2 className="t-title md:t-display [overflow-wrap:anywhere]">NY open, live trading</h2>
         </div>
-        <dl className="flex flex-wrap gap-y-3">
+        <dl className="mt-2 flex flex-wrap gap-x-8 gap-y-3">
           {stats.map((st) => (
-            <div key={st.label} className="flex flex-col gap-0.5 border-l border-a-on-highlight/10 px-4 first:border-l-0 first:pl-0 last:pr-0">
-              <dd className="t-heading-xl !leading-6 tabular-nums">{st.value}</dd>
+            <div key={st.label} className="flex flex-col gap-0.5">
+              <dd className="t-data-m tabular-nums">{st.value}</dd>
               <dt className="t-body-m">{st.label}</dt>
             </div>
           ))}
@@ -172,7 +173,7 @@ function NextLiveBanner({ base }: { base: string }) {
           <AdminButton hierarchy="highlight" size="xl" nativeButton={false} render={<Link href={`${base}/livestreams`} />}>
             Open studio
           </AdminButton>
-          <AdminButton hierarchy="secondary" size="xl" onClick={() => toast("Reminder sent", { description: "Signed-up students get a nudge." })}>
+          <AdminButton hierarchy="secondary" size="xl" className="min-w-0 flex-1" onClick={() => toast("Reminder sent", { description: "Signed-up students get a nudge." })}>
             Remind
           </AdminButton>
         </div>
@@ -185,6 +186,14 @@ function NextLiveBanner({ base }: { base: string }) {
  * Lesson-by-lesson completion per course, as in Figma 524:8745. `bars` are heights (% of the tallest);
  * `drop` is the lesson index where students fall off, with the label drawn above it.
  */
+/** Open student questions on lessons, newest first (Content › Questions). A new platform has none. */
+const OPEN_QUESTIONS = [
+  { id: "q1", initials: "RC", who: "Rita Carvalho", text: "How do I size a position when my stop is wider than usual?", where: "Foundations · Lesson 4", when: "2h ago" },
+  { id: "q2", initials: "TB", who: "Tom Becker", text: "Why does the playbook skip the London session?", where: "Price action playbook · Lesson 2", when: "5h ago" },
+  { id: "q3", initials: "AT", who: "Aiko Tanaka", text: "Is revenge trading covered in this lesson?", where: "Trading psychology · Lesson 3", when: "Yesterday" },
+  { id: "q4", initials: "MW", who: "Marcus Webb", text: "Can I use this setup on indices?", where: "Foundations · Lesson 9", when: "Yesterday" },
+]
+
 const COURSE_SUMMARY = [
   { completed: "59%", students: 142, bars: [97, 93, 87, 57, 53, 50, 48, 45, 42, 41, 36], drop: 3, dropLabel: "−31%" },
   { completed: "9%", students: 38, bars: [100, 63, 37, 21], drop: 1, dropLabel: "Drop-off" },
@@ -224,6 +233,9 @@ function ChartBar({ x = 0, y = 0, width = 0, height = 0 }: BarShapeProps) {
   )
 }
 
+/** Order of the Content tabs, for the direction the panes drift. */
+const LOWER = ["courses", "questions"] as const
+
 /** ADM-01. One Overview for every community: a new platform shows the same screen with zeros and empty lists (Figma Overview 01b). */
 export function AdminOverview() {
   const { coach, base } = useCoach()
@@ -238,6 +250,14 @@ export function AdminOverview() {
   const share = fresh ? 0 : tier === "all" ? 1 : (coach.tiers.find((t) => t.id === tier)?.members ?? 0) / Math.max(members, 1)
   const metrics = VIEWS.find((v) => v.id === view)!.metrics
   const [lower, setLower] = useState<"courses" | "questions">("courses")
+  // The chart morphs from one dataset to the next (a view, a tier or a period), but does not play its growing intro when the page opens.
+  const reduced = useReducedMotion()
+  const [armed, setArmed] = useState(false)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setArmed(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+  const morph = armed && !reduced
 
   // First metric of a view is the bars, the second one the line.
   const [barM, lineM] = metrics
@@ -265,6 +285,7 @@ export function AdminOverview() {
   ]
   const courses = fresh ? [] : COURSES.slice(0, 3)
   const needs = fresh ? [] : NEEDS
+  const questions = fresh ? [] : OPEN_QUESTIONS
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -275,16 +296,15 @@ export function AdminOverview() {
       )}
 
       <AdminPageHeader
-        className="pt-6"
+        className="pt-6 [&>div:first-child]:gap-1.5"
         title="Overview"
         subtitle={`${coach.name} · last 30 days${fresh ? "" : " · updated 2 min ago"}`}
         actions={
           <>
             {/* Figma Overview 01: a 114px pill with the live dot (14px box) 15px from the edge. */}
             <span className="inline-flex h-9 items-center gap-2 rounded-a-md border border-a-border px-[15px] t-body-m">
-              <span className="relative grid size-3.5 place-items-center">
-                <span className="absolute inset-0 animate-ping rounded-full bg-a-success-fill opacity-30 motion-reduce:animate-none" />
-                <span className="size-2 rounded-full bg-a-success-fill" />
+              <span className="grid size-3.5 place-items-center">
+                <LiveDot className="size-1.5" />
               </span>
               <span className="t-body-m-medium tabular-nums">{fresh ? 0 : 23}</span> Online
             </span>
@@ -315,7 +335,7 @@ export function AdminOverview() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <AdminTabs label="Overview view" tabs={VIEWS.map((v) => ({ id: v.id, label: v.label }))} value={view} onChange={setView} />
           <div className="flex flex-wrap items-center gap-2">
-            <ul className="mr-2 flex items-center gap-4 t-body-m text-a-text-2">
+            <ul key={view} className="mr-2 flex items-center gap-4 t-body-m text-a-text-2 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300">
               <li className="flex items-center gap-1.5"><span aria-hidden className="size-2 rounded-[2px] bg-a-bar" />{barM.label}</li>
               <li className="flex items-center gap-1.5"><span aria-hidden className="h-[3px] w-3.5 rounded-full bg-a-text" />{lineM.label}</li>
             </ul>
@@ -325,15 +345,15 @@ export function AdminOverview() {
         </div>
 
         <div>
-          <div className="relative h-56 border-y border-a-border-subtle md:h-[238px] [&_.recharts-line]:pointer-events-none [&_.recharts-active-dot]:pointer-events-none [&_.ov-layer]:transition-opacity [&_.ov-layer]:duration-[400ms] [&_.ov-layer]:ease-[ease] motion-reduce:[&_.ov-layer]:transition-none [&:has(.ov-bar:hover)_.ov-rest]:!opacity-0 [&:has(.ov-bar:hover)_.ov-bar:not(:hover)_.ov-grey]:!opacity-100 [&_.ov-bar:hover_.ov-active]:!opacity-100 [&_.ov-bar:hover_.ov-col]:!opacity-100" style={{ backgroundImage: "radial-gradient(circle, var(--admin-color-chart-grid) 0.75px, transparent 1px)", backgroundSize: "16px 16px" }}>
+          <div className="relative h-56 border-y border-a-border-subtle md:h-[238px] [&_.recharts-line]:pointer-events-none [&_.recharts-active-dot]:pointer-events-none [&_.ov-layer]:transition-opacity [&_.ov-layer]:duration-[400ms] [&_.ov-layer]:ease-[ease] motion-reduce:[&_.ov-layer]:transition-none [&:has(.ov-bar:hover)_.ov-rest]:!opacity-0 [&:has(.ov-bar:hover)_.ov-bar:not(:hover)_.ov-grey]:!opacity-100 [&_.ov-bar:hover_.ov-active]:!opacity-100 [&_.ov-active]:[filter:drop-shadow(0_8px_14px_rgb(255_133_41/0.35))] [&_.ov-bar:hover_.ov-col]:!opacity-100" style={{ backgroundImage: "radial-gradient(circle, var(--admin-color-chart-grid) 0.75px, transparent 1px)", backgroundSize: "16px 16px" }}>
             <ChartContainer config={config} className="aspect-auto h-full w-full [&_.recharts-surface]:overflow-visible [&_.recharts-wrapper]:overflow-visible">
               <ComposedChart data={data} margin={{ left: 0, right: 0, top: 4, bottom: 0 }} barCategoryGap="24%">
                 <XAxis xAxisId="bar" dataKey="i" hide />
                 <XAxis xAxisId="line" dataKey="i" type="number" domain={[0, Math.max(data.length - 1, 1)]} hide />
                 <YAxis yAxisId="bar" hide domain={[0, "auto"]} />
                 <YAxis yAxisId="line" hide domain={["auto", "auto"]} />
-                <ChartTooltip cursor={false} content={<OverviewTooltip bar={barM} line={lineM} />} />
-                <Bar xAxisId="bar" yAxisId="bar" dataKey="bar" isAnimationActive={false} shape={ChartBar} />
+                <ChartTooltip cursor={false} content={() => null} />
+                <Bar xAxisId="bar" yAxisId="bar" dataKey="bar" isAnimationActive={morph} animationDuration={520} animationEasing="ease-out" shape={ChartBar} />
                 <Line
                   xAxisId="line"
                   yAxisId="line"
@@ -344,13 +364,15 @@ export function AdminOverview() {
                   dot={(p: { cx?: number; cy?: number; index?: number }) =>
                     p.index === 0 || p.index === data.length - 1 ? <circle key={p.index} cx={p.cx} cy={p.cy} r={2} fill="var(--admin-color-text-primary)" /> : <g key={p.index} />
                   }
-                  activeDot={{ r: 4, fill: "var(--admin-color-text-primary)", stroke: "var(--admin-color-text-primary)", strokeWidth: 2 }}
-                  isAnimationActive={false}
+                  activeDot={(p: { cx?: number; cy?: number; payload?: TipPoint }) => <ActiveMark key="active" cx={p.cx} cy={p.cy} payload={p.payload} bar={barM} line={lineM} count={data.length} />}
+                  isAnimationActive={morph}
+                  animationDuration={520}
+                  animationEasing="ease-out"
                 />
               </ComposedChart>
             </ChartContainer>
           </div>
-          <div className="mt-4 flex justify-between pb-[7px] t-micro text-a-text-3 tabular-nums">
+          <div key={`${view}-${range}`} className="mt-4 flex justify-between pb-[7px] t-micro text-a-text-3 tabular-nums motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300">
             {ticks.map((t, i) => (
               <span key={i}>{t}</span>
             ))}
@@ -364,71 +386,90 @@ export function AdminOverview() {
             <h2 className="t-data-m text-a-text">Content</h2>
             <AdminTabs label="Content view" tabs={[{ id: "courses", label: "Courses" }, { id: "questions", label: "Questions" }]} value={lower} onChange={setLower} />
           </header>
-          {lower === "courses" ? (
-            courses.length === 0 ? (
-              <EmptyLine>{fresh ? "No course results yet. They show once students start learning." : "No courses yet. Add your first one in Content."}</EmptyLine>
-            ) : (
-              <div className="grid flex-1 border-t border-a-border @min-[680px]:grid-cols-[246fr_270fr_246fr]">
-                {courses.map((c, ci) => {
-                  const sum = COURSE_SUMMARY[ci] ?? COURSE_SUMMARY[0]
-                  const risky = sum.drop >= 0
-                  return (
-                    <Link
-                      key={c.id}
-                      href={`${base}/content`}
-                      className={cn(
-                        "flex min-w-0 flex-col gap-4 pb-1 pt-4 outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:ring-inset",
-                        ci > 0 && "border-a-border @max-[679px]:mt-4 @max-[679px]:border-t @min-[680px]:border-l",
-                        ci === 0 ? "@min-[680px]:pr-6" : ci === courses.length - 1 ? "@min-[680px]:pl-6" : "@min-[680px]:px-6"
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="t-body-m truncate text-a-text">{c.title}</span>
-                        <Tag tone={risky ? "danger" : "success"}>{risky ? "At risk" : "Healthy"}</Tag>
-                      </div>
-                      <dl className="flex items-end">
-                        {[
-                          [sum.completed, "completed"],
-                          [String(sum.students), "students"],
-                          [String(sum.bars.length), "lessons"],
-                        ].map(([v, l]) => (
-                          <div key={l} className="flex min-w-0 flex-1 flex-col gap-1">
-                            <dd className="t-heading-l tabular-nums text-a-text">{v}</dd>
-                            <dt className="t-caption text-a-text-2">{l}</dt>
-                          </div>
-                        ))}
-                      </dl>
-                      <div className="flex flex-1 flex-col gap-2">
-                        <div role="img" aria-label={`${c.title} completion per lesson`} className="relative min-h-[122px] flex-1">
-                          <div className="absolute inset-0 flex items-end gap-1.5">
-                            {sum.bars.map((v, i) => (
-                              <span key={i} className={cn("flex-1 rounded-t-a-2xs", i === sum.drop ? "bg-a-danger-fill" : "bg-a-track")} style={{ height: `${v}%` }} />
-                            ))}
-                          </div>
-                          {risky ? (
-                            <span className="absolute t-micro text-a-danger" style={{ left: `${(sum.drop / sum.bars.length) * 100}%`, bottom: `${sum.bars[sum.drop] + 3}%` }}>{sum.dropLabel}</span>
-                          ) : (
-                            <span className="absolute left-0 top-0 t-caption text-a-success">No drop-off</span>
+          {/* Both views share one grid cell, so the card keeps the height of the taller one and switching tabs never moves the page. */}
+          <div className="relative grid flex-1">
+            <TabStackPane active={lower === "courses"} from={tabDirection(LOWER, lower, "courses")} className="flex flex-col">
+              {courses.length === 0 ? (
+                  <EmptyLine>{fresh ? "No course results yet. They show once students start learning." : "No courses yet. Add your first one in Content."}</EmptyLine>
+                ) : (
+                  <div className="grid flex-1 border-t border-a-border @min-[680px]:grid-cols-[246fr_270fr_246fr]">
+                    {courses.map((c, ci) => {
+                      const sum = COURSE_SUMMARY[ci] ?? COURSE_SUMMARY[0]
+                      const risky = sum.drop >= 0
+                      return (
+                        <Link
+                          key={c.id}
+                          href={`${base}/content`}
+                          className={cn(
+                            "flex min-w-0 flex-col gap-4 pb-1 pt-4 outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus focus-visible:ring-inset",
+                            ci > 0 && "border-a-border @max-[679px]:mt-4 @max-[679px]:border-t @min-[680px]:border-l",
+                            ci === 0 ? "@min-[680px]:pr-6" : ci === courses.length - 1 ? "@min-[680px]:pl-6" : "@min-[680px]:px-6"
                           )}
-                          <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-a-icon-subtle" />
-                        </div>
-                        <div className="flex justify-between t-caption text-a-text-3">
-                          <span>Lesson 1</span>
-                          <span>Lesson {sum.bars.length}</span>
-                        </div>
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="t-body-m truncate text-a-text">{c.title}</span>
+                            <Tag tone={risky ? "danger" : "success"}>{risky ? "At risk" : "Healthy"}</Tag>
+                          </div>
+                          <dl className="flex items-end">
+                            {[
+                              [sum.completed, "completed"],
+                              [String(sum.students), "students"],
+                              [String(sum.bars.length), "lessons"],
+                            ].map(([v, l]) => (
+                              <div key={l} className="flex min-w-0 flex-1 flex-col gap-1">
+                                <dd className="t-heading-l tabular-nums text-a-text">{v}</dd>
+                                <dt className="t-caption text-a-text-2">{l}</dt>
+                              </div>
+                            ))}
+                          </dl>
+                          <div className="flex flex-1 flex-col gap-2">
+                            <div role="img" aria-label={`${c.title} completion per lesson`} className="relative min-h-[120px] flex-1">
+                              <div className="absolute inset-0 flex items-end gap-1.5">
+                                {sum.bars.map((v, i) => (
+                                  <span key={i} className={cn("flex-1 rounded-t-a-2xs", i === sum.drop ? "bg-a-danger-fill" : "bg-a-track")} style={{ height: `${v}%` }} />
+                                ))}
+                              </div>
+                              {risky ? (
+                                <span className="absolute t-micro text-a-danger" style={{ left: `${(sum.drop / sum.bars.length) * 100}%`, bottom: `${sum.bars[sum.drop] + 3}%` }}>{sum.dropLabel}</span>
+                              ) : (
+                                <span className="absolute left-0 top-0 t-caption text-a-success">No drop-off</span>
+                              )}
+                              <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-a-icon-subtle" />
+                            </div>
+                            <div className="flex justify-between t-caption text-a-text-3">
+                              <span>Lesson 1</span>
+                              <span>Lesson {sum.bars.length}</span>
+                            </div>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+            </TabStackPane>
+            <TabStackPane active={lower === "questions"} from={tabDirection(LOWER, lower, "questions")} className="flex flex-col">
+              {questions.length === 0 ? (
+                <EmptyLine>{fresh ? "No questions yet. They show once students ask in a lesson." : "No open questions in your courses right now."}</EmptyLine>
+              ) : (
+                <ul className="flex flex-1 flex-col border-t border-a-border">
+                  {questions.map((q) => (
+                    <li key={q.id} className="flex items-center gap-3 border-t border-a-border py-3 first:border-t-0 last:pb-0 @min-[680px]:flex-1">
+                      <AdminAvatar initials={q.initials} />
+                      <div className="flex min-w-0 flex-1 flex-col t-body-m">
+                        <span className="truncate text-a-text">{q.text}</span>
+                        <span className="truncate text-a-text-2">{q.who} · {q.where} · {q.when}</span>
                       </div>
-                    </Link>
-                  )
-                })}
-              </div>
-            )
-          ) : (
-            <EmptyLine>No open questions in your courses right now.</EmptyLine>
-          )}
+                      <AdminButton hierarchy="secondary" size="md" className="w-[106px]" nativeButton={false} render={<Link href={`${base}/content`} />}>Answer</AdminButton>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </TabStackPane>
+          </div>
         </Panel>
 
         <Panel className="gap-0 py-[18px]">
-          <header className="flex items-center justify-between pb-3.5">
+          <header className="flex min-h-[49px] items-center justify-between pb-3.5">
             <h2 className="t-data-m text-a-text">Needs you today</h2>
             <Link href={`${base}/students`} className="inline-flex items-center gap-1.5 t-caption text-a-text-2 outline-none transition-colors duration-300 hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
               See all <ArrowRight className="size-3" />
@@ -444,7 +485,7 @@ export function AdminOverview() {
                   <span className="truncate text-a-text">{u.name}</span>
                   <span className="truncate text-a-text-2">{u.reason}</span>
                 </div>
-                <AdminButton hierarchy="secondary" size="md" nativeButton={false} render={<Link href={`${base}/${u.href}`} />}>{u.action}</AdminButton>
+                <AdminButton hierarchy="secondary" size="md" className="w-[106px]" nativeButton={false} render={<Link href={`${base}/${u.href}`} />}>{u.action}</AdminButton>
               </li>
             ))}
           </ul>
@@ -458,12 +499,10 @@ function EmptyLine({ children }: { children: React.ReactNode }) {
   return <EmptyState compact title={children} className="py-6" />
 }
 
-type TipProps = { active?: boolean; payload?: { payload?: { label: string; bar: number; line: number } }[] }
+type TipPoint = { label: string; bar: number; line: number; i?: number }
 
 /** Figma 524:8716: day, then one row per series with its marker and value. */
-function OverviewTooltip({ bar, line, active, payload }: { bar: Metric; line: Metric } & TipProps) {
-  const d = payload?.[0]?.payload
-  if (!active || !d) return null
+function TooltipCard({ bar, line, d }: { bar: Metric; line: Metric; d: TipPoint }) {
   const rows = [
     { key: "bar", name: bar.label, value: format(bar, d.bar), marker: "size-2 rounded-[2px] bg-a-bar" },
     { key: "line", name: line.label, value: format(line, d.line), marker: "h-0.5 w-2 bg-a-text" },
@@ -480,5 +519,29 @@ function OverviewTooltip({ bar, line, active, payload }: { bar: Metric; line: Me
         ))}
       </div>
     </div>
+  )
+}
+
+const TIP_W = 220
+const TIP_H = 100
+
+/**
+ * The hovered point and its card, drawn together (Figma 01: a white dot with a dark ring on the line, the card 8px to its right
+ * and just below it). Drawn in the chart's own SVG, so it follows the bar and never covers the dot like a free-floating tooltip
+ * does. Near the right edge the card flips to the left of the dot; low on the chart it flips above it.
+ */
+function ActiveMark({ cx = 0, cy = 0, payload, bar, line, count }: { cx?: number; cy?: number; payload?: TipPoint; bar: Metric; line: Metric; count: number }) {
+  if (!payload) return null
+  const flipX = (payload.i ?? 0) >= count - 3
+  const flipY = cy > 150
+  return (
+    <g pointerEvents="none">
+      <circle cx={cx} cy={cy} r={5} fill="var(--admin-color-text-primary)" stroke="var(--admin-color-bg-raised)" strokeWidth={2} />
+      <foreignObject x={flipX ? cx - 8 - TIP_W : cx + 8} y={flipY ? cy - 2 - TIP_H : cy + 2} width={TIP_W} height={TIP_H} overflow="visible">
+        <div style={{ display: "flex", height: "100%", alignItems: flipY ? "flex-end" : "flex-start", justifyContent: flipX ? "flex-end" : "flex-start" }}>
+          <TooltipCard bar={bar} line={line} d={payload} />
+        </div>
+      </foreignObject>
+    </g>
   )
 }

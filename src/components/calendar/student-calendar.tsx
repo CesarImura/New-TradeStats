@@ -3,7 +3,7 @@
 import { createContext, useContext, useState } from "react"
 import { addDays, addMinutes, differenceInMinutes, format, isSameDay } from "date-fns"
 import { Bell, CalendarPlus, CalendarX, Clock, Lock, Play, Radio, TriangleAlert, Users, Video } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -36,6 +36,7 @@ import { DEMO_STUDENT } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
 import { CalendarSurface, type EventStyle, type View } from "./calendar-surface"
 import { OwnTitle } from "@/components/student/own-title"
+import { PingDot } from "@/components/ui/ping-dot"
 
 export const STUDENT_COLORS: Record<ItemKind, string> = {
   live: series(0),
@@ -120,10 +121,7 @@ export function StudentCalendar({ props = {} }: { props?: Record<string, string 
         <div className="fx-hero @container rounded-(--radius)" style={{ boxShadow: "var(--card-shadow)" }}>
           <div className="flex flex-col gap-3 p-[calc(1rem*var(--density,1))] @lg:flex-row @lg:items-center">
             <span className="flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
-              <span className="relative flex size-2.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-current opacity-60" />
-                <span className="relative inline-flex size-2.5 rounded-full bg-current" />
-              </span>
+              <PingDot className="size-2.5 bg-current" />
               Live now
             </span>
             <span className="flex-1 font-heading text-lg leading-tight">

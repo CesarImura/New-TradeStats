@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Check, FileSpreadsheet, Link2 } from "@/components/icons"
 import { Checkbox } from "@/components/ui/checkbox"

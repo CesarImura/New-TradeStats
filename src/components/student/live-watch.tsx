@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { uid } from "@/lib/data/learning"
 import { patchLivestream, useLivestreams, whenLabel, type Livestream } from "@/lib/data/livestreams"
 import { cn } from "@/lib/utils"
+import { PingDot } from "@/components/ui/ping-dot"
 
 const card = { boxShadow: "var(--card-shadow)" }
 
@@ -28,7 +29,7 @@ export function LiveList() {
         {list.map((s) => (
           <Link key={s.id} href={`${base}/live/${s.id}`} className="grid gap-1.5 rounded-(--radius) bg-card p-[calc(1.25rem*var(--density,1))] text-card-foreground" style={card}>
             <span className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className={cn("size-1.5 rounded-full", s.state === "live" ? "animate-pulse bg-red-500" : s.state === "scheduled" ? "bg-amber-500" : "bg-muted-foreground/50")} />
+              {s.state === "live" ? <PingDot className="size-1.5 bg-red-500" /> : <span className={cn("size-1.5 rounded-full", s.state === "scheduled" ? "bg-amber-500" : "bg-muted-foreground/50")} />}
               {s.state === "live" ? "Live now" : s.state === "scheduled" ? whenLabel(s.startsAt) : "Recording"}
             </span>
             <span className="font-heading text-lg">{s.title}</span>
@@ -117,7 +118,7 @@ function Screen({ s }: { s: Livestream }) {
       {s.state === "live" ? (
         <>
           <span className="absolute top-3 left-3 flex items-center gap-1.5 rounded bg-red-600 px-2 py-0.5 text-xs font-semibold">
-            <span className="size-1.5 animate-pulse rounded-full bg-white" /> LIVE
+            <PingDot className="size-1.5 bg-white" /> LIVE
           </span>
           <span className="absolute top-3 right-3 flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-xs tabular-nums">
             <Users className="size-3" /> {s.viewers}

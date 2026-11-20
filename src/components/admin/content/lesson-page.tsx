@@ -11,6 +11,7 @@ import { FilesTab } from "./files-tab"
 import { LessonTab } from "./lesson-tab"
 import { useRenameUndo } from "./use-rename-undo"
 import { QuizTab } from "./quiz-tab"
+import { TabPanel } from "@/components/admin/ui"
 
 type Tab = "lesson" | "chapters" | "quiz" | "files"
 /** Content · 08 Lesson, 09 Chapters, 10 Quiz (and Files): one lesson beside the course outline. */
@@ -31,7 +32,7 @@ export function LessonPage({ course, lesson, upload, saved, onChange, onPick, on
         <AdminButton hierarchy="secondary" size="xl" iconOnly aria-label="Back to the course" onClick={onBack}>
           <ArrowLeft />
         </AdminButton>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex min-w-0 flex-[1_1_14rem] flex-col gap-1">
           <h1 className="sr-only">{lesson.title}</h1>
           <input value={lesson.title} onChange={(e) => onChange({ title: e.target.value })} {...rename} aria-label="Lesson title" className="-mx-2 block w-[calc(100%+1rem)] truncate rounded-a-sm bg-transparent px-2 t-heading-xl text-a-text outline-none transition-colors duration-300 hover:bg-a-hover focus-visible:bg-a-field" />
           <p className="t-body-m text-a-text-2">
@@ -98,10 +99,12 @@ export function LessonPage({ course, lesson, upload, saved, onChange, onPick, on
               { id: "files", label: "Files", count: lesson.downloads.length },
             ]}
           />
+          <TabPanel value={tab} order={["lesson", "chapters", "quiz", "files"]}>
           {tab === "lesson" && <LessonTab course={course} lesson={lesson} upload={upload} t={t} onChange={onChange} onPick={onPick} next={lessons[at + 1] ? { title: lessons[at + 1].title, onPlay: () => onSelect(lessons[at + 1].id) } : undefined} />}
           {tab === "chapters" && <ChaptersTab course={course} lesson={lesson} t={t} setT={setT} onChange={onChange} />}
           {tab === "quiz" && <QuizTab lesson={lesson} onChange={onChange} />}
           {tab === "files" && <FilesTab lesson={lesson} onChange={onChange} />}
+          </TabPanel>
         </div>
       </div>
     </div>

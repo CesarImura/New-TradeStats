@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Check, Pencil, Play, Plus, Sparkles, Upload, X } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
 import { PageHeader, useCommunityData } from "../kit"
 import { useNewPlatform } from "../use-new-platform"
 import { AdminButton, AdminField, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, AdminSegmented, CellPerson, EmptyState, FileIcon, Panel, PanelHeader, StatPanel, Tag, adminControl } from "../ui"
+import { TabPanel } from "@/components/admin/ui"
 
 const TABS = [
   { id: "personality", label: "Personality" },
@@ -65,11 +66,13 @@ export function AiAdmin() {
         <AdminTabs label="AI assistant" tabs={isNew ? TABS.map((t) => (t.id === "questions" ? { ...t, count: 0 } : t)) : TABS} value={tab} onChange={setTab} />
       </div>
 
+      <TabPanel value={tab} order={TABS.map((t) => t.id)}>
       {tab === "personality" && <Personality ai={ai} set={set} base={base} name={coach.wording.ai} />}
       {tab === "knowledge" && <Knowledge ai={ai} set={set} sources={isNew ? [] : AI_KNOWLEDGE} />}
       {tab === "features" && <Features ai={ai} set={set} />}
       {tab === "test" && <TestChat corrections={ai.corrections} onCorrect={(c) => set({ corrections: [c, ...ai.corrections] })} />}
       {tab === "questions" && <Questions rows={isNew ? [] : AI_QUESTIONS} />}
+      </TabPanel>
     </div>
   )
 }

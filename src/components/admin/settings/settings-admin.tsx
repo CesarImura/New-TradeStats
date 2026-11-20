@@ -20,11 +20,12 @@ import { AdminButton } from "../ui"
 
 import { General, Domain, Emails } from "./settings-business"
 import { Legal } from "./settings-legal"
+import { Notifications } from "./settings-notifications"
 import { StudentOnboarding, FirstWeek } from "./settings-student"
 import { Tax, Team, Plan } from "./settings-account"
 /** Figma "Admin · 15 Settings": a menu of five groups (icon, mono label, pages) beside one page at a time. */
 const GROUPS = [
-  { label: "Your business", icon: Store, tabs: [["general", "General"], ["domain", "Web address"], ["email", "E-mails"], ["legal", "Legal pages"]] },
+  { label: "Your business", icon: Store, tabs: [["general", "General"], ["domain", "Web address"], ["email", "E-mails"], ["notifications", "Notifications"], ["legal", "Legal pages"]] },
   { label: "Students", icon: Users, tabs: [["onboarding", "Onboarding questions"], ["firstweek", "Home in the first week"]] },
   { label: "Money", icon: Wallet, tabs: [["tax", "Invoices and VAT"]] },
   { label: "Team", icon: UserAdmin, tabs: [["team", "Team and roles"]] },
@@ -64,6 +65,7 @@ export function SettingsAdmin() {
           {tab === "general" && <General />}
           {tab === "domain" && <Domain />}
           {tab === "email" && <Emails />}
+          {tab === "notifications" && <Notifications />}
           {tab === "legal" && <Legal />}
           {tab === "onboarding" && <StudentOnboarding />}
           {tab === "firstweek" && <FirstWeek />}
@@ -96,7 +98,7 @@ function SettingsNav({ value, onChange }: { value: TabId; onChange: (id: TabId) 
                 onClick={() => onChange(id)}
                 className={cn(
                   "relative flex h-8 w-full shrink-0 items-center rounded-a-md border px-2.5 text-left t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus max-md:w-auto max-md:whitespace-nowrap",
-                  active ? "border-a-border bg-a-selected text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-a-accent-strong" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text"
+                  active ? "max-md:pr-5 border-a-border bg-a-selected text-a-text after:absolute after:top-2 after:right-2 after:bottom-2 after:w-0.5 after:rounded-full after:bg-a-accent-strong" : "border-transparent text-a-text-nav hover:bg-a-hover hover:text-a-text"
                 )}
               >
                 {label}

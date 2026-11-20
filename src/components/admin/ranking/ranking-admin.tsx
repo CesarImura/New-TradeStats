@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { MoreHorizontal, Plus, Star, Trophy } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { PageHeader, useCommunityData } from "../kit"
 import { useNewPlatform } from "../use-new-platform"
 import { AdminButton, AdminField, AdminFilter, AdminModal, AdminSegmented, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminTr, Callout, EmptyState, Panel, PanelHeader, Tag, adminControl } from "../ui"
+import { TabPanel } from "@/components/admin/ui"
 
 export type RankingSetup = { metric: string; period: string; nicknames: boolean; optOut: boolean; competitions: Competition[]; points: typeof POINTS; badges?: typeof ADMIN_BADGES }
 export const DEFAULT_RANKING: RankingSetup = { metric: "discipline", period: "month", nicknames: true, optOut: true, competitions: COMPETITIONS, points: POINTS, badges: ADMIN_BADGES }
@@ -72,9 +73,11 @@ export function RankingAdmin() {
         <AdminTabs label="Ranking sections" tabs={TABS} value={tab} onChange={setTab} />
         {tab === "leaderboard" && <LeaderboardControls period={r.period} setPeriod={(v) => set({ period: v })} group={group} setGroup={setGroup} />}
       </div>
+      <TabPanel value={tab} order={TABS.map((t) => t.id)}>
       {tab === "leaderboard" && <Leaderboard period={r.period} group={group} fresh={fresh} />}
       {tab === "competitions" && <Competitions list={r.competitions} setList={(l) => set({ competitions: l })} onEdit={setEditing} onNew={() => setEditing("new")} />}
       {tab === "points" && <PointsAndBadges r={r} set={set} />}
+      </TabPanel>
       <CompetitionModal
         item={editing}
         onClose={() => setEditing(null)}
