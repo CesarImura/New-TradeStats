@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Captions, Lock, Maximize, Pause, Play, RotateCcw, RotateCw } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { series } from "@/components/widgets/parts/tokens"

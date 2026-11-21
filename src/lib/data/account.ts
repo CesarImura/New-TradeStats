@@ -12,7 +12,7 @@ export const DEMO_ADMIN = {
   memberships: [
     { slug: "northline", role: "Owner" as AdminRole, lastOpened: "now" },
     { slug: "northline-options", role: "Owner" as AdminRole, lastOpened: "yesterday" },
-    { slug: "kairo", role: "Operator" as AdminRole, lastOpened: "3 days ago" },
+    { slug: "kairo", role: "Owner" as AdminRole, lastOpened: "3 days ago" },
     { slug: "sophia", role: "Assistant coach" as AdminRole, lastOpened: "last week" },
   ],
 }

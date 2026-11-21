@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Check, FileDown, Trash2 } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"

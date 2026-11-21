@@ -3,7 +3,7 @@
 import { Check, ImagePlus } from "@/components/icons"
 import { useRef, useState } from "react"
 import type { ThemeDraft } from "@/lib/prototype-store"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { readAsDataUrl } from "@/lib/images"
 import { colorsFromLogo } from "@/lib/theme/logo-colors"
 import { chartStyleOf, figureStyleOf, headerFormOf, panelStyleOf, starStyleOf, widgetFinishOf, widgetFontOf, widgetHeaderOf, widgetSetOf, widgetStyleOf, type CoachTheme, type FigureStyle, type PanelStyle, type WidgetHeader, type WidgetStyle } from "@/lib/theme/types"
@@ -37,7 +37,7 @@ export function HeaderPartsField() {
   const on = widgetHeaderOf(theme)
   return (
     <div className="grid gap-1.5" data-field="widget-header">
-      <span className="text-xs text-muted-foreground">Show in every widget’s header</span>
+      <span className="t-caption text-muted-foreground">Show in every widget’s header</span>
       <div className="flex flex-wrap gap-1.5">
         {PARTS.map((p) => (
           <button
@@ -47,7 +47,7 @@ export function HeaderPartsField() {
             title={p.hint}
             onClick={() => change({ theme: { widgetHeader: { ...on, [p.key]: !on[p.key] } } }, `header-${p.key}`)}
             className={cn(
-              "flex h-7 items-center gap-1.5 px-2.5 text-xs",
+              "flex h-7 items-center gap-1.5 px-2.5 t-caption",
               FOCUS,
               chip(on[p.key]),
             )}
@@ -167,11 +167,11 @@ export function LogoColoursField() {
   return (
     <div className="grid gap-2">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs text-muted-foreground">From a logo</span>
+        <span className="t-caption text-muted-foreground">From a logo</span>
         <button
           type="button"
           onClick={() => input.current?.click()}
-          className={cn("flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-xs text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground", FOCUS)}
+          className={cn("flex h-7 items-center gap-1.5 rounded-md border px-2.5 t-caption text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground", FOCUS)}
         >
           <ImagePlus className="size-3.5" /> {busy ? "Reading…" : colours.length ? "Another logo" : "Upload a logo"}
         </button>
@@ -189,7 +189,7 @@ export function LogoColoursField() {
       </div>
       {colours.length > 0 && (
         <div className="grid gap-1.5 rounded-lg bg-muted p-2">
-          <span className="text-xs text-muted-foreground">Click to use as the brand colour; ⇧-click for the highlight</span>
+          <span className="t-caption text-muted-foreground">Click to use as the brand colour; ⇧-click for the highlight</span>
           <div className="flex gap-2">
             {colours.map((c) => (
               <button

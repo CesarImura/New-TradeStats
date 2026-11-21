@@ -1,0 +1,189 @@
+# Admin v2
+
+The Admin follows the Figma file Tradehub (XWHeEdjEiY6gWmrsg0vFIZ), collection `Admin` (541:2).
+
+## How Figma maps to code
+- Variable path → CSS variable: `component/button/primary/bg/default` → `--admin-component-button-primary-bg-default`. All 271 live in `src/app/admin-tokens.css` (on `:root`, so portalled popups inherit). Regenerate that file from the Figma collection when tokens change; never edit values by hand.
+- Same file maps tokens to Tailwind: `bg-a-panel`, `text-a-text-2`, `border-a-border`, `rounded-a-md`, `font-a-mono`.
+- Figma text styles → utilities `t-display`, `t-title-l`, `t-heading-m`, `t-body-m`, `t-mono-label` … (they take variants: `md:t-display`). Do not write `text-[13px]`.
+- Figma component name → React: `Admin / Button` → `AdminButton`, `Panel`, `Tag`, `Metric`, `AdminPageHeader`, `AdminTabs` in `src/components/admin/ui/`.
+
+## Layers
+1. `admin-tokens.css`: tokens + utilities.
+2. `src/lib/theme/admin-v2.ts`: remaps the shadcn tokens and legacy selectors (card, button, input, badge, tabs, table, overlays) so pages not rebuilt yet already look v2. Appended after `TS_ADMIN_CSS` in the shell.
+3. `src/components/shells/admin-shell.tsx`: floating 255 px sidebar card, 56 px topbar. Below 1280 px the sidebar is a drawer.
+4. `src/components/admin/kit.tsx` (PageHeader, Field, SettingRow, Empty) now renders v2.
+5. Rebuilt from Figma: Overview. New pages should use the kit in `admin/ui/`.
+
+## Rules
+- Dark only. UI text in English. No gradients except media fades. States: Default / Hover / Disabled (opacity 0.4); hover transitions 0.3 s ease-out.
+- Editor (`admin/design`) now follows v2 (14/11): frame, controls and menus come from `admin/ui` and `a-*` tokens, Inter/Space Mono, orange selection on panel controls. Terminal and the student area are not touched by v2.
+- Inter is first in the font stack on every device (substitute for Helvetica Neue, which the web cannot ship); mono is Space Mono.
+
+## Checks
+`npx tsc --noEmit`, `npx eslint src`, `npx next build`; screenshots at 1920 / 1024 / 390 (and 320 for overflow).
+After adding Tailwind classes in new files, restart `next dev` if utilities do not appear (stale cache).
+
+## Known gaps
+- Areas 02–15 inherit the v2 look through the legacy layer; their layouts are not yet rebuilt screen by screen from Figma.
+- Journal overflows by about 50 px at 320 px; Content > course page overflows 8 px at 1024 px.
+- Search in the topbar is hidden below 1280 px.
+
+## Status 09/11 (final round)
+Rebuilt to Figma: Overview, Students, Journal (stats), Content, Calendar, Downloads, Livestreams, Community, AI, Sales overview, Ranking, Partners. Charts, Settings, Livestream detail and the course builder follow the v2 look. Onboarding wizard (/signup, /setup) keeps its own frame and was not touched.
+Tests (09/11): tsc ok, next build ok, eslint only the old frame.tsx:92. Sweep 15 routes x 1920/1024/390 and 320 px: 0 overflow, console errors only from blocked external hosts (TradingView). Click-through of every visible button/tab on 14 screens at 1440/1024/390: 0 crashes. Drawer opens/closes, 0.3 s transitions, hover and focus ring checked at 3 breakpoints.
+Fixed in the last round: Journal overflow at 320 px, course builder 8 px at 1024 px, search icon in the topbar below 1280 px.
+Later 09/11: side sheets (calendar event, student profile, tiers, groups, help) are full width on phones (`data-[side=right]:w-full`, the shared Sheet has `w-3/4` that wins over `w-full`). Calendar event form stacks on narrow screens. Dialogs and sheets of Students, Calendar, Content, Downloads, Sales checked at 1440/1024/390 with no clipping. Onboarding wizard (/signup/*, /setup/*, 8 routes) checked at 3 widths: 0 overflow, 0 errors.
+
+## Code review 09/11 (applied)
+Page is always 1200 px (Figma Stack; `wide` removed). Mono rule scoped with `:is()`, icon button size rule fixed, dead sidebar-inset rule removed. Admin CSS string hoisted to a module constant, Inter no longer preloaded globally, admin wrapper renders `dark` on the server (no light flash), invite card dismissal shared between sidebar and drawer. AdminTabs: Home/End, fallback roving index, sr-only status text. Payouts timer cleaned on unmount; Sales money figures consistent. Ranking criteria are a radiogroup. Sales split per tab (revenue, tiers, groups, access, coupons, transactions, payouts).
+Not done (backlog): split overview.tsx (data, banner, chart), one shared highlight bar chart for Overview and Sales revenue (hover state re-renders the whole tab), one Empty component, tabpanel roles for AdminTabs callers, kit files as const arrows.
+
+## Passe 1:1 com o Figma (10/11)
+
+Ordem de trabalho: shell, Overview, Students, Journal, Content, Downloads, Calendar, Charts, Community, AI, Sales, Partners, Ranking, Settings.
+
+- Shell: texto do menu 14 px, item ativo com borda + ícone laranja, ícone de recolher ao lado do logo, ícone do convite, papel "Owner".
+- Overview: banner em gradiente, chip "23 Online" e Go live dividido, 4 métricas do Figma, gráfico combo (barras + linha) com legenda, conteúdo em 3 colunas com queda por aula, "Needs you today" com botões de ação. Checklist de setup e aviso de amostra saíram desta tela.
+- Journal: tabela de pedidos (Student, Question, Trade, Rules, Waiting, Answer). A resposta abre numa sheet com o mesmo editor de antes.
+- Students, Content, Downloads, Calendar, Charts, Community, AI, Sales, Partners, Ranking, Settings: subtítulos, rótulos, colunas e botões do Figma.
+- Diferenças que ficaram de propósito: nome "TradeStats" no logo (Figma diz "Traderhub"), "View as student" no menu, botão "Bulk upload" em Content, aba "Affiliates" em Sales, Partners e Livestreams em tabela, Personality da AI em layout de formulário (Figma tem dois cartões).
+
+## Tabs, filters and buttons pass (10/11)
+- Tabs: bordered group, 2 px inside, 26 px tabs, open tab on `bg-raised`, counts in tertiary (Figma Toolbar > Tabs). One rule in `admin-v2.ts` for the legacy `TabsList` plus `AdminTabs` (now with `count`, `dot`).
+- New in `admin/ui/toolbar.tsx`: `AdminToolbar` (tabs left, controls right), `AdminSearch` (⌘K), `AdminFilter` ("Label | value"), `AdminViewToggle`. Used in Journal, Content, Students, Downloads, Livestreams, Charts, Sales > Transactions, Calendar (News).
+- Tab sets now as Figma: Students All / Needs help / Invited / Paused; Content All / Needs attention / Published / Scheduled / Draft / Archived (+ grid/list); Community Announcements / Spaces & rules / Discord; Sales "Transactions".
+- Buttons: Calendar Today, ‹ ›, Week, Month in the tabs row (admin only; List stays on the student side); Ranking period buttons in the toolbar; AI "Test it" and "Publish changes"; Livestreams "Open studio"; Journal Rules "Preview as student"; Transactions "Invoice" / "Answer the dispute"; Community "New announcement" in the header; Students "Import or invite" with plus.
+- Left as is: Group filter in Ranking (no data), Type / date filters in Journal Answered, month filter in Transactions, card cover art in Content (the sample covers carry their own text).
+
+## Components and tokens pass (10/11)
+- Tokens: the 271 variables of the Figma Admin collection (541:2) match `admin-tokens.css` one to one; text styles match the `t-*` classes. Figma has no effect styles, so shadows live in the components: Menu `0 16 40 @50%`, Modal and Drawer `0 30 60 @60%` (border strong), set in `admin-v2.ts`.
+- `AdminButton` sizes follow Figma `_Base Button`: sm 24, md 28, lg 32, xl 36 (default). All Admin screens use it; the legacy `Button` is gone from `components/admin` (except the Design editor).
+- Fields: padding 12, label 12 regular. Menus: padding 6, items 32 px, padding 10, gap 10, min width 220. Toggle 32 × 18 with a 14 px knob. Checkbox hover = selected fill. Active nav item = panel fill + default border.
+- New in `components/admin/ui/`: `Callout`, `EmptyState`, `Dropzone`, `OptionCard`, `AdminSegmented`, `StepIndicator`, `ChoiceChip` (Time slot / Day chip). Use them instead of hand-built boxes.
+- Calendar event colours and status dots use tokens (Live = accent, Call = success, News = danger).
+- Still on the legacy remap layer (works, but not yet components): Table, Card, Badge, Progress and `text-sm` / `text-xs` / `text-muted-foreground` classes in older screens.
+
+## Content flow 07 to 13 (10/11)
+The course builder was the old tree + lesson editor; it now follows Figma Content 07 to 13 (`src/components/admin/content/`): `course-builder.tsx` (header, state, upload simulation, upload tray), `curriculum.tsx` (modules as thumbnail grids, drag to reorder, drop videos on a module, Attention strip), `lesson-page.tsx` (course outline + tabs Lesson / Chapters / Quiz / Files, Visibility), `course-settings.tsx` (drawer: course, access with "N students lose access", status, danger zone), `publish-review.tsx` (blocks, heads up, when, tell students), `student-preview.tsx` (viewing as a tier). `lesson-editor.tsx` and `course-tree.tsx` were removed. New optional field `Lesson.freePreview` (Visibility = Free preview); the student side does not read it yet. The pass mark is still stored as a count of right answers; the 70/80/90 % buttons pick the nearest.
+Not in the prototype data: the Figma failed upload (needs a real connection loss; the UI handles `failed` when the browser goes offline mid-upload).
+
+Also (10/11): Content 01 to 06. `content-board.tsx` has the card grid (status tag and attention strip over a quiet tint cover, "Edited" line, bigger numbers), the table (select, thumbnail, Attention, Access, Lessons, Students, Done, Edited, menu; footer with Publish / Archive for the selection) and the empty state; the "Bulk upload" button and old dialogs were removed. `new-course.tsx` is the three-step New course modal (Course, Access, Content: start blank, upload a folder, import links). Videos from a folder wait in `uploadQueue` (course-parts.tsx) and start uploading when the builder opens. New optional `Course.edited` (sample values) and `Course.soldSeparately`.
+
+Journal 02 and 03 (10/11): the answer is a page (`journal/journal-answer.tsx`), not a sheet; Video and Voice note open the recording screen. Sales 03: the tier editor is a centred dialog with Plan and Sales page tabs (`sales/tiers.tsx`); new optional `TierExtra.waitlist`. Content polish: lesson thumbnails tinted by state (failed red, hidden or no video grey), tabs dot is amber, "All changes saved" shows at rest, settings drawer floats with a compact cover row.
+
+## Design-system pass (10/11)
+Foundations checked against Figma collection Admin (541:2): 271 variables, names and values in sync with `admin-tokens.css`; text styles match the `t-*` utilities; Figma has no effect styles, the shadows live on the components (Modal and Drawer: 0 30 60 black 60%, Menu: 0 16 40 black 50%) and are now in the legacy layer (`admin-v2.ts`) so every dialog, sheet and menu follows them: radius 16 and 12, strong hairline, padding 6 and item 32 px, checkbox 16, toggle 32 x 18, progress 4 px, table padding 20 and 8.
+New kit components in `components/admin/ui/` from the Figma Components page: `Callout`, `AdminSegmented`, `AdminUnderlineTabs`, `OptionCard`, `EmptyState`, `AdminProgress`, `AdminField` + `adminControl`, `AdminModal`, `AdminDrawer`. Content, Sales tier editor and New course use them. Still to build as components and move screens onto: Table family (head, row, cells), Media and Lesson card, Sortable row, Calendar event, Day chip, Time slot, Dropzone and File item, Avatar, Step indicator, Chart bar.
+
+## Consolidation pass (10/11, later)
+One component per Figma component, no copies:
+- Buttons: every admin screen outside the Design editor now uses `AdminButton` (codemod over 23 files, 118 buttons; shadcn variant outline/ghost/destructive → secondary/ghost/danger, size sm → md, xs → sm, icon sizes → iconOnly). `PreviewAsMenu` lost its `size` prop.
+- Tags and progress: shadcn Badge and Progress in admin screens are now `Tag` and `AdminProgress` (students, AI, journal, calendar, groups, student profile, setup tips).
+- Fields and empty states: kit `Field` and `Empty` were duplicates of `AdminField` and `EmptyState`; `kit.tsx` now only re-exports them (`Field`, `EmptyState`), `Empty` is gone. `AdminField` takes either the control as children (label wraps it) or a render function with ids.
+- New in `ui/`: `Dropzone`, `FileItem`, `SortableRow`, `StepIndicator`, `MediaCard` (used by Content cards, New course, the lesson page and the student preview). Calendar event colours follow the Figma types (Live accent, 1:1 success, News danger, the rest neutral). Day chip and Time slot are student-booking components and have no admin screen yet.
+- Removed dead code: `SetupChecklist` and `TaskRow`, `LEVEL_COLOR`, `lesson-editor.tsx`, `course-tree.tsx`.
+- Layer fixes (`admin-v2.ts`): menu item hover is the selected fill, avatars on the track fill with a hairline, active segmented/option cards use `border-active` (token alias `--color-a-border-active` added to the Tailwind mapping block).
+Checks: `tsc` clean, ESLint 0 errors in admin (the old `frame.tsx:92` is the only one), 15 routes x 390 and 320 px without horizontal overflow or console errors, 194 clicks through every visible control without a page error.
+
+## Component review and test pass (10/11)
+- `/admin/<coach>/kit` is a dev-only gallery (not linked): every kit component in its states. It is also the test bench: Playwright asserts 65 values against the Figma specs (heights, radii, paddings, gaps, fills, edges, hover, focus, error, disabled, keyboard, focus trap, Esc), all passing; and overflow is 0 from 1920 down to 320 px.
+- New: `CellStack`, `CellPerson`, `CellProgress`, `CellDot` (table cells), `LessonCard`. Students and Journal tables, and the Content curriculum, use them. Tables themselves stay shadcn Table styled by the admin layer (header fill, padding 20 and 8, hairlines), which is the single source for every table.
+- 13 dialogs and sheets moved to `AdminModal` and `AdminDrawer` (Downloads, Community, Partners x2, Coupons, Ranking, Settings x3, Messages, Import, Charts, Groups, Calendar event). Left on the shadcn Sheet on purpose: the student profile and the calendar booking sheet, which have their own headers; they follow the layer for radius and shadow. Livestreams keeps its form dialog.
+- The old `.border-dashed` colour overrides in `admin-v2.ts` and `ts-system.ts` are gone: they blocked hover and active edges on dashed components.
+- Touch: with a coarse pointer buttons, tabs, segmented options, filters and search are at least 40 px (`pointer-coarse:`), checked with a touch emulation.
+
+## Kit pass for the editor (14/11, stage 1)
+- `AdminButton`: Secondary and Danger are now the same height as Primary (36 px xl, 32 lg, 28 md, 24 sm); the outline is drawn inside. A trigger whose menu is open (`aria-expanded` / `data-popup-open`) takes the Secondary Hover fill, for every hierarchy.
+- `AdminFilter` open = hover fill (4 %) + strong border, never orange. `SortableRow` has a default hairline (`--admin-component-sortable-row-border-default`, new token, alias of `color/border/default`; confirm the value when the Figma collection is next exported).
+- `TimelineStep` has an `open` state (a step you can start now, secondary action) and `onSkip` ("Skip for now" before the primary action on the current step).
+- `admin/ui/menu.tsx`: `AdminMenu`, `AdminMenuTrigger`, `AdminMenuContent`, `AdminMenuGroup`, `AdminMenuLabel` (mono capitals, must sit in a group), `AdminMenuItem` (`tone="danger"`, `active`), `AdminMenuSeparator`. Surface and item metrics come from the layer in `admin-v2.ts`.
+- Blur: `--blur-a-overlay: 16px` in the Tailwind mapping, so `backdrop-blur-a-overlay` is Admin/Blur/Overlay.
+- `/admin/<coach>/kit` shows all of them.
+
+## Editor frame (14/11, stage 2A)
+- `design-workspace.tsx`: Admin page colour, a top bar with no fill (`editor/top-bar.tsx`, one `EditorTopBar` for the workspace and the all-pages overview; `EditorBar` wraps it), then three floating cards 8 px apart: sections (rail 64 + panel 280, one card with a divider), the dotted canvas (`editor/canvas-bg.ts`; token `--admin-component-editor-canvas-dot`; the grey fill is not a Figma variable) and the inspector (336).
+- Status is a `Tag` with a dot (Warning "N changes · saved", Danger "Publish failed", Success "Published · up to date"). A publish that fails (the store returns false) shows the danger Callout over the canvas with "Try again" (blur from `backdrop-blur-a-overlay`); the failure clears when the draft changes.
+- The page and tier switchers are `AdminFilterButton` + `AdminMenu`; the device switch is `AdminSegmentGroup` (new kit part: Figma "Admin / Segmented", the grouped one; `AdminSegmented` stays for Figma "Segmented option").
+- The rail items are Admin Nav items (panel fill + border, brand-gradient icon). The panel title is Heading S with a caption ("<platform> · saved as you type").
+- Fit now also fits the page's height down to 40 %; the zoom bar is a Panel with ghost buttons. `PreviewFrame` shows "Loading the preview" until the frame loads.
+- Measured at 1920 × 1080 against Figma "Pages · 01 Pages": sidebar 8,64 346×1008; canvas 362,64 1550×1008; rail 64; top bar 56.
+
+## Editor controls (14/11, stage 3A)
+- `--ts-interactive` inside the workspace is the Admin's orange (`border/active`), and since 14/11 (Gustavo) the marks on the canvas (selected widget outline, corners, drop zones, rule badge) use the same orange, as in Figma. Loose colours left in `admin/design`: the canvas grey, the editor's dark chips on the canvas, the preview art (theme thumbnails), the colour picker's own gradients and the palette data (`options.ts`, trading colours).
+- `states.ts` (cards, chips, swatches), `OptionTiles`, `menuRow()` and the field primitives in `fields/controls.tsx` (`BOX`, `Segmented`, `SliderField`, labels) use `a-*` tokens: hairline edge, strong edge and hover fill on hover, orange edge and soft orange fill when selected. `menuRow()` follows the Sortable row token. The `--ctl-*` overrides are gone (the library theme editor that used them was removed).
+- Dialogs: Switch look, Save as template, Back to the original design and the 2-minute guide are `AdminModal`; Earlier versions is `AdminDrawer`. Buttons in the panel are `AdminButton`.
+- 14/11 later: picture tiles follow Admin / Selection card (padding 8, radius 12, 12 between art and name, 8 between cards, name Body M primary); the Buttons glyph is Admin / Editor Button shape (16 × 8, radius 2xs / xs / full); every text size in `admin/design` is a `t-*` style. Still different from Figma on purpose: the Layout tiles show the real widget thumbnail, not Figma's simplified drawing.
+
+---
+
+## Admin v2: fluxos refeitos em 10/11/2026
+
+Students, tabelas (Admin / Table), Calendar, Community, Journal & feedback, Downloads, Livestreams, Charts, AI assistant, Sales & payments (8 abas), Partners, Ranking, Settings e Onboarding foram refeitos ou ajustados 1:1 com o Figma XWHeEdjEiY6gWmrsg0vFIZ. Os detalhes de cada tela estão em `docs/components.md` §17 a §31.
+
+### Regras para novas telas e componentes
+1. Só tokens `a-*` e utilitários `t-*`. Nenhuma cor, texto, espaço ou raio solto. O Figma manda.
+2. Reusar `components/admin/ui`: AdminButton, AdminTable, AdminTabs, AdminSegmented, AdminFilter, AdminField + adminControl (h-11), AdminModal, AdminDrawer (520), Panel, Tag, Callout, EmptyState, StatPanel, OptionCard, SortableRow. Não criar um segundo design system.
+3. Página: contêiner de 1200 px, `gap-4`, cabeçalho cujas ações seguem a aba, abas em AdminTabs.
+4. Tabela: AdminTable com larguras por coluna; linha de 61 px (duas linhas) ou 53 px (uma); `scrollLabel` quando rola e não há nada focável.
+5. Estados: hover, `focus-visible` com anel, disabled a 40%, selecionado com borda ativa e fundo raised, alvos de 40 px em `pointer-coarse`.
+6. Ação reversível: desfazer por toast com id único. Validação inline curta. Ctrl/⌘+Enter salva em modais.
+7. Movimento: ease-out, só transform/opacity, nada de `transition-all`, sempre `motion-reduce`, `motion/react`.
+8. Reiniciar modal ou drawer: estado derivado no render, não effect.
+9. Texto em inglês, curto, com a mesma palavra para a mesma coisa.
+10. Testar em 1920, 1440, 1280, 1100, 1000, 768, 390 e 320 px com axe. O Editor (`components/admin/design`) usa o mesmo kit e os mesmos tokens (desde 14/11; marcas sobre o canvas ficam brancas e as regras do Admin não entram em `.hb-canvas`, mantendo a exclusão `:not(COACH)`). Student não se toca.
+
+### Decisões
+Tier grátis fora das abas de Sales; Access sem override por módulo; dados de exemplo alinhados ao Figma; onboarding só pergunta as opções do Figma; o passo de marca do setup reusa os controles do editor Design.
+
+## Offers (high ticket) e Deals (20/11/2026)
+
+Prototipo, sem Stripe nem backend: parcelas simuladas, nada e cobrado. Figma: Sales 12 a 16 (1876:71176, 1880:75998, 1880:78095, 1883:74159, 1883:78492, 1883:78604), Editor Join 04b (1929:31956).
+
+- **Aba Offers** em Sales & payments (`?tab=offers`): `admin/sales/offers.tsx` (cards dos pacotes, links com filtro por status e remetente, drawer Edit offer com abas Offer e Link settings, modal Send an offer link). Dados em `lib/data/offers.ts` (stores `<slug>:offers` e `<slug>:offerLinks`, via `useCommunityData`: plataforma nova comeca vazia).
+- **Pacote abre um tier que ja existe** (`tierId`); nao cria tier novo e nao entra em Layout for / Preview as (decisao do coordenador, 20/11, reversivel).
+- **Pagina publica** `/site/<coach>/offer/<id>` (`public/offer-checkout.tsx`): link de uso unico, com estados valido, expirado, ja usado e inexistente. Plano com mais de uma parcela exige o checkbox de consentimento. Pagar marca o link como pago, soma em sold/paying e grava a compra do tier (`savePurchase`).
+- **Booking link** na Join (Subscribe): campo `bookingUrl` em `JoinCopy` (inspector em `join-panels.tsx`) e linha "Not ready to pay yet? Book a call" em `public/checkout.tsx`. Vazio = a linha some.
+- **Deals**: os "Offers" de parceiros passaram a se chamar Deals nos textos (Partners, widget do aluno, vazio). Nomes de codigo (`useOffers`, `PartnerOffer`, `partners.ts`) nao mudaram.
+- **Settings > General > Book a call:** o Booking link tem uma fonte so (`lib/data/booking.ts`, chave `<slug>:booking`), editada em Settings e no inspector da Join; o checkout le dela. Vazio = a linha some.
+- **Overview / notificacoes / busca:** sino com "Instalment failed", "Offer link opened", "Offer paid" (`notifications-menu.tsx`); ⌘K com grupos Actions (Send offer link, New offer, Go to Offers) e Offers (`command-palette.tsx`, abre `?tab=offers&send=1` ou `&new=1`). Os atalhos "S O", "N O" do Figma nao existem (o teclado so entende "g x" e uma letra) e "G O" ja e o Overview: ficam sem atalho.
+- **Transactions:** aba Instalments (`Txn.instalment`) e rodape explicando as tentativas; Needs attention do Overview continua so com pagamentos que nao sao parcela.
+- **Perfil do aluno:** `Student.offer` mostra Tier and plan (plano, proximo pagamento, quem enviou o link). Hoje so Jonas Pereira tem.
+- **Overview de Sales:** painel "Where October revenue came from" (Offers + tiers, barra de 6 px) no lugar da tabela por tier; cards do grafico e Needs attention com a mesma altura.
+- **Payouts:** Connect payouts como timeline (`TimelineStep`, novo `tourId`) com o painel Before you start; Payout account em duas colunas com tag Verified.
+- **Fora do codigo, por escolha:** grafico de barras compartilhado do Figma (o codigo usa recharts e ja alinha grade, rotulos e base); faixa de parcela falhada no perfil do aluno; Settings alem do Booking link.
+
+## Sales & payments: Figma × localhost, passada de 20/11 (noite)
+
+Folha com as 16 telas lado a lado (Figma à esquerda, localhost à direita): `docs/sales-figma-vs-localhost-2026-11-20-a.png e -b.png`. Ajustado no código: tag e borda verdes em Most popular e Most sold (`color/status/success` a 22 %); Needs attention com total em risco (€568) e avatares; Revenue by source com Offers = receita do mês − tiers, barra de 6 px na cor `chart-bar-bg-default` e divisórias entre colunas; gráfico com abas do mesmo grupo dos outros e barras mais finas; Payout account com ícones e divisória, Recent payouts com To e See all; Connect payouts com ícones nos passos, tags de tempo e caixa de segurança; offer com Currency e preços com separador de milhar; Transactions: as parcelas de offers só aparecem em Instalments (6 linhas, como no Figma).
+
+Diferenças que ficam de propósito: dados de exemplo (Access tem cursos diferentes do Figma, Collected/Still to collect de Offers são calculados dos links), tiers de offer reaproveitam os existentes (decisão do Gustavo ainda aberta), a página pública do offer usa o tema do coach (Kairo) e o Figma mostra o da Northline, preview da Sales page escuro no código e claro no Figma, e o plano no checkout usa check, não rádio, como o checkout de assinatura do código.
+
+## Figma de Sales & payments: nova ordem (20/11/2026)
+
+Seção `Admin · 12 Sales & payments` (1485:116216). Antes, as telas de offers (12 a 16) ficavam no fim da linha, depois de Payouts, e a numeração não seguia as abas do Admin. Agora cada coluna é uma tela, na ordem das abas, as variantes (b, c) ficam embaixo da tela base (+620 px) e a coluna 00 é o mapa do fluxo (`Sales · 00 Flow map`, 1947:77406). Nada foi apagado nem redesenhado: só nomes, números e posições.
+
+| Novo | Tela | Antes |
+| --- | --- | --- |
+| 00 | Flow map | novo |
+| 01 / 01b | Overview / plataforma nova | 01 / 01b |
+| 02 / 02b | Tiers & prices / plataforma nova | 02 / 02b |
+| 03 / 03b | Edit tier / aba Sales page | 03 / 03b |
+| 04 / 04b | Offers / plataforma nova | 12 / 12b |
+| 05 / 05b | Edit offer / Link settings | 13 / 13b |
+| 06 | Send offer link | 14 |
+| 07 / 07b / 07c | Offer checkout / link expirado / link já usado | 15 / 15b / 15c |
+| 08 / 08b | Groups / plataforma nova | 04 / 04b |
+| 09 | Access | 05 |
+| 10 | Sales page | 06 |
+| 11 / 11b | Coupons / plataforma nova | 07 / 07b |
+| 12 | New coupon | 08 |
+| 13 / 13b / 13c | Transactions / plataforma nova / Instalments | 09 / 09b / 16 |
+| 14 | Payouts | 10 |
+| 15 | Connect payouts | 11 |
+
+Fora da seção mas parte do fluxo: Overview 02c e 03c, Students 03c, Settings 01b, Editor Join 04 e 04b, Partners 01 (Deals), tours Tier e Payouts. Os comentários do código passaram a citar os números novos.
+
+**Fechamento do high ticket no código (20/11, noite):** o sino mostra, em tempo real, "Offer link opened" (só se o offer tem "Tell me when a link is opened") e "Offer paid" para links abertos ou pagos na sessão; o perfil do aluno com offer mostra a faixa "Instalment X of N failed · retrying …" com Review (Send payment link, Retry now, Pause access) e "Next payment … (retry)". Continua só no Figma ou em aberto: tiers exclusivos de offer em Layout for / Preview as (decisão do Gustavo), cobrança real e backend (protótipo).
+
+**Cenários de erro e acerto (20/11, noite):** mapa completo em `docs/high-ticket-flow.md` (20 cenários, ciclo de vida do link e das parcelas, sugestões para o backend). No Figma entraram 07d (cartão recusado) e 07e (offer indisponível) como variantes do Offer checkout. No protótipo: cartão recusado e confirmação do banco (botões "Prototype · what the payment returns"), offer apagado depois do envio, aviso de assinatura que termina, e Offers bloqueado enquanto Payouts não estiver conectado.

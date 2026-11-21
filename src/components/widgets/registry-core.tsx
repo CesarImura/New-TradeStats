@@ -122,7 +122,7 @@ const CORE: { page: ModuleId; name: string; description: string; icon: LucideIco
   { page: "ranking", name: "Leaderboard", description: "The ranking and its rules", icon: Trophy },
   { page: "ai", name: "AI chat", description: "Questions to the AI coach", icon: Sparkles },
   { page: "downloads", name: "Downloads", description: "Indicators, templates and files to download", icon: Download },
-  { page: "partners", name: "Partner offers", description: "Offers from brokers, prop firms and tools, and the affiliate link", icon: Handshake },
+  { page: "partners", name: "Partner deals", description: "Deals from brokers, prop firms and tools, and the affiliate link", icon: Handshake },
 ]
 
 export const CORE_WIDGETS: WidgetDef[] = CORE.map((c) => ({

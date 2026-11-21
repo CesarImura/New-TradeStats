@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { toast } from "sonner"
-import { ArrowLeft, Check, ChevronRight, GripVertical, ImagePlus, Plus } from "@/components/icons"
+import { toast } from "@/lib/toast"
+import { ArrowLeft, Check, ChevronRight, GripVertical, ImagePlus, Plus, Search } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { getWidget, librarySections, lookOf, settingApplies, settingsFor, type WidgetDef } from "@/components/widgets/registry"
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils"
 import { Field, Segmented } from "../fields/controls"
 import { ThumbCard, WidgetThumb, dragGhost, galleryWidget } from "../thumbs/widget-thumb"
 import { Flyout } from "./flyout"
-import { usePanelSearch } from "./settings-panel"
+import { usePanelSearch, usePanelSearching } from "./settings-panel"
 
 /** Per-widget Emphasis and Detail (see the rules in widgets/kit.tsx). Shared with the grid's right-click menu. */
 export const EMPHASIS: { value: Emphasis; label: string; hint: string }[] = [
@@ -158,6 +158,7 @@ export function WidgetLibrary({
   const [view, setView] = useState<"add" | "page">("add")
   // Typed in the panel's header search, the same place as in Theme and Menu.
   const query = usePanelSearch()
+  const searching = usePanelSearching()
   const [group, setGroup] = useState<string | null>(null)
   const [picked, setPicked] = useState<string | null>(null)
   const q = query.trim().toLowerCase()
@@ -172,7 +173,7 @@ export function WidgetLibrary({
   // The flyout opens against the whole left sidebar (the aside), not just this list.
   const edge = useRef<HTMLElement | null>(null)
   useEffect(() => {
-    edge.current = root.current?.closest("aside") ?? root.current
+    edge.current = root.current?.closest("aside,[data-editor-panel]") ?? root.current
   })
   const drag = (type: string | null, opts?: AddOptions) => {
     setDragging(!!type)
@@ -228,7 +229,7 @@ export function WidgetLibrary({
         onClose={() => (setPicked(null), setGroup(null))}
         anchor={edge}
         side="right"
-        width={380}
+        width={378}
         title={def ? def.name : group}
       >
         <div className={cn("transition-opacity duration-150", dragging && "pointer-events-none opacity-30")}>
@@ -239,7 +240,7 @@ export function WidgetLibrary({
           )}
         </div>
       </Flyout>
-      <div className="sticky top-0 z-10 grid border-t border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] bg-background px-5 pt-4 pb-3">
+      {!searching && <div className="sticky top-0 z-10 grid border-t border-a-border-subtle bg-background px-5 pt-4 pb-3">
         <Segmented
           label="Gallery"
           value={view}
@@ -252,39 +253,67 @@ export function WidgetLibrary({
             { value: "page", label: "On this page" },
           ]}
         />
-      </div>
+      </div>}
 
-      {view === "page" ? (
+      {searching && (
+        // Figma Pages · 04 to 06: the box in the header, a line under it, then the groups or the matches as plain rows.
+        <p className="px-5 pb-3 t-caption text-a-text-3">{!q ? "Search every widget by name or type" : tiles && tiles.length ? `${tiles.length} ${tiles.length === 1 ? "widget matches" : "widgets match"} “${query}”` : `No widgets match “${query}”`}</p>
+      )}
+
+      {searching && q && tiles ? (
+        tiles.length === 0 ? (
+          <div className="mx-4 mb-4 grid justify-items-center gap-2 rounded-a-lg border border-dashed border-a-border px-6 py-10 text-center">
+            <span className="grid size-10 place-items-center rounded-a-md bg-a-muted text-a-icon">
+              <Search className="size-4" />
+            </span>
+            <span className="t-body-l-medium text-a-text">No widgets match</span>
+            <span className="t-body-m text-a-text-2">Try another word, like “calendar” or “journal”.</span>
+          </div>
+        ) : (
+          <div className="grid gap-1 px-3 pb-3">
+            {tiles.map((w) => (
+              <button key={w.type} type="button" onClick={() => setPicked(w.type)} className={cn(LIST_ROW, "text-muted-foreground hover:text-foreground")}>
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-a-muted [&_svg]:size-4">
+                  <w.icon />
+                </span>
+                <span className="min-w-0 flex-1 truncate t-body-l text-foreground">{w.variants.length > 1 ? `${w.name} · ${w.variants[0].label}` : w.name}</span>
+                <ChevronRight className="size-3.5" />
+              </button>
+            ))}
+          </div>
+        )
+      ) : view === "page" && !searching ? (
         // The page's widgets as a list of names, in reading order: one click selects it on the page.
         <div className="grid gap-1 px-3 pb-3">
-          {here.length === 0 && <p className="px-2 py-6 text-center text-xs text-muted-foreground">{onPage.length ? `No widget on this page matches “${query}”.` : "No widgets on this page yet."}</p>}
+          {here.length === 0 && <p className="px-2 py-6 text-center t-caption text-muted-foreground">{onPage.length ? `No widget on this page matches “${query}”.` : "No widgets on this page yet."}</p>}
           {here.map((w) => {
             const d = getWidget(w.type)!
             return (
               <button key={w.id} type="button" onClick={() => onSelect(w.id)} className={cn(LIST_ROW, "text-muted-foreground hover:text-foreground")}>
-                <span className="grid size-7 shrink-0 place-items-center rounded-md bg-[color:color-mix(in_oklab,var(--foreground)_6%,transparent)] [&_svg]:size-3.5">
+                <span className="grid size-7 shrink-0 place-items-center rounded-md bg-a-muted [&_svg]:size-3.5">
                   <d.icon />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-foreground">{d.name}</span>
-                <span className="shrink-0 text-[0.6875rem]">{[d.variants.length > 1 && lookOf(d, w.variant).label, w.emphasis === "star" && "Star"].filter(Boolean).join(" · ")}</span>
+                <span className="min-w-0 flex-1 truncate t-body-m text-foreground">{d.name}</span>
+                <span className="shrink-0 t-caption">{[d.variants.length > 1 && lookOf(d, w.variant).label, w.emphasis === "star" && "Star"].filter(Boolean).join(" · ")}</span>
               </button>
             )
           })}
         </div>
       ) : tiles ? (
         <div className="grid gap-3 px-4 pb-4">
-          {tiles.length === 0 && <p className="px-2 py-6 text-center text-xs text-muted-foreground">No widget matches “{query}”. Try “calendar”, “progress” or “banner”.</p>}
+          {tiles.length === 0 && <p className="px-2 py-6 text-center t-caption text-muted-foreground">No widget matches “{query}”. Try “calendar”, “progress” or “banner”.</p>}
           {tiles.map(tile)}
         </div>
       ) : (
         // The groups: one short list, each opening its widgets.
         <div className="grid gap-1 px-3 pb-3">
+          {searching && <span className="px-2.5 pb-1 t-body-m text-a-text-2">Browse by category</span>}
           {sections.map((s) => {
             const first = getWidget(s.types[0])
             return (
-              <button key={s.title} type="button" aria-expanded={group === s.title} onClick={() => (setPicked(null), setGroup(group === s.title ? null : s.title))} className={cn(LIST_ROW, "text-muted-foreground hover:text-foreground", group === s.title && "bg-white/8 text-foreground")}>
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[color:color-mix(in_oklab,var(--foreground)_6%,transparent)] [&_svg]:size-4">{first && <first.icon />}</span>
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground">{s.title}</span>
+              <button key={s.title} type="button" aria-expanded={group === s.title} onClick={() => (setPicked(null), setGroup(group === s.title ? null : s.title))} className={cn(LIST_ROW, "text-muted-foreground hover:text-foreground", group === s.title && "bg-a-selected text-foreground")}>
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-a-muted [&_svg]:size-4">{first && <first.icon />}</span>
+                <span className="min-w-0 flex-1 truncate t-body-l text-foreground">{s.title}</span>
                 <ChevronRight className="size-3.5" />
               </button>
             )
@@ -296,7 +325,7 @@ export function WidgetLibrary({
 }
 
 /** A row of the gallery's lists (groups, On this page): 36px, a faint fill on hover. */
-const LIST_ROW = `flex h-11 w-full items-center gap-3 rounded-[10px] px-2.5 text-left outline-none hover:bg-[color:color-mix(in_oklab,var(--foreground)_6%,transparent)] focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] ${"transition-colors duration-150"}`
+const LIST_ROW = `flex h-11 w-full items-center gap-3 rounded-[10px] px-2.5 text-left outline-none hover:bg-a-muted focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] ${"transition-colors duration-150"}`
 
 /**
  * One widget from the gallery, before it is added: a big preview of the chosen layout, then what can be set for it
@@ -354,8 +383,8 @@ function WidgetDetails({
       </div>
       <div className="grid flex-1 content-start gap-6 px-1 pb-2">
         <div className="grid gap-3">
-          <div {...drag(variant)} title="Drag onto the page" className="group/card relative cursor-grab overflow-hidden rounded-xl border p-1.5 active:cursor-grabbing">
-            <span aria-hidden className="pointer-events-none absolute top-3 right-3 z-10 flex items-center gap-1 rounded-md bg-black/75 py-0.5 pr-2 pl-1 text-[0.6875rem] font-medium text-white shadow-sm backdrop-blur-sm">
+          <div {...drag(variant)} title="Drag onto the page" className="group/card relative cursor-grab overflow-hidden rounded-xl border border-a-border bg-a-panel p-1.5 active:cursor-grabbing">
+            <span aria-hidden className="pointer-events-none absolute top-3 right-3 z-10 flex items-center gap-1 rounded-a-sm bg-a-page/75 py-0.5 pr-2 pl-1 t-caption-medium text-white shadow-sm backdrop-blur-sm">
               <GripVertical className="size-3.5" /> Drag to page
             </span>
             <div data-thumb className="pointer-events-none overflow-hidden rounded-lg">
@@ -363,12 +392,12 @@ function WidgetDetails({
             </div>
           </div>
           <div className="grid gap-0.5">
-            <span className="text-sm font-semibold">{def.name}</span>
-            <span className="text-xs text-muted-foreground">{shortOf(def)}</span>
+            <span className="t-body-l-medium">{def.name}</span>
+            <span className="t-caption text-muted-foreground">{shortOf(def)}</span>
           </div>
         </div>
         {onPage.length > 0 && (
-          <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+          <p className="flex flex-wrap items-center gap-x-1.5 t-caption text-muted-foreground">
             <Check className="size-3" /> Already on this page.
             <button type="button" className="font-medium text-foreground underline underline-offset-2" onClick={() => onSelect(onPage[0].id)}>
               Edit that one
@@ -378,7 +407,7 @@ function WidgetDetails({
         )}
         {def.variants.length > 1 && (
           <div className="grid gap-2">
-            <span className="text-[0.8125rem] font-medium">Layout</span>
+            <span className="t-body-m-medium">Layout</span>
             <div role="radiogroup" aria-label="Layout" className="grid grid-cols-2 gap-2">
               {def.variants.map((v) => (
                 <ThumbCard
@@ -404,21 +433,21 @@ function WidgetDetails({
           </div>
         )}
         <div className="grid gap-2">
-          <span className="text-[0.8125rem] font-medium">Detail</span>
+          <span className="t-body-m-medium">Detail</span>
           <Segmented label="How much it shows" value={detail} options={DETAIL.map((o) => ({ value: o.value, label: o.value === "compact" ? "Less" : o.value === "detailed" ? "More" : "Standard", hint: o.hint }))} onChange={setDetail} />
         </div>
         {choices.length > 0 && (
           <div className="grid gap-3">
-            <span className="text-[0.8125rem] font-medium">Shows</span>
+            <span className="t-body-m-medium">Shows</span>
             {choices.map((s) =>
               s.type === "toggle" ? (
-                <label key={s.key} className="flex items-center justify-between gap-3 text-[0.8125rem]">
+                <label key={s.key} className="flex items-center justify-between gap-3 t-body-m">
                   {s.label}
                   <Switch checked={props[s.key] === undefined ? !!s.defaultOn : !!props[s.key]} onCheckedChange={(v) => setProps({ ...props, [s.key]: v })} />
                 </label>
               ) : s.type === "select" ? (
                 <Field key={s.key} label={s.label}>
-                  <SelectOptions value={String(props[s.key] ?? s.options[0].value)} onChange={(e) => setProps({ ...props, [s.key]: e.target.value })} className="h-8 rounded-lg border bg-background px-2 text-sm">
+                  <SelectOptions value={String(props[s.key] ?? s.options[0].value)} onChange={(e) => setProps({ ...props, [s.key]: e.target.value })} className="h-8 rounded-lg border bg-background px-2 t-body-l">
                     {s.options.map((o) => (
                       <option key={o.value} value={o.value}>
                         {o.label}
@@ -431,7 +460,7 @@ function WidgetDetails({
           </div>
         )}
       </div>
-      <div className="sticky -bottom-5 -mx-4 flex gap-2 bg-[#111113] px-4 pt-3 pb-5">
+      <div className="sticky -bottom-5 -mx-4 flex gap-2 bg-a-page px-4 pt-3 pb-5">
         <Button variant="outline" className="flex-1" onClick={onBack}>
           Cancel
         </Button>

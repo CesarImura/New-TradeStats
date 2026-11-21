@@ -30,6 +30,14 @@ export type ResolvedColors = Palette & {
   invAccent: string
 }
 
+/**
+ * What the greys follow: the coach's choice, else the template's own colours, exactly as the Figma shows them (Terminal #050505 and
+ * #F4F4F5, Atelier cream #EFE9DC, Pulse navy #0E1226). Tinting them by the brand hue used to be the default: with an orange brand
+ * Pulse turned brown (dark) and pink (light), and a blue brand would turn the cream blue (Gustavo, 19/11: follow the Figma).
+ * "Brand" and "Grey" stay one click away in Style, Colours.
+ */
+export const greysFollow = (t: Pick<CoachTheme, "tint" | "template">): "brand" | "template" | "none" => t.tint ?? "template"
+
 export function resolveColors(t: CoachTheme): ResolvedColors {
   const base = t.palettes[t.mode]
   let p: Palette = t.highlight
@@ -39,7 +47,7 @@ export function resolveColors(t: CoachTheme): ResolvedColors {
   const own = tradingOf(t)
   if (own) p = { ...p, ...own }
   if (t.highlight) p = { ...p, highlightForeground: onColor(t.highlight) }
-  p = tintNeutrals(p, t.primary, t.tint ?? "brand")
+  p = tintNeutrals(p, t.primary, greysFollow(t))
   // One widget's own tone (widget-scope.tsx): its card, and the ladder, text and marks worked out on it.
   if (t.cardTone?.startsWith("#")) p = { ...p, card: t.cardTone }
   const ladder = surfaces(t, p)

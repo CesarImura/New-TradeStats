@@ -1,15 +1,11 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { ArrowLeft, ExternalLink, History, MoreHorizontal, PlayCircle, Redo2, Trash2, Undo2 } from "@/components/icons"
-import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { cn } from "@/lib/utils"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { ExternalLink, History, PlayCircle, Trash2 } from "@/components/icons"
+import { toast } from "@/lib/toast"
+import { AdminButton, AdminDrawer, AdminMenuItem, AdminMenuSeparator, AdminModal } from "@/components/admin/ui"
+import { EditorTopBar, type PublishStatus } from "./top-bar"
 import {
   EMPTY,
   mergeOverrides,
@@ -115,6 +111,8 @@ export function useDraftEditor(slug: string) {
     change,
     undo: doUndo,
     canUndo: undo.length > 0,
+    /** Steps made in this session (0 after a reload, when the draft is still there): the status says "N changes" only when it knows. */
+    changes: undo.length,
     redo: doRedo,
     canRedo: redo.length > 0,
     discard: () => {
@@ -135,17 +133,18 @@ export function useDraftEditor(slug: string) {
 }
 
 /**
- * Top bar of the Design workspace: the way back (to setup, or from the all-pages
- * overview to the workspace), what you're looking at (`children`: page and
- * tier), status, and the draft actions.
+ * Top bar of the all-pages overview: the same `EditorTopBar` as the Design workspace, with the screen's name in the middle's place.
+ * `failed`: the last publish did not go through (the draft is kept).
  */
 export function EditorBar({
   slug,
-  title = "Design",
+  title,
   back,
   editor,
   guide,
   previewHref,
+  failed,
+  onPublish,
   children,
 }: {
   slug: string
@@ -156,91 +155,67 @@ export function EditorBar({
   guide: { title: string; text: string }
   /** The student page to open in a new tab, showing the draft. */
   previewHref: string
+  failed?: boolean
+  onPublish?: () => void
   children?: React.ReactNode
 }) {
   // Opened from the setup wizard: keep the way back, everywhere in Design.
   const fromSetup = useSearchParams().get("from") === "setup"
   const way = fromSetup ? { href: "/setup", label: "Back to setup" } : back
   const [menu, setMenu] = useState<"versions" | "guide" | null>(null)
-  // The same bar as the Design workspace: where you are on the left, the screen in the middle, status and actions on the right.
+  const status: PublishStatus = failed ? { kind: "failed" } : editor.dirty ? { kind: "unpublished", changes: editor.changes } : { kind: "published" }
   return (
-    <div
-      className="grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/[0.16] px-4 max-sm:grid-cols-[auto_minmax(0,1fr)_auto] [&_[data-slot=button]]:h-9 [&_[data-slot=button][data-size^=icon]]:w-9 [&_[data-slot=button]]:text-[0.8125rem] [&_[data-slot=button]_svg]:size-4"
-      data-design-slug={slug}
-    >
-      <div className="flex min-w-0 items-center gap-2">
-        {way && (
-          <Button size="sm" variant={fromSetup ? "default" : "ghost"} nativeButton={false} render={<Link href={way.href} />}>
-            <ArrowLeft /> {way.label}
-          </Button>
-        )}
-      </div>
-      <div className="flex min-w-0 items-center justify-center gap-2">
-        <span className="truncate px-2.5 text-[0.875rem] font-semibold">{title}</span>
-        {children}
-      </div>
-      <div className="flex items-center justify-end gap-1">
-        <span className={cn("mr-1 inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs whitespace-nowrap", editor.dirty ? "bg-white/[0.06] text-foreground" : "text-muted-foreground")} title={editor.dirty ? "Students still see the last published design" : "Students see this design"}>
-          <span className={cn("size-1.5 rounded-full", editor.dirty ? "bg-amber-500" : "bg-emerald-500")} />
-          <span className="max-lg:sr-only">{editor.dirty ? "Not published yet" : "Live"}</span>
-        </span>
-        <Button variant="ghost" size="icon-sm" onClick={editor.undo} disabled={!editor.canUndo} aria-label="Undo" title="Undo (⌘Z)">
-          <Undo2 />
-        </Button>
-        <Button variant="ghost" size="icon-sm" onClick={editor.redo} disabled={!editor.canRedo} aria-label="Redo" title="Redo (⇧⌘Z)">
-          <Redo2 />
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More" />}>
-            <MoreHorizontal />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuItem onClick={() => setMenu("versions")}>
+    <>
+      <EditorTopBar
+        slug={slug}
+        title={title}
+        back={way}
+        center={children}
+        status={status}
+        history={{ undo: editor.undo, redo: editor.redo, canUndo: editor.canUndo, canRedo: editor.canRedo }}
+        moreItems={
+          <>
+            <AdminMenuItem onClick={() => setMenu("versions")}>
               <History /> Earlier versions
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setMenu("guide")}>
-              <PlayCircle /> 2-minute guide
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" disabled={!editor.dirty} onClick={editor.discard}>
+            </AdminMenuItem>
+            <AdminMenuItem onClick={() => setMenu("guide")}>
+              <PlayCircle /> 1-minute guide
+            </AdminMenuItem>
+            <AdminMenuSeparator />
+            <AdminMenuItem tone="danger" disabled={!editor.dirty} onClick={editor.discard}>
               <Trash2 /> Discard changes
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button variant="outline" size="sm" nativeButton={false} render={<a href={previewHref} target="_blank" rel="noreferrer" />} title={editor.dirty ? "Preview your draft in a new tab" : "Preview in a new tab"}>
-          <ExternalLink /> <span className="max-sm:sr-only">Preview</span>
-        </Button>
-        <Button size="sm" disabled={!editor.dirty} onClick={() => editor.publish()}>
-          Publish
-        </Button>
-      </div>
+            </AdminMenuItem>
+          </>
+        }
+        preview={
+          <AdminButton hierarchy="secondary" nativeButton={false} render={<a href={previewHref} target="_blank" rel="noreferrer" />} title={editor.dirty ? "Preview your draft in a new tab" : "Preview in a new tab"}>
+            <ExternalLink /> <span className="max-sm:sr-only">Preview</span>
+          </AdminButton>
+        }
+        onPublish={onPublish ?? (() => editor.publish())}
+        publishDisabled={!editor.dirty}
+      />
       <VersionsSheet slug={slug} open={menu === "versions"} onOpenChange={(o) => setMenu(o ? "versions" : null)} />
       <GuideDialog title={guide.title} text={guide.text} open={menu === "guide"} onOpenChange={(o) => setMenu(o ? "guide" : null)} />
-    </div>
+    </>
   )
 }
 
 /** The short video guide for a Design screen, with the offer to set it up for the coach. */
 export function GuideDialog({ title, text, open, onOpenChange }: { title: string; text: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{text}</DialogDescription>
-        </DialogHeader>
-        <div className="grid aspect-video place-items-center rounded-lg bg-muted">
-          <PlayCircle className="size-12 text-muted-foreground" />
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Rather not do it yourself?{" "}
-          <button className="font-medium text-foreground underline underline-offset-4" onClick={() => toast("We'll be in touch to book your setup call.")}>
-            Let us set it up for you
-          </button>
-          .
-        </p>
-      </DialogContent>
-    </Dialog>
+    <AdminModal overlay="plain" open={open} onOpenChange={onOpenChange} title={title} subtitle={text} className="sm:max-w-xl">
+      <div className="grid aspect-video place-items-center rounded-a-lg bg-a-subtle">
+        <PlayCircle className="size-12 text-a-text-3" />
+      </div>
+      <p className="t-body-m text-a-text-2">
+        Rather not do it yourself?{" "}
+        <button className="t-body-m-medium text-a-text underline underline-offset-4" onClick={() => toast("We'll be in touch to book your setup call.")}>
+          Let us set it up for you
+        </button>
+        .
+      </p>
+    </AdminModal>
   )
 }
 
@@ -248,39 +223,34 @@ export function GuideDialog({ title, text, open, onOpenChange }: { title: string
 export function VersionsSheet({ slug, open, onOpenChange }: { slug: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   const history = useHistory(slug)
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Earlier versions</SheetTitle>
-          <SheetDescription>Restoring a version opens it as a draft. Publish to make it live again.</SheetDescription>
-        </SheetHeader>
-        <div className="grid gap-2 px-4">
-          {history.length === 0 && <p className="text-sm text-muted-foreground">Nothing yet. Each time you publish, or switch to another look, the version before it is kept here.</p>}
-          {history.map((v, i) => (
-            <div key={v.at + i} className="flex items-center justify-between gap-3 rounded-lg border p-3">
-              <div className="grid">
-                <span className="text-sm">
-                  {JSON.stringify(v.snapshot) === JSON.stringify(EMPTY) ? "Original design" : v.label.startsWith("Before ") ? v.label : `Before: ${v.label.replace("Published ", "")}`}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {v.label.startsWith("Before ") && JSON.stringify(v.snapshot) === JSON.stringify(EMPTY) && `${v.label} · `}
-                  {new Date(v.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                </span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setDraft(slug, v.snapshot)
-                  toast("Version restored as a draft. Publish to make it live.")
-                }}
-              >
-                Restore
-              </Button>
+    <AdminDrawer overlay="plain" width={420} open={open} onOpenChange={onOpenChange} title="Earlier versions">
+      <div className="grid gap-2">
+        <p className="t-body-m text-a-text-2">Restoring a version opens it as a draft. Publish to make it live again.</p>
+        {history.length === 0 && <p className="t-body-m text-a-text-2">Nothing yet. Each time you publish, or switch to another look, the version before it is kept here.</p>}
+        {history.map((v, i) => (
+          <div key={v.at + i} className="flex items-center justify-between gap-3 rounded-a-lg border border-a-border p-3">
+            <div className="grid">
+              <span className="t-body-m text-a-text">
+                {JSON.stringify(v.snapshot) === JSON.stringify(EMPTY) ? "Original design" : v.label.startsWith("Before ") ? v.label : `Before: ${v.label.replace("Published ", "")}`}
+              </span>
+              <span className="t-caption text-a-text-2">
+                {v.label.startsWith("Before ") && JSON.stringify(v.snapshot) === JSON.stringify(EMPTY) && `${v.label} · `}
+                {new Date(v.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+              </span>
             </div>
-          ))}
-        </div>
-      </SheetContent>
-    </Sheet>
+            <AdminButton
+              hierarchy="secondary"
+              size="md"
+              onClick={() => {
+                setDraft(slug, v.snapshot)
+                toast("Version restored as a draft. Publish to make it live.")
+              }}
+            >
+              Restore
+            </AdminButton>
+          </div>
+        ))}
+      </div>
+    </AdminDrawer>
   )
 }

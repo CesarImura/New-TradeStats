@@ -25,7 +25,7 @@ export function SizePill({ edges, label, atMin, pillRef }: { edges: Edges; label
     <div ref={pillRef} aria-hidden className="pointer-events-none absolute top-0 left-0 z-50">
       <span
         data-size-pill
-        className="block w-max rounded-full bg-[#141416] px-2.5 py-1 font-[family-name:var(--ff-geist)] text-xs whitespace-nowrap text-white shadow-[0_0_0_1px_rgb(255_255_255/0.14),0_6px_16px_-6px_rgb(0_0_0/0.7)] [zoom:var(--ui-zoom,1)]"
+        className="block w-max rounded-full bg-[#141416] px-2.5 py-1 font-[family-name:var(--admin-font-family-primary)] text-xs whitespace-nowrap text-white shadow-[0_0_0_1px_rgb(255_255_255/0.14),0_6px_16px_-6px_rgb(0_0_0/0.7)] [zoom:var(--ui-zoom,1)]"
         style={{ translate: `${tx} ${ty}` }}
       >
         {atMin ? "Minimum size" : label}

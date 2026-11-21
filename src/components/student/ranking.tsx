@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { ArrowDown, ArrowUp, Flame, Medal, Trophy } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCommunityData } from "@/components/admin/kit"
 import { DEFAULT_RANKING, type RankingSetup } from "@/components/admin/ranking/ranking-admin"
 import { useCoach } from "@/components/coach/coach-provider"

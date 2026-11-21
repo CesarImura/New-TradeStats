@@ -1,0 +1,66 @@
+// Connect payouts (timeline e primeiro drawer). Rodar com o servidor em localhost:3000:
+// CHROME_PATH="<Chrome for Testing>" node scripts/payouts-connect.mjs
+import { createRequire } from "node:module"
+const require = createRequire(import.meta.url)
+const { chromium } = require("playwright-core")
+const b = await chromium.launch({ executablePath: process.env.CHROME_PATH })
+const out = []
+const ok = (n, v, x = "") => out.push(`${v ? "OK  " : "FAIL"} ${n} ${x}`)
+for (const w of [390, 1280]) {
+  const ctx = await b.newContext({ viewport: { width: w, height: 1000 } })
+  await ctx.addInitScript(() => { if (!sessionStorage.getItem("seeded")) { sessionStorage.setItem("seeded", "1"); localStorage.setItem("proto:kairo:payouts-v2", JSON.stringify({ step: 0, done: false, country: "DE", kind: "person" })) } })
+  const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message.slice(0, 120)))
+  await p.goto("http://localhost:3000/admin/kairo/sales?tab=payouts"); await p.waitForTimeout(5000)
+  ok(`${w} inicial: Start ativo, Verify identity travado`, (await p.getByRole("button", { name: "Start" }).isEnabled()) && (await p.getByRole("button", { name: "Verify identity" }).isDisabled()))
+  ok(`${w} painel Before you start`, (await p.locator("text=Before you start").count()) === 1)
+  await p.getByRole("button", { name: "Start" }).click(); await p.waitForTimeout(600)
+  const dlg = p.locator("[role=dialog]")
+  ok(`${w} Start abre o passo 1`, (await dlg.textContent()).includes("Step 1 of 3"))
+  ok(`${w} Continue desabilitado ate preencher o nome`, await dlg.getByRole("button", { name: "Continue" }).isDisabled())
+  await dlg.getByRole("button", { name: "Cancel" }).click(); await p.waitForTimeout(500)
+  ok(`${w} Cancel fecha e mantem o passo 1`, (await p.locator("[role=dialog]").count()) === 0 && (await p.getByRole("button", { name: "Start" }).count()) === 1)
+  ok(`${w} marcador da tour no botao atual`, (await p.locator("[data-tour=payouts-start]").count()) === 1)
+  ok(`${w} sem erros`, errs.length === 0, errs.join(";"))
+  await ctx.close()
+}
+
+
+// Connect payouts de ponta a ponta: 3 passos, validacoes, ID em revisao, conectado, persistencia e Change
+{
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 1000 } })
+  await ctx.addInitScript(() => { if (!sessionStorage.getItem("seeded2")) { sessionStorage.setItem("seeded2", "1"); localStorage.setItem("proto:kairo:payouts-v2", JSON.stringify({ step: 0, done: false, country: "DE", kind: "person" })) } })
+  const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message.slice(0, 120)))
+  await p.goto("http://localhost:3000/admin/kairo/sales?tab=payouts"); await p.waitForTimeout(5000)
+  const d = p.locator("[role=dialog]")
+  await p.getByRole("button", { name: "Start" }).click(); await p.waitForTimeout(600)
+  ok("e2e passo 1 abre", (await d.textContent()).includes("Step 1 of 3"))
+  ok("e2e passo 1: Continue desabilitado sem nome", await d.getByRole("button", { name: "Continue" }).isDisabled())
+  await d.locator("input[placeholder='Your legal name']").fill("Kairo Test GmbH")
+  await d.getByRole("button", { name: "Continue" }).click(); await p.waitForTimeout(800)
+  ok("e2e passo 2 abre com o nome", (await d.textContent()).includes("Step 2 of 3") && (await d.locator("input").nth(0).inputValue()) === "Kairo Test GmbH")
+  await d.locator("input").nth(1).fill("123"); await p.waitForTimeout(200)
+  ok("e2e passo 2: IBAN invalido bloqueia Save", await d.getByRole("button", { name: "Save" }).isDisabled())
+  await d.locator("input").nth(1).fill("DE89 3704 0044 0532 0130 00"); await p.waitForTimeout(200)
+  await d.getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(900)
+  ok("e2e passo 3 abre", (await d.textContent()).includes("Step 3 of 3"))
+  ok("e2e passo 3: Submit desabilitado sem foto", await d.getByRole("button", { name: "Submit" }).isDisabled())
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64")
+  await d.locator("input[type=file]").setInputFiles({ name: "id.png", mimeType: "image/png", buffer: png }); await p.waitForTimeout(600)
+  ok("e2e passo 3: com foto habilita Submit", await d.getByRole("button", { name: "Submit" }).isEnabled())
+  await d.getByRole("button", { name: "Submit" }).click(); await p.waitForTimeout(2200)
+  ok("e2e conectado: Payout account aparece", (await p.locator("text=Payout account").count()) >= 1)
+  ok("e2e ID em revisao logo depois", (await p.locator("text=ID in review").count()) >= 1)
+  const st = await p.evaluate(() => JSON.parse(localStorage.getItem("proto:kairo:payouts-v2")))
+  ok("e2e estado salvo (done, IBAN, nome)", st.done === true && /DE89/.test(st.iban || "") && st.name === "Kairo Test GmbH", JSON.stringify(st).slice(0, 120))
+  await p.waitForTimeout(6500)
+  ok("e2e depois de alguns segundos vira Connected", (await p.locator("text=Connected").count()) >= 1 && (await p.locator("text=ID in review").count()) === 0)
+  await p.reload(); await p.waitForTimeout(5000)
+  ok("e2e persiste ao recarregar", (await p.locator("text=Payout account").count()) >= 1)
+  await p.getByRole("button", { name: "Change" }).click(); await p.waitForTimeout(900)
+  ok("e2e Change reabre o passo 2", (await p.locator("[role=dialog]").textContent()).includes("Step 2 of 3") || (await p.locator("text=Bank account").count()) >= 1)
+  ok("e2e sem erros", errs.length === 0, errs.join(";"))
+  await ctx.close()
+}
+
+console.log(out.join("\n"))
+await b.close()

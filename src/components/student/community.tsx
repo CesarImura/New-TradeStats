@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Heart, MessageCircle, Pin } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import type { Announcement } from "@/components/admin/community/community-admin"
 import { useCommunityData } from "@/components/admin/kit"
 import { useCoach } from "@/components/coach/coach-provider"

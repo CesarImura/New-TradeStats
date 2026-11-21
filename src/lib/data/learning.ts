@@ -8,7 +8,7 @@ import { setStored, useStored } from "@/lib/prototype-store"
  * Courses: what the coach builds in Content (ADM-08 to ADM-13) and what
  * students take in Courses (STU-02 to STU-05, STU-29). One catalogue per
  * community, stored in the browser, so admin edits show on the student side.
- * The prototype's "today" is Monday 12 October 2026.
+ * The prototype's "today" is Monday 10 November 2025.
  */
 
 export type Status = "published" | "draft" | "scheduled" | "archived"
@@ -23,8 +23,10 @@ export type Lesson = {
   title: string
   minutes: number
   status: Status
-  /** Shown to students while locked, e.g. "Thu 15 Oct". */
+  /** Shown to students while locked, e.g. "Thu 13 Nov". */
   unlockAt?: string
+  /** Open to students without access (a taster). Set from the lesson's Visibility in the admin. */
+  freePreview?: boolean
   summary?: string
   takeaways?: string[]
   aiSummary?: boolean
@@ -48,12 +50,18 @@ export type Course = {
   area: string
   status: Status
   scheduledFor?: string
+  /** When it goes live, as local date and time ("2025-11-27T09:00"); `scheduledFor` is the same day for display. */
+  scheduledAt?: string
   /** Tier ids that get this course. Empty means every tier. */
   tiers: string[]
   /** Index into the brand's series colours, for the cover. */
   color: number
   /** The course's own cover picture (a small JPEG as a data URL). Empty: its colour. */
   cover?: string
+  /** When the coach last changed it, as a short phrase for the admin lists ("2 h ago"). */
+  edited?: string
+  /** Sold on its own, outside the tiers (set when it was made; the price lives in Sales). */
+  soldSeparately?: boolean
   modules: Module[]
 }
 
@@ -162,8 +170,8 @@ function seed(coach: Coach): Catalog {
             id: "m4",
             title: "Building a playbook",
             lessons: [
-              L("l9", "What goes in a playbook", 15, { status: "scheduled", unlockAt: "Thu 15 Oct" }),
-              L("l10", "Writing your first setup", 20, { status: "scheduled", unlockAt: "Thu 15 Oct" }),
+              L("l9", "What goes in a playbook", 15, { status: "scheduled", unlockAt: "Thu 13 Nov" }),
+              L("l10", "Writing your first setup", 20, { status: "scheduled", unlockAt: "Thu 13 Nov" }),
               L("l11", "Reviewing it every Friday", 11, { status: "draft" }),
             ],
           },
@@ -214,11 +222,11 @@ function seed(coach: Coach): Catalog {
         tagline: "Every live session, cut into lessons",
         area: "Strategies",
         status: "scheduled",
-        scheduledFor: "Thu 29 Oct",
+        scheduledFor: "Thu 27 Nov",
         tiers: [],
         color: 3,
         cover: "/placeholders/course-breakdowns.svg",
-        modules: [{ id: "b1", title: "October", lessons: [L("b1l1", "NY open, 5 Oct", 26, { status: "draft" }), L("b1l2", "NY open, 7 Oct", 31, { status: "draft" })] }],
+        modules: [{ id: "b1", title: "October", lessons: [L("b1l1", "NY open, 3 Nov", 26, { status: "draft" }), L("b1l2", "NY open, 5 Nov", 31, { status: "draft" })] }],
       },
       {
         id: "risk-lab",
@@ -272,6 +280,9 @@ const fromDrafts = (drafts: CourseDraft[]): Catalog => ({
   })),
 })
 
+const EDITED = ["2 h ago", "yesterday", "3 d ago", "4 d ago", "1 w ago", "2 w ago"]
+const withEdited = (c: Catalog): Catalog => ({ ...c, courses: c.courses.map((x, i) => ({ ...x, edited: x.edited ?? EDITED[i % EDITED.length] })) })
+
 // The seed follows the coach's setup uploads, so the wizard preview shows their own
 // courses instead of the sample. Without uploads it stays the memoised sample.
 const seedFor = (coach: Coach): Catalog => {
@@ -281,7 +292,7 @@ const seedFor = (coach: Coach): Catalog => {
     if (!SEEDS.has(key)) SEEDS.set(key, fromDrafts(drafts))
     return SEEDS.get(key)!
   }
-  if (!SEEDS.has(coach.slug)) SEEDS.set(coach.slug, seed(coach))
+  if (!SEEDS.has(coach.slug)) SEEDS.set(coach.slug, withEdited(seed(coach)))
   return SEEDS.get(coach.slug)!
 }
 
@@ -295,8 +306,20 @@ const START_PROGRESS: Progress = { done: ["l1", "l2", "l3", "l4"], notes: {}, qu
 const catalogKey = (slug: string) => `catalog:${slug}`
 const progressKey = (slug: string) => `progress:${slug}`
 
-export function useCatalog(coach: Coach) {
-  return useStored<Catalog>(catalogKey(coach.slug), seedFor(coach))
+/**
+ * The coach's catalogue. `sampleIfEmpty` (the Design preview): while nothing is published yet, the sample catalogue
+ * stands in, so the coach sees how a full platform will look. Nothing is written.
+ */
+export function useCatalog(coach: Coach, sampleIfEmpty = false) {
+  const catalog = useStored<Catalog>(catalogKey(coach.slug), seedFor(coach))
+  if (sampleIfEmpty && !catalog.courses.some((c) => c.status === "published")) return sampleFor(coach)
+  return catalog
+}
+/** The sample catalogue only (never the coach's uploads), memoised per platform. */
+const sampleFor = (coach: Coach): Catalog => {
+  const key = `${coach.slug}:sample`
+  if (!SEEDS.has(key)) SEEDS.set(key, withEdited(seed(coach)))
+  return SEEDS.get(key)!
 }
 
 export function useProgress(slug: string) {
@@ -323,6 +346,9 @@ export const studentCourses = (c: Catalog) => c.courses.filter((x) => x.status =
 
 export const allLessons = (c: Course) => c.modules.flatMap((m) => m.lessons)
 export const openLessons = (c: Course) => allLessons(c).filter((l) => l.status === "published")
+/** A draft course with at least one visible lesson: on a platform that isn't live yet, it opens with Go live (Flavio, 14/11). */
+/** A draft that opens with Go live: a visible lesson with a video, the same rule as Getting started's course step (QA 14/11). */
+export const readyForLaunch = (c: Course) => c.status === "draft" && openLessons(c).some((l) => !!l.video)
 
 export function courseStats(c: Course, p: Progress) {
   const open = openLessons(c)

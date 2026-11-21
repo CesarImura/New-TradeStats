@@ -1,23 +1,28 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Loader2 } from "@/components/icons"
-import { toast } from "sonner"
-import { OnbFrame, OnbTitle, ProtoNote } from "@/components/onboarding/frame"
-import { setAccount } from "@/lib/data/communities"
+import { toast } from "@/lib/toast"
+import { ArrowLeft, Loader2 } from "@/components/icons"
+import { SignupFrame, SignupTitle, useSignupGo } from "@/components/onboarding/signup-frame"
+import { AdminButton } from "@/components/admin/ui"
+import { account, customCommunities, setAccount } from "@/lib/data/communities"
 import { useAccount } from "@/lib/data/use-communities"
-import { cn } from "@/lib/utils"
 
-/** ONB-02 · Six-digit code that verifies the e-mail. */
+/**
+ * Sign up · 03 Verify code (Figma 939:58478). Six boxes (Admin / Code box: 56 × 64, radius 10); paste works in any box
+ * and the last digit verifies. Any six digits pass in the prototype except 000000, which shows the "code doesn't match" state. A coach logging back in goes to their platform;
+ * everyone else goes on to About you.
+ */
 export default function Verify() {
-  const router = useRouter()
+  const go = useSignupGo()
   const acc = useAccount()
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""))
   const [checking, setChecking] = useState(false)
+  const [wrong, setWrong] = useState(false)
   const [wait, setWait] = useState(30)
   const refs = useRef<(HTMLInputElement | null)[]>([])
+  const full = digits.every(Boolean)
+  const back = acc?.mode === "create" ? "/signup/create" : "/signup"
 
   useEffect(() => {
     if (wait <= 0) return
@@ -25,44 +30,50 @@ export default function Verify() {
     return () => clearTimeout(t)
   }, [wait])
 
-  const complete = (next: string[]) => {
-    if (next.some((d) => !d)) return
+  const verify = (next = digits) => {
+    if (next.some((d) => !d) || checking) return
     setChecking(true)
+    setWrong(false)
     setTimeout(() => {
+      // Prototype: 000000 is the code that doesn't match, so the error state can be seen.
+      if (next.every((d) => d === "0")) {
+        setChecking(false)
+        setWrong(true)
+        setDigits(Array(6).fill(""))
+        refs.current[0]?.focus()
+        return
+      }
       setAccount({ verified: true })
-      router.push(acc?.approved ? "/signup/welcome" : "/signup/about")
-    }, 700)
+      const a = account()
+      const mine = a?.setupSlug ? customCommunities().find((c) => c.slug === a.setupSlug) : undefined
+      if (a?.mode === "login" && mine) go(mine.status === "live" ? `/admin/${mine.slug}` : `/admin/${mine.slug}/getting-started`)
+      else go("/signup/about")
+    }, 600)
   }
 
   const set = (i: number, value: string) => {
     const clean = value.replace(/\D/g, "")
-    if (!clean) {
-      const next = digits.map((d, j) => (j === i ? "" : d))
-      setDigits(next)
-      return
-    }
-    // Typing one digit, or pasting the whole code into any box.
+    setWrong(false)
+    if (!clean) return setDigits((d) => d.map((x, j) => (j === i ? "" : x)))
+    // One digit typed, or the whole code pasted into any box.
     const next = [...digits]
-    clean.split("").slice(0, 6 - i).forEach((d, k) => (next[i + k] = d))
+    clean
+      .split("")
+      .slice(0, 6 - i)
+      .forEach((d, k) => (next[i + k] = d))
     setDigits(next)
     refs.current[Math.min(5, i + clean.length)]?.focus()
-    complete(next)
+    if (next.every(Boolean)) verify(next)
   }
 
   return (
-    <OnbFrame>
-      <div className="grid gap-5">
-        <OnbTitle
-          eyebrow="Check your inbox"
-          title="Enter the 6-digit code"
-          text={
-            <>
-              We sent it to <span className="text-foreground">{acc?.email || "your e-mail"}</span>. It works for 10 minutes.
-            </>
-          }
-        />
-
-        <div className="flex gap-2" role="group" aria-label="Verification code">
+    <SignupFrame>
+      <div className="flex flex-col gap-5">
+        <AdminButton hierarchy="text" className="w-fit pl-0 [&_svg]:transition-transform [&_svg]:duration-200 hover:[&_svg]:-translate-x-0.5" onClick={() => go(back, -1)}>
+          <ArrowLeft /> Back
+        </AdminButton>
+        <SignupTitle title="Enter the 6-digit code" text={<>We sent it to {acc?.email || "your e-mail"}.</>} />
+        <div className="flex gap-2.5 max-sm:gap-2" role="group" aria-label="Verification code" aria-describedby={wrong ? "code-error" : undefined}>
           {digits.map((d, i) => (
             <input
               key={i}
@@ -74,47 +85,51 @@ export default function Verify() {
               autoComplete={i === 0 ? "one-time-code" : "off"}
               autoFocus={i === 0}
               aria-label={`Digit ${i + 1}`}
-              disabled={checking}
+              readOnly={checking}
+              aria-invalid={wrong || undefined}
+              data-filled={d ? "" : undefined}
+              data-checking={checking ? "" : undefined}
+              style={{ "--i": i } as React.CSSProperties}
               onChange={(e) => set(i, e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Backspace" && !d && i > 0) refs.current[i - 1]?.focus()
                 if (e.key === "ArrowLeft" && i > 0) refs.current[i - 1]?.focus()
                 if (e.key === "ArrowRight" && i < 5) refs.current[i + 1]?.focus()
+                if (e.key === "Enter") verify()
               }}
               onFocus={(e) => e.target.select()}
-              className={cn(
-                "h-10 w-full min-w-0 rounded-[4px] border border-[#2a2a2f] bg-[#0e0e10] text-center font-[family-name:var(--ff-geist-mono)] text-lg shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] outline-none focus:border-[var(--ts-interactive)] focus:shadow-[0_0_0_3px_rgb(255_85_0/0.18)] disabled:opacity-60",
-                i === 3 && "ml-3",
-              )}
+              className="h-16 w-0 min-w-0 flex-1 rounded-a-10 border border-a-border-strong bg-a-subtle text-center t-heading-xl text-a-text aria-invalid:border-a-border-danger outline-none transition-[background-color,border-color] duration-300 ease-out hover:bg-a-hover focus:border-a-border-active focus:bg-a-raised data-[filled]:animate-[onb-pop_180ms_cubic-bezier(0.23,1,0.32,1)] data-[checking]:border-a-border-active data-[checking]:[transition-delay:calc(var(--i)*60ms)] motion-reduce:animate-none"
             />
           ))}
         </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+        {wrong && (
+          <p id="code-error" role="alert" className="-mt-2 t-body-m text-a-danger">
+            That code doesn’t match. Check your e-mail and try again.
+          </p>
+        )}
+        <AdminButton className="w-full" disabled={!full || checking} onClick={() => verify()}>
           {checking ? (
-            <span className="flex items-center gap-2 text-foreground">
-              <Loader2 className="size-4 animate-spin" /> Checking…
-            </span>
-          ) : wait > 0 ? (
-            <span className="tabular-nums">Resend in 0:{String(wait).padStart(2, "0")}</span>
+            <>
+              <Loader2 className="animate-spin" /> Checking…
+            </>
           ) : (
-            <button
-              className="text-foreground underline underline-offset-4"
-              onClick={() => {
-                setWait(30)
-                toast("New code sent.")
-              }}
-            >
+            "Verify"
+          )}
+        </AdminButton>
+        <div className="flex flex-wrap items-center gap-1.5 t-body-m text-a-text-2">
+          <span>Didn&apos;t get it?</span>
+          {wait > 0 ? (
+            <span className="tabular-nums text-a-text-3">Send a new code in 0:{String(wait).padStart(2, "0")}</span>
+          ) : (
+            <button className="inline-flex min-h-6 -my-[3px] items-center rounded-a-xs text-a-text-accent outline-none hover:underline focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:-mx-2 pointer-coarse:-my-[11px] pointer-coarse:min-h-10 pointer-coarse:px-2" onClick={() => (setWait(30), toast("New code sent."))}>
               Send a new code
             </button>
           )}
-          <Link href="/signup" className="underline underline-offset-4 hover:text-foreground">
-            Wrong e-mail?
-          </Link>
+          <button className="ml-auto inline-flex min-h-6 -my-[3px] items-center rounded-a-xs outline-none hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:-mr-2 pointer-coarse:-my-[11px] pointer-coarse:min-h-10 pointer-coarse:px-2" onClick={() => go(back, -1)}>
+            Change e-mail
+          </button>
         </div>
-
-        <ProtoNote>Any six digits work. Paste works too.</ProtoNote>
       </div>
-    </OnbFrame>
+    </SignupFrame>
   )
 }

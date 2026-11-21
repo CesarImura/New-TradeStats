@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Check, CircleHelp, X } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
 import { updateProgress, useProgress, type Lesson, type Quiz } from "@/lib/data/learning"

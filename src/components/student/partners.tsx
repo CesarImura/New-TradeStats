@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Copy, ExternalLink, Handshake, Link2, Lock } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCommunityData } from "@/components/admin/kit"
 import { useCoach } from "@/components/coach/coach-provider"
 import { OwnTitle } from "@/components/student/own-title"
@@ -35,26 +35,26 @@ export function StudentPartners({ props = {} }: { props?: Record<string, string 
   const visible = offers.filter((o) => access.locked === "show" || open(o))
   const kinds = PARTNER_KINDS.filter((k) => visible.some((o) => o.kind === k))
   const shown = visible.filter((o) => kind === "all" || o.kind === kind)
-  const link = `https://${coach.slug}.tradestats.app/?ref=${nick}`
+  const link = `https://${coach.slug}.traderhub.io/?ref=${nick}`
 
   return (
     <div className="flex flex-col page-gap">
       <OwnTitle>
         <div className="flex flex-col gap-1">
           <span className="eyebrow">
-            {visible.length} {visible.length === 1 ? "offer" : "offers"} · {coach.name}
+            {visible.length} {visible.length === 1 ? "deal" : "deals"} · {coach.name}
           </span>
           <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.partners}</h1>
         </div>
       </OwnTitle>
 
-      <p className="max-w-2xl text-sm text-muted-foreground">Offers from partners {coach.coachName} works with. Some are affiliate links.</p>
+      <p className="max-w-2xl text-sm text-muted-foreground">Deals from partners {coach.coachName} works with. Some are affiliate links.</p>
 
       {visible.length === 0 ? (
         <Card className="items-center gap-3 rounded-(--radius) px-6 py-12 text-center">
           <Handshake className="size-8 text-muted-foreground" />
-          <p className="font-medium">No offers yet</p>
-          <p className="max-w-sm text-sm text-muted-foreground">When {coach.coachName} adds a broker, prop firm or tool offer, it shows here.</p>
+          <p className="font-medium">No deals yet</p>
+          <p className="max-w-sm text-sm text-muted-foreground">When {coach.coachName} adds a broker, prop firm or tool deal, it shows here.</p>
         </Card>
       ) : (
         <>

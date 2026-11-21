@@ -1,0 +1,192 @@
+"use client"
+
+import { useState } from "react"
+import { Download, MoreHorizontal, Plus, RefreshCw, Trash2, X } from "@/components/icons"
+import { Checkbox } from "@/components/ui/checkbox"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Switch } from "@/components/ui/switch"
+import {
+  AdminButton, AdminDrawer, AdminField, AdminFilter, AdminModal, AdminPageHeader, AdminProgress, AdminSearch, AdminSegmented, AdminTabs, AdminToolbar, AdminUnderlineTabs,
+  AdminFilterButton, AdminSegmentGroup, AdminMenu, AdminMenuContent, AdminMenuGroup, AdminMenuItem, AdminMenuLabel, AdminMenuSeparator, AdminMenuTrigger, TimelineStep,
+  AdminVideoPlayer, Callout, CellDot, CellPerson, CellProgress, CellStack, Dropzone, EmptyState, FileIcon, KNOWN_FILE_EXTENSIONS, FileItem, LessonCard, MediaCard, Metric, OptionCard, Panel, SortableRow, StatPanel, StepIndicator, Tag, adminControl,
+} from "@/components/admin/ui"
+
+const TONES = ["neutral", "accent", "success", "warning", "danger", "info"] as const
+const HIER = ["primary", "secondary", "ghost", "danger", "highlight"] as const
+const SIZES = ["sm", "md", "lg", "xl"] as const
+
+function Block({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="grid gap-3" aria-label={title}>
+      <h2 className="t-mono-label text-a-text-3">{title}</h2>
+      <div className="flex flex-wrap items-start gap-3">{children}</div>
+    </section>
+  )
+}
+
+/** Dev-only gallery: every Admin kit component in its states, to test them at each breakpoint. Not linked from the app. */
+export default function KitGallery() {
+  const [seg, setSeg] = useState("a")
+  const [ul, setUl] = useState("one")
+  const [tab, setTab] = useState("all")
+  const [opt, setOpt] = useState("x")
+  const [modal, setModal] = useState(false)
+  const [drawer, setDrawer] = useState(false)
+  const [q, setQ] = useState("")
+  const [filter, setFilter] = useState("all")
+  return (
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-10">
+      <AdminPageHeader title="Kit" subtitle="Admin components in their states." actions={<AdminButton><Plus /> Action</AdminButton>} />
+      <Block title="Button · hierarchy × size, default and disabled, icon only">
+        {HIER.map((h) => (
+          <div key={h} className="grid gap-2" data-hier={h}>
+            {SIZES.map((s) => (
+              <div key={s} className="flex items-center gap-2">
+                <AdminButton hierarchy={h} size={s}>Label</AdminButton>
+                <AdminButton hierarchy={h} size={s} disabled>Label</AdminButton>
+                <AdminButton hierarchy={h} size={s} iconOnly aria-label="Add"><Plus /></AdminButton>
+              </div>
+            ))}
+          </div>
+        ))}
+      </Block>
+      <Block title="Tag · tones, with dot"><>{TONES.map((t) => <Tag key={t} tone={t} dot>{t}</Tag>)}</></Block>
+      <Block title="Callout · tones"><div className="grid w-full gap-2">{(["neutral", "accent", "success", "warning", "danger"] as const).map((t) => <Callout key={t} tone={t} action={<AdminButton hierarchy="secondary" size="md">Review</AdminButton>}>Message for the {t} callout</Callout>)}</div></Block>
+      <Block title="Tabs · toolbar group, underline, segmented">
+        <AdminTabs label="Group" value={tab} onChange={setTab} tabs={[{ id: "all", label: "All", count: 5 }, { id: "att", label: "Needs attention", count: 2, dot: true }, { id: "pub", label: "Published", count: 3 }]} />
+        <AdminUnderlineTabs label="Underline" value={ul} onChange={setUl} tabs={[{ id: "one", label: "Lesson" }, { id: "two", label: "Chapters", count: 6 }, { id: "three", label: "Quiz", count: 4 }]} />
+        <div className="w-full max-w-72"><AdminSegmented label="Segmented" value={seg} onChange={setSeg} options={[{ value: "a", label: "Monthly" }, { value: "b", label: "One payment" }, { value: "c", label: "3 months" }]} /></div>
+      </Block>
+      <Block title="Option card · default, active, disabled">
+        <div className="grid w-full max-w-md gap-2" role="radiogroup" aria-label="Options">
+          <OptionCard checked={opt === "x"} onSelect={() => setOpt("x")} title="All tiers" description="Everyone with any paid or free tier" />
+          <OptionCard checked={opt === "y"} onSelect={() => setOpt("y")} title="Pick tiers" description="Only the tiers you choose" />
+          <OptionCard checked={false} onSelect={() => {}} disabled title="Sell it on its own" description="Disabled" />
+        </div>
+      </Block>
+      <Block title="Form · field states, controls, filter, search">
+        <div className="grid w-full max-w-72 gap-4">
+          <AdminField label="Default" hint="Helper text">{(p) => <input {...p} className={`${adminControl} h-11`} defaultValue="Value" />}</AdminField>
+          <AdminField label="Error" error="Something is wrong">{(p) => <input {...p} className={`${adminControl} h-11`} defaultValue="Oops" />}</AdminField>
+          <AdminField label="Disabled" optional>{(p) => <input {...p} disabled className={`${adminControl} h-11`} defaultValue="Locked" />}</AdminField>
+        </div>
+        <div className="grid gap-3">
+          <label className="flex items-center gap-3 t-body-m"><Checkbox defaultChecked /> Checked</label>
+          <label className="flex items-center gap-3 t-body-m"><Checkbox /> Unchecked</label>
+          <label className="flex items-center gap-3 t-body-m"><Switch defaultChecked /> On</label>
+          <label className="flex items-center gap-3 t-body-m"><Switch /> Off</label>
+        </div>
+        <div className="grid gap-3"><AdminSearch value={q} onChange={setQ} placeholder="Search" hint="⌘K" /><AdminFilter label="Tier" value={filter} onValueChange={setFilter} options={[{ value: "all", label: "All tiers" }, { value: "core", label: "Core" }]} /></div>
+      </Block>
+      <Block title="File icon · types and sizes">
+        <div className="grid w-full gap-4">
+          {(["sm", "md", "lg"] as const).map((z) => (
+            <div key={z} className="flex flex-wrap items-end gap-4" data-kit-file-icons={z}>
+              <span className="w-14 t-caption text-a-text-2">{z}</span>
+              {["a.pdf", "a.docx", "a.xlsx", "a.png", "a.zip", "a.pptx", "Makefile", "x.fig", "a.verylongext"].map((n) => <FileIcon key={n} name={n} size={z} />)}
+            </div>
+          ))}
+        </div>
+      </Block>
+      <Block title="File icon · on every Admin background">
+        <div className="grid w-full gap-3" data-kit-file-bg>
+          {(["page", "panel", "raised", "track"] as const).map((bg) => (
+            <div key={bg} className="flex flex-wrap items-end gap-5 rounded-a-10 p-4" style={{ background: `var(--admin-color-bg-${bg})` }} data-bg={bg}>
+              <span className="w-14 t-caption text-a-text-2">{bg}</span>
+              {["a.pdf", "a.docx", "a.xlsx", "a.png", "a.zip"].flatMap((n) => (["sm", "md", "lg"] as const).map((z) => <FileIcon key={n + z} name={n} size={z} />))}
+            </div>
+          ))}
+        </div>
+      </Block>
+      <Block title="File icon · every known format and the fallbacks">
+        <div className="flex w-full flex-wrap gap-x-5 gap-y-4" data-kit-file-formats>
+          {KNOWN_FILE_EXTENSIONS.map((e) => (
+            <div key={e} className="grid justify-items-center gap-1.5"><FileIcon name={`file.${e}`} size="md" /><span className="t-caption text-a-text-3">.{e}</span></div>
+          ))}
+          {["Makefile", "report.", ".env", "archive.tar.gz", "UPPER.PDF", "no extension", "Quarterly report final v2 (copy) (1).xlsx", "weird.name.with.many.dots.csv", "file.ext!"].map((n) => (
+            <div key={n} className="grid justify-items-center gap-1.5"><FileIcon name={n} size="lg" /><span className="max-w-24 truncate t-caption text-a-text-3" title={n}>{n}</span></div>
+          ))}
+          <div className="grid justify-items-center gap-1.5"><FileIcon type="pdf" size="lg" /><span className="t-caption text-a-text-3">type=pdf</span></div>
+          <div className="grid justify-items-center gap-1.5"><FileIcon size="lg" /><span className="t-caption text-a-text-3">no name</span></div>
+        </div>
+      </Block>
+      <Block title="Files · dropzone, file items, sortable rows">
+        <div className="grid w-full max-w-sm gap-3">
+          <Dropzone title="Drop a file here, or click" hint="Up to 200 MB" onFiles={() => {}} />
+          <FileItem name="Trend checklist.pdf" meta="1.2 MB · Ready to upload" trailing={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Remove"><Trash2 /></AdminButton>} />
+          <FileItem name="Trend checklist.pdf" status="uploading" progress={40} meta="480 KB of 1.2 MB · Uploading" trailing={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Cancel"><X /></AdminButton>} />
+          <FileItem name="Trend checklist.pdf" status="done" meta="1.2 MB" trailing={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Remove"><Trash2 /></AdminButton>} />
+          <FileItem name="Trend checklist.pdf" status="error" meta="1.2 MB" />
+          <FileItem name="Trend checklist.pdf" status="error" progress={40} statusText="Upload failed · connection lost" trailing={<AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Retry"><RefreshCw /></AdminButton>} />
+          <FileItem name="Quarterly risk review for the whole funded trader program final v2 (copy) (1).xlsx" meta="3.4 MB · A very long file name must truncate" />
+          <FileItem name="Makefile" meta="No extension" />
+          <FileItem name="breakout-range.ex5" meta="MetaTrader 5 · 24 KB" />
+        </div>
+        <div className="grid w-full max-w-xs gap-2">
+          <SortableRow title="Default" description="One line" trailing={<Tag>New</Tag>} />
+          <SortableRow title="Hover" description="Hover me" />
+          <SortableRow title="Active" description="One line" active />
+          <SortableRow title="Dragging" description="One line" dragging />
+          <SortableRow title="Disabled" description="One line" disabled />
+        </div>
+      </Block>
+      <Block title="Video player · play, scrub, volume, subtitles, speed, quality, full screen">
+        <AdminVideoPlayer seconds={842} startAt={192} resetKey="kit" className="aspect-video w-full max-w-2xl" />
+        <AdminVideoPlayer seconds={842} resetKey="kit-bare" controls={false} className="aspect-video w-full max-w-xs" />
+      </Block>
+      <Block title="Data · progress, steps, metrics, cells">
+        <div className="grid w-full max-w-60 gap-3">{(["default", "accent", "success", "danger"] as const).map((t) => <AdminProgress key={t} tone={t} value={60} label={t} />)}</div>
+        <div className="flex items-center gap-2">{(["done", "current", "upcoming", "success", "warning", "error"] as const).map((s, i) => <StepIndicator key={s} step={i + 1} state={s} />)}</div>
+        <div className="w-full"><StatPanel stats={[{ label: "Active students", value: "1,284", delta: "+6.2% vs last 30 days", tone: "success" }, { label: "Revenue", value: "€37,180", delta: "−4 vs last 30 days", tone: "danger" }, { label: "New", value: 40, delta: "neutral" }]} /></div>
+        <Metric label="Single" value="84%" delta="+3 pp" tone="success" />
+        <div className="grid w-full max-w-72 gap-3"><CellPerson initials="AM" name="Alex Moreau" subtitle="alex@mail.com" /><CellStack title="Core" subtitle="October cohort" /><CellProgress label="Progress" value={62} /><CellDot tone="danger" label="Payment failed" /><CellDot tone="warning" label="Inactive for 9 days" /></div>
+      </Block>
+      <Block title="Cards · media card, lesson card, empty state, panel">
+        <div className="w-full max-w-xs"><MediaCard cover={<div className="aspect-[2.3] w-full" />} title="Foundations" subtitle="Market structure, execution and risk" meta={<><span className="text-a-text-2">All tiers</span></>} stats={[["11", "Lessons"], ["142", "Students"], ["59%", "Completed"]]} /></div>
+        <div className="w-full max-w-60"><LessonCard picture={<div className="aspect-[1.78] w-full bg-a-raised" />} time="12:40" title="How price moves" mark="Free preview" markClassName="text-a-text-3" /></div>
+        <div className="w-full max-w-xl"><EmptyState icon={Download} title="Nothing here yet" description="Describe what will appear." actions={<AdminButton>Create</AdminButton>} /></div>
+        <Panel className="w-full max-w-72"><p className="t-body-m text-a-text-2">Panel content</p></Panel>
+      </Block>
+      <Block title="Segmented group · labels, icons only; filter button">
+        <div className="grid w-60 gap-3">
+          <AdminSegmentGroup fill label="Add or on this page" value={seg} onChange={setSeg} options={[{ value: "a", label: "Add" }, { value: "b", label: "On this page" }]} />
+          <AdminSegmentGroup label="Device" value={seg} onChange={setSeg} options={[{ value: "a", icon: <Plus />, title: "One" }, { value: "b", icon: <Download />, title: "Two" }, { value: "c", icon: <MoreHorizontal />, title: "Three" }]} />
+          <AdminFilterButton label="Page" value="Home" />
+        </div>
+      </Block>
+      <Block title="Menu · items, group label, danger, active (K6)">
+        <AdminMenu>
+          <AdminMenuTrigger render={<AdminButton hierarchy="secondary" aria-label="Open Admin menu">Menu</AdminButton>} />
+          <AdminMenuContent align="start">
+            <AdminMenuGroup>
+              <AdminMenuLabel>Pages</AdminMenuLabel>
+              <AdminMenuItem active>Home</AdminMenuItem>
+              <AdminMenuItem>Courses</AdminMenuItem>
+            </AdminMenuGroup>
+            <AdminMenuSeparator />
+            <AdminMenuItem tone="danger">Delete</AdminMenuItem>
+          </AdminMenuContent>
+        </AdminMenu>
+      </Block>
+      <Block title="Timeline step · done, current with Skip, open, upcoming (K4)">
+        <ol className="w-full max-w-2xl">
+          <TimelineStep step={1} state="done" title="Step title" description="Short line that says what to do." onEdit={() => {}} first />
+          <TimelineStep step={2} state="current" title="Step title" description="Short line that says what to do." action="Start" onAction={() => {}} onSkip={() => {}} />
+          <TimelineStep step={3} state="open" title="Step title" description="Short line that says what to do." action="Start" onAction={() => {}} />
+          <TimelineStep step={4} state="upcoming" title="Step title" description="Short line that says what to do." action="Start" last />
+        </ol>
+      </Block>
+      <Block title="Overlays · menu, modal, drawer">
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" iconOnly aria-label="Open menu" />}><MoreHorizontal /></DropdownMenuTrigger>
+          <DropdownMenuContent align="start"><DropdownMenuItem>Edit</DropdownMenuItem><DropdownMenuItem>Duplicate</DropdownMenuItem><DropdownMenuSeparator /><DropdownMenuItem variant="destructive">Delete</DropdownMenuItem></DropdownMenuContent>
+        </DropdownMenu>
+        <AdminButton hierarchy="secondary" onClick={() => setModal(true)}>Open modal</AdminButton>
+        <AdminButton hierarchy="secondary" onClick={() => setDrawer(true)}>Open drawer</AdminButton>
+      </Block>
+      <AdminToolbar><AdminTabs label="Toolbar" value={tab} onChange={setTab} tabs={[{ id: "all", label: "All", count: 5 }, { id: "att", label: "Draft", count: 1 }]} /><div className="flex-1" /><AdminSearch value={q} onChange={setQ} placeholder="Search" /></AdminToolbar>
+      <AdminModal open={modal} onOpenChange={setModal} title="Modal title" subtitle="Subtitle" footer={<><span className="flex-1" /><AdminButton hierarchy="secondary" onClick={() => setModal(false)}>Cancel</AdminButton><AdminButton onClick={() => setModal(false)}>Save</AdminButton></>}><p className="t-body-m text-a-text-2">Content goes in the body.</p></AdminModal>
+      <AdminDrawer open={drawer} onOpenChange={setDrawer} title="Drawer title" subtitle="Subtitle" footer={<AdminButton hierarchy="ghost" onClick={() => setDrawer(false)}>Close</AdminButton>}><p className="t-body-m text-a-text-2">Content goes in the body.</p></AdminDrawer>
+    </div>
+  )
+}

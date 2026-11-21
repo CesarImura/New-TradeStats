@@ -24,7 +24,7 @@ export function DemoBanner() {
         <CalendarClock className="size-3.5" /> Your setup call: {acc.call.date}, {acc.call.time}
       </span>
       <span className="ml-auto flex shrink-0 items-center gap-3">
-        <Link href="/setup" onClick={() => setAccount({ route: "C" })} className="underline underline-offset-4">
+        <Link href="/signup/name" onClick={() => setAccount({ route: "C" })} className="underline underline-offset-4">
           Start setting up myself
         </Link>
         <button onClick={() => setAccount({ call: undefined, route: undefined })} aria-label="Leave the demo (prototype reset)" className="text-white/50 hover:text-white">

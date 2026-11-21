@@ -4,6 +4,7 @@ import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Check, ChevronsUpDown, Plus } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
+import { cn } from "@/lib/utils"
 import { CommunityMark } from "@/components/coach/community-mark"
 import {
   Command,
@@ -25,7 +26,7 @@ import { useCustomCommunities } from "@/lib/data/use-communities"
  * several communities; this is how they move between them. Switching keeps
  * the section they're in (e.g. Students → Students).
  */
-export function WorkspaceSwitcher() {
+export function WorkspaceSwitcher({ compact = false }: { compact?: boolean }) {
   const { coach } = useCoach()
   const router = useRouter()
   const path = usePathname()
@@ -50,21 +51,23 @@ export function WorkspaceSwitcher() {
             render={
               <SidebarMenuButton
                 size="lg"
-                className="ts-switcher h-12 rounded-[10px] bg-white/[0.04] hover:bg-white/[0.07] data-popup-open:bg-white/[0.07] group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:shadow-none"
-                aria-label={`Current community: ${coach.name}. Switch community`}
+                className={cn("ts-switcher h-12 rounded-a-lg! bg-a-panel ring-1 ring-inset ring-a-border hover:bg-a-hover data-popup-open:bg-a-hover group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:shadow-none [html[data-admin-sb=collapsed]_.admin-side_&]:h-10 [html[data-admin-sb=collapsed]_.admin-side_&]:p-1")}
               />
             }
           >
-            <CommunityMark coach={coach} />
-            <span className="grid min-w-0 flex-1 text-left leading-tight">
-              <span className="truncate text-sm font-semibold">{coach.name}</span>
-              <span className="truncate text-xs text-muted-foreground">
+            <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-a-md bg-a-accent-strong t-body-m text-white">{coach.mark}</span>
+            {/* Collapsed sidebar: only the mark shows; the names stay for screen readers. */}
+            <span className="grid min-w-0 flex-1 text-left [html[data-admin-sb=collapsed]_.admin-side_&]:sr-only">
+              <span className="truncate t-body-l text-a-text">{coach.name}</span>
+              <span className="truncate t-caption text-a-text-2">
                 {coach.org} · {current?.role ?? "Owner"}
               </span>
             </span>
-            <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
+            {/* The name read out is the visible text (community, org, role) plus this, so voice control matches what is on screen. */}
+            <span className="sr-only">Switch community</span>
+            <ChevronsUpDown className="ml-auto size-4 text-a-text-nav [html[data-admin-sb=collapsed]_.admin-side_&]:hidden" />
           </PopoverTrigger>
-          <PopoverContent align="start" side="bottom" className="w-(--anchor-width) min-w-72 p-0">
+          <PopoverContent align={compact ? "end" : "start"} side={compact ? "right" : "bottom"} sideOffset={compact ? 12 : undefined} className="w-(--anchor-width) min-w-72 p-0">
             <Command>
               <CommandInput placeholder="Find a community" autoFocus={many} />
               <CommandList className="max-h-80">
@@ -97,7 +100,7 @@ export function WorkspaceSwitcher() {
                     }}
                     className="gap-2.5"
                   >
-                    <span className="grid size-7 place-items-center rounded-md border border-dashed">
+                    <span className="grid size-7 place-items-center rounded-md border border-dashed border-a-border-strong">
                       <Plus className="size-4" />
                     </span>
                     Create a new community

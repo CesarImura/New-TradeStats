@@ -34,11 +34,17 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
+          // Sonner brings its own system font; the notice speaks in the page's voice (Helvetica Neue in the Admin and the Editor, the theme font for students).
+          fontFamily: "inherit",
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
           toast: "cn-toast",
+          // No one-word last line ("… and logo / stay.").
+          title: "text-balance",
+          // Sonner colours the description from its own theme, which can disagree with the page (dark Admin, light theme): follow the toast text instead.
+          description: "!text-(--normal-text) opacity-80 text-balance",
         },
       }}
       {...props}

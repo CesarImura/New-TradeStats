@@ -22,8 +22,8 @@ const modulesOf = (c: Course) => c.modules.map((m) => ({ ...m, lessons: m.lesson
 
 /** The coach's catalogue, the student's progress and tier: what every widget here reads. */
 function useLearning() {
-  const { coach } = useCoach()
-  const catalog = useCatalog(coach)
+  const { coach, preview } = useCoach()
+  const catalog = useCatalog(coach, preview)
   const progress = useProgress(coach.slug)
   const tier = useViewerTier(coach)
   const courses = studentCourses(catalog)
@@ -35,15 +35,15 @@ function useLearning() {
   return { courses, open, current, progress, tier, needs }
 }
 
-/** Prototype "today" is Monday 12 October 2026, 22:00: unlocks are dated "Thu 15 Oct" in the catalogue. */
-const NOW = Date.UTC(2026, 9, 12, 22)
+/** Prototype "today" is Monday 10 November 2025, 22:00: unlocks are dated "Thu 13 Nov" in the catalogue. */
+const NOW = Date.UTC(2025, 10, 10, 22)
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-/** Hours until a date like "Thu 15 Oct", or null if it can't be read. */
+/** Hours until a date like "Thu 13 Nov", or null if it can't be read. */
 function hoursUntil(date: string) {
   const m = /(\d{1,2})\s+([A-Za-z]{3})/.exec(date)
   const month = m ? MONTHS.indexOf(m[2][0].toUpperCase() + m[2].slice(1, 3).toLowerCase()) : -1
   if (!m || month < 0) return null
-  return Math.max(0, Math.round((Date.UTC(2026, month, Number(m[1])) - NOW) / 36e5))
+  return Math.max(0, Math.round((Date.UTC(2025, month, Number(m[1])) - NOW) / 36e5))
 }
 /** What opens next: scheduled lessons in the catalogue, grouped by module and date, soonest first. */
 function unlocksOf(courses: Course[]) {

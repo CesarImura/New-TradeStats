@@ -1,9 +1,11 @@
 import {
-  BarChart3,
+  Send,
   BookOpen,
   CalendarDays,
   ChartCandlestick,
-  CreditCard,
+  Currency,
+  LineChart,
+  Video,
   GraduationCap,
   Download,
   Handshake,
@@ -12,7 +14,6 @@ import {
   MessagesSquare,
   NotebookPen,
   Palette,
-  Radio,
   Settings,
   Sparkles,
   Trophy,
@@ -21,7 +22,7 @@ import {
 } from "@/components/icons"
 import { PAGE_ICONS, isPageId, pageIdOf, type Coach, type ModuleId } from "@/lib/data/coaches"
 
-export type NavItem = { id: string; label: string; href: string; icon: LucideIcon; screens: string }
+export type NavItem = { id: string; label: string; href: string; icon: LucideIcon; screens: string; /** Not available yet: shows the grey Soon badge and opens the Coming soon screen. */ soon?: boolean }
 
 const MODULE_ICON: Record<ModuleId, LucideIcon> = {
   courses: BookOpen,
@@ -63,32 +64,34 @@ export function studentNav(coach: Coach, base: string): NavItem[] {
 }
 
 /** The admin menu is the same for every community, in our words, not the coach's. */
-export function adminNav(_coach: Coach, base: string): { group: string; items: NavItem[] }[] {
+export function adminNav(coach: Coach, base: string): { group: string; items: NavItem[] }[] {
+  // A platform still being set up (onboarding v2) opens on Getting started instead of the Overview.
+  const draft = (coach as { status?: string }).status === "setup"
   return [
     {
       group: "Today",
-      items: [{ id: "overview", label: "Overview", href: base, icon: LayoutDashboard, screens: "ADM-01" }],
+      items: [draft ? { id: "getting-started", label: "Getting started", href: `${base}/getting-started`, icon: Send, screens: "ONB" } : { id: "overview", label: "Overview", href: base, icon: LayoutDashboard, screens: "ADM-01" }],
     },
     {
       group: "Coaching",
       items: [
         { id: "students", label: "Students", href: `${base}/students`, icon: Users, screens: "ADM-02 to ADM-07" },
-        { id: "journal", label: "Journal & feedback", href: `${base}/journal`, icon: NotebookPen, screens: "ADM-05, ADM-06, ADM-16" },
+        { id: "journal", label: "Journal & feedback", href: `${base}/journal`, icon: NotebookPen, screens: "ADM-05, ADM-06, ADM-16", soon: true },
         { id: "content", label: "Content", href: `${base}/content`, icon: GraduationCap, screens: "ADM-08 to ADM-15" },
         { id: "downloads", label: "Downloads", href: `${base}/downloads`, icon: Download, screens: "ADM-59" },
         { id: "calendar", label: "Calendar", href: `${base}/calendar`, icon: CalendarDays, screens: "ADM-19 to ADM-23" },
-        { id: "livestreams", label: "Livestreams", href: `${base}/livestreams`, icon: Radio, screens: "ADM-61" },
-        { id: "charts", label: "Charts", href: `${base}/charts`, icon: ChartCandlestick, screens: "ADM-57, ADM-58" },
+        { id: "livestreams", label: "Livestreams", href: `${base}/livestreams`, icon: Video, screens: "ADM-61" },
+        { id: "charts", label: "Charts", href: `${base}/charts`, icon: LineChart, screens: "ADM-57, ADM-58" },
         { id: "community", label: "Community", href: `${base}/community`, icon: MessagesSquare, screens: "ADM-17, ADM-18" },
-        { id: "ai", label: "AI assistant", href: `${base}/ai`, icon: Sparkles, screens: "ADM-24 to ADM-28" },
+        { id: "ai", label: "AI assistant", href: `${base}/ai`, icon: Sparkles, screens: "ADM-24 to ADM-28", soon: true },
       ],
     },
     {
       group: "Business",
       items: [
-        { id: "sales", label: "Sales & payments", href: `${base}/sales`, icon: CreditCard, screens: "ADM-29 to ADM-36, ADM-41" },
+        { id: "sales", label: "Sales & payments", href: `${base}/sales`, icon: Currency, screens: "ADM-29 to ADM-36, ADM-41" },
         { id: "partners", label: "Partners", href: `${base}/partners`, icon: Handshake, screens: "ADM-60" },
-        { id: "ranking", label: "Ranking", href: `${base}/ranking`, icon: BarChart3, screens: "ADM-53, ADM-54" },
+        { id: "ranking", label: "Ranking", href: `${base}/ranking`, icon: Trophy, screens: "ADM-53, ADM-54" },
       ],
     },
     {

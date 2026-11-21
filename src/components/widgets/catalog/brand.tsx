@@ -392,7 +392,7 @@ export function PartnerLinks({ variant = "list" }: WidgetProps) {
   const ext = { target: "_blank", rel: "noreferrer" } as const
 
   if (offers.length === 0) {
-    return <WidgetEmpty icon={Handshake} title="No partner offers yet" text={`Offers from the brokers, prop firms and tools ${coach.coachName} works with show here.`} />
+    return <WidgetEmpty icon={Handshake} title="No partner deals yet" text={`Deals from the brokers, prop firms and tools ${coach.coachName} works with show here.`} />
   }
 
   if (variant === "chips") {

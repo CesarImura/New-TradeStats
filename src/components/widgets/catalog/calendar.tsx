@@ -160,7 +160,7 @@ export function NextLive({ variant = "countdown", props = {} }: WidgetProps) {
     const blocked = agenda.filter((a) => a.noTrade).reduce((s, a) => s + a.mins, 0)
     const free = (DAY_TO - NOW_HOUR) * 60 - coachMins - blocked
     return (
-      <WCard icon={CalendarDays} title="Today" meta={`Mon 12 Oct · ${agenda.length} on your day with ${coach.coachName}`} chip={<Chip>in {short(mins)}</Chip>} bodyClassName={SPLIT}>
+      <WCard icon={CalendarDays} title="Today" meta={`Mon 10 Nov · ${agenda.length} on your day with ${coach.coachName}`} chip={<Chip>in {short(mins)}</Chip>} bodyClassName={SPLIT}>
         {/* Wide and short: the day's bar on the left, the agenda beside it. */}
         <div data-main className="flex shrink-0 flex-col justify-center gap-3">
           {detailed && <Num size="md" value={`${agenda.length} events`} delta={`next ${next.time}`} deltaTone="accent" />}
@@ -188,7 +188,7 @@ export function NextLive({ variant = "countdown", props = {} }: WidgetProps) {
       <WCard
         icon={CalendarDays}
         title="This week"
-        meta={`12–16 Oct · ${items.filter((e) => e.kind !== "news").length} sessions with ${coach.coachName}`}
+        meta={`12–14 Nov · ${items.filter((e) => e.kind !== "news").length} sessions with ${coach.coachName}`}
         chip={<Chip tone="neutral">{items.length} events</Chip>}
       >
         <div className={cn("grid min-h-16 grid-cols-5 gap-1.5", detailed ? "h-24 shrink-0" : "flex-1")} onPointerLeave={() => setHover(undefined)}>
@@ -390,7 +390,7 @@ function sessionState(s: { open: number; close: number }, now: number) {
 function ImpactTicks({ impact = "low", big }: { impact?: CalEvent["impact"]; big?: boolean }) {
   const h = big ? [6, 10, 14] : [4, 7, 10]
   return (
-    <span className="flex shrink-0 items-end gap-[2px]" style={{ height: h[2] }} aria-label={`${impact} impact`}>
+    <span className="flex shrink-0 items-end gap-[2px]" style={{ height: h[2] }} role="img" aria-label={`${impact} impact`}>
       {h.map((px, i) => (
         <i key={i} className="rounded-[1px]" style={{ width: big ? 4 : 3, height: px, background: i < IMPACT[impact] ? "var(--foreground)" : TRACK }} />
       ))}

@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Textarea } from "@/components/ui/textarea"
 import { DEFAULT_AI, SUGGESTED, aiAnswer, aiTradeAnswer, askAi, type AiReply } from "@/lib/data/ai"
-import { TRADES, fmtR } from "@/lib/data/trades"
+import { TRADES, fmtR, sideLabel } from "@/lib/data/trades"
 import { useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
 import { OwnTitle } from "@/components/student/own-title"
@@ -117,13 +117,13 @@ export function StudentAi({ props = {} }: { props?: Record<string, string | bool
                   key={t.id}
                   onClick={() => {
                     setPicking(false)
-                    ask(`What about my ${t.symbol} ${t.side} on ${t.date}?`, aiTradeAnswer(t))
+                    ask(`What about my ${t.symbol} ${sideLabel(t.side)} on ${t.date}?`, aiTradeAnswer(t))
                   }}
                   className="flex items-center gap-3 rounded-(--r-inner) px-2.5 py-1.5 text-left text-sm hover:bg-muted"
                 >
                   <span className="w-24 text-muted-foreground">{t.date}</span>
                   <span className="flex-1">
-                    {t.symbol} {t.side} · {t.setup}
+                    {t.symbol} {sideLabel(t.side)} · {t.setup}
                   </span>
                   <span className={cn("tabular-nums", t.r >= 0 ? "text-profit" : "text-loss")}>{fmtR(t.r)}</span>
                 </button>

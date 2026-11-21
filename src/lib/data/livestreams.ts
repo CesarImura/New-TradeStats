@@ -1,5 +1,10 @@
 import { setStored, useStored } from "@/lib/prototype-store"
 import type { Coach } from "./coaches"
+import { NOW } from "./schedule"
+import { isSetupSlug } from "./communities"
+import { useEmptyIfSetup } from "./use-communities"
+
+const NO_STREAMS: Livestream[] = []
 
 /**
  * Livestreams: a coach schedules one, connects OBS, goes live, and ends it; the recording lands in Content.
@@ -13,7 +18,7 @@ export type Livestream = {
   id: string
   title: string
   description?: string
-  /** When it starts, as local time "2026-11-05T15:00". */
+  /** When it starts, as local time "2025-11-05T15:00". */
   startsAt: string
   state: StreamState
   /** Tier ids that can watch. Empty means every tier. */
@@ -22,6 +27,8 @@ export type Livestream = {
   key: string
   /** When the coach went live (ms since 1970), while it is live. */
   startedAt?: number
+  /** Students who said they will join (sample figure), while it is scheduled. */
+  joining?: number
   /** Minutes on air, once it ended. */
   minutes?: number
   /** The most people watching at once. */
@@ -30,20 +37,67 @@ export type Livestream = {
   chat: ChatMessage[]
   /** After it ends: the recording is made, then it is ready to use. */
   recording?: "processing" | "ready"
+  /** Planned length in minutes (before it starts). */
+  planned?: number
+  /** Where students find it: the calendar and the Live page, or the Live page only. */
+  where?: "both" | "live"
+  /** Title of the course its recording was saved into as a lesson. */
+  lesson?: string
 }
 
 /** Where OBS sends the video. The same for every community: the platform's own streaming address. */
-export const STREAM_SERVER = "rtmps://live.tradestats.io:443/app"
+export const STREAM_SERVER = "rtmps://live.traderhub.io:443/app"
 
 const SEED = (): Livestream[] => [
   {
     id: "s1",
-    title: "Live session: NY open",
+    title: "NY open, live trading",
     description: "We trade the first hour together. Bring your questions.",
-    startsAt: "2026-11-05T14:30",
+    startsAt: "2025-11-13T15:30",
+    planned: 90,
+    joining: 41,
     state: "scheduled",
     tiers: [],
-    key: "ts_live_9f3k2m8x7q1w4c6v5b0n",
+    key: "th_live_9f3k2m8x7q1w4c6v5b0n",
+    peak: 0,
+    viewers: 0,
+    chat: [],
+  },
+  {
+    id: "s3",
+    title: "London open breakdown",
+    startsAt: "2025-11-14T09:00",
+    planned: 75,
+    joining: 24,
+    state: "scheduled",
+    tiers: [],
+    key: "th_live_4c8m1p5r2t7y3u9i6o0a",
+    peak: 0,
+    viewers: 0,
+    chat: [],
+  },
+  {
+    id: "s4",
+    title: "Q&A: risk and sizing",
+    startsAt: "2025-11-17T18:00",
+    planned: 60,
+    joining: 18,
+    state: "scheduled",
+    tiers: ["desk"],
+    key: "th_live_7d2n6q1w8e4r9t3y5u0i",
+    peak: 0,
+    viewers: 0,
+    chat: [],
+  },
+  {
+    id: "s5",
+    title: "Weekly review",
+    startsAt: "2025-11-19T17:00",
+    planned: 45,
+    joining: 12,
+    state: "scheduled",
+    tiers: ["core", "desk"],
+    key: "th_live_1k5l9z3x7c2v6b8n4m0q",
     peak: 0,
     viewers: 0,
     chat: [],
@@ -52,12 +106,12 @@ const SEED = (): Livestream[] => [
     id: "s2",
     title: "Weekly market review",
     description: "What moved, what we traded and what we are watching next week.",
-    startsAt: "2026-10-30T15:00",
+    startsAt: "2025-11-06T15:00",
     state: "ended",
     tiers: [],
-    key: "ts_live_2b7h4j9d3s8a1e6f5g0t",
+    key: "th_live_2b7h4j9d3s8a1e6f5g0t",
     minutes: 74,
-    peak: 118,
+    peak: 38,
     viewers: 0,
     chat: [
       { id: "m1", who: "Alex", text: "That stop placement made sense, thanks." },
@@ -79,11 +133,12 @@ const seedFor = (coach: Coach) => {
 const keyOf = (coach: Coach) => `${coach.slug}:livestreams`
 
 export function useLivestreams(coach: Coach) {
-  return useStored<Livestream[]>(keyOf(coach), seedFor(coach))
+  const sample = seedFor(coach)
+  return useEmptyIfSetup(coach.slug, useStored<Livestream[]>(keyOf(coach), sample), sample, NO_STREAMS)
 }
 
 export function saveLivestreams(coach: Coach, update: (l: Livestream[]) => Livestream[]) {
-  setStored<Livestream[]>(keyOf(coach), update, seedFor(coach))
+  setStored<Livestream[]>(keyOf(coach), update, isSetupSlug(coach.slug) ? NO_STREAMS : seedFor(coach))
 }
 
 /** Change one livestream. */
@@ -92,12 +147,24 @@ export const patchLivestream = (coach: Coach, id: string, patch: Partial<Livestr
 
 const ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"
 /** A new stream key: long enough to be private. Only the coach sees it. */
-export const newStreamKey = () => "ts_live_" + Array.from({ length: 20 }, () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)]).join("")
+export const newStreamKey = () => "th_live_" + Array.from({ length: 20 }, () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)]).join("")
 
-/** "Thu 5 Nov, 14:30" */
+/** "Thu 4 Dec, 14:30" */
 export function whenLabel(startsAt: string) {
   const d = new Date(startsAt)
   return `${d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
 }
 
 export const STATE_LABEL: Record<StreamState, string> = { scheduled: "Before", live: "Live", ended: "After" }
+
+/** "in 2 h 14 min", "in 24 days": how long until a livestream starts, from the prototype's today. */
+export function untilLabel(startsAt: string, now = NOW) {
+  const mins = Math.round((new Date(startsAt).getTime() - now.getTime()) / 60000)
+  if (mins <= 0) return "now"
+  if (mins < 60) return `in ${mins} min`
+  if (mins < 48 * 60) return `in ${Math.floor(mins / 60)} h ${mins % 60} min`
+  return `in ${Math.round(mins / 1440)} days`
+}
+
+/** "1 h 30 min" */
+export const lengthLabel = (m: number) => (m < 60 ? `${m} min` : m % 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m / 60} h`)

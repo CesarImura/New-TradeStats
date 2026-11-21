@@ -21,16 +21,19 @@ export type Block = {
 }
 
 export const BLOCK_INFO: Record<BlockType, { name: string; hint: string }> = {
-  hero: { name: "Opening", hint: "Big headline, one sentence and the main button" },
-  about: { name: "About the coach", hint: "Who you are and how you trade" },
-  results: { name: "What students say", hint: "Quotes from students who agreed" },
-  curriculum: { name: "What's inside", hint: "Your courses, filled in from Content" },
+  hero: { name: "Hero", hint: "Heading, text and button" },
+  about: { name: "About you", hint: "Photo and short bio" },
+  results: { name: "What they said", hint: "Quotes from students" },
+  curriculum: { name: "Courses it unlocks", hint: "From Content" },
   week: { name: "A week with us", hint: "Lives, calls and community at a glance" },
-  tiers: { name: "Prices", hint: "Your tiers from Tiers & prices" },
+  tiers: { name: "Tiers & prices", hint: "From Tiers & prices" },
   groups: { name: "Next groups", hint: "Upcoming cohorts with seats left" },
   faq: { name: "Questions", hint: "Questions people ask before buying" },
   cta: { name: "Closing", hint: "Last call to join" },
 }
+
+/** The line under a block's name in the editor: quotes and answers are counted. */
+export const blockHint = (b: Block) => (b.type === "results" && b.items ? `${b.items.length} ${b.items.length === 1 ? "quote" : "quotes"}` : b.type === "faq" && b.items ? `${b.items.length} ${b.items.length === 1 ? "answer" : "answers"}` : BLOCK_INFO[b.type].hint)
 
 const cache = new Map<string, Block[]>()
 

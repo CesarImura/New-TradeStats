@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { toast } from "@/lib/toast"
+import { AdminButton, AdminModal, Callout } from "@/components/admin/ui"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -64,13 +63,22 @@ export function SaveTemplateDialog({ coach, theme, open, onOpenChange }: { coach
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Save as template</DialogTitle>
-          <DialogDescription>Prototype only. Replaces a starting template with the design you see here, unpublished changes included. Git keeps the old version.</DialogDescription>
-        </DialogHeader>
-
+    <AdminModal overlay="plain"
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Save as template"
+      subtitle="Prototype only. Replaces a starting template with the design you see here, unpublished changes included."
+      footer={
+        <>
+          <AdminButton hierarchy="secondary" onClick={() => onOpenChange(false)}>
+            Cancel
+          </AdminButton>
+          <AdminButton onClick={save} disabled={saving || !name.trim()}>
+            {saving ? "Saving…" : `Replace ${TEMPLATES[id].name}`}
+          </AdminButton>
+        </>
+      }
+    >
         <div className="grid gap-4">
           <div className="grid gap-2">
             <Label>Template to replace</Label>
@@ -81,42 +89,29 @@ export function SaveTemplateDialog({ coach, theme, open, onOpenChange }: { coach
                   role="radio"
                   aria-checked={id === t}
                   onClick={() => choose(t)}
-                  className={cn("px-3 py-2 text-left text-sm", card(id === t))}
+                  className={cn("px-3 py-2 text-left t-body-l", card(id === t))}
                 >
                   <span className="block font-medium">{TEMPLATES[t].name}</span>
-                  <span className="block text-xs text-muted-foreground">{t === theme.template ? "This design's base" : "Replace"}</span>
+                  <span className="block t-caption text-muted-foreground">{t === theme.template ? "This design's base" : "Replace"}</span>
                 </button>
               ))}
             </div>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="tpl-name">Name</Label>
-            <Input id="tpl-name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input id="tpl-name" autoFocus value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="tpl-blurb">One line about it</Label>
             <Textarea id="tpl-blurb" rows={2} value={blurb} onChange={(e) => setBlurb(e.target.value)} />
           </div>
-          <div className="grid gap-1 rounded-lg bg-muted/60 p-3 text-xs leading-5 text-muted-foreground">
-            <span>
-              <span className="font-medium text-foreground">Saved:</span> the look (colour, light/dark, greys for both modes and how they follow the brand, fonts, corners, depth, spacing, background, menu layout), the Home
-              {arranged.length ? ` and ${arranged.length} arranged page${arranged.length === 1 ? "" : "s"} (${arranged.join(", ")})` : ""}.
-            </span>
-            <span>
-              <span className="font-medium text-foreground">Not saved:</span> {coach.name}&rsquo;s name, logo, words and menu items, and per-tier layouts.
-            </span>
-          </div>
+          <Callout>
+            <span className="font-medium text-foreground">Saved:</span> the look (colours, light or dark, fonts, corners, cards, depth, spacing, background, widget styles)
+            {arranged.length ? `, the Home and ${arranged.length} arranged page${arranged.length === 1 ? "" : "s"} (${arranged.join(", ")})` : ""}. <span className="font-medium text-foreground">Not saved:</span> {coach.name}&rsquo;s name, logo, words and
+            menu items.
+          </Callout>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={save} disabled={saving || !name.trim()}>
-            {saving ? "Saving…" : `Replace ${TEMPLATES[id].name}`}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </AdminModal>
   )
 }
