@@ -7,7 +7,7 @@ type Status = "ready" | "uploading" | "done" | "error"
 const STATUS_TEXT = { done: "Completed", error: "Upload failed" } as const
 
 /**
- * Admin / File item (Figma 'Admin · Files'): radius 10, padding 12, gap 12, a file icon, the name, a meta line and a trailing action.
+ * Admin / File item (Figma 'Admin · 10 Files'): radius 10, padding 12, gap 12, a file icon, the name, a meta line and a trailing action.
  * Ready and Uploading write their meta in grey; Done adds a green check and "Completed", Error a warning icon and the reason, both in grey: the icon carries the colour, never the words.
  * With a progress value (Uploading, or Error with the bar) the action sits at the top and the bar with its percentage runs under the whole row.
  * Error without a progress value keeps the size in the meta line before the reason.

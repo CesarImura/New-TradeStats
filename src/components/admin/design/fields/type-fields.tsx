@@ -11,7 +11,7 @@ export function FontsField() {
   const { theme, change } = useDesign()
   return (
     <div data-field="fonts" className="grid gap-1.5">
-      {/* Figma Style · 09: each pair as a card that shows its heading font, the pair's name and the fonts in it. */}
+      {/* Figma Style · 04 Type: each pair as a card that shows its heading font, the pair's name and the fonts in it. */}
       <div role="radiogroup" aria-label="Font pair" className="grid grid-cols-2 gap-2">
         {FONT_PAIRS.map((p) => {
           // The label font too: two pairs share a heading and body and differ only in their labels.

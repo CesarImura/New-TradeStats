@@ -141,7 +141,6 @@ import {
   ColorPalette as CColorPalette,
   Currency as CCurrency,
   ClosedCaption as CClosedCaption,
-  Keyboard as CKeyboard,
   Popup as CPopup,
   Restart as CRestart,
   VolumeDown as CVolumeDown,
@@ -246,7 +245,6 @@ export const VolumeUp = i(CVolumeUp, "VolumeUp")
 export const VolumeDown = i(CVolumeDown, "VolumeDown")
 export const VolumeMute = i(CVolumeMute, "VolumeMute")
 export const Miniplayer = i(CPopup, "Miniplayer")
-export const KeyboardIcon = i(CKeyboard, "Keyboard")
 export const Replay = i(CRestart, "Replay")
 /** Carbon has no circle-with-a-slash (its "Not available" is two dashes), so this one is drawn on the same 32 grid and 2px line. */
 const CBlocked = forwardRef<SVGSVGElement, { size?: number } & React.SVGProps<SVGSVGElement>>(function CBlocked({ size = 24, ...p }, ref) {

@@ -1,6 +1,6 @@
-# Onboarding do coach (Admin v2): contexto completo
+# Onboarding do coach (Admin): contexto completo
 
-Estado em 19/11/2026, depois da revisão final. Fonte de decisão: vault (Updates de 12/11, 14/11 e 19/11), Figma seção `Screens · Admin v2` › `1485:136393`. Protótipo com persistência local (`localStorage`), sem backend nem autenticação reais: o e-mail só "prova" o endereço com um código de seis dígitos (qualquer um passa, `000000` mostra o erro).
+Estado em 19/11/2026, depois da revisão final. Fonte de decisão: vault (Updates de 12/11, 14/11 e 19/11), Figma seção `Screens · Admin` › `1485:136393`. Protótipo com persistência local (`localStorage`), sem backend nem autenticação reais: o e-mail só "prova" o endereço com um código de seis dígitos (qualquer um passa, `000000` mostra o erro).
 
 ## Fluxo e rotas
 
@@ -38,7 +38,7 @@ Estado em 19/11/2026, depois da revisão final. Fonte de decisão: vault (Update
 
 ## Decisões abertas
 
-1. ~~Atelier e Pulse dark~~ **Resolvido em 19/11 (Gustavo: seguir o Figma):** paletas dos templates ajustadas aos frames `Style · 02 a 05 Theme` (ver "Temas" em `docs/components.md`). Em aberto: Atelier dark e Pulse light não existem no Figma (ficaram como estavam); o cartão do Pulse dark sai #1C213F (escada de contraste) contra #171B38 do Figma.
+1. ~~Atelier e Pulse dark~~ **Resolvido em 19/11 (Gustavo: seguir o Figma):** paletas dos templates ajustadas aos frames `Style · 02 a 02d Theme` (eram 02 a 05 antes da reorganização de 21/11) (ver "Temas" em `docs/components.md`). Em aberto: Atelier dark e Pulse light não existem no Figma (ficaram como estavam); o cartão do Pulse dark sai #1C213F (escada de contraste) contra #171B38 do Figma.
 2. Etiqueta "Skipped" do Timeline step: existe no código e não existe no componente do Figma (6 variantes e dezenas de instâncias). Precisa de uma etapa própria.
 3. Alvo de toque de 24 px nos pontos de cor (Brand, pares de cores do Layout): mantidos como no Figma, aceitos como exceção documentada.
 

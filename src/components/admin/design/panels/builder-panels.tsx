@@ -256,7 +256,7 @@ export function WidgetLibrary({
       </div>}
 
       {searching && (
-        // Figma Pages · 04 to 06: the box in the header, a line under it, then the groups or the matches as plain rows.
+        // Figma Pages · 01b to 01d (search): the box in the header, a line under it, then the groups or the matches as plain rows.
         <p className="px-5 pb-3 t-caption text-a-text-3">{!q ? "Search every widget by name or type" : tiles && tiles.length ? `${tiles.length} ${tiles.length === 1 ? "widget matches" : "widgets match"} “${query}”` : `No widgets match “${query}”`}</p>
       )}
 

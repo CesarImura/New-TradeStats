@@ -9,7 +9,7 @@ import { pictureFrom } from "@/lib/images"
 import { AdminButton, AdminDrawer, AdminField, AdminSegmented, Callout, Tag, adminControl } from "../ui"
 import { CourseCover, whenLabel } from "./course-parts"
 
-/** Content · 11 Settings drawer: course, access, status and the danger zone. Changes save as you type. */
+/** Content · 06 Course settings: course, access, status and the danger zone. Changes save as you type. */
 export function CourseSettingsDrawer({ course, open, onOpenChange, edit, onDuplicate, onDelete, onPublish, onReviewAccess }: { course: Course; open: boolean; onOpenChange: (o: boolean) => void; edit: (fn: (c: Course) => Course) => void; onDuplicate: () => void; onDelete: () => void; onPublish: () => void; onReviewAccess: () => void }) {
   const { coach } = useCoach()
   const cover = useRef<HTMLInputElement>(null)

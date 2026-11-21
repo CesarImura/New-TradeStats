@@ -76,7 +76,7 @@ function lanes(list: Item[]) {
   return out
 }
 
-/** Calendar · 01 Week (Figma 532:8006): a panel, a 40px head with the days, 56px per hour, events inset 4px. Click an empty time to schedule there. */
+/** Calendar · 01 Week (Figma 1485:101431): a panel, a 40px head with the days, 56px per hour, events inset 4px. Click an empty time to schedule there. */
 export function AdminWeek({ items, start, onSelect, onEmptySlot }: { items: Item[]; start: Date; onSelect: (i: Item, el?: HTMLElement) => void; onEmptySlot: (d: Date) => void }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i))
   const inWeek = items.filter((i) => i.start >= days[0] && i.start < addDays(days[6], 1))

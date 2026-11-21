@@ -30,7 +30,6 @@ export const formatTime = (s: number) => {
 
 export const speedLabel = (s: number) => (s === 1 ? "Normal" : `${s}×`)
 export const qualityLabel = (id: string) => (id === "auto" ? `Auto (${AUTO_QUALITY})` : id)
-export const captionLabel = (id: string) => CAPTION_LANGUAGES.find((l) => l.id === id)?.label ?? "Off"
 
 const LINES: Record<string, string[]> = {
   en: ["A trend is a series of higher highs and higher lows.", "Look at the higher timeframe before you look at the entry.", "A range is price moving between two levels.", "Your stop goes where the idea is proven wrong.", "Wait for the close, not the wick.", "Write it down, then take the trade."],

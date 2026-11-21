@@ -260,7 +260,7 @@ export function DesignWorkspace() {
     </>
   )
   const tabs = designTabs({
-    // Light or dark moved to Theme (Figma Editor · 2 Style): Brand is who you are, Theme is how it looks.
+    // Light or dark moved to Theme (Figma Editor · 02 Style): Brand is who you are, Theme is how it looks.
     type: {
       finds: [
         ...FONT_PAIRS.map((f) => ({ title: "Font pair", option: f.name, words: `${f.text} fonts typeface heading text serif mono` })),

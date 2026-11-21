@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 
 /**
- * Admin / Table for screens written as <Table><TableHeader>… (Figma 662:30058 and its parts, section "Admin · Tables").
+ * Admin / Table for screens written as <Table><TableHeader>… (Figma 662:30058 and its parts, section "Admin · 07 Tables").
  * Same look as `AdminTable` + `AdminTh/Tr/Td`: a panel with a clipping radius, a 38px subtle head row with Caption 12px labels in sentence case,
  * 61px rows with a hairline above and a hover fill, and sideways scroll instead of squeezing. The shell is part of `Table`: do not wrap it in another border.
  */

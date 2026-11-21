@@ -71,11 +71,6 @@ export const COURSES: Course[] = [
   },
 ]
 
-export function courseProgress(c: Course) {
-  const all = c.modules.flatMap((m) => m.lessons)
-  return Math.round((all.filter((l) => l.done).length / all.length) * 100)
-}
-
 export type EventKind = "live" | "call" | "workshop" | "one-on-one" | "news"
 export type CalEvent = {
   id: string
@@ -153,15 +148,6 @@ export const FEEDBACK_REQUESTS = [
   { id: "f1", student: "Mia Sørensen", initials: "MS", trade: "NQ long · −1.2R", note: "Was my stop too tight here?", waiting: "2 days" },
   { id: "f2", student: "Jonas Pereira", initials: "JP", trade: "ES short · +2.4R", note: "Took partials early, right call?", waiting: "1 day" },
   { id: "f3", student: "Lena Ito", initials: "LI", trade: "CL long · −0.8R", note: "Entered before confirmation again.", waiting: "5 hours" },
-]
-
-export const REVENUE_MONTHS = [
-  { month: "May", revenue: 11200 },
-  { month: "Jun", revenue: 12900 },
-  { month: "Jul", revenue: 13650 },
-  { month: "Aug", revenue: 15100 },
-  { month: "Sep", revenue: 16480 },
-  { month: "Oct", revenue: 17940 },
 ]
 
 /** Last four weeks, Monday to Friday, oldest first. 0 = no trades. */

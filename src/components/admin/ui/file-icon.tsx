@@ -58,7 +58,7 @@ const PAGE_PATH = "M4 .5H20L31.5 12V36a3.5 3.5 0 0 1-3.5 3.5H4A3.5 3.5 0 0 1 .5 
 const FOLD_PATH = "M20.5 1V11.5H31"
 
 /**
- * Admin / File icon (Figma 'Admin · Files'): an outlined page with a folded top-right corner and a label bar carrying the extension (radius 2, shifted 3px left of the page, padding 4 around the letters).
+ * Admin / File icon (Figma 'Admin · 10 Files'): an outlined page with a folded top-right corner and a label bar carrying the extension (radius 2, shifted 3px left of the page, padding 4 around the letters).
  * One look (outline); the colour of the pill comes from the type: PDF and slides red, Doc blue, Sheet green, Media amber, anything else grey.
  * The extension letters carry the meaning, not just the colour: md draws 3 letters, lg 4, sm only a colour strip (3/4 of the page width) (the file name beside it says the rest).
  * Decorative: the file name beside it is the accessible name. For an action, wrap it in a button or link that has its own label.

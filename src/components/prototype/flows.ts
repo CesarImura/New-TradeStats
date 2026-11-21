@@ -1,7 +1,7 @@
 /**
  * Map of every screen and flow of the prototype: the Prototype controller (prototype-bar.tsx) and the start page
  * both read it, so a new screen is added once. Hrefs take the community slug. Figma frame names in `figma` help to
- * compare a screen with its design (Screens · Admin v2, Screens · Editor).
+ * compare a screen with its design (Screens · Admin, Screens · Editor).
  */
 export type ProtoScreen = { label: string; href: (slug: string) => string; figma?: string; soon?: boolean }
 export type ProtoFlow = { id: string; label: string; screens: ProtoScreen[] }
@@ -20,14 +20,14 @@ export const PROTO_AREAS: ProtoArea[] = [
     flows: [
       { id: "overview", label: "Overview", screens: [{ label: "Overview", href: admin(), figma: "Overview · 01" }, { label: "Getting started", href: admin("/getting-started"), figma: "Getting started · 01 Start" }] },
       { id: "students", label: "Students", screens: [{ label: "List", href: admin("/students"), figma: "Students · 01" }] },
-      { id: "journal", label: "Journal & feedback", screens: [{ label: "Coming soon", href: admin("/journal"), figma: "Journal · 00", soon: true }] },
+      { id: "journal", label: "Journal & feedback", screens: [{ label: "Coming soon", href: admin("/journal"), figma: "Journal · 00b", soon: true }] },
       { id: "content", label: "Content", screens: [{ label: "Courses", href: admin("/content"), figma: "Content · 01" }] },
       { id: "downloads", label: "Downloads", screens: [{ label: "Files", href: admin("/downloads"), figma: "Downloads · 01" }] },
       { id: "calendar", label: "Calendar", screens: [{ label: "Week", href: admin("/calendar"), figma: "Calendar · 01" }] },
       { id: "livestreams", label: "Livestreams", screens: [{ label: "Coming up", href: admin("/livestreams"), figma: "Livestreams · 01" }] },
       { id: "charts", label: "Charts", screens: [{ label: "Live chart", href: admin("/charts"), figma: "Charts · 01" }] },
       { id: "community", label: "Community", screens: [{ label: "Announcements", href: admin("/community"), figma: "Community · 01" }] },
-      { id: "ai", label: "AI assistant", screens: [{ label: "Coming soon", href: admin("/ai"), figma: "AI assistant · 00", soon: true }] },
+      { id: "ai", label: "AI assistant", screens: [{ label: "Coming soon", href: admin("/ai"), figma: "AI assistant · 00b", soon: true }] },
       {
         id: "sales",
         label: "Sales & payments",

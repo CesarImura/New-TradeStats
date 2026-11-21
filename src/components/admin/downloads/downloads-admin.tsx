@@ -157,7 +157,7 @@ export function DownloadsAdmin() {
   )
 }
 
-/** Downloads · 02 Upload a file (Figma 556:17251): the file first, then what it is and who gets it. */
+/** Downloads · 02 Upload a file (Figma 1485:100254): the file first, then what it is and who gets it. */
 function UploadDrawer({ item, onClose }: { item?: DownloadItem; onClose: () => void }) {
   const { coach } = useCoach()
   const tiers = useTiers(coach)

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 
-/** Admin / Empty state (Figma 'Admin · Layout'): radius 12, dashed strong hairline, padding 48/24, an accent-soft icon box, title, description, actions. */
+/** Admin / Empty state (Figma 'Admin · 05 Layout'): radius 12, dashed strong hairline, padding 48/24, an accent-soft icon box, title, description, actions. */
 export function EmptyState({ icon: Icon, title, description, actions, compact, className }: { icon?: React.ComponentType<{ className?: string }>; title: React.ReactNode; description?: React.ReactNode; actions?: React.ReactNode; compact?: boolean; className?: string }) {
   if (compact) return <p className={cn("rounded-a-md border border-dashed border-a-border-strong px-4 py-6 text-center t-body-m text-a-text-2", className)}>{title}</p>
   return (

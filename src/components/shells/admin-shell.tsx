@@ -86,7 +86,7 @@ function useSidebarCollapsed() {
 }
 
 /**
- * The admin area, Admin v2 (Figma "Admin / Sidebar" + "Admin / Topbar").
+ * The admin area (Figma "Admin / Sidebar" + "Admin / Topbar").
  * Identical in every community: same layout, same colours, same words, so people
  * who run several communities always know where things are. Only the switcher at
  * the top says which community is open.

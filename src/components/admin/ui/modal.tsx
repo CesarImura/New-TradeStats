@@ -25,7 +25,7 @@ function Parts({ title, subtitle, footer, headerActions, bodyClassName, children
   )
 }
 
-/** Admin / Modal (Figma 'Admin · Layout'): radius 16, strong hairline, shadow 0 30 60; header 20/24, body 20/24 gap 16, footer 16/24. */
+/** Admin / Modal (Figma 'Admin · 05 Layout'): radius 16, strong hairline, shadow 0 30 60; header 20/24, body 20/24 gap 16, footer 16/24. */
 const SCRIM = { blur: "bg-a-scrim supports-backdrop-filter:backdrop-blur-a-overlay", plain: "bg-a-scrim supports-backdrop-filter:backdrop-blur-none" } as const
 
 export function AdminModal({ open, onOpenChange, className, overlay = "blur", ...p }: Shell) {

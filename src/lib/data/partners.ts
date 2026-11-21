@@ -41,9 +41,6 @@ export type PartnerOffer = {
 /** An offer TradeStats negotiated; the coach adds it and earns a share of the commission. */
 export type CatalogueOffer = { id: string; name: string; kind: PartnerKind; offer: string; text: string; commission: string }
 
-/** The coach's share of every commission on a catalogue offer. */
-export const COACH_SHARE = 60
-
 export const CATALOGUE: CatalogueOffer[] = [
   { id: "tradeify", name: "Tradeify", kind: "prop", offer: "20% off any evaluation", text: "Futures evaluation with instant funding", commission: "12% of the fee" },
   { id: "tradingview", name: "TradingView", kind: "tool", offer: "30 days of Premium free", text: "The charts used in the lessons", commission: "$30 per paid sign-up" },

@@ -27,7 +27,7 @@ const MODES = [
 ] as const
 type Mode = (typeof MODES)[number]["id"]
 
-/** Students · 04 Import or invite (Figma 556:9396): choose where they come from, check the columns, invite. Three steps, the same modal throughout. */
+/** Students · 03 Import or invite (Figma 1485:74593): choose where they come from, check the columns, invite. Three steps, the same modal throughout. */
 export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const { coach } = useCoach()
   const [step, setStep] = useState(0)

@@ -5,7 +5,7 @@ import { Upload } from "@/components/icons"
 import { cn } from "@/lib/utils"
 
 /**
- * Admin / Dropzone (Figma 'Admin · Files'): radius 10, dashed strong hairline, padding 28/16, an icon, a title and a hint.
+ * Admin / Dropzone (Figma 'Admin · 10 Files'): radius 10, dashed strong hairline, padding 28/16, an icon, a title and a hint.
  * Click to browse or drop files. States: default, hover and drag-over (accent edge), disabled. `size="tile"` fills its box (a lesson slot).
  */
 export function Dropzone({ title = "Drop a file here, or click", hint, icon, accept, multiple, directory, disabled, size = "md", onFiles, className, children, label }: {

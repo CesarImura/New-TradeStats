@@ -14,7 +14,7 @@ import { QuizTab } from "./quiz-tab"
 import { TabPanel } from "@/components/admin/ui"
 
 type Tab = "lesson" | "chapters" | "quiz" | "files"
-/** Content · 08 Lesson, 09 Chapters, 10 Quiz (and Files): one lesson beside the course outline. */
+/** Content · 05 Lesson, 05c Chapters, 05d Quiz (and Files): one lesson beside the course outline. */
 export function LessonPage({ course, lesson, upload, saved, onChange, onPick, onBack, onSelect, onPreview }: { course: Course; lesson: Lesson; upload?: Upload; saved: boolean; onChange: (p: Partial<Lesson>) => void; onPick: (file: File) => void; onBack: () => void; onSelect: (id: string) => void; onPreview: () => void }) {
   const [tab, setTab] = useState<Tab>("lesson")
   const [t, setT] = useState(0)

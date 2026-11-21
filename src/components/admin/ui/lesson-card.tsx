@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 
-/** Admin / Lesson card (Figma 'Admin · Cards & lists'): a 16:9 picture with the length in mono on the corner, the title and an optional mark beneath. */
+/** Admin / Lesson card (Figma 'Admin · 06 Cards & lists'): a 16:9 picture with the length in mono on the corner, the title and an optional mark beneath. */
 /** `selected` and `dragging` take the Admin's active edge (accent), as a selected or dragged Sortable row does. */
 export function LessonCard({ picture, time, title, mark, markClassName, selected, dragging, className, ...props }: Omit<React.ComponentProps<"button">, "title"> & { picture: React.ReactNode; time?: string; title: React.ReactNode; mark?: React.ReactNode; markClassName?: string; selected?: boolean; dragging?: boolean }) {
   return (

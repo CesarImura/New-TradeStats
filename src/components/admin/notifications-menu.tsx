@@ -139,7 +139,7 @@ export function NotificationsMenu({ base, anchorRef, paused = false }: { base: s
           <AdminButton hierarchy="ghost" size="md" nativeButton={false} render={<Link href={`${base}/settings?tab=notifications`} onClick={() => setOpen(false)} />}>
             Notification settings
           </AdminButton>
-          <AdminButton hierarchy="secondary" size="md" className="ml-auto" onClick={() => toast("All notifications are shown here", { description: "A full history page is not part of the prototype yet." })}>
+          <AdminButton hierarchy="secondary" size="md" className="ml-auto" onClick={() => toast("These are all your notifications", { description: "Older ones aren't kept in a separate history." })}>
             See all
           </AdminButton>
         </footer>

@@ -44,4 +44,3 @@ export type AdminButtonProps = ButtonPrimitive.Props & VariantProps<typeof butto
 export function AdminButton({ className, hierarchy, size, iconOnly, ...props }: AdminButtonProps) {
   return <ButtonPrimitive data-slot="admin-button" className={cn(button({ hierarchy, size, iconOnly }), className)} {...props} />
 }
-export { button as adminButton }

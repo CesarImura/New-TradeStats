@@ -10,7 +10,7 @@ import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/ta
 import { DataCard, SettingsPage } from "./settings-parts"
 
 /**
- * Settings › Your business › Notifications, in four blocks (Figma Settings · 03b Notifications):
+ * Settings › Your business › Notifications, in four blocks (Figma Settings · 04 Notifications):
  * Always on (read-only), Activity (bell and e-mail per alert), Daily summary, News from Traderhub.
  * Saved as you type, like every other page here. The bell panel reads the same data (lib/data/admin-notifications).
  */

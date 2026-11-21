@@ -38,7 +38,7 @@ export function AnnouncementsTab({ list, setList, d, setD }: { list: Announcemen
                         <span className="truncate">{a.title}</span>
                         {a.pinned && <Pin className="size-4 shrink-0" aria-label="Pinned" />}
                       </span>
-                      <span className="truncate t-caption text-a-text-2">{a.body}</span>
+                      <span className="truncate t-caption text-a-text-2">{a.body.replace(/\.$/, "")}</span>
                     </div>
                   </div>
                 </AdminTd>
@@ -127,7 +127,7 @@ export function AnnouncementDrawer({ open, onOpenChange, onPost }: { open: boole
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="New module is live" className={cn(adminControl, "h-11")} />
         </AdminField>
         <AdminField label="Message">
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Module 3 covers daily loss limits and the end-of-day review…" className={cn(adminControl, "block h-[104px] resize-none py-2.5")} />
+          <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Module 3 covers daily loss limits and the end-of-day review…" className={cn(adminControl, "block h-[100px] resize-none py-2.5")} />
         </AdminField>
       </div>
       <hr className="m-0 h-px shrink-0 border-0 bg-a-border-subtle" />
@@ -154,8 +154,8 @@ export function AnnouncementDrawer({ open, onOpenChange, onPost }: { open: boole
       </div>
       <hr className="m-0 h-px shrink-0 border-0 bg-a-border-subtle" />
       <div className="flex flex-col gap-4">
-        <fieldset className="grid gap-2.5">
-          <legend className="mb-2.5 t-caption text-a-text">Post in</legend>
+        <fieldset className="grid gap-2">
+          <legend className="mb-2 t-caption text-a-text">Post in</legend>
           {CHANNELS.map((c) => (
             <label key={c.id} className="flex items-center gap-2.5 t-body-m text-a-text">
               <Checkbox checked={channels.includes(c.id)} onCheckedChange={(v) => setChannels((x) => (v ? [...x, c.id] : x.filter((y) => y !== c.id)))} />

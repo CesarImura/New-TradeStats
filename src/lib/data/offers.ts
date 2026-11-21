@@ -57,8 +57,6 @@ export type OfferLink = {
   failed?: boolean
 }
 
-export type OfferSettingsSample = { offers: Offer[]; links: OfferLink[] }
-
 export const NO_OFFERS: Offer[] = []
 export const NO_LINKS: OfferLink[] = []
 

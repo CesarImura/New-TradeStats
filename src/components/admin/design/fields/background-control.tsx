@@ -27,7 +27,7 @@ export function BackgroundControl({ theme, onChange, where = true }: { theme: Co
 
   return (
     <div className="grid gap-4">
-      {/* Figma Style · 10: four cards that show what each background does, the page's colour, a texture, the brand's gradient or a picture. */}
+      {/* Figma Style · 05 Background: four cards that show what each background does, the page's colour, a texture, the brand's gradient or a picture. */}
       <div role="radiogroup" aria-label="Background style" data-field="background" className="grid grid-cols-2 gap-2">
         {(
           [
@@ -104,7 +104,7 @@ export function BackgroundControl({ theme, onChange, where = true }: { theme: Co
               e.target.value = ""
               if (!f) return
               try {
-                // Figma Style · 15: too small stays soft on a big screen, so it is refused with the minimum (1600 px wide).
+                // Figma Style · 05b Background · Image too small: too small stays soft on a big screen, so it is refused with the minimum (1600 px wide).
                 const size = await imageSize(f)
                 if (size && size.w < 1600) return setError(`This image is ${size.w} × ${size.h} px. Use one at least 1600 px wide so it stays sharp.`)
                 setError(null)

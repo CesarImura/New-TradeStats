@@ -162,29 +162,6 @@ export const MONEY = {
   trials: 14,
 }
 
-export const TEAM = [
-  { name: "Lionel Imura", initials: "LI", email: "lionel@northline.trade", role: "Owner", students: "All" },
-  { name: "Jana Novak", initials: "JN", email: "jana@northline.trade", role: "Assistant coach", students: "2 assigned" },
-  { name: "Ravi Patel", initials: "RP", email: "ravi@northline.trade", role: "Moderator", students: "–" },
-]
-export const ROLES = [
-  { id: "owner", name: "Owner", text: "Everything, including money and the team" },
-  { id: "admin", name: "Admin", text: "Everything except payouts and our subscription" },
-  { id: "coach", name: "Assistant coach", text: "Their students: feedback, notes, calls" },
-  { id: "moderator", name: "Moderator", text: "Community and announcements" },
-]
-
-export const EMAIL_TEMPLATES = [
-  { id: "code", name: "Login code", subject: "Your code for {platform}", body: "Hi {first},\n\nYour code is {code}. It works for 10 minutes." },
-  { id: "welcome", name: "Welcome", subject: "Welcome to {platform}", body: "Hi {first},\n\nGlad you're here. Start with the first lesson: {link}\n\n{coach}" },
-  { id: "receipt", name: "Receipt and invoice", subject: "Your receipt from {platform}", body: "Thanks for your payment of {amount}. Your invoice is attached." },
-  { id: "trial", name: "Trial ending", subject: "Your trial ends in 2 days", body: "Hi {first},\n\nYour free trial ends on {date}. Nothing to do if you want to stay." },
-  { id: "failed", name: "Payment failed", subject: "Your payment didn't go through", body: "Hi {first},\n\nWe couldn't take your payment. Update your card here: {link}" },
-  { id: "lesson", name: "New lesson", subject: "New: {lesson}", body: "{coach} published a new lesson: {lesson}.\n\n{link}" },
-  { id: "event", name: "Event reminder", subject: "{event} starts in 1 hour", body: "Join here: {link}" },
-  { id: "feedback", name: "Feedback received", subject: "{coach} reviewed your trade", body: "{coach} left feedback on your {trade} trade.\n\n{link}" },
-]
-
 export const LEGAL = [
   { id: "imprint", name: "Imprint", text: "Northline Trading GmbH\nBahnhofstrasse 1, 8001 Zürich, Switzerland\nCommercial register: CHE-123.456.789" },
   { id: "terms", name: "Terms", text: "1. Scope\nThese terms apply to all memberships of Northline Trading…" },

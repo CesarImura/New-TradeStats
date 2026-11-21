@@ -43,7 +43,7 @@ export function useConfirmSwitch() {
         </>
       }
     >
-      {/* Figma Style · 07 Switch: what is redone and what stays, then where the design as it is now is kept. */}
+      {/* Figma Style · 02f Theme · Switch: what is redone and what stays, then where the design as it is now is kept. */}
       <div className="grid grid-cols-2 gap-4">
         <ChangeList title={`Redone from ${pending?.name ?? ""}`} items={["Fonts and heading weight", "Corners, buttons, shadow and borders", "Widget style"]} />
         <ChangeList title="Stays as it is" items={["Name and logo", "Colours and Dark or Light", "Menu, pages, spacing and background"]} />

@@ -183,7 +183,7 @@ export function Team() {
                   role="radio"
                   aria-checked={role === r}
                   onClick={() => setRole(r)}
-                  className={cn("flex items-center gap-3 rounded-a-md border px-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus", role === r ? "border-a-border-active bg-a-raised" : "border-a-border hover:bg-a-hover")}
+                  className={cn("flex items-center gap-3 rounded-a-md border px-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus", role === r ? "border-[var(--admin-color-control-on)] bg-a-raised" : "border-a-border hover:bg-a-hover")}
                 >
                   <span className={cn("grid size-4 shrink-0 place-items-center rounded-full border", role === r ? "border-a-accent-strong" : "border-a-border-strong")}>
                     {role === r && <span className="size-2 rounded-full bg-a-accent-strong" />}

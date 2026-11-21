@@ -146,7 +146,7 @@ function GroupEditor({ group, isNew, onClose }: { group: Group | null; isNew: bo
             <span className="t-caption text-a-text">Who can join</span>
             <div className="grid gap-2 sm:grid-cols-2">
               {tiers.map((t) => (
-                <label key={t.id} className={cn("flex items-center gap-2.5 rounded-a-md border p-2.5 t-body-m", g.tiers.includes(t.id) ? "border-a-border-active bg-a-raised" : "border-a-border")}>
+                <label key={t.id} className={cn("flex items-center gap-2.5 rounded-a-md border p-2.5 t-body-m", g.tiers.includes(t.id) ? "border-[var(--admin-color-control-on)] bg-a-raised" : "border-a-border")}>
                   <Checkbox checked={g.tiers.includes(t.id)} onCheckedChange={(v) => set({ tiers: v ? [...g.tiers, t.id] : g.tiers.filter((x) => x !== t.id) })} />
                   {t.name}
                 </label>

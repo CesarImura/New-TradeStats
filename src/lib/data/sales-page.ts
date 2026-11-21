@@ -41,7 +41,7 @@ export function defaultBlocks(coach: Coach): Block[] {
   const hit = cache.get(coach.slug)
   if (hit) return hit
   const blocks: Block[] = [
-    { id: "hero", type: "hero", on: true, title: coach.tagline, text: `Courses, live sessions and a community with ${coach.coachName}. Everything in one place, built around how you actually trade.` },
+    { id: "hero", type: "hero", on: true, title: coach.tagline, text: `Courses, live sessions and a community with ${coach.coachName}, built around how you actually trade.` },
     {
       id: "about",
       type: "about",

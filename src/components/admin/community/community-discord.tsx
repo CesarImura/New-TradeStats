@@ -43,7 +43,7 @@ export function DiscordTab({ d, setD }: { d: DiscordSetup; setD: (n: DiscordSetu
         <Panel className="gap-3">
           <div className="grid gap-0.5">
             <h2 className="t-heading-s text-a-text">Our bot posts in Discord</h2>
-            <p className="t-caption text-a-text-2">So your server knows what&apos;s new on the platform.</p>
+            <p className="t-caption text-a-text-2">So your server knows what’s new on the platform.</p>
           </div>
           <div className="flex flex-col gap-3">
             {BOT_POSTS.map(([id, label, channel]) => (

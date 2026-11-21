@@ -120,7 +120,7 @@ function Settings({ s, setS }: { s: ChartSettings; setS: (n: ChartSettings | ((c
               const on = s.markets.includes(m.id)
               return (
                 <button key={m.id} type="button" aria-pressed={on} onClick={() => set({ markets: on ? s.markets.filter((x) => x !== m.id) : [...s.markets, m.id] })}
-                  className={cn("h-9 rounded-a-md border t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:h-10", on ? "border-a-border-active bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:border-a-border-strong hover:text-a-text")}>
+                  className={cn("h-9 rounded-a-md border t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus pointer-coarse:h-10", on ? "border-[var(--admin-color-control-on)] bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:border-a-border-strong hover:text-a-text")}>
                   {m.label}
                 </button>
               )

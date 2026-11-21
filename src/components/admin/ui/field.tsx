@@ -4,7 +4,7 @@ import { useId } from "react"
 import { cn } from "@/lib/utils"
 import { SelectField } from "@/components/kit/select-field"
 
-/** Admin / Field control (Figma 'Admin · Forms'): 44px, radius md, field fill, subtle hairline; hover strong, focus orange, error red. */
+/** Admin / Field control (Figma 'Admin · 03 Forms'): 44px, radius md, field fill, subtle hairline; hover strong, focus orange, error red. */
 export const adminControl = "w-full rounded-a-md border border-a-border-subtle bg-a-field px-3 t-body-l text-a-text outline-none placeholder:text-a-text-3 transition-colors duration-300 hover:border-a-border-strong focus-visible:border-a-border-focus disabled:pointer-events-none disabled:opacity-40 aria-[invalid=true]:border-a-border-danger"
 
 type ControlProps = { id: string; "aria-invalid"?: true; "aria-describedby"?: string }

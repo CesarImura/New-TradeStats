@@ -86,7 +86,7 @@ function useDark() {
   }, [])
 }
 
-/** Card box width by screen (Figma Admin v2 · 01 Onboarding): 440 for Log in, Create account and Verify, 480 for Name, 560 for About (content 360, 400 and 480 plus 40 px padding each side). */
+/** Card box width by screen (Figma Admin · 01 Onboarding): 440 for Log in, Create account and Verify, 480 for Name, 560 for About (content 360, 400 and 480 plus 40 px padding each side). */
 const CARD_W: Record<string, string> = { "/signup/about": "sm:max-w-[560px]", "/signup/name": "sm:max-w-[480px]" }
 const CARD_W_DEFAULT = "sm:max-w-[440px]"
 

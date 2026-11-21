@@ -6,7 +6,7 @@ import { ReorderHandle } from "./reorder"
 
 /**
  * Admin / Sortable row (Figma 748:38223): radius 8, 52 high, padding 8/10, gap 10, a drag handle, titles, a trailing slot.
- * States: default (hairline border, token component/sortable-row/border/default), hover (a faint fill, the handle and menu brighten), active (selected: accent edge), dragging (accent edge, a stronger fill), disabled.
+ * States: default (hairline border, token component/sortable-row/border/default), hover (a faint fill, the handle and menu brighten), active (selected: orange edge, component/sortable-row/border/active), dragging (orange edge, a stronger fill), disabled.
  * With `handle` the grip is a real button: drag it, or focus it and press the arrows (see ui/reorder). Without it, the grip is only decoration.
  */
 export function SortableRow({ title, description, trailing, active, dragging, disabled, handle, dragHandleProps, className, ...props }: Omit<React.ComponentProps<"div">, "title"> & {
@@ -21,7 +21,7 @@ export function SortableRow({ title, description, trailing, active, dragging, di
   dragHandleProps?: React.ComponentProps<"span">
 }) {
   return (
-    <div data-slot="sortable-row" className={cn("group/sortable flex min-h-[52px] items-center gap-2.5 rounded-a-md border px-2.5 py-2 transition-colors duration-300", active ? "border-a-border-active bg-a-muted" : "border-[var(--admin-component-sortable-row-border-default)] hover:bg-a-hover", dragging && "border-a-border-active bg-a-selected", disabled && "pointer-events-none opacity-40", className)} {...props}>
+    <div data-slot="sortable-row" className={cn("group/sortable flex min-h-[52px] items-center gap-2.5 rounded-a-md border px-2.5 py-2 transition-colors duration-300", active ? "border-[var(--admin-component-sortable-row-border-active)] bg-a-muted" : "border-[var(--admin-component-sortable-row-border-default)] hover:bg-a-hover", dragging && "border-[var(--admin-component-sortable-row-border-active)] bg-a-selected", disabled && "pointer-events-none opacity-40", className)} {...props}>
       {handle ? (
         <ReorderHandle {...handle} className={cn("-ml-1", handle.className)} />
       ) : (

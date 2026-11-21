@@ -38,9 +38,6 @@ import { NewCourse } from "./new-course"
 import { useAllUploads } from "./upload-store"
 import { SampleNotice, SetupTip, useWizardCommunity } from "../setup-checklist"
 
-/** Thumbnail tints for the admin, which keeps its own neutral look. */
-export { COVER_TINTS as THUMB } from "./thumbs"
-
 type Filter = "all" | "attention" | Status
 
 /** Published and still holding a lesson that is not ready for students. */

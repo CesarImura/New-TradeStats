@@ -35,7 +35,7 @@ export const REPORTS: Report[] = [
 ]
 export const NO_REPORTS: Report[] = []
 export const MOD_RULES = [
-  ["first", "Hold a member's first post", "New members' first post waits for a moderator.", true],
+  ["first", "Hold a member’s first post", "New members’ first post waits for a moderator.", true],
   ["hide", "Hide after 3 reports", "Posts reported three times are hidden until reviewed.", true],
   ["mail", "Notify me of new reports", "Get an e-mail when a post is reported.", false],
 ] as const

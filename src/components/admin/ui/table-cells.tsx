@@ -2,7 +2,7 @@ import { AdminAvatar } from "./avatar"
 import { cn } from "@/lib/utils"
 import { AdminProgress } from "./progress-line"
 
-/** Admin / Cell stack (Figma 'Admin · Tables'): a title over an optional subtitle; the title is Regular or Medium. */
+/** Admin / Cell stack (Figma 'Admin · 07 Tables'): a title over an optional subtitle; the title is Regular or Medium. */
 export function CellStack({ title, subtitle, weight = "regular", className }: { title: React.ReactNode; subtitle?: React.ReactNode; weight?: "regular" | "medium"; className?: string }) {
   return (
     <div className={cn("grid min-w-0 gap-0.5", className)}>

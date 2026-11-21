@@ -36,7 +36,7 @@ export function PageHeader({ title, text, actions, guide }: { title: string; tex
 }
 
 /** The admin's page column. */
-/** Admin v2 content is 1200 px wide (Figma "Stack"), capped by the shell. */
+/** Admin content is 1200 px wide (Figma "Stack"), capped by the shell. */
 export function Page({ children }: { children: React.ReactNode }) {
   return <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8">{children}</div>
 }
@@ -69,10 +69,6 @@ export { AdminField as Field, EmptyState } from "@/components/admin/ui"
 /** Small mono label in our own TradeStats style. */
 export function Mono({ children, className }: { children: React.ReactNode; className?: string }) {
   return <span className={cn("t-mono-label", className)}>{children}</span>
-}
-
-export function HealthDot({ health, className }: { health: "red" | "amber" | "green"; className?: string }) {
-  return <span className={cn("inline-block size-2 shrink-0 rounded-full", health === "red" ? "bg-a-danger-fill" : health === "amber" ? "bg-a-warning-fill" : "bg-a-success-fill", className)} />
 }
 
 /**

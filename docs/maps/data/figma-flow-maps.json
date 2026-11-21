@@ -1,0 +1,147 @@
+{
+"A01": {"flow":"Onboarding","sec":"1485:136393","title":"ONBOARDING · MAPA DO FLUXO","sub":"A ordem das telas segue o caminho do coach do cadastro até o Go live",
+ "groups":[
+  {"t":"1 · Criar a conta","d":"Cadastro com e-mail e código, perfil e idioma.","i":[["1","Sign up","01 a 05: log in, conta, código, sobre você, nome e idioma"]]},
+  {"t":"2 · Montar a plataforma","d":"O Getting started guia os passos em ordem; o atual fica aberto.","i":[["2","Getting started","01 a 06, 06b pagamentos pulados"],["3","Design","01 a 03 e o tour do editor"],["4","Tour · Tier","01 a 04, 02b tier grátis"]]},
+  {"t":"3 · Conteúdo e dinheiro","d":"Primeiro curso (três ramos de vídeo) e conexão dos repasses.","i":[["5","Tour · Course","01 a 09; 04a/04b/04c e 05a/05b são ramos"],["6","Tour · Payouts","01 a 05, 05b identidade em análise"]]},
+  {"t":"4 · Publicar","d":"Páginas legais, confirmação e a plataforma no ar.","i":[["7","Tour · Legal","01 a 04"],["8","Tour · Go live","01 a 03, 01b endereço em uso"],["?","Help","chat, chamada de setup, nós montamos"]]}
+ ],
+ "rel":"Design abre o Editor (Editor · 02 Style) · Tour · Tier abre Sales 03 Edit tier · Tour · Course abre Content 02 a 05 · Go live publica o site do aluno",
+ "code":"Código: admin/getting-started, admin/tour, onboarding/*.tsx, docs/onboarding.md."},
+"A02": {"flow":"Overview","sec":"1485:64808","title":"OVERVIEW · MAPA DO FLUXO","sub":"A primeira tela do Admin e os dois atalhos do topo",
+ "groups":[
+  {"t":"1 · A semana","d":"Números do mês, perguntas dos alunos e o que precisa do coach.","i":[["01","Normal week","01b a 01g: plataforma nova, gráfico, perguntas, lembrete, menu da conta"]]},
+  {"t":"2 · Atalhos do topo","d":"Sino de notificações e busca ⌘K.","i":[["02","Notifications","02b vazio, 02c offers"],["03","Search (⌘K)","03b vazio, 03c enviar offer"]]}
+ ],
+ "rel":"02c e 03c abrem Sales 06 Send offer · os cartões levam a Students, Journal e Sales",
+ "code":"Código: admin/overview.tsx, notifications-menu.tsx, command-palette.tsx, account-menu.tsx."},
+"A03": {"flow":"Students","sec":"1485:74514","title":"STUDENTS · MAPA DO FLUXO","sub":"Da lista de alunos ao perfil, importação e mensagem",
+ "groups":[
+  {"t":"1 · A lista","d":"Todos os alunos com filtros, seleção e busca.","i":[["01","List","01b sem alunos, 01c seleção, 01d sem resultado"]]},
+  {"t":"2 · Um aluno","d":"Perfil no drawer, com abas.","i":[["02","Profile","02b comprador de offer, 02c atividade, 02d notas"]]},
+  {"t":"3 · Ações","d":"Trazer alunos e falar com eles.","i":[["03","Import or invite","03b escolher origem"],["04","Message","um aluno ou a seleção"]]}
+ ],
+ "rel":"02b liga com Sales · 07 Offer checkout · a mensagem também sai da busca ⌘K (Overview 03)",
+ "code":"Código: admin/students/*.tsx."},
+"A04": {"flow":"Journal","sec":"1485:76770","title":"JOURNAL & FEEDBACK · MAPA DO FLUXO","sub":"Hoje o código mostra Coming soon; as telas abaixo são o desenho do fluxo",
+ "groups":[
+  {"t":"1 · Requests","d":"Pedidos de feedback dos alunos.","i":[["01","Requests","01b atrasados, 01c nada esperando"],["02","Answer a request",""],["03","Recording a video",""]]},
+  {"t":"2 · Answered","d":"O que já foi respondido.","i":[["04","Answered","04b plataforma nova"]]},
+  {"t":"3 · Rules","d":"Regras e estratégias que o aluno usa no diário.","i":[["05","Rules",""],["06","New strategy",""]]}
+ ],
+ "rel":"00b Coming soon é a tela que está no ar · Requests chegam pelo diário do aluno (Terminal)",
+ "code":"Código: admin/journal/*.tsx (guardado), admin/ui/coming-soon.tsx no ar."},
+"A05": {"flow":"Content","sec":"1485:77490","title":"CONTENT · MAPA DO FLUXO","sub":"Dos cursos à publicação, na ordem em que o coach trabalha",
+ "groups":[
+  {"t":"1 · Seus cursos","d":"Lista em cards ou tabela.","i":[["01","List","01b tabela, 01c sem cursos"]]},
+  {"t":"2 · Criar um curso","d":"Dois passos no mesmo modal.","i":[["02","New course · Course",""],["03","New course · Content","pasta, links ou vazio"]]},
+  {"t":"3 · Montar as aulas","d":"Currículo e a página de cada aula.","i":[["04","Curriculum + uploads",""],["05","Lesson","05b sem thumbnail, 05c capítulos, 05d quiz, 05e sem quiz"]]},
+  {"t":"4 · Publicar","d":"Ajustes, revisão e a visão do aluno.","i":[["06","Course settings",""],["07","Publish review",""],["08","Preview as student",""]]}
+ ],
+ "rel":"Onboarding · Tour · Course passa por 02 a 05 · Livestreams 05 vira aula em 04",
+ "code":"Código: admin/content/*.tsx."},
+"A06": {"flow":"Downloads","sec":"1485:100231","title":"DOWNLOADS · MAPA DO FLUXO","sub":"Arquivos que os alunos baixam",
+ "groups":[
+  {"t":"1 · Arquivos","d":"Lista e envio de arquivos.","i":[["01","List","01b sem arquivos"],["02","Upload a file","02b arquivo escolhido"]]}
+ ],
+ "rel":"Os ícones de arquivo vêm de Admin / File icon",
+ "code":"Código: admin/downloads/*.tsx."},
+"A07": {"flow":"Calendar","sec":"1485:101430","title":"CALENDAR · MAPA DO FLUXO","sub":"As abas Calendar, Availability e News, na ordem do Admin",
+ "groups":[
+  {"t":"1 · Calendar","d":"Semana e mês, eventos e chamadas.","i":[["01","Week","01b plataforma nova, 01c sobreposição, 01d mês, 01e prévia"],["02","New event",""],["03","Call details",""]]},
+  {"t":"2 · Availability","d":"Horários livres para chamadas.","i":[["04","Availability",""]]},
+  {"t":"3 · News","d":"Agenda de notícias do mercado.","i":[["05","News",""]]}
+ ],
+ "rel":"Chamadas usam o link de agendamento de Settings 01b · livestreams aparecem na semana",
+ "code":"Código: admin/calendar/*.tsx."},
+"A08": {"flow":"Livestreams","sec":"1485:102134","title":"LIVESTREAMS · MAPA DO FLUXO","sub":"Antes, durante e depois de uma live",
+ "groups":[
+  {"t":"1 · Antes","d":"Lista e agendamento.","i":[["01","Coming up","01b sem lives"],["02","Schedule a livestream",""]]},
+  {"t":"2 · Durante","d":"Estúdio com OBS.","i":[["03","Studio · Connect OBS",""],["04","Studio · Live",""]]},
+  {"t":"3 · Depois","d":"A gravação vira aula.","i":[["05","Ended · Save as a lesson","05b gravação em preparo"]]}
+ ],
+ "rel":"05 cria uma aula em Content 04 · lives aparecem no Calendar",
+ "code":"Código: admin/livestreams/*.tsx."},
+"A09": {"flow":"Charts","sec":"1485:102744","title":"CHARTS · MAPA DO FLUXO","sub":"O gráfico ao vivo do coach e suas ações",
+ "groups":[
+  {"t":"1 · Chart","d":"Gráfico, layouts, compartilhar e marcar.","i":[["01","Live chart","01b nível marcado, 01c sem gráficos"],["02","Layouts",""],["03","Share snapshot",""],["04","Mark up a chart",""]]},
+  {"t":"2 · Settings","d":"Preferências do gráfico.","i":[["05","Settings",""]]}
+ ],
+ "rel":"Snapshots compartilhados aparecem para os alunos no Terminal",
+ "code":"Código: admin/charts/*.tsx, components/charts."},
+"A10": {"flow":"Community","sec":"1485:103066","title":"COMMUNITY · MAPA DO FLUXO","sub":"As abas da comunidade, na ordem do Admin",
+ "groups":[
+  {"t":"1 · Announcements","d":"Avisos para os alunos.","i":[["01","Announcements","01b plataforma nova"],["02","New announcement",""]]},
+  {"t":"2 · Espaços e Discord","d":"Onde os alunos conversam.","i":[["03","Spaces & rules",""],["04","Discord","04b não conectado"]]},
+  {"t":"3 · Moderation","d":"Denúncias e bloqueios.","i":[["05","Moderation",""]]}
+ ],
+ "rel":"Avisos chegam ao sino do aluno · Discord depende do tier (Sales 09 Access)",
+ "code":"Código: admin/community/*.tsx."},
+"A11": {"flow":"AI assistant","sec":"1485:115708","title":"AI ASSISTANT · MAPA DO FLUXO","sub":"Hoje o código mostra Coming soon; as telas abaixo são o desenho do fluxo",
+ "groups":[
+  {"t":"1 · Configurar","d":"Como o assistente fala e o que sabe.","i":[["01","Personality",""],["02","Knowledge","02b plataforma nova"],["03","Features & quotas",""]]},
+  {"t":"2 · Acompanhar","d":"Testar e ver o que os alunos perguntam.","i":[["04","Test & correct",""],["05","Questions","05b plataforma nova"]]}
+ ],
+ "rel":"00b Coming soon é a tela que está no ar · o widget Ask the AI do aluno usa as cotas de 03",
+ "code":"Código: admin/ai/*.tsx (guardado), admin/ui/coming-soon.tsx no ar."},
+"A13": {"flow":"Partners","sec":"1485:117918","title":"PARTNERS · MAPA DO FLUXO","sub":"As abas Deals e Affiliate program",
+ "groups":[
+  {"t":"1 · Deals","d":"Ofertas de parceiros para os alunos.","i":[["01","Deals","01b plataforma nova, 01c parceiros desligados"],["02","Add from catalogue",""]]},
+  {"t":"2 · Affiliate program","d":"Indicações que geram comissão.","i":[["03","Affiliate program","03b plataforma nova"]]}
+ ],
+ "rel":"Comissões aparecem em Sales 13 Transactions",
+ "code":"Código: admin/partners/*.tsx."},
+"A14": {"flow":"Ranking","sec":"1485:118296","title":"RANKING · MAPA DO FLUXO","sub":"As abas Leaderboard, Competitions e Points & badges",
+ "groups":[
+  {"t":"1 · Leaderboard","d":"Quem está na frente.","i":[["01","Leaderboard","01b plataforma nova"]]},
+  {"t":"2 · Competitions","d":"Desafios com prazo.","i":[["02","Competitions","02b plataforma nova"],["03","New competition",""]]},
+  {"t":"3 · Points & badges","d":"Regras de pontos e selos.","i":[["04","Points & badges",""]]}
+ ],
+ "rel":"O ranking aparece no Terminal do aluno",
+ "code":"Código: admin/ranking/*.tsx."},
+"A15": {"flow":"Settings","sec":"1485:118930","title":"SETTINGS · MAPA DO FLUXO","sub":"As páginas do menu de Settings, na ordem do código",
+ "groups":[
+  {"t":"1 · O negócio","d":"Dados, endereço e e-mails.","i":[["01","General","01b link de agendamento"],["02","Web address",""],["03","E-mails",""]]},
+  {"t":"2 · Avisos e legal","d":"Notificações e páginas legais.","i":[["04","Notifications",""],["05","Legal pages",""]]},
+  {"t":"3 · Primeiros dias do aluno","d":"Perguntas e a home da primeira semana.","i":[["06","Onboarding questions",""],["07","Home in the first week",""]]},
+  {"t":"4 · Cobrança e equipe","d":"Notas fiscais, equipe e plano.","i":[["08","Invoices and VAT",""],["09","Team and roles",""],["10","Invite to the team",""],["11","Plan and invoices",""]]}
+ ],
+ "rel":"01b é usado em Sales offers e Editor Join 03b · 05 é preenchido no Onboarding (Tour · Legal)",
+ "code":"Código: admin/settings/*.tsx."},
+"E01": {"flow":"Menu","sec":"144:13220","title":"EDITOR · MENU · MAPA DO FLUXO","sub":"O menu principal do Editor flutuante",
+ "groups":[
+  {"t":"1 · Menu","d":"Entrada para Style, Pages e Join.","i":[["01","Main",""]]}
+ ],
+ "rel":"Leva a Editor · 02 Style, 03 Pages e 04 Join",
+ "code":"Código: admin/design/editor/*.tsx."},
+"E02": {"flow":"Style","sec":"1438:23355","title":"EDITOR · STYLE · MAPA DO FLUXO","sub":"As abas de Style, na ordem do Editor",
+ "groups":[
+  {"t":"1 · Marca e tema","d":"Logo, cores e o tema do site.","i":[["01","Brand","01b importar do site, 01c logo grande"],["02","Theme","02b a 02f: Terminal claro, Atelier, Pulse, Custom, troca"]]},
+  {"t":"2 · Forma","d":"Layout, fontes e fundo.","i":[["03","Layout",""],["04","Type",""],["05","Background","05b imagem pequena"]]},
+  {"t":"3 · Em qualquer aba","d":"Busca e clique no preview.","i":[["06","Search · Results",""],["07","Click to edit",""]]}
+ ],
+ "rel":"O Onboarding (Design 01 a 03) usa as mesmas abas",
+ "code":"Código: admin/design/fields, admin/design/panels, lib/theme."},
+"E03": {"flow":"Pages","sec":"144:13223","title":"EDITOR · PAGES · MAPA DO FLUXO","sub":"Páginas do site e os widgets de cada uma",
+ "groups":[
+  {"t":"1 · Páginas","d":"Lista e busca de páginas.","i":[["01","Pages","01b a 01d: busca vazia, resultados, sem resultado"]]},
+  {"t":"2 · Widgets","d":"Selecionar e adicionar widgets.","i":[["02","Widget selected",""],["03","All widgets",""]]}
+ ],
+ "rel":"Menus e diálogos do painel ficam em Editor · 05",
+ "code":"Código: admin/design/panels/builder-panels.tsx, components/widgets."},
+"E04": {"flow":"Join","sec":"144:13222","title":"EDITOR · JOIN · MAPA DO FLUXO","sub":"As páginas públicas de entrada e assinatura",
+ "groups":[
+  {"t":"1 · Entrar","d":"Log in e cadastro.","i":[["01","Log in","01b layout dividido"],["02","Sign up",""]]},
+  {"t":"2 · Assinar","d":"Escolher o tier e pagar.","i":[["03","Subscribe","03b link de agendamento"]]}
+ ],
+ "rel":"Preços vêm de Sales 02 Tiers & prices · 03b usa Settings 01b",
+ "code":"Código: components/public/*.tsx."},
+"E05": {"flow":"Menus and dialogs","sec":"1132:9921","title":"EDITOR · MENUS AND DIALOGS · MAPA","sub":"Catálogo: uma linha por grupo, não é um fluxo",
+ "groups":[
+  {"t":"1 · Top bar","d":"Menus do topo e publicação.","i":[["01","Page menu",""],["02","More menu",""],["03","Preview as",""],["04","Publish failed","05 tudo publicado"]]},
+  {"t":"2 · Canvas","d":"Tamanhos e carregamento.","i":[["01","Layout for","02 tablet, 03 phone, 04 carregando"]]},
+  {"t":"3 · Dialogs e painel","d":"Versões, template e painel de páginas.","i":[["D","Dialogs","01 versões, 02 template, 03 voltar ao original"],["P","Pages panel","01 nesta página, 02 categoria, 03 página de curso"]]}
+ ],
+ "rel":"Usados por Style e Pages",
+ "code":"Código: admin/design/editor/*.tsx."}
+}

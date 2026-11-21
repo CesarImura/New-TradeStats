@@ -198,7 +198,3 @@ export function setAccount(patch: Partial<Account> | null) {
   write(ACCOUNT, { ...cur, ...patch })
 }
 
-/** Prototype stand-in for "we pre-approved this e-mail". */
-export function isPreApproved(email: string) {
-  return /@(approved|vip)\./i.test(email) || /\+vip@/i.test(email)
-}

@@ -120,7 +120,7 @@ function WeeklyActivity({ s }: { s: Student }) {
   )
 }
 
-/** Students · 03 Profile, 07 Activity, 08 Notes (Figma 556:32726): everything about one student, in the drawer. Their name and money first, then what needs the coach, then the details. */
+/** Students · 02 Profile, 02c Activity, 02d Notes (Figma 1485:74566): everything about one student, in the drawer. Their name and money first, then what needs the coach, then the details. */
 export function StudentProfile({ student: s, paused = false, onOpenChange, onMessage, onPause }: { student: Student | null; paused?: boolean; onOpenChange: (o: boolean) => void; onMessage: (s: Student) => void; onPause: (s: Student) => void }) {
   const { coach } = useCoach()
   const [notes, setNotes] = useCommunityData(coach.slug, "student-notes", NO_NOTES)

@@ -27,10 +27,10 @@ export function AdminTableHead({ children }: { children: React.ReactNode }) {
   )
 }
 
-/** Admin / Table head cell: mono caption, 12px line. `width` is the whole column (cell + gap), in px. */
+/** Admin / Table head cell (Figma Admin/Micro 11/14, head 34px). `width` is the whole column (cell + gap), in px. */
 export function AdminTh({ children, width, align = "start", className }: { children?: React.ReactNode; width?: number; align?: "start" | "end"; className?: string }) {
   return (
-    <th scope="col" style={width ? { width } : undefined} className={cn("relative h-[38px] py-0 pr-4 t-caption text-a-text-2 first:pl-5 last:pr-5", align === "end" && "text-right", className)}>
+    <th scope="col" style={width ? { width } : undefined} className={cn("relative h-[34px] py-0 pr-4 t-micro text-a-text-2 first:pl-5 last:pr-5", align === "end" && "text-right", className)}>
       {children ?? <span className="sr-only">Actions</span>}
     </th>
   )

@@ -12,7 +12,7 @@ const STATE = {
   skipped: "border border-dashed border-a-border-strong text-a-text-2",
 } as const
 
-/** Admin / Step indicator (Figma 'Admin · Data display'): a 20px circle with a number, or a check when done or successful. */
+/** Admin / Step indicator (Figma 'Admin · 08 Data display'): a 20px circle with a number, or a check when done or successful. */
 export function StepIndicator({ step, state = "upcoming", className }: { step: number; state?: keyof typeof STATE; className?: string }) {
   return (
     <span className={cn("grid size-5 shrink-0 place-items-center rounded-full transition-colors duration-300 ease-out t-micro-medium", STATE[state], className)}>

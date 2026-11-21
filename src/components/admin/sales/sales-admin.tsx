@@ -107,7 +107,7 @@ function Affiliates() {
   const { base } = useCoach()
   return (
     <Panel className="max-w-xl">
-      <PanelHeader title="Affiliates moved to Partners" description="The affiliate program, your partner deals and what they earn are now in one place." />
+      <PanelHeader title="Affiliates moved to Partners" description="The affiliate program, partner deals and partner earnings are all in Partners." />
       <div>
         <AdminButton nativeButton={false} render={<Link href={`${base}/partners`} />} hierarchy="secondary">
           Open Partners

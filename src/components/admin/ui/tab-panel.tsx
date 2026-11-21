@@ -93,7 +93,7 @@ export function TabPanel({ value, order, className, outerClassName, children }: 
           initial={reduced ? false : { opacity: 0, x, y }}
           animate={{ opacity: 1, x: 0, y: 0, transition: reduced ? INSTANT : PANEL_IN }}
           exit={{ opacity: 0, x: reduced ? 0 : -x / 2, y: state.dir === 0 && !reduced ? -2 : 0, transition: reduced ? INSTANT : PANEL_OUT }}
-          className={className}
+          className={cn("flex min-w-0 flex-col gap-4", className)}
         >
           {children}
         </motion.div>

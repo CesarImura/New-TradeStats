@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { SlideTrack } from "@/components/admin/ui/slide-thumb"
 
 /**
- * Charts · 01 Live chart (Figma Admin v2, 1485:102744): a charting workspace. Drawing tools on the left, a toolbar with the
+ * Charts · 01 Live chart (Figma Screens · Admin, 1485:102745): a charting workspace. Drawing tools on the left, a toolbar with the
  * symbol and timeframes, candles with volume and the coach's levels in the middle, and on the right the watchlist,
  * the charts the coach marked up and the levels on this chart. Prices are sample data, steady per symbol and timeframe.
  */

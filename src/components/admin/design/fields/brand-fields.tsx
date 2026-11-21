@@ -55,7 +55,7 @@ export function TemplateField() {
 }
 
 /**
- * Import from your website (Figma Style · 13): the address, what to bring (colours, fonts, logo), then a result the coach reviews.
+ * Import from your website (Figma Style · 01b Brand · Import from website): the address, what to bring (colours, fonts, logo), then a result the coach reviews.
  * In the prototype the site is not read: the choices come from a sample worked out from the address, and the line says so.
  */
 export function ImportSiteField() {
@@ -135,7 +135,7 @@ export function LogoField() {
 
   const [logoError, setLogoError] = useState<string | null>(null)
   const onFile = async (file: File) => {
-    // Figma Style · 14: a file over 2 MB is refused with the limit (the picture is kept small anyway).
+    // Figma Style · 01c Brand · Logo too large: a file over 2 MB is refused with the limit (the picture is kept small anyway).
     if (file.size > 2 * 1024 * 1024) return setLogoError(`That file is ${(file.size / 1048576).toFixed(1)} MB. Use a PNG or SVG under 2 MB.`)
     setLogoError(null)
     let small: string

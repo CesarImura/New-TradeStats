@@ -162,7 +162,7 @@ const TabContext = createContext<(id: string) => void>(() => {})
 /** What is typed in the header's search, for a section that searches its own content (the widget gallery). */
 const PanelSearch = createContext("")
 export const usePanelSearch = () => useContext(PanelSearch)
-/** True while the header search box is open (Figma Pages · 04 to 06: the panel then shows the search and its results only). */
+/** True while the header search box is open (Figma Pages · 01b to 01d: the panel then shows the search and its results only). */
 const PanelSearching = createContext(false)
 export const usePanelSearching = () => useContext(PanelSearching)
 

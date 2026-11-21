@@ -2,7 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { AlertTriangle, Blocked, Info } from "@/components/icons"
 import { cn } from "@/lib/utils"
 
-/** Admin / Callout (Figma 'Admin · Data display'). Radius 12, padding 10/14, gap 10; the tone sets fill and text. Keep the message in words, never the colour alone. */
+/** Admin / Callout (Figma 'Admin · 08 Data display'). Radius 12, padding 10/14, gap 10; the tone sets fill and text. Keep the message in words, never the colour alone. */
 const callout = cva("flex min-w-0 items-center gap-2.5 rounded-a-lg px-3.5 py-2.5 t-body-m", {
   variants: {
     tone: {

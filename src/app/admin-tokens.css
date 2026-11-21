@@ -1,4 +1,4 @@
-/* Admin v2 design tokens (mode v2 is the only mode in code), generated from the Figma "Admin" variable collection (file XWHeEdjEiY6gWmrsg0vFIZ,
+/* Admin design tokens (one mode, "Admin"), generated from the Figma "Admin" variable collection (file XWHeEdjEiY6gWmrsg0vFIZ,
    collection 541:2). Names follow the Figma code syntax: --admin-<variable path with hyphens>. Do not edit by hand:
    change the variable in Figma, then regenerate (docs/admin-v2.md). Tokens live on :root so portalled popups inherit them. */
 :root {
@@ -239,7 +239,7 @@
   --admin-component-checkbox-bg-on: var(--admin-primitive-orange-700);
   --admin-component-choice-chip-bg-active: var(--admin-primitive-orange-soft);
   --admin-component-choice-chip-border-active: var(--admin-primitive-orange-500);
-  --admin-component-choice-chip-border-hover: var(--admin-primitive-orange-500);
+  --admin-component-choice-chip-border-hover: var(--admin-color-border-strong);
   --admin-component-coachmark-progress-active: var(--admin-component-progress-fill);
   --admin-component-coachmark-progress-inactive: var(--admin-color-border-default);
   --admin-component-content-note-highlight: var(--admin-primitive-extra-ff5500-35);
@@ -312,7 +312,7 @@
   --admin-component-sortable-row-bg-active: var(--admin-color-bg-muted);
   --admin-component-sortable-row-bg-dragging: var(--admin-color-bg-selected);
   --admin-component-sortable-row-bg-hover: var(--admin-color-bg-hover);
-  --admin-component-sortable-row-border-active: var(--admin-color-border-active);
+  --admin-component-sortable-row-border-active: var(--admin-color-control-on);
   --admin-component-sortable-row-border-default: var(--admin-color-border-default);
   --admin-component-timeline-step-bg-done: var(--admin-primitive-extra-4ade80-4);
   --admin-component-timeline-step-border-done: var(--admin-primitive-extra-4ade80-40);
@@ -330,13 +330,9 @@
   --admin-component-table-row-bg-active: var(--admin-color-bg-muted);
   --admin-component-table-row-bg-hover: var(--admin-color-bg-hover);
 
-  /* Legacy names (not in the Figma collection any more). Kept so existing code keeps working; remove when no file uses them. */
-  --admin-color-icon-strong: var(--admin-primitive-white-96);
-  --admin-font-family-mono: var(--admin-font-family-primary);
-  --admin-space-pad-button: var(--admin-space-14);
 }
 
-/* Tailwind mapping: short names (bg-a-panel, text-a-text-2, border-a-border, rounded-a-md…) for the Admin v2 tokens. */
+/* Tailwind mapping: short names (bg-a-panel, text-a-text-2, border-a-border, rounded-a-md…) for the Admin tokens. */
 @theme inline {
   --blur-a-overlay: 16px; /* Admin/Blur/Overlay (Figma effect, blur 16): backdrop-blur-a-overlay */
   --color-a-page: var(--admin-color-bg-page);

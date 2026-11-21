@@ -56,7 +56,7 @@ const VIDEO = /\.(mp4|mov|mkv|webm|m4v)$/i
 const cleanName = (f: string) => f.replace(VIDEO, "").replace(/^\d+[\s._-]*/, "").replace(/[-_]+/g, " ").trim().replace(/^./, (c) => c.toUpperCase())
 const sizeOf = (bytes: number) => (bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.max(1, Math.round(bytes / 1e6))} MB`)
 
-/** Content · 04 to 06 New course: two steps (Course, Content). Save as draft works as soon as there is a title. */
+/** Content · 02 and 03 New course: two steps (Course, Content). Save as draft works as soon as there is a title. */
 export function NewCourse({ open, onOpenChange, area, initialMethod = "blank", onCreate }: { open: boolean; onOpenChange: (o: boolean) => void; area: string; initialMethod?: Method; onCreate: (c: Course, o: { open: boolean }) => void }) {
   const { coach } = useCoach()
   const [step, setStep] = useState<Step>("course")

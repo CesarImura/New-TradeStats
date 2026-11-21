@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { AdminButton, AdminProgress, FileItem, Panel, Tag } from "../ui"
 import { PlayerFrame } from "./course-parts"
 
-/** Content · 13 Preview as student: the lesson as a student of a chosen tier sees it, with a bar to go back and edit. */
+/** Content · 08 Preview as student: the lesson as a student of a chosen tier sees it, with a bar to go back and edit. */
 export function StudentPreview({ course, lesson, onSelect, onEdit, onExit }: { course: Course; lesson: Lesson; onSelect: (id: string) => void; onEdit: () => void; onExit: () => void }) {
   const { coach } = useCoach()
   const [as, setAs] = useState<string>(course.tiers[0] ?? coach.tiers[0]?.id ?? "access")
@@ -31,7 +31,7 @@ export function StudentPreview({ course, lesson, onSelect, onEdit, onExit }: { c
         <span className="t-body-m text-a-text-2">Viewing as</span>
         <div role="radiogroup" aria-label="Viewing as" className="flex flex-wrap gap-1.5">
           {options.map((o) => (
-            <button key={o.id} type="button" role="radio" aria-checked={as === o.id} onClick={() => setAs(o.id)} className={cn("h-9 rounded-a-md border px-3 t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus", as === o.id ? "border-a-border-active bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover hover:text-a-text")}>
+            <button key={o.id} type="button" role="radio" aria-checked={as === o.id} onClick={() => setAs(o.id)} className={cn("h-9 rounded-a-md border px-3 t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus", as === o.id ? "border-[var(--admin-color-control-on)] bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover hover:text-a-text")}>
               {o.label}
             </button>
           ))}

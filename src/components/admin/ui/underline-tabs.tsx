@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { useSlideBox } from "./slide-thumb"
 
 /**
- * Admin / Underline tab (Figma 'Admin · Navigation'): caption text, a 2px accent underline when open. Not the bordered Toolbar tab group.
+ * Admin / Underline tab (Figma 'Admin · 04 Navigation'): caption text, a 2px accent underline when open. Not the bordered Toolbar tab group.
  * The underline is one bar that slides (and resizes) to the open tab on the same spring as the segmented thumb.
  */
 export function AdminUnderlineTabs<T extends string>({ tabs, value, onChange, label }: { tabs: readonly { id: T; label: string; count?: number }[]; value: T; onChange: (v: T) => void; label: string }) {

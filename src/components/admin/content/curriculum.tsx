@@ -44,7 +44,7 @@ const modulesMoved = (c: Course, id: string, before: string): Course => {
   return { ...c, modules: rest }
 }
 
-/** Content · 07 Curriculum + uploads: the course's main screen. Modules hold a grid of lesson thumbnails. */
+/** Content · 04 Curriculum + uploads: the course's main screen. Modules hold a grid of lesson thumbnails. */
 export function Curriculum({ course, edit, uploads, onOpen, onUpload, onReview }: { course: Course; edit: (fn: (c: Course) => Course) => void; uploads: Upload[]; onOpen: (lessonId: string) => void; onUpload: (lessonId: string, file: File) => void; onReview: () => void }) {
   const [drag, setDrag] = useState<Drag>(null)
   const [target, setTarget] = useState<string | null>(null)

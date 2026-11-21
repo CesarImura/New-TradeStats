@@ -1,13 +1,5 @@
 import type { ModuleId } from "@/lib/data/coaches"
-import type { Account, Audience } from "@/lib/data/communities"
-import type { TemplateId } from "@/lib/theme/types"
-
-export const AUDIENCES: { id: Audience; label: string; text: string }[] = [
-  { id: "starting", label: "Nothing yet", text: "" },
-  { id: "small", label: "1 to 50", text: "" },
-  { id: "growing", label: "50 to 500", text: "" },
-  { id: "large", label: "More than 500", text: "" },
-]
+import type { Account } from "@/lib/data/communities"
 
 /** Where the coach runs things today. "Platforms" hold paying members we'd move over. */
 export const TOOLS: { id: string; label: string; platform?: boolean; ask?: boolean }[] = [
@@ -33,14 +25,6 @@ export const OFFERS: { id: string; label: string; module?: ModuleId; ask?: boole
 
 type Answers = NonNullable<Account["answers"]>
 
-/** Route B (free setup call) for big communities, and for mid-size ones moving off another platform. */
-export function routeFor(a: Answers): "B" | "C" {
-  const switching = a.tools.some((t) => TOOLS.find((x) => x.id === t)?.platform)
-  if (a.audience === "large") return "B"
-  if (a.audience === "growing" && switching) return "B"
-  return "C"
-}
-
 /** Modules the wizard switches on, from what the coach offers. AI is on for everyone. */
 export function suggestedModules(a?: Answers): Record<ModuleId, boolean> {
   // The three questions don't ask about these, so they start on for everyone.
@@ -53,12 +37,4 @@ export function suggestedModules(a?: Answers): Record<ModuleId, boolean> {
   // Traders who go live or send signals work on charts.
   if (a?.offers.some((o) => o === "live" || o === "signals")) on.add("charts")
   return { courses: on.has("courses"), calendar: on.has("calendar"), charts: on.has("charts"), community: on.has("community"), journal: on.has("journal"), ranking: false, ai: true, downloads: true, partners: a?.audience === "growing" || a?.audience === "large" }
-}
-
-/** A starting template that fits: a trading desk for live/signals, calm for courses and 1:1, social for big groups. */
-export function suggestedTemplate(a?: Answers): TemplateId {
-  if (!a) return "terminal"
-  if (a.offers.includes("live") || a.offers.includes("signals")) return "terminal"
-  if (a.audience === "large" || a.offers.includes("community")) return "pulse"
-  return "atelier"
 }

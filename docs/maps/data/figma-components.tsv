@@ -1,0 +1,164 @@
+# Famílias de componentes da página Components (283:9649), 21/11/2026, via MCP (scripts/maps/figma-export-components.js).
+# id|nome|seção|variantes|propriedades|tem descrição (1/0)
+1096:2363|Admin / _Base Logo|Admin · 01 Brand|1|Show Wordmark|1
+1096:2456|Admin / Logo|Admin · 01 Brand|5|Tone|1
+572:28448|Admin / _Base Button|Admin · 02 Actions|8|Show Label,Label Text,Show L Icon,L Icon,Show R Icon,R Icon,Size,Icon Only|1
+572:28569|Admin / Button|Admin · 02 Actions|18|Hierarchy,State|1
+693:1911|Admin / _Base Field|Admin · 03 Forms|5|Show Label,Label Text,Show Optional,Show L Icon,L Icon,Value Text,Show Trailing,Trailing Text,Show R Icon,R Icon,Show Hint,Hint Text,Show Control,Show Prefix,Prefix Text,Show Action,Show Hint Icon,Hint Icon,Size,Type|1
+693:2023|Admin / Field|Admin · 03 Forms|5|State|1
+545:71|Admin / Checkbox|Admin · 03 Forms|9|Checked,State|1
+545:76|Admin / Radio|Admin · 03 Forms|6|Checked,State|1
+545:56|Admin / Toggle|Admin · 03 Forms|6|Checked,State|1
+658:1671|Admin / _Base Code box|Admin · 03 Forms|1|Show Digit,Digit Text,Size|1
+658:1690|Admin / Code box|Admin · 03 Forms|6|State|1
+658:1711|Admin / _Base Code input|Admin · 03 Forms|1|Length|1
+658:1784|Admin / Code input|Admin · 03 Forms|3|State|1
+578:513|Admin / _Base Filter|Admin · 03 Forms|1|Label Text,Show Label,Value Text|1
+578:539|Admin / Filter|Admin · 03 Forms|3|State|1
+934:7154|Admin / Segmented item|Admin · 03 Forms|8|Label Text,Icon,Show Icon,State,Icon Only|1
+934:7156|Admin / Segmented|Admin · 03 Forms|1|Items|1
+945:2262|Admin / _Base Choice chip|Admin · 03 Forms|1|Label Text|1
+945:2318|Admin / Choice chip|Admin · 03 Forms|4|State|1
+983:2344|Admin / _Base Color field|Admin · 03 Forms|1|Value Text|1
+983:2427|Admin / Color field|Admin · 03 Forms|4|State|1
+1059:2352|Admin / _Base E-mail chip|Admin · 03 Forms|1|Label Text,Show Remove|1
+1059:2497|Admin / E-mail chip|Admin · 03 Forms|3|State|1
+1127:10854|Admin / Swatch|Admin · 03 Forms|3|State|1
+1186:60309|Admin / Swatch pair|Admin · 03 Forms|3|State|1
+549:162|Admin / Topbar|Admin · 04 Navigation|1|Show Unread|1
+581:631|Admin / Nav item|Admin · 04 Navigation|6|State,Icon Only|1
+753:38238|Admin / Nav group|Admin · 04 Navigation|1|Icon,Show Icon,Label Text|1
+580:447|Admin / _Base Tab|Admin · 04 Navigation|1|Label Text,Show Count,Count Text,Show Dot|1
+580:459|Admin / Tab|Admin · 04 Navigation|3|State|1
+580:460|Admin / _Base Underline tab|Admin · 04 Navigation|1|Label Text|1
+580:471|Admin / Underline tab|Admin · 04 Navigation|3|State|1
+580:472|Admin / _Base Segmented option|Admin · 04 Navigation|1|Label Text|1
+580:480|Admin / Segmented option|Admin · 04 Navigation|3|State|1
+580:545|Admin / _Base Sub-nav item|Admin · 04 Navigation|1|Label Text,Show Indicator|1
+580:556|Admin / Sub-nav item|Admin · 04 Navigation|3|State|1
+548:175|Admin / Menu|Admin · 04 Navigation|1|Items|1
+580:515|Admin / _Base Menu item|Admin · 04 Navigation|1|Label Text,Show L Icon,L Icon,Show Shortcut,Shortcut Text|1
+580:543|Admin / Menu item|Admin · 04 Navigation|6|Tone,State|1
+957:2266|Admin / _Base Timeline step|Admin · 04 Navigation|1|Title Text,Description Text,Show Action,Show Edit,Show Line,Show Guide,Show Line Top,Show Skip,Show Tag,Show Icon,Icon|1
+957:2923|Admin / Timeline step|Admin · 04 Navigation|5|State|1
+1100:2437|Admin / _Base Nav item|Admin · 04 Navigation|2|Label Text,L Icon,Show Badge,Badge Text,Icon Only|1
+1101:2679|Admin / Sidebar|Admin · 04 Navigation|2|Show Invite Card,Workspace Text,Role Text,Initial Text,Size|1
+1639:68798|Admin / Help row|Admin · 04 Navigation|2|Label Text,Icon,State|1
+549:89|Admin / Page header|Admin · 05 Layout|1|Actions,Title Text,Show Subtitle,Subtitle Text|1
+548:95|Admin / Panel|Admin · 05 Layout|1|Content,Show Header|1
+548:82|Admin / Panel header|Admin · 05 Layout|1|Actions,Title Text,Show Subtitle,Subtitle Text|1
+549:110|Admin / Modal|Admin · 05 Layout|1|Body,Title Text,Show Subtitle,Subtitle Text,Show Footer,Footer Actions,Header Actions,Show Header Actions|1
+549:136|Admin / Drawer|Admin · 05 Layout|1|Body,Title Text,Show Subtitle,Subtitle Text,Show Footer,Footer Actions,Header Actions,Show Header Actions|1
+753:38236|Admin / Divider|Admin · 05 Layout|1||1
+548:160|Admin / Empty state|Admin · 05 Layout|1|Actions,Title Text,Description Text,Empty Icon|1
+1351:2783|Admin / Empty state · Compact|Admin · 05 Layout|1|Text|1
+736:1970|Admin / _Base Media card|Admin · 06 Cards & lists|2|Visual,Show Status,Status Text,Status Action,Title,Subtitle,Show Subtitle,Meta,Stats,Show Stats,Show Scheduled icon,Size|1
+736:2101|Admin / Media card|Admin · 06 Cards & lists|2|State|1
+557:243|Admin / Lesson card|Admin · 06 Cards & lists|1|Title Text|1
+672:34191|Admin / _Base Option card|Admin · 06 Cards & lists|2|Content,Show Control,Control,Title Text,Description Text,Show Description,Show Trailing,Show Title,Side|1
+674:2167|Admin / Option card|Admin · 06 Cards & lists|4|State|1
+748:38108|Admin / _Base Sortable row|Admin · 06 Cards & lists|1|Show Drag,Title Text,Description Text,Show Description,Trailing|1
+748:38223|Admin / Sortable row|Admin · 06 Cards & lists|5|State|1
+934:2245|Admin / _Base Selection card|Admin · 06 Cards & lists|1|Media,Title Text,Description Text,Show Description,Control,Show Control|1
+934:2287|Admin / Selection card|Admin · 06 Cards & lists|4|State|1
+1353:2423|Admin / Setup tip|Admin · 06 Cards & lists|1|Title Text,Steps Text,Show Action|1
+662:30058|Admin / Table|Admin · 07 Tables|1|Content|1
+662:30063|Admin / Table head|Admin · 07 Tables|1|Content|1
+662:30068|Admin / Table footer|Admin · 07 Tables|1|Content|1
+662:30088|Admin / Table row|Admin · 07 Tables|3|Content,State|1
+662:30099|Admin / Table cell|Admin · 07 Tables|2|Content,Align|1
+662:30104|Admin / Table head cell|Admin · 07 Tables|2|Label Text,Show Checkbox,Align|1
+662:30112|Admin / Cell stack|Admin · 07 Tables|2|Title Text,Subtitle Text,Show Subtitle,Weight|1
+662:30118|Admin / Cell person|Admin · 07 Tables|1||1
+662:30126|Admin / Cell progress|Admin · 07 Tables|1|Value Text|1
+662:30140|Admin / Cell dot|Admin · 07 Tables|3|Label Text,Tone|1
+576:380|Admin / _Base Tag|Admin · 08 Data display|1|Label Text,Show Dot,Show Remove|1
+576:414|Admin / Tag|Admin · 08 Data display|6|Tone|1
+545:47|Admin / Avatar|Admin · 08 Data display|3|Initials Text,Show Status,Size|1
+545:85|Admin / Progress|Admin · 08 Data display|4|Tone|1
+687:1926|Admin / _Base Progress item|Admin · 08 Data display|3|Show Title,Title Text,Show Value,Value Text,Show Action,Show Bar,Size|1
+687:1927|Admin / Progress item|Admin · 08 Data display|1||1
+583:520|Admin / _Base Metric|Admin · 08 Data display|2|Label Text,Value Text,Show Delta,Delta Text,Show Icon,Icon,Size|1
+583:539|Admin / Metric|Admin · 08 Data display|3|Tone|1
+583:540|Admin / _Base Callout|Admin · 08 Data display|1|Message Text,Show Action|1
+583:614|Admin / Callout|Admin · 08 Data display|5|Tone|1
+590:585|Admin / _Base Step indicator|Admin · 08 Data display|4|Number Text,Show Number,Show Check,Show Lock,Size|1
+590:600|Admin / Step indicator|Admin · 08 Data display|8|State,Tone|1
+1147:2518|Admin / Icon tile|Admin · 08 Data display|1|Icon|1
+1296:2607|Admin / Video player|Admin · 08 Data display|1|Show Action,Show Center Play,Time Text,Chapter Text,Show Chapter,Show Seek,Play Icon,Show Live|1
+1832:71845|Admin / Live dot|Admin · 08 Data display|2|Tone|1
+1859:72870|Admin / Toast|Admin · 08 Data display|3|Show Description,Show Action,Show Icon,Title Text,Description Text,Type|1
+756:38410|Admin / _Base Chart bar|Admin · 09 Charts|1|Show Value,Value Text,Show Label,Label Text|1
+756:38441|Admin / Chart bar|Admin · 09 Charts|3|Tone|1
+756:38442|Admin / Bar chart|Admin · 09 Charts|1|Bars,Show Y axis,Max Tick,Mid Tick,Min Tick,Show Grid|1
+596:1316|Admin / Chart preview|Admin · 09 Charts|4|Series|1
+745:38098|Admin / _Base Dropzone|Admin · 10 Files|2|Show Icon,Icon,Title Text,Show Hint,Hint Text,Size|1
+745:38118|Admin / Dropzone|Admin · 10 Files|4|State|1
+767:38959|Admin / _Base File icon|Admin · 10 Files|3|Label Text,Size|1
+767:38975|Admin / File icon|Admin · 10 Files|15|Type,Size|1
+768:2085|Admin / _Base File item|Admin · 10 Files|1|Trailing,Name Text,Meta Text,Show Value,Value Text,Show Bar,Show Status,Status Text,Show Done Icon,Show Error Icon,Show Meta|1
+768:2252|Admin / File item|Admin · 10 Files|5|Status|1
+583:636|Admin / _Base Calendar event|Admin · 11 Scheduling|1|Title Text,Meta Text,Show Meta|1
+583:660|Admin / Calendar event|Admin · 11 Scheduling|4|Type|1
+494:1831|Admin / Cover / course-foundations|Admin · 12 Covers|1||1
+494:1893|Admin / Cover / course-playbook|Admin · 12 Covers|1||1
+494:1955|Admin / Cover / course-psychology|Admin · 12 Covers|1||1
+62:884|Admin / Editor Top bar|Editor · 01 Shell|1|Back Text,Section Text,Center,Actions|1
+62:872|Admin / Editor Rail|Editor · 01 Shell|1|Buttons|1
+62:874|Admin / Editor Panel|Editor · 01 Shell|1|Title Text,Content,Show Caption,Caption Text|1
+62:880|Admin / Editor Inspector|Editor · 01 Shell|1|Title Text,Hint Text,Show Hint,Content,Show Icon,Show Actions|1
+71:122|Admin / Editor Section|Editor · 01 Shell|1|Title Text,Content,Show Chevron,Show Dot,Show Reset|1
+156:287|Admin / Editor Widget toolbar|Editor · 01 Shell|1|State|1
+1151:21831|Admin / Editor Zoom|Editor · 01 Shell|1|Zoom Text|1
+1189:71873|Admin / Editor Canvas dots|Editor · 01 Shell|1||1
+80:3469|Admin / Editor Upsell card|Editor · 02 Controls|1|Title Text,Body Text,Link Text|1
+1128:12988|Admin / Editor List row|Editor · 02 Controls|2|Label Text,Show Tile,Show Lead Icon,Lead Icon,Show Trail Icon,Trail Icon,Show Meta,Meta Text,State|1
+1130:13011|Admin / Editor Design all card|Editor · 02 Controls|2|State|1
+1147:21226|Admin / Editor Field|Editor · 02 Controls|3|Label Text,Hint Text,Show Hint,Control,Layout|1
+1158:21551|Admin / Editor Button shape|Editor · 02 Controls|3|Shape|1
+1275:2521|Admin / Menu row|Editor · 02 Controls|3|Type,Visible|1
+1442:64929|Admin / Editor Theme art|Editor · 02 Controls|6|Theme,Size|1
+1442:65049|Admin / Editor Layout art|Editor · 02 Controls|8|Layout,Size|1
+1443:2622|Admin / Editor Background art|Editor · 02 Controls|4|Kind|1
+62:891|Admin / Editor Preview shell|Editor · 03 Preview|1|Workspace Text,Nav,Eyebrow Text,Greeting Text,Widgets,Badge Text|1
+598:660|Admin / _Base Editor Preview nav item|Editor · 03 Preview|1|Label Text,Icon|1
+598:674|Admin / Editor Preview nav item|Editor · 03 Preview|2|State|1
+171:1026|Admin / Editor Preview logo mark|Editor · 03 Preview|1|Initial Text|1
+51:64|Admin / Editor Avatar|Editor · 03 Preview|2|Initials Text,Size|1
+128:2899|Public / Form field|Public · 01 Join|1|Label|1
+128:2910|Public / Plan card|Public · 01 Join|1|Name,Price,Selected|1
+128:3010|Public / Auth card|Public · 01 Join|3|Eyebrow,Title,Subtitle,Show name,Show Discord,Show footer,Footer text,Card|1
+129:2930|Public / Checkout|Public · 01 Join|1|Title,Subtitle|1
+132:3089|Public / Shell|Public · 01 Join|2|Body,Custom look,Layout|1
+101:116|Terminal / _Base Button|Terminal · 01 Actions|8|Show Label,Label Text,Show L Icon,L Icon,Show R Icon,R Icon,Size,Icon Only|1
+101:235|Terminal / Button|Terminal · 01 Actions|9|Hierarchy,State|1
+102:2390|Terminal / _Base Input|Terminal · 02 Forms|3|Value,Show L Icon,L Icon,Show R Icon,R Icon,Size|1
+102:2416|Terminal / Input|Terminal · 02 Forms|5|State|1
+122:11365|Terminal / _Base Tab|Terminal · 03 Navigation|1|Label Text,Show L Icon,L Icon|1
+122:11388|Terminal / Tab|Terminal · 03 Navigation|3|State|1
+103:643|Widget / Row|Terminal · 04 Rows & layout|2|Label,Value,Divider,State|1
+103:628|Widget / Header|Terminal · 04 Rows & layout|1|Path,Show tag|1
+105:1268|Widget / Link row|Terminal · 04 Rows & layout|1|Label|1
+66:1481|Widget / Divider|Terminal · 04 Rows & layout|1||1
+82:6854|Widget / Poster|Terminal · 04 Rows & layout|1|Index,Title,Meta,Show index|1
+66:1477|Widget / Day|Terminal · 04 Rows & layout|6|Tone|1
+102:2333|Terminal / _Base Badge|Terminal · 05 Data display|2|Label Text,Show Icon,Icon,Size|1
+102:2351|Terminal / Badge|Terminal · 05 Data display|4|Tone|1
+102:2359|Terminal / _Base Avatar|Terminal · 05 Data display|3|Initials,Size|1
+102:2370|Terminal / Avatar|Terminal · 05 Data display|3|Tone|1
+102:2473|Terminal / _Base Progress Bar|Terminal · 05 Data display|10|Size,Value|1
+102:2490|Terminal / Progress Bar|Terminal · 05 Data display|5|Value|1
+103:614|Widget / Tag|Terminal · 05 Data display|1|Label|1
+103:617|Widget / Chip|Terminal · 05 Data display|1|Label|1
+103:620|Widget / Stat|Terminal · 05 Data display|1|Label,Value|1
+103:624|Widget / Unit|Terminal · 05 Data display|1|Value,Label|1
+105:1230|Widget / Dot bar|Terminal · 05 Data display|6|Tone,Filled|1
+105:1232|Widget / Meter row|Terminal · 05 Data display|1|Label,Value|1
+103:732|Widget / Progress row|Terminal · 05 Data display|1|Label,Value|1
+105:1657|Widget / Tick ring|Terminal · 05 Data display|4|Value text,Caption,Value|1
+112:961|Widget / Streak day|Terminal · 05 Data display|4|State|1
+66:1480|Widget / Bar|Terminal · 05 Data display|2|Tone|1
+201:3817|Widget / Week bars|Terminal · 05 Data display|4|Total Text,Week|1
+209:3722|Widget / Compare row|Terminal · 05 Data display|6|Row|1
+221:3917|Widget / Courses / Bars|Terminal · 05 Data display|3|Columns|1
+221:4087|Widget / Continue lesson / Progress|Terminal · 05 Data display|2|Columns|1

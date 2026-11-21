@@ -155,8 +155,6 @@ export function whenLabel(startsAt: string) {
   return `${d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
 }
 
-export const STATE_LABEL: Record<StreamState, string> = { scheduled: "Before", live: "Live", ended: "After" }
-
 /** "in 2 h 14 min", "in 24 days": how long until a livestream starts, from the prototype's today. */
 export function untilLabel(startsAt: string, now = NOW) {
   const mins = Math.round((new Date(startsAt).getTime() - now.getTime()) / 60000)

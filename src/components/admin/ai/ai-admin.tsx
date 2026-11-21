@@ -204,7 +204,7 @@ function Knowledge({ ai, set, sources }: { ai: AiSetup; set: (p: Partial<AiSetup
     const added = ok.map((f, i) => ({ id: `u${Date.now()}${i}`, name: f.name, kind: kindOf(f.name), items: f.size < 1024 * 1024 ? `${Math.max(1, Math.round(f.size / 1024))} KB` : `${(f.size / 1024 / 1024).toFixed(1)} MB` }))
     set({ uploaded: [...ai.uploaded, ...added], knowledge: { ...ai.knowledge, ...Object.fromEntries(added.map((a) => [a.id, true])) } })
     added.forEach((a) => learn(a.id))
-    toast(added.length === 1 ? `${added[0].name} added` : `${added.length} files added`, { description: "Your AI is learning from them." })
+    toast(added.length === 1 ? `${added[0].name} added` : `${added.length} files added`, { description: "The assistant reads them and uses them in its answers." })
   }
   const pick = () => input.current?.click()
   const toggle = (id: string, on: boolean) => {

@@ -197,7 +197,7 @@ export function StateBadge({ state }: { state: Livestream["state"] }) {
   )
 }
 
-/** Livestreams · 02 Schedule a livestream (Figma 556:19753), also used to edit one. */
+/** Livestreams · 02 Schedule a livestream (Figma 1485:102166), also used to edit one. */
 function ScheduleModal({ stream, onClose }: { stream: Livestream | "new" | null; onClose: () => void }) {
   const { coach } = useCoach()
   const [last, setLast] = useState<Livestream | "new" | null>(stream)
@@ -292,7 +292,7 @@ function ScheduleModal({ stream, onClose }: { stream: Livestream | "new" | null;
   )
 }
 
-/** Livestreams · 05 Ended · Save as a lesson (Figma 556:20594): the recording becomes a draft lesson in a module. */
+/** Livestreams · 05 Ended · Save as a lesson (Figma 1485:102303): the recording becomes a draft lesson in a module. */
 export function SaveLessonModal({ stream, onClose }: { stream: Livestream | null; onClose: () => void }) {
   const { coach, base } = useCoach()
   const router = useRouter()

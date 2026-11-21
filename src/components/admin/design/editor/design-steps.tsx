@@ -30,7 +30,7 @@ export function Section({ title, children }: { title?: string; children: React.R
 }
 
 /**
- * Theme (Figma Editor · 2 Style · 02-06): Dark or Light on top, the three themes as the setup shows them (Terminal,
+ * Theme (Figma Editor · 02 Style · 02 to 02e): Dark or Light on top, the three themes as the setup shows them (Terminal,
  * Atelier, Pulse), then the theme's two variations. A theme sets the personality only (fonts, corners, buttons,
  * shadow, borders, labels, heading weight, widget style): colours, logo, menu, spacing and background stay. When
  * the coach changes one of those by hand the theme shows "Custom" with Reset; switching theme then asks first.
@@ -97,7 +97,7 @@ export function ThemeTab() {
                 onClick={() => look?.id !== l.id && apply(l, l.name)}
                 className={cn(
                   "h-9 rounded-full border px-4 t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
-                  look?.id === l.id ? "border-a-border-active bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:border-a-border-strong hover:text-a-text",
+                  look?.id === l.id ? "border-[var(--admin-component-choice-chip-border-active)] bg-[var(--admin-component-choice-chip-bg-active)] text-a-text" : "border-a-border text-a-text-2 hover:border-a-border-strong hover:text-a-text",
                 )}
               >
                 {l.name}
@@ -118,7 +118,7 @@ export function ThemeTab() {
 }
 
 /**
- * Layout (Figma Editor · 2 Style · 08): the four ready-made layouts of the setup, then the same four settings in
+ * Layout (Figma Editor · 02 Style · 03 Layout): the four ready-made layouts of the setup, then the same four settings in
  * detail. Spacing belongs here, not to the theme. Changing a detail leaves no layout marked: "Custom".
  */
 export function LayoutTab() {

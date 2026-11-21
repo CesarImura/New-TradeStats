@@ -19,7 +19,7 @@ function Radio({ checked, disabled, onSelect, children }: { checked: boolean; di
   return (
     <button type="button" role="radio" aria-checked={checked} disabled={disabled} onClick={onSelect}
       className="flex items-center gap-2 rounded-a-xs t-body-m text-a-text outline-none focus-visible:ring-2 focus-visible:ring-a-border-focus disabled:pointer-events-none disabled:text-a-text-3 pointer-coarse:min-h-10">
-      <span aria-hidden className={cn("grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-300", checked ? "border-a-border-active" : "border-a-border-strong", disabled && "opacity-40")}>
+      <span aria-hidden className={cn("grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-300", checked ? "border-[var(--admin-color-control-on)]" : "border-a-border-strong", disabled && "opacity-40")}>
         <span className={cn("size-2 rounded-full bg-[var(--admin-color-control-on)] transition-transform duration-200 ease-out motion-reduce:transition-none", checked ? "scale-100" : "scale-0")} />
       </span>
       {children}
@@ -27,7 +27,7 @@ function Radio({ checked, disabled, onSelect, children }: { checked: boolean; di
   )
 }
 
-/** Students · 05 Message (Figma 556:9825): one student or a selection. Who gets it as chips you can take off, a subject, the message, and where it arrives. */
+/** Students · 04 Message (Figma 1485:74620): one student or a selection. Who gets it as chips you can take off, a subject, the message, and where it arrives. */
 export function MessageDialog({ to, onClose }: { to: Student[] | null; onClose: () => void }) {
   const [subject, setSubject] = useState("")
   const [body, setBody] = useState("")

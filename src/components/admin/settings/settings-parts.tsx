@@ -42,7 +42,7 @@ export function Segmented<T extends string>({ value, onChange, options, label }:
           onClick={() => onChange(id)}
           className={cn(
             "h-8 rounded-a-md border t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
-            value === id ? "border-a-border-active bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover hover:text-a-text"
+            value === id ? "border-[var(--admin-color-control-on)] bg-a-raised text-a-text" : "border-a-border text-a-text-2 hover:bg-a-hover hover:text-a-text"
           )}
         >
           {text}
