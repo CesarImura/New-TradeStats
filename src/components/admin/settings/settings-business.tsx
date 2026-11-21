@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { Info, ShieldCheck, TriangleAlert } from "@/components/icons"
+import { Fragment, useState } from "react"
+import { useNewPlatform } from "@/components/admin/use-new-platform"
+import { Info, Lock, ShieldCheck, TriangleAlert } from "@/components/icons"
 import { toast } from "@/lib/toast"
 import { bookingUrlOk, saveBookingUrl, useBookingUrl } from "@/lib/data/booking"
 import { useCoach } from "@/components/coach/coach-provider"
@@ -224,18 +225,30 @@ export function Domain() {
 
 // ---------- ADM-47
 
+/** Three kinds of e-mail, because the law treats them differently (21/11): service (needed to run the account: receipts and failed payments cannot be switched off),
+ * activity (what the student asked for: only sent to students who switched on "Also by e-mail"), marketing (only with an explicit opt-in, always with an unsubscribe link). */
+const EMAIL_KINDS = [
+  { id: "service", title: "Service e-mails", note: "Sent because of something the student did or paid. Receipts and failed payments are always on." },
+  { id: "activity", title: "Activity e-mails", note: "Only to students who switched on “Also by e-mail” in their profile." },
+  { id: "marketing", title: "Marketing e-mails", note: "Only to students who agreed to them, with an unsubscribe link. Each opt-in is recorded with its date." },
+] as const
+const LOCKED_EMAILS = ["receipt", "failed"]
+/** Who each kind reaches in the sample community (of 194 students): everyone for service e-mails, those who switched on "Also by e-mail" for activity, those who agreed to marketing. */
+const REACH: Record<(typeof EMAIL_KINDS)[number]["id"], number> = { service: 194, activity: 142, marketing: 38 }
+
 const EMAILS = [
-  { id: "welcome", name: "Welcome", when: "Right after they join", on: true, subject: "Welcome to {platform}", body: "Hi {first},\n\nGlad you're here. Start with the first lesson: {link}\n\n{coach}" },
-  { id: "receipt", name: "Payment receipt", when: "After every payment", on: true, subject: "Your receipt from {platform}", body: "Thanks for your payment of {amount}. Your invoice is attached." },
-  { id: "failed", name: "Payment failed", when: "When a card is declined", on: true, subject: "Your payment didn't go through", body: "Hi {first},\n\nWe couldn't take your payment. Update your card here: {link}" },
-  { id: "lesson", name: "New lesson", when: "When you publish a lesson", on: true, subject: "New: {lesson}", body: "{coach} published a new lesson: {lesson}.\n\n{link}" },
-  { id: "event", name: "Live in 1 hour", when: "Before every livestream", on: true, subject: "{event} starts in 1 hour", body: "Join here: {link}" },
-  { id: "feedback", name: "Feedback answered", when: "When you answer a journal request", on: true, subject: "{coach} reviewed your trade", body: "{coach} left feedback on your {trade} trade.\n\n{link}" },
-  { id: "miss", name: "We miss you", when: "After 14 days without logging in", on: false, subject: "We miss you, {first}", body: "Hi {first},\n\nIt's been a while. Your next lesson is waiting: {link}\n\n{coach}" },
+  { id: "welcome", kind: "service", name: "Welcome", when: "Right after they join", on: true, subject: "Welcome to {platform}", body: "Hi {first},\n\nGlad you're here. Start with the first lesson: {link}\n\n{coach}" },
+  { id: "receipt", kind: "service", name: "Payment receipt", when: "After every payment", on: true, subject: "Your receipt from {platform}", body: "Thanks for your payment of {amount}. Your invoice is attached." },
+  { id: "failed", kind: "service", name: "Payment failed", when: "When a card is declined", on: true, subject: "Your payment didn't go through", body: "Hi {first},\n\nWe couldn't take your payment. Update your card here: {link}" },
+  { id: "lesson", kind: "activity", name: "New lesson", when: "When you publish a lesson", on: true, subject: "New: {lesson}", body: "{coach} published a new lesson: {lesson}.\n\n{link}" },
+  { id: "event", kind: "activity", name: "Live in 1 hour", when: "Before every livestream", on: true, subject: "{event} starts in 1 hour", body: "Join here: {link}" },
+  { id: "feedback", kind: "activity", name: "Feedback answered", when: "When you answer a journal request", on: true, subject: "{coach} reviewed your trade", body: "{coach} left feedback on your {trade} trade.\n\n{link}" },
+  { id: "miss", kind: "marketing", name: "We miss you", when: "After 14 days without logging in", on: false, subject: "We miss you, {first}", body: "Hi {first},\n\nIt's been a while. Your next lesson is waiting: {link}\n\n{coach}" },
 ]
 
 export function Emails() {
   const { coach } = useCoach()
+  const fresh = useNewPlatform()
   const [sel, setSel] = useState<string | null>(null)
   const [edits, setEdits] = useCommunityData<Record<string, { subject: string; body: string }>>(coach.slug, "emails", {})
   const [off, setOff] = useCommunityData<Record<string, boolean>>(coach.slug, "emails-on", {})
@@ -253,7 +266,7 @@ export function Emails() {
       .replaceAll("{trade}", "NQ long")
 
   return (
-    <SettingsPage title="Every e-mail students get" text="Turn e-mails on or off and change the words.">
+    <SettingsPage title="Every e-mail students get" text="Turn e-mails on or off and change the words. Marketing and activity e-mails only reach students who opted in.">
       <DataCard rowHeight={53}>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -264,19 +277,36 @@ export function Emails() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {EMAILS.map((x) => (
-            <TableRow key={x.id}>
-              <TableCell>{x.name}</TableCell>
-              <TableCell className="text-a-text-2">{x.when}</TableCell>
-              <TableCell>
-                <Switch checked={off[x.id] === undefined ? x.on : off[x.id]} onCheckedChange={(v) => setOff((o) => ({ ...o, [x.id]: v }))} aria-label={`${x.name} e-mail`} />
-              </TableCell>
-              <TableCell className="text-right">
-                <AdminButton hierarchy="ghost" size="md" onClick={() => setSel(x.id)}>
-                  Edit
-                </AdminButton>
-              </TableCell>
-            </TableRow>
+          {EMAIL_KINDS.map((g) => (
+            <Fragment key={g.id}>
+              <TableRow className="bg-a-hover/40 hover:bg-a-hover/40">
+                <TableCell colSpan={4} className="py-2.5">
+                  <span className="t-body-m-medium text-a-text">{g.title}</span>
+                  <span className="ml-2 t-caption text-a-text-2">{g.note}</span>
+                  <span className="ml-2 t-caption text-a-text-3 tabular-nums">· {fresh ? "No students yet" : g.id === "service" ? "Reaches every student" : `Reaches ${REACH[g.id]} of ${REACH.service} students`}</span>
+                </TableCell>
+              </TableRow>
+              {EMAILS.filter((x) => x.kind === g.id).map((x) => (
+                <TableRow key={x.id}>
+                  <TableCell>{x.name}</TableCell>
+                  <TableCell className="text-a-text-2">{x.when}</TableCell>
+                  <TableCell>
+                    {LOCKED_EMAILS.includes(x.id) ? (
+                      <span className="inline-flex items-center gap-1.5 t-caption text-a-text-2">
+                        <Lock aria-hidden className="size-3.5 text-a-icon" /> Always on
+                      </span>
+                    ) : (
+                      <Switch checked={off[x.id] === undefined ? x.on : off[x.id]} onCheckedChange={(v) => setOff((o) => ({ ...o, [x.id]: v }))} aria-label={`${x.name} e-mail`} />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <AdminButton hierarchy="ghost" size="md" onClick={() => setSel(x.id)}>
+                      Edit
+                    </AdminButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </Fragment>
           ))}
         </TableBody>
       </DataCard>

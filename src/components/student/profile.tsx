@@ -22,6 +22,7 @@ import { useViewerGroup } from "@/lib/data/access"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { MyGroup } from "./my-group"
 import { ACCOUNTS } from "@/lib/data/trades"
+import { DEFAULT_STUDENT_PREFS, STUDENT_PREFS_KEY, type StudentNoticePrefs } from "@/lib/data/student-notifications"
 import { cn } from "@/lib/utils"
 
 function Row({ label, text, children }: { label: string; text?: string; children: React.ReactNode }) {
@@ -48,7 +49,7 @@ export function StudentProfile() {
   const group = useViewerGroup(coach)
   const params = useSearchParams()
   const [nick, setNick] = useCommunityData(coach.slug, "nickname", "alexm")
-  const [notif, setNotif] = useCommunityData(coach.slug, "notifications", { feedback: true, lessons: true, events: true, community: false, email: true })
+  const [notif, setNotif] = useCommunityData<StudentNoticePrefs>(coach.slug, STUDENT_PREFS_KEY, DEFAULT_STUDENT_PREFS)
   const [linked, setLinked] = useCommunityData(coach.slug, "discord-linked", false)
   const [hidden, setHidden] = useCommunityData(coach.slug, "rank-hidden", false)
   const [change, setChange] = useState<string | null>(null)
@@ -207,8 +208,21 @@ export function StudentProfile() {
                 ["email", "Also by e-mail"],
               ] as const
             ).map(([id, label]) => (
-              <Row key={id} label={label}>
-                <Switch checked={notif[id]} onCheckedChange={(v) => setNotif((n) => ({ ...n, [id]: v }))} />
+              <Row
+                key={id}
+                label={label}
+                text={id === "email" ? (notif.email ? `On since ${notif.emailSince ?? "today"}. We only e-mail what you chose above; turn it off here any time.` : "Off until you switch it on. We only e-mail what you chose above, and you can turn it off here any time.") : undefined}
+              >
+                <Switch
+                  checked={notif[id]}
+                  onCheckedChange={(v) => {
+                    if (id !== "email") return setNotif((n) => ({ ...n, [id]: v }))
+                    const since = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                    setNotif((n) => ({ ...n, email: v, emailSince: v ? since : undefined }))
+                    if (v) toast("E-mail notifications on", { description: "We'll e-mail you what you chose above.", action: { label: "Undo", onClick: () => setNotif((n) => ({ ...n, email: false, emailSince: undefined })) } })
+                    else toast("E-mail notifications off", { description: "You'll only see them in the app." })
+                  }}
+                />
               </Row>
             ))}
           </Card>

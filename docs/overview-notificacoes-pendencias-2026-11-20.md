@@ -34,3 +34,14 @@ Como `overview.tsx`, `notifications-menu.tsx` e `docs/components.md` misturam te
 - O Figma foi alterado em 3 pontos (Foundations, Overview 01f, Components já do dia); o arquivo Figma não passa pelo git.
 - A animação de altura do `TabPanel` só roda na troca de aba; conteúdo que cresce por dentro não anima (intencional).
 - Testes de animação são sensíveis a carga da máquina: rodar com o computador sossegado.
+
+## 6. Decisões tomadas em 21/11 (a pedido do Gustavo: "faça o que acha recomendado")
+Commit b520be1b já publicado antes; o que segue está **no working tree, sem commit**.
+1. **KPIs seguem Period e Tier.** Recomendação aceita: número que diz "last 30 days" ao lado de um gráfico de 7 dias se contradiz. 30 dias e todos os tiers continuam idênticos ao Figma. (`admin/overview.tsx`, `headlineFor`)
+2. **Avatar do topo vira menu da conta** (nome e e-mail, Settings, Notification settings, Team and roles, Plan and invoices, View as student, Log out). Era uma figura sem função. (`admin/account-menu.tsx`)
+3. **Painel de notificações do aluno**: criado (em vez de mudar os textos do Admin), só com o que o aluno ligou, mesmas regras do sino do Admin. (`student/notifications-menu.tsx`, `lib/data/student-notifications.ts`)
+4. **E-mail do aluno por consentimento:** "Also by e-mail" desligado por padrão; Admin › E-mails em Service / Activity / Marketing, com recibo e pagamento recusado sempre ligados. Marketing e Activity só chegam a quem optou. Sem backend (decisão do Gustavo, 21/11): o consentimento é só desenho e protótipo: "On since <data>" no perfil, toast com Undo, alcance de cada grupo no Admin.
+5. **Cor âmbar da mídia mantida** (`#a16207`, rótulo branco 4,5:1, só na pílula do File icon). Sem mudança.
+6. **Frame 1 de teste no Figma:** não existe (conferi Cover, Guide, Components, Screens Admin, Admin v2, Editor e Drafts). Nada a apagar.
+Testes: tsc 0 erros; ESLint 0 erros nos arquivos alterados; build isolado passou; `scripts/overview-decisions.mjs` (KPIs 7/30/90 e Tier, avatar, 320/390/1440), `scripts/notifications-student.mjs` (1440/768/390, Admin › E-mails, plataforma nova) e regressão (`tabs-motion`, 4 de notificações): 185 OK, 0 FAIL. Não testado: aparelhos reais (consentimento real não se aplica: sem backend).
+Figma (21/11, thread de high ticket pausada): desenhados o menu do avatar (Overview 01g), os grupos de Settings › E-mails (frame 03) e a regra dos KPIs por Period na nota do 01; auditoria 0 valores soltos. Sem desenho: KPIs de 7/90 dias como frame, painel do sino do aluno e "On since <data>" (telas do aluno ficam fora deste arquivo). Detalhes no mapa de componentes.

@@ -21,6 +21,39 @@ const RANGES = { "7": "Last 7 days", "30": "Last 30 days", "90": "Last 90 days" 
 type Range = keyof typeof RANGES
 
 /**
+ * The four numbers over the chart follow the chart's Period and Tier (Overview decision 21/11: a figure that says "last 30 days"
+ * while the chart shows 7 contradicted it). Samples of the whole community per period, each with the previous period as the comparison;
+ * a tier takes its share of students, sign-ups and revenue (the rules rate does not depend on the tier).
+ */
+const KPI_SAMPLE: Record<Range, { active: [number, number]; revenue: [number, number]; joined: [number, number]; rules: [number, number]; entries: number }> = {
+  "7": { active: [171, 164], revenue: [8420, 8170], joined: [11, 12], rules: [86, 85], entries: 74 },
+  "30": { active: [194, 182.67], revenue: [37180, 35000], joined: [40, 44], rules: [84, 81], entries: 312 },
+  "90": { active: [208, 197], revenue: [104900, 96300], joined: [118, 102], rules: [82, 82], entries: 903 },
+}
+const euro = (n: number) => `€${Math.round(n).toLocaleString("en")}`
+const signed = (n: number, unit = "") => (n === 0 ? `0${unit}` : `${n < 0 ? "−" : "+"}${Math.abs(n)}${unit}`)
+const tone = (n: number) => (n > 0 ? ("success" as const) : n < 0 ? ("danger" as const) : undefined)
+
+function headlineFor(range: Range, share: number) {
+  const k = KPI_SAMPLE[range]
+  const before = `vs previous ${range} days`
+  const active = Math.round(k.active[0] * share)
+  const activeBefore = k.active[1] * share
+  const revenue = k.revenue[0] * share
+  const revenueBefore = k.revenue[1] * share
+  const joined = Math.round(k.joined[0] * share)
+  const joinedBefore = Math.round(k.joined[1] * share)
+  const pct = (a: number, b: number) => (b ? Math.round(((a - b) / b) * 1000) / 10 : 0)
+  const rulesDiff = k.rules[0] - k.rules[1]
+  return [
+    { label: "Active students", value: active.toLocaleString("en"), delta: `${signed(pct(k.active[0] * share, activeBefore), "%")} ${before}`, tone: tone(active - activeBefore), href: "students" },
+    { label: "Revenue", value: euro(revenue), delta: `${signed(pct(revenue, revenueBefore), "%")} · ${euro(Math.abs(revenue - revenueBefore))} ${revenue >= revenueBefore ? "more" : "less"}`, tone: tone(revenue - revenueBefore), href: "sales" },
+    { label: "New students", value: String(joined), delta: `${signed(joined - joinedBefore)} ${before}`, tone: tone(joined - joinedBefore), href: "students" },
+    { label: "Rules followed", value: `${k.rules[0]}%`, delta: `${signed(rulesDiff)} pp · ${Math.round(k.entries * share)} journal entries`, tone: tone(rulesDiff), href: "journal" },
+  ]
+}
+
+/**
  * One number in the metric strip. `daily` is a typical day for the whole
  * community; `sum` adds the days up (sales, answers), otherwise the strip shows
  * the latest day (students, open requests). `money` formats as euros.
@@ -277,12 +310,7 @@ export function AdminOverview() {
         { label: "New students", value: "0", delta: "Shows once students join", href: "students" },
         { label: "Rules followed", value: "—", delta: "Shows once students trade", href: "journal" },
       ]
-    : [
-    { label: "Active students", value: "194", delta: "+6.2% vs last 30 days", tone: "success" as const, href: "students" },
-    { label: "Revenue", value: "€37,180", delta: "+6.2% · €2,180 more", tone: "success" as const, href: "sales" },
-    { label: "New students", value: "40", delta: "−4 vs last 30 days", tone: "danger" as const, href: "students" },
-    { label: "Rules followed", value: "84%", delta: "+3 pp · 312 journal entries", tone: "success" as const, href: "journal" },
-  ]
+    : headlineFor(range, share)
   const courses = fresh ? [] : COURSES.slice(0, 3)
   const needs = fresh ? [] : NEEDS
   const questions = fresh ? [] : OPEN_QUESTIONS
@@ -298,7 +326,7 @@ export function AdminOverview() {
       <AdminPageHeader
         className="pt-6 [&>div:first-child]:gap-1.5"
         title="Overview"
-        subtitle={`${coach.name} · last 30 days${fresh ? "" : " · updated 2 min ago"}`}
+        subtitle={`${coach.name} · ${RANGES[range].toLowerCase()}${fresh ? "" : " · updated 2 min ago"}`}
         actions={
           <>
             {/* Figma Overview 01: a 114px pill with the live dot (14px box) 15px from the edge. */}

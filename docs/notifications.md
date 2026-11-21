@@ -46,10 +46,11 @@ Quatro blocos: **Always on** (Security, Plan and invoices, Payouts: não dá par
 - **Fonte:** a da página (Helvetica Neue no Admin e no Editor; a do tema no aluno). Antes o Sonner usava a fonte do sistema.
 - **Figma:** `Admin / Toast` (Components › Admin · Data display; Type Default/Success/Error, Show Description/Action/Icon, Title Text, Description Text).
 
-## 5. Lado do aluno (achados, não alterado)
+## 5. Lado do aluno (decidido e feito em 21/11)
 
-- O sino do aluno (`student-shell.tsx`) é um botão **sem painel e com ponto fixo**; o Admin promete "Students get a notification" em vários lugares (mensagem, feedback, downloads, ranking, lembrete do journal) e o aluno não tem onde ver. Decisão do Gustavo: criar o painel do aluno ou ajustar os textos.
-- O perfil do aluno tem a aba Notifications com 5 switches (feedback, lessons, events, community, e-mail) e "Also by e-mail" ligado por padrão: falta decidir com o Flavio (consentimento, serviço x marketing).
+- **Sino do aluno** (`student/notifications-menu.tsx`, dados em `lib/data/student-notifications.ts`): painel com os avisos que o aluno **ligou** em Profile › Notifications (feedback, novas aulas, lives, comunidade). Mesmas regras do sino do Admin: o ponto só existe enquanto há aviso não lido, clique lê e abre, "Mark all read", estado vazio "You're all caught up", rodapé "Notification settings". Lido persiste por comunidade (`student-notification-read`; as preferências do aluno ficam em `notifications`, chaves diferentes das do Admin). Plataforma nova: vazio. O Admin pode prometer "Students get a notification" porque agora existe onde ver.
+- **E-mail do aluno = consentimento por ação.** "Also by e-mail" vem **desligado** (antes ligado) e diz: "Off until you switch it on. We only e-mail what you chose above…". Motivo: consentimento tem de ser um ato positivo, não um padrão (RGPD art. 7 e considerando 32; regras de ePrivacy para e-mail não essencial).
+- **Admin › Settings › E-mails** passou a três grupos: **Service** (Welcome; Payment receipt e Payment failed ficam "Always on"), **Activity** (New lesson, Live in 1 hour, Feedback answered: só para quem ligou "Also by e-mail"), **Marketing** ("We miss you": só com opt-in, desligado, com link de cancelar). Não há backend: o consentimento é **desenhado e simulado** no protótipo. Ao ligar "Also by e-mail" o perfil mostra "On since <data>" (o registro do opt-in) e um toast com Undo; ao desligar, volta ao texto de desligado e avisa. Cada grupo de e-mails mostra a quem chega ("Reaches every student", "Reaches 142 of 194 students", "Reaches 38 of 194 students"; plataforma nova: "No students yet").
 
 ## 6. Cenários cobertos pelos testes
 
@@ -60,6 +61,6 @@ Quatro blocos: **Always on** (Security, Plan and invoices, Payouts: não dá par
 
 ## 7. Em aberto
 
-1. Painel de notificações do aluno (item 5).
-2. Aba E-mails do aluno: serviço x marketing e registro de consentimento (com o Flavio e jurídico).
+1. Texto exato do consentimento e do link de cancelar: confirmar com o Flavio e o jurídico quando o produto real for escrito (o protótipo só desenha o fluxo).
+2. Figma: ainda sem o painel do sino do aluno, o menu do avatar e os grupos da aba E-mails (Settings está com a thread de high ticket).
 3. Bug de hidratação do player (volume guardado < 0,5) só relatado: `video-player.tsx`, `useState(loadPrefs)`.

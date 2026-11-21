@@ -28,10 +28,9 @@ import { Logo } from "@/components/brand/logo"
 import { WorkspaceSwitcher } from "@/components/admin/workspace-switcher"
 import { TourLayer } from "@/components/admin/tour/tour"
 import { NotificationsMenu } from "@/components/admin/notifications-menu"
+import { AccountMenu } from "@/components/admin/account-menu"
 import { CommandPalette } from "@/components/admin/command-palette"
-import { DEMO_ADMIN } from "@/lib/data/account"
 import { adminNav } from "@/components/coach/nav"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   Sheet,
   SheetContent,
@@ -176,9 +175,7 @@ export function AdminShell({ studentBase, children }: { studentBase: string; chi
               </Button>
               <HelpButton />
               <NotificationsMenu base={base} anchorRef={topbarRef} paused={searchOpen} />
-              <Avatar className="size-8">
-                <AvatarFallback className="bg-a-track t-micro text-a-text ring-1 ring-inset ring-a-border">{DEMO_ADMIN.initials}</AvatarFallback>
-              </Avatar>
+              <AccountMenu base={base} studentBase={studentBase} />
             </div>
           </header>
           <main id="admin-main" tabIndex={-1} className={cn("mx-auto w-full outline-none min-w-0 flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10 xl:pt-12", path.startsWith(`${base}/charts`) ? "max-w-[1635px]" : "max-w-[1264px]")}>{children}</main>

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { createContext, useContext, useState } from "react"
-import { Bell, LogOut, MoreHorizontal, Search, Settings, User } from "@/components/icons"
+import { LogOut, MoreHorizontal, Search, Settings, User } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CommunitySwitcher } from "@/components/student/community-switcher"
 import { PreviewAsBanner, Tour } from "@/components/student/getting-started"
@@ -11,6 +11,7 @@ import { PreviewPicker } from "@/components/student/preview-picker"
 import { studentNav, type NavItem } from "@/components/coach/nav"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { StudentNotifications } from "@/components/student/notifications-menu"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -269,10 +270,7 @@ function HeaderActions() {
           <Search />
         </Button>
       )}
-      <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
-        <Bell />
-        <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />
-      </Button>
+      <StudentNotifications />
       <ProfileMenu />
     </>
   )
