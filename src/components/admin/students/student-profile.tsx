@@ -237,6 +237,24 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
             </Callout>
           )}
 
+          {shown.offer?.failed && (
+            <Callout
+              tone="danger"
+              icon={<CircleAlert className="size-4" />}
+              action={
+                <DropdownMenu>
+                  <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Review</DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => toast("Payment link sent", { description: `${first} gets an e-mail to update the card.` })}>Send payment link</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => toast("Retrying the payment", { description: "You'll see the result here." })}>Retry now</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onPause(shown)}>Pause access</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              }>
+              Instalment {shown.offer.paidCount + 1} of {shown.offer.plan} failed · retrying {shown.offer.next}
+            </Callout>
+          )}
+
           <AdminUnderlineTabs label="Student" tabs={TABS} value={tab} onChange={setTab} />
 
           <TabPanel value={tab} order={TABS.map((t) => t.id)} className="flex flex-col gap-5">
@@ -250,10 +268,18 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
               </section>
 
               <section className="flex flex-col gap-2.5">
-                <Label>Tier and group</Label>
-                <Row label="Tier" value={`${tier.name} · ${price(tier.id)}`} options={coach.tiers.map((t) => ({ label: `${t.name} · ${price(t.id)}`, onSelect: () => toast(`${shown.name} moves to ${t.name}`, { description: "Upgrades start now, downgrades at the end of the period." }) }))} />
+                <Label>{shown.offer ? "Tier and plan" : "Tier and group"}</Label>
+                <Row label="Tier" value={shown.offer ? `${tier.name} · ${shown.offer.name}` : `${tier.name} · ${price(tier.id)}`} options={coach.tiers.map((t) => ({ label: `${t.name} · ${price(t.id)}`, onSelect: () => toast(`${shown.name} moves to ${t.name}`, { description: "Upgrades start now, downgrades at the end of the period." }) }))} />
                 <Row label="Group" value={shown.group ?? "No group"} options={[{ label: "No group", onSelect: () => toast("Removed from the group") }, ...GROUPS.map((g) => ({ label: g.name, onSelect: () => toast(`Added to ${g.name}`, { description: "What a group unlocks starts on its start date." }) }))]} />
-                <Row label="Next payment" value={failed ? "12 Nov" : "30 Nov"} />
+                {shown.offer ? (
+                  <>
+                    <Row label="Payment plan" value={`${shown.offer.plan} payments of €${shown.offer.each.toLocaleString("en")} · ${shown.offer.paidCount} of ${shown.offer.plan} paid`} />
+                    <Row label="Next payment" value={`${shown.offer.next} · €${shown.offer.each.toLocaleString("en")}${shown.offer.failed ? " (retry)" : ""}`} />
+                    <Row label="Link sent by" value={shown.offer.sentBy} />
+                  </>
+                ) : (
+                  <Row label="Next payment" value={failed ? "12 Nov" : "30 Nov"} />
+                )}
                 <Row label="Extra access" value={shown.coach ?? "Nobody"} options={[{ label: "Add a course for free", onSelect: () => toast("Pick a course to unlock for this student") }]} />
               </section>
               <Rule />

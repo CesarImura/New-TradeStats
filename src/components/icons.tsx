@@ -23,6 +23,8 @@ import {
   Camera as CCamera,
   CenterCircle as CCenterCircle,
   CertificateCheck as CCertificateCheck,
+  CurrencyEuro as CCurrencyEuro,
+  Money as CMoney,
   ChartCandlestick as CChartCandlestick,
   ChartLine as CChartLine,
   Chat as CChat,
@@ -182,6 +184,8 @@ export const ArrowUp = i(CArrowUp, "ArrowUp")
 export const ArrowUpRight = i(CArrowUpRight, "ArrowUpRight")
 export const ArrowUpToLine = i(CUpload, "ArrowUpToLine")
 export const BadgeCheck = i(CCertificateCheck, "BadgeCheck")
+export const Euro = i(CCurrencyEuro, "Euro")
+export const Banknote = i(CMoney, "Banknote")
 export const Bell = i(CNotification, "Bell")
 export const BookOpen = i(CBook, "BookOpen")
 export const Bot = i(CChatBot, "Bot")

@@ -42,19 +42,19 @@ export function StudentPartners({ props = {} }: { props?: Record<string, string 
       <OwnTitle>
         <div className="flex flex-col gap-1">
           <span className="eyebrow">
-            {visible.length} {visible.length === 1 ? "offer" : "offers"} · {coach.name}
+            {visible.length} {visible.length === 1 ? "deal" : "deals"} · {coach.name}
           </span>
           <h1 className="text-3xl leading-tight md:text-4xl">{coach.wording.partners}</h1>
         </div>
       </OwnTitle>
 
-      <p className="max-w-2xl text-sm text-muted-foreground">Offers from partners {coach.coachName} works with. Some are affiliate links.</p>
+      <p className="max-w-2xl text-sm text-muted-foreground">Deals from partners {coach.coachName} works with. Some are affiliate links.</p>
 
       {visible.length === 0 ? (
         <Card className="items-center gap-3 rounded-(--radius) px-6 py-12 text-center">
           <Handshake className="size-8 text-muted-foreground" />
-          <p className="font-medium">No offers yet</p>
-          <p className="max-w-sm text-sm text-muted-foreground">When {coach.coachName} adds a broker, prop firm or tool offer, it shows here.</p>
+          <p className="font-medium">No deals yet</p>
+          <p className="max-w-sm text-sm text-muted-foreground">When {coach.coachName} adds a broker, prop firm or tool deal, it shows here.</p>
         </Card>
       ) : (
         <>

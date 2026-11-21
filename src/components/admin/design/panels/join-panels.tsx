@@ -4,6 +4,7 @@ import { toast } from "@/lib/toast"
 import { Dropzone } from "@/components/admin/ui"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { saveBookingUrl, useBookingUrl } from "@/lib/data/booking"
 import { JOIN_SCREENS, joinTheme, type JoinCopy, type JoinDraft, type JoinLook, type JoinScreenId } from "@/lib/data/join"
 import { pictureFrom } from "@/lib/images"
 import { onColor } from "@/lib/theme/derive"
@@ -98,6 +99,7 @@ function JoinLook() {
 export function JoinInspector({ screen }: { screen: JoinScreenId }) {
   const { coach } = useDesign()
   const { join, set } = useJoin()
+  const booking = useBookingUrl(coach.slug)
   const info = JOIN_SCREENS.find((s) => s.id === screen)!
   const copy: JoinCopy = join.screens?.[screen] ?? {}
   const def = DEFAULTS[screen]
@@ -128,6 +130,19 @@ export function JoinInspector({ screen }: { screen: JoinScreenId }) {
         {text("title", "Title", def.title(coach.name))}
         {text("subtitle", "Subtitle", def.subtitle)}
         {def.button && text("button", "Button", def.button)}
+        {screen === "subscribe" && (
+          <Field label="Booking link">
+            <Input
+              type="url"
+              value={booking}
+              placeholder="https://calendly.com/your-name/intro-call"
+              aria-label="Booking link"
+              maxLength={200}
+              onChange={(e) => saveBookingUrl(coach.slug, e.target.value)}
+              className="h-8 t-body-m"
+            />
+          </Field>
+        )}
       </div>
       {account && (
         <InspectorSection title="Layout">

@@ -13,9 +13,9 @@ const LABEL: Record<Txn["status"], string> = { paid: "Paid", failed: "Failed", r
 const money = (n: number) => `€${Number.isInteger(n) ? n.toLocaleString("en") : n.toFixed(2)}`
 const MONTHS = [{ value: "oct", label: "October" }, { value: "sep", label: "September" }, { value: "aug", label: "August" }]
 
-/** Sales · 09 Transactions (Figma 536:7904): every payment, the ones that need you first. */
+/** Sales · 13 Transactions (Figma 536:7904), with 13c Instalments: every payment, the ones that need you first. */
 export function Transactions() {
-  const [filter, setFilter] = useState<"all" | "failed" | "disputed" | "refunded">("all")
+  const [filter, setFilter] = useState<"all" | "instalments" | "failed" | "disputed" | "refunded">("all")
   const [month, setMonth] = useState("oct")
   const [q, setQ] = useState("")
   const fresh = useNewPlatform()
@@ -23,7 +23,7 @@ export function Transactions() {
   // The list is the newest few; the counts are the whole month, moved by what you do here.
   const count = (st: "failed" | "disputed" | "refunded") => fresh ? 0 : TXN_COUNTS[st] + rows.filter((t) => t.status === st).length - TRANSACTIONS.filter((t) => t.status === st).length
   const inMonth = month === "oct" && !fresh ? rows : []
-  const shown = inMonth.filter((t) => (filter === "all" || t.status === filter) && (!q.trim() || `${t.who} ${t.what}`.toLowerCase().includes(q.trim().toLowerCase())))
+  const shown = inMonth.filter((t) => (filter === "instalments" ? !!t.instalment : !t.instalment && (filter === "all" || t.status === filter)) && (!q.trim() || `${t.who} ${t.what}`.toLowerCase().includes(q.trim().toLowerCase())))
   const dispute = () => toast("Send proof", { description: "We add the login history and course progress for you." })
 
   return (
@@ -35,6 +35,7 @@ export function Transactions() {
           onChange={setFilter}
           tabs={[
             { id: "all", label: "All payments", count: fresh ? 0 : TXN_COUNTS.all.toLocaleString("en") },
+            { id: "instalments", label: "Instalments", count: fresh ? 0 : rows.filter((t) => t.instalment).length },
             { id: "failed", label: "Failed", count: count("failed") },
             { id: "disputed", label: "Disputed", count: count("disputed") },
             { id: "refunded", label: "Refunded", count: count("refunded") },
@@ -44,7 +45,7 @@ export function Transactions() {
         <AdminSearch value={q} onChange={setQ} placeholder="Search name or e-mail" label="Search payments" hint="⌘K" className="w-full sm:w-[220px]" />
         <AdminFilter ariaLabel="Month" value={month} onValueChange={setMonth} options={MONTHS} />
       </AdminToolbar>
-      <AdminTable minWidth={820} footer={<AdminTableFooter>Card and payment fees are taken before payout · Our share · 5%</AdminTableFooter>}>
+      <AdminTable minWidth={820} footer={<AdminTableFooter>{filter === "instalments" ? "Instalments are charged on their date. A failed one is retried for 2 weeks, then you decide about access." : "Card and payment fees are taken before payout · Our share · 5%"}</AdminTableFooter>}>
         <AdminTableHead>
           <AdminTh width={190}>Student</AdminTh>
           <AdminTh>What</AdminTh>

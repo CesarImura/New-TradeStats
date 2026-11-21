@@ -34,6 +34,7 @@ export const PROTO_AREAS: ProtoArea[] = [
         screens: [
           ["Overview", "overview"],
           ["Tiers & prices", "tiers"],
+          ["Offers", "offers"],
           ["Groups", "groups"],
           ["Access", "access"],
           ["Sales page", "page"],
@@ -42,7 +43,7 @@ export const PROTO_AREAS: ProtoArea[] = [
           ["Payouts", "payouts"],
         ].map(([label, tab]) => ({ label: label!, href: admin("/sales", `?tab=${tab}`) })),
       },
-      { id: "partners", label: "Partners", screens: [{ label: "Offers", href: admin("/partners"), figma: "Partners · 01" }] },
+      { id: "partners", label: "Partners", screens: [{ label: "Deals", href: admin("/partners"), figma: "Partners · 01" }] },
       { id: "ranking", label: "Ranking", screens: [{ label: "Leaderboard", href: admin("/ranking"), figma: "Ranking · 01" }] },
       {
         id: "settings",

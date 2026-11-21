@@ -27,7 +27,7 @@ export function NewGroupButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-/** Sales · 04 Groups (Figma 535:7989): cohorts in a table; each opens in a drawer. */
+/** Sales · 08 Groups (Figma 535:7989): cohorts in a table; each opens in a drawer. */
 export function Groups({ newSignal }: { newSignal: number }) {
   const { coach } = useCoach()
   const groups = useGroups(coach)

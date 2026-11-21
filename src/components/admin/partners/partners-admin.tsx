@@ -48,7 +48,7 @@ export function PartnersAdmin() {
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
       <PageHeader
         title="Partners"
-        text="Offers from our partners and students who bring students"
+        text="Deals from our partners and students who bring students"
         actions={
           tab === "offers" ? (
             <>
@@ -68,7 +68,7 @@ export function PartnersAdmin() {
         </Callout>
       )}
       <div className="flex">
-        <AdminTabs label="Partners sections" tabs={[{ id: "offers", label: "Offers", count: offers.length }, { id: "affiliate", label: "Affiliate program" }]} value={tab} onChange={setTab} />
+        <AdminTabs label="Partners sections" tabs={[{ id: "offers", label: "Deals", count: offers.length }, { id: "affiliate", label: "Affiliate program" }]} value={tab} onChange={setTab} />
       </div>
       <TabPanel value={tab} order={["offers", "affiliate"]}>
       {tab === "offers" && <Offers onAdd={setAdding} />}
@@ -94,8 +94,8 @@ function Offers({ onAdd }: { onAdd: (k: "catalogue" | "own") => void }) {
     return (
       <EmptyState
         icon={Handshake}
-        title="No offers yet"
-        description="Add an offer from our catalogue or your own affiliate link. Students see them labelled as partner offers."
+        title="No deals yet"
+        description="Add a deal from our catalogue or your own affiliate link. Students see them labelled as partner deals."
         actions={
           <>
             <AdminButton onClick={() => onAdd("catalogue")} hierarchy="secondary">Add from catalogue</AdminButton>
@@ -150,7 +150,7 @@ function CatalogueDialog({ open, onClose }: { open: boolean; onClose: () => void
       bodyClassName="gap-3"
       footer={
         <div className="flex w-full items-center gap-3">
-          <span className="t-caption text-a-text-2">Students see it as a partner offer.</span>
+          <span className="t-caption text-a-text-2">Students see it as a partner deal.</span>
           <span aria-hidden className="h-px min-w-px flex-1" />
           <AdminButton onClick={close}>Done</AdminButton>
         </div>
@@ -170,7 +170,7 @@ function CatalogueDialog({ open, onClose }: { open: boolean; onClose: () => void
               {added ? (
                 <Tag tone="success">Added</Tag>
               ) : (
-                <AdminButton hierarchy="secondary" size="md" aria-label={`Add ${c.name}`} onClick={() => (saveOffers(coach, (l) => [...l, fromCatalogue(coach, c)]), toast(`${c.name} added`, { description: "Students see it as a partner offer." }))}>
+                <AdminButton hierarchy="secondary" size="md" aria-label={`Add ${c.name}`} onClick={() => (saveOffers(coach, (l) => [...l, fromCatalogue(coach, c)]), toast(`${c.name} added`, { description: "Students see it as a partner deal." }))}>
                   Add
                 </AdminButton>
               )}
@@ -236,7 +236,7 @@ function OwnDialog({ item, onClose }: { item?: PartnerOffer; onClose: () => void
           {() => <AdminSelect ariaLabel="Kind" value={kind} onValueChange={(v) => setKind(v as PartnerKind)} options={PARTNER_KINDS.map((k) => ({ value: k, label: KIND_LABEL[k] }))} />}
         </AdminField>
       </div>
-      <AdminField label="Offer" hint="What the student gets" >
+      <AdminField label="Deal" hint="What the student gets" >
         <input value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="20% off the first month" className={cn(adminControl, "h-11")} />
       </AdminField>
       <div className="grid grid-cols-2 items-start gap-3 max-sm:grid-cols-1">

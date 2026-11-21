@@ -3,23 +3,24 @@
 import { useState, type RefObject } from "react"
 import Link from "next/link"
 import { toast } from "@/lib/toast"
-import { AlertTriangle, ArrowUpToLine, Bell, CircleAlert, CreditCard, MessageCircle, Video } from "@/components/icons"
+import { AlertTriangle, ArrowUpToLine, Bell, CircleAlert, CreditCard, Eye, Video } from "@/components/icons"
 import { AdminButton, AdminTabs, EmptyState, Tag } from "@/components/admin/ui"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { cn } from "@/lib/utils"
 import { useCoach } from "@/components/coach/coach-provider"
 import { DEFAULT_NOTICE_PREFS, NOTICE_PREFS_KEY, NOTICE_READ_KEY, normalizePrefs, panelOn, type NoticeKind, type NoticePrefs } from "@/lib/data/admin-notifications"
+import { LINKS, money, NOW_ISO, NO_LINKS, NO_OFFERS, OFFERS, planEach, type Offer, type OfferLink } from "@/lib/data/offers"
 import { useCommunityData } from "./kit"
 import { useNewPlatform } from "./use-new-platform"
 
 type Filter = "all" | "payments" | "journal" | "students"
 type Notice = { id: string; kind?: NoticeKind; title: string; detail: string; time: string; icon: React.ComponentType<{ className?: string }>; tone: string; filters: Filter[]; href: string }
 
-/** Sample items from Figma "Overview · 03 Notifications" (524:11637). The first four start unread. */
+/** Sample items from Figma "Overview · 03 Notifications" (524:11637) and 02c (offers: a failed instalment, a link opened, an offer paid). The first four start unread. */
 const NOTICES: Notice[] = [
-  { id: "n1", kind: "failed", title: "Payment failed · Alex Moreau", detail: "Inner Circle €49 · retrying in 2 days", time: "2 h", icon: CircleAlert, tone: "text-a-danger", filters: ["payments", "students"], href: "sales" },
-  { id: "n2", title: "New journal request · Mia Sørensen", detail: "“Was my stop on NQ too tight?”", time: "3 h", icon: MessageCircle, tone: "text-a-text-2", filters: ["journal", "students"], href: "journal" },
-  { id: "n3", kind: "sale", title: "New sale · Lena Ito", detail: "1:1 VIP · €390", time: "5 h", icon: CreditCard, tone: "text-a-success", filters: ["payments", "students"], href: "sales" },
+  { id: "n1", kind: "failed", title: "Instalment failed · Sofia Laurent", detail: "Coaching Silver €600 · retrying in 2 days", time: "2 h", icon: CircleAlert, tone: "text-a-danger", filters: ["payments", "students"], href: "sales?tab=transactions" },
+  { id: "n2", title: "Offer link opened · Daniel Okoye", detail: "Coaching Platinum · opened 3 min ago", time: "3 min", icon: Eye, tone: "text-a-text-2", filters: ["students"], href: "sales?tab=offers" },
+  { id: "n3", kind: "sale", title: "Offer paid · Marco Bellini", detail: "Coaching Gold · instalment 1 of 4 · €1,500", time: "5 h", icon: CreditCard, tone: "text-a-success", filters: ["payments", "students"], href: "sales?tab=offers" },
   { id: "n4", kind: "upload", title: "Upload finished", detail: "Price action · Lesson 4 is ready to publish", time: "6 h", icon: ArrowUpToLine, tone: "text-a-text-2", filters: [], href: "content" },
   { id: "n5", kind: "live", title: "Livestream starts in 1 hour", detail: "London open breakdown · 09:00", time: "1 d", icon: Video, tone: "text-a-text-2", filters: [], href: "livestreams" },
   { id: "n6", title: "Payout delayed", detail: "Stripe needs a document from you", time: "2 d", icon: AlertTriangle, tone: "text-a-text-2", filters: ["payments"], href: "sales" },
@@ -51,7 +52,18 @@ export function NotificationsMenu({ base, anchorRef, paused = false }: { base: s
   // What was read is remembered, like the switches. The two oldest start read; a new platform has nothing to read.
   const [readList, setReadList] = useCommunityData<string[]>(coach.slug, NOTICE_READ_KEY, INITIALLY_READ, [])
   const read = new Set(Array.isArray(readList) ? readList : [])
-  const notices = fresh ? NO_NOTICES : NOTICES.filter((n) => !n.kind || panelOn(prefs, n.kind))
+  // What happens in this session with offer links: opened (when the offer asks to be told) and paid. Sample links never make a notice.
+  const [offers] = useCommunityData<Offer[]>(coach.slug, "offers", OFFERS, NO_OFFERS)
+  const [links] = useCommunityData<OfferLink[]>(coach.slug, "offerLinks", LINKS, NO_LINKS)
+  const live: Notice[] = (Array.isArray(links) ? links : []).flatMap((l) => {
+    const o = offers.find((x) => x.id === l.offerId)
+    const who = l.name || l.email || "a client"
+    const out: Notice[] = []
+    if (o && l.paidAt === NOW_ISO) out.push({ id: `offer-paid-${l.id}`, kind: "sale", title: `Offer paid · ${who}`, detail: `${o.name} · ${l.plan === 1 ? "paid in full" : `instalment 1 of ${l.plan}`} · ${money(planEach(l.price, l.plan))}`, time: "now", icon: CreditCard, tone: "text-a-success", filters: ["payments", "students"], href: "sales?tab=offers" })
+    else if (o?.notifyOpen && l.openedAt === NOW_ISO && !l.paidAt) out.push({ id: `offer-open-${l.id}`, title: `Offer link opened · ${who}`, detail: `${o.name} · opened just now`, time: "now", icon: Eye, tone: "text-a-text-2", filters: ["students"], href: "sales?tab=offers" })
+    return out
+  })
+  const notices = fresh ? NO_NOTICES : [...live, ...NOTICES].filter((n) => !n.kind || panelOn(prefs, n.kind))
   const empty = notices.length === 0
   const unread = notices.filter((n) => !read.has(n.id)).length
   const shown = notices.filter((n) => filter === "all" || n.filters.includes(filter))

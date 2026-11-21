@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { amount, fmtDate, isFull, per, useGroups, useTiers } from "@/lib/data/access"
 import { COUPONS } from "@/lib/data/people"
+import { bookingUrlOk, useBookingUrl } from "@/lib/data/booking"
 import { savePurchase } from "@/lib/data/sales-page"
 import { useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
@@ -63,6 +64,9 @@ export function Checkout() {
   const [method, setMethod] = useState<"card" | "wallet">("card")
   const [busy, setBusy] = useState(false)
   const copy = coach.join?.screens?.subscribe ?? {}
+
+  const bookingUrl = useBookingUrl(coach.slug)
+  const booking = bookingUrlOk(bookingUrl) ? bookingUrl.trim() : undefined
 
   if (!tier) return <p className="p-10 text-center text-muted-foreground">No paid plans yet.</p>
 
@@ -301,9 +305,19 @@ export function Checkout() {
             .
           </p>
         </div>
-        <Link href={`${base}/login`} className="text-center text-sm text-muted-foreground hover:text-foreground">
-          Already a member? Log in to change your plan
-        </Link>
+        <div className="flex flex-col items-center gap-1 text-center text-sm text-muted-foreground">
+          <Link href={`${base}/login`} className="hover:text-foreground">
+            Already a member? Log in to change your plan
+          </Link>
+          {booking && (
+            <span>
+              Not ready to pay yet?{" "}
+              <a href={booking} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-foreground">
+                Book a call
+              </a>
+            </span>
+          )}
+        </div>
       </aside>
     </div>
   )

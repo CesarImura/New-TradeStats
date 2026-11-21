@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 import { dropLine } from "@/components/kit/drop-line"
 import { AdminButton, AdminField, Panel, SortHint, SortableRow, Tag, adminControl, useMoveFeedback } from "../ui"
 
-/** Sales · 06 Sales page, header actions (Figma 536:7152). */
+/** Sales · 10 Sales page, header actions (Figma 536:7152). */
 export function SalesPageActions({ slug, onReset }: { slug: string; onReset: () => void }) {
   return (
     <>
@@ -22,7 +22,7 @@ export function SalesPageActions({ slug, onReset }: { slug: string; onReset: () 
   )
 }
 
-/** Sales · 06 Sales page (Figma 536:7152): blocks on the left, the live page on the right. The block being edited is dashed in the page. */
+/** Sales · 10 Sales page (Figma 536:7152): blocks on the left, the live page on the right. The block being edited is dashed in the page. */
 export function SalesPageEditor({ resetSignal }: { resetSignal: number }) {
   const { coach } = useCoach()
   const blocks = useSalesPage(coach)

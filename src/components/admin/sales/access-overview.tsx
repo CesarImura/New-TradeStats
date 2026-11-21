@@ -15,7 +15,7 @@ function Dot({ on, label, onChange }: { on: boolean; label: string; onChange: (v
   )
 }
 
-/** Sales · 05 Access (Figma 535:8199): what each tier unlocks, in one grid, with the rule for locked content. */
+/** Sales · 09 Access (Figma 535:8199): what each tier unlocks, in one grid, with the rule for locked content. */
 export function AccessOverview() {
   const { coach } = useCoach()
   const catalog = useCatalog(coach)

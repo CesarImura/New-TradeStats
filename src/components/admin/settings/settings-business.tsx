@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Info, ShieldCheck, TriangleAlert } from "@/components/icons"
 import { toast } from "@/lib/toast"
+import { bookingUrlOk, saveBookingUrl, useBookingUrl } from "@/lib/data/booking"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
@@ -23,6 +24,7 @@ export function General() {
   const fallback: GeneralSettings = { name: coach.name, short: coach.name, tz: "lisbon", currency: "eur", from: `${coach.coachName} · ${coach.name}`, replyTo: `${coach.slug}@${handle}.trading` }
   const [g, setG] = useCommunityData<GeneralSettings>(coach.slug, "general", fallback)
   const set = (p: Partial<GeneralSettings>) => setG((x) => ({ ...x, ...p }))
+  const booking = useBookingUrl(coach.slug)
   return (
     <SettingsPage title="General" text="What students see as your name and how we reach you.">
       <Panel>
@@ -77,6 +79,15 @@ export function General() {
           </Field>
         </div>
         <p className="t-caption text-a-success">Students reply to this address. Verified · SPF and DKIM ok.</p>
+      </Panel>
+      <Panel>
+        <PanelHeader title="Book a call" />
+        <Field
+          label="Booking link"
+          hint={booking.trim() && !bookingUrlOk(booking) ? undefined : 'Shown as a "Book a call" button on your Join page. We do not see the booking itself.'}
+          error={booking.trim() && !bookingUrlOk(booking) ? "Start with https://" : undefined}>
+          {(f) => <Input {...f} type="url" value={booking} onChange={(e) => saveBookingUrl(coach.slug, e.target.value)} placeholder="https://calendly.com/your-name/discovery" />}
+        </Field>
       </Panel>
     </SettingsPage>
   )

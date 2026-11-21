@@ -14,6 +14,7 @@ import { Groups, NewGroupButton } from "./groups"
 import { SalesPageEditor, SalesPageActions } from "./sales-page-editor"
 import { Coupons, NewCouponButton } from "./coupons"
 import { RevenueOverview } from "./revenue"
+import { Offers, OffersActions } from "./offers"
 import { Payouts } from "./payouts"
 import { Tiers } from "./tiers"
 import { Transactions } from "./transactions"
@@ -21,6 +22,7 @@ import { Transactions } from "./transactions"
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "tiers", label: "Tiers & prices" },
+  { id: "offers", label: "Offers" },
   { id: "groups", label: "Groups" },
   { id: "access", label: "Access" },
   { id: "page", label: "Sales page" },
@@ -46,6 +48,8 @@ export function SalesAdmin() {
   const [newTier, setNewTier] = useState(0)
   const [newGroup, setNewGroup] = useState(0)
   const [newCoupon, setNewCoupon] = useState(0)
+  const [newOffer, setNewOffer] = useState(0)
+  const [sendOffer, setSendOffer] = useState(0)
   const [resetPage, setResetPage] = useState(0)
 
   const salesPage = (
@@ -61,6 +65,8 @@ export function SalesAdmin() {
           <Plus /> New tier
         </AdminButton>
       </>
+    ) : tab === "offers" ? (
+      <OffersActions onNew={() => setNewOffer((n) => n + 1)} onSend={() => setSendOffer((n) => n + 1)} />
     ) : tab === "groups" ? (
       <NewGroupButton onClick={() => setNewGroup((n) => n + 1)} />
     ) : tab === "page" ? (
@@ -73,7 +79,7 @@ export function SalesAdmin() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
-      <PageHeader title="Sales & payments" text="Tiers, sales page, coupons and payouts" actions={actions} />
+      <PageHeader title="Sales & payments" text="Tiers, offers, sales page, coupons and payouts" actions={actions} />
       {tab === "tiers" && <SetupTip task="membership" />}
       {tab === "payouts" && <SetupTip task="payouts" />}
       <div className="flex">
@@ -82,6 +88,7 @@ export function SalesAdmin() {
       <TabPanel value={tab} order={TABS.map((t) => t.id)}>
       {tab === "overview" && <RevenueOverview onProblems={() => setTab("transactions")} />}
       {tab === "tiers" && <Tiers newSignal={newTier} onNew={() => setNewTier((n) => n + 1)} />}
+      {tab === "offers" && <Offers newSignal={newOffer} sendSignal={sendOffer} />}
       {tab === "groups" && <Groups newSignal={newGroup} />}
       {tab === "access" && <AccessOverview />}
       {tab === "page" && <SalesPageEditor resetSignal={resetPage} />}
@@ -100,7 +107,7 @@ function Affiliates() {
   const { base } = useCoach()
   return (
     <Panel className="max-w-xl">
-      <PanelHeader title="Affiliates moved to Partners" description="The affiliate program, your partner offers and what they earn are now in one place." />
+      <PanelHeader title="Affiliates moved to Partners" description="The affiliate program, your partner deals and what they earn are now in one place." />
       <div>
         <AdminButton nativeButton={false} render={<Link href={`${base}/partners`} />} hierarchy="secondary">
           Open Partners

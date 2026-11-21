@@ -82,12 +82,12 @@ export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => v
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2 xl:grid-cols-3">
         {tiers.map((t, i) => (
-          <Panel key={t.id} data-tour={i === 0 ? "tier-card" : undefined} data-ready={saved[t.id] ? true : undefined} className={cn("gap-0 p-0", t.featured && "border-a-border-strong")}>
+          <Panel key={t.id} data-tour={i === 0 ? "tier-card" : undefined} data-ready={saved[t.id] ? true : undefined} className={cn("gap-0 p-0", t.featured && "border-a-success/[0.22]")}>
             <div className="flex flex-1 flex-col gap-3 p-5 pb-4">
               <div className="flex items-start gap-2">
                 <h2 className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 t-heading-s text-a-text">
                   {t.name}
-                  {t.featured && <Tag>Most popular</Tag>}
+                  {t.featured && <Tag tone="success">Most popular</Tag>}
                   {t.hidden && <Tag>Hidden · link only</Tag>}
                 </h2>
                 <DropdownMenu>

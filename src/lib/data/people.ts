@@ -22,6 +22,8 @@ export type Student = {
   discord: boolean
   country: string
   coach?: string // assistant coach
+  /** Joined through an offer link (Offers): the plan and where the instalments stand. */
+  offer?: { name: string; plan: number; paidCount: number; each: number; next: string; sentBy: string; failed?: boolean }
   trades30: number
   rules: number // % rules kept, last 30 days
   notes: { by: string; when: string; text: string }[]
@@ -55,7 +57,7 @@ const FEATURED_STUDENTS: Student[] = [
   },
   {
     id: "s5", name: "Jonas Pereira", initials: "JP", email: "jonas@pereira.pt", tier: "vip", progress: 94, lastActive: "today", activeDays: 14, health: "green",
-    joined: "2 Nov 2025", paid: 9600, broker: true, discord: true, country: "PT", trades30: 52, rules: 96, notes: [{ by: "Marco", when: "29 Oct", text: "Ready to size up. Talk about scaling plan on next 1:1." }],
+    joined: "2 Sep 2025", paid: 4800, offer: { name: "Coaching Platinum", plan: 4, paidCount: 2, each: 2400, next: "Tue 25 Nov", sentBy: "Kairo", failed: true }, broker: true, discord: true, country: "PT", trades30: 52, rules: 96, notes: [{ by: "Marco", when: "29 Oct", text: "Ready to size up. Talk about scaling plan on next 1:1." }],
     history: [H("Thu 6 Nov", "Asked for review: ES short +2.4R"), H("2 Nov 2025", "Joined 1:1 VIP")],
   },
   {
@@ -129,7 +131,7 @@ export const couponLabel = (c: Coupon) => `${c.kind === "percent" ? `${c.amount}
 /** Out of date or out of uses. */
 export const couponEnded = (c: Coupon) => (!!c.ends && c.ends < COUPON_TODAY) || (c.limit !== undefined && c.used >= c.limit)
 
-export type Txn = { id: string; when: string; who: string; what: string; amount: number; status: "paid" | "failed" | "refunded" | "retrying" | "disputed" }
+export type Txn = { id: string; when: string; who: string; what: string; amount: number; status: "paid" | "failed" | "refunded" | "retrying" | "disputed"; /** One payment of an offer plan (Offers): shown under Instalments. */ instalment?: boolean }
 export const TRANSACTIONS: Txn[] = [
   { id: "x1", when: "Today 09:12", who: "Lena Ito", what: "1:1 VIP · instalment 2 of 3", amount: 130, status: "paid" },
   { id: "x2", when: "Today 06:00", who: "Alex Moreau", what: "Inner Circle · monthly", amount: 49, status: "retrying" },
@@ -137,9 +139,16 @@ export const TRANSACTIONS: Txn[] = [
   { id: "x4", when: "Yesterday", who: "Mia Sørensen", what: "Trading Desk · monthly", amount: 129, status: "paid" },
   { id: "x5", when: "2 d ago", who: "Tom Okafor", what: "Trading Desk · monthly", amount: 129, status: "failed" },
   { id: "x6", when: "3 d ago", who: "Priya Nair", what: "Inner Circle · AUTUMN20", amount: 39.2, status: "paid" },
+  // Offer instalments (Figma Sales 16): the client, the plan and who sent the link.
+  { id: "x7", when: "Today 09:12", who: "Marco Bellini", what: "Gold · instalment 2 of 4 · sent by Ana", amount: 1500, status: "paid", instalment: true },
+  { id: "x8", when: "Today 06:00", who: "Daniel Okoye", what: "Platinum · instalment 3 of 6 · sent by Kairo", amount: 1600, status: "retrying", instalment: true },
+  { id: "x9", when: "Yesterday", who: "Eva Lindqvist", what: "Gold · instalment 3 of 4 · sent by Ana", amount: 1500, status: "disputed", instalment: true },
+  { id: "x10", when: "Yesterday", who: "Tom Okafor", what: "Gold · instalment 1 of 2 · sent by Ana", amount: 3000, status: "paid", instalment: true },
+  { id: "x11", when: "2 d ago", who: "Sofia Laurent", what: "Silver · instalment 2 of 4 · sent by Ana", amount: 600, status: "failed", instalment: true },
+  { id: "x12", when: "3 d ago", who: "Priya Nair", what: "Silver · instalment 1 of 2 · sent by Kairo", amount: 1200, status: "paid", instalment: true },
 ]
 /** Counts the Transactions filters show (the sample list above is only the newest few). */
-export const TXN_COUNTS = { all: 1204, failed: 2, disputed: 1, refunded: 4 }
+export const TXN_COUNTS = { all: 1210, failed: 3, disputed: 2, refunded: 4 }
 
 export const MONEY = {
   mrr: 37180,

@@ -39,7 +39,7 @@ export function NewCouponButton({ onClick, inEmpty }: { onClick: () => void; inE
 
 const NO_COUPONS: Coupon[] = []
 
-/** Sales · 07 Coupons (Figma 536:7402) and 08 New coupon (536:7623). */
+/** Sales · 11 Coupons (Figma 536:7402) and 12 New coupon (536:7623). */
 export function Coupons({ newSignal }: { newSignal: number }) {
   const { coach } = useCoach()
   const tiers = useTiers(coach)

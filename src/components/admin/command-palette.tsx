@@ -7,9 +7,12 @@ import { ArrowRight, Pencil, Play, Plus, Search } from "@/components/icons"
 import { AdminAvatar } from "@/components/admin/ui"
 import { ADMIN_STUDENTS, COURSES, FEEDBACK_REQUESTS } from "@/lib/data/sample"
 import { cn } from "@/lib/utils"
+import { useCoach } from "@/components/coach/coach-provider"
+import { money, NO_OFFERS, OFFERS, type Offer } from "@/lib/data/offers"
+import { useCommunityData } from "./kit"
 import { useNewPlatform } from "./use-new-platform"
 
-type GroupId = "students" | "journal" | "content" | "go"
+type GroupId = "actions" | "offers" | "students" | "journal" | "content" | "go"
 type Item = {
   id: string
   group: GroupId
@@ -23,6 +26,8 @@ type Item = {
 }
 
 const GROUPS: { id: GroupId; label: string; max: number }[] = [
+  { id: "actions", label: "Actions", max: 3 },
+  { id: "offers", label: "Offers", max: 3 },
   { id: "students", label: "Students", max: 4 },
   { id: "journal", label: "Journal & feedback", max: 3 },
   { id: "content", label: "Content", max: 4 },
@@ -60,7 +65,7 @@ const NAV: { id: string; label: string; path: string }[] = [
   { id: "settings", label: "Settings", path: "/settings" },
 ]
 
-function buildItems(base: string, fresh: boolean): Item[] {
+function buildItems(base: string, fresh: boolean, offers: Offer[]): Item[] {
   const students: Item[] = fresh ? [] : [
     ...ADMIN_STUDENTS.map((s) => ({ id: s.id, name: s.name, initials: s.initials, email: PEOPLE[s.name]?.email ?? "", tier: PEOPLE[s.name]?.tier ?? s.tier })),
     ...EXTRA_STUDENTS,
@@ -75,7 +80,14 @@ function buildItems(base: string, fresh: boolean): Item[] {
     { id: "go-sales-transactions", group: "go", title: "Sales & payments → Transactions", icon: "arrow", keys: GO_KEYS.sales, href: `${base}/sales` },
     ...NAV.filter((n) => n.id !== "sales").map<Item>((n) => ({ id: `go-${n.id}`, group: "go", title: n.label, icon: "arrow", keys: GO_KEYS[n.id], href: `${base}${n.path}` })),
   ]
-  return [...students, ...journal, ...content, ...go]
+  // Offers (Figma Overview 03c): the actions answer "offer", and each offer is a row that opens its tab.
+  const actions: Item[] = [
+    ...(offers.length > 0 ? [{ id: "act-send-offer", group: "actions" as const, title: "Send offer link", detail: "Make a checkout link for one client", icon: "plus" as const, href: `${base}/sales?tab=offers&send=1` }] : []),
+    { id: "act-new-offer", group: "actions", title: "New offer", detail: "A package you sell on a call", icon: "plus", href: `${base}/sales?tab=offers&new=1` },
+    { id: "act-go-offers", group: "actions", title: "Go to Sales & payments → Offers", icon: "arrow", href: `${base}/sales?tab=offers` },
+  ]
+  const offerRows: Item[] = offers.map((o) => ({ id: `offer-${o.id}`, group: "offers", title: o.name, detail: `${money(o.price)} · ${o.plans.length} payment ${o.plans.length === 1 ? "plan" : "plans"} · ${o.sold} sold`, icon: "arrow", href: `${base}/sales?tab=offers` }))
+  return [...actions, ...offerRows, ...students, ...journal, ...content, ...go]
 }
 
 /** Lower case, no accents, so "sorensen" finds "Sørensen". */
@@ -85,7 +97,7 @@ function search(items: Item[], query: string): Item[] {
   const tokens = fold(query).split(/\s+/).filter(Boolean)
   const hits = tokens.length
     ? items.filter((i) => {
-        const hay = fold(`${i.title} ${i.detail ?? ""}`)
+        const hay = fold(`${i.title} ${i.detail ?? ""}${i.group === "offers" ? " offer offers" : ""}`)
         return tokens.every((t) => hay.includes(t))
       })
     : items.filter((i) => i.group === "go")
@@ -109,7 +121,9 @@ export function CommandPalette({ open, onOpenChange, base }: { open: boolean; on
   const [query, setQuery] = useState("")
   const [active, setActive] = useState(0)
   const fresh = useNewPlatform()
-  const all = useMemo(() => buildItems(base, fresh), [base, fresh])
+  const { coach } = useCoach()
+  const [offers] = useCommunityData<Offer[]>(coach.slug, "offers", OFFERS, NO_OFFERS)
+  const all = useMemo(() => buildItems(base, fresh, offers), [base, fresh, offers])
   const results = useMemo(() => search(all, query), [all, query])
   const current = results[Math.min(active, results.length - 1)]
   const optionId = (i: Item) => `${listId}-${i.id}`

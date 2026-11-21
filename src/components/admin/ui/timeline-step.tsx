@@ -30,6 +30,7 @@ export function TimelineStep({
   guide,
   tag,
   icon: Icon,
+  tourId,
 }: {
   step: number
   state: "done" | "current" | "open" | "locked" | "upcoming"
@@ -52,6 +53,8 @@ export function TimelineStep({
   tag?: string
   /** Figma Show Icon / Icon: a 20 px icon before the title (palette, store, course, wallet, legal, rocket). */
   icon?: React.ComponentType<{ className?: string }>
+  /** Marks the action for a guided tour (`data-tour`). */
+  tourId?: string
 }) {
   // The rail (Gustavo's Figma, 19/11): solid green up to the last done step, dashed 4 / 4 after it.
   const line = "w-0.5 flex-1 transition-colors duration-300 ease-out"
@@ -106,7 +109,7 @@ export function TimelineStep({
                       Skip for now
                     </AdminButton>
                   )}
-                  <AdminButton hierarchy={state === "current" ? "primary" : "secondary"} disabled={muted} onClick={onAction} className="w-[152px]">
+                  <AdminButton hierarchy={state === "current" ? "primary" : "secondary"} disabled={muted} onClick={onAction} data-tour={tourId} className="w-[152px]">
                     {action}
                   </AdminButton>
                 </span>

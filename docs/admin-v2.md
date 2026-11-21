@@ -135,3 +135,55 @@ Students, tabelas (Admin / Table), Calendar, Community, Journal & feedback, Down
 
 ### Decisões
 Tier grátis fora das abas de Sales; Access sem override por módulo; dados de exemplo alinhados ao Figma; onboarding só pergunta as opções do Figma; o passo de marca do setup reusa os controles do editor Design.
+
+## Offers (high ticket) e Deals (20/11/2026)
+
+Prototipo, sem Stripe nem backend: parcelas simuladas, nada e cobrado. Figma: Sales 12 a 16 (1876:71176, 1880:75998, 1880:78095, 1883:74159, 1883:78492, 1883:78604), Editor Join 04b (1929:31956).
+
+- **Aba Offers** em Sales & payments (`?tab=offers`): `admin/sales/offers.tsx` (cards dos pacotes, links com filtro por status e remetente, drawer Edit offer com abas Offer e Link settings, modal Send an offer link). Dados em `lib/data/offers.ts` (stores `<slug>:offers` e `<slug>:offerLinks`, via `useCommunityData`: plataforma nova comeca vazia).
+- **Pacote abre um tier que ja existe** (`tierId`); nao cria tier novo e nao entra em Layout for / Preview as (decisao do coordenador, 20/11, reversivel).
+- **Pagina publica** `/site/<coach>/offer/<id>` (`public/offer-checkout.tsx`): link de uso unico, com estados valido, expirado, ja usado e inexistente. Plano com mais de uma parcela exige o checkbox de consentimento. Pagar marca o link como pago, soma em sold/paying e grava a compra do tier (`savePurchase`).
+- **Booking link** na Join (Subscribe): campo `bookingUrl` em `JoinCopy` (inspector em `join-panels.tsx`) e linha "Not ready to pay yet? Book a call" em `public/checkout.tsx`. Vazio = a linha some.
+- **Deals**: os "Offers" de parceiros passaram a se chamar Deals nos textos (Partners, widget do aluno, vazio). Nomes de codigo (`useOffers`, `PartnerOffer`, `partners.ts`) nao mudaram.
+- **Settings > General > Book a call:** o Booking link tem uma fonte so (`lib/data/booking.ts`, chave `<slug>:booking`), editada em Settings e no inspector da Join; o checkout le dela. Vazio = a linha some.
+- **Overview / notificacoes / busca:** sino com "Instalment failed", "Offer link opened", "Offer paid" (`notifications-menu.tsx`); ⌘K com grupos Actions (Send offer link, New offer, Go to Offers) e Offers (`command-palette.tsx`, abre `?tab=offers&send=1` ou `&new=1`). Os atalhos "S O", "N O" do Figma nao existem (o teclado so entende "g x" e uma letra) e "G O" ja e o Overview: ficam sem atalho.
+- **Transactions:** aba Instalments (`Txn.instalment`) e rodape explicando as tentativas; Needs attention do Overview continua so com pagamentos que nao sao parcela.
+- **Perfil do aluno:** `Student.offer` mostra Tier and plan (plano, proximo pagamento, quem enviou o link). Hoje so Jonas Pereira tem.
+- **Overview de Sales:** painel "Where October revenue came from" (Offers + tiers, barra de 6 px) no lugar da tabela por tier; cards do grafico e Needs attention com a mesma altura.
+- **Payouts:** Connect payouts como timeline (`TimelineStep`, novo `tourId`) com o painel Before you start; Payout account em duas colunas com tag Verified.
+- **Fora do codigo, por escolha:** grafico de barras compartilhado do Figma (o codigo usa recharts e ja alinha grade, rotulos e base); faixa de parcela falhada no perfil do aluno; Settings alem do Booking link.
+
+## Sales & payments: Figma × localhost, passada de 20/11 (noite)
+
+Folha com as 16 telas lado a lado (Figma à esquerda, localhost à direita): `docs/sales-figma-vs-localhost-2026-11-20-a.png e -b.png`. Ajustado no código: tag e borda verdes em Most popular e Most sold (`color/status/success` a 22 %); Needs attention com total em risco (€568) e avatares; Revenue by source com Offers = receita do mês − tiers, barra de 6 px na cor `chart-bar-bg-default` e divisórias entre colunas; gráfico com abas do mesmo grupo dos outros e barras mais finas; Payout account com ícones e divisória, Recent payouts com To e See all; Connect payouts com ícones nos passos, tags de tempo e caixa de segurança; offer com Currency e preços com separador de milhar; Transactions: as parcelas de offers só aparecem em Instalments (6 linhas, como no Figma).
+
+Diferenças que ficam de propósito: dados de exemplo (Access tem cursos diferentes do Figma, Collected/Still to collect de Offers são calculados dos links), tiers de offer reaproveitam os existentes (decisão do Gustavo ainda aberta), a página pública do offer usa o tema do coach (Kairo) e o Figma mostra o da Northline, preview da Sales page escuro no código e claro no Figma, e o plano no checkout usa check, não rádio, como o checkout de assinatura do código.
+
+## Figma de Sales & payments: nova ordem (20/11/2026)
+
+Seção `Admin · 12 Sales & payments` (1485:116216). Antes, as telas de offers (12 a 16) ficavam no fim da linha, depois de Payouts, e a numeração não seguia as abas do Admin. Agora cada coluna é uma tela, na ordem das abas, as variantes (b, c) ficam embaixo da tela base (+620 px) e a coluna 00 é o mapa do fluxo (`Sales · 00 Flow map`, 1947:77406). Nada foi apagado nem redesenhado: só nomes, números e posições.
+
+| Novo | Tela | Antes |
+| --- | --- | --- |
+| 00 | Flow map | novo |
+| 01 / 01b | Overview / plataforma nova | 01 / 01b |
+| 02 / 02b | Tiers & prices / plataforma nova | 02 / 02b |
+| 03 / 03b | Edit tier / aba Sales page | 03 / 03b |
+| 04 / 04b | Offers / plataforma nova | 12 / 12b |
+| 05 / 05b | Edit offer / Link settings | 13 / 13b |
+| 06 | Send offer link | 14 |
+| 07 / 07b / 07c | Offer checkout / link expirado / link já usado | 15 / 15b / 15c |
+| 08 / 08b | Groups / plataforma nova | 04 / 04b |
+| 09 | Access | 05 |
+| 10 | Sales page | 06 |
+| 11 / 11b | Coupons / plataforma nova | 07 / 07b |
+| 12 | New coupon | 08 |
+| 13 / 13b / 13c | Transactions / plataforma nova / Instalments | 09 / 09b / 16 |
+| 14 | Payouts | 10 |
+| 15 | Connect payouts | 11 |
+
+Fora da seção mas parte do fluxo: Overview 02c e 03c, Students 03c, Settings 01b, Editor Join 04 e 04b, Partners 01 (Deals), tours Tier e Payouts. Os comentários do código passaram a citar os números novos.
+
+**Fechamento do high ticket no código (20/11, noite):** o sino mostra, em tempo real, "Offer link opened" (só se o offer tem "Tell me when a link is opened") e "Offer paid" para links abertos ou pagos na sessão; o perfil do aluno com offer mostra a faixa "Instalment X of N failed · retrying …" com Review (Send payment link, Retry now, Pause access) e "Next payment … (retry)". Continua só no Figma ou em aberto: tiers exclusivos de offer em Layout for / Preview as (decisão do Gustavo), cobrança real e backend (protótipo).
+
+**Cenários de erro e acerto (20/11, noite):** mapa completo em `docs/high-ticket-flow.md` (20 cenários, ciclo de vida do link e das parcelas, sugestões para o backend). No Figma entraram 07d (cartão recusado) e 07e (offer indisponível) como variantes do Offer checkout. No protótipo: cartão recusado e confirmação do banco (botões "Prototype · what the payment returns"), offer apagado depois do envio, aviso de assinatura que termina, e Offers bloqueado enquanto Payouts não estiver conectado.

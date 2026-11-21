@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { AlertTriangle, ArrowUp, Loader2, X } from "@/components/icons"
+import { AlertTriangle, ArrowUp, Banknote, BadgeCheck, CalendarDays, Clock, CreditCard, Euro, Landmark, Loader2, ShieldCheck, User, Wallet, X } from "@/components/icons"
 import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { account } from "@/lib/data/communities"
@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils"
 import { useCommunityData } from "../kit"
 import { useWizardCommunity } from "../setup-checklist"
 import { isFreeTier, useTiers } from "@/lib/data/access"
-import { AdminSelect, AdminButton, AdminDrawer, AdminField, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, Callout, Dropzone, OptionCard, Panel, StatPanel, StepIndicator, Tag, adminControl } from "../ui"
+import { AdminSelect, AdminButton, AdminDrawer, AdminField, Callout, Dropzone, OptionCard, Panel, StatPanel, Tag, TimelineStep, adminControl } from "../ui"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 
 type Payouts = { step: number; done: boolean; country?: string; kind?: "person" | "company"; iban?: string; /** Full legal name, as on the ID. */ name?: string; holder?: string; /** The ID is being checked (it clears by itself in the prototype). */ review?: boolean }
 const STEPS = [
@@ -35,7 +36,15 @@ const IBAN = /^[A-Z]{2}\d{2}[A-Z0-9 ]{10,30}$/
 /** Country and check digits, then the last four: "DE89 •••• 3000" (QA 14/11). */
 const maskIban = (v: string) => { const s = v.replace(/\s/g, "").toUpperCase(); return `${s.slice(0, 4)} •••• ${s.slice(-4)}` }
 
-/** Sales · 10 Payouts (Figma 536:8198) and 11 Connect payouts (536:8427). */
+/** Are payouts connected? Offer links need it: no connected account, no payment (Figma Sales · 04b). */
+export function usePayoutsDone() {
+  const { coach } = useCoach()
+  const wizard = useWizardCommunity(coach.slug)
+  const [state] = useCommunityData<Payouts>(coach.slug, "payouts-v2", !wizard || wizard.setup?.payouts === "connected" ? CONNECTED : NOT_CONNECTED)
+  return state.done
+}
+
+/** Sales · 14 Payouts (Figma 536:8198) and 15 Connect payouts (536:8427). */
 export function Payouts() {
   const { coach } = useCoach()
   // The demo communities have payouts set up; one made in setup only if the coach connected them there.
@@ -75,35 +84,58 @@ export function Payouts() {
 
     return (
       <div className="flex flex-col gap-4">
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
         <Panel className="gap-4">
           <header className="grid gap-1"><h2 className="t-heading-m text-a-text">Connect payouts</h2><p className="t-body-m text-a-text-2">Needed before your first sale. Takes about 5 minutes.</p></header>
-          <ol className="flex flex-col gap-4">
+          <ol className="flex flex-col">
             {STEPS.map((s, i) => {
               const done = i < state.step
               const current = i === state.step
               return (
-                <li
+                <TimelineStep
                   key={s.title}
-                  aria-current={current ? "step" : undefined}
-                  // A finished step shows the Done tag (Figma 'Tag / Done'); the whole row opens it again to edit.
-                  {...(done ? { role: "button", tabIndex: 0, "aria-label": `Edit ${s.title}`, onClick: () => setOpen(i), onKeyDown: (e: React.KeyboardEvent) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setOpen(i)) } : {})}
-                  className={cn("flex items-center gap-3 rounded-a-md border px-4 py-3.5 transition-colors duration-300", current ? "border-a-border-strong" : "border-a-border", done && "cursor-pointer outline-none hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus")}>
-                  <StepIndicator step={i + 1} state={done ? "done" : current ? "current" : "upcoming"} />
-                  <div className="grid min-w-0 flex-1 gap-0.5">
-                    <span className={cn("t-body-l", done || current ? "text-a-text" : "text-a-text-2")}>{s.title}</span>
-                    <span className="t-caption text-a-text-2">{sub(i)}</span>
-                  </div>
-                  {current && (
-                    <AdminButton size="md" data-tour={i === 0 ? "payouts-start" : "payouts-next"} onClick={() => setOpen(i)}>
-                      {i === 0 ? "Start" : "Continue"}
-                    </AdminButton>
-                  )}
-                  {done && <Tag tone="success">Done</Tag>}
-                </li>
+                  step={i + 1}
+                  state={done ? "done" : current ? "current" : "locked"}
+                  title={s.title}
+                  description={sub(i) || s.text}
+                  action={i === 0 ? "Start" : i === 1 ? "Continue" : "Verify identity"}
+                  onAction={() => setOpen(i)}
+                  onEdit={() => setOpen(i)}
+                  first={i === 0}
+                  last={i === STEPS.length - 1}
+                  prevDone={i > 0 && i - 1 < state.step}
+                  disabledHint="Finish the step above first"
+                  icon={[User, Wallet, CreditCard][i]}
+                  tourId={current ? (i === 0 ? "payouts-start" : "payouts-next") : undefined}
+                />
               )
             })}
           </ol>
         </Panel>
+        <Panel className="gap-4">
+          <header className="grid gap-1"><h2 className="t-heading-s text-a-text">Before you start</h2><p className="t-body-m text-a-text-2">Have these ready so you do not have to stop.</p></header>
+          <ul className="flex flex-col">
+            {[
+              [Landmark, "A bank account", "We need the IBAN, in your name.", "2 min"],
+              [CreditCard, "An ID document", "A passport or national ID card.", "3 min"],
+              [Clock, "You can pause", "Saved at every step.", "Anytime"],
+            ].map(([Icon, title, text, time]) => {
+              const I = Icon as React.ComponentType<{ className?: string }>
+              return (
+                <li key={title as string} className="flex items-center gap-3 border-t border-a-border-subtle py-3 first:border-t-0 first:pt-0">
+                  <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-a-md bg-a-selected text-a-icon"><I className="size-4" /></span>
+                  <div className="grid min-w-0 flex-1 gap-0.5">
+                    <span className="t-body-m text-a-text">{title as string}</span>
+                    <span className="t-caption text-a-text-2">{text as string}</span>
+                  </div>
+                  <Tag>{time as string}</Tag>
+                </li>
+              )
+            })}
+          </ul>
+          <p className="flex items-start gap-2 rounded-a-md border border-a-border-subtle bg-a-subtle p-3 t-caption text-a-text-3"><ShieldCheck aria-hidden className="mt-px size-3.5 shrink-0" />Payments are processed by our payment partner. We never see or store your bank details.</p>
+        </Panel>
+        </div>
         <Callout tone="warning" icon={<AlertTriangle className="size-4" />}>
           {firstTier ? `Students can't buy ${firstTier} until payouts are connected.` : "Students can join free tiers now. Paid tiers open after payouts are connected."}
         </Callout>
@@ -114,10 +146,13 @@ export function Payouts() {
 
   const iban = state.iban ? maskIban(state.iban) : "CH93 •••• 5295 7"
   const rows = [
-    ["Bank account", `IBAN ${iban}`],
-    ["Payout day", "Every Monday, no minimum"],
-    ["Legal name", state.name || `${coach.org} GmbH`],
-  ]
+    [Wallet, "Account", `IBAN ${iban}`],
+    [CalendarDays, "Payout day", "Every Monday"],
+    [User, "Holder", state.name || `${coach.org} GmbH`],
+    [Banknote, "Minimum", "None"],
+    [BadgeCheck, "Status", state.review ? <Tag tone="warning" key="s">In review</Tag> : <span key="s" className="inline-flex items-center gap-2">12 Oct <Tag tone="success">Verified</Tag></span>],
+    [Euro, "Currency", "EUR"],
+  ] as [React.ComponentType<{ className?: string }>, string, React.ReactNode][]
   // A platform made at sign-up has sold nothing yet (Figma 1040:2642): no demo money.
   const fresh = !!wizard
   return (
@@ -130,38 +165,49 @@ export function Payouts() {
           { label: "Our share · 5%", value: fresh ? "€0" : `€${MONEY.share.toLocaleString("en")}` },
         ]}
       />
-      <div className={cn("grid items-start gap-4", !fresh && "lg:grid-cols-[minmax(0,610fr)_minmax(0,570fr)]")}>
-        <Panel className="gap-3" data-tour="payouts-connected" data-state={state.review ? "review" : "connected"}>
-          <header className="flex items-center justify-between gap-2"><h2 className="t-heading-s text-a-text">Where your money goes every week</h2>{state.review ? <Tag tone="warning">ID in review</Tag> : <Tag tone="success">Payouts connected</Tag>}</header>
-          <dl className="flex flex-col gap-2.5">
-            {rows.map(([k, v]) => (
-              <div key={k} className="flex items-baseline justify-between gap-4">
+      <div className={cn("grid items-stretch gap-4", !fresh && "lg:grid-cols-[minmax(0,610fr)_minmax(0,570fr)]")}>
+        <Panel className="gap-3 pb-3" data-tour="payouts-connected" data-state={state.review ? "review" : "connected"}>
+          <header className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2"><h2 className="t-heading-s text-a-text">Payout account</h2>{state.review ? <Tag tone="warning">ID in review</Tag> : <Tag tone="success">Connected</Tag>}</div>
+            <AdminButton hierarchy="secondary" size="md" onClick={() => (setState({ ...state, step: 1, done: false }), setOpen(1))}>Change</AdminButton>
+          </header>
+          <dl className="grid flex-1 gap-x-0 sm:grid-cols-2 sm:grid-rows-3">
+            {rows.map(([Icon, k, v], i) => (
+              <div key={k} className={cn("flex items-center gap-3 border-t border-a-border-subtle py-3 first:border-t-0 sm:[&:nth-child(2)]:border-t-0", i % 2 === 0 ? "sm:border-r sm:border-r-a-border-subtle sm:pr-6" : "sm:pl-6")}>
+                <Icon aria-hidden className="size-4 shrink-0 text-a-icon" />
                 <dt className="t-body-m text-a-text-2">{k}</dt>
-                <dd className="min-w-0 truncate text-right t-body-m text-a-text">{v}</dd>
+                <dd className="ml-auto min-w-0 truncate text-right t-body-m text-a-text">{v}</dd>
               </div>
             ))}
           </dl>
-          <div>
-            <AdminButton hierarchy="secondary" size="md" onClick={() => (setState({ ...state, step: 1, done: false }), setOpen(1))}>Change</AdminButton>
-          </div>
         </Panel>
         {!fresh && (
-        <AdminTable minWidth={360} scrollLabel="Payout history">
-          <AdminTableHead>
-            <AdminTh>Date</AdminTh>
-            <AdminTh width={120} align="end">Amount</AdminTh>
-            <AdminTh width={110}>Status</AdminTh>
-          </AdminTableHead>
-          <tbody>
-            {HISTORY.map((p) => (
-              <AdminTr key={p.d}>
-                <AdminTd className="text-a-text">{p.d}</AdminTd>
-                <AdminTd align="end">€{p.a.toLocaleString("en")}</AdminTd>
-                <AdminTd><Tag tone="success">Paid</Tag></AdminTd>
-              </AdminTr>
-            ))}
-          </tbody>
-        </AdminTable>
+        <Panel className="gap-0 overflow-hidden p-0">
+          <header className="flex items-center justify-between gap-2 px-5 py-4">
+            <h2 className="t-heading-s text-a-text">Recent payouts</h2>
+            <button type="button" onClick={() => toast("All payouts are shown here", { description: "Older payouts are in the e-mails you got from our payment partner." })} className="rounded-a-xs t-caption text-a-text-2 outline-none transition-colors duration-300 hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">See all</button>
+          </header>
+          <Table bare scrollLabel="Payout history">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-[34px]">Date</TableHead>
+                <TableHead className="h-[34px]">To</TableHead>
+                <TableHead className="h-[34px] text-right">Amount</TableHead>
+                <TableHead className="h-[34px] w-24 text-right">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {HISTORY.map((p) => (
+                <TableRow key={p.d}>
+                  <TableCell className="h-[42px] py-0">{p.d}</TableCell>
+                  <TableCell className="h-[42px] py-0 text-a-text-2">Bank ••{(state.iban ? state.iban.replace(/\s/g, "").slice(-1) : "7")}</TableCell>
+                  <TableCell className="h-[42px] py-0 text-right tabular-nums">€{p.a.toLocaleString("en")}</TableCell>
+                  <TableCell className="h-[42px] py-0 text-right"><Tag tone="success">Paid</Tag></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Panel>
         )}
       </div>
     </div>
