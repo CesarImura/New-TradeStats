@@ -64,7 +64,11 @@ export function JournalAdmin() {
 
   if (open) {
     const queue = trades.filter((x) => x.review === "waiting" && x.id !== open.id)
-    const go = () => (queue[0] ? setOpenId(queue[0].id) : show(null))
+    const go = () => {
+      if (!queue[0]) return show(null)
+      window.history.replaceState({ journal: queue[0].id }, "", `${window.location.pathname}?request=${queue[0].id}`)
+      setOpenId(queue[0].id)
+    }
     return <AnswerPage key={open.id} trade={open} student={STUDENTS.find((x) => x.id === OWNER[open.id])!} aiDraft={AI_DRAFT[open.id] ?? "Solid execution. The entry matched the setup; the exit came early. Write down what made you close."} readOnly={open.review !== "waiting"} hasNext={queue.length > 0} onBack={() => show(null)} onNext={go} onSkip={go} />
   }
 
@@ -155,9 +159,9 @@ function RequestsTable({ trades, onOpen, q, tier, sort }: { trades: Trades; onOp
     <AdminTable minWidth={1080} footer={<AdminTableFooter>{rows.length} {rows.length === 1 ? "request" : "requests"} · students get a notification and an e-mail when you answer</AdminTableFooter>}>
       <AdminTableHead>
         <AdminTh>Student</AdminTh>
-        <AdminTh width={284}>Question</AdminTh>
+        <AdminTh width={248}>Question</AdminTh>
         <AdminTh width={216}>Trade</AdminTh>
-        <AdminTh width={264}>Rules</AdminTh>
+        <AdminTh width={232}>Rules</AdminTh>
         <AdminTh width={106} align="end">Waiting</AdminTh>
         <AdminTh width={106} />
       </AdminTableHead>
@@ -344,7 +348,7 @@ function JournalRules() {
             <ul className="grid gap-2.5">
               {s.rules.filter(Boolean).map((rule, k) => (
                 <li key={k} className="flex items-start gap-2.5 t-body-m text-a-text">
-                  <span aria-hidden className="mt-px grid size-4 shrink-0 place-items-center rounded-a-xs bg-a-accent text-a-on-accent"><Check className="size-3" /></span>
+                  <span aria-hidden className="mt-px grid size-4 shrink-0 place-items-center rounded-a-xs bg-a-selected text-a-text-2"><Check className="size-3" /></span>
                   {rule}
                 </li>
               ))}

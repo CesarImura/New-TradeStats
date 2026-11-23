@@ -4,16 +4,17 @@ import { useMemo, useState } from "react"
 import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { CircleAlert } from "@/components/icons"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { BookOpen, Check, CircleAlert, Mail, Pause, RefreshCw, Send, Trash2 } from "@/components/icons"
 import { DEMO_ADMIN } from "@/lib/data/account"
+import { isOfferOnly } from "@/lib/data/access"
 import { GROUPS, tierFor, type Student } from "@/lib/data/people"
 import { COURSES } from "@/lib/data/sample"
 import { NO_QUESTIONS, useOnboardingSettings, useStudentStart } from "@/lib/data/student-start"
 import { TRADES } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
 import { useCommunityData } from "../kit"
-import { AdminButton, AdminDrawer, AdminProgress, AdminUnderlineTabs, Callout, StepIndicator, adminControl } from "../ui"
+import { AdminButton, AdminDrawer, AdminMenu, AdminMenuContent, AdminMenuItem, AdminMenuSeparator, AdminMenuTrigger, AdminProgress, AdminUnderlineTabs, Callout, StepIndicator, adminControl } from "../ui"
 import { TabPanel } from "@/components/admin/ui"
 
 /** The prototype's one student who really goes through onboarding (the others are sample data). */
@@ -120,6 +121,40 @@ function WeeklyActivity({ s }: { s: Student }) {
   )
 }
 
+/** The "Review" menu of the callout (Figma 'Admin / Menu · Review', Students 02e): what the coach can do about this student, an icon each, the destructive one last. */
+function ReviewMenu({ kind, first, student: s, onPause, onRemove, onMessage }: { kind: "payment" | "invite" | "other"; first: string; student: Student; onPause: (s: Student) => void; onRemove: (s: Student) => void; onMessage: (s: Student) => void }) {
+  const reviewed = <AdminMenuItem onClick={() => toast("Marked as reviewed", { description: "It stays in the history." })}><Check /> Mark as reviewed</AdminMenuItem>
+  return (
+    <AdminMenu>
+      <AdminMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Review</AdminMenuTrigger>
+      <AdminMenuContent align="end">
+        {kind === "payment" ? (
+          <>
+            <AdminMenuItem onClick={() => toast("Payment link sent", { description: `${first} gets an e-mail to update the card.` })}><Send /> Send payment link</AdminMenuItem>
+            <AdminMenuItem onClick={() => toast("Retrying the payment", { description: "You'll see the result here." })}><RefreshCw /> Retry now</AdminMenuItem>
+            <AdminMenuItem onClick={() => onPause(s)}><Pause /> Pause access</AdminMenuItem>
+            {reviewed}
+            <AdminMenuSeparator />
+            <AdminMenuItem tone="danger" onClick={() => onRemove(s)}><Trash2 /> Remove student</AdminMenuItem>
+          </>
+        ) : kind === "invite" ? (
+          <>
+            <AdminMenuItem onClick={() => toast("Invite sent again", { description: `${first} gets a new e-mail.` })}><Send /> Send the invite again</AdminMenuItem>
+            <AdminMenuItem onClick={() => onMessage(s)}><Mail /> Send a message</AdminMenuItem>
+            {reviewed}
+          </>
+        ) : (
+          <>
+            <AdminMenuItem onClick={() => onMessage(s)}><Mail /> Send a message</AdminMenuItem>
+            <AdminMenuItem onClick={() => toast(`Opening ${first}'s journal`)}><BookOpen /> Open journal</AdminMenuItem>
+            {reviewed}
+          </>
+        )}
+      </AdminMenuContent>
+    </AdminMenu>
+  )
+}
+
 /** Students · 02 Profile, 02c Activity, 02d Notes (Figma 1485:74566): everything about one student, in the drawer. Their name and money first, then what needs the coach, then the details. */
 export function StudentProfile({ student: s, paused = false, onOpenChange, onMessage, onPause, onRemove }: { student: Student | null; paused?: boolean; onOpenChange: (o: boolean) => void; onMessage: (s: Student) => void; onPause: (s: Student) => void; onRemove: (s: Student) => void }) {
   const { coach } = useCoach()
@@ -148,8 +183,16 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
     const t = coach.tiers.find((x) => x.id === id)
     return t ? `${t.price}/${t.cadence === "quarter" ? "qtr" : "mo"}` : ""
   }
+  // An offer-only tier has no price of its own and nobody is moved into it by hand: it comes with an offer link.
+  const movable = coach.tiers.filter((t) => !isOfferOnly(t))
+  const tierLabel = (id: string) => {
+    const t = coach.tiers.find((x) => x.id === id)
+    return t && isOfferOnly(t) ? `${t.name} · Priced in each offer` : `${t?.name ?? ""} · ${price(id)}`
+  }
   const invited = !!shown?.joined.startsWith("invited")
-  const failed = shown?.reason?.toLowerCase().includes("payment")
+  const failed = shown?.health === "red" && !shown.offer?.failed
+  // What needs the coach, in one phrase: the written reason, or the failed instalment of an offer.
+  const issue = shown?.reason ?? (shown?.offer?.failed ? `Instalment ${shown.offer.paidCount + 1} of ${shown.offer.plan} failed` : undefined)
   const addNote = () => {
     if (!shown || !draft.trim()) return
     setNotes((n) => ({ ...n, [shown.id]: [{ by: "you", when: "just now", text: draft.trim() }, ...(n[shown.id] ?? [])] }))
@@ -206,56 +249,13 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
           </div>
 
           {shown.reason && (
-            <Callout
-              tone={shown.health === "red" ? "danger" : "warning"}
-              icon={shown.health === "red" ? <CircleAlert className="size-4" /> : undefined}
-              action={
-                <DropdownMenu>
-                  <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Review</DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {failed ? (
-                      <>
-                        <DropdownMenuItem onClick={() => toast("Payment link sent", { description: `${first} gets an e-mail to update the card.` })}>Send payment link</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast("Retrying the payment", { description: "You'll see the result here." })}>Retry now</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onPause(shown)}>Pause access</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="destructive" onClick={() => onRemove(shown)}>Remove student</DropdownMenuItem>
-                      </>
-                    ) : invited ? (
-                      <>
-                        <DropdownMenuItem onClick={() => toast("Invite sent again", { description: `${first} gets a new e-mail.` })}>Send the invite again</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onMessage(shown)}>Send a message</DropdownMenuItem>
-                      </>
-                    ) : (
-                      <>
-                        <DropdownMenuItem onClick={() => onMessage(shown)}>Send a message</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast(`Opening ${first}'s journal`)}>Open journal</DropdownMenuItem>
-                      </>
-                    )}
-                    <DropdownMenuItem onClick={() => toast("Marked as reviewed", { description: "It stays in the history." })}>Mark as reviewed</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              }>
-              {failed ? `${shown.reason} · retrying Wed 12 Nov` : shown.reason}
+            <Callout tone={shown.health === "red" ? "danger" : "warning"} icon={shown.health === "red" ? <CircleAlert className="size-4" /> : undefined} action={<ReviewMenu kind={failed ? "payment" : invited ? "invite" : "other"} first={first} student={shown} onPause={onPause} onRemove={onRemove} onMessage={onMessage} />}>
+              {shown.reason === "Payment failed" ? `${shown.reason} · retrying Wed 12 Nov` : shown.reason}
             </Callout>
           )}
 
           {shown.offer?.failed && (
-            <Callout
-              tone="danger"
-              icon={<CircleAlert className="size-4" />}
-              action={
-                <DropdownMenu>
-                  <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Review</DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => toast("Payment link sent", { description: `${first} gets an e-mail to update the card.` })}>Send payment link</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => toast("Retrying the payment", { description: "You'll see the result here." })}>Retry now</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onPause(shown)}>Pause access</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onClick={() => onRemove(shown)}>Remove student</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              }>
+            <Callout tone="danger" icon={<CircleAlert className="size-4" />} action={<ReviewMenu kind="payment" first={first} student={shown} onPause={onPause} onRemove={onRemove} onMessage={onMessage} />}>
               Instalment {shown.offer.paidCount + 1} of {shown.offer.plan} failed · retrying {shown.offer.next}
             </Callout>
           )}
@@ -268,22 +268,22 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
               <section className="flex flex-col gap-2 rounded-a-10 border border-a-accent-strong bg-a-accent-soft px-4 py-3.5">
                 <h3 className="t-micro text-a-text-accent">AI briefing · only you see this</h3>
                 <p className="t-body-m text-a-text">
-                  {first} has logged {shown.trades30} trades in 30 days and kept {shown.broker ? `${shown.rules}% of the rules` : "no rules yet, no broker connected"}. {shown.reason ? `${shown.reason}.` : "Nothing needs you this week."} {TRADES.filter((t) => t.review === "waiting").length > 0 && shown.id === DEMO_STUDENT_ID ? `${TRADES.filter((t) => t.review === "waiting").length} trades wait for your review.` : ""}
+                  {first} has logged {shown.trades30} trades in 30 days and kept {shown.broker ? `${shown.rules}% of the rules` : "no rules yet, no broker connected"}. {issue ? `${issue}.` : "Nothing needs you this week."} {TRADES.filter((t) => t.review === "waiting").length > 0 && shown.id === DEMO_STUDENT_ID ? `${TRADES.filter((t) => t.review === "waiting").length} trades wait for your review.` : ""}
                 </p>
               </section>
 
               <section className="flex flex-col gap-2.5">
                 <Label>{shown.offer ? "Tier and plan" : "Tier and group"}</Label>
-                <Row label="Tier" value={shown.offer ? `${tier.name} · ${shown.offer.name}` : `${tier.name} · ${price(tier.id)}`} options={coach.tiers.map((t) => ({ label: `${t.name} · ${price(t.id)}`, onSelect: () => toast(`${shown.name} moves to ${t.name}`, { description: "Upgrades start now, downgrades at the end of the period." }) }))} />
+                <Row label="Tier" value={shown.offer ? `${tier.name} · ${shown.offer.name}` : tierLabel(tier.id)} options={movable.map((t) => ({ label: tierLabel(t.id), onSelect: () => toast(`${shown.name} moves to ${t.name}`, { description: "Upgrades start now, downgrades at the end of the period." }) }))} />
                 <Row label="Group" value={shown.group ?? "No group"} options={[{ label: "No group", onSelect: () => toast("Removed from the group") }, ...GROUPS.map((g) => ({ label: g.name, onSelect: () => toast(`Added to ${g.name}`, { description: "What a group unlocks starts on its start date." }) }))]} />
                 {shown.offer ? (
                   <>
                     <Row label="Payment plan" value={`${shown.offer.plan} payments of €${shown.offer.each.toLocaleString("en")} · ${shown.offer.paidCount} of ${shown.offer.plan} paid`} />
-                    <Row label="Next payment" value={`${shown.offer.next} · €${shown.offer.each.toLocaleString("en")}${shown.offer.failed ? " (retry)" : ""}`} />
+                    {shown.offer.paidCount < shown.offer.plan && <Row label="Next payment" value={`${shown.offer.next} · €${shown.offer.each.toLocaleString("en")}${shown.offer.failed ? " (retry)" : ""}`} />}
                     <Row label="Link sent by" value={shown.offer.sentBy} />
                   </>
                 ) : (
-                  <Row label="Next payment" value={failed ? "12 Nov" : "30 Nov"} />
+                  <Row label="Next payment" value={shown.reason?.includes("retries stopped") ? "Retries stopped" : failed ? "12 Nov" : "30 Nov"} />
                 )}
                 <Row label="Extra access" value={shown.coach ?? "Nobody"} options={[{ label: "Add a course for free", onSelect: () => toast("Pick a course to unlock for this student") }]} />
               </section>

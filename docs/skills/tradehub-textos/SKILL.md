@@ -49,3 +49,8 @@ Weak alone (act only with other tells): stacked qualifiers, passive voice, a sin
 - Don't rewrite copy only to match your taste; a finding needs a reason from §2 or §3.
 - Don't change legal, payment, consent or deletion meaning; flag it to Gustavo.
 - Don't translate or "humanize" coach-written sample content into another voice; only remove obvious filler.
+
+## Helper text on sample behaviour (23/11/2026)
+- Text that explains a prototype-only behaviour (sample CSV, fake send) says what the screen does, never "Prototype:" ("Any file shows the same sample of 4 students."). The same line goes in Figma and code.
+- A validation hint counts what the coach cares about, in plain words: "1 to invite · 1 already a student · 2 not valid".
+- `tradehub-anti-ai-look` does not exist as a separate skill: section 3 of this skill (tells to remove) is the anti-AI rule set.

@@ -1,15 +1,17 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Download, Mail, Plus, Users, X } from "@/components/icons"
 import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { isOfferOnly } from "@/lib/data/access"
 import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
 import { NOW } from "@/lib/data/schedule"
 import { NO_ALERTS, PAYMENT_ALERTS } from "@/lib/data/payment-alerts"
-import { EmptyState, PageHeader } from "../kit"
+import { EmptyState, PageHeader, useCommunityData } from "../kit"
 import { AdminButton, AdminFilter, AdminModal, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, CellPerson, CellProgress, CellStack, StatPanel, Tag } from "../ui"
 import { SetupTip } from "../setup-checklist"
 import { useNewPlatform } from "../use-new-platform"
@@ -27,13 +29,16 @@ const COURSES: Record<string, number> = { s1: 3, s2: 2, s3: 1, s4: 1, s5: 1, s6:
 const coursesOf = (id: string) => COURSES[id] ?? 1 + ([...id].reduce((n, c) => n + c.charCodeAt(0), 0) % 3)
 const PAGE = 8
 const NO_STUDENTS: Student[] = []
+const NO_ADDED: Student[] = []
 
 /** Students (Figma 518:7152, 01 List, 02 Selected, 06 No results): the questions a coach asks as tabs, a table that opens a profile drawer, import, message. */
 export function StudentsPage() {
   const { coach } = useCoach()
   const fresh = useNewPlatform()
   const [removed, setRemoved] = useState<string[]>([])
-  const students = (fresh ? NO_STUDENTS : STUDENTS).filter((s) => !removed.includes(s.id))
+  // People brought in by "Import or invite" (kept in the browser like the notes); they join the list as Invited, newest first.
+  const [added, setAdded] = useCommunityData(coach.slug, "students-added", NO_ADDED)
+  const students = [...added, ...(fresh ? NO_STUDENTS : STUDENTS)].filter((s) => !removed.includes(s.id))
   const [q, setQ] = useState("")
   const [filter, setFilter] = useState<Filter>("all")
   const [tier, setTier] = useState("")
@@ -45,6 +50,14 @@ export function StudentsPage() {
   // Figma Students 01 shows 2 paused students: two of the fine ones, picked by position.
   const [paused, setPaused] = useState<string[]>(() => STUDENTS.filter((s) => s.health === "green").filter((_, i) => i === 20 || i === 61).map((s) => s.id))
   const [open, setOpen] = useState<Student | null>(null)
+  // ⌘K opens a student with ?open=<id>; it also works when this page is already on screen.
+  const openParam = useSearchParams().get("open")
+  const [seenParam, setSeenParam] = useState<string | null>(null)
+  if (openParam !== seenParam) {
+    setSeenParam(openParam)
+    const hit = openParam ? students.find((s) => s.id === openParam) : undefined
+    if (hit) setOpen(hit)
+  }
   const [importing, setImporting] = useState(false)
   const [message, setMessage] = useState<Student[] | null>(null)
   // "Remove student" (Figma Students 02f): the coach confirms, the student leaves the list and can be invited again.
@@ -86,12 +99,13 @@ export function StudentsPage() {
     set(v)
     setPage(0)
   }
-  const filtering = !!(q || tier || group || filter !== "all")
+  const filtering = !!(q || tier || group || filter !== "all" || sort !== "default")
   const reset = () => {
     setQ("")
     setTier("")
     setGroup("")
     setFilter("all")
+    setSort("default")
     setPage(0)
   }
   const label = (n: number) => `${n} ${n === 1 ? "student" : "students"}`
@@ -144,7 +158,7 @@ export function StudentsPage() {
           <DropdownMenu>
             <DropdownMenuTrigger render={<AdminButton hierarchy="secondary" size="md" />}>Move to tier</DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {coach.tiers.map((t) => (
+              {coach.tiers.filter((t) => !isOfferOnly(t)).map((t) => (
                 <DropdownMenuItem key={t.id} onClick={() => toast(`${label(picked.length)} move to ${t.name}`, { description: "Upgrades start now, downgrades at the end of the period." })}>
                   {t.name}
                 </DropdownMenuItem>
@@ -214,7 +228,7 @@ export function StudentsPage() {
           footer={
             <AdminTableFooter className="py-[10px]">
               <span className="mr-auto tabular-nums">
-                Showing {shown.length} of {rows.length}
+                Showing {at * PAGE + 1}–{at * PAGE + shown.length} of {rows.length}
               </span>
               <AdminButton hierarchy="secondary" size="md" disabled={at === 0} onClick={() => setPage(at - 1)}>Previous</AdminButton>
               <AdminButton hierarchy="secondary" size="md" disabled={at >= pages - 1} onClick={() => setPage(at + 1)}>Next</AdminButton>
@@ -226,13 +240,13 @@ export function StudentsPage() {
               <Checkbox checked={onPage === shown.length && shown.length > 0} indeterminate={onPage > 0 && onPage < shown.length} onCheckedChange={(v) => setPicked((p) => (v ? [...new Set([...p, ...shown.map((r) => r.id)])] : p.filter((id) => !shown.some((r) => r.id === id))))} aria-label="Select all on this page" />
             </AdminTh>
             <AdminTh>Student</AdminTh>
-            <AdminTh width={166}>Tier and group</AdminTh>
-            <AdminTh width={96}>Courses</AdminTh>
-            <AdminTh width={176}>Overall progress</AdminTh>
-            <AdminTh width={106}>Rules kept</AdminTh>
-            <AdminTh width={146}>Status</AdminTh>
-            <AdminTh width={150}>Joined</AdminTh>
-            <AdminTh width={80} align="end">Last active</AdminTh>
+            <AdminTh width={150}>Tier and group</AdminTh>
+            <AdminTh width={80}>Courses</AdminTh>
+            <AdminTh width={150}>Overall progress</AdminTh>
+            <AdminTh width={90}>Rules kept</AdminTh>
+            <AdminTh width={120}>Status</AdminTh>
+            <AdminTh width={112}>Joined</AdminTh>
+            <AdminTh width={96} align="end">Last active</AdminTh>
           </AdminTableHead>
           <tbody>
             {shown.map((s) => {
@@ -270,7 +284,7 @@ export function StudentsPage() {
       )}
 
       <StudentProfile student={open} paused={!!open && paused.includes(open.id)} onOpenChange={(o) => !o && setOpen(null)} onMessage={(s) => setMessage([s])} onRemove={(s) => setRemoving(s)} onPause={(s) => { const on = paused.includes(s.id); setPaused((p) => (on ? p.filter((x) => x !== s.id) : [...p, s.id])); toast(on ? `${s.name} has access again` : `Access paused for ${s.name}`, { description: on ? "Everything is back as it was." : "Keeps the account and the journal. Nothing is deleted." }) }} />
-      <ImportDialog open={importing} onOpenChange={setImporting} />
+      <ImportDialog open={importing} onOpenChange={setImporting} existing={students.map((s) => s.email)} onImported={(list) => { setAdded((a) => [...list, ...a]) }} />
       <MessageDialog to={message} onClose={() => setMessage(null)} />
       <AdminModal
         open={!!removing}
@@ -305,15 +319,17 @@ export function StudentsPage() {
   )
 }
 
+/** A failed payment, a failed instalment or a dispute: the five people of the payment alerts (Sales · 01c). */
+const paymentIssue = (s: Student) => s.health === "red" || !!s.offer?.failed
 /** Worth a look but not a payment problem or a student who has not joined (those have their own status). */
-const atRisk = (s: Student) => s.health !== "green" && !s.joined.startsWith("invited") && !s.reason?.toLowerCase().includes("payment")
+const atRisk = (s: Student) => s.health !== "green" && !s.joined.startsWith("invited") && !paymentIssue(s)
 const rank = (s: Student) => (s.health === "red" ? 0 : s.health === "amber" ? 1 : 2)
 
 /** The six standard statuses (Figma Students 01): what the coach should do about a student, in one word or two. */
 function StudentStatus({ student: s, paused }: { student: Student; paused: boolean }) {
   if (paused) return <Tag>Paused</Tag>
   if (s.joined.startsWith("invited")) return <Tag>Invited</Tag>
-  if (s.health === "red" && s.reason?.toLowerCase().includes("payment")) return <Tag tone="danger">Payment issue</Tag>
+  if (paymentIssue(s)) return <Tag tone="danger">Payment issue</Tag>
   if (s.health !== "green") return <Tag tone="warning">At risk</Tag>
   return <Tag tone="success">{s.progress >= 100 ? "Completed" : "Active"}</Tag>
 }

@@ -1,6 +1,6 @@
 # Mapa de tokens (Figma × código)
 
-Gerado por `scripts/maps/tokens.mjs` em 2026-11-21, commit a87c21f5. Figma: arquivo XWHeEdjEiY6gWmrsg0vFIZ, exportado em 21/11/2026 (pasta `docs/maps/data`). Não editar à mão: atualizar os dados e rodar de novo.
+Gerado por `scripts/maps/tokens.mjs` em 2026-11-23, commit d2198c74. Figma: arquivo XWHeEdjEiY6gWmrsg0vFIZ, exportado em 21/11/2026 (pasta `docs/maps/data`). Não editar à mão: atualizar os dados e rodar de novo.
 
 Como ler: **medido** = contagem de ocorrências no código (`--admin-…` direto, utilitário Tailwind `bg-a-…`/`rounded-a-…` e alias dentro de `admin-tokens.css`) e lista de variáveis sem uso no Figma (varredura de nós ligados, inclusive aliases). **Inferido**: nada nesta tabela; status = combinação das duas medições.
 
@@ -8,9 +8,9 @@ Regras: coleção **Terminal não se mexe** (temas e widgets do aluno; 'sem uso 
 
 ## Admin
 
-320 variáveis no Figma. em uso: 204 · sem uso direto no código: 113 · sem uso no Figma: 1 · sem uso (Figma e código): 2.
+320 variáveis no Figma. em uso: 203 · sem uso direto no código: 114 · sem uso no Figma: 1 · sem uso (Figma e código): 2.
 
-Tokens só no código (não estão na coleção do Figma): nenhum.
+Tokens só no código (não estão na coleção do Figma): `--admin-font-family-mono`.
 
 | Figma | Código | Valor no código (modo Admin) | Tailwind | Usos diretos | Usos Tailwind | Aliases | Status |
 |---|---|---|---|---|---|---|---|
@@ -44,35 +44,35 @@ Tokens só no código (não estão na coleção do Figma): nenhum.
 | primitive/white/100 | `--admin-primitive-white-100` | `#ffffff` |  | 0 | 0 | 4 | em uso |
 | color/bg/page | `--admin-color-bg-page` | `var(--admin-primitive-ink-950)` | a-page | 5 | 39 | 0 | em uso |
 | color/bg/panel | `--admin-color-bg-panel` | `var(--admin-primitive-ink-900)` | a-panel | 3 | 56 | 0 | em uso |
-| color/bg/raised | `--admin-color-bg-raised` | `var(--admin-primitive-ink-850)` | a-raised | 6 | 41 | 0 | em uso |
+| color/bg/raised | `--admin-color-bg-raised` | `var(--admin-primitive-ink-850)` | a-raised | 6 | 42 | 0 | em uso |
 | color/bg/sunk | `--admin-color-bg-sunk` | `var(--admin-primitive-ink-925)` | a-sunk | 1 | 4 | 0 | em uso |
-| color/bg/field | `--admin-color-bg-field` | `var(--admin-primitive-white-04)` | a-field | 0 | 40 | 0 | em uso |
+| color/bg/field | `--admin-color-bg-field` | `var(--admin-primitive-white-04)` | a-field | 0 | 41 | 0 | em uso |
 | color/bg/hover | `--admin-color-bg-hover` | `var(--admin-primitive-white-04)` | a-hover | 0 | 73 | 5 | em uso |
-| color/bg/selected | `--admin-color-bg-selected` | `var(--admin-primitive-white-08)` | a-selected | 0 | 43 | 1 | em uso |
+| color/bg/selected | `--admin-color-bg-selected` | `var(--admin-primitive-white-08)` | a-selected | 0 | 44 | 1 | em uso |
 | color/bg/track | `--admin-color-bg-track` | `var(--admin-primitive-ink-750)` | a-track | 1 | 10 | 0 | em uso |
 | color/bg/scrim | `--admin-color-bg-scrim` | `var(--admin-primitive-black-60)` | a-scrim | 1 | 17 | 0 | em uso |
-| color/border/subtle | `--admin-color-border-subtle` | `var(--admin-primitive-white-09)` | a-border-subtle | 2 | 70 | 1 | em uso |
-| color/border/default | `--admin-color-border-default` | `var(--admin-primitive-white-14)` | a-border | 15 | 190 | 3 | em uso |
-| color/border/strong | `--admin-color-border-strong` | `var(--admin-primitive-white-22)` | a-border-strong | 1 | 81 | 2 | em uso |
+| color/border/subtle | `--admin-color-border-subtle` | `var(--admin-primitive-white-09)` | a-border-subtle | 2 | 68 | 1 | em uso |
+| color/border/default | `--admin-color-border-default` | `var(--admin-primitive-white-14)` | a-border | 15 | 194 | 3 | em uso |
+| color/border/strong | `--admin-color-border-strong` | `var(--admin-primitive-white-22)` | a-border-strong | 1 | 85 | 2 | em uso |
 | color/border/focus | `--admin-color-border-focus` | `var(--admin-primitive-white-96)` | a-border-focus | 3 | 148 | 0 | em uso |
-| color/text/primary | `--admin-color-text-primary` | `var(--admin-primitive-white-96)` | a-text | 4 | 550 | 5 | em uso |
-| color/text/secondary | `--admin-color-text-secondary` | `var(--admin-primitive-white-52)` | a-text-2 | 1 | 377 | 2 | em uso |
-| color/text/tertiary | `--admin-color-text-tertiary` | `var(--admin-primitive-white-46)` | a-text-3 | 1 | 234 | 1 | em uso |
-| color/text/on-accent | `--admin-color-text-on-accent` | `var(--admin-primitive-white-100)` | a-on-accent | 0 | 7 | 5 | em uso |
+| color/text/primary | `--admin-color-text-primary` | `var(--admin-primitive-white-96)` | a-text | 4 | 552 | 5 | em uso |
+| color/text/secondary | `--admin-color-text-secondary` | `var(--admin-primitive-white-52)` | a-text-2 | 2 | 387 | 2 | em uso |
+| color/text/tertiary | `--admin-color-text-tertiary` | `var(--admin-primitive-white-46)` | a-text-3 | 1 | 237 | 1 | em uso |
+| color/text/on-accent | `--admin-color-text-on-accent` | `var(--admin-primitive-white-100)` | a-on-accent | 0 | 6 | 5 | em uso |
 | color/text/accent | `--admin-color-text-accent` | `var(--admin-primitive-white-96)` | a-text-accent | 0 | 23 | 0 | em uso |
-| color/accent/default | `--admin-color-accent-default` | `var(--admin-primitive-white-96)` | a-accent | 0 | 17 | 0 | em uso |
+| color/accent/default | `--admin-color-accent-default` | `var(--admin-primitive-white-96)` | a-accent | 0 | 16 | 0 | em uso |
 | color/accent/hover | `--admin-color-accent-hover` | `var(--admin-primitive-orange-800)` | a-accent-hover | 0 | 0 | 1 | em uso |
 | color/accent/strong | `--admin-color-accent-strong` | `var(--admin-primitive-orange-500)` | a-accent-strong | 0 | 25 | 1 | em uso |
 | color/accent/soft | `--admin-color-accent-soft` | `var(--admin-primitive-white-08)` | a-accent-soft | 3 | 12 | 0 | em uso |
-| color/status/success | `--admin-color-status-success` | `var(--admin-primitive-green-400)` | a-success | 1 | 32 | 2 | em uso |
+| color/status/success | `--admin-color-status-success` | `var(--admin-primitive-green-400)` | a-success | 1 | 31 | 2 | em uso |
 | color/status/success-soft | `--admin-color-status-success-soft` | `var(--admin-primitive-green-soft)` | a-success-soft | 0 | 7 | 0 | em uso |
-| color/status/danger | `--admin-color-status-danger` | `var(--admin-primitive-red-400)` | a-danger | 0 | 39 | 3 | em uso |
+| color/status/danger | `--admin-color-status-danger` | `var(--admin-primitive-red-400)` | a-danger | 0 | 41 | 3 | em uso |
 | color/status/danger-soft | `--admin-color-status-danger-soft` | `var(--admin-primitive-red-soft)` | a-danger-soft | 1 | 9 | 1 | em uso |
 | color/status/warning | `--admin-color-status-warning` | `var(--admin-primitive-amber-400)` | a-warning | 0 | 8 | 0 | em uso |
 | color/status/warning-soft | `--admin-color-status-warning-soft` | `var(--admin-primitive-amber-soft)` | a-warning-soft | 0 | 4 | 0 | em uso |
 | color/status/info | `--admin-color-status-info` | `var(--admin-primitive-blue-400)` | a-info | 0 | 2 | 0 | em uso |
 | color/status/info-soft | `--admin-color-status-info-soft` | `var(--admin-primitive-blue-soft)` | a-info-soft | 0 | 2 | 0 | em uso |
-| color/icon/default | `--admin-color-icon-default` | `var(--admin-primitive-white-52)` | a-icon | 0 | 26 | 0 | em uso |
+| color/icon/default | `--admin-color-icon-default` | `var(--admin-primitive-white-52)` | a-icon | 0 | 27 | 0 | em uso |
 | space/2 | `--admin-space-2` | `var(--admin-primitive-space-2)` |  | 0 | 0 | 0 | sem uso direto no código |
 | space/4 | `--admin-space-4` | `var(--admin-primitive-space-4)` |  | 0 | 0 | 0 | sem uso direto no código |
 | space/8 | `--admin-space-8` | `var(--admin-primitive-space-8)` |  | 0 | 0 | 0 | sem uso direto no código |
@@ -82,13 +82,13 @@ Tokens só no código (não estão na coleção do Figma): nenhum.
 | space/24 | `--admin-space-24` | `var(--admin-primitive-space-24)` |  | 0 | 0 | 0 | sem uso direto no código |
 | space/32 | `--admin-space-32` | `var(--admin-primitive-space-32)` |  | 0 | 0 | 0 | sem uso direto no código |
 | space/48 | `--admin-space-48` | `var(--admin-primitive-space-48)` |  | 0 | 0 | 0 | sem uso direto no código |
-| radius/xs | `--admin-radius-xs` | `var(--admin-primitive-radius-4)` | a-xs | 0 | 55 | 0 | em uso |
+| radius/xs | `--admin-radius-xs` | `var(--admin-primitive-radius-4)` | a-xs | 0 | 54 | 0 | em uso |
 | radius/sm | `--admin-radius-sm` | `var(--admin-primitive-radius-6)` | a-sm | 0 | 69 | 1 | em uso |
-| radius/md | `--admin-radius-md` | `var(--admin-primitive-radius-8)` | a-md | 0 | 123 | 1 | em uso |
+| radius/md | `--admin-radius-md` | `var(--admin-primitive-radius-8)` | a-md | 0 | 128 | 1 | em uso |
 | radius/lg | `--admin-radius-lg` | `var(--admin-primitive-radius-12)` | a-lg | 1 | 60 | 0 | em uso |
 | radius/xl | `--admin-radius-xl` | `16px` | a-xl | 0 | 8 | 0 | em uso |
 | radius/full | `--admin-radius-full` | `var(--admin-primitive-radius-999)` |  | 0 | 0 | 0 | sem uso direto no código |
-| font/family/primary | `--admin-font-family-primary` | `"Helvetica Neue", Helvetica, var(--ff-inter), Arial, system-ui, sans-serif` | a-sans | 6 | 1 | 0 | em uso |
+| font/family/primary | `--admin-font-family-primary` | `"Helvetica Neue", Helvetica, var(--ff-inter), Arial, system-ui, sans-serif` | a-sans | 6 | 1 | 1 | em uso |
 | primitive/red/40 | `--admin-primitive-red-40` | `rgb(243 90 90 / 40%)` |  | 0 | 0 | 1 | em uso |
 | color/border/danger | `--admin-color-border-danger` | `var(--admin-primitive-red-40)` | a-border-danger | 0 | 10 | 1 | em uso |
 | color/border/active | `--admin-color-border-active` | `var(--admin-primitive-white-64)` | a-border-active | 5 | 27 | 0 | em uso |
@@ -101,7 +101,7 @@ Tokens só no código (não estão na coleção do Figma): nenhum.
 | color/bg/subtle | `--admin-color-bg-subtle` | `var(--admin-primitive-white-02)` | a-subtle | 0 | 15 | 0 | em uso |
 | color/bg/muted | `--admin-color-bg-muted` | `var(--admin-primitive-white-06)` | a-muted | 0 | 24 | 2 | em uso |
 | primitive/white/09 | `--admin-primitive-white-09` | `rgb(255 255 255 / 9%)` |  | 0 | 0 | 2 | em uso |
-| color/chart/grid | `--admin-color-chart-grid` | `var(--admin-primitive-white-09)` |  | 2 | 0 | 0 | em uso |
+| color/chart/grid | `--admin-color-chart-grid` | `var(--admin-primitive-white-09)` |  | 3 | 0 | 0 | em uso |
 | color/highlight/base | `--admin-color-highlight-base` | `#f6d9c6` |  | 2 | 0 | 0 | em uso |
 | color/highlight/soft | `--admin-color-highlight-soft` | `#ffe0c2` |  | 0 | 0 | 1 | em uso |
 | color/highlight/strong | `--admin-color-highlight-strong` | `#ff9e61` |  | 0 | 0 | 0 | sem uso direto no código |
@@ -246,13 +246,13 @@ Tokens só no código (não estão na coleção do Figma): nenhum.
 | component/sortable-row/bg/active | `--admin-component-sortable-row-bg-active` | `var(--admin-color-bg-muted)` |  | 0 | 0 | 0 | sem uso direto no código |
 | component/sortable-row/bg/dragging | `--admin-component-sortable-row-bg-dragging` | `var(--admin-color-bg-selected)` |  | 0 | 0 | 0 | sem uso direto no código |
 | component/sortable-row/border/active | `--admin-component-sortable-row-border-active` | `var(--admin-color-control-on)` |  | 2 | 0 | 0 | em uso |
-| component/chart-bar/bg/default | `--admin-component-chart-bar-bg-default` | `var(--admin-primitive-extra-c2561c)` | a-bar | 6 | 2 | 0 | em uso |
-| component/chart-bar/bg/active | `--admin-component-chart-bar-bg-active` | `var(--admin-primitive-orange-400)` | a-bar-active | 1 | 0 | 0 | em uso |
+| component/chart-bar/bg/default | `--admin-component-chart-bar-bg-default` | `var(--admin-primitive-extra-c2561c)` | a-bar | 5 | 2 | 0 | em uso |
+| component/chart-bar/bg/active | `--admin-component-chart-bar-bg-active` | `var(--admin-primitive-orange-400)` | a-bar-active | 0 | 0 | 0 | sem uso direto no código |
 | component/chart-bar/bg/danger | `--admin-component-chart-bar-bg-danger` | `var(--admin-color-status-danger-fill)` |  | 0 | 0 | 0 | sem uso direto no código |
 | color/status/danger-fill | `--admin-color-status-danger-fill` | `var(--admin-primitive-red-600)` | a-danger-fill | 0 | 10 | 3 | em uso |
-| color/status/success-fill | `--admin-color-status-success-fill` | `var(--admin-primitive-green-600)` | a-success-fill | 0 | 12 | 1 | em uso |
+| color/status/success-fill | `--admin-color-status-success-fill` | `var(--admin-primitive-green-600)` | a-success-fill | 2 | 12 | 1 | em uso |
 | color/status/warning-fill | `--admin-color-status-warning-fill` | `var(--admin-primitive-amber-400)` | a-warning-fill | 0 | 5 | 3 | em uso |
-| color/status/info-fill | `--admin-color-status-info-fill` | `var(--admin-primitive-extra-3b82f6)` | a-info-fill | 0 | 1 | 0 | sem uso no Figma |
+| color/status/info-fill | `--admin-color-status-info-fill` | `var(--admin-primitive-extra-3b82f6)` | a-info-fill | 1 | 1 | 0 | sem uso no Figma |
 | component/tab/dot | `--admin-component-tab-dot` | `var(--admin-color-status-warning-fill)` |  | 0 | 0 | 0 | sem uso direto no código |
 | component/file-item/border | `--admin-component-file-item-border` | `var(--admin-color-border-subtle)` |  | 0 | 0 | 0 | sem uso direto no código |
 | component/file-item/meta/default | `--admin-component-file-item-meta-default` | `var(--admin-color-text-tertiary)` |  | 0 | 0 | 0 | sem uso direto no código |
@@ -292,11 +292,11 @@ Tokens só no código (não estão na coleção do Figma): nenhum.
 | color/bg/sidebar | `--admin-color-bg-sidebar` | `var(--admin-primitive-ink-925)` |  | 1 | 0 | 0 | em uso |
 | primitive/extra/c2561c | `--admin-primitive-extra-c2561c` | `#c2561c` |  | 0 | 0 | 2 | em uso |
 | primitive/extra/c2561c-30 | `--admin-primitive-extra-c2561c-30` | `rgb(194 86 28 / 30%)` |  | 0 | 0 | 1 | em uso |
-| component/chart-bar/bg/dim | `--admin-component-chart-bar-bg-dim` | `var(--admin-primitive-extra-c2561c-30)` | a-bar-dim | 3 | 0 | 0 | em uso |
+| component/chart-bar/bg/dim | `--admin-component-chart-bar-bg-dim` | `var(--admin-primitive-extra-c2561c-30)` | a-bar-dim | 2 | 0 | 0 | em uso |
 | component/table-row/bg/hover | `--admin-component-table-row-bg-hover` | `var(--admin-color-bg-hover)` |  | 0 | 0 | 0 | sem uso direto no código |
 | component/table-row/bg/active | `--admin-component-table-row-bg-active` | `var(--admin-color-bg-muted)` |  | 0 | 0 | 0 | sem uso direto no código |
 | component/checkbox/bg/on | `--admin-component-checkbox-bg-on` | `var(--admin-primitive-orange-700)` |  | 0 | 0 | 0 | sem uso direto no código |
-| component/progress/fill | `--admin-component-progress-fill` | `var(--admin-primitive-extra-c2561c)` | a-progress | 2 | 2 | 1 | em uso |
+| component/progress/fill | `--admin-component-progress-fill` | `var(--admin-primitive-extra-c2561c)` | a-progress | 2 | 1 | 1 | em uso |
 | component/progress/track | `--admin-component-progress-track` | `var(--admin-primitive-white-14)` |  | 0 | 0 | 0 | sem uso direto no código |
 | component/progress-item/bar/fill | `--admin-component-progress-item-bar-fill` | `var(--admin-color-status-warning-fill)` |  | 1 | 0 | 0 | em uso |
 | primitive/extra/88b137 | `--admin-primitive-extra-88b137` | `#88b137` |  | 0 | 0 | 1 | em uso |

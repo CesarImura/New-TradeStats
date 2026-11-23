@@ -172,6 +172,7 @@
 
   /* font, space, radius */
   --admin-font-family-primary: "Helvetica Neue", Helvetica, var(--ff-inter), Arial, system-ui, sans-serif;
+  --admin-font-family-mono: var(--admin-font-family-primary);
   --admin-radius-10: var(--admin-primitive-radius-10);
   --admin-radius-2xs: var(--admin-primitive-radius-2);
   --admin-radius-full: var(--admin-primitive-radius-999);

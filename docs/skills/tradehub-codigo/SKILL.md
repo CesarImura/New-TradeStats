@@ -55,3 +55,11 @@ shadcn CLI: `npx shadcn add` only with `--dry-run --diff` first; its components 
 - Offers, plans, links and the checkout live in `lib/data/offers.ts` (types and helpers), `admin/sales/offers.tsx` and `src/components/public/offer-checkout.tsx`; the spec is `docs/high-ticket-flow.md` (§6 for the shared alerts). Before touching tiers, grep `cadence`, `isOfferOnly` and `coach.tiers` (student profile, unlock dialog, upgrade widget, import dialog, command palette): each list of tiers a student can buy must skip the offer-only one.
 - Tests: `scripts/offers-flow.mjs` (90) and `scripts/sales-overview.mjs` (53); wait about 3.5 s after `goto` before filling a form (hydration). Restart `scripts/dev-server.sh restart` after changing an export that a stale module still serves.
 - Module cycles: don't call helpers from `offers.ts` at module level in `offers.tsx` (keep them lazy).
+
+## Students and sample data (23/11/2026)
+- One roster: `lib/data/people.ts` (+ `people-generated.ts`). Anything that lists students (⌘K, Needs you today, drawers) reads it; never keep a second list with its own e-mails or tiers (the palette had one and disagreed). Numbers to keep when you touch it: 201 students, 86 active, 7 at risk, 12 invited, 14 joined this month, 5 payment issues, groups 12 / 8 / 6.
+- Deep link to a profile: `/admin/<coach>/students?open=<student id>`.
+- Radio groups need only `role="radiogroup"` + `role="radio"`: `RadioKeys` (root layout) gives arrows, Home, End. A group that handles the arrows itself is left alone.
+- Menus with actions: `AdminMenu*` with the icon as first child, destructive item last after a separator.
+- Import or invite creates real Invited students (kept as `students-added` by `useCommunityData`, newest first); the people of the sample CSV must never exist in the roster (otherwise the import skips them as "already students").
+- Overview (last 30 days: Active students 194, New students 40) and Students ("Active this week" 86, "joined this month" 14) use different windows on purpose; never align the numbers (12 of the 201 are only invited).

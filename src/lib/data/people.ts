@@ -35,9 +35,9 @@ const H = (when: string, text: string) => ({ when, text })
 const FEATURED_STUDENTS: Student[] = [
   {
     id: "s1", name: "Alex Moreau", initials: "AM", email: "alex.moreau@mail.com", tier: "desk", group: "Futures A", progress: 62, lastActive: "2 h ago", activeDays: 11, health: "red", reason: "Payment failed",
-    joined: "18 Jun 2025", paid: 588, broker: true, discord: true, country: "FR", trades30: 41, rules: 94,
+    joined: "18 Jun 2025", paid: 645, broker: true, discord: true, country: "FR", trades30: 41, rules: 94,
     notes: [{ by: "Marco", when: "31 Oct", text: "Wants to pass a 50K funded challenge before December. Push the daily loss limit module." }],
-    history: [H("Today 07:12", "Payment of €149 failed (card expired)"), H("Fri 7 Nov", "Asked for review: NQ long −1.2R"), H("30 Oct", "Joined October cohort"), H("1 Apr", "Joined Core")],
+    history: [H("Today 07:12", "Payment of €129 failed (card declined)"), H("Fri 7 Nov", "Asked for review: NQ long −1.2R"), H("6 Oct", "Joined Futures A"), H("18 Jun", "Joined Trading Desk")],
   },
   {
     id: "s2", name: "Mia Sørensen", initials: "MS", email: "mia.s@proton.me", tier: "desk", group: "Futures A", progress: 48, lastActive: "today", activeDays: 13, health: "amber", reason: "Broke loss limit twice",
@@ -52,12 +52,12 @@ const FEATURED_STUDENTS: Student[] = [
   },
   {
     id: "s4", name: "Lena Ito", initials: "LI", email: "lena.ito@gmail.com", tier: "vip", progress: 22, lastActive: "3 days ago", activeDays: 8, health: "amber", reason: "Stuck in Module 2 for 12 days",
-    joined: "14 Sep 2025", paid: 149, broker: true, discord: true, country: "JP", trades30: 17, rules: 88, notes: [],
-    history: [H("Thu 6 Nov", "Asked for review: CL long −0.8R"), H("27 Oct", "Joined Core")],
+    joined: "4 Nov 2025", paid: 600, offer: { name: "Coaching Silver", plan: 4, paidCount: 1, each: 600, next: "Thu 4 Dec", sentBy: "Ana Ribeiro" }, broker: true, discord: true, country: "JP", trades30: 17, rules: 88, notes: [],
+    history: [H("Thu 6 Nov", "Asked for review: CL long −0.8R"), H("4 Nov", "Joined Coaching Silver")],
   },
   {
     id: "s5", name: "Jonas Pereira", initials: "JP", email: "jonas@pereira.pt", tier: "vip", progress: 94, lastActive: "today", activeDays: 14, health: "green",
-    joined: "2 Sep 2025", paid: 4800, offer: { name: "Coaching Platinum", plan: 4, paidCount: 2, each: 2400, next: "Tue 25 Nov", sentBy: "Kairo", failed: true }, broker: true, discord: true, country: "PT", trades30: 52, rules: 96, notes: [{ by: "Marco", when: "29 Oct", text: "Ready to size up. Talk about scaling plan on next 1:1." }],
+    joined: "2 Sep 2025", paid: 4800, offer: { name: "Coaching Platinum", plan: 4, paidCount: 2, each: 2400, next: "Tue 25 Nov", sentBy: "Kairo" }, broker: true, discord: true, country: "PT", trades30: 52, rules: 96, notes: [{ by: "Marco", when: "29 Oct", text: "Ready to size up. Talk about scaling plan on next 1:1." }],
     history: [H("Thu 6 Nov", "Asked for review: ES short +2.4R"), H("2 Nov 2025", "Joined 1:1 VIP")],
   },
   {
@@ -94,11 +94,32 @@ const FEATURED_STUDENTS: Student[] = [
   },
   {
     id: "s14", name: "Marek Nowak", initials: "MN", email: "marek.nowak@wp.pl", tier: "vip", progress: 100, lastActive: "4 days ago", activeDays: 7, health: "green",
-    joined: "5 Nov 2024", paid: 9100, broker: true, discord: true, country: "PL", trades30: 44, rules: 99, notes: [], history: [H("5 Nov 2024", "Joined 1:1 VIP")],
+    joined: "5 Nov 2024", paid: 9600, offer: { name: "Coaching Platinum", plan: 4, paidCount: 4, each: 2400, next: "—", sentBy: "Kairo" }, broker: true, discord: true, country: "PL", trades30: 44, rules: 99, notes: [], history: [H("5 Nov 2024", "Joined Coaching Platinum")],
   },
   {
     id: "s15", name: "Yuki Tanaka", initials: "YT", email: "yuki.t@icloud.com", tier: "desk", group: "Futures A", progress: 35, lastActive: "today", activeDays: 12, health: "green",
     joined: "27 Oct 2025", paid: 258, broker: true, discord: true, country: "JP", trades30: 19, rules: 72, notes: [], history: [H("27 Oct", "Joined Trading Desk")],
+  },
+  // The four people behind the other payment alerts (Sales · 01c). With Alex they are the 5 "Payment issues" of Students 01.
+  {
+    id: "s16", name: "Marco Bellini", initials: "MB", email: "marco.bellini@example.com", tier: "vip", progress: 62, lastActive: "today", activeDays: 6, health: "red",
+    joined: "2 Nov 2025", paid: 3000, offer: { name: "Coaching Gold", plan: 4, paidCount: 2, each: 1500, next: "Tue 25 Nov", sentBy: "Ana Ribeiro", failed: true }, broker: true, discord: true, country: "IT", trades30: 23, rules: 94, notes: [],
+    history: [H("Today 06:00", "Instalment 3 of 4 failed (card declined)"), H("Today 09:12", "Instalment 2 of 4 paid"), H("2 Nov", "Joined Coaching Gold")],
+  },
+  {
+    id: "s17", name: "Priya Nair", initials: "PN", email: "priya.nair@example.com", tier: "vip", progress: 41, lastActive: "3 d ago", activeDays: 3, health: "red", reason: "Instalment 2 of 2 failed · retries stopped",
+    joined: "6 Nov 2025", paid: 1200, offer: { name: "Coaching Silver", plan: 2, paidCount: 1, each: 1200, next: "Retries stopped", sentBy: "Kairo" }, broker: false, discord: true, country: "IN", trades30: 9, rules: 0, notes: [],
+    history: [H("Today 05:40", "Instalment 2 of 2 failed (card declined, 3 attempts)"), H("Fri 7 Nov", "Instalment 1 of 2 paid"), H("6 Nov", "Joined Coaching Silver")],
+  },
+  {
+    id: "s18", name: "Tom Okafor", initials: "TO", email: "tom.okafor@example.com", tier: "desk", progress: 37, lastActive: "5 d ago", activeDays: 4, health: "red", reason: "Payment failed · retries stopped",
+    joined: "14 Aug 2025", paid: 516, broker: true, discord: false, country: "GB", trades30: 12, rules: 68, notes: [],
+    history: [H("Today 05:40", "Payment of €129 failed (insufficient funds, 3 attempts)"), H("14 Oct", "Renewed"), H("14 Aug", "Joined Trading Desk")],
+  },
+  {
+    id: "s19", name: "Jonas Weber", initials: "JW", email: "jonas@beckerfx.de", tier: "vip", progress: 18, lastActive: "6 d ago", activeDays: 2, health: "red", reason: "Dispute opened 12 Nov · respond by 5 Dec",
+    joined: "29 Oct 2025", paid: 1500, offer: { name: "Coaching Gold", plan: 4, paidCount: 1, each: 1500, next: "On hold", sentBy: "Kairo" }, broker: false, discord: false, country: "DE", trades30: 0, rules: 0, notes: [],
+    history: [H("Yesterday", "Opened a dispute: product not as described"), H("29 Oct", "Joined Coaching Gold")],
   },
 ]
 
@@ -112,9 +133,9 @@ const ORDERED = [...FIGMA_FIRST.map((id) => FEATURED_STUDENTS.find((x) => x.id =
 export const STUDENTS: Student[] = [...ORDERED, ...generatedStudents(FEATURED_STUDENTS)]
 
 export const GROUPS = [
-  { id: "dec", name: "December cohort", start: "1 Dec 2025", end: "28 Feb 2026", seats: 20, members: 18, waiting: 0, tiers: ["desk"] },
-  { id: "futures", name: "Futures A", start: "6 Oct 2025", end: "31 Dec 2025", seats: 0, members: 24, waiting: 0, tiers: ["desk"] },
-  { id: "futures-b", name: "Futures B", start: "5 Jan 2026", end: "31 Mar 2026", seats: 12, members: 14, waiting: 0, tiers: ["desk"] },
+  { id: "dec", name: "December cohort", start: "1 Dec 2025", end: "28 Feb 2026", seats: 20, members: 6, waiting: 0, tiers: ["desk"] },
+  { id: "futures", name: "Futures A", start: "6 Oct 2025", end: "31 Dec 2025", seats: 0, members: 12, waiting: 0, tiers: ["desk"] },
+  { id: "futures-b", name: "Futures B", start: "5 Jan 2026", end: "31 Mar 2026", seats: 12, members: 8, waiting: 0, tiers: ["desk"] },
 ]
 
 /** A discount code. `tiers` empty means every tier; `ends` is an ISO date or empty for no end. */

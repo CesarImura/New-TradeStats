@@ -1,4 +1,4 @@
-// Troca de conteúdo das abas (20/11): o painel novo entra (fade + 12 px do lado da aba), o antigo sai em 110 ms, a altura acompanha e volta a auto.
+// Só as abas da página (as de dentro de um painel, como Revenue/Members do gráfico, somem quando a aba da página muda). Troca de conteúdo das abas (20/11): o painel novo entra (fade + 12 px do lado da aba), o antigo sai em 110 ms, a altura acompanha e volta a auto.
 // Rodar com o servidor em localhost:3000: CHROME_PATH="<Chrome for Testing>" node scripts/tab-content-motion.mjs
 import { createRequire } from "node:module"
 const require = createRequire(import.meta.url)
@@ -24,7 +24,7 @@ for (const w of (process.env.WIDTHS ?? "1440,768,390").split(",").map(Number)) {
     p.on("pageerror", (e) => errs.push(`[pageerror ${p.url().split("/").pop()}] ` + e.message.slice(0, 90))); p.on("console", (m) => m.type() === "error" && errs.push(`[${p.url().split("/").pop()}] ` + m.text().slice(0, 110)))
     for (const [name, path] of SCREENS) {
       await p.goto(BASE + path, { waitUntil: "domcontentloaded" }); await p.waitForTimeout(2800)
-      const tabs = await p.evaluate(() => [...document.querySelectorAll("main [data-tab]")].map((e) => e.getAttribute("data-tab")))
+      const tabs = await p.evaluate(() => [...document.querySelectorAll("main [data-tab]")].filter((e) => !e.closest("[data-slot=tab-panel]")).map((e) => e.getAttribute("data-tab")))
       if (tabs.length < 2) { log(`${w}${reduced ? "r" : ""} ${name}: abas`, false, `(${tabs.length})`); continue }
       let bad = ""
       for (const t of tabs.slice(1, 4)) {

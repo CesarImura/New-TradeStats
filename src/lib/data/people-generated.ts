@@ -6,6 +6,7 @@ import type { Student } from "./people"
  */
 const FIRST = ["Lena", "Tomas", "Aiko", "Mateo", "Sofia", "Jonas", "Priya", "Luca", "Ines", "Marek", "Yuki", "Noah", "Elena", "Omar", "Clara", "Felix", "Nadia", "Ravi", "Hana", "Diego", "Freya", "Kasper", "Leila", "Viktor", "Maya", "Ivan", "Zoe", "Anton", "Rosa", "Theo"]
 const LAST = ["Ito", "Berg", "Silva", "Novak", "Rossi", "Haas", "Costa", "Weber", "Lund", "Duarte", "Kim", "Moreno", "Petrov", "Nair", "Bauer", "Santos", "Frey", "Olsen", "Koch", "Ricci", "Tanaka", "Lopez", "Meyer", "Horvat", "Dalla", "Ernst", "Vogel", "Reyes", "Aydin", "Brandt"]
+const OFFERS = [{ name: "Coaching Silver", total: 2400 }, { name: "Coaching Gold", total: 6000 }, { name: "Coaching Platinum", total: 9600 }]
 const COUNTRY = ["DE", "FR", "ES", "IT", "NL", "PT", "PL", "SE", "CH", "AT", "BE", "IE", "GB", "FI", "DK"]
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 const LAST_ACTIVE = ["today", "today", "today", "yesterday", "2 d ago", "3 d ago", "5 d ago", "1 w ago", "2 w ago"]
@@ -28,15 +29,18 @@ export function generatedStudents(existing: Student[], total = 201): Student[] {
   const used = new Set(existing.map((s) => s.name))
   const out: Student[] = []
   const count = Math.max(0, total - existing.length)
-  // Kairo's counts in Figma (Students 01): 3 payment issues, 7 at risk and 12 invited in all. The written students already hold
-  // 1 payment issue, 3 at risk and 2 invited, so the generated ones add 2, 4 and 10; the rest are fine. Placed by the seed, not at random.
-  const roles: ("payment" | "risk" | "invited" | "ok")[] = [...Array(2).fill("payment"), ...Array(4).fill("risk"), ...Array(10).fill("invited"), ...Array(Math.max(0, count - 16)).fill("ok")]
+  // Kairo's counts in Figma (Students 01): 5 payment issues (the people of the payment alerts), 7 at risk and 12 invited in all. The written students
+  // already hold all 5 payment issues, 3 at risk and 2 invited, so the generated ones add 0, 4 and 10; the rest are fine. Placed by the seed, not at random.
+  const roles: ("payment" | "risk" | "invited" | "ok")[] = [...Array(4).fill("risk"), ...Array(10).fill("invited"), ...Array(Math.max(0, count - 14)).fill("ok")]
   for (let i = roles.length - 1; i > 0; i--) {
     const j = Math.floor(r() * (i + 1))
     ;[roles[i], roles[j]] = [roles[j]!, roles[i]!]
   }
   // Figma Students 01 says 86 active this week (activeDays 10 or more of 14): with the 8 written ones that is 78 of the fine ones, spread by a stride.
   let fine = 0
+  // The groups only take Trading Desk students (Sales · Groups: Futures A 12, Futures B 8, December cohort 6; the written ones hold 3 + 2 + 0).
+  let desk = 0
+  const GROUP_OF_DESK = [...Array(9).fill("Futures A"), ...Array(6).fill("Futures B"), ...Array(6).fill("December cohort")]
   for (let i = 0; out.length < count; i++) {
     const name = `${FIRST[(i * 7 + Math.floor(r() * 3)) % FIRST.length]} ${LAST[(i * 11 + Math.floor(r() * 5)) % LAST.length]}`
     if (used.has(name)) continue
@@ -47,12 +51,18 @@ export function generatedStudents(existing: Student[], total = 201): Student[] {
     const reasonFor = role === "risk" ? ["Rules kept below 70%", "Stuck in Module 2", "Skipped three lives", "No activity for 2 weeks"] : []
     const invitedDays = 3 + Math.floor(r() * 9)
     const okIdx = role === "ok" ? fine++ : -1
-    const active = okIdx >= 0 && (okIdx * 37) % Math.max(1, count - 16) < 78
-    // Figma says 14 joined this month (Oct 13 to Nov 12): 4 written ones plus 10 of these.
-    const recentJoin = okIdx >= 0 && (okIdx * 53) % Math.max(1, count - 16) < 10
+    const active = okIdx >= 0 && (okIdx * 37) % Math.max(1, count - 14) < 78
+    // Figma says 14 joined this month (Oct 13 to Nov 12): 7 written ones plus 7 of these.
+    const recentJoin = okIdx >= 0 && (okIdx * 53) % Math.max(1, count - 14) < 7
     const monthsAgo = 2 + Math.floor(r() * 9)
     const joinedMonth = Math.max(0, 10 - monthsAgo)
     const [first, last] = name.split(" ")
+    // 1:1 VIP exists only through an offer link (Sales · Offers): every VIP student has a plan, with its own steady numbers (a separate seed keeps the rest of the roster as it was).
+    const o = rng(7919 * (out.length + 3))
+    const pack = OFFERS[Math.floor(o() * OFFERS.length)]!
+    const plan = o() > 0.5 ? 4 : 2
+    const offer: Student["offer"] = tier === "vip" ? { name: pack.name, plan, paidCount: 1 + Math.floor(o() * plan), each: pack.total / plan, next: "Mon 1 Dec", sentBy: o() > 0.5 ? "Ana Ribeiro" : "Kairo" } : undefined
+    const group = tier === "desk" && role !== "invited" ? GROUP_OF_DESK[desk++] : undefined
     out.push({
       id: `s${existing.length + out.length + 1}`,
       name,
@@ -65,7 +75,9 @@ export function generatedStudents(existing: Student[], total = 201): Student[] {
       health,
       reason: role === "payment" ? "Payment failed" : role === "invited" ? `Invited ${invitedDays} days ago, hasn't joined` : reasonFor.length ? reasonFor[Math.floor(r() * reasonFor.length)] : undefined,
       joined: role === "invited" ? `invited ${Math.max(1, 12 - invitedDays)} Nov` : recentJoin ? `${1 + Math.floor(r() * 12)} Nov 2025` : `${1 + Math.floor(r() * 27)} ${MONTHS[joinedMonth]} 2025`,
-      paid: tier === "free" ? 0 : Math.round((tier === "vip" ? 390 : tier === "desk" ? 129 : 49) * (1 + r() * 9)),
+      paid: offer ? offer.paidCount * offer.each : tier === "free" ? 0 : Math.round((tier === "desk" ? 129 : 49) * (1 + r() * 9)),
+      offer,
+      group,
       broker: role === "invited" ? false : r() > 0.5,
       discord: r() > 0.35,
       country: COUNTRY[Math.floor(r() * COUNTRY.length)]!,

@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { ArrowRight, Pencil, Play, Plus, Search } from "@/components/icons"
 import { AdminAvatar } from "@/components/admin/ui"
-import { ADMIN_STUDENTS, COURSES, FEEDBACK_REQUESTS } from "@/lib/data/sample"
+import { COURSES, FEEDBACK_REQUESTS } from "@/lib/data/sample"
+import { STUDENTS, tierFor } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { useCoach } from "@/components/coach/coach-provider"
 import { money, NO_OFFERS, OFFERS, type Offer } from "@/lib/data/offers"
+import type { Coach } from "@/lib/data/coaches"
 import { useCommunityData } from "./kit"
 import { useNewPlatform } from "./use-new-platform"
 
@@ -34,16 +36,6 @@ const GROUPS: { id: GroupId; label: string; max: number }[] = [
   { id: "go", label: "Go to", max: 6 },
 ]
 
-/** Sample contact details for the people in the sample data (Figma 524:13831 shows e-mail and tier). */
-const PEOPLE: Record<string, { email: string; tier: string }> = {
-  "Alex Moreau": { email: "alex.m@fastmail.com", tier: "Core" },
-  "Mia Sørensen": { email: "mia.s@proton.me", tier: "Trading Desk" },
-  "Tom Becker": { email: "tom@beckerfx.de", tier: "Core" },
-  "Lena Ito": { email: "lena.ito@gmail.com", tier: "Core" },
-  "Jonas Pereira": { email: "jonas.p@outlook.com", tier: "1:1 VIP" },
-  "Sara Kowalski": { email: "sara.k@wp.pl", tier: "Trading Desk" },
-}
-const EXTRA_STUDENTS = [{ id: "x1", name: "Mikael Koski", initials: "MK", email: "mk@koski.fi", tier: "Inner Circle" }]
 
 /** Where "g" then a letter goes, and what "c" does. Shown on the matching rows. */
 const GO_KEYS: Record<string, string> = { overview: "g o", journal: "g j", content: "g c", downloads: "g d", livestreams: "g l", sales: "g s", partners: "g p", ranking: "g r" }
@@ -65,11 +57,9 @@ const NAV: { id: string; label: string; path: string }[] = [
   { id: "settings", label: "Settings", path: "/settings" },
 ]
 
-function buildItems(base: string, fresh: boolean, offers: Offer[]): Item[] {
-  const students: Item[] = fresh ? [] : [
-    ...ADMIN_STUDENTS.map((s) => ({ id: s.id, name: s.name, initials: s.initials, email: PEOPLE[s.name]?.email ?? "", tier: PEOPLE[s.name]?.tier ?? s.tier })),
-    ...EXTRA_STUDENTS,
-  ].map((s) => ({ id: `student-${s.id}`, group: "students", title: s.name, detail: `${s.email} · ${s.tier}`, initials: s.initials, href: `${base}/students` }))
+function buildItems(base: string, fresh: boolean, offers: Offer[], coach: Coach): Item[] {
+  // The first six of the Students list (same e-mail and tier as there); picking one opens that student's profile.
+  const students: Item[] = (fresh ? [] : STUDENTS.slice(0, 6)).map((s) => ({ id: `student-${s.id}`, group: "students", title: s.name, detail: `${s.email} · ${tierFor(coach, s.tier).name}`, initials: s.initials, href: `${base}/students?open=${s.id}` }))
   const journal: Item[] = (fresh ? [] : FEEDBACK_REQUESTS).map((f) => ({ id: `journal-${f.id}`, group: "journal", title: `Request from ${f.student}`, detail: `“${f.note}” · ${f.waiting} ago`, icon: "edit", href: `${base}/journal` }))
   const content: Item[] = (fresh ? [] : COURSES).flatMap((c) =>
     c.modules.flatMap((m) => m.lessons.map((l) => ({ id: `lesson-${l.id}`, group: "content" as const, title: `Lesson · ${l.title}`, detail: `${c.title} · ${m.title.split(" · ")[0]}`, icon: "play" as const, href: `${base}/content` })))
@@ -123,7 +113,7 @@ export function CommandPalette({ open, onOpenChange, base }: { open: boolean; on
   const fresh = useNewPlatform()
   const { coach } = useCoach()
   const [offers] = useCommunityData<Offer[]>(coach.slug, "offers", OFFERS, NO_OFFERS)
-  const all = useMemo(() => buildItems(base, fresh, offers), [base, fresh, offers])
+  const all = useMemo(() => buildItems(base, fresh, offers, coach), [base, fresh, offers, coach])
   const results = useMemo(() => search(all, query), [all, query])
   const current = results[Math.min(active, results.length - 1)]
   const optionId = (i: Item) => `${listId}-${i.id}`

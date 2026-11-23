@@ -11,7 +11,7 @@ import { tierFor } from "@/lib/data/people"
 import { pictureFrom } from "@/lib/images"
 import { fmtPnl, fmtPrice, fmtR, sideLabel } from "@/lib/data/trades"
 import { cn } from "@/lib/utils"
-import { AdminButton, Panel, Tag } from "../ui"
+import { AdminButton, AdminModal, Panel, Tag } from "../ui"
 
 type T = ReturnType<typeof allTrades>[number]
 type Mode = "text" | "voice" | "video" | "screenshot"
@@ -30,6 +30,7 @@ export function AnswerPage({ trade: t, student: s, aiDraft, readOnly, onBack, on
   const [secs, setSecs] = useState(0)
   const [paused, setPaused] = useState(false)
   const [elapsed, setElapsed] = useState(0)
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
   const picker = useRef<HTMLInputElement>(null)
   const ask = t.thread.find((m) => m.from === "student")
   const earlier = t.thread.filter((m) => m.from === "coach")
@@ -39,6 +40,17 @@ export function AnswerPage({ trade: t, student: s, aiDraft, readOnly, onBack, on
     const id = setInterval(() => setElapsed((x) => x + 1), 60000)
     return () => clearInterval(id)
   }, [])
+  // Esc during a recording asks before throwing it away, instead of leaving the page.
+  useEffect(() => {
+    if (!recording) return
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || document.querySelector("[role=dialog]")) return
+      e.stopImmediatePropagation()
+      setConfirmDiscard(true)
+    }
+    window.addEventListener("keydown", esc, true)
+    return () => window.removeEventListener("keydown", esc, true)
+  }, [recording])
   useEffect(() => {
     if (!recording || paused) return
     const id = setInterval(() => setSecs((x) => x + 1), 1000)
@@ -53,7 +65,7 @@ export function AnswerPage({ trade: t, student: s, aiDraft, readOnly, onBack, on
     setPaused(false)
     setMode("text")
   }
-  const cancelRecording = () => (setSecs(0), setPaused(false), setMode("text"))
+  const cancelRecording = () => (setSecs(0), setPaused(false), setConfirmDiscard(false), setMode("text"))
   const done = (send: boolean) => {
     if (send && text.trim()) say({ from: "coach", kind: "text", text: text.trim() + (rules.length ? `\n\nRule to remind: ${rules.join(", ")}` : ""), when: "just now" })
     if (link.trim()) say({ from: "coach", kind: "chart", text: `Marked-up chart · ${t.symbol}`, link: `https://${link.trim().replace(/^https?:\/\//, "")}`, when: "just now" })
@@ -76,7 +88,7 @@ export function AnswerPage({ trade: t, student: s, aiDraft, readOnly, onBack, on
 
   const header = (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-full sm:basis-0">
         <h1 className="t-title text-a-text">{s.name}</h1>
         <p className="t-body-m text-a-text-2">{tierFor(coach, s.tier).name} · asked {ask?.when ?? "recently"} · 48 trades journaled</p>
       </div>
@@ -109,6 +121,15 @@ export function AnswerPage({ trade: t, student: s, aiDraft, readOnly, onBack, on
             <AdminButton onClick={stopRecording}><Square /> Stop and review</AdminButton>
           </div>
         </Panel>
+        <AdminModal open={confirmDiscard} onOpenChange={setConfirmDiscard} title="Discard this recording?" className="sm:max-w-[440px]"
+          footer={
+            <div className="flex w-full items-center justify-end gap-2">
+              <AdminButton hierarchy="ghost" onClick={() => setConfirmDiscard(false)}>Keep recording</AdminButton>
+              <AdminButton onClick={cancelRecording}>Discard</AdminButton>
+            </div>
+          }>
+          <p className="t-body-m text-a-text-2">What you recorded so far will be lost.</p>
+        </AdminModal>
       </div>
     )
   }
@@ -203,8 +224,8 @@ export function AnswerPage({ trade: t, student: s, aiDraft, readOnly, onBack, on
                     <button type="button" onClick={() => setAddingRule(true)} className="flex items-center gap-1 t-caption text-a-text-2 outline-none hover:text-a-text focus-visible:text-a-text"><Plus className="size-3" /> Tag</button>
                   )}
                 </div>
-                <div className="flex items-center gap-3 border-t border-a-border-subtle pt-4">
-                  <p className="min-w-0 flex-1 t-caption text-a-text-2">They get a notification and an e-mail.</p>
+                <div className="flex flex-wrap items-center gap-3 border-t border-a-border-subtle pt-4">
+                  <p className="min-w-0 flex-1 basis-full t-caption sm:basis-0 text-a-text-2">They get a notification and an e-mail.</p>
                   <AdminButton hierarchy="ghost" onClick={() => done(false)}>Mark done</AdminButton>
                   <AdminButton disabled={!text.trim() && !link.trim()} onClick={() => done(true)}>Send and mark done</AdminButton>
                 </div>

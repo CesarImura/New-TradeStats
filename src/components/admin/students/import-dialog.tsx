@@ -5,7 +5,8 @@ import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Check, FileSpreadsheet, Link2 } from "@/components/icons"
 import { Checkbox } from "@/components/ui/checkbox"
-import { GROUPS } from "@/lib/data/people"
+import { isOfferOnly } from "@/lib/data/access"
+import { GROUPS, type Student } from "@/lib/data/people"
 import { cn } from "@/lib/utils"
 import { AdminSelect, AdminButton, AdminField, AdminFilter, AdminModal, AdminTable, AdminTableHead, AdminTd, AdminTh, AdminTr, Callout, Dropzone, FileItem, OptionCard, StepIndicator, adminControl } from "../ui"
 
@@ -13,10 +14,10 @@ import { AdminSelect, AdminButton, AdminField, AdminFilter, AdminModal, AdminTab
 const SAMPLE_NAME = "students-export.csv"
 const SAMPLE_HEAD = ["Full name", "E-mail", "Plan", "Team", "Joined", "Phone"]
 const SAMPLE_ROWS = [
-  ["Hugo Martin", "hugo.martin@me.com", "Basic", "—", "12/03/2025", "+33 6 12 34"],
-  ["Ines Duarte", "ines.duarte@gmail.com", "Pro", "Futures A", "13/02/2025", "+351 91 234"],
-  ["Marek Nowak", "marek@nowak.pl", "Basic", "—", "07/04/2025", "+48 600 123"],
-  ["Yuki Tanaka", "yuki.t@me.com", "Pro", "—", "20/07/2025", "+81 90 1234"],
+  ["Rafael Quintero", "rafael.quintero@gmail.com", "Basic", "—", "12/03/2025", "+33 6 12 34"],
+  ["Greta Lindholm", "greta.lindholm@outlook.com", "Pro", "Futures A", "13/02/2025", "+46 70 123"],
+  ["Samir Haddad", "samir@haddad.ma", "Basic", "—", "07/04/2025", "+212 6 12"],
+  ["Elodie Marchand", "elodie.m@free.fr", "Pro", "—", "20/07/2025", "+33 6 98 76"],
 ]
 const GUESS = ["Name", "E-mail", "Tier", "Group", "Joined date", "Don't import"]
 const FIELDS = ["Name", "E-mail", "Tier", "Group", "Joined date", "Don't import"]
@@ -28,7 +29,7 @@ const MODES = [
 type Mode = (typeof MODES)[number]["id"]
 
 /** Students · 03 Import or invite (Figma 1485:74593): choose where they come from, check the columns, invite. Three steps, the same modal throughout. */
-export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+export function ImportDialog({ open, onOpenChange, existing, onImported }: { open: boolean; onOpenChange: (o: boolean) => void; /** E-mails of the people who are already students, to tell them from the new ones. */ existing: string[]; /** The students this import creates: the list shows them as Invited. */ onImported: (added: Student[]) => void }) {
   const { coach } = useCoach()
   const [step, setStep] = useState(0)
   const [mode, setMode] = useState<Mode>("csv")
@@ -38,8 +39,18 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
   const [tier, setTier] = useState(coach.tiers[0]?.id ?? "")
   const [group, setGroup] = useState("")
   const [invite, setInvite] = useState(true)
+  // What the last import really added (the typed list stops counting once those people are students).
+  const [imported, setImported] = useState(0)
 
-  const addresses = useMemo(() => [...new Set(emails.split(/[\s,;]+/).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)))], [emails])
+  // What was typed, sorted into the ones to invite, the ones who are already students and what is not an e-mail (repeats count once).
+  const typed = useMemo(() => {
+    const tokens = emails.split(/[\s,;]+/).filter(Boolean)
+    const valid = [...new Set(tokens.filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)).map((e) => e.toLowerCase()))]
+    const known = new Set(existing.map((e) => e.toLowerCase()))
+    return { addresses: valid.filter((e) => !known.has(e)), already: valid.filter((e) => known.has(e)).length, invalid: tokens.filter((e) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)).length }
+  }, [emails, existing])
+  const addresses = typed.addresses
+  const sold = coach.tiers.filter((t) => !isOfferOnly(t))
   const count = mode === "csv" ? SAMPLE_ROWS.length : mode === "emails" ? addresses.length : 0
   const tierName = coach.tiers.find((t) => t.id === tier)?.name ?? ""
   const csv = mode === "csv"
@@ -57,13 +68,21 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
     setMap(GUESS)
     setGroup("")
     setInvite(true)
+    setImported(0)
   }
   const close = () => {
     onOpenChange(false)
     setTimeout(reset, 200)
   }
   const done = () => {
-    toast(`${count} ${count === 1 ? "student" : "students"} imported`, { description: invite ? "Invite e-mails are on their way." : "They're waiting as “Invited”." })
+    const people: { name: string; email: string; group?: string }[] =
+      mode === "csv"
+        ? SAMPLE_ROWS.map((r) => ({ name: r[map.indexOf("Name")] ?? r[0]!, email: r[map.indexOf("E-mail")]!, group: map.includes("Group") && r[map.indexOf("Group")] !== "—" ? r[map.indexOf("Group")] : undefined }))
+        : addresses.map((email) => ({ name: nameFrom(email), email, group: group || undefined }))
+    const added = people.map((p, i) => toStudent(p, tier, `${Date.now().toString(36)}${i}`)).filter((st) => !existing.some((e) => e.toLowerCase() === st.email.toLowerCase()))
+    onImported(added)
+    setImported(added.length)
+    toast(`${added.length} ${added.length === 1 ? "student" : "students"} imported`, { description: invite ? "Invite e-mails are on their way." : "They're waiting as “Invited”." })
     setStep(2)
   }
 
@@ -125,14 +144,14 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
               <>
                 <Dropzone title="Drop your file here, or click" hint="A .csv with one student per row" icon={<FileSpreadsheet className="size-[22px]" />} accept=".csv,text/csv" onFiles={(f) => setFile(f[0]?.name.toLowerCase().endsWith(".csv") ? f[0].name : SAMPLE_NAME)} />
                 <p className="t-caption text-a-text-3">
-                  Prototype: any file gives a sample of {SAMPLE_ROWS.length} students.{" "}
+                  Any file shows the same sample of {SAMPLE_ROWS.length} students.{" "}
                   <button type="button" onClick={() => setFile(SAMPLE_NAME)} className="rounded-a-xs text-a-text-accent outline-none hover:underline focus-visible:ring-2 focus-visible:ring-a-border-focus">Use the sample file</button>
                 </p>
               </>
             ))}
 
           {mode === "emails" && (
-            <AdminField label="E-mails" hint={emails.trim() ? `${addresses.length} valid` : "Separate with a comma, a space or a new line"}>
+            <AdminField label="E-mails" hint={emails.trim() ? [`${addresses.length} to invite`, typed.already ? `${typed.already} already ${typed.already === 1 ? "a student" : "students"}` : "", typed.invalid ? `${typed.invalid} not valid` : ""].filter(Boolean).join(" · ") : "Separate with a comma, a space or a new line"}>
               <textarea rows={6} value={emails} onChange={(e) => setEmails(e.target.value)} placeholder={"hugo@mail.fr\nines@gmail.com"} className={cn(adminControl, "resize-none py-2.5")} />
             </AdminField>
           )}
@@ -184,7 +203,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
         <>
           <div className="grid gap-4 sm:grid-cols-2">
             <AdminField label="Tier">
-              {() => <AdminSelect ariaLabel="Tier" value={tier} onValueChange={setTier} options={coach.tiers.map((t) => ({ value: t.id, label: `${t.name} · ${t.price}` }))} />}
+              {() => <AdminSelect ariaLabel="Tier" value={tier} onValueChange={setTier} options={sold.map((t) => ({ value: t.id, label: `${t.name} · ${t.price}` }))} />}
             </AdminField>
             <AdminField label="Group" optional>
               {() => <AdminSelect ariaLabel="Group" value={group} onValueChange={setGroup} options={[{ value: "", label: "No group" }, ...GROUPS.map((g) => ({ value: g.name, label: g.name }))]} />}
@@ -196,7 +215,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
 
       {step === 2 && (
         <Callout tone="success" icon={<Check className="size-4" />}>
-          {count} {count === 1 ? "student" : "students"} imported{csv ? "" : ` as ${tierName}${group ? ` in ${group}` : ""}`}. {invite ? "Their invite e-mails are on their way." : "They stay “Invited” until you send the e-mail."}
+          {imported} {imported === 1 ? "student" : "students"} imported{csv ? "" : ` as ${tierName}${group ? ` in ${group}` : ""}`}. {invite ? "Their invite e-mails are on their way." : "They stay “Invited” until you send the e-mail."}
         </Callout>
       )}
     </AdminModal>
@@ -213,4 +232,16 @@ function InviteToggle({ invite, setInvite, coachName }: { invite: boolean; setIn
       </span>
     </label>
   )
+}
+
+/** "rafael.quintero@gmail.com" → "Rafael Quintero": a name to show until the student fills in their own. */
+const nameFrom = (email: string) => email.split("@")[0]!.split(/[._-]+/).filter(Boolean).map((w) => w[0]!.toUpperCase() + w.slice(1)).join(" ")
+
+/** An imported person is an Invited student: no activity yet, nothing paid, in the tier (and group) picked here. */
+function toStudent(p: { name: string; email: string; group?: string }, tier: string, id: string): Student {
+  const initials = p.name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("")
+  return {
+    id: `n${id}`, name: p.name, initials, email: p.email, tier, group: p.group, progress: 0, lastActive: "never", activeDays: 0, health: "amber", reason: "Invited today, hasn't joined",
+    joined: "invited 12 Nov", paid: 0, broker: false, discord: false, country: "—", trades30: 0, rules: 0, notes: [], history: [{ when: "Today", text: "Imported and invited" }],
+  }
 }

@@ -2,6 +2,33 @@
 
 Uma linha por mudança de nome, lugar ou estrutura. Mais recente em cima. Mudanças de produto ficam no vault (Updates).
 
+## 23/11/2026 (noite, 2ª rodada): Import cria alunos
+
+- Import or invite agora adiciona os alunos à lista como Invited (guardados no navegador); o CSV de exemplo passa a ter 4 pessoas fora do roster (Figma 03: primeira linha "Rafael Quintero"). Regra das janelas Overview × Students em docs/admin-v2.md.
+
+## 23/11/2026 (noite): revisão ponta a ponta de Students
+
+- Import or invite: e-mails colados agora separam "to invite", "already a student" e "not valid" (antes um aluno existente contava como novo); o Tier do passo Access não oferece o tier só de oferta; "Prototype: any file gives…" → "Any file shows the same sample of 4 students." (código e Figma 03b).
+- ⌘K: os alunos vêm do roster de Students (e-mail e tier iguais ao da lista, antes eram outros dados) e abrem o perfil com `?open=<id>`; Mikael Koski, que não é aluno, saiu da busca.
+- docs/admin-v2.md ganhou o mapa do fluxo Students; skills `tradehub-codigo` e `tradehub-textos` ganharam as regras desta revisão (instalar de novo no app).
+
+## 23/11/2026 (tarde, 2ª rodada): decisões do Gustavo sobre Students
+
+- Barras de curso do drawer em laranja: no Figma as 8 barras de Students 02, 02b, 02e e 02f passaram a `component/progress/fill` (override); o componente Progress item e `component/progress-item/bar/fill` (amarelo, usado no upload de Content) não mudaram.
+- Tabela: colunas do Figma iguais às do código (tier 134, courses 64, progress 134, rules 74, status 104, joined 96, last active 76, cabeçalho Last active alinhado à direita) em todas as telas Students com tabela; Lena Ito entra em 4 Nov 2025 (plano Silver).
+- Grupos: Futures A 12, Futures B 8 e December cohort 6 membros, iguais na lista de alunos e em Sales › Groups (Futures B passou a existir nos dois); só alunos Trading Desk entram em grupo.
+- VIP só por oferta: todo aluno VIP tem plano (Lena, Marek e os gerados); "Next payment" some só quando o plano terminou.
+- Menu Review (código e Figma 02e): ícones (Send, Retry, Pause, Mark as reviewed, Remove); no código vira `ReviewMenu`, com `AdminMenu`.
+- Clear filters também volta o Sort para Default.
+- Teclado: `RadioKeys` (kit/radio-keys.tsx, no layout raiz) dá setas, Home e End a todo `role="radiogroup"` que não trate as setas sozinho.
+- Teste `tab-content-motion.mjs`: contava abas de dentro do painel (Revenue/Members do gráfico); agora só as da página.
+
+## 23/11/2026 (tarde): revisão do fluxo Students (Figma × código)
+
+- Dados: Payment issues = 5 linhas na tabela (Alex Moreau, Marco Bellini, Priya Nair, Tom Okafor e Jonas Weber, as mesmas pessoas dos Payment alerts); os dois alunos gerados com pagamento falhado (Kasper Petrov, Jonas Vogel) saíram. Jonas Pereira deixa de ter parcela falhada (o teste de Remove student passou para Marco Bellini). Alex: Trading Desk €129, pago €645, histórico sem "Core" nem €149. 14 joined this month, 86 active e 201 alunos mantidos.
+- Código: colunas da tabela mais estreitas (nome e e-mail não cortam a 1440); rodapé "Showing 1–8 of 201" (faixa da página); status "Payment issue" também para parcela falhada e disputa; Move to tier e o menu de tier do perfil sem o tier só de oferta (1:1 VIP mostra "Priced in each offer"); menu Review com "Mark as reviewed" antes de Remove student.
+- Figma: Students 01/01b/01d com filtro Sort; rodapé "Showing 1–8 of 201"; "Payments that need you"; Profile 02, 02b, 02e, 02f, 02c e 02d com os textos do código (Alex e Marco); "Mark as reviewed" no menu da 02e; 02e/02f entram no mapa de telas.
+
 ## 23/11/2026: Sales & payments e Overview do Figma passados para o código
 
 - Planos de pagamento por oferta (lista de valores, parcelas iguais ou diferentes), tier "Offer only", checkout sem consentimento; ver `docs/high-ticket-flow.md` §1 e §6.

@@ -1,8 +1,8 @@
 # Mapa de telas (Figma × rotas)
 
-Gerado por `scripts/maps/components-screens.mjs` em 2026-11-23, commit 77eccf8f. Figma: arquivo XWHeEdjEiY6gWmrsg0vFIZ, dados exportados em 21/11/2026 pelo MCP (pasta `docs/maps/data`). Não editar à mão: atualizar os dados e rodar de novo. Mudanças ficam em `docs/maps/CHANGELOG.md`.
+Gerado por `scripts/maps/components-screens.mjs` em 2026-11-23, commit d2198c74. Figma: arquivo XWHeEdjEiY6gWmrsg0vFIZ, dados exportados em 21/11/2026 pelo MCP (pasta `docs/maps/data`). Não editar à mão: atualizar os dados e rodar de novo. Mudanças ficam em `docs/maps/CHANGELOG.md`.
 
-262 telas: 215 no Admin e 47 no Editor. Toda tela tem uma nota `Note · <nome>` 40 px abaixo, em português. Convenção de nomes e disposição: skill `tradehub-figma` e `docs/maps/README.md`.
+264 telas: 217 no Admin e 47 no Editor. Toda tela tem uma nota `Note · <nome>` 40 px abaixo, em português. Convenção de nomes e disposição: skill `tradehub-figma` e `docs/maps/README.md`.
 
 Tipo: **mapa do fluxo** = `00 Flow map`, primeira coluna de cada seção; **passo** = número sem letra; **estado ou variante** = número + letra (b, c…) empilhado na coluna da base; **ramo** = caminhos paralelos (a, b, c), cada um na sua linha com `Label · Branch`. Link para abrir: `https://www.figma.com/design/XWHeEdjEiY6gWmrsg0vFIZ/Tradehub?node-id=<ID com - no lugar de :>`.
 
@@ -104,6 +104,8 @@ Rota no protótipo: `/admin/[coach]/students`.
 | `1887:79162` | Students · 02b Profile · Offer buyer | estado ou variante | — | — |
 | `1485:74673` | Students · 02c Profile · Activity | estado ou variante | — | — |
 | `1485:74700` | Students · 02d Profile · Notes | estado ou variante | — | — |
+| `2008:85998` | Students · 02e Profile · Review menu | estado ou variante | — | — |
+| `2008:86343` | Students · 02f Profile · Remove student | estado ou variante | — | — |
 | `1485:74593` | Students · 03 Import or invite | passo | `src/components/admin/students/import-dialog.tsx` | — |
 | `1485:74727` | Students · 03b Import or invite · Choose | estado ou variante | — | — |
 | `1485:74620` | Students · 04 Message | passo | `src/components/admin/students/student-message.tsx` | — |

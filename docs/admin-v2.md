@@ -148,7 +148,7 @@ Prototipo, sem Stripe nem backend: parcelas simuladas, nada e cobrado. Figma: Sa
 - **Settings > General > Book a call:** o Booking link tem uma fonte so (`lib/data/booking.ts`, chave `<slug>:booking`), editada em Settings e no inspector da Join; o checkout le dela. Vazio = a linha some.
 - **Overview / notificacoes / busca:** sino com "Instalment failed", "Offer link opened", "Offer paid" (`notifications-menu.tsx`); ⌘K com grupos Actions (Send offer link, New offer, Go to Offers) e Offers (`command-palette.tsx`, abre `?tab=offers&send=1` ou `&new=1`). Os atalhos "S O", "N O" do Figma nao existem (o teclado so entende "g x" e uma letra) e "G O" ja e o Overview: ficam sem atalho.
 - **Transactions:** aba Instalments (`Txn.instalment`) e rodape explicando as tentativas; Needs attention do Overview continua so com pagamentos que nao sao parcela.
-- **Perfil do aluno:** `Student.offer` mostra Tier and plan (plano, proximo pagamento, quem enviou o link). Hoje so Jonas Pereira tem.
+- **Perfil do aluno:** `Student.offer` mostra Tier and plan (plano, proximo pagamento, quem enviou o link). Hoje Jonas Pereira, Marco Bellini, Priya Nair e Jonas Weber tem; Marco e o da parcela falhada.
 - **Overview de Sales:** painel "Where October revenue came from" (Offers + tiers, barra de 6 px) no lugar da tabela por tier; cards do grafico e Needs attention com a mesma altura.
 - **Payouts:** Connect payouts como timeline (`TimelineStep`, novo `tourId`) com o painel Before you start; Payout account em duas colunas com tag Verified.
 - **Fora do codigo, por escolha:** grafico de barras compartilhado do Figma (o codigo usa recharts e ja alinha grade, rotulos e base); faixa de parcela falhada no perfil do aluno; Settings alem do Booking link.
@@ -187,3 +187,22 @@ Fora da seção mas parte do fluxo: Overview 02c e 03c, Students 03c, Settings 0
 **Fechamento do high ticket no código (20/11, noite):** o sino mostra, em tempo real, "Offer link opened" (só se o offer tem "Tell me when a link is opened") e "Offer paid" para links abertos ou pagos na sessão; o perfil do aluno com offer mostra a faixa "Instalment X of N failed · retrying …" com Review (Send payment link, Retry now, Pause access) e "Next payment … (retry)". Continua só no Figma ou em aberto: tiers exclusivos de offer em Layout for / Preview as (decisão do Gustavo), cobrança real e backend (protótipo).
 
 **Cenários de erro e acerto (20/11, noite):** mapa completo em `docs/high-ticket-flow.md` (20 cenários, ciclo de vida do link e das parcelas, sugestões para o backend). No Figma entraram 07d (cartão recusado) e 07e (offer indisponível) como variantes do Offer checkout. No protótipo: cartão recusado e confirmação do banco (botões "Prototype · what the payment returns"), offer apagado depois do envio, aviso de assinatura que termina, e Offers bloqueado enquanto Payouts não estiver conectado.
+
+## Students: mapa do fluxo e decisões (revisão de 23/11/2026)
+
+**Jornada** (Figma `Admin · 03 Students`, 14 telas; rota `/admin/[coach]/students`):
+- Entrada: sidebar › Students, ⌘K (os 6 primeiros alunos abrem o perfil com `?open=<id>`), setas do Overview (KPIs Active/New students), Getting started (tarefa `invite`) e os alertas de pagamento (Payment issues).
+- Lista (`students/students.tsx`): KPIs → abas All/At risk/Invited/Paused → busca, Tier, Group, Sort → tabela (8 por página, rodapé `Showing 1–8 of 201`) → barra de seleção (Send a message, Move to tier, Add to group, Export). Estados: 01b sem alunos (plataforma nova), 01c seleção, 01d sem resultado.
+- Perfil (`student-profile.tsx`, drawer 540 px): Overview / Activity / Notes; callout de pagamento com menu Review (`ReviewMenu`); Pause/Resume access, Open journal, Send a message; Remove student (modal, Undo no toast). 02b comprador de oferta, 02e menu Review, 02f Remove student.
+- Importar ou convidar (`import-dialog.tsx`): 3 passos (Choose, Check columns ou Access, Invite); arquivo (CSV de exemplo), e-mails colados (conta só os novos: avisa os que já são alunos e os inválidos) e link. O protótipo não cria alunos na lista.
+- Mensagem (`student-message.tsx`): um aluno ou a seleção; canal por radio (Discord só se todos têm Discord ligado).
+
+**Regras que não podem quebrar**
+- Roster (`lib/data/people.ts` + `people-generated.ts`): 201 alunos, 86 active, 7 at risk, 12 invited, 14 joined this month, 5 Payment issues (as pessoas dos Payment alerts: Alex Moreau, Marco Bellini, Priya Nair, Tom Okafor, Jonas Weber). Todo VIP tem oferta; grupos Futures A 12, Futures B 8, December cohort 6, iguais em Sales › Groups.
+- Tier só de oferta (`isOfferOnly`) nunca aparece como destino (Move to tier, menu de tier, Import).
+- Contagens de pagamento vêm de `lib/data/payment-alerts.ts`; status "Payment issue" = `health === "red"` ou parcela falhada.
+- Teste de Remove student: Marco Bellini (`scripts/offers-flow.mjs`, `scripts/sales-overview.mjs`).
+
+**Janelas de tempo (decisão 23/11, coordenador)**: Overview e Students mostram janelas diferentes de propósito e os dados de cada um ficam como estão. Overview: últimos 30 dias (Active students 194, New students 40, `KPI_SAMPLE`). Students: "Active this week" (86, atividade nos últimos 14 dias com 10 dias ou mais) e "joined this month" (14). Não alinhar os números: 12 dos 201 só foram convidados, então 194 ativos em 30 dias não cabe no roster sem mudar os dados.
+
+**Import or invite cria alunos (23/11)**: cada importação (arquivo de exemplo, e-mails colados) cria alunos "Invited" no topo da lista, guardados no navegador (`students-added`, via `useCommunityData`), com a contagem de alunos, Invited e a aba atualizadas. E-mails que já são alunos são pulados e avisados no hint. O CSV de exemplo usa 4 pessoas fora do roster (Rafael Quintero, Greta Lindholm, Samir Haddad, Elodie Marchand), igual ao Figma 03.

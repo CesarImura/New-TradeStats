@@ -139,8 +139,9 @@ export type Group = {
 
 /** `tiers`: tier ids (or indexes into the coach's tiers). Extras per group are optional: channel defaults to on, ranking to the coach's module. */
 const SEED_GROUPS: { id: string; name: string; description: string; start: string; end: string; seats: number; members: number; waiting: number; tiers: (string | number)[]; channel?: boolean; ranking?: boolean }[] = [
-  { id: "dec", name: "December cohort", description: "A new cohort. Students join it at checkout or you add them.", start: "2025-12-01", end: "2026-02-28", seats: 20, members: 18, waiting: 0, tiers: ["desk"], channel: true, ranking: true },
-  { id: "futures", name: "Futures A", description: "Futures traders, US session", start: "2025-10-06", end: "2025-12-31", seats: 0, members: 24, waiting: 0, tiers: ["desk"], channel: true, ranking: false },
+  { id: "dec", name: "December cohort", description: "A new cohort. Students join it at checkout or you add them.", start: "2025-12-01", end: "2026-02-28", seats: 20, members: 6, waiting: 0, tiers: ["desk"], channel: true, ranking: true },
+  { id: "futures", name: "Futures A", description: "Futures traders, US session", start: "2025-10-06", end: "2025-12-31", seats: 0, members: 12, waiting: 0, tiers: ["desk"], channel: true, ranking: false },
+  { id: "futures-b", name: "Futures B", description: "Futures traders, second cohort", start: "2026-01-05", end: "2026-03-31", seats: 12, members: 8, waiting: 0, tiers: ["desk"], channel: true, ranking: false },
 ]
 
 const NO_GROUPS: Group[] = []
