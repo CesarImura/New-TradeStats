@@ -134,7 +134,7 @@ ${adm(":is([data-slot=popover-content], [data-slot=dropdown-menu-content], [data
   border-radius: ${T("radius-lg")}; background: ${T("color-bg-raised")}; box-shadow: 0 0 0 1px ${T("color-border-strong")}, 0 16px 40px rgb(0 0 0 / 0.5);
 }
 ${adm(":is([data-slot=dropdown-menu-content], [data-slot=context-menu-content], [data-slot=select-content])")} { padding: ${T("space-6")}; }
-${adm(":is([data-slot=dialog-content], [data-slot=sheet-content])")} { border-radius: ${T("radius-xl")}; background: ${T("color-bg-panel")}; box-shadow: 0 0 0 1px ${T("color-border-strong")}, 0 30px 60px rgb(0 0 0 / 0.6); }
+${adm(":is([data-slot=dialog-content], [data-slot=sheet-content])")} { border-radius: ${T("radius-xl")}; background: ${T("color-bg-panel")}; box-shadow: 0 30px 60px rgb(0 0 0 / 0.6); }
 ${adm(":is([data-slot=dropdown-menu-item], [data-slot=context-menu-item], [data-slot=select-item], [data-slot=command-item])")} { border-radius: ${T("radius-sm")}; min-height: 2rem; padding-inline: ${T("space-10")}; gap: ${T("space-10")}; font-size: 0.8125rem; line-height: 1.125rem; }
 ${adm(":is([data-slot=dropdown-menu-separator], [data-slot=context-menu-separator])")} { background: ${T("color-border-subtle")}; margin-inline: 0; }
 ${adm(":is([data-slot=dropdown-menu-content], [data-slot=context-menu-content])")} { min-width: 13.75rem; }

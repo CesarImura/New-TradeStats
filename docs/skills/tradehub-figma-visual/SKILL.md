@@ -54,3 +54,8 @@ The Admin (page Screens · Admin, called "Admin v2" until 21/11/2026) and the fl
 7. When code and Figma differ decide which is right first; code defects never go into Figma (separate list). Empty states come from a fresh platform in the code, never memory. Product decisions go to Gustavo.
 ## Copy
 All product text (titles, buttons, empty states, errors, notes) follows `tradehub-textos`: specific to the screen, no filler, no AI tells. A visual rule never justifies generic copy.
+
+## Sales & payments Overview (23/11/2026)
+- Chart tabs Revenue / Members: Revenue is stacked (green subscriptions, orange offers, legend, total on top); Members is one orange series, no legend, value on top, axis 0 to 200. Both use `component/chart-bar/bg/default`; the hover state dims the others (`bg/dim`). Oct and Nov members = sum of the tiers (142 + 38 + 9 = 189).
+- Card titles 16 px; modal, drawer and Settings titles 18 px. "Needs you today" (Overview) and "Payment alerts" (Sales) are the same card; their drawers have a 1 px `color/border/strong` stroke inside, no avatar dot, no Close footer.
+- Revenue by source: panel 20, donut 185 with the ring at 10 % of the width, 18 px under the title, rows 12 px apart.

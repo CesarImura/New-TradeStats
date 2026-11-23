@@ -3,9 +3,9 @@
 import { cn } from "@/lib/utils"
 
 /** Admin / Segmented option, in a row (Figma 'Admin · 04 Navigation'). 36px, radius md, 1px hairline; hover strengthens it; the chosen one is raised with the orange edge (color/control/on). Radio semantics, arrow keys move. */
-export function AdminSegmented<T extends string>({ value, onChange, options, label, className, size = "md" }: { value: T; onChange: (v: T) => void; options: readonly { value: T; label: string; disabled?: boolean }[]; label: string; className?: string; size?: "sm" | "md" }) {
+export function AdminSegmented<T extends string>({ value, onChange, options, label, className, size = "md", columns }: { value: T; onChange: (v: T) => void; options: readonly { value: T; label: string; disabled?: boolean }[]; label: string; className?: string; size?: "sm" | "md"; /** Options per row; all in one row by default. */ columns?: number }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn("grid gap-2", className)} style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+    <div role="radiogroup" aria-label={label} className={cn("grid gap-2", className)} style={{ gridTemplateColumns: `repeat(${columns ?? options.length}, minmax(0, 1fr))` }}
       onKeyDown={(e) => {
         if (!["ArrowRight", "ArrowLeft"].includes(e.key)) return
         e.preventDefault()

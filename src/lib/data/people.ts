@@ -153,7 +153,8 @@ export const TXN_COUNTS = { all: 1210, failed: 3, disputed: 2, refunded: 4 }
 export const MONEY = {
   mrr: 37180,
   mrrChange: 6.2,
-  month: 31204,
+  /** What was paid out for October: revenue €37,180 minus the card fees (€1,118) and our share (€1,859). */
+  month: 34203,
   fees: { label: "Our share (5%) and card fees", amount: 1118 },
   share: 1859,
   mrrMore: 2180,

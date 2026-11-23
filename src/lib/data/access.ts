@@ -55,13 +55,16 @@ const FEATURES = [
 const SEED_BY_ID: Record<string, Partial<TierExtra>> = {
   core: { trial: 0, yearly: "€490", features: ["All courses", "Community and lives", "Journal feedback · 2 / month"], featured: false },
   desk: { trial: 7, yearly: "€1,290", features: ["Everything in Inner Circle", "Daily desk call", "Journal feedback · unlimited"], featured: true },
-  vip: { trial: 0, installments: true, hidden: true, features: ["Everything in Trading Desk", "4 calls a month", "Private channel"], featured: false },
+  vip: { trial: 0, installments: false, hidden: true, features: ["Everything in Trading Desk", "4 calls a month", "Private channel"], featured: false },
 }
 
 /** `slug`: the sample texts of Sales · Tiers & prices are Kairo FX's; every other community starts from the generic list by position (Figma Join · Subscribe: "Everything in the first tier", "Group trade reviews"…). */
 export function blankExtra(i: number, id?: string, slug?: string): TierExtra {
   return { trial: i === 0 ? 7 : 0, installments: false, hidden: false, role: "", description: "", features: FEATURES[Math.min(i, 2)], featured: i === 1, ...(id && slug === "kairo" ? SEED_BY_ID[id] : undefined) }
 }
+
+/** An offer-only tier (Figma Sales · 03c): no price of its own and never on the sales page; clients get it from an offer link, and the price is set in each offer. */
+export const isOfferOnly = (t: { cadence?: string }) => t.cadence === "offer"
 
 /** The free tier isn't sold: the Sales tabs list only the paid ones (no free tier, visitors see the paywall first). */
 export const isFreeTier = (t: { price: string }) => (Number(t.price.replace(/[^\d.]/g, "")) || 0) === 0
@@ -77,7 +80,9 @@ function mergeTiers(coach: Coach, extra: Record<string, TierExtra>, added: Tier[
   return [...coach.tiers, ...added].map((t, i) => {
     const x = { ...blankExtra(i, t.id, coach.slug), ...extra[t.id] }
     const { name, price, cadence, ...rest } = x
-    return { ...t, ...rest, name: name ?? t.name, price: price ?? t.price, cadence: cadence ?? t.cadence }
+    const cad = cadence ?? t.cadence
+    // An offer-only tier is never on the sales page, whatever the "Hidden · link only" switch says.
+    return { ...t, ...rest, hidden: rest.hidden || cad === "offer", name: name ?? t.name, price: price ?? t.price, cadence: cad }
   })
 }
 

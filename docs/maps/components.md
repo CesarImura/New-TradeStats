@@ -1,6 +1,6 @@
 # Mapa de componentes (Figma × código)
 
-Gerado por `scripts/maps/components-screens.mjs` em 2026-11-21, commit a87c21f5. Figma: arquivo XWHeEdjEiY6gWmrsg0vFIZ, dados exportados em 21/11/2026 pelo MCP (pasta `docs/maps/data`). Não editar à mão: atualizar os dados e rodar de novo. Mudanças ficam em `docs/maps/CHANGELOG.md`.
+Gerado por `scripts/maps/components-screens.mjs` em 2026-11-23, commit 77eccf8f. Figma: arquivo XWHeEdjEiY6gWmrsg0vFIZ, dados exportados em 21/11/2026 pelo MCP (pasta `docs/maps/data`). Não editar à mão: atualizar os dados e rodar de novo. Mudanças ficam em `docs/maps/CHANGELOG.md`.
 
 162 famílias na página Components (283:9649). Correspondência com o código: confirmado 87 · pendente 64 · provável 11. Componentes `_Base` são a estrutura interna do público e normalmente não têm export próprio.
 
@@ -19,8 +19,8 @@ Como consultar: procure pelo nome do Figma, pelo ID ou pelo arquivo. Telas que u
 
 | Figma (ID) | Variantes | Propriedades | Uso Admin / Editor | Seções | Código | Status | Evidência | Importado por |
 |---|---|---|---|---|---|---|---|---|
-| Admin / _Base Button (`572:28448`) | 8 | Show Label, Label Text, Show L Icon, L Icon, Show R Icon, R Icon, Size, Icon Only | 1826 / 358 | A01,A02,A03,A04,A05,A06,A07,A08,A09,A10,A11,A12,A13,A14,A15,E01,E02,E03,E04,E05 | `AdminButton` em `src/components/admin/ui/button.tsx` | confirmado | citado em `src/components/admin/ui/button.tsx`, `src/lib/theme/admin-v2.ts` | 77 arquivos |
-| Admin / Button (`572:28569`) | 18 | Hierarchy, State | 1853 / 358 | A01,A02,A03,A04,A05,A06,A07,A08,A09,A10,A11,A12,A13,A14,A15,E01,E02,E03,E04,E05 | `AdminButton` em `src/components/admin/ui/button.tsx` | confirmado | citado em `src/components/admin/ui/button.tsx`, `src/lib/theme/admin-v2.ts` | 77 arquivos |
+| Admin / _Base Button (`572:28448`) | 8 | Show Label, Label Text, Show L Icon, L Icon, Show R Icon, R Icon, Size, Icon Only | 1826 / 358 | A01,A02,A03,A04,A05,A06,A07,A08,A09,A10,A11,A12,A13,A14,A15,E01,E02,E03,E04,E05 | `AdminButton` em `src/components/admin/ui/button.tsx` | confirmado | citado em `src/components/admin/ui/button.tsx`, `src/lib/theme/admin-v2.ts` | 80 arquivos |
+| Admin / Button (`572:28569`) | 18 | Hierarchy, State | 1853 / 358 | A01,A02,A03,A04,A05,A06,A07,A08,A09,A10,A11,A12,A13,A14,A15,E01,E02,E03,E04,E05 | `AdminButton` em `src/components/admin/ui/button.tsx` | confirmado | citado em `src/components/admin/ui/button.tsx`, `src/lib/theme/admin-v2.ts` | 80 arquivos |
 
 ## Admin · 03 Forms
 
@@ -77,12 +77,12 @@ Como consultar: procure pelo nome do Figma, pelo ID ou pelo arquivo. Telas que u
 | Figma (ID) | Variantes | Propriedades | Uso Admin / Editor | Seções | Código | Status | Evidência | Importado por |
 |---|---|---|---|---|---|---|---|---|
 | Admin / Page header (`549:89`) | 1 | Actions, Title Text, Show Subtitle, Subtitle Text | 150 / 0 | A01,A03,A04,A05,A06,A07,A08,A09,A10,A11,A12,A13,A14,A15 | `AdminPageHeader` em `src/components/admin/ui/page-header.tsx` | confirmado | citado em `src/components/admin/kit.tsx`, `src/components/admin/ui/page-header.tsx` | 5 arquivos |
-| Admin / Panel (`548:95`) | 1 | Content, Show Header | 151 / 4 | A01,A04,A05,A07,A08,A09,A10,A11,A12,A13,A14,A15,E05 | `Panel` em `src/components/admin/ui/panel.tsx` | confirmado | citado em `src/components/admin/getting-started/go-live.tsx`, `src/components/admin/ui/panel.tsx` e mais 2 | 42 arquivos |
+| Admin / Panel (`548:95`) | 1 | Content, Show Header | 151 / 4 | A01,A04,A05,A07,A08,A09,A10,A11,A12,A13,A14,A15,E05 | `Panel` em `src/components/admin/ui/panel.tsx` | confirmado | citado em `src/components/admin/getting-started/go-live.tsx`, `src/components/admin/ui/panel.tsx` e mais 2 | 44 arquivos |
 | Admin / Panel header (`548:82`) | 1 | Actions, Title Text, Show Subtitle, Subtitle Text | 23 / 0 | A01,A04,A08 | `PanelHeader` em `src/components/admin/ui/panel.tsx` | confirmado | citado em `src/components/admin/ui/panel.tsx` | 8 arquivos |
-| Admin / Modal (`549:110`) | 1 | Body, Title Text, Show Subtitle, Subtitle Text, Show Footer, Footer Actions, Header Actions, Show Header Actions | 16 / 3 | A01,A03,A04,A05,A07,A08,A09,A12,A13,A14,A15,E02,E05 | `AdminModal` em `src/components/admin/ui/modal.tsx` | confirmado | citado em `src/components/admin/getting-started/help-panels.tsx`, `src/components/admin/ui/modal.tsx` e mais 1 | 20 arquivos |
-| Admin / Drawer (`549:136`) | 1 | Body, Title Text, Show Subtitle, Subtitle Text, Show Footer, Footer Actions, Header Actions, Show Header Actions | 22 / 1 | A01,A03,A05,A06,A07,A10,A12,E05 | `AdminDrawer` em `src/components/admin/ui/modal.tsx` | confirmado | citado em `src/components/admin/getting-started/help-panels.tsx`, `src/components/admin/ui/modal.tsx` | 13 arquivos |
+| Admin / Modal (`549:110`) | 1 | Body, Title Text, Show Subtitle, Subtitle Text, Show Footer, Footer Actions, Header Actions, Show Header Actions | 16 / 3 | A01,A03,A04,A05,A07,A08,A09,A12,A13,A14,A15,E02,E05 | `AdminModal` em `src/components/admin/ui/modal.tsx` | confirmado | citado em `src/components/admin/getting-started/help-panels.tsx`, `src/components/admin/ui/modal.tsx` e mais 1 | 21 arquivos |
+| Admin / Drawer (`549:136`) | 1 | Body, Title Text, Show Subtitle, Subtitle Text, Show Footer, Footer Actions, Header Actions, Show Header Actions | 22 / 1 | A01,A03,A05,A06,A07,A10,A12,E05 | `AdminDrawer` em `src/components/admin/ui/modal.tsx` | confirmado | citado em `src/components/admin/getting-started/help-panels.tsx`, `src/components/admin/ui/modal.tsx` | 14 arquivos |
 | Admin / Divider (`753:38236`) | 1 | — | 64 / 0 | A01,A15 | — | pendente | nenhum export nem citação encontrada | — |
-| Admin / Empty state (`548:160`) | 1 | Actions, Title Text, Description Text, Empty Icon | 34 / 2 | A01,A02,A03,A04,A05,A06,A08,A10,A11,A12,A13,A14,E03,E05 | `EmptyState` em `src/components/admin/ui/empty-state.tsx` | confirmado | citado em `src/components/admin/ui/empty-state.tsx` | 26 arquivos |
+| Admin / Empty state (`548:160`) | 1 | Actions, Title Text, Description Text, Empty Icon | 34 / 2 | A01,A02,A03,A04,A05,A06,A08,A10,A11,A12,A13,A14,E03,E05 | `EmptyState` em `src/components/admin/ui/empty-state.tsx` | confirmado | citado em `src/components/admin/ui/empty-state.tsx` | 27 arquivos |
 | Admin / Empty state · Compact (`1351:2783`) | 1 | Text | 10 / 0 | A02,A12,A14 | — | pendente | nenhum export nem citação encontrada | — |
 
 ## Admin · 06 Cards & lists
@@ -106,9 +106,9 @@ Como consultar: procure pelo nome do Figma, pelo ID ou pelo arquivo. Telas que u
 |---|---|---|---|---|---|---|---|---|
 | Admin / Table (`662:30058`) | 1 | Content | 55 / 0 | A01,A03,A04,A05,A06,A07,A08,A10,A11,A12,A14,A15 | `AdminTable` em `src/components/admin/ui/data-table.tsx` | confirmado | citado em `src/components/admin/ui/data-table.tsx`, `src/components/admin/ui/table.tsx` | 18 arquivos |
 | Admin / Table head (`662:30063`) | 1 | Content | 54 / 0 | A01,A03,A04,A05,A06,A07,A08,A10,A11,A12,A14,A15 | `AdminTableHead` em `src/components/admin/ui/data-table.tsx` | confirmado | citado em `src/components/admin/ui/data-table.tsx` | 17 arquivos |
-| Admin / Table footer (`662:30068`) | 1 | Content | 30 / 0 | A03,A04,A05,A06,A07,A10,A11,A12,A14 | `AdminTableFooter` em `src/components/admin/ui/data-table.tsx` | confirmado | citado em `src/components/admin/ui/data-table.tsx` | 10 arquivos |
-| Admin / Table row (`662:30088`) | 3 | Content, State | 274 / 0 | A01,A03,A04,A05,A06,A07,A08,A10,A11,A12,A14,A15 | `TableRow` em `src/components/admin/ui/table.tsx` | confirmado | citado em `src/components/admin/ui/data-table.tsx` | 6 arquivos |
-| Admin / Table cell (`662:30099`) | 2 | Content, Align | 1744 / 0 | A01,A03,A04,A05,A06,A07,A08,A10,A11,A12,A14,A15 | `TableCell` em `src/components/admin/ui/table.tsx` | confirmado | citado em `src/components/admin/ui/data-table.tsx` | 6 arquivos |
+| Admin / Table footer (`662:30068`) | 1 | Content | 30 / 0 | A03,A04,A05,A06,A07,A10,A11,A12,A14 | `AdminTableFooter` em `src/components/admin/ui/data-table.tsx` | confirmado | citado em `src/components/admin/ui/data-table.tsx` | 11 arquivos |
+| Admin / Table row (`662:30088`) | 3 | Content, State | 274 / 0 | A01,A03,A04,A05,A06,A07,A08,A10,A11,A12,A14,A15 | `TableRow` em `src/components/admin/ui/table.tsx` | confirmado | citado em `src/components/admin/ui/data-table.tsx` | 7 arquivos |
+| Admin / Table cell (`662:30099`) | 2 | Content, Align | 1744 / 0 | A01,A03,A04,A05,A06,A07,A08,A10,A11,A12,A14,A15 | `TableCell` em `src/components/admin/ui/table.tsx` | confirmado | citado em `src/components/admin/ui/data-table.tsx` | 7 arquivos |
 | Admin / Table head cell (`662:30104`) | 2 | Label Text, Show Checkbox, Align | 320 / 0 | A01,A03,A04,A05,A06,A07,A08,A10,A11,A12,A14,A15 | ver arquivos citados | confirmado | citado em `src/components/admin/ui/data-table.tsx` | — |
 | Admin / Cell stack (`662:30112`) | 2 | Title Text, Subtitle Text, Show Subtitle, Weight | 180 / 0 | A03,A04,A10,A11,A15 | `CellStack` em `src/components/admin/ui/table-cells.tsx` | confirmado | citado em `src/components/admin/ui/table-cells.tsx` | 3 arquivos |
 | Admin / Cell person (`662:30118`) | 1 | — | 94 / 0 | A03,A04,A15 | `CellPerson` em `src/components/admin/ui/table-cells.tsx` | confirmado | citado em `src/components/admin/ui/table-cells.tsx` | 4 arquivos |
@@ -119,8 +119,8 @@ Como consultar: procure pelo nome do Figma, pelo ID ou pelo arquivo. Telas que u
 
 | Figma (ID) | Variantes | Propriedades | Uso Admin / Editor | Seções | Código | Status | Evidência | Importado por |
 |---|---|---|---|---|---|---|---|---|
-| Admin / _Base Tag (`576:380`) | 1 | Label Text, Show Dot, Show Remove | 406 / 43 | A01,A02,A03,A04,A05,A06,A07,A08,A09,A10,A11,A12,A13,A14,A15,E01,E02,E03,E04,E05 | `Tag` em `src/components/admin/ui/tag.tsx` | confirmado | citado em `src/components/admin/ui/tag.tsx`, `src/lib/theme/admin-v2.ts` | 50 arquivos |
-| Admin / Tag (`576:414`) | 6 | Tone | 421 / 43 | A01,A02,A03,A04,A05,A06,A07,A08,A09,A10,A11,A12,A13,A14,A15,E01,E02,E03,E04,E05 | `Tag` em `src/components/admin/ui/tag.tsx` | confirmado | citado em `src/components/admin/ui/tag.tsx`, `src/lib/theme/admin-v2.ts` | 50 arquivos |
+| Admin / _Base Tag (`576:380`) | 1 | Label Text, Show Dot, Show Remove | 406 / 43 | A01,A02,A03,A04,A05,A06,A07,A08,A09,A10,A11,A12,A13,A14,A15,E01,E02,E03,E04,E05 | `Tag` em `src/components/admin/ui/tag.tsx` | confirmado | citado em `src/components/admin/ui/tag.tsx`, `src/lib/theme/admin-v2.ts` | 51 arquivos |
+| Admin / Tag (`576:414`) | 6 | Tone | 421 / 43 | A01,A02,A03,A04,A05,A06,A07,A08,A09,A10,A11,A12,A13,A14,A15,E01,E02,E03,E04,E05 | `Tag` em `src/components/admin/ui/tag.tsx` | confirmado | citado em `src/components/admin/ui/tag.tsx`, `src/lib/theme/admin-v2.ts` | 51 arquivos |
 | Admin / Avatar (`545:47`) | 3 | Initials Text, Show Status, Size | 372 / 0 | A01,A02,A03,A04,A05,A06,A07,A08,A09,A10,A11,A12,A13,A14,A15 | `AdminAvatar` em `src/components/admin/ui/avatar.tsx` | confirmado | citado em `src/components/admin/ui/avatar.tsx` | 4 arquivos |
 | Admin / Progress (`545:85`) | 4 | Tone | 91 / 2 | A01,A03,A05,E02,E05 | `AdminProgress` em `src/components/admin/ui/progress-line.tsx` | confirmado | citado em `src/components/admin/ui/progress-line.tsx`, `src/components/admin/ui/progress-ring.tsx` | 8 arquivos |
 | Admin / _Base Progress item (`687:1926`) | 3 | Show Title, Title Text, Show Value, Value Text, Show Action, Show Bar, Size | 17 / 0 | A01,A03,A05 | — | pendente | nenhum export nem citação encontrada | — |
@@ -260,7 +260,7 @@ Como consultar: procure pelo nome do Figma, pelo ID ou pelo arquivo. Telas que u
 | Terminal / Avatar (`102:2370`) | 3 | Tone | 0 / 0 · **sem uso** | — | `Avatar` em `src/components/widgets/parts/bits.tsx` | provável | nome do export | 21 arquivos |
 | Terminal / _Base Progress Bar (`102:2473`) | 10 | Size, Value | 9 / 99 | A01,E01,E02,E03,E05 | — | pendente | nenhum export nem citação encontrada | — |
 | Terminal / Progress Bar (`102:2490`) | 5 | Value | 9 / 99 | A01,E01,E02,E03,E05 | — | pendente | nenhum export nem citação encontrada | — |
-| Widget / Tag (`103:614`) | 1 | Label | 30 / 330 | A01,E01,E02,E03,E05 | `Tag` em `src/components/widgets/catalog/poster.tsx` | provável | nome do export | 50 arquivos |
+| Widget / Tag (`103:614`) | 1 | Label | 30 / 330 | A01,E01,E02,E03,E05 | `Tag` em `src/components/widgets/catalog/poster.tsx` | provável | nome do export | 51 arquivos |
 | Widget / Chip (`103:617`) | 1 | Label | 9 / 99 | A01,E01,E02,E03,E05 | `Chip` em `src/components/widgets/parts/anatomy.tsx` | provável | nome do export | 22 arquivos |
 | Widget / Stat (`103:620`) | 1 | Label, Value | 0 / 0 · **sem uso** | — | `Stat` em `src/components/widgets/parts/card.tsx` | provável | nome do export | 2 arquivos |
 | Widget / Unit (`103:624`) | 1 | Value, Label | 9 / 99 | A01,E01,E02,E03,E05 | — | pendente | nenhum export nem citação encontrada | — |

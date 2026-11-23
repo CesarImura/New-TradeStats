@@ -90,7 +90,7 @@ export function UpgradeDialog({ course, open, onOpenChange }: { course: Course |
             <span className="text-sm text-muted-foreground">
               {tier ? (
                 <>
-                  <span className="font-heading text-xl text-foreground">{tier.price}</span> / {tier.cadence}
+                  {tier.cadence === "offer" ? "Ask your coach about the offer" : <><span className="font-heading text-xl text-foreground">{tier.price}</span> / {tier.cadence}</>}
                 </>
               ) : null}
             </span>

@@ -22,7 +22,7 @@ const HOST = ".traderhub.io"
 function Shell({ open, onOpenChange, title, text, close, children }: { open: boolean; onOpenChange: (o: boolean) => void; title: string; text: string; close?: boolean; children: React.ReactNode }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="flex max-h-[calc(100svh-2rem)] flex-col gap-6 overflow-y-auto rounded-a-lg border border-a-border bg-a-panel p-5 text-a-text ring-0 sm:max-w-[560px]">
+      <DialogContent showCloseButton={false} className="flex max-h-[calc(100svh-2rem)] flex-col gap-6 overflow-y-auto rounded-a-lg border border-a-border-strong bg-a-panel p-5 text-a-text ring-0 sm:max-w-[560px]">
         <div className={cn("flex flex-col gap-2", close && "pr-8")}>
           <DialogTitle className="t-heading-s! text-a-text">{title}</DialogTitle>
           <DialogDescription className="t-body-m! text-a-text-2">{text}</DialogDescription>

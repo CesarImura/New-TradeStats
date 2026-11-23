@@ -1,13 +1,13 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Check, MoreHorizontal, Plus, Tag as TagIcon, X } from "@/components/icons"
+import { Check, MoreHorizontal, Plus, Tag as TagIcon, Users, X } from "@/components/icons"
 import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
-import { NO_TIER, addTier, amount, isFreeTier, per, saveTier, setPreviewAs, tierUnlocks, useTiers, type TierExtra, type TierInfo } from "@/lib/data/access"
+import { NO_TIER, addTier, amount, isFreeTier, isOfferOnly, per, saveTier, setPreviewAs, tierUnlocks, useTiers, type TierExtra, type TierInfo } from "@/lib/data/access"
 import { saveCatalog, useCatalog } from "@/lib/data/learning"
 import { readStored, setStored, useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
@@ -16,12 +16,12 @@ import { TabPanel } from "@/components/admin/ui"
 
 const NO_EXTRA: Record<string, TierExtra> = {}
 
-const cadenceOf = (c: string) => (c === "once" ? "once" : c === "quarter" ? "quarter" : c === "free" ? "free" : "month")
+const cadenceOf = (c: string) => (c === "once" ? "once" : c === "quarter" ? "quarter" : c === "free" ? "free" : c === "offer" ? "offer" : "month")
 /** A tier the coach made free in Billing (Figma 1237:57060). The sample free tiers (price 0, not sold) stay out of Sales. */
 const madeFree = (t: { cadence?: string }) => t.cadence === "free"
 
 /** What sits under the price: the yearly price, how it can be paid, or the trial. */
-const subline = (t: TierInfo) => (madeFree(t) ? "Students join with their e-mail" : t.yearly ? `${t.yearly} / year · 2 months free` : t.installments ? "One payment or 3 instalments" : t.trial ? `${t.trial}-day free trial` : "No trial")
+const subline = (t: TierInfo) => (isOfferOnly(t) ? "Priced in each offer. Not on your sales page." : madeFree(t) ? "Students join with their e-mail" : t.yearly ? `${t.yearly} / year · 2 months free` : t.installments ? "One payment or 3 instalments" : t.trial ? `${t.trial}-day free trial` : "No trial")
 
 /** Sales · 02 Tiers & prices (Figma 535:7431) and 03 Edit tier (535:7677): price cards, and the tier opens in a drawer. */
 export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => void }) {
@@ -82,13 +82,13 @@ export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => v
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2 xl:grid-cols-3">
         {tiers.map((t, i) => (
-          <Panel key={t.id} data-tour={i === 0 ? "tier-card" : undefined} data-ready={saved[t.id] ? true : undefined} className={cn("gap-0 p-0", t.featured && "border-a-success/[0.22]")}>
+          <Panel key={t.id} data-tour={i === 0 ? "tier-card" : undefined} data-ready={saved[t.id] ? true : undefined} className="gap-0 p-0">
             <div className="flex flex-1 flex-col gap-3 p-5 pb-4">
               <div className="flex items-start gap-2">
                 <h2 className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 t-heading-s text-a-text">
                   {t.name}
-                  {t.featured && <Tag tone="success">Most popular</Tag>}
-                  {t.hidden && <Tag>Hidden · link only</Tag>}
+                  {t.featured && !isOfferOnly(t) && <Tag tone="success">Most popular</Tag>}
+                  {isOfferOnly(t) ? <Tag>Offer only</Tag> : t.hidden && <Tag>Hidden · link only</Tag>}
                 </h2>
                 <DropdownMenu>
                   <DropdownMenuTrigger render={<AdminButton aria-label={`Actions for ${t.name}`} hierarchy="ghost" size="md" iconOnly className="-mt-1 -mr-2" />}>
@@ -96,15 +96,15 @@ export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => v
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => setOpen(t.id)}>Edit</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => patch(t, { featured: !t.featured }, t.featured ? `${t.name} is no longer most popular` : `${t.name} is the most popular`)}>{t.featured ? "Remove “Most popular”" : "Mark as most popular"}</DropdownMenuItem>
+                    {!isOfferOnly(t) && <DropdownMenuItem onClick={() => patch(t, { featured: !t.featured }, t.featured ? `${t.name} is no longer most popular` : `${t.name} is the most popular`)}>{t.featured ? "Remove “Most popular”" : "Mark as most popular"}</DropdownMenuItem>}
                     <DropdownMenuItem onClick={() => (setPreviewAs(coach.slug, { kind: "tier", id: t.id, label: t.name }), window.open(`/c/${coach.slug}`, "_blank"))}>Preview as this tier</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => patch(t, { hidden: !t.hidden }, t.hidden ? `${t.name} is on the sales page` : `${t.name} is link only`)}>{t.hidden ? "Show on the sales page" : "Hide: link only"}</DropdownMenuItem>
+                    {!isOfferOnly(t) && <DropdownMenuItem onClick={() => patch(t, { hidden: !t.hidden }, t.hidden ? `${t.name} is on the sales page` : `${t.name} is link only`)}>{t.hidden ? "Show on the sales page" : "Hide: link only"}</DropdownMenuItem>}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="t-title-l tabular-nums">{madeFree(t) ? "Free" : t.price}</span>
-                {!madeFree(t) && <span className="t-body-m text-a-text-2">{per(t.cadence)}</span>}
+                <span className="t-title-l tabular-nums">{isOfferOnly(t) ? "Per offer" : madeFree(t) ? "Free" : t.price}</span>
+                {!madeFree(t) && !isOfferOnly(t) && <span className="t-body-m text-a-text-2">{per(t.cadence)}</span>}
               </div>
               <span className="t-caption text-a-text-3">{subline(t)}</span>
               {/* No empty band when the tier has no sales lines yet (QA 14/11). */}
@@ -119,7 +119,7 @@ export function Tiers({ newSignal, onNew }: { newSignal: number; onNew?: () => v
               </ul>}
             </div>
             <div className="flex items-center justify-between border-t border-a-border px-5 py-3">
-              <span className="t-caption text-a-text-2 tabular-nums">{t.members.toLocaleString("en")} members</span>
+              <span className="flex items-center gap-1.5 t-caption text-a-text-2 tabular-nums"><Users className="size-4 shrink-0" aria-hidden />{t.members.toLocaleString("en")} members</span>
               <AdminButton hierarchy="secondary" size="md" onClick={() => setOpen(t.id)} aria-label={`Edit ${t.name}`}>
                 Edit
               </AdminButton>
@@ -174,6 +174,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
   // The tier keeps what it unlocks (Courses it unlocks, Plan tab); the courses keep who can watch them (Access tab and
   // student side read the course), so saving writes the choice through to each course.
   const free = cadenceOf(x?.cadence ?? "month") === "free"
+  const offer = cadenceOf(x?.cadence ?? "month") === "offer"
   const unlocks = x?.unlocks ?? "all"
   const picked = unlocks === "all" ? [] : unlocks
   const writeUnlocks = (id: string, u: "all" | string[]) =>
@@ -191,7 +192,7 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
 
   const save = () => {
     if (!x || !tier) return
-    const patch = free ? { price: "€0", yearly: undefined, trial: 0 } : {}
+    const patch = free ? { price: "€0", yearly: undefined, trial: 0 } : offer ? { yearly: undefined, trial: 0, featured: false } : {}
     saveTier(coach.slug, tier.id, index, { ...x, ...patch, features: x.features.map((f) => f.trim()).filter(Boolean) })
     writeUnlocks(tier.id, unlocks)
     toast(`${x.name || tier.name} saved`)
@@ -208,19 +209,19 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
       footer={
         <>
           <AdminButton hierarchy="ghost" onClick={close}>Cancel</AdminButton>
-          <AdminButton disabled={!x?.name?.trim() || (!free && !amount(x.price ?? "")) || (unlocks !== "all" && picked.length === 0)} onClick={save}>Save tier</AdminButton>
+          <AdminButton disabled={!x?.name?.trim() || (!free && !offer && !amount(x.price ?? "")) || (unlocks !== "all" && picked.length === 0)} onClick={save}>Save tier</AdminButton>
         </>
       }>
       <AdminUnderlineTabs label="Tier sections" value={tab} onChange={setTab} tabs={[{ id: "plan", label: "Plan" }, { id: "page", label: "Sales page" }]} />
       <TabPanel value={tab} order={["plan", "page"]}>
       {x && tier && tab === "plan" && (
         <div className="flex flex-col gap-4">
-          <div data-tour="tier-plan" data-filled={x.name?.trim() && (free || amount(x.price ?? "")) ? true : undefined} data-free={free || undefined} className="flex flex-col gap-4">
+          <div data-tour="tier-plan" data-filled={x.name?.trim() && (free || offer || amount(x.price ?? "")) ? true : undefined} data-free={free || undefined} className="flex flex-col gap-4">
           <label className="grid gap-1.5">
             <span className="t-caption text-a-text">Name</span>
             <input value={x.name ?? ""} onChange={(e) => set({ name: e.target.value })} maxLength={60} placeholder={fresh ? "e.g. Inner Circle" : undefined} className={cn(adminControl, "h-11")} />
           </label>
-          {!free && <div className="grid grid-cols-2 items-start gap-3 max-sm:grid-cols-1 [&>*]:min-w-0">
+          {!free && !offer && <div className="grid grid-cols-2 items-start gap-3 max-sm:grid-cols-1 [&>*]:min-w-0">
             <div className="grid gap-1.5">
               <span className="t-caption text-a-text">Price</span>
               <Money label="Price" value={(x.price ?? "").replace(/^€/, "")} onChange={(v) => set({ price: `€${v}` })} />
@@ -233,10 +234,11 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
           </div>}
           <div className="grid gap-1.5">
             <span className="t-caption text-a-text">Billing</span>
-            <AdminSegmented label="Billing" value={cadenceOf(x.cadence ?? "month")} onChange={(v) => set({ cadence: v })} options={[{ value: "month", label: "Monthly" }, { value: "once", label: "One payment" }, { value: "quarter", label: "Every 3 months" }, { value: "free", label: "Free" }]} />
+            <AdminSegmented label="Billing" columns={3} value={cadenceOf(x.cadence ?? "month")} onChange={(v) => set({ cadence: v })} options={[{ value: "month", label: "Monthly" }, { value: "once", label: "One payment" }, { value: "quarter", label: "Every 3 months" }, { value: "free", label: "Free" }, { value: "offer", label: "Offer only" }]} />
+            {offer && <span className="t-caption text-a-text-3">Not on your sales page. Clients get this tier from an offer link, and the price is set in each offer.</span>}
           </div>
           </div>
-          {!free && <div className="grid gap-1.5">
+          {!free && !offer && <div className="grid gap-1.5">
             <span className="t-caption text-a-text">Free trial</span>
             <AdminSegmented label="Free trial" value={x.trial === 14 ? "14" : x.trial === 7 ? "7" : "0"} onChange={(v) => set({ trial: Number(v) })} options={[{ value: "0", label: "No trial" }, { value: "7", label: "7 days" }, { value: "14", label: "14 days" }]} />
             <span className="t-caption text-a-text-3">{x.trial ? "Card needed; first payment after the trial" : "Students pay when they join"}</span>
@@ -269,10 +271,10 @@ function TierEditor({ tier, index, onClose }: { tier: TierInfo | null; index: nu
           {!fresh && <span className="my-1 h-px bg-a-border" aria-hidden />}
           <div className={cn("flex flex-col gap-4", fresh && "hidden")}>
             {([
-              ["Mark as most popular", "Highlighted on the sales page", !!x.featured, (v: boolean) => set({ featured: v })],
-              ["Hidden · link only", "Not on the sales page; only people with the link can join", x.hidden, (v: boolean) => set({ hidden: v })],
-              ["Waiting list when full", "People leave their e-mail and hear first when a seat opens", !!x.waitlist, (v: boolean) => set({ waitlist: v })],
-            ] as const).map(([label, text, on, fn]) => (
+              ["Mark as most popular", "Highlighted on the sales page", !!x.featured, (v: boolean) => set({ featured: v }), !offer],
+              ["Hidden · link only", "Not on the sales page; only people with the link can join", x.hidden, (v: boolean) => set({ hidden: v }), !offer],
+              ["Waiting list when full", "People leave their e-mail and hear first when a seat opens", !!x.waitlist, (v: boolean) => set({ waitlist: v }), true],
+            ] as const).filter((r) => r[4]).map(([label, text, on, fn]) => (
               <label key={label} className="flex items-center justify-between gap-4">
                 <span className="grid"><span className="t-body-m text-a-text">{label}</span><span className="t-caption text-a-text-2">{text}</span></span>
                 <Switch checked={on} onCheckedChange={fn} />

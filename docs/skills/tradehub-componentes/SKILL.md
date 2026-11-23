@@ -35,3 +35,13 @@ Gustavo approved these on 19/11/2026. Read the reference file of the component y
 - `TabPanel` is `flex flex-col gap-4`: blocks inside a tab get 16 px, like Figma. Don't add wrappers to fake the gap; pass `className` only to change it.
 - `AdminTh`: Admin/Micro 11/14 (`t-micro`), head 34 px, same as the 52 Figma tables.
 - Compare screens in the browser at the same width as the Figma frame and measure (`getBoundingClientRect` vs the node's y); this is how the Community gap and the 4 px table head were found.
+
+## Cards of attention, drawers and table footers (23/11/2026)
+- `AttentionCard` + `AttentionDrawer` (`ui/attention-card.tsx`) are the one pattern for "what needs you": `NeedsYouToday` (Overview, all areas) and `PaymentAlerts` (Sales, payments only) use it. Card = title with count, "View all →", the most urgent rows with one action each (fixed 106 px width); rows share the card height with `fill`. Drawer = tabs by kind, rows with a tag, no urgency dot on the avatar, no Close button in the footer. Don't build a third list; extend the data.
+- The numbers behind payment alerts come from one source, `lib/data/payment-alerts.ts` (Sales card and drawer, Overview summary row, Students "Payment issues"). Never write the count by hand.
+- Card titles are 16 px (`t-heading-s`) in every Admin card; modal, drawer and Settings section titles stay 18 px (`t-heading-m`).
+- A table footer is always `AdminTableFooter` (padding 20, hairline above, 12 px text); a bare `span` in `footer=` loses both (found on Offers).
+- Drawers and modals have a 1 px `border-a-border-strong` and the 0 30 60 shadow, nothing else: no extra ring in the theme (`admin-v2.ts`), the Figma stroke is 1 px inside.
+- Offer-only tier (`cadence: "offer"`, `isOfferOnly`): no price of its own, hidden from the sales page and checkout, and it never shows a price or a switch/upgrade on the student side ("Included in your offer").
+- Offer plans are free lists of amounts (`OfferPlan.payments`, first today, the rest monthly) that must add up to the total; equal plans follow the price, edited ones keep their amounts, a changed sender price rescales (`scalePlan`).
+- Chart tab pairs (Revenue / Members) share one chart: same orange bars from `component/chart-bar/*`, same tooltip; the Members value for the current month comes from the tiers, never typed.

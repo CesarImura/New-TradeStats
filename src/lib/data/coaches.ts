@@ -111,7 +111,7 @@ export const COACHES: Coach[] = [
     tiers: [
       { id: "core", name: "Core", price: "€149", cadence: "month", members: 141 },
       { id: "desk", name: "Trading Desk", price: "€390", cadence: "month", members: 37 },
-      { id: "vip", name: "1:1 VIP", price: "€2,400", cadence: "quarter", members: 4 },
+      { id: "vip", name: "1:1 VIP", price: "€2,400", cadence: "offer", members: 4 },
     ],
     discordUrl: "https://discord.gg/",
   },
@@ -157,7 +157,7 @@ export const COACHES: Coach[] = [
       { id: "free", name: "Free community", price: "€0", cadence: "month", members: 12 },
       { id: "core", name: "Inner Circle", price: "€49", cadence: "month", members: 142 },
       { id: "desk", name: "Trading Desk", price: "€129", cadence: "month", members: 38 },
-      { id: "vip", name: "1:1 VIP", price: "€390", cadence: "month", members: 9 },
+      { id: "vip", name: "1:1 VIP", price: "€390", cadence: "offer", members: 9 },
     ],
   },
   {

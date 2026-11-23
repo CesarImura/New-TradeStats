@@ -8,8 +8,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { GROUPS, STUDENTS, tierFor, type Student } from "@/lib/data/people"
 import { NOW } from "@/lib/data/schedule"
+import { NO_ALERTS, PAYMENT_ALERTS } from "@/lib/data/payment-alerts"
 import { EmptyState, PageHeader } from "../kit"
-import { AdminButton, AdminFilter, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, CellPerson, CellProgress, CellStack, StatPanel, Tag } from "../ui"
+import { AdminButton, AdminFilter, AdminModal, AdminSearch, AdminTable, AdminTableFooter, AdminTableHead, AdminTabs, AdminTd, AdminTh, AdminToolbar, AdminTr, CellPerson, CellProgress, CellStack, StatPanel, Tag } from "../ui"
 import { SetupTip } from "../setup-checklist"
 import { useNewPlatform } from "../use-new-platform"
 import { ImportDialog } from "./import-dialog"
@@ -31,7 +32,8 @@ const NO_STUDENTS: Student[] = []
 export function StudentsPage() {
   const { coach } = useCoach()
   const fresh = useNewPlatform()
-  const students = fresh ? NO_STUDENTS : STUDENTS
+  const [removed, setRemoved] = useState<string[]>([])
+  const students = (fresh ? NO_STUDENTS : STUDENTS).filter((s) => !removed.includes(s.id))
   const [q, setQ] = useState("")
   const [filter, setFilter] = useState<Filter>("all")
   const [tier, setTier] = useState("")
@@ -45,6 +47,8 @@ export function StudentsPage() {
   const [open, setOpen] = useState<Student | null>(null)
   const [importing, setImporting] = useState(false)
   const [message, setMessage] = useState<Student[] | null>(null)
+  // "Remove student" (Figma Students 02f): the coach confirms, the student leaves the list and can be invited again.
+  const [removing, setRemoving] = useState<Student | null>(null)
 
   const rows = useMemo(
     () =>
@@ -115,7 +119,7 @@ export function StudentsPage() {
         stats={[
           { label: "Active this week", value: activeNow, delta: `${Math.round((activeNow / Math.max(students.length, 1)) * 100)}% of all students` },
           { label: "At risk", value: counts.help, delta: "Rules broken or stuck" },
-          { label: "Payment issues", value: students.filter((s) => s.reason?.toLowerCase().includes("payment")).length, delta: "Retrying automatically" },
+          { label: "Payment issues", value: fresh ? NO_ALERTS.length : PAYMENT_ALERTS.length, delta: "Payments that need you" },
           { label: "Invited", value: counts.invited, delta: "Haven't joined yet" },
         ]}
       />
@@ -265,9 +269,38 @@ export function StudentsPage() {
         </AdminTable>
       )}
 
-      <StudentProfile student={open} paused={!!open && paused.includes(open.id)} onOpenChange={(o) => !o && setOpen(null)} onMessage={(s) => setMessage([s])} onPause={(s) => { const on = paused.includes(s.id); setPaused((p) => (on ? p.filter((x) => x !== s.id) : [...p, s.id])); toast(on ? `${s.name} has access again` : `Access paused for ${s.name}`, { description: on ? "Everything is back as it was." : "Keeps the account and the journal. Nothing is deleted." }) }} />
+      <StudentProfile student={open} paused={!!open && paused.includes(open.id)} onOpenChange={(o) => !o && setOpen(null)} onMessage={(s) => setMessage([s])} onRemove={(s) => setRemoving(s)} onPause={(s) => { const on = paused.includes(s.id); setPaused((p) => (on ? p.filter((x) => x !== s.id) : [...p, s.id])); toast(on ? `${s.name} has access again` : `Access paused for ${s.name}`, { description: on ? "Everything is back as it was." : "Keeps the account and the journal. Nothing is deleted." }) }} />
       <ImportDialog open={importing} onOpenChange={setImporting} />
       <MessageDialog to={message} onClose={() => setMessage(null)} />
+      <AdminModal
+        open={!!removing}
+        onOpenChange={(o) => !o && setRemoving(null)}
+        title={`Remove ${removing?.name ?? "student"}?`}
+        subtitle={`${removing?.name.split(" ")[0] ?? "The student"} loses access to the community right away.`}
+        className="sm:max-w-[560px]"
+        footer={
+          <>
+            <AdminButton hierarchy="ghost" onClick={() => setRemoving(null)}>Cancel</AdminButton>
+            <AdminButton
+              hierarchy="danger"
+              onClick={() => {
+                if (!removing) return
+                const gone = removing
+                setRemoved((r) => [...r, gone.id])
+                setRemoving(null)
+                setOpen(null)
+                toast(`${gone.name} removed`, { action: { label: "Undo", onClick: () => setRemoved((r) => r.filter((x) => x !== gone.id)) } })
+              }}>
+              Remove student
+            </AdminButton>
+          </>
+        }>
+        <p className="t-body-m text-a-text-2">
+          {removing?.offer
+            ? `${removing.name.split(" ")[0]} paid ${removing.offer.paidCount} of ${removing.offer.plan} instalments on ${removing.offer.name}. The remaining €${((removing.offer.plan - removing.offer.paidCount) * removing.offer.each).toLocaleString("en")} will not be collected and the payment link stops working. You can invite ${removing.name.split(" ")[0]} again later.`
+            : `Nothing else is deleted. You can invite ${removing?.name.split(" ")[0] ?? "the student"} again later.`}
+        </p>
+      </AdminModal>
     </div>
   )
 }

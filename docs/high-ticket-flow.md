@@ -1,16 +1,16 @@
 # High ticket (Offers): fluxo, cenários e regras para os devs
 
-Estado em 20/11/2026. O Figma (seção Sales & payments, telas 04 a 07e) e o protótipo mostram o fluxo inteiro; **não há backend**: nada é cobrado, os dados ficam no navegador (`<slug>:offers`, `<slug>:offerLinks`). Quem for construir o real usa este documento como especificação. Decisões do Gustavo (20/11): o pacote abre um **tier que já existe** (sem tiers só de offer); não haverá versão com backend feita por nós.
+Estado em 23/11/2026 (revisão do Figma passada para o código). O Figma (seção Sales & payments, telas 04 a 07e) e o protótipo mostram o fluxo inteiro; **não há backend**: nada é cobrado, os dados ficam no navegador (`<slug>:offers`, `<slug>:offerLinks`). Quem for construir o real usa este documento como especificação. Decisões do Gustavo (20/11): o pacote abre um tier; o tier "só por oferta" (cadence `offer`, ex.: 1:1 VIP) não tem preço próprio e não aparece na sales page nem no checkout; não haverá versão com backend feita por nós.
 
 ## 1. O que existe
 
 | Entidade | Campos principais | Onde no protótipo |
 | --- | --- | --- |
-| Offer | nome, preço total, tier que abre, planos permitidos (1, 2, 4, 6 pagamentos), substitui assinatura, trava e-mail, avisar quando abrir, remetente pode mudar o preço | `lib/data/offers.ts`, `admin/sales/offers.tsx` |
+| Offer | nome, preço total, tier que abre, planos de pagamento (cada plano = lista de valores: o 1º é pago hoje, os outros um por mês; podem ser iguais ou diferentes, ex.: entrada + 3 meses; a soma tem que fechar o preço total), substitui assinatura, trava e-mail, avisar quando abrir, remetente pode mudar o preço | `lib/data/offers.ts`, `admin/sales/offers.tsx` |
 | Link | offer, plano, preço do cliente, e-mail (opcional), remetente, criado em, expira em, aberto em, pago em, parcela falhada | idem |
 | Compra | tier, e-mail, nome, total pago hoje | `savePurchase` (`lib/data/sales-page.ts`) |
 
-Regras: a primeira parcela é paga na hora e as outras uma por mês no mesmo dia (2 pagamentos: a segunda 30 dias depois). Preço da parcela = total ÷ nº de pagamentos. O link vale 24 h, 7 dias ou 30 dias e **só funciona uma vez**. Depois da primeira parcela o cliente recebe o tier do offer; o `replaceSubscription` encerra a assinatura que ele já tinha. Moeda vem de Settings > General.
+Regras: a primeira parcela é paga na hora e as outras uma por mês no mesmo dia (2 pagamentos: a segunda 30 dias depois). Plano com parcelas iguais segue o preço (total ÷ nº); plano editado à mão mantém os valores. Quando o remetente muda o preço de um link, o plano é reescalado (`scalePlan`, a última parcela fecha o resto). O checkout não pede mais consentimento: só nome e e-mail. O link vale 24 h, 7 dias ou 30 dias e **só funciona uma vez**. Depois da primeira parcela o cliente recebe o tier do offer; o `replaceSubscription` encerra a assinatura que ele já tinha. Moeda vem de Settings > General.
 
 ## 2. Ciclo de vida
 
@@ -54,4 +54,12 @@ Regras: a primeira parcela é paga na hora e as outras uma por mês no mesmo dia
 
 ## 5. Como testar o protótipo
 
-`node scripts/offers-flow.mjs` (84 verificações) com o servidor em localhost:3000; na página pública, os botões "Prototype · what the payment returns" simulam pago, cartão recusado e confirmação do banco.
+`node scripts/offers-flow.mjs` (90 verificações) e `node scripts/sales-overview.mjs` (53: Sales Overview, alertas, Needs you today, gráfico, Remove student, plataforma nova) com o servidor em localhost:3000; na página pública, os botões "Prototype · what the payment returns" simulam pago, cartão recusado e confirmação do banco.
+
+## 6. Sales & payments e Overview (23/11/2026)
+
+- **Fonte única dos alertas de pagamento:** `lib/data/payment-alerts.ts`. Alimenta o card Payment alerts (Sales), a linha de pagamentos e o drawer de Needs you today (Overview) e a contagem "Payment issues" em Students; os números não podem divergir.
+- **Padrão de card:** `ui/attention-card.tsx` (`AttentionCard` + `AttentionDrawer`); usado por `sales/payment-alerts.tsx` e `needs-you-today.tsx`. Mostra as linhas mais urgentes com uma ação cada; "View all" abre o drawer com abas e rolagem. Drawer sem botão Close no rodapé.
+- **Sales Overview** (`sales/revenue.tsx`): KPIs (Revenue, MRR, To collect, Next payout), gráfico de 6 meses empilhado Subscriptions/Offers com hover (`revenue-chart.tsx`), Coming up e Revenue by source em donut (`revenue-panels.tsx`). MRR e Coming up são dados de exemplo do protótipo.
+- **Remove student:** menu do perfil e callout de falha de pagamento; modal "Remove {nome}?" com Undo; o aluno some da lista (sem pronome inferido).
+- Títulos de card em 16 px (`t-heading-s`) em todo o Admin; título de modal, drawer e Settings continuam em 18 px.

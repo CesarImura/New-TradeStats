@@ -86,7 +86,7 @@ export function Payouts() {
       <div className="flex flex-col gap-4">
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
         <Panel className="gap-4">
-          <header className="grid gap-1"><h2 className="t-heading-m text-a-text">Connect payouts</h2><p className="t-body-m text-a-text-2">Needed before your first sale. Takes about 5 minutes.</p></header>
+          <header className="grid gap-1"><h2 className="t-heading-s text-a-text">Connect payouts</h2><p className="t-body-m text-a-text-2">Needed before your first sale. Takes about 5 minutes.</p></header>
           <ol className="flex flex-col">
             {STEPS.map((s, i) => {
               const done = i < state.step

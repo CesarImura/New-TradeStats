@@ -2,6 +2,16 @@
 
 Uma linha por mudança de nome, lugar ou estrutura. Mais recente em cima. Mudanças de produto ficam no vault (Updates).
 
+## 23/11/2026: Sales & payments e Overview do Figma passados para o código
+
+- Planos de pagamento por oferta (lista de valores, parcelas iguais ou diferentes), tier "Offer only", checkout sem consentimento; ver `docs/high-ticket-flow.md` §1 e §6.
+- Novos: `AttentionCard`/`AttentionDrawer` (Figma Overview 01h e Sales 01c), `NeedsYouToday`, `PaymentAlerts`, `RevenueChart`, `ComingUp`, `SourceDonut`, fonte `lib/data/payment-alerts.ts`.
+- Textos: "Needs attention" → "Payment alerts" (Sales) e "Needs you today" (Overview); Remove student (Students 02e/02f). Títulos de card 20 → 16 px no Overview.
+- Figma (mesmo dia): novo `Sales · 01e Overview · Members chart` (+ nota, Flow map) sob o 01d; seção 12 +840 px e seções 13 a 15 deslocadas; Tom Okafor em Coming up = Gold · 2 of 4 / €1,000 (01, 01c, 01d, 01e); Students 02e/02f sem pronome (Marco); Overview "vs last 30 days" → "vs previous 30 days" (24 textos, 12 telas, igual ao código); Members Oct/Nov = 189 (soma dos tiers).
+
+- Componentes: `AttentionCard`/`AttentionDrawer`, `NeedsYouToday`, `PaymentAlerts`, `RevenueChart`, `ComingUp` e `SourceDonut` não têm componente próprio no Figma; as telas Overview 01h e Sales 01 a 01e os desenham com `Admin / Panel`, `Avatar`, `Button`, `Tag` e `Chart bar`. Se virarem componentes, entram na seção `Admin · 06 Cards & lists` e na linha do Component map.
+- Código/skills (23/11): borda dos drawers e modais sem anel duplicado; footer de tabela sempre `AdminTableFooter`; skills do repo (`docs/skills`) atualizadas, instalar de novo no app (ver `docs/skills/README.md`).
+
 ## 21/11/2026 (noite): laranja no estado selecionado dos controles de escolha
 
 - `Admin / Option card` (674:2167) e `Admin / Segmented option` (580:480), State=Active: borda `color/border/active` (branco 64) → `color/control/on` (laranja #cf4500).

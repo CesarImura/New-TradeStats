@@ -50,3 +50,8 @@ shadcn CLI: `npx shadcn add` only with `--dry-run --diff` first; its components 
 - localhost:3000 = one `next dev` from `_worktrees/admin-v2` (`scripts/dev-server.sh status|start|restart`). Don't start a second one; if 3000 is down and no TradeHub process exists, start it once with the script.
 - Commit, push, PR and deploy only when Gustavo asks; the auto-mode classifier may block commits and pushes even then: give him the exact command. Deploy only with `scripts/deploy-admin.sh` (Gustavo runs it).
 - Don't edit the same file as another thread; ask the coordinator.
+
+## Sales & payments and high ticket (23/11/2026)
+- Offers, plans, links and the checkout live in `lib/data/offers.ts` (types and helpers), `admin/sales/offers.tsx` and `src/components/public/offer-checkout.tsx`; the spec is `docs/high-ticket-flow.md` (§6 for the shared alerts). Before touching tiers, grep `cadence`, `isOfferOnly` and `coach.tiers` (student profile, unlock dialog, upgrade widget, import dialog, command palette): each list of tiers a student can buy must skip the offer-only one.
+- Tests: `scripts/offers-flow.mjs` (90) and `scripts/sales-overview.mjs` (53); wait about 3.5 s after `goto` before filling a form (hydration). Restart `scripts/dev-server.sh restart` after changing an export that a stale module still serves.
+- Module cycles: don't call helpers from `offers.ts` at module level in `offers.tsx` (keep them lazy).

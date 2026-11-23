@@ -70,3 +70,6 @@ Model: `Admin · 12 Sales & payments` (1485:116216). Every Admin flow follows it
 2. Screenshot what changed (and the "before" when the change is visual).
 3. Maps regenerated when screens, components or variables changed; CHANGELOG updated.
 4. Reply in Portuguese: what changed, counts, what was only checked by script, what is left. Tell the coordinator.
+
+## Sales flow additions (23/11/2026)
+- `Admin · 12 Sales & payments` now has `Sales · 01c Payment alerts`, `01d Chart default` and `01e Members chart` stacked under `01` / `01b` in the Overview column; the Flow map line lists them. States added later keep the next letter and the next row (previous y + height + 620), so the section grows and the sections below move with it.

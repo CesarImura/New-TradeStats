@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { CircleAlert } from "@/components/icons"
 import { DEMO_ADMIN } from "@/lib/data/account"
 import { GROUPS, tierFor, type Student } from "@/lib/data/people"
@@ -121,7 +121,7 @@ function WeeklyActivity({ s }: { s: Student }) {
 }
 
 /** Students · 02 Profile, 02c Activity, 02d Notes (Figma 1485:74566): everything about one student, in the drawer. Their name and money first, then what needs the coach, then the details. */
-export function StudentProfile({ student: s, paused = false, onOpenChange, onMessage, onPause }: { student: Student | null; paused?: boolean; onOpenChange: (o: boolean) => void; onMessage: (s: Student) => void; onPause: (s: Student) => void }) {
+export function StudentProfile({ student: s, paused = false, onOpenChange, onMessage, onPause, onRemove }: { student: Student | null; paused?: boolean; onOpenChange: (o: boolean) => void; onMessage: (s: Student) => void; onPause: (s: Student) => void; onRemove: (s: Student) => void }) {
   const { coach } = useCoach()
   const [notes, setNotes] = useCommunityData(coach.slug, "student-notes", NO_NOTES)
   const [tab, setTab] = useState<Tab>("overview")
@@ -217,6 +217,9 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
                       <>
                         <DropdownMenuItem onClick={() => toast("Payment link sent", { description: `${first} gets an e-mail to update the card.` })}>Send payment link</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => toast("Retrying the payment", { description: "You'll see the result here." })}>Retry now</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onPause(shown)}>Pause access</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem variant="destructive" onClick={() => onRemove(shown)}>Remove student</DropdownMenuItem>
                       </>
                     ) : invited ? (
                       <>
@@ -248,6 +251,8 @@ export function StudentProfile({ student: s, paused = false, onOpenChange, onMes
                     <DropdownMenuItem onClick={() => toast("Payment link sent", { description: `${first} gets an e-mail to update the card.` })}>Send payment link</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => toast("Retrying the payment", { description: "You'll see the result here." })}>Retry now</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onPause(shown)}>Pause access</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem variant="destructive" onClick={() => onRemove(shown)}>Remove student</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               }>

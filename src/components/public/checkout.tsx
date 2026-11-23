@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { amount, fmtDate, isFull, per, useGroups, useTiers } from "@/lib/data/access"
+import { amount, fmtDate, isFull, isOfferOnly, per, useGroups, useTiers } from "@/lib/data/access"
 import { COUPONS } from "@/lib/data/people"
 import { bookingUrlOk, useBookingUrl } from "@/lib/data/booking"
 import { savePurchase } from "@/lib/data/sales-page"
@@ -47,8 +47,9 @@ export function Checkout() {
   const tiers = useTiers(coach)
   const groups = useGroups(coach)
   const coupons = useStored(`${coach.slug}:coupons`, COUPONS)
-  const paid = tiers.filter((t) => amount(t.price) > 0)
-  const asked = tiers.find((t) => t.id === params.get("tier"))
+  // An offer-only tier is not on sale here: it comes with an offer link.
+  const paid = tiers.filter((t) => amount(t.price) > 0 && !isOfferOnly(t))
+  const asked = paid.find((t) => t.id === params.get("tier"))
   const firstPaid = (paid.find((t) => t.featured && !t.hidden) ?? paid[0])?.id
   const [tierId, setTierId] = useState(asked && amount(asked.price) > 0 ? asked.id : firstPaid)
   // Wizard-made communities arrive after the first render (the provider shows a stand-in until then), so fall back to the first paid tier.
@@ -200,7 +201,7 @@ export function Checkout() {
             ) : (
               <div className="flex h-11 items-center justify-center rounded-md bg-foreground text-sm text-background">Pay with your wallet</div>
             )}
-            <span className="text-center text-xs text-muted-foreground">Prototype: the payment provider&apos;s form goes here. Nothing is charged.</span>
+            <span className="text-center text-xs text-muted-foreground">The payment provider&apos;s secure form appears here.</span>
           </div>
         </section>
       </div>

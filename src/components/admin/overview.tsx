@@ -8,6 +8,7 @@ import { Bar, ComposedChart, Line, XAxis, YAxis } from "recharts"
 import { ArrowRight, CalendarDays, Video } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { useNewPlatform } from "./use-new-platform"
+import { NeedsYouToday } from "./needs-you-today"
 import { AdminAvatar, AdminButton, AdminFilter, AdminPageHeader, AdminTabs, EmptyState, LiveDot, Metric as MetricCard, Panel, Tag, TabStackPane, tabDirection } from "@/components/admin/ui"
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart"
 import { COURSES, EVENTS } from "@/lib/data/sample"
@@ -233,14 +234,6 @@ const COURSE_SUMMARY = [
   { completed: "64%", students: 21, bars: [83, 74, 60], drop: -1, dropLabel: "" },
 ]
 
-/** Figma 524:8846. Sample items; the dot colour is the urgency. */
-const NEEDS = [
-  { id: "n1", name: "Alex Moreau", initials: "AM", reason: "Payment failed", tone: "danger", action: "Message", href: "students" },
-  { id: "n2", name: "Mia Sørensen", initials: "MS", reason: "Broke loss limit twice", tone: "danger", action: "Review", href: "journal" },
-  { id: "n3", name: "Lena Ito", initials: "LI", reason: "Stuck in Module 2", tone: "warning", action: "Nudge", href: "students" },
-  { id: "n4", name: "Open feedback", initials: "KO", reason: "3 journal entries waiting", tone: "warning", action: "Open", href: "journal" },
-] as const
-
 type BarShapeProps = { x?: number; y?: number; width?: number; height?: number }
 
 /** `barCategoryGap` on the chart, as a share of the slot, on each side of the bar. */
@@ -312,7 +305,6 @@ export function AdminOverview() {
       ]
     : headlineFor(range, share)
   const courses = fresh ? [] : COURSES.slice(0, 3)
-  const needs = fresh ? [] : NEEDS
   const questions = fresh ? [] : OPEN_QUESTIONS
 
   return (
@@ -411,7 +403,7 @@ export function AdminOverview() {
       <div className="grid items-stretch gap-4 2xl:grid-cols-[minmax(0,1fr)_380px]">
         <Panel className="@container gap-3.5 py-[18px]">
           <header className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="t-data-m text-a-text">Content</h2>
+            <h2 className="t-heading-s text-a-text">Content</h2>
             <AdminTabs label="Content view" tabs={[{ id: "courses", label: "Courses" }, { id: "questions", label: "Questions" }]} value={lower} onChange={setLower} />
           </header>
           {/* Both views share one grid cell, so the card keeps the height of the taller one and switching tabs never moves the page. */}
@@ -496,28 +488,7 @@ export function AdminOverview() {
           </div>
         </Panel>
 
-        <Panel className="gap-0 py-[18px]">
-          <header className="flex min-h-[49px] items-center justify-between pb-3.5">
-            <h2 className="t-data-m text-a-text">Needs you today</h2>
-            <Link href={`${base}/students`} className="inline-flex items-center gap-1.5 t-caption text-a-text-2 outline-none transition-colors duration-300 hover:text-a-text focus-visible:ring-2 focus-visible:ring-a-border-focus">
-              See all <ArrowRight className="size-3" />
-            </Link>
-          </header>
-          {needs.length === 0 && <EmptyLine>Nothing needs you today.</EmptyLine>}
-          <ul className="flex flex-1 flex-col">
-            {needs.map((u) => (
-              <li key={u.id} className="flex flex-1 items-center gap-3 border-t border-a-border py-3 last:pb-0">
-                <AdminAvatar initials={u.initials} status={u.tone} />
-                <span className="sr-only">{u.tone === "danger" ? "Urgent" : "Warning"}</span>
-                <div className="flex min-w-0 flex-1 flex-col t-body-m">
-                  <span className="truncate text-a-text">{u.name}</span>
-                  <span className="truncate text-a-text-2">{u.reason}</span>
-                </div>
-                <AdminButton hierarchy="secondary" size="md" className="w-[106px]" nativeButton={false} render={<Link href={`${base}/${u.href}`} />}>{u.action}</AdminButton>
-              </li>
-            ))}
-          </ul>
-        </Panel>
+        <NeedsYouToday fresh={fresh} />
       </div>
     </div>
   )

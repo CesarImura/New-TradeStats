@@ -110,10 +110,14 @@ export function StudentProfile() {
                 <span className="eyebrow">Your plan</span>
                 <span className="text-2xl">{tier?.name}</span>
               </div>
-              <span className="text-lg tabular-nums">
-                {tier?.price}
-                <span className="text-sm text-muted-foreground"> / {tier?.cadence === "once" ? "once" : tier?.cadence}</span>
-              </span>
+              {tier?.cadence === "offer" ? (
+                <span className="text-sm text-muted-foreground">Included in your offer</span>
+              ) : (
+                <span className="text-lg tabular-nums">
+                  {tier?.price}
+                  <span className="text-sm text-muted-foreground"> / {tier?.cadence === "once" ? "once" : tier?.cadence}</span>
+                </span>
+              )}
             </div>
             <span className="text-sm text-muted-foreground">Next payment on 30 Nov 2025 · Visa ·· 4242</span>
             <div className="flex flex-wrap gap-2 pt-1">
@@ -126,7 +130,7 @@ export function StudentProfile() {
             </div>
           </Card>
           <div className="grid gap-3 md:grid-cols-3">
-            {coach.tiers.map((t) => {
+            {coach.tiers.filter((t) => t.cadence !== "offer" || t.id === tier?.id).map((t) => {
               const current = t.id === tier?.id
               const up = price(t.price) > price(tier?.price ?? "0")
               return (
@@ -136,8 +140,7 @@ export function StudentProfile() {
                     {current && <Badge>Current</Badge>}
                   </span>
                   <span className="text-xl tabular-nums">
-                    {t.price}
-                    <span className="text-sm text-muted-foreground"> / {t.cadence === "once" ? "once" : t.cadence}</span>
+                    {t.cadence === "offer" ? <span className="text-sm text-muted-foreground">Included in your offer</span> : <>{t.price}<span className="text-sm text-muted-foreground"> / {t.cadence === "once" ? "once" : t.cadence}</span></>}
                   </span>
                   {!current && (
                     <Button size="sm" variant={up ? "default" : "outline"} onClick={() => setChange(t.id)}>

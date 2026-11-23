@@ -21,7 +21,7 @@ const SAMPLE_ROWS = [
 const GUESS = ["Name", "E-mail", "Tier", "Group", "Joined date", "Don't import"]
 const FIELDS = ["Name", "E-mail", "Tier", "Group", "Joined date", "Don't import"]
 const MODES = [
-  { id: "csv", title: "A file", description: "CSV from Whop, Skool, Kajabi or Stripe" },
+  { id: "csv", title: "A file", description: "CSV from Whop, Skool or Kajabi" },
   { id: "emails", title: "E-mails", description: "Paste a list" },
   { id: "link", title: "A link", description: "Anyone with it can join" },
 ] as const

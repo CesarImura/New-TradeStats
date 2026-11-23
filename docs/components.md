@@ -364,6 +364,8 @@ Um arquivo de componente passa de ~600 linhas? Divida por responsabilidade, sem 
 - Coupons: tabela, ⋯ (copiar, pausar, apagar com Undo), modal com validações. Formato novo `Coupon` em `lib/data/people.ts`, guardado em `coupons-v2`; o checkout lê o mesmo formato (`couponLabel`, `couponEnded`).
 - Transactions: filtros com contagens do mês, busca, mês, Invoice ou "Answer the dispute"; o ⋯ (tentar de novo, reembolsar) ficou além do Figma.
 - Payouts: conectado (métricas, conta, histórico) ou o passo a passo de 3 etapas (`payouts-v2`) com aviso do que fica bloqueado.
+- Overview da aba (23/11/2026): KPIs (Revenue, MRR, To collect, Next payout), gráfico dos últimos 6 meses com abas Revenue e Members (`sales/revenue-chart.tsx`; o último mês de Members vem da soma dos tiers pagantes), Payment alerts (`PaymentAlerts` sobre `ui/attention-card.tsx`), Coming up e Revenue by source em donut (`sales/revenue-panels.tsx`). Os alertas vêm de `lib/data/payment-alerts.ts`, a mesma fonte do Needs you today (Overview) e da contagem em Students.
+- Offers: planos de pagamento livres (`OfferPlan`), tier "Offer only" (`cadence: "offer"`) e checkout sem consentimento; ver `docs/high-ticket-flow.md`. Título de card em 16 px; footer de tabela sempre `AdminTableFooter`; drawers e modais só com a borda de 1 px (sem anel extra no tema).
 
 ## 28. Partners (Figma 537:7152)
 

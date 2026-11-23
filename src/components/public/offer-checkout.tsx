@@ -6,12 +6,11 @@ import { useParams, useRouter } from "next/navigation"
 import { Check, CreditCard, Loader2, Lock, Wallet } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useTiers } from "@/lib/data/access"
-import { instalmentDate, isoDay, offerTier, LINKS, linkStatus, money, NOW_ISO, OFFERS, planEach, planLine, shortDate, type OfferLink } from "@/lib/data/offers"
+import { instalmentDate, isoDay, offerTier, LINKS, linkStatus, money, NOW_ISO, OFFERS, planFirst, readLinks, readOffers, planLine, planName, shortDate, type OfferLink } from "@/lib/data/offers"
 import { NOW } from "@/lib/data/schedule"
 import { savePurchase } from "@/lib/data/sales-page"
 import { setStored, useStored } from "@/lib/prototype-store"
@@ -20,13 +19,13 @@ import type { Offer } from "@/lib/data/offers"
 
 /**
  * An offer link's page (Figma Sales · 07 Offer checkout, 07b Link expired, 07c Link already used): one client, one plan, one payment that
- * opens the offer's tier. The link works once. Prototype: the payment fields are a picture of the provider's form; nothing is charged.
+ * opens the offer's tier. The link works once. The payment fields are a picture of the provider's form.
  */
 export function OfferCheckout() {
   const { coach, base } = useCoach()
   const { id } = useParams<{ id: string }>()
-  const links = useStored<OfferLink[]>(`${coach.slug}:offerLinks`, LINKS)
-  const offers = useStored<Offer[]>(`${coach.slug}:offers`, OFFERS)
+  const links = readLinks(useStored<OfferLink[]>(`${coach.slug}:offerLinks`, LINKS))
+  const offers = readOffers(useStored<Offer[]>(`${coach.slug}:offers`, OFFERS))
   const link = links.find((l) => l.id === id)
   const offer = link ? offers.find((o) => o.id === link.offerId) : undefined
 
@@ -70,7 +69,6 @@ function Pay({ link, offer }: { link: OfferLink; offer: Offer }) {
   const [email, setEmail] = useState(link.email ?? "")
   const [name, setName] = useState(link.name ?? "")
   const [method, setMethod] = useState<"card" | "wallet">("card")
-  const [agreed, setAgreed] = useState(false)
   const [busy, setBusy] = useState(false)
   // Prototype only: what the payment provider answers. Real payments decide this, not a switch.
   const [result, setResult] = useState<"paid" | "declined" | "bank">("paid")
@@ -78,17 +76,16 @@ function Pay({ link, offer }: { link: OfferLink; offer: Offer }) {
   const [bank, setBank] = useState(false)
 
   const plan = link.plan
-  const each = planEach(link.price, plan)
+  const count = plan.payments.length
+  const each = planFirst(plan)
   const emailOk = /^\S+@\S+\.\S+$/.test(email)
-  const later = Array.from({ length: plan - 1 }, (_, i) => shortDate(isoDay(instalmentDate(NOW, i + 1))))
-  const needConsent = plan > 1
-  const ready = emailOk && name.trim().length > 1 && (!needConsent || agreed) && !busy
+  const later = plan.payments.slice(1).map((amount, i) => ({ amount, date: shortDate(isoDay(instalmentDate(NOW, i + 1))) }))
+  const ready = emailOk && name.trim().length > 1 && !busy
   const perks = [...(tier ? [`Opens the ${tier.name} tier`] : []), ...offer.perks]
-  const lastDate = later.length ? later[later.length - 1] : ""
-
+  
   const complete = () => {
     setStored<OfferLink[]>(`${coach.slug}:offerLinks`, (l) => l.map((x) => (x.id === link.id ? { ...x, paidAt: NOW_ISO, openedAt: x.openedAt ?? NOW_ISO, email, name: name.trim() } : x)), LINKS)
-    setStored<Offer[]>(`${coach.slug}:offers`, (o) => o.map((x) => (x.id === offer.id ? { ...x, sold: x.sold + 1, paying: x.paying + (plan > 1 ? 1 : 0) } : x)), OFFERS)
+    setStored<Offer[]>(`${coach.slug}:offers`, (o) => o.map((x) => (x.id === offer.id ? { ...x, sold: x.sold + 1, paying: x.paying + (count > 1 ? 1 : 0) } : x)), OFFERS)
     savePurchase(coach.slug, { tier: tier?.id ?? offer.tierId, cycle: "regular", email, name: name.trim(), total: each, trial: 0 })
     router.push(`${base}/account`)
   }
@@ -124,7 +121,7 @@ function Pay({ link, offer }: { link: OfferLink; offer: Offer }) {
             <span className="grid gap-0.5">
               <span className="font-medium">{offer.name}</span>
               <span className="text-sm text-muted-foreground tabular-nums">
-                {plan === 1 ? `Pay in full · ${money(link.price)}` : `${planLine(link.price, plan)} · ${money(link.price)} in total`}
+                {count === 1 ? `Pay in full · ${money(link.price)}` : `${planLine(plan)} · ${money(link.price)} in total`}
               </span>
             </span>
             <span className="grid size-5 shrink-0 place-items-center rounded-full border border-primary bg-primary text-primary-foreground">
@@ -181,7 +178,7 @@ function Pay({ link, offer }: { link: OfferLink; offer: Offer }) {
             ) : (
               <div className="flex h-11 items-center justify-center rounded-md bg-foreground text-sm text-background">Pay with your wallet</div>
             )}
-            <span className="text-center text-xs text-muted-foreground">Prototype: the payment provider&apos;s form goes here. Nothing is charged.</span>
+            <span className="text-center text-xs text-muted-foreground">The payment provider&apos;s secure form appears here.</span>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span>Prototype · what the payment returns</span>
@@ -218,7 +215,7 @@ function Pay({ link, offer }: { link: OfferLink; offer: Offer }) {
           <dl className="grid gap-1.5 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">
-                {offer.name} · {plan === 1 ? "pay in full" : `${plan} payments`}
+                {offer.name} · {planName(plan).toLowerCase()}
               </dt>
               <dd className="tabular-nums">{money(link.price)}</dd>
             </div>
@@ -227,17 +224,9 @@ function Pay({ link, offer }: { link: OfferLink; offer: Offer }) {
               <dd className="tabular-nums">{money(each)}</dd>
             </div>
             <dd className="text-xs text-muted-foreground">
-              {plan === 1 ? "One payment." : `Then ${plan - 1} ${plan - 1 === 1 ? "payment" : "payments"} of ${money(each)} on ${later.length > 1 ? `${later.slice(0, -1).join(", ")} and ${lastDate}` : lastDate}.`} VAT included.
+              {later.length === 0 ? "One payment." : later.every((l) => l.amount === later[0].amount) ? `Then ${later.length === 1 ? "1 payment" : `${later.length} payments`} of ${money(later[0].amount)} on ${later.length > 1 ? `${later.slice(0, -1).map((l) => l.date).join(", ")} and ${later[later.length - 1].date}` : later[0].date}.` : `Then ${later.map((l) => `${money(l.amount)} on ${l.date}`).join(", ")}.`} VAT included.
             </dd>
           </dl>
-          {needConsent && (
-            <label className="flex items-start gap-2.5 text-xs text-muted-foreground">
-              <Checkbox checked={agreed} onCheckedChange={(v) => setAgreed(!!v)} className="mt-0.5" />
-              <span>
-                I agree to pay {plan} instalments of {money(each)}, one a month, charged to my card automatically on their dates.
-              </span>
-            </label>
-          )}
           {error && (
             <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
               {error}
@@ -258,9 +247,8 @@ function Pay({ link, offer }: { link: OfferLink; offer: Offer }) {
           </Button>
           {!emailOk && email.length <= 3 && <span className="-mt-2 text-center text-xs text-muted-foreground">Enter your e-mail above to continue.</span>}
           {!emailOk && email.length > 3 && <span className="-mt-2 text-center text-xs text-destructive">Check the e-mail address.</span>}
-          {emailOk && needConsent && !agreed && <span className="-mt-2 text-center text-xs text-muted-foreground">Tick the box to agree to the payment plan.</span>}
           <p className="text-center text-xs text-muted-foreground">
-            By paying you accept the{needConsent ? " payment plan, the" : ""}{" "}
+            By paying you accept the{" "}
             <Link href={`${base}/legal/terms`} className="underline underline-offset-2">
               terms
             </Link>{" "}

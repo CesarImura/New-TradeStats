@@ -72,3 +72,9 @@ Scripts: /mnt/project-files/figma-tradehub/scripts/ (inter-swap.js, audit-page.j
 - Slot content (e.g. the widgets inside `Admin / Editor Preview shell`) is per instance: fixing a text there means fixing every instance (`findAll` by text inside the named frame).
 - Notes are frames with bound text styles: clone an existing `Note · …` (title "Nota de design" + bullet text), append to the section, set the bullet text under the Inter swap, restore in `finally`.
 - use_figma in a remote session can't load Helvetica Neue: text edits and clones with Helvetica need the Inter swap (§Fonts).
+
+## Lessons from the Sales Overview (23/11/2026)
+- A `const` declared inside `try` is not visible after it: a `return` that uses it throws and the whole call rolls back. Keep the result object outside the `try`.
+- Chart bars (`_Base Chart bar`) fake stacking with a hard-stop gradient on the `Bar` frame; for a single series replace the fill with a solid paint: `figma.variables.setBoundVariableForPaint({type:'SOLID',color}, 'color', variable)` and assign `bar.fills = [paint]`. Heights are the `layoutGrow` of `Spacer` and `Bar` (percent of the axis), the value is the `Value Text#…` property of the `_Base` instance.
+- Growing a section means shifting every section below it by the same delta (`y += delta`) and resizing it with `resizeWithoutConstraints`; no font needed for moves.
+- `get_screenshot` of a node then `curl` + PIL crop is enough to compare against a code screenshot at 1920.

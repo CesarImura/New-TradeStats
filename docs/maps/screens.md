@@ -1,8 +1,8 @@
 # Mapa de telas (Figma × rotas)
 
-Gerado por `scripts/maps/components-screens.mjs` em 2026-11-21, commit a87c21f5. Figma: arquivo XWHeEdjEiY6gWmrsg0vFIZ, dados exportados em 21/11/2026 pelo MCP (pasta `docs/maps/data`). Não editar à mão: atualizar os dados e rodar de novo. Mudanças ficam em `docs/maps/CHANGELOG.md`.
+Gerado por `scripts/maps/components-screens.mjs` em 2026-11-23, commit 77eccf8f. Figma: arquivo XWHeEdjEiY6gWmrsg0vFIZ, dados exportados em 21/11/2026 pelo MCP (pasta `docs/maps/data`). Não editar à mão: atualizar os dados e rodar de novo. Mudanças ficam em `docs/maps/CHANGELOG.md`.
 
-259 telas: 212 no Admin e 47 no Editor. Toda tela tem uma nota `Note · <nome>` 40 px abaixo, em português. Convenção de nomes e disposição: skill `tradehub-figma` e `docs/maps/README.md`.
+262 telas: 215 no Admin e 47 no Editor. Toda tela tem uma nota `Note · <nome>` 40 px abaixo, em português. Convenção de nomes e disposição: skill `tradehub-figma` e `docs/maps/README.md`.
 
 Tipo: **mapa do fluxo** = `00 Flow map`, primeira coluna de cada seção; **passo** = número sem letra; **estado ou variante** = número + letra (b, c…) empilhado na coluna da base; **ramo** = caminhos paralelos (a, b, c), cada um na sua linha com `Label · Branch`. Link para abrir: `https://www.figma.com/design/XWHeEdjEiY6gWmrsg0vFIZ/Tradehub?node-id=<ID com - no lugar de :>`.
 
@@ -248,6 +248,9 @@ Rota no protótipo: `/admin/[coach]/sales, /site/[coach]/offer/[id]`.
 | `1947:77406` | Sales · 00 Flow map | mapa do fluxo | — | — |
 | `1485:116217` | Sales · 01 Overview | passo | `src/components/admin/sales/revenue.tsx` | — |
 | `1485:116646` | Sales · 01b Overview · New platform | estado ou variante | — | — |
+| `2032:85563` | Sales · 01c Overview · Payment alerts | estado ou variante | — | — |
+| `2037:83191` | Sales · 01d Overview · Chart default | estado ou variante | — | — |
+| `2056:83422` | Sales · 01e Overview · Members chart | estado ou variante | — | — |
 | `1485:116245` | Sales · 02 Tiers & prices | passo | `src/components/admin/sales/tiers.tsx` | — |
 | `1485:116674` | Sales · 02b Tiers & prices · New platform | estado ou variante | — | — |
 | `1485:116294` | Sales · 03 Edit tier | passo | — | — |

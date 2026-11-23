@@ -157,7 +157,7 @@ export function AnswerPage({ trade: t, student: s, aiDraft, readOnly, onBack, on
         <div className="flex min-w-0 flex-col gap-4">
           <Panel className="gap-4">
             <div className="flex items-baseline justify-between gap-3">
-              <h2 className="t-heading-m text-a-text">{readOnly ? "Your feedback" : "Your answer"}</h2>
+              <h2 className="t-heading-s text-a-text">{readOnly ? "Your feedback" : "Your answer"}</h2>
               {!readOnly && <span className="t-caption text-a-text-3">Giving feedback · {Math.max(2, elapsed)} min</span>}
             </div>
             {readOnly ? (
@@ -214,7 +214,7 @@ export function AnswerPage({ trade: t, student: s, aiDraft, readOnly, onBack, on
 
           <Panel className="gap-3">
             <div className="flex items-baseline justify-between">
-              <h2 className="t-heading-m text-a-text">Earlier feedback</h2>
+              <h2 className="t-heading-s text-a-text">Earlier feedback</h2>
               <span className="t-caption text-a-text-3">{earlier.length}</span>
             </div>
             {earlier.length === 0 ? (
