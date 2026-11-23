@@ -1,28 +1,40 @@
 // Canned answers for the AI assistant in the prototype. The real one answers
 // from the coach's own courses, transcripts, documents and rules.
 
-import { AI_KNOWLEDGE, AI_USAGE } from "./people"
+import { AI_FEATURES, AI_KNOWLEDGE } from "./people"
 
 /** What the coach set up for their AI (ADM-24 to ADM-27). */
 export type AiSetup = {
   tone: number
   length: "short" | "medium" | "long"
   examples: string
-  avoid: string
+  /** Topics it never talks about. */
+  never: string[]
   knowledge: Record<string, boolean>
-  features: Record<string, Record<string, boolean>>
+  /** Files the coach added in Knowledge. */
+  uploaded: { id: string; name: string; kind: string; items: string }[]
+  /** Which features are on. */
+  on: Record<string, boolean>
+  /** "Answer questions" per tier: the student chat reads this. 0 means unlimited. */
   quotas: Record<string, number>
+  /** The other features, keyed `feature:tier`. null means the tier doesn't get it, 0 unlimited. */
+  limits: Record<string, number | null>
   corrections: { q: string; a: string }[]
 }
 export const DEFAULT_AI: AiSetup = {
-  tone: 40,
+  tone: 50,
   length: "medium",
-  examples: "Short sentences. Refer to the lesson and the minute. Always end with one thing to do next.",
-  avoid: "Signals, specific entries for tomorrow, which broker to pick, anything about taxes.",
+  examples: "Always remind students of their daily loss limit when they ask about revenge trading.",
+  never: ["Signals", "Specific entries for tomorrow", "Other coaches"],
   knowledge: Object.fromEntries(AI_KNOWLEDGE.map((k) => [k.id, k.on])),
-  features: {},
-  quotas: Object.fromEntries(AI_USAGE.map((u) => [u.tier, u.quota])),
-  corrections: [],
+  uploaded: [],
+  on: Object.fromEntries(AI_FEATURES.map((f) => [f.id, f.on])),
+  quotas: { core: 20, desk: 50, vip: 0 },
+  limits: {},
+  corrections: [
+    { q: "Is 2R enough on NQ?", a: "Say 1.5R minimum for the desk" },
+    { q: "Can I hold overnight?", a: "Never for Inner Circle students" },
+  ],
 }
 
 /** "Ask <name>" for buttons and prompts, without doubling it when the coach already named the assistant "Ask Marco". */

@@ -156,13 +156,3 @@ export function TradingViewChart({
   )
 }
 
-/** TradingView's small symbol overview, for cards. */
-export function TradingViewMini({ symbol, dark, className }: { symbol: string; dark: boolean; className?: string }) {
-  return (
-    <TradingViewEmbed
-      widget="mini-symbol-overview"
-      className={className}
-      config={{ symbol, width: "100%", height: "100%", locale: "en", dateRange: "1M", colorTheme: dark ? "dark" : "light", isTransparent: true, autosize: true }}
-    />
-  )
-}

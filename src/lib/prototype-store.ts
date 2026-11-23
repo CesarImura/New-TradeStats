@@ -1,7 +1,7 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import type { CustomPage, MenuId, ModuleId, Wording } from "@/lib/data/coaches"
 import type { CoursePageDraft } from "@/lib/data/course-page"
 import type { JoinDraft } from "@/lib/data/join"
@@ -301,6 +301,11 @@ export function patchPublished(slug: string, patch: Partial<Overrides>) {
  */
 export function useStored<T>(key: string, fallback: T): T {
   return useKey<T>(`proto:${key}`, fallback)
+}
+
+/** Read `proto:<key>` straight from storage: for effects that run before useStored has hydrated (its first render is the fallback). */
+export function readStored<T>(key: string, fallback: T): T {
+  return read<T>(`proto:${key}`, fallback)
 }
 
 /** Save under `proto:<key>`; pass a function to update from the current value. */

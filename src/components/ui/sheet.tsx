@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import { XIcon } from "@/components/icons"
+import { trapTab } from "@/components/ui/trap-tab"
 
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
@@ -41,14 +42,18 @@ function SheetContent({
   children,
   side = "right",
   showCloseButton = true,
+  overlayClassName,
+  onKeyDown,
   ...props
 }: SheetPrimitive.Popup.Props & {
   side?: "top" | "right" | "bottom" | "left"
   showCloseButton?: boolean
+  /** Extra classes for the dimmed layer behind (the Admin sets its scrim and blur here). */
+  overlayClassName?: string
 }) {
   return (
     <SheetPortal>
-      <SheetOverlay />
+      <SheetOverlay className={overlayClassName} />
       <SheetPrimitive.Popup
         data-slot="sheet-content"
         data-side={side}
@@ -57,6 +62,7 @@ function SheetContent({
           className
         )}
         {...props}
+        onKeyDown={(e) => trapTab(e, onKeyDown as never)}
       >
         {children}
         {showCloseButton && (

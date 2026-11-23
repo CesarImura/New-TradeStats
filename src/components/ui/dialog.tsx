@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import { XIcon } from "@/components/icons"
+import { trapTab } from "@/components/ui/trap-tab"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -43,13 +44,17 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  overlayClassName,
+  onKeyDown,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
+  /** Extra classes for the dimmed layer behind (the Admin sets its scrim and blur here). */
+  overlayClassName?: string
 }) {
   return (
     <DialogPortal>
-      <DialogOverlay />
+      <DialogOverlay className={overlayClassName} />
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
@@ -57,6 +62,7 @@ function DialogContent({
           className
         )}
         {...props}
+        onKeyDown={(e) => trapTab(e, onKeyDown as never)}
       >
         {children}
         {showCloseButton && (

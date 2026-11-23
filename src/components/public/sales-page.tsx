@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, CalendarDays, Check, MessagesSquare, NotebookPen, PlayCircle, Quote, Sparkles, Star, Users } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CourseCover, hours } from "@/components/courses/shared"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -14,6 +14,7 @@ import { amount, courseTiers, fmtDate, isFull, per, useGroups, useTiers, type Ti
 import { allLessons, studentCourses, useCatalog } from "@/lib/data/learning"
 import { useSalesPage, type Block } from "@/lib/data/sales-page"
 import { cn } from "@/lib/utils"
+import { PingDot } from "@/components/ui/ping-dot"
 
 const wrap = "mx-auto w-full max-w-[1180px] px-4 sm:px-6"
 
@@ -118,10 +119,7 @@ function Hero({ block }: { block: Block }) {
       <div className="relative">
         <Cover className="aspect-[4/3] w-full rounded-(--radius)" />
         <div className="absolute -bottom-5 left-5 flex items-center gap-3 rounded-(--radius) bg-card px-4 py-3 text-card-foreground" style={{ boxShadow: "var(--card-shadow)" }}>
-          <span className="relative flex size-2.5">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60" />
-            <span className="relative inline-flex size-2.5 rounded-full bg-primary" />
-          </span>
+          <PingDot className="size-2.5 bg-primary" />
           <span className="text-sm">
             Next live session <b>tomorrow 08:30</b>
           </span>
@@ -283,7 +281,7 @@ function PriceCard({ tier, yearly, href }: { tier: TierInfo; yearly: boolean; hr
 function Groups({ block }: { block: Block }) {
   const { coach, base } = useCoach()
   const tiers = useTiers(coach)
-  const groups = useGroups(coach).filter((g) => g.end >= "2026-10-12")
+  const groups = useGroups(coach).filter((g) => g.end >= "2025-11-12")
   if (groups.length === 0) return null
   return (
     <div className={wrap}>
@@ -291,7 +289,7 @@ function Groups({ block }: { block: Block }) {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {groups.map((g) => {
           const full = isFull(g)
-          const started = g.start <= "2026-10-12"
+          const started = g.start <= "2025-11-12"
           const tier = tiers.find((t) => g.tiers.includes(t.id) && !t.hidden) ?? tiers.find((t) => g.tiers.includes(t.id))
           return (
             <article key={g.id} className="grid gap-4 rounded-(--radius) bg-card p-5 text-card-foreground" style={{ boxShadow: "var(--card-shadow)" }}>

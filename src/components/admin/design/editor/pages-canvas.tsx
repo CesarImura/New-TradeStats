@@ -11,6 +11,7 @@ import { useCustomCommunities } from "@/lib/data/use-communities"
 import { resolveCoach } from "@/lib/theme/resolve"
 import { cn } from "@/lib/utils"
 import { EditorBar, useDraftEditor } from "./editor-shell"
+import { canvasDots } from "./canvas-bg"
 
 /** Every page is laid out at real desktop width on the canvas; its height is its own (FRAME.h until measured, never below MIN_H). */
 const FRAME = { w: 1280, h: 820 }
@@ -261,7 +262,7 @@ export function PagesCanvas() {
 
   return (
     // A screen of its own over the admin, like the Design workspace: the same bar, the same colours.
-    <div role="dialog" aria-modal aria-label="All pages" className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-background [--background:#0b0b0c] [--border:rgb(255_255_255/0.08)] [--ring:rgb(244_244_245/0.6)]">
+    <div role="dialog" aria-modal aria-label="All pages" className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-a-page font-[family-name:var(--admin-font-family-primary)] [--background:var(--admin-color-bg-page)] [--border:var(--admin-color-border-default)] [--ring:var(--admin-color-border-focus)]">
       <EditorBar
         slug={slug}
         title="All pages"
@@ -276,12 +277,8 @@ export function PagesCanvas() {
 
       <div
         ref={view}
-        className={cn("relative min-h-[70svh] touch-none overflow-clip bg-[#2b2b2e] select-none [overflow-anchor:none] lg:min-h-0", panning ? "cursor-grabbing" : "cursor-grab")}
-        style={{
-          backgroundImage: "radial-gradient(circle, color-mix(in oklab, var(--foreground) 13%, transparent) 1px, transparent 1.4px)",
-          backgroundSize: `${dot}px ${dot}px`,
-          backgroundPosition: `${cam.x}px ${cam.y}px`,
-        }}
+        className={cn("relative mx-2 mb-2 min-h-[70svh] touch-none overflow-clip rounded-a-xl border border-a-border select-none [overflow-anchor:none] lg:min-h-0", panning ? "cursor-grabbing" : "cursor-grab")}
+        style={canvasDots(dot, `${cam.x}px ${cam.y}px`)}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -311,20 +308,20 @@ export function PagesCanvas() {
                 {/* The label keeps a readable size at any zoom. */}
                 <div
                   className={cn(
-                    "absolute bottom-full left-0 flex origin-bottom-left items-center gap-1.5 pb-2 text-[0.8125rem] whitespace-nowrap",
+                    "absolute bottom-full left-0 flex origin-bottom-left items-center gap-1.5 pb-2 t-body-m whitespace-nowrap",
                     on ? "text-foreground" : "text-muted-foreground",
                   )}
                   style={{ transform: `scale(${1 / cam.z})` }}
                 >
                   <Icon className="size-3.5" />
                   <span className="font-medium text-foreground">{p.label}</span>
-                  {p.id !== "home" && <span className="font-mono text-[0.6875rem]">{p.href.replace(`/c/${slug}`, "")}</span>}
-                  {p.id === "home" && <span className="rounded bg-foreground/8 px-1.5 py-0.5 text-[0.6875rem]">Widgets</span>}
+                  {p.id !== "home" && <span className="t-caption">{p.href.replace(`/c/${slug}`, "")}</span>}
+                  {p.id === "home" && <span className="rounded bg-foreground/8 px-1.5 py-0.5 t-caption">Widgets</span>}
                 </div>
                 <div
                   data-page={i}
                   className={cn(
-                    "size-full overflow-hidden rounded-[18px] bg-background shadow-[0_1px_2px_rgb(0_0_0/0.06),0_12px_40px_-12px_rgb(0_0_0/0.25)] ring-1 ring-black/10 transition-[box-shadow] dark:ring-white/10",
+                    "size-full overflow-hidden rounded-[18px] bg-background ring-1 ring-a-border transition-[box-shadow]",
                     !on && "hover:ring-[6px] hover:ring-primary/50",
                   )}
                 >
@@ -359,8 +356,8 @@ export function PagesCanvas() {
             <Button variant="ghost" size="sm" onClick={fitAll}>
               <ArrowLeft /> All pages
             </Button>
-            <span className="text-sm font-medium">{focused.label}</span>
-            <span className="hidden text-xs text-muted-foreground sm:inline">Live preview of your draft · Esc to go back</span>
+            <span className="t-body-l-medium">{focused.label}</span>
+            <span className="hidden t-caption text-muted-foreground sm:inline">Live preview of your draft · Esc to go back</span>
             <div className="ml-auto flex items-center gap-1">
               {pages.map((p, i) => (
                 <Button key={p.id} variant={i === focus ? "secondary" : "ghost"} size="xs" onClick={() => open(i)}>
@@ -381,7 +378,7 @@ export function PagesCanvas() {
               <Minus />
             </Button>
             <button
-              className="w-12 text-center text-xs tabular-nums text-muted-foreground hover:text-foreground"
+              className="w-12 text-center t-caption tabular-nums text-muted-foreground hover:text-foreground"
               onClick={() => zoomBy(1 / cam.z)}
               title="Zoom to 100%"
             >
@@ -395,7 +392,7 @@ export function PagesCanvas() {
             </Button>
           </div>
           {!focused && (
-            <p className="pointer-events-none hidden text-xs whitespace-nowrap text-muted-foreground xl:block">
+            <p className="pointer-events-none hidden t-caption whitespace-nowrap text-muted-foreground xl:block">
               Drag to move · Pinch or ⌘ + scroll to zoom · Click a page to open it
             </p>
           )}

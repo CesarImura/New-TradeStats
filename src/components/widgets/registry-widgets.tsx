@@ -558,7 +558,7 @@ export const BASE_WIDGETS: WidgetDef[] = [
     ],
     settings: [
       { key: "title", label: "Title", type: "text", placeholder: "Next cohort starts" },
-      { key: "date", label: "Date and time", type: "text", placeholder: "2026-11-01 09:00" },
+      { key: "date", label: "Date and time", type: "text", placeholder: "2025-11-30 09:00" },
       // Only the With text layout shows a text.
       { key: "text", label: "Text", type: "textarea", variants: ["card"] },
       { key: "button", label: "Button text", type: "text", placeholder: "Save my spot" },

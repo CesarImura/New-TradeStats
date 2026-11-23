@@ -1,115 +1,123 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { ArrowRight } from "@/components/icons"
-import { Choice, OnbFrame, OnbTitle, mono } from "@/components/onboarding/frame"
-import { AUDIENCES, OFFERS, TOOLS, routeFor } from "@/components/onboarding/suggest"
-import { Button } from "@/components/ui/button"
-import { setAccount, type Audience } from "@/lib/data/communities"
-import { useAccount } from "@/lib/data/use-communities"
-import { cn } from "@/lib/utils"
+import { useState, useSyncExternalStore } from "react"
+import { ArrowLeft } from "@/components/icons"
+import { ChoiceChip, SignupFrame, SignupTitle, useNeedsAccount, useSignupGo } from "@/components/onboarding/signup-frame"
+import { AdminButton } from "@/components/admin/ui"
+import { account, setAccount, type Audience } from "@/lib/data/communities"
 
 /**
- * ONB-04 · About you. Three questions. The answers pick the route (setup call
- * or the wizard) and preselect a template and modules.
+ * Sign up · 04 About you (Figma 939:58985). Three optional questions as chips. The answers preselect the look and the
+ * modules (suggest.ts); nothing here changes the route any more: everyone names their platform next.
  */
+const MEMBERS: { id: string; label: string; audience: Audience }[] = [
+  { id: "none", label: "None yet", audience: "starting" },
+  { id: "under-100", label: "Under 100", audience: "small" },
+  { id: "100-500", label: "100–500", audience: "growing" },
+  { id: "500-1500", label: "500–1,500", audience: "large" },
+  { id: "1500", label: "1,500+", audience: "large" },
+]
+const TOOLS = [
+  { id: "none", label: "Nothing yet" },
+  { id: "discord", label: "Discord" },
+  { id: "whop", label: "Whop" },
+  { id: "skool", label: "Skool" },
+  { id: "kajabi", label: "Kajabi" },
+  { id: "other", label: "Other" },
+]
+const OFFERS = [
+  { id: "courses", label: "Courses" },
+  { id: "calls", label: "Mentoring / 1:1" },
+  { id: "live", label: "Live trading" },
+  { id: "community", label: "Community" },
+  { id: "other", label: "Other" },
+]
+
+const noop = () => () => {}
+/** The answers given before (coming Back from Name your platform), as one stable string. */
+const given = () => JSON.stringify(account()?.answers ?? null)
+
 export default function About() {
-  const router = useRouter()
-  const acc = useAccount()
-  const [audience, setAudience] = useState<Audience>()
+  useNeedsAccount()
+  const go = useSignupGo()
+  const [members, setMembers] = useState<string>()
   const [tools, setTools] = useState<string[]>([])
   const [offers, setOffers] = useState<string[]>([])
-
-  const toggle = (list: string[], id: string, set: (l: string[]) => void, only?: string) => {
-    if (list.includes(id)) return set(list.filter((x) => x !== id))
-    // "Nothing yet" can't be picked together with a tool.
-    if (id === only) return set([id])
-    set([...list.filter((x) => x !== only), id])
+  // Back from the next screen: the answers come back, read once on the client.
+  const saved = useSyncExternalStore(noop, given, () => "null")
+  const [seeded, setSeeded] = useState(false)
+  if (saved !== "null" && !seeded) {
+    setSeeded(true)
+    const a = JSON.parse(saved) as { members?: string; tools: string[]; offers: string[] }
+    setMembers(a.members)
+    setTools(a.tools)
+    setOffers(a.offers)
+  }
+  const save = (skip?: boolean) => {
+    const m = MEMBERS.find((x) => x.id === members)
+    setAccount({ answers: skip ? undefined : { audience: m?.audience ?? "starting", members, tools, offers } })
   }
 
-  const ready = audience && tools.length > 0 && offers.length > 0
+  // "Nothing yet" can't sit next to a tool.
+  const toggle = (list: string[], id: string, only?: string) => (list.includes(id) ? list.filter((x) => x !== id) : id === only ? [id] : [...list.filter((x) => x !== only), id])
 
-  const next = () => {
-    if (!audience) return
-    const answers = { audience, tools, offers }
-    const route = routeFor(answers)
-    setAccount({ answers, route })
-    router.push(route === "B" ? "/signup/call" : "/setup")
+  const next = (skip?: boolean) => {
+    save(skip)
+    go("/signup/name")
   }
+
+  const question = (label: string, children: React.ReactNode, multi?: boolean) => (
+    <div className="flex flex-col gap-2" role={multi ? "group" : "radiogroup"} aria-label={label}>
+      <span className="t-body-m-medium text-a-text">{label}</span>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  )
 
   return (
-    <OnbFrame right={<span className={mono}>3 quick questions</span>}>
-      <div className="grid gap-6">
-        <OnbTitle
-          eyebrow={acc?.name ? `Hi ${acc.name.split(" ")[0]}` : "About you"}
-          title="Tell us where you are today."
-          text="So we can start you off in the right place. You can change everything later."
-        />
-
-        <Question n={1} title="How many paying students do you have?">
-          <div className="grid grid-cols-2 gap-2" role="radiogroup">
-            {AUDIENCES.map((a) => (
-              <Choice key={a.id} checked={audience === a.id} onClick={() => setAudience(a.id)} title={a.label} text={a.text} />
-            ))}
-          </div>
-        </Question>
-
-        <Question n={2} title="What do you use today?" hint="Pick all that apply">
-          <div className="flex flex-wrap gap-2">
-            {TOOLS.map((t) => (
-              <Pill key={t.id} on={tools.includes(t.id)} onClick={() => toggle(tools, t.id, setTools, "none")}>
-                {t.label}
-              </Pill>
-            ))}
-          </div>
-        </Question>
-
-        <Question n={3} title="What do you offer your students?" hint="Pick all that apply">
-          <div className="flex flex-wrap gap-2">
-            {OFFERS.map((o) => (
-              <Pill key={o.id} on={offers.includes(o.id)} onClick={() => toggle(offers, o.id, setOffers)}>
+    <SignupFrame>
+      <div className="flex flex-col gap-5">
+        <AdminButton type="button" hierarchy="text" className="w-fit pl-0 [&_svg]:transition-transform [&_svg]:duration-200 hover:[&_svg]:-translate-x-0.5" onClick={() => (save(), go("/signup/create", -1))}>
+          <ArrowLeft /> Back
+        </AdminButton>
+        <SignupTitle title="Tell us about your coaching." text="Help us tailor TraderHub for you. All optional." />
+        <div className="flex flex-col gap-6">
+          {question(
+            "How many members do you have today?",
+            MEMBERS.map((o) => (
+              <ChoiceChip key={o.id} checked={members === o.id} onClick={() => setMembers((m) => (m === o.id ? undefined : o.id))}>
                 {o.label}
-              </Pill>
-            ))}
-          </div>
-        </Question>
-
-        <Button className="w-full justify-between" disabled={!ready} onClick={next}>
-          Continue <ArrowRight />
-        </Button>
+              </ChoiceChip>
+            )),
+          )}
+          {question(
+            "Where do you run your community today?",
+            TOOLS.map((o) => (
+              <ChoiceChip key={o.id} multi checked={tools.includes(o.id)} onClick={() => setTools((l) => toggle(l, o.id, "none"))}>
+                {o.label}
+              </ChoiceChip>
+            )),
+            true,
+          )}
+          {question(
+            "What do you offer?",
+            OFFERS.map((o) => (
+              <ChoiceChip key={o.id} multi checked={offers.includes(o.id)} onClick={() => setOffers((l) => toggle(l, o.id))}>
+                {o.label}
+              </ChoiceChip>
+            )),
+            true,
+          )}
+        </div>
+        {/* Figma 939:58985: Continue then Skip, on the right. */}
+        <div className="flex items-center justify-end gap-4 pt-2">
+          <AdminButton size="xl" disabled={!members && tools.length === 0 && offers.length === 0} onClick={() => next()}>
+            Continue
+          </AdminButton>
+          <AdminButton size="xl" hierarchy="text" className="pl-0" onClick={() => next(true)}>
+            Skip
+          </AdminButton>
+        </div>
       </div>
-    </OnbFrame>
-  )
-}
-
-function Question({ n, title, hint, children }: { n: number; title: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <fieldset className="grid gap-2">
-      <legend className="mb-2 flex w-full items-baseline gap-2">
-        <span className={cn(mono, "text-[var(--ts-interactive)]")}>0{n}</span>
-        <span className="text-sm font-medium">{title}</span>
-        {hint && <span className="ml-auto text-xs text-muted-foreground">{hint}</span>}
-      </legend>
-      {children}
-    </fieldset>
-  )
-}
-
-function Pill({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={on}
-      onClick={onClick}
-      className={cn(
-        "h-7 rounded-[4px] border border-[#2a2a2f] bg-[var(--ts-layer-2)] px-2.5 text-[0.8125rem] shadow-[inset_0_1px_0_rgb(255_255_255/0.04)] transition-colors outline-none hover:border-[#3a3a40] hover:bg-[var(--ts-layer-3)] focus-visible:border-[var(--ts-interactive)] focus-visible:shadow-[0_0_0_3px_rgb(255_85_0/0.18)]",
-        on && "border-[var(--ts-interactive)] bg-[color-mix(in_oklab,var(--ts-interactive)_12%,var(--ts-layer-2))] text-foreground hover:border-[var(--ts-interactive)] hover:bg-[color-mix(in_oklab,var(--ts-interactive)_16%,var(--ts-layer-2))]",
-        !on && "text-muted-foreground",
-      )}
-    >
-      {children}
-    </button>
+    </SignupFrame>
   )
 }

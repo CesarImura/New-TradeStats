@@ -52,7 +52,6 @@ export const minHeight = (w: WidgetInstance, o: TileOptions) => cardRange(w, o).
 /** The height a card's layout is designed at (at its width and Detail). */
 export const designedHeight = (w: WidgetInstance, o: TileOptions) => cardRange(w, o).designed
 
-
 // ---------- the page in blocks
 
 /** A band, or a block: the cards between two bands. */
@@ -548,23 +547,6 @@ export function withoutCards(items: WidgetInstance[], hide: ReadonlySet<string>)
   const rest = groups.map((g) => ("ids" in g ? { ...g, ids: g.ids.filter((i) => !hide.has(i)) } : g)).filter((g) => !("band" in g && hide.has(g.band.id)))
   const next = reflow(kept, rest, byId)
   return touched.size ? fillGaps(next, touched) : next
-}
-
-/** Whether any two cards of a block overlap, or a card is off the page: the one rule a page of cards has to keep. */
-export function hasOverlap(items: WidgetInstance[]): boolean {
-  for (const g of groupsOf(items)) {
-    if (!("ids" in g)) continue
-    const tiles = g.ids.map((i) => items.find((w) => w.id === i)!)
-    for (let a = 0; a < tiles.length; a++) {
-      const p = tiles[a]
-      if (p.x < -EPS || p.x + p.w > 12 + EPS || p.y < g.origin - EPS) return true
-      for (let b = a + 1; b < tiles.length; b++) {
-        const q = tiles[b]
-        if (overlaps(p.x, p.x + p.w, q.x, q.x + q.w) && overlaps(p.y, p.y + p.h, q.y, q.y + q.h)) return true
-      }
-    }
-  }
-  return false
 }
 
 // ---------- drawing

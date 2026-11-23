@@ -3,7 +3,7 @@
 import { useId, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Check, CreditCard, Download, Link2 } from "@/components/icons"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { DiscordMark } from "@/components/admin/community/community-admin"
 import { useCommunityData } from "@/components/admin/kit"
 import { useCoach } from "@/components/coach/coach-provider"
@@ -22,6 +22,7 @@ import { useViewerGroup } from "@/lib/data/access"
 import { DEMO_STUDENT } from "@/lib/data/sample"
 import { MyGroup } from "./my-group"
 import { ACCOUNTS } from "@/lib/data/trades"
+import { DEFAULT_STUDENT_PREFS, STUDENT_PREFS_KEY, type StudentNoticePrefs } from "@/lib/data/student-notifications"
 import { cn } from "@/lib/utils"
 
 function Row({ label, text, children }: { label: string; text?: string; children: React.ReactNode }) {
@@ -48,7 +49,7 @@ export function StudentProfile() {
   const group = useViewerGroup(coach)
   const params = useSearchParams()
   const [nick, setNick] = useCommunityData(coach.slug, "nickname", "alexm")
-  const [notif, setNotif] = useCommunityData(coach.slug, "notifications", { feedback: true, lessons: true, events: true, community: false, email: true })
+  const [notif, setNotif] = useCommunityData<StudentNoticePrefs>(coach.slug, STUDENT_PREFS_KEY, DEFAULT_STUDENT_PREFS)
   const [linked, setLinked] = useCommunityData(coach.slug, "discord-linked", false)
   const [hidden, setHidden] = useCommunityData(coach.slug, "rank-hidden", false)
   const [change, setChange] = useState<string | null>(null)
@@ -109,12 +110,16 @@ export function StudentProfile() {
                 <span className="eyebrow">Your plan</span>
                 <span className="text-2xl">{tier?.name}</span>
               </div>
-              <span className="text-lg tabular-nums">
-                {tier?.price}
-                <span className="text-sm text-muted-foreground"> / {tier?.cadence === "once" ? "once" : tier?.cadence}</span>
-              </span>
+              {tier?.cadence === "offer" ? (
+                <span className="text-sm text-muted-foreground">Included in your offer</span>
+              ) : (
+                <span className="text-lg tabular-nums">
+                  {tier?.price}
+                  <span className="text-sm text-muted-foreground"> / {tier?.cadence === "once" ? "once" : tier?.cadence}</span>
+                </span>
+              )}
             </div>
-            <span className="text-sm text-muted-foreground">Next payment on 1 Nov 2026 · Visa ·· 4242</span>
+            <span className="text-sm text-muted-foreground">Next payment on 30 Nov 2025 · Visa ·· 4242</span>
             <div className="flex flex-wrap gap-2 pt-1">
               <Button variant="outline" size="sm" onClick={() => toast("Update your card", { description: "Opens the secure payment form." })}>
                 <CreditCard /> Update card
@@ -125,7 +130,7 @@ export function StudentProfile() {
             </div>
           </Card>
           <div className="grid gap-3 md:grid-cols-3">
-            {coach.tiers.map((t) => {
+            {coach.tiers.filter((t) => t.cadence !== "offer" || t.id === tier?.id).map((t) => {
               const current = t.id === tier?.id
               const up = price(t.price) > price(tier?.price ?? "0")
               return (
@@ -135,8 +140,7 @@ export function StudentProfile() {
                     {current && <Badge>Current</Badge>}
                   </span>
                   <span className="text-xl tabular-nums">
-                    {t.price}
-                    <span className="text-sm text-muted-foreground"> / {t.cadence === "once" ? "once" : t.cadence}</span>
+                    {t.cadence === "offer" ? <span className="text-sm text-muted-foreground">Included in your offer</span> : <>{t.price}<span className="text-sm text-muted-foreground"> / {t.cadence === "once" ? "once" : t.cadence}</span></>}
                   </span>
                   {!current && (
                     <Button size="sm" variant={up ? "default" : "outline"} onClick={() => setChange(t.id)}>
@@ -149,7 +153,7 @@ export function StudentProfile() {
           </div>
           <Card className="gap-0 px-5 py-2">
             <span className="eyebrow py-2">Invoices</span>
-            {["1 Oct 2026", "1 Sep 2026", "1 Aug 2026"].map((d) => (
+            {["30 Oct 2025", "30 Sep 2025", "30 Aug 2025"].map((d) => (
               <div key={d} className="flex items-center justify-between border-t py-2.5 text-sm">
                 <span>{d}</span>
                 <span className="flex items-center gap-3 tabular-nums">
@@ -207,8 +211,21 @@ export function StudentProfile() {
                 ["email", "Also by e-mail"],
               ] as const
             ).map(([id, label]) => (
-              <Row key={id} label={label}>
-                <Switch checked={notif[id]} onCheckedChange={(v) => setNotif((n) => ({ ...n, [id]: v }))} />
+              <Row
+                key={id}
+                label={label}
+                text={id === "email" ? (notif.email ? `On since ${notif.emailSince ?? "today"}. We only e-mail what you chose above; turn it off here any time.` : "Off until you switch it on. We only e-mail what you chose above, and you can turn it off here any time.") : undefined}
+              >
+                <Switch
+                  checked={notif[id]}
+                  onCheckedChange={(v) => {
+                    if (id !== "email") return setNotif((n) => ({ ...n, [id]: v }))
+                    const since = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                    setNotif((n) => ({ ...n, email: v, emailSince: v ? since : undefined }))
+                    if (v) toast("E-mail notifications on", { description: "We'll e-mail you what you chose above.", action: { label: "Undo", onClick: () => setNotif((n) => ({ ...n, email: false, emailSince: undefined })) } })
+                    else toast("E-mail notifications off", { description: "You'll only see them in the app." })
+                  }}
+                />
               </Row>
             ))}
           </Card>
@@ -230,7 +247,7 @@ export function StudentProfile() {
                   <DialogDescription>
                     {diff > 0
                       ? `Starts now. You pay the difference for the rest of this month: about €${Math.round(diff * 0.6)}. Then ${t.price} / ${t.cadence}.`
-                      : `Starts on 1 Nov, when your current period ends. You keep ${tier.name} until then.`}
+                      : `Starts on 30 Nov, when your current period ends. You keep ${tier.name} until then.`}
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
@@ -240,7 +257,7 @@ export function StudentProfile() {
                   <Button
                     onClick={() => {
                       setChange(null)
-                      toast(diff > 0 ? `Welcome to ${t.name}` : `You switch to ${t.name} on 1 Nov`)
+                      toast(diff > 0 ? `Welcome to ${t.name}` : `You switch to ${t.name} on 30 Nov`)
                     }}
                   >
                     {diff > 0 ? `Pay and upgrade` : "Confirm"}
@@ -256,7 +273,7 @@ export function StudentProfile() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancel your membership?</DialogTitle>
-            <DialogDescription>You keep everything until 1 Nov. Your account, journal and notes stay; you can come back any time.</DialogDescription>
+            <DialogDescription>You keep everything until 30 Nov. Your account, journal and notes stay; you can come back any time.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-1.5">
             <Label className="text-[0.8125rem]">Why are you leaving? (optional)</Label>
@@ -270,7 +287,7 @@ export function StudentProfile() {
               variant="destructive"
               onClick={() => {
                 setCancel(false)
-                toast("Membership cancelled", { description: "Access until 1 Nov 2026." })
+                toast("Membership cancelled", { description: "Access until 30 Nov 2025." })
               }}
             >
               Cancel membership

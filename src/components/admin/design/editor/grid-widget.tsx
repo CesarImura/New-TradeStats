@@ -28,12 +28,12 @@ export function GridWidget({ w, fixed = false, selected, available, onRemove, on
       data-selected={selected}
       className="group/w relative flex h-full cursor-grab flex-col rounded-(--radius) active:cursor-grabbing"
     >
-      {/* The outline: white with a fine dark edge outside it, so it reads on a light page as well as a dark one (never a coach's colour). It sits
+      {/* The outline: the Admin's orange (border/active, Gustavo 14/11) with a fine dark edge outside it, so it reads on a light page as well as a dark one. It sits
           2px off the card, its corners the card's radius plus that gap, so they stay concentric. Faint on hover, full when selected. */}
       <span
         aria-hidden
         className={cn(
-          "pointer-events-none absolute z-10 rounded-[calc(var(--radius)+3.5px*var(--ui-zoom,1))] border-[calc(1.5px*var(--ui-zoom,1))] border-white opacity-0 shadow-[0_0_0_calc(1.5px*var(--ui-zoom,1))_rgb(24_24_28/0.8)] transition-opacity duration-150 ease-out group-hover/w:opacity-50",
+          "pointer-events-none absolute z-10 rounded-[calc(var(--radius)+3.5px*var(--ui-zoom,1))] border-[calc(1.5px*var(--ui-zoom,1))] border-a-border-active opacity-0 shadow-[0_0_0_calc(1.5px*var(--ui-zoom,1))_rgb(24_24_28/0.8)] transition-opacity duration-150 ease-out group-hover/w:opacity-50",
           selected && "opacity-100 group-hover/w:opacity-100",
         )}
         style={{ inset: "calc(-3.5px * var(--ui-zoom, 1))" }}
@@ -44,13 +44,13 @@ export function GridWidget({ w, fixed = false, selected, available, onRemove, on
           key={pos}
           aria-hidden
           data-corner-mark
-          className={cn("pointer-events-none absolute z-10 rounded-full bg-white opacity-0 shadow-[0_0_0_1px_rgb(24_24_28/0.75)] transition-opacity duration-150 ease-out group-hover/w:opacity-80", selected && "opacity-100 group-hover/w:opacity-100", pos)}
+          className={cn("pointer-events-none absolute z-10 rounded-full bg-a-border-active opacity-0 shadow-[0_0_0_1px_rgb(24_24_28/0.75)] transition-opacity duration-150 ease-out group-hover/w:opacity-80", selected && "opacity-100 group-hover/w:opacity-100", pos)}
           style={{ width: "calc(7px * var(--ui-zoom, 1))", height: "calc(7px * var(--ui-zoom, 1))" }}
         />
       ))}
       {/* Name, rule and quick actions sit on the card's top edge, half above it, so they never cover its header. .no-drag keeps
           clicks on the actions from starting a drag; the actions also show while one of them has keyboard focus. */}
-      <div className="pointer-events-none absolute inset-x-2 top-0 z-[35] flex -translate-y-[60%] items-center gap-1 font-[family-name:var(--ff-geist)]">
+      <div className="pointer-events-none absolute inset-x-2 top-0 z-[35] flex -translate-y-[60%] items-center gap-1 font-[family-name:var(--admin-font-family-primary)]">
         <span
           // Its name on hover; once selected the inspector names it, and the quick bar takes the edge.
           className={cn("min-w-0 truncate rounded-md px-1.5 py-0.5 text-[0.6875rem] opacity-0 group-hover/w:opacity-100 data-[on=true]:hidden", EDITOR_CHIP)}
@@ -64,7 +64,7 @@ export function GridWidget({ w, fixed = false, selected, available, onRemove, on
           {w.emphasis === "star" && " · Star"}
         </span>
         <span className="ml-auto" />
-        {rule && <span className="max-w-[45%] shrink-0 truncate rounded-[3px] bg-[var(--ts-interactive)] px-1.5 py-0.5 font-mono text-[0.6875rem] leading-none font-medium tracking-[0.04em] text-black uppercase">{rule}</span>}
+        {rule && <span className="max-w-[45%] shrink-0 truncate rounded-[3px] bg-a-border-active px-1.5 py-0.5 font-mono text-[0.6875rem] leading-none font-medium tracking-[0.04em] text-a-on-accent uppercase">{rule}</span>}
         {/* The quick bar: the width in one click (selected only), duplicate and remove. On the card's own top edge, so it never
             covers the widget below; in the editor's colours, not the coach's, so it reads the same on every theme. */}
         <div

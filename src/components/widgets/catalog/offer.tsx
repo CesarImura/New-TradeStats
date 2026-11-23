@@ -29,7 +29,7 @@ const currency = (price: string) => price.replace(/[\d.,\s]/g, "") || "€"
 /** The student's tier and the next one up: the coach's own tiers when there are two, the sample otherwise. */
 function useTiers() {
   const { coach } = useCoach()
-  const [a, b] = coach.tiers
+  const [a, b] = coach.tiers.filter((t) => t.cadence !== "offer")
   const current = a ? { name: a.name, price: a.price, cadence: a.cadence } : { ...UPGRADE.current, cadence: UPGRADE.next.cadence }
   const next = b ? { name: b.name, price: b.price, cadence: b.cadence, members: b.members } : { ...UPGRADE.next, members: 37 }
   return { current, next }

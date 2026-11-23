@@ -51,12 +51,13 @@ const FINISHES = [
   { value: "grid", label: "Grid", hint: "A field of small crosses behind the widgets" },
 ] as const
 const BUTTONS = [
-  { value: "square", radius: "2px", label: "Square" },
-  { value: "rounded", radius: "5px", label: "Rounded" },
-  { value: "pill", radius: "999px", label: "Pill" },
+  // Admin / Editor Button shape: a 16 × 8 glyph in secondary text, radius 2xs, xs or full.
+  { value: "square", radius: "rounded-a-2xs", label: "Square" },
+  { value: "rounded", radius: "rounded-a-xs", label: "Rounded" },
+  { value: "pill", radius: "rounded-full", label: "Pill" },
 ] as const
 
-export function AllWidgetsInspector({ draft, onReset, onBack, back, own, onClearOwn }: { draft: ThemeDraft; onReset: (keys: (keyof ThemeDraft)[]) => void; onBack: () => void; /** Where the arrow goes back to: the selected widget or the page. */ back: string; /** Widgets that keep their own style. */ own: number; /** Puts every widget on this page back to the style set here. */ onClearOwn: () => void }) {
+export function AllWidgetsInspector({ draft, onReset, onBack, back, own, onClearOwn }: { draft: ThemeDraft; onReset: (keys: (keyof ThemeDraft)[]) => void; onBack?: () => void; /** Where the arrow goes back to: the selected widget or the page. */ back: string; /** Widgets that keep their own style. */ own: number; /** Puts every widget on this page back to the style set here. */ onClearOwn: () => void }) {
   const { theme, change } = useDesign()
   const [fly, setFly] = useState<"header" | "charts" | null>(null)
   const root = useRef<HTMLDivElement>(null)
@@ -75,20 +76,41 @@ export function AllWidgetsInspector({ draft, onReset, onBack, back, own, onClear
     <div ref={root}>
       <InspectorTop>
         <div className="flex min-w-0 items-center gap-1">
-          <button type="button" onClick={onBack} aria-label={`Back to ${back}`} title={`Back to ${back}`} className="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
-            <ArrowLeft className="size-4" />
-          </button>
-          <span className="truncate text-[0.875rem] font-semibold">All widgets</span>
+          {onBack && (
+            <button type="button" onClick={onBack} aria-label={`Back to ${back}`} title={`Back to ${back}`} className="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
+              <ArrowLeft className="size-4" />
+            </button>
+          )}
+          <span className="truncate t-body-l-medium">Design all widgets</span>
         </div>
       </InspectorTop>
-      <p className="-mt-1 px-5 pb-3 text-xs leading-4 text-muted-foreground">Every page.{own ? ` ${own} widget${own === 1 ? " keeps its" : "s keep their"} own style.` : ""}</p>
+      <p className="-mt-1 px-5 pb-3 t-caption text-muted-foreground">Corner radius, cards, buttons and charts of every widget, on every page.{own ? ` ${own} widget${own === 1 ? " keeps its" : "s keep their"} own style.` : ""}</p>
       {own > 0 && (
         <div className="px-5 pb-3">
-          <button type="button" onClick={onClearOwn} className="h-8 w-full rounded-md border border-border px-3 text-xs font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]">
+          <button type="button" onClick={onClearOwn} className="h-8 w-full rounded-a-md border border-a-border-strong px-3 t-caption-medium outline-none transition-colors duration-300 hover:bg-a-hover focus-visible:ring-2 focus-visible:ring-a-border-focus">
             Use these settings on {own === 1 ? "that widget" : `all ${own}`} (this page)
           </button>
         </div>
       )}
+
+      <InspectorSection title="Shape">
+        {/* The slider carries its own name and value. */}
+        <SliderField label="Corners" value={radius} min={0} max={24} unit="px" format={(r) => `${r <= 3 ? "Sharp" : r >= 16 ? "Very round" : "Round"} · ${r}px`} onChange={(r) => set({ radius: r }, "radius")} />
+        <Row label="Buttons" hint="The buttons, menus and forms of your whole platform" own={changed("buttonShape")} onReset={() => onReset(["buttonShape"])} from="the look">
+          <Segmented
+            label="Button shape"
+            value={theme.buttonShape}
+            options={BUTTONS.map((b) => ({ value: b.value, name: b.label, hint: b.label, label: <span aria-hidden className={cn("h-2 w-4 bg-a-text-2", b.radius)} /> }))}
+            onChange={(buttonShape) => set({ buttonShape }, "buttons")}
+          />
+        </Row>
+        <Row label="Spacing" hint="Between and inside widgets, and across your platform" own={changed("density")} onReset={() => onReset(["density"])} from="the look">
+          <Segmented label="Spacing" value={theme.density} options={[{ value: "compact", label: "Compact" }, { value: "comfortable", label: "Comfy", hint: "Comfortable" }, { value: "airy", label: "Airy" }]} onChange={(density) => set({ density }, "density")} />
+        </Row>
+        <Row label="Finish" hint={FINISHES.find((f) => f.value === widgetFinishOf(theme))?.hint} own={changed("widgetFinish")} onReset={() => onReset(["widgetFinish"])} from="the look">
+          <Segmented label="Finish" value={widgetFinishOf(theme)} options={FINISHES.map((f) => ({ ...f }))} onChange={(widgetFinish) => set({ widgetFinish }, "widget-finish")} />
+        </Row>
+      </InspectorSection>
 
       <InspectorSection title="Card">
         <Row label="Card" hint={SURFACES.find((s) => s.id === surface)?.hint} own={changed("widgetSet", "cardSurface")} onReset={() => onReset(["widgetSet", "cardSurface", "shadow"])} from="the look" stack>
@@ -106,25 +128,6 @@ export function AllWidgetsInspector({ draft, onReset, onBack, back, own, onClear
         </Row>
         <Row label="Outline" hint="A fine line round every card, the Star included" own={changed("borders")} onReset={() => onReset(["borders"])} from="the look">
           <Segmented label="Outline on cards" value={theme.borders ? "yes" : "no"} options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} onChange={(v) => set({ borders: v === "yes" }, "borders")} />
-        </Row>
-      </InspectorSection>
-
-      <InspectorSection title="Shape">
-        {/* The slider carries its own name and value. */}
-        <SliderField label="Corners" value={radius} min={0} max={24} unit="px" format={(r) => `${r <= 3 ? "Sharp" : r >= 16 ? "Very round" : "Round"} · ${r}px`} onChange={(r) => set({ radius: r }, "radius")} />
-        <Row label="Buttons" hint="The buttons, menus and forms of your whole platform" own={changed("buttonShape")} onReset={() => onReset(["buttonShape"])} from="the look">
-          <Segmented
-            label="Button shape"
-            value={theme.buttonShape}
-            options={BUTTONS.map((b) => ({ value: b.value, name: b.label, hint: b.label, label: <span aria-hidden className="h-3.5 w-7 bg-current opacity-70" style={{ borderRadius: b.radius }} /> }))}
-            onChange={(buttonShape) => set({ buttonShape }, "buttons")}
-          />
-        </Row>
-        <Row label="Spacing" hint="Between and inside widgets, and across your platform" own={changed("density")} onReset={() => onReset(["density"])} from="the look">
-          <Segmented label="Spacing" value={theme.density} options={[{ value: "compact", label: "Compact" }, { value: "comfortable", label: "Comfy", hint: "Comfortable" }, { value: "airy", label: "Airy" }]} onChange={(density) => set({ density }, "density")} />
-        </Row>
-        <Row label="Finish" hint={FINISHES.find((f) => f.value === widgetFinishOf(theme))?.hint} own={changed("widgetFinish")} onReset={() => onReset(["widgetFinish"])} from="the look">
-          <Segmented label="Finish" value={widgetFinishOf(theme)} options={FINISHES.map((f) => ({ ...f }))} onChange={(widgetFinish) => set({ widgetFinish }, "widget-finish")} />
         </Row>
       </InspectorSection>
 
@@ -156,14 +159,14 @@ export function AllWidgetsInspector({ draft, onReset, onBack, back, own, onClear
                   title={p.hint}
                   // The theme merge replaces the whole object: each click saves all four.
                   onClick={() => set({ widgetHeader: { ...header, [p.key]: !header[p.key] } }, `header-${p.key}`)}
-                  className={cn("flex h-8 items-center gap-1.5 px-3 text-[0.8125rem]", chip(header[p.key]))}
+                  className={cn("flex h-8 items-center gap-1.5 px-3 t-body-m", chip(header[p.key]))}
                 >
                   {header[p.key] && <Check className="size-3.5" />}
                   {p.label}
                 </button>
               ))}
             </div>
-            <p className="text-[0.6875rem] leading-4 text-muted-foreground">The icon shows with a Top or Tag title, the description when a widget shows More.</p>
+            <p className="t-caption text-muted-foreground">The icon shows with a Top or Tag title, the description when a widget shows More.</p>
           </Row>
         </div>
       </Flyout>

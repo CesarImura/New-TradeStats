@@ -4,6 +4,8 @@ import { useSearchParams } from "next/navigation"
 import type { Coach, Tier } from "./coaches"
 import type { Course } from "./learning"
 import { setStored, useStored } from "@/lib/prototype-store"
+import { isSetupSlug } from "./communities"
+import { useEmptyIfSetup } from "./use-communities"
 
 /**
  * Tiers, groups and access (ADM-14, ADM-15, ADM-29 to ADM-31). One store per
@@ -22,6 +24,8 @@ export type TierExtra = {
   trial: number
   installments: boolean
   hidden: boolean
+  /** People leave their e-mail and hear first when a seat opens. */
+  waitlist?: boolean
   role: string
   /** One line under the name on the sales page. */
   description: string
@@ -29,6 +33,11 @@ export type TierExtra = {
   features: string[]
   /** Marked "Most popular" on the sales page. */
   featured?: boolean
+  /**
+   * The courses this tier opens (Flavio, 14/11): "all" (every course, now and later) or the courses picked. Unset on
+   * tiers made before 14/11: read from the courses (a course with no tiers is open to all, see `tierUnlocks`).
+   */
+  unlocks?: "all" | string[]
 }
 
 export type TierInfo = Tier & Omit<TierExtra, "name" | "price" | "cadence">
@@ -42,9 +51,23 @@ const FEATURES = [
   ["Everything in the tiers before", "1:1 call every month", "Personal trading plan", "Direct line to the coach"],
 ]
 
-export function blankExtra(i: number): TierExtra {
-  return { trial: i === 0 ? 7 : 0, installments: false, hidden: false, role: "", description: "", features: FEATURES[Math.min(i, 2)], featured: i === 1 }
+/** What the sample communities' known tiers start with (Figma Sales · Tiers & prices). */
+const SEED_BY_ID: Record<string, Partial<TierExtra>> = {
+  core: { trial: 0, yearly: "€490", features: ["All courses", "Community and lives", "Journal feedback · 2 / month"], featured: false },
+  desk: { trial: 7, yearly: "€1,290", features: ["Everything in Inner Circle", "Daily desk call", "Journal feedback · unlimited"], featured: true },
+  vip: { trial: 0, installments: false, hidden: true, features: ["Everything in Trading Desk", "4 calls a month", "Private channel"], featured: false },
 }
+
+/** `slug`: the sample texts of Sales · Tiers & prices are Kairo FX's; every other community starts from the generic list by position (Figma Join · Subscribe: "Everything in the first tier", "Group trade reviews"…). */
+export function blankExtra(i: number, id?: string, slug?: string): TierExtra {
+  return { trial: i === 0 ? 7 : 0, installments: false, hidden: false, role: "", description: "", features: FEATURES[Math.min(i, 2)], featured: i === 1, ...(id && slug === "kairo" ? SEED_BY_ID[id] : undefined) }
+}
+
+/** An offer-only tier (Figma Sales · 03c): no price of its own and never on the sales page; clients get it from an offer link, and the price is set in each offer. */
+export const isOfferOnly = (t: { cadence?: string }) => t.cadence === "offer"
+
+/** The free tier isn't sold: the Sales tabs list only the paid ones (no free tier, visitors see the paywall first). */
+export const isFreeTier = (t: { price: string }) => (Number(t.price.replace(/[^\d.]/g, "")) || 0) === 0
 
 /** The coach's tiers with every edit made in Sales & payments. */
 export function useTiers(coach: Coach): TierInfo[] {
@@ -55,20 +78,40 @@ export function useTiers(coach: Coach): TierInfo[] {
 
 function mergeTiers(coach: Coach, extra: Record<string, TierExtra>, added: Tier[]): TierInfo[] {
   return [...coach.tiers, ...added].map((t, i) => {
-    const x = { ...blankExtra(i), ...extra[t.id] }
+    const x = { ...blankExtra(i, t.id, coach.slug), ...extra[t.id] }
     const { name, price, cadence, ...rest } = x
-    return { ...t, ...rest, name: name ?? t.name, price: price ?? t.price, cadence: cadence ?? t.cadence }
+    const cad = cadence ?? t.cadence
+    // An offer-only tier is never on the sales page, whatever the "Hidden · link only" switch says.
+    return { ...t, ...rest, hidden: rest.hidden || cad === "offer", name: name ?? t.name, price: price ?? t.price, cadence: cad }
   })
 }
 
 export function saveTier(slug: string, id: string, index: number, patch: Partial<TierExtra>) {
-  setStored<Record<string, TierExtra>>(`${slug}:tier-extra`, (all) => ({ ...all, [id]: { ...blankExtra(index), ...all[id], ...patch } }), NO_EXTRA)
+  setStored<Record<string, TierExtra>>(`${slug}:tier-extra`, (all) => ({ ...all, [id]: { ...blankExtra(index, id, slug), ...all[id], ...patch } }), NO_EXTRA)
 }
 
 export function addTier(slug: string): Tier {
   const t = { id: `t${Date.now()}`, name: "New tier", price: "€99", cadence: "month", members: 0 }
   setStored<Tier[]>(`${slug}:tiers-added`, (a) => [...a, t], NO_TIERS)
   return t
+}
+
+/** What a tier unlocks: its own choice, or (older tiers) what the courses say: every course open to it means "all". */
+export function tierUnlocks(t: { id: string; unlocks?: "all" | string[] }, courses: Pick<Course, "id" | "tiers" | "status">[]): "all" | string[] {
+  if (t.unlocks) return t.unlocks
+  const live = courses.filter((c) => c.status !== "archived")
+  const open = live.filter((c) => c.tiers.length === 0 || c.tiers.includes(t.id)).map((c) => c.id)
+  return open.length === live.length ? "all" : open
+}
+
+/**
+ * The tiers a new course is open to: those that unlock all courses (`[]` when that is every tier, as courses store it).
+ * When every tier picked its courses, the new course is in none of them yet (`NO_TIER`, an id no tier has).
+ */
+export const NO_TIER = "none"
+export function tiersForNewCourse(tiers: { id: string; unlocks?: "all" | string[] }[]) {
+  const all = tiers.filter((t) => (t.unlocks ?? "all") === "all").map((t) => t.id)
+  return all.length === tiers.length ? [] : all.length ? all : [NO_TIER]
 }
 
 export const amount = (price: string) => Number(price.replace(/[^\d.]/g, "")) || 0
@@ -90,14 +133,18 @@ export type Group = {
   waitlist: boolean
   channel: boolean
   ranking: boolean
+  /** One line under the name in the groups table. */
+  description?: string
 }
 
-const SEED_GROUPS = [
-  { id: "oct", name: "October cohort", start: "2026-10-01", end: "2026-12-17", seats: 30, members: 24, waiting: 0, tiers: [0, 1] },
-  { id: "nov", name: "November cohort", start: "2026-11-02", end: "2027-01-21", seats: 30, members: 11, waiting: 0, tiers: [0, 1] },
-  { id: "mastermind", name: "Funded mastermind", start: "2026-10-05", end: "2026-11-30", seats: 12, members: 12, waiting: 7, tiers: [1, 2] },
+/** `tiers`: tier ids (or indexes into the coach's tiers). Extras per group are optional: channel defaults to on, ranking to the coach's module. */
+const SEED_GROUPS: { id: string; name: string; description: string; start: string; end: string; seats: number; members: number; waiting: number; tiers: (string | number)[]; channel?: boolean; ranking?: boolean }[] = [
+  { id: "dec", name: "December cohort", description: "A new cohort. Students join it at checkout or you add them.", start: "2025-12-01", end: "2026-02-28", seats: 20, members: 6, waiting: 0, tiers: ["desk"], channel: true, ranking: true },
+  { id: "futures", name: "Futures A", description: "Futures traders, US session", start: "2025-10-06", end: "2025-12-31", seats: 0, members: 12, waiting: 0, tiers: ["desk"], channel: true, ranking: false },
+  { id: "futures-b", name: "Futures B", description: "Futures traders, second cohort", start: "2026-01-05", end: "2026-03-31", seats: 12, members: 8, waiting: 0, tiers: ["desk"], channel: true, ranking: false },
 ]
 
+const NO_GROUPS: Group[] = []
 const groupCache = new Map<string, Group[]>()
 /** Sample groups, with the coach's own tier ids. Stable per coach, as the store needs. */
 export function defaultGroups(coach: Coach): Group[] {
@@ -106,27 +153,28 @@ export function defaultGroups(coach: Coach): Group[] {
   const ids = coach.tiers.map((t) => t.id)
   const list = SEED_GROUPS.map((g) => ({
     ...g,
-    tiers: [...new Set(g.tiers.map((i) => ids[Math.min(i, ids.length - 1)]).filter(Boolean))],
+    tiers: [...new Set(g.tiers.map((i) => (typeof i === "string" ? (ids.includes(i) ? i : ids[ids.length - 1]) : ids[Math.min(i, ids.length - 1)])).filter(Boolean))],
     waitlist: true,
-    channel: true,
-    ranking: coach.modules.ranking,
+    channel: g.channel ?? true,
+    ranking: g.ranking ?? coach.modules.ranking,
   }))
   groupCache.set(coach.slug, list)
   return list
 }
 
 export function useGroups(coach: Coach) {
-  return useStored(`${coach.slug}:groups`, defaultGroups(coach))
+  const sample = defaultGroups(coach)
+  return useEmptyIfSetup(coach.slug, useStored(`${coach.slug}:groups`, sample), sample, NO_GROUPS)
 }
 
 export function saveGroups(coach: Coach, update: (g: Group[]) => Group[]) {
-  setStored(`${coach.slug}:groups`, update, defaultGroups(coach))
+  setStored(`${coach.slug}:groups`, update, isSetupSlug(coach.slug) ? NO_GROUPS : defaultGroups(coach))
 }
 
 export const isFull = (g: Group) => g.members >= g.seats
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-/** "2026-10-01" → "1 Oct 2026" */
+/** "2025-10-30" → "30 Oct 2025" */
 export function fmtDate(iso: string, year = true) {
   const [y, m, d] = iso.split("-").map(Number)
   if (!y || !m || !d) return iso
@@ -153,7 +201,17 @@ export type AccessSettings = {
   modules: Record<string, string[]>
   /** "courseId/groupId" → when the group gets it. Missing means "tier". */
   groups: Record<string, GroupRule>
+  /** Which tiers get each feature of the community ("journal", "live", "charts", "ai"). Missing means the defaults below. */
+  features?: Record<string, string[]>
 }
+
+/** Features that follow a tier, in the order the Access tab lists them. Charts and the AI start with the higher tiers. */
+export const ACCESS_FEATURES = [
+  { id: "journal", name: "Journal feedback", from: 0 },
+  { id: "live", name: "Livestreams", from: 0 },
+  { id: "charts", name: "Charts", from: 1 },
+  { id: "ai", name: "AI assistant", from: 1 },
+]
 
 const NO_ACCESS: AccessSettings = { locked: "show", modules: {}, groups: {} }
 
@@ -219,7 +277,7 @@ export function useViewerGroup(coach: Coach): Group | undefined {
   return groups.find((g) => g.id === id)
 }
 
-const TODAY = "2026-10-12"
+const TODAY = "2025-11-10"
 const OFFSET: Partial<Record<GroupRule, number>> = { start: 0, week2: 7, week3: 14, week4: 21 }
 
 /** For a group member: is the course open yet, and from when. `null` when the group rule doesn't apply. */

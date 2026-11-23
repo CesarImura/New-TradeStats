@@ -1,18 +1,16 @@
 "use client"
 
-import { useRef } from "react"
-import { toast } from "sonner"
-import { ImagePlus } from "@/components/icons"
+import { toast } from "@/lib/toast"
+import { Dropzone } from "@/components/admin/ui"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { saveBookingUrl, useBookingUrl } from "@/lib/data/booking"
 import { JOIN_SCREENS, joinTheme, type JoinCopy, type JoinDraft, type JoinLook, type JoinScreenId } from "@/lib/data/join"
 import { pictureFrom } from "@/lib/images"
 import { onColor } from "@/lib/theme/derive"
-import { cn } from "@/lib/utils"
 import { BackgroundControl } from "../fields/background-control"
 import { Field, InspectorSection, Segmented, Swatches } from "../fields/controls"
 import { useDesign } from "../fields/design-fields"
-import { card } from "../states"
 import { InspectorTop } from "./widget-inspector"
 
 /** What each screen says when the coach hasn't changed it: shown as the field's hint, so an empty field is never a mystery. */
@@ -42,7 +40,7 @@ function JoinLook() {
   return (
     <InspectorSection title="Look · all Join screens" defaultOpen={false} summary={custom ? "Custom" : "Platform"}>
       <div className="grid gap-4">
-        <p className="text-xs leading-4 text-muted-foreground">Shared by Log in, Sign up and Subscribe. The platform your members use after they join does not change.</p>
+        <p className="t-caption text-muted-foreground">Shared by Log in, Sign up and Subscribe. The platform your members use after they join does not change.</p>
         <Segmented
           label="Look of the Join screens"
           value={custom ? "custom" : "platform"}
@@ -101,6 +99,7 @@ function JoinLook() {
 export function JoinInspector({ screen }: { screen: JoinScreenId }) {
   const { coach } = useDesign()
   const { join, set } = useJoin()
+  const booking = useBookingUrl(coach.slug)
   const info = JOIN_SCREENS.find((s) => s.id === screen)!
   const copy: JoinCopy = join.screens?.[screen] ?? {}
   const def = DEFAULTS[screen]
@@ -108,7 +107,6 @@ export function JoinInspector({ screen }: { screen: JoinScreenId }) {
   const edit = (patch: Partial<JoinCopy>, key: string) => set({ ...join, screens: { ...join.screens, [screen]: { ...copy, ...patch } } }, `${screen}-${key}`)
   // The checkout is one task on one screen: it has no side picture, no second way in.
   const account = screen !== "subscribe"
-  const file = useRef<HTMLInputElement>(null)
   const text = (key: "title" | "subtitle" | "button", label: string, hint: string) => (
     <Field label={label}>
       <Input
@@ -117,7 +115,7 @@ export function JoinInspector({ screen }: { screen: JoinScreenId }) {
         aria-label={label}
         maxLength={key === "subtitle" ? 120 : 48}
         onChange={(e) => edit({ [key]: e.target.value || undefined }, key)}
-        className="h-8 text-[0.8125rem]"
+        className="h-8 t-body-m"
       />
     </Field>
   )
@@ -125,13 +123,26 @@ export function JoinInspector({ screen }: { screen: JoinScreenId }) {
   return (
     <div>
       <InspectorTop>
-        <span className="truncate text-[0.875rem] font-semibold">{info.label}</span>
+        <span className="truncate t-body-l-medium">{info.label}</span>
       </InspectorTop>
       <div className="grid gap-4 px-5 pb-5">
-        <p className="text-xs leading-4 text-muted-foreground">{info.hint}. Leave a field empty to keep the default words.</p>
+        <p className="t-caption text-muted-foreground">{info.hint}. Leave a field empty to keep the default words.</p>
         {text("title", "Title", def.title(coach.name))}
         {text("subtitle", "Subtitle", def.subtitle)}
         {def.button && text("button", "Button", def.button)}
+        {screen === "subscribe" && (
+          <Field label="Booking link">
+            <Input
+              type="url"
+              value={booking}
+              placeholder="https://calendly.com/your-name/intro-call"
+              aria-label="Booking link"
+              maxLength={200}
+              onChange={(e) => saveBookingUrl(coach.slug, e.target.value)}
+              className="h-8 t-body-m"
+            />
+          </Field>
+        )}
       </div>
       {account && (
         <InspectorSection title="Layout">
@@ -149,33 +160,25 @@ export function JoinInspector({ screen }: { screen: JoinScreenId }) {
             </Field>
             {copy.layout === "split" && (
               <Field label="Picture">
-                <button type="button" onClick={() => file.current?.click()} className={cn("flex h-20 items-center justify-center gap-2 overflow-hidden rounded-md border border-dashed bg-cover bg-center text-xs text-muted-foreground", card(!!copy.sideImage))} style={copy.sideImage ? { backgroundImage: `url("${copy.sideImage}")` } : undefined}>
-                  {!copy.sideImage && (
-                    <>
-                      <ImagePlus className="size-4" /> Add a picture
-                    </>
-                  )}
-                </button>
-                <input
-                  ref={file}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0]
-                    e.target.value = ""
-                    if (!f) return
-                    try {
-                      edit({ sideImage: await pictureFrom(f, { max: 1200, side: "width", quality: 0.8, keep: [] }) }, "side")
-                    } catch (err) {
-                      toast.error((err as Error).message)
-                    }
-                  }}
-                />
-                {copy.sideImage && (
-                  <Button variant="ghost" size="sm" className="w-fit" onClick={() => edit({ sideImage: undefined }, "side")}>
-                    Remove picture
-                  </Button>
+                {copy.sideImage ? (
+                  <>
+                    <div role="img" aria-label="The picture beside the card" className="h-20 overflow-hidden rounded-a-10 border border-a-border bg-cover bg-center" style={{ backgroundImage: `url(${copy.sideImage})` }} />
+                    <Button variant="ghost" size="sm" className="w-fit" onClick={() => edit({ sideImage: undefined }, "side")}>
+                      Remove picture
+                    </Button>
+                  </>
+                ) : (
+                  <Dropzone
+                    title="Add a picture"
+                    accept="image/jpeg,image/png,image/webp"
+                    onFiles={async ([f]) => {
+                      try {
+                        edit({ sideImage: await pictureFrom(f, { max: 1200, side: "width", quality: 0.8, keep: [] }) }, "side")
+                      } catch (err) {
+                        toast.error((err as Error).message)
+                      }
+                    }}
+                  />
                 )}
               </Field>
             )}

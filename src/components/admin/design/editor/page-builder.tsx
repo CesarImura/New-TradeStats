@@ -1,7 +1,6 @@
 "use client"
-
-import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
-import { animate, cancelFrame, frame, motion, motionValue, useReducedMotion, type MotionValue } from "motion/react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { animate, cancelFrame, frame, motion, motionValue, useReducedMotion } from "motion/react"
 import { Info, LayoutGrid, Minus, Plus } from "@/components/icons"
 import { CoachContext, useCoach } from "@/components/coach/coach-provider"
 import { Toaster } from "@/components/ui/sonner"
@@ -16,44 +15,18 @@ import { themeToCss } from "@/lib/theme/css"
 import { widgetFinishOf, widgetSetOf, type CoachTheme } from "@/lib/theme/types"
 import { GAP, ROW_HEIGHT, stackOrder, uid, type WidgetInstance } from "@/lib/widgets/layout"
 import { cn } from "@/lib/utils"
+import { AdminButton, Callout } from "@/components/admin/ui"
 import { resolve, type PickTarget } from "@/lib/design-pick"
-import { ShellEditorContext, StudentShell } from "@/components/shells/student-shell"
+import { ShellEditorContext } from "@/components/shells/student-shell"
 import type { AddOptions } from "../panels/builder-panels"
 import { CANVAS_TOASTS } from "./canvas-toast"
 import { GridWidget } from "./grid-widget"
-import { DropRect, GapAreas, GapStore, SizePill, SnapGrid, type Rect } from "./drag-marks"
+import { DropRect, GapAreas, GapStore, SizePill, SnapGrid } from "./drag-marks"
 import { useArrange, type Arrange } from "./use-arrange"
+import { BODY, BodyCtx, colsLabel, DEVICE_HEIGHT, DEVICE_WIDTH, HANDLES, inWidget, NEW, PAD, REST, rowsLabel, same, setCursor, SHELL_CSS, ShellFrame, ZOOMS, type Carried, type Device, type Mark } from "./canvas-parts"
 import { WidgetMenu } from "./widget-menu"
 
-export { useArrange, type Arrange }
-
-const DEVICE_WIDTH: Record<Device, number> = { desktop: 1180, tablet: 820, phone: 390 }
-const PAD = { desktop: 32, tablet: 24, phone: 16 }
-
-export type Device = "desktop" | "tablet" | "phone"
-
-/** Where a moving or arriving card would land, and the exact rectangle it will take (px on the page). */
-type Mark = { at: Target; rect: Rect }
-/** What a drag says on the card being resized. */
-const colsLabel = (n: number) => `${n} ${n === 1 ? "column" : "columns"}`
-/** Rows count in halves: "1 row", "4½ rows", "½ row". */
-const rowsLabel = (n: number) => {
-  const whole = Math.floor(n + 1e-6)
-  const half = n - whole > 0.25
-  return `${whole || !half ? whole : ""}${half ? "½" : ""} ${n === 1 ? "row" : "rows"}`
-}
-/** How long the pointer rests on a spot before the cards in the way move aside (ms). */
-const REST = 350
-/** The motion values of a card being carried: its box, and how much it is lifted. */
-type Carried = { x: MotionValue<number>; y: MotionValue<number>; w: MotionValue<number>; h: MotionValue<number>; s: MotionValue<number> }
-/** The pointer while something is dragged. */
-const setCursor = (c: string) => {
-  document.body.style.cursor = c
-}
-/** A card that has not been saved yet (a widget on its way in from the library). */
-const NEW = "__new"
-/** Whether two arrangements are the same cards in the same rectangles. */
-const same = (a: WidgetInstance[], b: WidgetInstance[]) => JSON.stringify(a.map((c) => [c.id, c.x, c.y, c.w, c.h])) === JSON.stringify(b.map((c) => [c.id, c.x, c.y, c.w, c.h]))
+export { useArrange, type Arrange, type Device }
 
 /**
  * The page as students see it (free cards, see planTiles and WidgetGrid) in the
@@ -490,6 +463,7 @@ export function ArrangeCanvas({
   const area = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLDivElement>(null)
   const [areaWidth, setAreaWidth] = useState(0)
+  const [areaHeight, setAreaHeight] = useState(0)
   const [canvasHeight, setCanvasHeight] = useState(0)
   useEffect(() => {
     const a = area.current
@@ -497,6 +471,7 @@ export function ArrangeCanvas({
     if (!a || !c) return
     const ro = new ResizeObserver(() => {
       setAreaWidth(a.clientWidth)
+      setAreaHeight(a.clientHeight)
       setCanvasHeight(c.offsetHeight)
     })
     ro.observe(a)
@@ -509,7 +484,11 @@ export function ArrangeCanvas({
   const logicalWidth = shellOn && device === "desktop" ? 1440 : DEVICE_WIDTH[device]
   // Zoom, as in Framer and Figma: "fit" fills the width; a number is a fixed scale and the workspace scrolls both ways.
   const [zoom, setZoom] = useState<number | "fit">("fit")
-  const fit = areaWidth ? Math.min(1, (areaWidth - 96) / logicalWidth) : 1
+  // Fit shows the whole page above the zoom bar (Figma: 64 above, 64 below): by width, and by height down to 40 %, below which a long page scrolls instead.
+  const fitWidth = areaWidth ? Math.min(1, (areaWidth - 96) / logicalWidth) : 1
+  // A device screen sits clear of the notice above it and the zoom bar below (Figma: 93 % in a 1080 px window).
+  const fitHeight = areaHeight && canvasHeight ? (areaHeight - (shellOn && DEVICE_HEIGHT[device] ? 224 : 128)) / canvasHeight : 1
+  const fit = Math.min(fitWidth, Math.max(fitHeight, 0.4))
   const scale = hold ?? (zoom === "fit" ? fit : zoom)
   useEffect(() => {
     scaleNow.current = scale
@@ -619,10 +598,10 @@ export function ArrangeCanvas({
                 >
                   {/* A widget is on its way from the gallery: the whole page takes it. */}
                   {incoming && (
-                    <span aria-hidden className="pointer-events-none absolute -inset-3 z-0 rounded-[calc(var(--radius)+12px)] border-2 border-dashed border-[var(--ts-interactive)]/35 transition-opacity" />
+                    <span aria-hidden className="pointer-events-none absolute -inset-3 z-0 rounded-[calc(var(--radius)+12px)] border-2 border-dashed border-a-border-active/35 transition-opacity" />
                   )}
                   {layout.items.length === 0 && !arriving && (
-                    <div className="pointer-events-none grid min-h-48 place-items-center rounded-(--radius) border-2 border-dashed text-sm text-muted-foreground">
+                    <div className="pointer-events-none grid min-h-48 place-items-center rounded-(--radius) border-2 border-dashed t-body-l text-muted-foreground">
                       <span className="flex items-center gap-2">
                         <LayoutGrid className="size-4" /> Drag widgets from the gallery onto the page
                       </span>
@@ -682,7 +661,7 @@ export function ArrangeCanvas({
                           {item}
                         </div>
                         {allWidgets && (
-                          <span aria-hidden className="pointer-events-none absolute -inset-[4px] z-20 rounded-[calc(var(--radius)+4px)] border border-dashed border-[var(--ts-interactive)]/50" />
+                          <span aria-hidden className="pointer-events-none absolute -inset-[4px] z-20 rounded-[calc(var(--radius)+4px)] border border-dashed border-a-border-active/50" />
                         )}
                         {/* The card's edges and corners: hit zones inside its own edge and on half the gap around it, so it resizes without being
                             selected first and neighbours' zones never overlap. Not for the page title and tool (as tall as their content). */}
@@ -739,19 +718,18 @@ export function ArrangeCanvas({
       {/* The workspace: a mid grey round the page, so the page (in the coach's colours) always stands out from the editor's black panels. */}
       <div
         ref={area}
-        className={cn("h-full min-w-0 overflow-auto bg-[#2b2b2e] px-12 pt-16 pb-28 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", spaceDown && "cursor-grab active:cursor-grabbing")}
+        className={cn("h-full min-w-0 overflow-auto px-12 pt-16 pb-28 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", spaceDown && "cursor-grab active:cursor-grabbing")}
         onClick={() => setSelected(null)}
         onPointerDownCapture={startPan}
       >
         {device !== "desktop" && (
-          <div className="mx-auto mb-3 flex max-w-xl items-center gap-2 rounded-[6px] border bg-card px-3 py-2 text-xs text-muted-foreground">
-            <Info className="size-4 shrink-0" />
+          <Callout icon={<Info className="size-4" />} className="mx-auto mb-3 max-w-xl bg-a-panel">
             This is how the page reflows on {device === "tablet" ? "tablets" : "phones"}. Arrange widgets on desktop; the order here follows it, top to bottom and left to right.
-          </div>
+          </Callout>
         )}
         <div className="relative mx-auto" style={{ width: logicalWidth * scale, height: canvasHeight * scale, minWidth: logicalWidth * scale, transition: easeScale ? "width 180ms var(--ease-out), min-width 180ms var(--ease-out)" : undefined }}>
           {/* The frame's outline is drawn here, at screen size, with no drop shadow: a blurred shadow on a dark grey shows as banded strips beside the frame. */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 ring-1 ring-white/[0.08]" style={{ borderRadius: device === "desktop" ? 12 : 28 }} />
+          <div aria-hidden className="pointer-events-none absolute inset-0 ring-1 ring-a-border" style={{ borderRadius: device === "desktop" ? 12 : 28 }} />
           <DataModeProvider value={data}>
             <BodyCtx.Provider value={body}>
             <div
@@ -775,7 +753,7 @@ export function ArrangeCanvas({
               }}
               className={cn(canvasClass, "origin-top-left overflow-hidden bg-background font-sans text-foreground", spaceDown && "pointer-events-none")}
               // The same corners as the preview frame (12px on screen, 28px on a tablet or phone), whatever the zoom.
-              style={{ width: logicalWidth, transform: `scale(${scale})`, transition: easeScale ? "transform 180ms var(--ease-out)" : undefined, padding: shellOn ? 0 : PAD[device], borderRadius: (device === "desktop" ? 12 : 28) / (scale || 1), "--ui-zoom": scale ? Math.min(2.5, 1 / scale) : 1 } as React.CSSProperties}
+              style={{ width: logicalWidth, height: shellOn ? DEVICE_HEIGHT[device] : undefined, overflowY: shellOn && DEVICE_HEIGHT[device] ? "auto" : undefined, transform: `scale(${scale})`, transition: easeScale ? "transform 180ms var(--ease-out)" : undefined, padding: shellOn ? 0 : PAD[device], borderRadius: (device === "desktop" ? 12 : 28) / (scale || 1), "--ui-zoom": scale ? Math.min(2.5, 1 / scale) : 1 } as React.CSSProperties}
             >
               {shellOn ? (
                 <ShellEditorContext.Provider value={shellCtx}>
@@ -789,28 +767,28 @@ export function ArrangeCanvas({
           </DataModeProvider>
         </div>
       </div>
-      {/* The floating bar under the page (Framer, Figma): zoom, fit, and arranging the page. */}
-      <div role="toolbar" aria-label="Canvas" className="absolute bottom-4 left-1/2 z-30 flex h-10 -translate-x-1/2 items-center gap-0.5 rounded-xl border border-white/10 bg-[#141416] p-1 text-white shadow-[0_12px_32px_-12px_rgb(0_0_0/0.8)]">
-        <button type="button" className={BAR} aria-label="Zoom out" title="Zoom out (⌘ −)" onClick={() => stepZoom(-1)}>
-          <Minus className="size-4" />
-        </button>
-        <button type="button" className={cn(BAR, "w-14 text-xs tabular-nums")} title="Fit to screen (⌘ 0)" aria-label={`Zoom ${Math.round(scale * 100)}%. Fit to screen`} onClick={() => setZoom("fit")}>
+      {/* The floating bar under the page (Figma Admin / Editor Zoom): a Panel with ghost buttons, 16 px from the bottom. */}
+      <div role="toolbar" aria-label="Canvas" className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-0.5 rounded-a-md border border-a-border bg-a-panel p-1">
+        <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Zoom out" title="Zoom out (⌘ −)" onClick={() => stepZoom(-1)}>
+          <Minus />
+        </AdminButton>
+        <AdminButton hierarchy="ghost" size="md" className="min-w-12 t-mono-data tabular-nums" title="Fit to screen (⌘ 0)" aria-label={`Zoom ${Math.round(scale * 100)}%. Fit to screen`} onClick={() => setZoom("fit")}>
           {Math.round(scale * 100)}%
-        </button>
-        <button type="button" className={BAR} aria-label="Zoom in" title="Zoom in (⌘ +)" onClick={() => stepZoom(1)}>
-          <Plus className="size-4" />
-        </button>
-        <span aria-hidden className="mx-1 h-5 w-px bg-white/12" />
-        <button type="button" className={cn(BAR, "px-2.5 text-xs", zoom === "fit" && "text-white")} aria-pressed={zoom === "fit"} title="Fit the page to the screen (⌘ 0)" onClick={() => setZoom("fit")}>
+        </AdminButton>
+        <AdminButton hierarchy="ghost" size="md" iconOnly aria-label="Zoom in" title="Zoom in (⌘ +)" onClick={() => stepZoom(1)}>
+          <Plus />
+        </AdminButton>
+        <span aria-hidden className="mx-1 h-5 w-px bg-a-border" />
+        <AdminButton hierarchy="ghost" size="md" className={cn(zoom === "fit" && "text-a-text")} aria-pressed={zoom === "fit"} title="Fit the page to the screen (⌘ 0)" onClick={() => setZoom("fit")}>
           Fit
-        </button>
+        </AdminButton>
         {/* Only when the page has empty space: one click closes it (one undo step). */}
         {arrange.gaps && device === "desktop" && (
           <>
-            <span aria-hidden className="mx-1 h-5 w-px bg-white/12" />
-            <button type="button" data-fill-gaps className={cn(BAR, "px-2.5 text-xs")} title="Close the empty space between cards" onClick={arrange.fillAll}>
+            <span aria-hidden className="mx-1 h-5 w-px bg-a-border" />
+            <AdminButton hierarchy="ghost" size="md" data-fill-gaps title="Close the empty space between cards" onClick={arrange.fillAll}>
               Fill gaps
-            </button>
+            </AdminButton>
           </>
         )}
       </div>
@@ -820,54 +798,4 @@ export function ArrangeCanvas({
     </PageIdContext.Provider>
   )
 }
-
-/**
- * The platform's shell drawn inside the canvas: the canvas is scaled (a transform), so the shell's fixed parts (the side
- * menu, the backdrop) are placed in it already; they just must not take the window's height.
- */
-const SHELL_CSS =
-  // A card that arrives fades and scales in (0.98 to 1); reduced motion zeroes it in globals.css.
-  `@keyframes hb-in{from{opacity:0;scale:.98}to{opacity:1;scale:1}}.hb-enter{animation:hb-in 180ms var(--ease-out)}` +
-  `[data-shell] [data-slot=sidebar-container]{height:auto!important}[data-shell] .min-h-svh{min-height:0!important}` +
-  // Click to edit shows itself: a part that opens a setting (the logo, the menu, a heading, a label) is outlined under the pointer, as in the preview.
-  // Only the innermost part: pointing at a menu item outlines the item, not also the whole side menu around it.
-  `[data-shell] :is([data-edit],h1,h2,h3,.eyebrow):not([data-slot=widget] *):not(:has([data-edit]:hover)):hover{outline:calc(1.5px * var(--ui-zoom,1)) solid rgb(244 244 245 / .55);outline-offset:3px;border-radius:4px;cursor:pointer}`
-
-/** A click inside a widget, its quick bar or the canvas tools: the builder's own, never click-to-edit. */
-const inWidget = (t: EventTarget | null) => t instanceof Element && !!t.closest("[data-widget-id], .group\\/wrap, .no-drag, [role=toolbar]")
-
-/** Hit zones of a card: inside its edge (6px on the screen) and half the gap outside it; corners are squares over both edges. */
-const IN = "calc(6px * var(--ui-zoom,1))"
-const OUT = "calc(var(--gap) / 2)"
-const OUTN = `calc(${OUT} * -1)`
-const EDGE = `calc(${IN} + ${OUT})`
-const CORNER = `calc(12px * var(--ui-zoom,1) + ${OUT})`
-const HANDLES: { name: string; edges: Edges; cursor: string; corner?: boolean; style: React.CSSProperties }[] = [
-  { name: "right", edges: { r: true }, cursor: "ew-resize", style: { top: 0, bottom: 0, right: OUTN, width: EDGE } },
-  { name: "left", edges: { l: true }, cursor: "ew-resize", style: { top: 0, bottom: 0, left: OUTN, width: EDGE } },
-  { name: "top", edges: { t: true }, cursor: "ns-resize", style: { left: 0, right: 0, top: OUTN, height: EDGE } },
-  { name: "bottom", edges: { b: true }, cursor: "ns-resize", style: { left: 0, right: 0, bottom: OUTN, height: EDGE } },
-  { name: "top-left", edges: { t: true, l: true }, cursor: "nwse-resize", corner: true, style: { top: OUTN, left: OUTN, width: CORNER, height: CORNER } },
-  { name: "top-right", edges: { t: true, r: true }, cursor: "nesw-resize", corner: true, style: { top: OUTN, right: OUTN, width: CORNER, height: CORNER } },
-  { name: "bottom-left", edges: { b: true, l: true }, cursor: "nesw-resize", corner: true, style: { bottom: OUTN, left: OUTN, width: CORNER, height: CORNER } },
-  { name: "bottom-right", edges: { b: true, r: true }, cursor: "nwse-resize", corner: true, style: { bottom: OUTN, right: OUTN, width: CORNER, height: CORNER } },
-]
-
-/**
- * The page's content is handed to the platform's shell through a context: the shell (side menu, top bar) draws again only when it changes
- * itself, not at every step of a drag. `BODY` is the same element every time, so the shell is skipped, and `Body` draws what the editor says.
- */
-const BodyCtx = createContext<React.ReactNode>(null)
-function Body() {
-  return useContext(BodyCtx)
-}
-const BODY = <Body />
-const ShellFrame = memo(function ShellFrame({ children }: { children: React.ReactNode }) {
-  return <StudentShell>{children}</StudentShell>
-})
-
-/** Zoom steps for − and +, as in Figma. */
-const ZOOMS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.25, 1.5, 2]
-/** One button of the floating canvas bar: 32px, white on near-black, a lighter fill on hover. */
-const BAR = "grid h-8 min-w-8 grid-flow-col place-items-center rounded-lg text-white/70 outline-none transition-[background-color,color,scale] duration-150 ease-out hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70 active:scale-[0.96]"
 

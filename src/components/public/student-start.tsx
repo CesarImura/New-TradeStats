@@ -60,6 +60,8 @@ export function StudentStart() {
   const setP = (patch: Partial<typeof p>) => saveStudentStart(coach.slug, (s) => ({ ...s, profile: { ...s.profile, ...patch } }))
   const first = purchase?.name?.split(" ")[0] || "there"
 
+  // Rule (19/11): Welcome only informs, so Continue is open. A step made only of optional questions (profile, Discord) enables Continue after at least one answer; Skip is always open.
+  const answered = step === "profile" ? !!p.nickname.trim() || !!p.experience || p.markets.length > 0 || !!p.goal || Object.values(p.answers ?? {}).some((v) => v.trim()) : step === "discord" ? linked : true
   const next = () => {
     if (i < steps.length - 1) return setI(i + 1)
     saveStudentStart(coach.slug, (s) => ({ ...s, stage: "new", tour: settings.tour, dismissed: false }))
@@ -207,7 +209,7 @@ export function StudentStart() {
                   Skip
                 </Button>
               )}
-              <Button onClick={next}>
+              <Button onClick={next} disabled={!answered}>
                 {i === steps.length - 1 ? `Go to ${coach.wording.home}` : "Continue"} <ArrowRight />
               </Button>
             </div>

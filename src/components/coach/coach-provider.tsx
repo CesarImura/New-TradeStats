@@ -69,6 +69,19 @@ function usePreviewFlag() {
   return param || seen
 }
 
+/**
+ * The onboarding preview (?modules=all, with ?preview=draft): every module on, so the coach sees the theme's page as it
+ * was designed instead of the few cards their default modules keep (the rest would leave the grid and stretch them).
+ * Sticky like the preview flag.
+ */
+function useAllModulesFlag() {
+  const param = useSearchParams().get("modules") === "all"
+  const [seen, setSeen] = useState(param)
+  if (param && !seen) setSeen(true)
+  return param || seen
+}
+const ALL_MODULES: Coach["modules"] = { courses: true, calendar: true, charts: true, community: true, journal: true, ranking: true, ai: true, downloads: true, partners: true }
+
 function ThemedProvider({
   slug,
   base,
@@ -78,8 +91,12 @@ function ThemedProvider({
   hydrated,
 }: ProviderProps & { original: Coach; hydrated: boolean }) {
   const preview = usePreviewFlag()
+  const allModules = useAllModulesFlag() && preview
   const overrides = useOverrides(slug, preview ? "draft" : "published")
-  const coach = useMemo(() => resolveCoach(original, overrides.content), [original, overrides.content])
+  const coach = useMemo(() => {
+    const c = resolveCoach(original, overrides.content)
+    return allModules ? { ...c, modules: ALL_MODULES } : c
+  }, [original, overrides.content, allModules])
   const theme = useMemo(() => resolveTheme(coach, overrides.theme), [coach, overrides.theme])
 
   // Next.js keeps the previous page mounted but hidden, so several coaches'

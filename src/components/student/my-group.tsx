@@ -8,7 +8,7 @@ import { fmtDate, groupOpening, useAccess, useViewerGroup } from "@/lib/data/acc
 import { studentCourses, useCatalog } from "@/lib/data/learning"
 import { cn } from "@/lib/utils"
 
-const TODAY = "2026-10-12"
+const TODAY = "2025-11-10"
 
 /** STU-31: the student's cohort: dates, who's in it, and what opens when. */
 export function MyGroup() {

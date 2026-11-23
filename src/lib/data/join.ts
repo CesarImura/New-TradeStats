@@ -14,7 +14,7 @@ export const JOIN_SCREENS: { id: JoinScreenId; label: string; hint: string; rout
 ]
 
 /** The pages that take the Join look: the three above, plus the invite and waiting-list pages that sit beside them. */
-const JOIN_ROUTES = ["login", "join", "invite", "checkout", "waitlist", "welcome"]
+const JOIN_ROUTES = ["login", "join", "invite", "checkout", "offer", "waitlist", "welcome"]
 export const isJoinPath = (path: string, base: string) => JOIN_ROUTES.some((r) => path === `${base}/${r}` || path.startsWith(`${base}/${r}/`))
 
 export type JoinCopy = {

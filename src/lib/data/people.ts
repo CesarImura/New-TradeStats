@@ -1,7 +1,8 @@
 // Coach-side sample data: students, team, money, AI, ranking.
-// The prototype's "today" is Monday 12 October 2026, 09:00.
+// The prototype's "today" is Monday 10 November 2025, 09:00.
 
 import type { Health } from "./sample"
+import { generatedStudents } from "./people-generated"
 
 export type Student = {
   id: string
@@ -21,6 +22,8 @@ export type Student = {
   discord: boolean
   country: string
   coach?: string // assistant coach
+  /** Joined through an offer link (Offers): the plan and where the instalments stand. */
+  offer?: { name: string; plan: number; paidCount: number; each: number; next: string; sentBy: string; failed?: boolean }
   trades30: number
   rules: number // % rules kept, last 30 days
   notes: { by: string; when: string; text: string }[]
@@ -29,113 +32,157 @@ export type Student = {
 
 const H = (when: string, text: string) => ({ when, text })
 
-export const STUDENTS: Student[] = [
+const FEATURED_STUDENTS: Student[] = [
   {
-    id: "s1", name: "Alex Moreau", initials: "AM", email: "alex.moreau@mail.com", tier: "core", group: "October cohort", progress: 62, lastActive: "today", activeDays: 11, health: "red", reason: "Payment failed",
-    joined: "3 Mar 2026", paid: 1043, broker: true, discord: true, country: "FR", trades30: 41, rules: 84,
-    notes: [{ by: "Marco", when: "2 Oct", text: "Wants to pass a 50K funded challenge before December. Push the daily loss limit module." }],
-    history: [H("Today 07:12", "Payment of €149 failed (card expired)"), H("Fri 9 Oct", "Asked for review: NQ long −1.2R"), H("1 Oct", "Joined October cohort"), H("3 Mar", "Joined Core")],
+    id: "s1", name: "Alex Moreau", initials: "AM", email: "alex.moreau@mail.com", tier: "desk", group: "Futures A", progress: 62, lastActive: "2 h ago", activeDays: 11, health: "red", reason: "Payment failed",
+    joined: "18 Jun 2025", paid: 645, broker: true, discord: true, country: "FR", trades30: 41, rules: 94,
+    notes: [{ by: "Marco", when: "31 Oct", text: "Wants to pass a 50K funded challenge before December. Push the daily loss limit module." }],
+    history: [H("Today 07:12", "Payment of €129 failed (card declined)"), H("Fri 7 Nov", "Asked for review: NQ long −1.2R"), H("6 Oct", "Joined Futures A"), H("18 Jun", "Joined Trading Desk")],
   },
   {
-    id: "s2", name: "Mia Sørensen", initials: "MS", email: "mia.s@proton.me", tier: "desk", progress: 81, lastActive: "today", activeDays: 13, health: "red", reason: "Broke daily loss limit twice",
-    joined: "12 Jan 2026", paid: 3510, broker: true, discord: true, country: "DK", coach: "Jana", trades30: 68, rules: 71,
-    notes: [{ by: "Jana", when: "8 Oct", text: "Revenge trades after the first loss. Suggest a hard stop after −2R." }],
-    history: [H("Fri 9 Oct", "Broke daily loss limit"), H("Wed 7 Oct", "Broke daily loss limit"), H("12 Jan", "Joined Trading Desk")],
+    id: "s2", name: "Mia Sørensen", initials: "MS", email: "mia.s@proton.me", tier: "desk", group: "Futures A", progress: 48, lastActive: "today", activeDays: 13, health: "amber", reason: "Broke loss limit twice",
+    joined: "2 Aug 2025", paid: 3510, broker: true, discord: true, country: "DK", coach: "Jana", trades30: 68, rules: 61,
+    notes: [{ by: "Jana", when: "6 Nov", text: "Revenge trades after the first loss. Suggest a hard stop after −2R." }],
+    history: [H("Fri 7 Nov", "Broke daily loss limit"), H("Wed 5 Nov", "Broke daily loss limit"), H("10 Feb", "Joined Trading Desk")],
   },
   {
     id: "s3", name: "Tom Becker", initials: "TB", email: "tom.becker@web.de", tier: "core", progress: 23, lastActive: "9 days ago", activeDays: 2, health: "amber", reason: "Inactive for 9 days",
-    joined: "20 Aug 2026", paid: 298, broker: false, discord: false, country: "DE", trades30: 0, rules: 0, notes: [],
-    history: [H("3 Oct", "Last login"), H("20 Aug", "Joined Core")],
+    joined: "18 Sep 2025", paid: 298, broker: false, discord: false, country: "DE", trades30: 0, rules: 0, notes: [],
+    history: [H("1 Nov", "Last login"), H("18 Sep", "Joined Core")],
   },
   {
-    id: "s4", name: "Lena Ito", initials: "LI", email: "lena.ito@gmail.com", tier: "core", group: "October cohort", progress: 35, lastActive: "yesterday", activeDays: 8, health: "amber", reason: "Stuck in Module 2 for 12 days",
-    joined: "28 Sep 2026", paid: 149, broker: true, discord: true, country: "JP", trades30: 17, rules: 88, notes: [],
-    history: [H("Thu 8 Oct", "Asked for review: CL long −0.8R"), H("28 Sep", "Joined Core")],
+    id: "s4", name: "Lena Ito", initials: "LI", email: "lena.ito@gmail.com", tier: "vip", progress: 22, lastActive: "3 days ago", activeDays: 8, health: "amber", reason: "Stuck in Module 2 for 12 days",
+    joined: "4 Nov 2025", paid: 600, offer: { name: "Coaching Silver", plan: 4, paidCount: 1, each: 600, next: "Thu 4 Dec", sentBy: "Ana Ribeiro" }, broker: true, discord: true, country: "JP", trades30: 17, rules: 88, notes: [],
+    history: [H("Thu 6 Nov", "Asked for review: CL long −0.8R"), H("4 Nov", "Joined Coaching Silver")],
   },
   {
     id: "s5", name: "Jonas Pereira", initials: "JP", email: "jonas@pereira.pt", tier: "vip", progress: 94, lastActive: "today", activeDays: 14, health: "green",
-    joined: "2 Nov 2025", paid: 9600, broker: true, discord: true, country: "PT", trades30: 52, rules: 96, notes: [{ by: "Marco", when: "30 Sep", text: "Ready to size up. Talk about scaling plan on next 1:1." }],
-    history: [H("Thu 8 Oct", "Asked for review: ES short +2.4R"), H("2 Nov 2025", "Joined 1:1 VIP")],
+    joined: "2 Sep 2025", paid: 4800, offer: { name: "Coaching Platinum", plan: 4, paidCount: 2, each: 2400, next: "Tue 25 Nov", sentBy: "Kairo" }, broker: true, discord: true, country: "PT", trades30: 52, rules: 96, notes: [{ by: "Marco", when: "29 Oct", text: "Ready to size up. Talk about scaling plan on next 1:1." }],
+    history: [H("Thu 6 Nov", "Asked for review: ES short +2.4R"), H("2 Nov 2025", "Joined 1:1 VIP")],
   },
   {
     id: "s6", name: "Sara Kowalski", initials: "SK", email: "sara.kowalski@o2.pl", tier: "desk", progress: 70, lastActive: "2 days ago", activeDays: 10, health: "green",
-    joined: "5 May 2026", paid: 2340, broker: true, discord: true, country: "PL", coach: "Jana", trades30: 33, rules: 92, notes: [], history: [H("5 May", "Joined Trading Desk")],
+    joined: "3 Jun 2025", paid: 2340, broker: true, discord: true, country: "PL", coach: "Jana", trades30: 33, rules: 92, notes: [], history: [H("3 Jun", "Joined Trading Desk")],
   },
   {
     id: "s7", name: "Tariq Bello", initials: "TB", email: "tariq.bello@icloud.com", tier: "core", group: "October cohort", progress: 48, lastActive: "today", activeDays: 12, health: "green",
-    joined: "30 Sep 2026", paid: 149, broker: true, discord: true, country: "NG", trades30: 22, rules: 90, notes: [], history: [H("30 Sep", "Joined Core")],
+    joined: "29 Oct 2025", paid: 149, broker: true, discord: true, country: "NG", trades30: 22, rules: 90, notes: [], history: [H("29 Oct", "Joined Core")],
   },
   {
     id: "s8", name: "Elena Rossi", initials: "ER", email: "elena.rossi@libero.it", tier: "core", progress: 57, lastActive: "yesterday", activeDays: 9, health: "green",
-    joined: "14 Jun 2026", paid: 745, broker: false, discord: true, country: "IT", trades30: 0, rules: 0, notes: [], history: [H("14 Jun", "Joined Core")],
+    joined: "13 Jul 2025", paid: 745, broker: false, discord: true, country: "IT", trades30: 0, rules: 0, notes: [], history: [H("13 Jul", "Joined Core")],
   },
   {
     id: "s9", name: "Noah Fischer", initials: "NF", email: "noah.f@gmx.ch", tier: "desk", progress: 12, lastActive: "today", activeDays: 3, health: "green",
-    joined: "10 Oct 2026", paid: 390, broker: false, discord: false, country: "CH", trades30: 0, rules: 0, notes: [], history: [H("10 Oct", "Joined Trading Desk")],
+    joined: "8 Nov 2025", paid: 390, broker: false, discord: false, country: "CH", trades30: 0, rules: 0, notes: [], history: [H("8 Nov", "Joined Trading Desk")],
   },
   {
     id: "s10", name: "Ava Lindqvist", initials: "AL", email: "ava.lindqvist@me.com", tier: "core", progress: 0, lastActive: "never", activeDays: 0, health: "amber", reason: "Invited 6 days ago, hasn't joined",
-    joined: "invited 6 Oct", paid: 0, broker: false, discord: false, country: "SE", trades30: 0, rules: 0, notes: [], history: [H("6 Oct", "Invited by e-mail")],
+    joined: "invited 4 Nov", paid: 0, broker: false, discord: false, country: "SE", trades30: 0, rules: 0, notes: [], history: [H("4 Nov", "Invited by e-mail")],
+  },
+  {
+    id: "s11", name: "Kofi Owusu", initials: "KO", email: "kofi@owusu.io", tier: "desk", group: "Futures B", progress: 91, lastActive: "today", activeDays: 13, health: "green",
+    joined: "9 Mar 2025", paid: 1290, broker: true, discord: true, country: "GH", trades30: 36, rules: 97, notes: [], history: [H("9 Mar", "Joined Trading Desk")],
+  },
+  {
+    id: "s12", name: "Hugo Martin", initials: "HM", email: "hugo.martin@me.com", tier: "free", progress: 8, lastActive: "never", activeDays: 0, health: "amber", reason: "Invited 8 days ago, hasn't joined",
+    joined: "invited 4 Nov", paid: 0, broker: false, discord: false, country: "FR", trades30: 0, rules: 0, notes: [], history: [H("4 Nov", "Invited by e-mail")],
+  },
+  {
+    id: "s13", name: "Ines Duarte", initials: "ID", email: "ines@duarte.pt", tier: "desk", group: "Futures B", progress: 77, lastActive: "yesterday", activeDays: 11, health: "green",
+    joined: "22 Jan 2025", paid: 1590, broker: true, discord: true, country: "PT", trades30: 29, rules: 90, notes: [], history: [H("22 Jan", "Joined Trading Desk")],
+  },
+  {
+    id: "s14", name: "Marek Nowak", initials: "MN", email: "marek.nowak@wp.pl", tier: "vip", progress: 100, lastActive: "4 days ago", activeDays: 7, health: "green",
+    joined: "5 Nov 2024", paid: 9600, offer: { name: "Coaching Platinum", plan: 4, paidCount: 4, each: 2400, next: "—", sentBy: "Kairo" }, broker: true, discord: true, country: "PL", trades30: 44, rules: 99, notes: [], history: [H("5 Nov 2024", "Joined Coaching Platinum")],
+  },
+  {
+    id: "s15", name: "Yuki Tanaka", initials: "YT", email: "yuki.t@icloud.com", tier: "desk", group: "Futures A", progress: 35, lastActive: "today", activeDays: 12, health: "green",
+    joined: "27 Oct 2025", paid: 258, broker: true, discord: true, country: "JP", trades30: 19, rules: 72, notes: [], history: [H("27 Oct", "Joined Trading Desk")],
+  },
+  // The four people behind the other payment alerts (Sales · 01c). With Alex they are the 5 "Payment issues" of Students 01.
+  {
+    id: "s16", name: "Marco Bellini", initials: "MB", email: "marco.bellini@example.com", tier: "vip", progress: 62, lastActive: "today", activeDays: 6, health: "red",
+    joined: "2 Nov 2025", paid: 3000, offer: { name: "Coaching Gold", plan: 4, paidCount: 2, each: 1500, next: "Tue 25 Nov", sentBy: "Ana Ribeiro", failed: true }, broker: true, discord: true, country: "IT", trades30: 23, rules: 94, notes: [],
+    history: [H("Today 06:00", "Instalment 3 of 4 failed (card declined)"), H("Today 09:12", "Instalment 2 of 4 paid"), H("2 Nov", "Joined Coaching Gold")],
+  },
+  {
+    id: "s17", name: "Priya Nair", initials: "PN", email: "priya.nair@example.com", tier: "vip", progress: 41, lastActive: "3 d ago", activeDays: 3, health: "red", reason: "Instalment 2 of 2 failed · retries stopped",
+    joined: "6 Nov 2025", paid: 1200, offer: { name: "Coaching Silver", plan: 2, paidCount: 1, each: 1200, next: "Retries stopped", sentBy: "Kairo" }, broker: false, discord: true, country: "IN", trades30: 9, rules: 0, notes: [],
+    history: [H("Today 05:40", "Instalment 2 of 2 failed (card declined, 3 attempts)"), H("Fri 7 Nov", "Instalment 1 of 2 paid"), H("6 Nov", "Joined Coaching Silver")],
+  },
+  {
+    id: "s18", name: "Tom Okafor", initials: "TO", email: "tom.okafor@example.com", tier: "desk", progress: 37, lastActive: "5 d ago", activeDays: 4, health: "red", reason: "Payment failed · retries stopped",
+    joined: "14 Aug 2025", paid: 516, broker: true, discord: false, country: "GB", trades30: 12, rules: 68, notes: [],
+    history: [H("Today 05:40", "Payment of €129 failed (insufficient funds, 3 attempts)"), H("14 Oct", "Renewed"), H("14 Aug", "Joined Trading Desk")],
+  },
+  {
+    id: "s19", name: "Jonas Weber", initials: "JW", email: "jonas@beckerfx.de", tier: "vip", progress: 18, lastActive: "6 d ago", activeDays: 2, health: "red", reason: "Dispute opened 12 Nov · respond by 5 Dec",
+    joined: "29 Oct 2025", paid: 1500, offer: { name: "Coaching Gold", plan: 4, paidCount: 1, each: 1500, next: "On hold", sentBy: "Kairo" }, broker: false, discord: false, country: "DE", trades30: 0, rules: 0, notes: [],
+    history: [H("Yesterday", "Opened a dispute: product not as described"), H("29 Oct", "Joined Coaching Gold")],
   },
 ]
 
+/** The fifteen written by hand plus the generated rest of the roster (201 in all). */
+/**
+ * The first eight rows are the ones Figma shows in Students 01, in that order; the rest of the written ones and the generated roster follow.
+ * (The default order of the Students list is this array's order; "At risk first" is the other choice there.)
+ */
+const FIGMA_FIRST = ["s1", "s2", "s4", "s11", "s12", "s13", "s14", "s15"]
+const ORDERED = [...FIGMA_FIRST.map((id) => FEATURED_STUDENTS.find((x) => x.id === id)!), ...FEATURED_STUDENTS.filter((x) => !FIGMA_FIRST.includes(x.id))]
+export const STUDENTS: Student[] = [...ORDERED, ...generatedStudents(FEATURED_STUDENTS)]
+
 export const GROUPS = [
-  { id: "oct", name: "October cohort", start: "1 Oct 2026", end: "17 Dec 2026", seats: 30, members: 24, waiting: 0, tiers: ["core", "desk"] },
-  { id: "nov", name: "November cohort", start: "2 Nov 2026", end: "21 Jan 2027", seats: 30, members: 11, waiting: 0, tiers: ["core", "desk"] },
-  { id: "mastermind", name: "Funded mastermind", start: "5 Oct 2026", end: "30 Nov 2026", seats: 12, members: 12, waiting: 7, tiers: ["desk", "vip"] },
+  { id: "dec", name: "December cohort", start: "1 Dec 2025", end: "28 Feb 2026", seats: 20, members: 6, waiting: 0, tiers: ["desk"] },
+  { id: "futures", name: "Futures A", start: "6 Oct 2025", end: "31 Dec 2025", seats: 0, members: 12, waiting: 0, tiers: ["desk"] },
+  { id: "futures-b", name: "Futures B", start: "5 Jan 2026", end: "31 Mar 2026", seats: 12, members: 8, waiting: 0, tiers: ["desk"] },
 ]
 
-export const COUPONS = [
-  { code: "BLACKFRIDAY", discount: "40% for 3 months", uses: "0 of 200", expires: "30 Nov 2026", active: true },
-  { code: "WELCOME10", discount: "€10 off first month", uses: "86", expires: "never", active: true },
-  { code: "YOUTUBE", discount: "7-day free trial", uses: "212", expires: "never", active: true },
-  { code: "SUMMER", discount: "25% for 1 month", uses: "48 of 50", expires: "31 Aug 2026", active: false },
+/** A discount code. `tiers` empty means every tier; `ends` is an ISO date or empty for no end. */
+export type Coupon = { /** `discount` and `active` are what the checkout reads; they follow the fields below. */ discount: string; active: boolean; code: string; kind: "percent" | "amount"; amount: number; duration: "first" | "3" | "forever"; tiers: string[]; used: number; limit?: number; ends?: string; paused?: boolean }
+export const COUPONS: Coupon[] = [
+  { discount: "20% off · first payment", active: true, code: "AUTUMN20", kind: "percent", amount: 20, duration: "first", tiers: [], used: 34, limit: 100, ends: "2025-11-30" },
+  { discount: "€50 off · forever", active: true, code: "DESK50", kind: "amount", amount: 50, duration: "forever", tiers: ["desk"], used: 6, limit: 20 },
+  { discount: "30% off · 3 months", active: false, code: "BF2024", kind: "percent", amount: 30, duration: "3", tiers: [], used: 100, limit: 100, ends: "2024-12-01" },
 ]
 
-export type Txn = { id: string; when: string; who: string; what: string; amount: number; status: "paid" | "failed" | "refunded" | "retrying" | "disputed" }
+export const COUPON_TODAY = "2025-11-10"
+/** "20% off · first payment" */
+export const couponLabel = (c: Coupon) => `${c.kind === "percent" ? `${c.amount}%` : `€${c.amount}`} off · ${c.duration === "first" ? "first payment" : c.duration === "3" ? "3 months" : "forever"}`
+/** Out of date or out of uses. */
+export const couponEnded = (c: Coupon) => (!!c.ends && c.ends < COUPON_TODAY) || (c.limit !== undefined && c.used >= c.limit)
+
+export type Txn = { id: string; when: string; who: string; what: string; amount: number; status: "paid" | "failed" | "refunded" | "retrying" | "disputed"; /** One payment of an offer plan (Offers): shown under Instalments. */ instalment?: boolean }
 export const TRANSACTIONS: Txn[] = [
-  { id: "x1", when: "Today 07:12", who: "Alex Moreau", what: "Core · monthly", amount: 149, status: "failed" },
-  { id: "x2", when: "Today 06:40", who: "Noah Fischer", what: "Trading Desk · monthly", amount: 390, status: "paid" },
-  { id: "x3", when: "Sun 11 Oct", who: "Sara Kowalski", what: "Trading Desk · monthly", amount: 390, status: "paid" },
-  { id: "x4", when: "Sat 10 Oct", who: "Ben Okafor", what: "Core · monthly", amount: 149, status: "retrying" },
-  { id: "x5", when: "Fri 9 Oct", who: "Lucía Gómez", what: "Core · monthly", amount: 149, status: "refunded" },
-  { id: "x6", when: "Thu 8 Oct", who: "Jonas Pereira", what: "1:1 VIP · quarterly", amount: 2400, status: "paid" },
-  { id: "x7", when: "Wed 7 Oct", who: "Kim Ahn", what: "Core · monthly", amount: 149, status: "disputed" },
-  { id: "x8", when: "Wed 7 Oct", who: "Tariq Bello", what: "Core · monthly", amount: 149, status: "paid" },
+  { id: "x1", when: "Today 09:12", who: "Lena Ito", what: "1:1 VIP · instalment 2 of 3", amount: 130, status: "paid" },
+  { id: "x2", when: "Today 06:00", who: "Alex Moreau", what: "Inner Circle · monthly", amount: 49, status: "retrying" },
+  { id: "x3", when: "Yesterday", who: "Jonas Weber", what: "1:1 VIP", amount: 390, status: "disputed" },
+  { id: "x4", when: "Yesterday", who: "Mia Sørensen", what: "Trading Desk · monthly", amount: 129, status: "paid" },
+  { id: "x5", when: "2 d ago", who: "Tom Okafor", what: "Trading Desk · monthly", amount: 129, status: "failed" },
+  { id: "x6", when: "3 d ago", who: "Priya Nair", what: "Inner Circle · AUTUMN20", amount: 39.2, status: "paid" },
+  // Offer instalments (Figma Sales 16): the client, the plan and who sent the link.
+  { id: "x7", when: "Today 09:12", who: "Marco Bellini", what: "Gold · instalment 2 of 4 · sent by Ana", amount: 1500, status: "paid", instalment: true },
+  { id: "x8", when: "Today 06:00", who: "Daniel Okoye", what: "Platinum · instalment 3 of 6 · sent by Kairo", amount: 1600, status: "retrying", instalment: true },
+  { id: "x9", when: "Yesterday", who: "Eva Lindqvist", what: "Gold · instalment 3 of 4 · sent by Ana", amount: 1500, status: "disputed", instalment: true },
+  { id: "x10", when: "Yesterday", who: "Tom Okafor", what: "Gold · instalment 1 of 2 · sent by Ana", amount: 3000, status: "paid", instalment: true },
+  { id: "x11", when: "2 d ago", who: "Sofia Laurent", what: "Silver · instalment 2 of 4 · sent by Ana", amount: 600, status: "failed", instalment: true },
+  { id: "x12", when: "3 d ago", who: "Priya Nair", what: "Silver · instalment 1 of 2 · sent by Kairo", amount: 1200, status: "paid", instalment: true },
 ]
+/** Counts the Transactions filters show (the sample list above is only the newest few). */
+export const TXN_COUNTS = { all: 1210, failed: 3, disputed: 2, refunded: 4 }
 
 export const MONEY = {
   mrr: 37180,
   mrrChange: 6.2,
-  month: 17940,
-  fees: { label: "Our share (5%) and card fees", amount: 1420 },
-  nextPayout: { amount: 4210, date: "Mon 19 Oct" },
+  /** What was paid out for October: revenue €37,180 minus the card fees (€1,118) and our share (€1,859). */
+  month: 34203,
+  fees: { label: "Our share (5%) and card fees", amount: 1118 },
+  share: 1859,
+  mrrMore: 2180,
+  nextPayout: { amount: 8412, date: "Mon 17 Nov" },
   churn: 3.1,
   trials: 14,
 }
-
-export const TEAM = [
-  { name: "Lionel Imura", initials: "LI", email: "lionel@northline.trade", role: "Owner", students: "All" },
-  { name: "Jana Novak", initials: "JN", email: "jana@northline.trade", role: "Assistant coach", students: "2 assigned" },
-  { name: "Ravi Patel", initials: "RP", email: "ravi@northline.trade", role: "Moderator", students: "–" },
-]
-export const ROLES = [
-  { id: "owner", name: "Owner", text: "Everything, including money and the team" },
-  { id: "admin", name: "Admin", text: "Everything except payouts and our subscription" },
-  { id: "coach", name: "Assistant coach", text: "Their students: feedback, notes, calls" },
-  { id: "moderator", name: "Moderator", text: "Community and announcements" },
-]
-
-export const EMAIL_TEMPLATES = [
-  { id: "code", name: "Login code", subject: "Your code for {platform}", body: "Hi {first},\n\nYour code is {code}. It works for 10 minutes." },
-  { id: "welcome", name: "Welcome", subject: "Welcome to {platform}", body: "Hi {first},\n\nGlad you're here. Start with the first lesson: {link}\n\n{coach}" },
-  { id: "receipt", name: "Receipt and invoice", subject: "Your receipt from {platform}", body: "Thanks for your payment of {amount}. Your invoice is attached." },
-  { id: "trial", name: "Trial ending", subject: "Your trial ends in 2 days", body: "Hi {first},\n\nYour free trial ends on {date}. Nothing to do if you want to stay." },
-  { id: "failed", name: "Payment failed", subject: "Your payment didn't go through", body: "Hi {first},\n\nWe couldn't take your payment. Update your card here: {link}" },
-  { id: "lesson", name: "New lesson", subject: "New: {lesson}", body: "{coach} published a new lesson: {lesson}.\n\n{link}" },
-  { id: "event", name: "Event reminder", subject: "{event} starts in 1 hour", body: "Join here: {link}" },
-  { id: "feedback", name: "Feedback received", subject: "{coach} reviewed your trade", body: "{coach} left feedback on your {trade} trade.\n\n{link}" },
-]
 
 export const LEGAL = [
   { id: "imprint", name: "Imprint", text: "Northline Trading GmbH\nBahnhofstrasse 1, 8001 Zürich, Switzerland\nCommercial register: CHE-123.456.789" },
@@ -146,36 +193,36 @@ export const LEGAL = [
 
 // ---------- AI
 
+/** What the AI can do for students. `plan` is off until the coach turns it on. */
 export const AI_FEATURES = [
-  { id: "chat", name: "Ask anything", text: "Students chat with your AI about lessons and trading questions" },
-  { id: "trade", name: "Ask about a trade", text: "From a journal trade: what went right, which rule it broke" },
-  { id: "lesson", name: "Lesson summaries and quiz", text: "Summary, chapters and quiz in every lesson" },
-  { id: "weekly", name: "Weekly summary", text: "A short review of the student's week in the journal" },
-  { id: "briefing", name: "Briefing before a 1:1", text: "Only for you: what the student traded and asked" },
+  { id: "answer", name: "Answer questions", on: true },
+  { id: "journal", name: "Review a journal entry", on: true },
+  { id: "lesson", name: "Explain a lesson", on: true },
+  { id: "plan", name: "Pre-market plan", on: false },
 ]
+/** Questions per day, per student, for each paid tier in order. null means the tier doesn't get the feature, 0 means unlimited. */
+export const AI_LIMITS: Record<string, (number | null)[]> = {
+  answer: [20, 50, 0],
+  journal: [null, 5, 20],
+  lesson: [10, 30, 0],
+  plan: [null, null, 1],
+}
 
 export const AI_KNOWLEDGE = [
-  { id: "k1", name: "Foundations", kind: "Course", items: "8 lessons · transcripts", on: true },
-  { id: "k2", name: "Price action playbook", kind: "Course", items: "2 lessons · transcripts", on: true },
-  { id: "k3", name: "Live session recordings", kind: "Recordings", items: "24 recordings", on: true },
-  { id: "k4", name: "Northline rulebook.pdf", kind: "Document", items: "18 pages", on: true },
-  { id: "k5", name: "FAQ", kind: "FAQ", items: "32 questions", on: true },
-  { id: "k6", name: "Trading psychology", kind: "Course", items: "1 lesson · Inner Circle only", on: false },
+  { id: "k1", name: "Foundations", kind: "Course", items: "11 lessons", on: true, updated: "2 h ago" },
+  { id: "k2", name: "Price action playbook", kind: "Course", items: "4 lessons", on: true, updated: "yesterday" },
+  { id: "k3", name: "Risk rules.pdf", kind: "PDF", items: "12 pages", on: true, updated: "3 d ago" },
+  { id: "k4", name: "FAQ from Discord", kind: "Q&A list", items: "48 answers", on: true, updated: "now", learning: true },
+  { id: "k5", name: "Trading psychology", kind: "Course", items: "3 lessons", on: false, updated: "—" },
 ]
 
-export const AI_QUESTIONS = [
-  { q: "Where exactly do I put my stop on an ORB?", n: 41, lesson: "Stops that make sense", answered: true },
-  { q: "How many contracts for a 50K account?", n: 33, lesson: "Position sizing", answered: true },
-  { q: "Should I trade during CPI?", n: 27, lesson: "Daily loss limits", answered: true },
-  { q: "What's the difference between a failed breakout and a reversal?", n: 19, lesson: "Failed breakout reversal", answered: true },
-  { q: "Which prop firm do you recommend?", n: 16, lesson: "–", answered: false },
-  { q: "How do I handle overnight gaps?", n: 11, lesson: "–", answered: false },
-]
-
-export const AI_USAGE = [
-  { tier: "core", used: 2140, quota: 30 },
-  { tier: "desk", used: 1210, quota: 100 },
-  { tier: "vip", used: 220, quota: 0 },
+export type AiResult = "answered" | "handed" | "blocked"
+/** What students asked lately: who, what, where the answer came from, how it ended. */
+export const AI_QUESTIONS: { id: string; student: string; initials: string; q: string; from?: string; result: AiResult; ago: string }[] = [
+  { id: "q1", student: "Mia Sørensen", initials: "MS", q: "Where do I put my stop on an ORB?", from: "Foundations · Lesson 4", result: "answered", ago: "2 h" },
+  { id: "q2", student: "Alex Moreau", initials: "AM", q: "Can I trade during NFP?", from: "Your rules", result: "answered", ago: "3 h" },
+  { id: "q3", student: "Lena Ito", initials: "LI", q: "Is my position size right for 2k?", result: "handed", ago: "5 h" },
+  { id: "q4", student: "Jonas Weber", initials: "JW", q: "What's the best broker?", result: "blocked", ago: "1 d" },
 ]
 
 // ---------- Ranking
@@ -188,18 +235,32 @@ export const RANK_METRICS = [
   { id: "activity", name: "Activity", text: "Journal entries, reviews, lives attended" },
 ]
 
-export const COMPETITIONS = [
-  { id: "c1", name: "October consistency cup", metric: "consistency", start: "1 Oct", end: "31 Oct", prize: "Free month of Trading Desk", entrants: 64, status: "running" as const },
-  { id: "c2", name: "Rulebook November", metric: "discipline", start: "2 Nov", end: "30 Nov", prize: "1:1 call with Marco", entrants: 0, status: "scheduled" as const },
-  { id: "c3", name: "September sprint", metric: "return", start: "1 Sep", end: "30 Sep", prize: "€500 funded account", entrants: 81, status: "ended" as const },
+export type Competition = { id: string; name: string; metric: "rules" | "journal" | "points"; start: string; end: string; prize: string; entrants: number; winner?: string; who: "everyone" | "pick"; /** Tier and group ids when `who` is "pick". */ picked?: string[]; nicknames: boolean; /** Kept for the student side, which reads it. */ status?: "running" | "scheduled" | "ended" }
+export const COMPETITIONS: Competition[] = [
+  { id: "c1", name: "November discipline cup", metric: "rules", start: "2025-12-14", end: "2025-12-29", prize: "A free month", entrants: 64, who: "everyone", nicknames: true, status: "scheduled" },
+  { id: "c2", name: "October consistency cup", metric: "journal", start: "2025-10-30", end: "2025-11-29", prize: "Bragging rights", entrants: 52, winner: "Sara Kowalski", who: "everyone", nicknames: true, status: "ended" },
 ]
+export const RANK_TODAY = "2025-12-06"
+const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+/** "2025-12-14" → "Sat 14 Dec" */
+export const dayLabel = (iso: string) => {
+  const d = new Date(`${iso}T12:00:00Z`)
+  return Number.isNaN(d.getTime()) ? iso : `${WD[d.getUTCDay()]} ${d.getUTCDate()} ${MO[d.getUTCMonth()]}`
+}
+const daysBetween = (a: string, b: string) => Math.round((new Date(`${b}T12:00:00Z`).getTime() - new Date(`${a}T12:00:00Z`).getTime()) / 86400000)
+export type CompetitionState = { status: "upcoming" | "running" | "ended"; days: number }
+/** Where a competition is today: it starts in `days`, ends in `days`, or is over. */
+export const competitionState = (c: Competition): CompetitionState =>
+  c.end < RANK_TODAY ? { status: "ended", days: 0 } : c.start > RANK_TODAY ? { status: "upcoming", days: daysBetween(RANK_TODAY, c.start) } : { status: "running", days: daysBetween(RANK_TODAY, c.end) }
+
+export const COMPETITION_METRICS = [{ value: "rules", label: "Rules kept" }, { value: "journal", label: "Journal entries" }, { value: "points", label: "Points" }] as const
 
 export const POINTS = [
-  { action: "Finish a lesson", points: 10 },
-  { action: "Log a trade with notes", points: 5 },
-  { action: "Keep every rule for a day", points: 15 },
-  { action: "Attend a live session", points: 20 },
-  { action: "Ask for a review", points: 5 },
+  { action: "Finish a lesson", points: 10, on: true },
+  { action: "Log a trade in the journal", points: 5, on: true },
+  { action: "Keep every rule for a day", points: 20, on: true },
+  { action: "Join a livestream", points: 5, on: false },
 ]
 export const LEVELS = [
   { name: "Rookie", from: 0 },
@@ -208,20 +269,27 @@ export const LEVELS = [
   { name: "Pro", from: 2000 },
   { name: "Elite", from: 5000 },
 ]
+/** The badges the admin lists, with how each is earned. */
+export const ADMIN_BADGES = [
+  { id: "b1", name: "First 10 trades", text: "Logged 10 journal entries", earned: 142 },
+  { id: "b2", name: "Rule keeper", text: "7 days with every rule kept", earned: 38 },
+  { id: "b3", name: "Course finisher", text: "Finished a course", earned: 61 },
+]
 export const BADGES = [
   { name: "First trade logged", earned: 412 },
   { name: "7-day streak", earned: 158 },
-  { name: "Rulebook keeper", earned: 61 },
-  { name: "Course finished", earned: 94 },
+  { name: "Rule keeper", earned: 61 },
+  { name: "Course finisher", earned: 94 },
   { name: "Asked for feedback", earned: 203 },
 ]
 
 // ---------- Community
 
 export const ANNOUNCEMENTS = [
-  { id: "n1", title: "New module: Daily loss limits", body: "Watch it before Wednesday's CPI. We'll go through your limits on Thursday's call.", when: "2 hours ago", pinned: true, channels: ["platform", "email", "discord"], reads: 128 },
-  { id: "n2", title: "Live this Thursday moves to 15:00", body: "ECB at 14:15, so we start a bit later and trade the reaction.", when: "Fri 9 Oct", pinned: false, channels: ["platform", "discord"], reads: 164 },
-  { id: "n3", title: "November cohort is open", body: "11 seats left. Members of the October cohort get the replays for free.", when: "Mon 5 Oct", pinned: false, channels: ["platform", "email"], reads: 171 },
+  { id: "n1", title: "New module is live", body: "Foundations · Module 3 is ready.", when: "Mon 10 Nov", pinned: true, channels: ["platform", "email", "discord"], reads: 128 },
+  { id: "n2", title: "London open at 09:00", body: "A live session starts.", when: "Fri 7 Nov", pinned: false, channels: ["platform", "discord"], reads: 164 },
+  { id: "n3", title: "Levels for this week", body: "A new marked-up chart.", when: "Mon 3 Nov", pinned: false, channels: ["platform"], reads: 171 },
+  { id: "n4", title: "November discipline cup", body: "Starts Sat 15 Nov.", when: "Sat 15 Nov 08:00", pinned: false, channels: ["platform", "email"], reads: 0, scheduled: "Sat 15 Nov 08:00" },
 ]
 
 export const DISCORD_ROLES = [

@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { amount, fmtDate, isFull, per, useGroups, useTiers } from "@/lib/data/access"
+import { amount, fmtDate, isFull, isOfferOnly, per, useGroups, useTiers } from "@/lib/data/access"
 import { COUPONS } from "@/lib/data/people"
+import { bookingUrlOk, useBookingUrl } from "@/lib/data/booking"
 import { savePurchase } from "@/lib/data/sales-page"
 import { useStored } from "@/lib/prototype-store"
 import { cn } from "@/lib/utils"
@@ -46,14 +47,15 @@ export function Checkout() {
   const tiers = useTiers(coach)
   const groups = useGroups(coach)
   const coupons = useStored(`${coach.slug}:coupons`, COUPONS)
-  const paid = tiers.filter((t) => amount(t.price) > 0)
-  const asked = tiers.find((t) => t.id === params.get("tier"))
+  // An offer-only tier is not on sale here: it comes with an offer link.
+  const paid = tiers.filter((t) => amount(t.price) > 0 && !isOfferOnly(t))
+  const asked = paid.find((t) => t.id === params.get("tier"))
   const firstPaid = (paid.find((t) => t.featured && !t.hidden) ?? paid[0])?.id
   const [tierId, setTierId] = useState(asked && amount(asked.price) > 0 ? asked.id : firstPaid)
   // Wizard-made communities arrive after the first render (the provider shows a stand-in until then), so fall back to the first paid tier.
   const tier = tiers.find((t) => t.id === tierId) ?? tiers.find((t) => t.id === firstPaid)
   const [yearly, setYearly] = useState(params.get("cycle") === "yearly")
-  const open = groups.filter((g) => tier && g.tiers.includes(tier.id) && !isFull(g) && g.end >= "2026-10-12")
+  const open = groups.filter((g) => tier && g.tiers.includes(tier.id) && !isFull(g) && g.end >= "2025-11-12")
   const [groupId, setGroupId] = useState(params.get("group") ?? "")
   const group = open.find((g) => g.id === groupId)
   const [email, setEmail] = useState("")
@@ -64,19 +66,23 @@ export function Checkout() {
   const [busy, setBusy] = useState(false)
   const copy = coach.join?.screens?.subscribe ?? {}
 
+  const bookingUrl = useBookingUrl(coach.slug)
+  const booking = bookingUrlOk(bookingUrl) ? bookingUrl.trim() : undefined
+
   if (!tier) return <p className="p-10 text-center text-muted-foreground">No paid plans yet.</p>
 
   const isYearly = yearly && !!tier.yearly
   const list = amount(isYearly ? tier.yearly! : tier.price)
   const off = applied?.kind === "percent" ? Math.round(list * applied.value) / 100 : applied?.kind === "amount" ? Math.min(list, applied.value) : 0
-  const trial = applied?.kind === "trial" ? applied.value : tier.trial
+  // Figma Join 04 has no free trial: a plan's own trial only applies when the link asks for it (?trial=1); a trial code always does.
+  const trial = applied?.kind === "trial" ? applied.value : params.get("trial") ? tier.trial : 0
   const first = list - off
   const today = trial ? 0 : first
   const emailOk = /^\S+@\S+\.\S+$/.test(email)
   const money = (n: number) => `€${n.toLocaleString("en", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`
   const cadence = isYearly ? "/ year" : per(tier.cadence)
   const trialEnd = (() => {
-    const d = new Date("2026-10-12T12:00:00Z")
+    const d = new Date("2025-11-12T12:00:00Z")
     d.setUTCDate(d.getUTCDate() + trial)
     return fmtDate(d.toISOString().slice(0, 10), false)
   })()
@@ -92,9 +98,7 @@ export function Checkout() {
         <section className="grid gap-3">
           <h2 className="text-lg">Your plan</h2>
           <div className="grid gap-2 sm:grid-cols-2">
-            {paid
-              .filter((t) => !t.hidden || t.id === tierId)
-              .map((t) => (
+            {paid.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => setTierId(t.id)}
@@ -111,9 +115,10 @@ export function Checkout() {
                     {t.id === tierId && <Check className="size-3" strokeWidth={3} />}
                   </span>
                 </button>
-              ))}
+            ))}
           </div>
-          {tier.yearly && (
+          {/* Figma Join 04 has one price per plan: the yearly choice only shows when the link asks for it (?cycle=yearly or ?cycle=monthly). */}
+          {tier.yearly && params.get("cycle") && (
             <div className="flex w-fit rounded-full border p-1 text-sm">
               {[false, true].map((y) => (
                 <button key={String(y)} onClick={() => setYearly(y)} className={cn("rounded-full px-3.5 py-1", yearly === y ? "bg-foreground text-background" : "text-muted-foreground")}>
@@ -136,7 +141,7 @@ export function Checkout() {
                   >
                     {/* Name first, details after it: told apart by weight, both in a colour that reads at 4.5:1. */}
                     <span className="font-medium">{g.name}</span>
-                    {g.id && <span> · {g.start <= "2026-10-12" ? "running" : `starts ${fmtDate(g.start, false)}`}, {g.seats - g.members} left</span>}
+                    {g.id && <span> · {g.start <= "2025-11-12" ? "running" : `starts ${fmtDate(g.start, false)}`}, {g.seats - g.members} left</span>}
                   </button>
                 ))}
               </div>
@@ -196,7 +201,7 @@ export function Checkout() {
             ) : (
               <div className="flex h-11 items-center justify-center rounded-md bg-foreground text-sm text-background">Pay with your wallet</div>
             )}
-            <span className="text-center text-xs text-muted-foreground">Prototype: the payment provider&apos;s form goes here. Nothing is charged.</span>
+            <span className="text-center text-xs text-muted-foreground">The payment provider&apos;s secure form appears here.</span>
           </div>
         </section>
       </div>
@@ -301,9 +306,19 @@ export function Checkout() {
             .
           </p>
         </div>
-        <Link href={`${base}/login`} className="text-center text-sm text-muted-foreground hover:text-foreground">
-          Already a member? Log in to change your plan
-        </Link>
+        <div className="flex flex-col items-center gap-1 text-center text-sm text-muted-foreground">
+          <Link href={`${base}/login`} className="hover:text-foreground">
+            Already a member? Log in to change your plan
+          </Link>
+          {booking && (
+            <span>
+              Not ready to pay yet?{" "}
+              <a href={booking} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-foreground">
+                Book a call
+              </a>
+            </span>
+          )}
+        </div>
       </aside>
     </div>
   )

@@ -1,20 +1,16 @@
 "use client"
 
-import { Check } from "@/components/icons"
-import { toast } from "sonner"
-import { Badge } from "@/components/ui/badge"
-import { mono } from "@/components/onboarding/frame"
-import { themeToCss } from "@/lib/theme/css"
-import { onColor } from "@/lib/theme/derive"
-import { TEMPLATES } from "@/lib/theme/templates"
-import type { CoachTheme, TemplateId } from "@/lib/theme/types"
+import { RotateCcw } from "@/components/icons"
+import { toast } from "@/lib/toast"
+import type { Mode, TemplateId } from "@/lib/theme/types"
 import { cn } from "@/lib/utils"
-import { More } from "../fields/controls"
+import { Field, More } from "../fields/controls"
+import { PillSegmented, SelectionCard } from "../fields/choice-cards"
 import { DesignField, useDesign } from "../fields/design-fields"
-import { LOOKS, currentLook, type Look } from "../looks"
+import { type Look } from "../looks"
+import { LAYOUTS, THEMES, layoutOf, layoutPatch, looksOf, lookPatch, matchLook } from "../presets"
 import { PaletteField } from "../fields/palette-field"
 import { CAN_SAVE_TEMPLATE } from "./save-template"
-import { card } from "../states"
 import { useConfirmSwitch } from "./switch-look"
 import { SECTION_LABEL } from "../panels/settings-panel"
 
@@ -26,7 +22,7 @@ export function Section({ title, children }: { title?: string; children: React.R
   return (
     // minmax(0,1fr): a grid track never grows past the panel to fit a long word or a truncated line (they shrink instead).
     // The same block as the theme's groups (settings-panel.tsx): hairline on top, the same padding and title.
-    <section className="grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-[color:color-mix(in_oklab,var(--foreground)_10%,transparent)] px-5 pt-6 pb-6">
+    <section className="grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-a-border-subtle px-5 pt-6 pb-6">
       {title && <h3 className={cn(SECTION_LABEL, "flex h-6 items-center")}>{title}</h3>}
       {children}
     </section>
@@ -34,45 +30,120 @@ export function Section({ title, children }: { title?: string; children: React.R
 }
 
 /**
- * The ready-made looks as cards; picking one keeps the coach's colours and
- * logo. Fine-tuning is in the editor's Type, Shape, Widgets and Page sections.
- * `suggested`: the template to mark "Fits you" (the first look on it);
- * `templates`: the note on which template the coach is on, and the palette tool.
+ * Theme (Figma Editor · 02 Style · 02 to 02e): Dark or Light on top, the three themes as the setup shows them (Terminal,
+ * Atelier, Pulse), then the theme's two variations. A theme sets the personality only (fonts, corners, buttons,
+ * shadow, borders, labels, heading weight, widget style): colours, logo, menu, spacing and background stay. When
+ * the coach changes one of those by hand the theme shows "Custom" with Reset; switching theme then asks first.
  */
-export function LookCards({ suggested, templates = true }: { suggested?: TemplateId; templates?: boolean }) {
+export function ThemeTab() {
   const { theme, change, undo } = useDesign()
-  const active = currentLook(theme)
   const [ask, dialog] = useConfirmSwitch()
+  const look = matchLook(theme)
+  const custom = !look
+  const variations = looksOf(theme.template)
+  const apply = (l: Look, said: string) => {
+    change({ theme: lookPatch(l) }, "look")
+    toast(`${said} applied. Your colours and logo stay.`, undo ? { action: { label: "Undo", onClick: undo } } : undefined)
+  }
+  const pick = (id: TemplateId) => {
+    if (id === theme.template) return
+    const first = looksOf(id)[0]
+    // Only a design the coach tuned by hand would be lost: then it asks (and keeps the old one in Earlier versions).
+    ask(THEMES.find((t) => t.id === id)!.name, () => apply(first, THEMES.find((t) => t.id === id)!.name), custom)
+  }
   return (
     <>
-    <Section>
-      <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Look">
-        {LOOKS.map((l) => (
-          <LookCard
-            key={l.id}
-            look={l}
-            theme={theme}
-            selected={active?.id === l.id}
-            fits={!!suggested && l.id === LOOKS.find((x) => x.template === suggested)?.id}
-            onSelect={() =>
-              active?.id !== l.id &&
-              ask(l.name, () => {
-                change({ theme: { template: l.template, ...l.set } }, "look")
-                toast(`${l.name} look applied. Your colours and logo stay.`, undo ? { action: { label: "Undo", onClick: undo } } : undefined)
-              })
-            }
-          />
-        ))}
-      </div>
-      {!active && <p className="text-xs text-muted-foreground">Your own mix. Pick a look to start again from it.</p>}
-      {dialog}
-    </Section>
-    {/* A tool for the team (saving templates), apart from the looks. */}
-    {templates && CAN_SAVE_TEMPLATE && (
       <Section>
-        <PaletteField />
+        <div className="flex h-6 items-center gap-2">
+          <h3 className={SECTION_LABEL}>Theme</h3>
+          {custom && <span aria-label="changed" className="size-1.5 rounded-full bg-a-accent-strong" />}
+          <span className="flex-1" />
+          {custom && (
+            <button
+              type="button"
+              onClick={() => apply(variations[0], variations[0].name)}
+              className="flex h-6 items-center gap-1 rounded-md px-1.5 t-caption text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-a-border-focus"
+            >
+              <RotateCcw className="size-3" /> Reset
+            </button>
+          )}
+        </div>
+        {custom && <p className="t-caption text-a-text-3">Your own mix. Pick a theme to start again from it.</p>}
+        <Field id="mode" label="Mode" inline>
+          <PillSegmented<Mode>
+            label="Light or dark"
+            value={theme.mode}
+            onChange={(mode) => change({ theme: { mode } }, "mode")}
+            options={[
+              { value: "dark", label: "Dark" },
+              { value: "light", label: "Light" },
+            ]}
+            className="[&>button]:w-[54px] [&>button]:px-0"
+          />
+        </Field>
+        <div role="radiogroup" aria-label="Theme" className="grid gap-2" data-field="template">
+          {THEMES.map((t) => (
+            <SelectionCard key={t.id} checked={theme.template === t.id} onSelect={() => pick(t.id)} title={t.name} description={t.summary} img={t.img} imgClass="aspect-[276/188]" radius="rounded-a-md" />
+          ))}
+        </div>
+        <Field id="look" label="Variation" hint={look ? look.blurb : "Your own mix"}>
+          <div role="radiogroup" aria-label="Variation" className="flex flex-wrap gap-2">
+            {variations.map((l) => (
+              <button
+                key={l.id}
+                type="button"
+                role="radio"
+                aria-checked={look?.id === l.id}
+                onClick={() => look?.id !== l.id && apply(l, l.name)}
+                className={cn(
+                  "h-9 rounded-full border px-4 t-body-m outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-a-border-focus",
+                  look?.id === l.id ? "border-[var(--admin-component-choice-chip-border-active)] bg-[var(--admin-component-choice-chip-bg-active)] text-a-text" : "border-a-border text-a-text-2 hover:border-a-border-strong hover:text-a-text",
+                )}
+              >
+                {l.name}
+              </button>
+            ))}
+          </div>
+        </Field>
+        {dialog}
       </Section>
-    )}
+      {/* A tool for the team (saving templates and the template's greys), apart from the themes. */}
+      {CAN_SAVE_TEMPLATE && (
+        <Section>
+          <PaletteField />
+        </Section>
+      )}
+    </>
+  )
+}
+
+/**
+ * Layout (Figma Editor · 02 Style · 03 Layout): the four ready-made layouts of the setup, then the same four settings in
+ * detail. Spacing belongs here, not to the theme. Changing a detail leaves no layout marked: "Custom".
+ */
+export function LayoutTab() {
+  const { theme, change } = useDesign()
+  const active = layoutOf(theme)
+  return (
+    <>
+      <Section>
+        <div className="flex h-6 items-center gap-2">
+          <h3 className={SECTION_LABEL}>Layout</h3>
+          {!active && <span aria-label="changed" className="size-1.5 rounded-full bg-a-accent-strong" />}
+        </div>
+        {!active && <p className="t-caption text-a-text-3">Your own layout. Pick one to start again from it.</p>}
+        <div role="radiogroup" aria-label="Layout" className="grid gap-2" data-field="layout">
+          {LAYOUTS.map((l) => (
+            <SelectionCard key={l.id} checked={active === l.id} onSelect={() => active !== l.id && change({ theme: layoutPatch(l, theme) }, "layout")} title={l.name} description={l.text} img={l.img} imgClass="aspect-[276/117]" radius="rounded-a-md" />
+          ))}
+        </div>
+      </Section>
+      <Section title="Details">
+        <DesignField id="nav-layout" />
+        <DesignField id="nav-frame" />
+        <DesignField id="layout-widgets" />
+        <DesignField id="density" />
+      </Section>
     </>
   )
 }
@@ -91,9 +162,7 @@ export function MenuStep() {
         <DesignField id="nav-signout" />
       </Section>
       <Section>
-        <More label="Menu layout">
-          <DesignField id="nav-layout" />
-          <DesignField id="nav-frame" />
+        <More label="Menu style">
           <DesignField id="nav-style" />
           <DesignField id="nav-logo" />
         </More>
@@ -106,51 +175,5 @@ export function MenuStep() {
         </More>
       </Section>
     </>
-  )
-}
-
-/** A look as a small card drawn in that look, with the coach's own colour. */
-export function LookCard({ look, theme, selected, fits, onSelect }: { look: Look; theme: CoachTheme; selected: boolean; fits?: boolean; onSelect: () => void }) {
-  const t: CoachTheme = {
-    ...TEMPLATES[look.template].theme,
-    ...look.set,
-    mode: theme.mode,
-    primary: theme.primary,
-    primaryForeground: onColor(theme.primary),
-  }
-  const cls = `tpl-look-${look.id}`
-  return (
-    <button
-      role="radio"
-      aria-checked={selected}
-      onClick={onSelect}
-      className={cn(
-        "grid gap-1.5 p-1.5 text-left",
-        card(selected),
-      )}
-    >
-      <style dangerouslySetInnerHTML={{ __html: themeToCss(t, `.${cls}`) }} />
-      <span className={cn(cls, t.mode === "light" && "light", "grid aspect-[16/10] content-start gap-1.5 overflow-hidden rounded-[4px] bg-background p-2 text-foreground")}>
-        <span className="text-base leading-none" style={{ fontFamily: "var(--coach-font-heading)", fontWeight: look.set.headingWeight }}>
-          Aa
-        </span>
-        <span className="grid gap-1 rounded-[min(var(--radius),12px)] bg-card p-1.5" style={{ boxShadow: "var(--card-shadow)", border: look.set.borders ? "1px solid var(--border)" : undefined }}>
-          <span className="h-1 w-10 rounded-full bg-foreground/40" />
-          <span className="h-2.5 w-9 rounded-[var(--button-radius)] bg-primary" />
-        </span>
-      </span>
-      <span className="grid px-0.5">
-        <span className="flex items-center gap-1 text-xs font-medium">
-          {look.name}
-          {selected && <Check className="size-3 text-[var(--ts-interactive)]" />}
-          {fits && (
-            <Badge variant="outline" className={cn(mono, "ml-auto h-5 border-[var(--ts-interactive)]/50 text-[0.6875rem] text-[var(--ts-interactive)]")}>
-              Fits you
-            </Badge>
-          )}
-        </span>
-        <span className="truncate text-[0.6875rem] text-muted-foreground">{look.blurb}</span>
-      </span>
-    </button>
   )
 }

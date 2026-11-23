@@ -64,7 +64,7 @@ export function PageRow({ id }: { id: `page:${string}` }) {
             variant="ghost"
             size="icon"
             style={{ width: 36, height: 36 }}
-            className="size-9 shrink-0 bg-[color-mix(in_oklab,var(--foreground)_6%,transparent)] hover:bg-[color-mix(in_oklab,var(--foreground)_12%,transparent)]"
+            className="size-9 shrink-0 bg-a-muted hover:bg-a-selected"
             aria-label={`Edit the ${page.name} page`}
             title={`Edit the ${page.name} page`}
             onClick={() => openPage(id)}

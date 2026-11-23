@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { createContext, useContext, useState } from "react"
-import { Bell, LogOut, MoreHorizontal, Search, Settings, User } from "@/components/icons"
+import { LogOut, MoreHorizontal, Search, Settings, User } from "@/components/icons"
 import { useCoach } from "@/components/coach/coach-provider"
 import { CommunitySwitcher } from "@/components/student/community-switcher"
 import { PreviewAsBanner, Tour } from "@/components/student/getting-started"
@@ -11,6 +11,7 @@ import { PreviewPicker } from "@/components/student/preview-picker"
 import { studentNav, type NavItem } from "@/components/coach/nav"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { StudentNotifications } from "@/components/student/notifications-menu"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,8 +75,10 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const texture = { grid: "coach-bg-grid", glow: "coach-bg-glow", dots: "coach-bg-dots" } as Record<string, string>
   // An image or gradient sits on its own layer behind the page, so the page itself turns see-through.
   const where = theme.bgWhere ?? "all"
-  const backdrop = backdropStyle(theme) && (where === "all" || (where === "home" && path === base)) ? backdropStyle(theme) : null
-  const bg = backdrop ? "bg-transparent" : cn("bg-background", texture[theme.background])
+  // "Login" puts the background on the Join pages only (PublicShell), so the platform itself stays plain.
+  const here = where === "all" || (where === "home" && path === base)
+  const backdrop = backdropStyle(theme) && here ? backdropStyle(theme) : null
+  const bg = backdrop ? "bg-transparent" : cn("bg-background", here && texture[theme.background])
 
   // The Charts terminal uses the full width, like a trading screen.
   const wide = path.startsWith(`${base}/charts`)
@@ -162,7 +165,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
           <ProfileMenu compact />
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className={cn(bg, floating && canvas)}>
+      <SidebarInset as={editor ? "div" : "main"} className={cn(bg, floating && canvas)}>
         {!editor && <PreviewAsBanner />}
         {backdrop && <Backdrop style={backdrop} dim={theme.background === "image" ? dimOf(theme) : 0} />}
         <header className={cn("sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/80 backdrop-blur", pad)}>
@@ -267,10 +270,7 @@ function HeaderActions() {
           <Search />
         </Button>
       )}
-      <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
-        <Bell />
-        <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />
-      </Button>
+      <StudentNotifications />
       <ProfileMenu />
     </>
   )

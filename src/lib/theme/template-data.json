@@ -1,7 +1,7 @@
 {
   "terminal": {
     "name": "Terminal",
-    "blurb": "Dark, crisp, mono labels. Built on the TradeStats look.",
+    "blurb": "Dark, crisp, mono labels. Built on the TraderHub look.",
     "theme": {
       "template": "terminal",
       "mode": "dark",
@@ -9,13 +9,13 @@
       "primaryForeground": "#ffffff",
       "palettes": {
         "light": {
-          "background": "#ffffff",
+          "background": "#f4f4f5",
           "card": "#ffffff",
-          "foreground": "#040404",
+          "foreground": "#0a0a0b",
           "muted": "#f2f2f0",
-          "mutedForeground": "rgba(4,4,4,0.58)",
-          "border": "rgba(4,4,4,0.12)",
-          "sidebar": "#fafafa",
+          "mutedForeground": "#6b6b73",
+          "border": "rgba(0,0,0,0.11)",
+          "sidebar": "#f4f4f5",
           "highlight": "#f8ff9e",
           "highlightForeground": "#040404",
           "profit": "#0f8045",
@@ -260,13 +260,13 @@
       "primaryForeground": "#ffffff",
       "palettes": {
         "light": {
-          "background": "#ffffff",
-          "card": "#f5f6f2",
-          "foreground": "#15201b",
-          "muted": "#eceee8",
-          "mutedForeground": "#5f6b64",
-          "border": "#e1e4dd",
-          "sidebar": "#f5f6f2",
+          "background": "#efe9dc",
+          "card": "#f8f4ea",
+          "foreground": "#26211d",
+          "muted": "#e8e1d1",
+          "mutedForeground": "#85796a",
+          "border": "rgba(0,0,0,0.11)",
+          "sidebar": "#efe9dc",
           "highlight": "#e9dcc3",
           "highlightForeground": "#3b2f17",
           "profit": "#286b49",
@@ -381,7 +381,7 @@
     "blurb": "Bright and energetic. Pill buttons, deep shadows, icon rail.",
     "theme": {
       "template": "pulse",
-      "mode": "light",
+      "mode": "dark",
       "primary": "#3d5afe",
       "primaryForeground": "#ffffff",
       "palettes": {
@@ -392,20 +392,20 @@
           "muted": "#e8eaf6",
           "mutedForeground": "#5b6083",
           "border": "#e1e3f0",
-          "sidebar": "#0b0f2b",
+          "sidebar": "#f2f3fa",
           "highlight": "#00d39a",
           "highlightForeground": "#03231a",
           "profit": "#007a58",
           "loss": "#d01c4f"
         },
         "dark": {
-          "background": "#070a1f",
-          "card": "#10153a",
-          "foreground": "#eef0ff",
+          "background": "#0e1226",
+          "card": "#171b38",
+          "foreground": "#ffffff",
           "muted": "#1a2050",
-          "mutedForeground": "#9aa0cc",
-          "border": "#222a62",
-          "sidebar": "#05071a",
+          "mutedForeground": "rgba(255,255,255,0.56)",
+          "border": "rgba(255,255,255,0.11)",
+          "sidebar": "#0e1226",
           "highlight": "#00d39a",
           "highlightForeground": "#03231a",
           "profit": "#2de2a6",
@@ -457,7 +457,8 @@
             "x": 6,
             "y": 0,
             "w": 3,
-            "h": 3
+            "h": 3,
+            "detail": "detailed"
           },
           {
             "type": "discord",
@@ -473,7 +474,8 @@
             "x": 9,
             "y": 0,
             "w": 3,
-            "h": 6
+            "h": 6,
+            "detail": "detailed"
           },
           {
             "type": "journal-pnl",
